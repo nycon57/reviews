@@ -296,9 +296,9 @@
       "dependencies": [
         "S006"
       ],
-      "startedAt": "2026-01-14T06:07:15.819878+00:00",
-      "completedAt": "2026-01-14T07:30:00.000000+00:00",
-      "updatedAt": "2026-01-14T07:30:00.000000+00:00"
+      "startedAt": "2026-01-14T06:19:37.229379+00:00",
+      "completedAt": "2026-01-14T06:21:52.854314+00:00",
+      "updatedAt": "2026-01-14T06:21:52.854203+00:00"
     },
     {
       "id": "S010",
@@ -315,7 +315,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Dashboard loads within 2 seconds",
         "Metrics calculate correctly"
@@ -323,7 +323,10 @@
       "dependencies": [
         "S004",
         "S002"
-      ]
+      ],
+      "startedAt": "2026-01-14T06:21:54.909897+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T06:21:54.910134+00:00"
     },
     {
       "id": "S011",

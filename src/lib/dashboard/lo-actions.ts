@@ -1,0 +1,564 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import type { ActionResult } from "@/lib/reviews/types";
+
+// Types for loan officer dashboard
+export interface LoanOfficerProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  photoUrl: string | null;
+  title: string | null;
+  bio: string | null;
+  branch: string | null;
+  region: string | null;
+  nmlsId: string | null;
+  linkedinUrl: string | null;
+  zillowProfileUrl: string | null;
+  googlePlaceId: string | null;
+}
+
+export interface DashboardMetrics {
+  totalReviews: number;
+  averageRating: number;
+  npsScore: number;
+  responseRate: number;
+  // Change metrics (vs last period)
+  totalReviewsChange: number;
+  averageRatingChange: number;
+  npsScoreChange: number;
+  responseRateChange: number;
+}
+
+export interface RecentReview {
+  id: string;
+  customerName: string | null;
+  rating: number;
+  text: string | null;
+  reviewDate: string;
+  status: string;
+  isPublished: boolean;
+  source: string;
+}
+
+export interface TrendDataPoint {
+  date: string;
+  value: number;
+}
+
+export interface ProfileCompletionItem {
+  field: string;
+  label: string;
+  completed: boolean;
+}
+
+// Get user context - returns user id, role, organization_id, and linked loan_officer_id
+async function getUserContext() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("id, organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData) {
+    return null;
+  }
+
+  // Check if user has a linked loan officer profile
+  const { data: loanOfficer } = await supabase
+    .from("loan_officers")
+    .select("id")
+    .eq("user_id", user.id)
+    .single();
+
+  return {
+    userId: userData.id,
+    organizationId: userData.organization_id!,
+    role: userData.role,
+    loanOfficerId: loanOfficer?.id || null,
+  };
+}
+
+// Get loan officer dashboard metrics
+export async function getLoanOfficerMetrics(
+  loanOfficerId?: string
+): Promise<ActionResult<DashboardMetrics>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+
+  // For loan officers, they can only view their own metrics
+  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+    return { success: false, error: "Unauthorized - Can only view own metrics" };
+  }
+
+  // If no loan officer ID available, return empty metrics
+  if (!targetLoanOfficerId) {
+    return {
+      success: true,
+      data: {
+        totalReviews: 0,
+        averageRating: 0,
+        npsScore: 0,
+        responseRate: 0,
+        totalReviewsChange: 0,
+        averageRatingChange: 0,
+        npsScoreChange: 0,
+        responseRateChange: 0,
+      },
+    };
+  }
+
+  // Get loan officer data with cached metrics
+  const { data: loanOfficer, error: loError } = await supabase
+    .from("loan_officers")
+    .select("total_reviews, average_rating, nps_score")
+    .eq("id", targetLoanOfficerId)
+    .eq("organization_id", context.organizationId)
+    .single();
+
+  if (loError) {
+    console.error("Error fetching loan officer:", loError);
+    return { success: false, error: "Failed to fetch loan officer data" };
+  }
+
+  // Calculate response rate from surveys
+  const { data: surveys } = await supabase
+    .from("surveys")
+    .select("id, status")
+    .eq("loan_officer_id", targetLoanOfficerId);
+
+  const totalSurveys = surveys?.length || 0;
+  const completedSurveys = surveys?.filter((s) => s.status === "completed").length || 0;
+  const responseRate = totalSurveys > 0 ? Math.round((completedSurveys / totalSurveys) * 100) : 0;
+
+  // Calculate change metrics (compare to 30 days ago)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const sixtyDaysAgo = new Date();
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+  // Get reviews from last 30 days
+  const { data: recentReviews } = await supabase
+    .from("reviews")
+    .select("rating, review_date")
+    .eq("loan_officer_id", targetLoanOfficerId)
+    .gte("review_date", thirtyDaysAgo.toISOString());
+
+  // Get reviews from 30-60 days ago for comparison
+  const { data: previousReviews } = await supabase
+    .from("reviews")
+    .select("rating, review_date")
+    .eq("loan_officer_id", targetLoanOfficerId)
+    .gte("review_date", sixtyDaysAgo.toISOString())
+    .lt("review_date", thirtyDaysAgo.toISOString());
+
+  const recentCount = recentReviews?.length || 0;
+  const previousCount = previousReviews?.length || 0;
+  const totalReviewsChange = previousCount > 0
+    ? Math.round(((recentCount - previousCount) / previousCount) * 100)
+    : recentCount > 0 ? 100 : 0;
+
+  // Calculate NPS from recent survey responses
+  const { data: surveyResponses } = await supabase
+    .from("survey_responses")
+    .select(`
+      nps_score,
+      surveys!inner (
+        loan_officer_id
+      )
+    `)
+    .not("nps_score", "is", null);
+
+  const filteredResponses = surveyResponses?.filter(
+    (r) => {
+      const survey = r.surveys as unknown as { loan_officer_id: string };
+      return survey.loan_officer_id === targetLoanOfficerId;
+    }
+  ) || [];
+
+  let npsScore = loanOfficer?.nps_score || 0;
+  if (filteredResponses.length > 0) {
+    const promoters = filteredResponses.filter((r) => (r.nps_score || 0) >= 9).length;
+    const detractors = filteredResponses.filter((r) => (r.nps_score || 0) <= 6).length;
+    npsScore = Math.round(((promoters - detractors) / filteredResponses.length) * 100);
+  }
+
+  return {
+    success: true,
+    data: {
+      totalReviews: loanOfficer?.total_reviews || 0,
+      averageRating: loanOfficer?.average_rating || 0,
+      npsScore,
+      responseRate,
+      totalReviewsChange,
+      averageRatingChange: 0, // Would need historical data to calculate
+      npsScoreChange: 0,
+      responseRateChange: 0,
+    },
+  };
+}
+
+// Get recent reviews for loan officer
+export async function getLoanOfficerRecentReviews(
+  loanOfficerId?: string,
+  limit: number = 5
+): Promise<ActionResult<RecentReview[]>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+
+  // For loan officers, they can only view their own reviews
+  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+    return { success: false, error: "Unauthorized - Can only view own reviews" };
+  }
+
+  // If no loan officer ID, return empty list
+  if (!targetLoanOfficerId) {
+    return { success: true, data: [] };
+  }
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .select(`
+      id,
+      customer_name,
+      rating,
+      text,
+      review_date,
+      status,
+      is_published,
+      source
+    `)
+    .eq("loan_officer_id", targetLoanOfficerId)
+    .eq("organization_id", context.organizationId)
+    .order("review_date", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error fetching reviews:", error);
+    return { success: false, error: "Failed to fetch reviews" };
+  }
+
+  const reviews: RecentReview[] = (data || []).map((r) => ({
+    id: r.id,
+    customerName: r.customer_name,
+    rating: r.rating,
+    text: r.text,
+    reviewDate: r.review_date,
+    status: r.status || "pending",
+    isPublished: r.is_published || false,
+    source: r.source,
+  }));
+
+  return { success: true, data: reviews };
+}
+
+// Get rating trend data (monthly average)
+export async function getRatingTrend(
+  loanOfficerId?: string,
+  months: number = 6
+): Promise<ActionResult<TrendDataPoint[]>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+
+  // For loan officers, they can only view their own data
+  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // If no loan officer ID, return empty data
+  if (!targetLoanOfficerId) {
+    return { success: true, data: [] };
+  }
+
+  // Calculate start date
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - months);
+
+  const { data, error } = await supabase
+    .from("reviews")
+    .select("rating, review_date")
+    .eq("loan_officer_id", targetLoanOfficerId)
+    .gte("review_date", startDate.toISOString())
+    .order("review_date", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching rating trend:", error);
+    return { success: false, error: "Failed to fetch rating trend" };
+  }
+
+  // Group by month and calculate averages
+  const monthlyData = new Map<string, { sum: number; count: number }>();
+
+  for (const review of data || []) {
+    const date = new Date(review.review_date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+    if (!monthlyData.has(monthKey)) {
+      monthlyData.set(monthKey, { sum: 0, count: 0 });
+    }
+
+    const entry = monthlyData.get(monthKey)!;
+    entry.sum += review.rating;
+    entry.count += 1;
+  }
+
+  // Convert to array and fill in missing months
+  const trendData: TrendDataPoint[] = [];
+  const currentDate = new Date();
+
+  for (let i = months - 1; i >= 0; i--) {
+    const date = new Date(currentDate);
+    date.setMonth(date.getMonth() - i);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+
+    const entry = monthlyData.get(monthKey);
+    trendData.push({
+      date: monthLabel,
+      value: entry ? Number((entry.sum / entry.count).toFixed(1)) : 0,
+    });
+  }
+
+  return { success: true, data: trendData };
+}
+
+// Get NPS trend data (monthly)
+export async function getNPSTrend(
+  loanOfficerId?: string,
+  months: number = 6
+): Promise<ActionResult<TrendDataPoint[]>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+
+  // For loan officers, they can only view their own data
+  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // If no loan officer ID, return empty data
+  if (!targetLoanOfficerId) {
+    return { success: true, data: [] };
+  }
+
+  // Calculate start date
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - months);
+
+  const { data, error } = await supabase
+    .from("survey_responses")
+    .select(`
+      nps_score,
+      submitted_at,
+      surveys!inner (
+        loan_officer_id
+      )
+    `)
+    .not("nps_score", "is", null)
+    .gte("submitted_at", startDate.toISOString());
+
+  if (error) {
+    console.error("Error fetching NPS trend:", error);
+    return { success: false, error: "Failed to fetch NPS trend" };
+  }
+
+  // Filter to only this loan officer's responses
+  const filteredData = (data || []).filter((r) => {
+    const survey = r.surveys as unknown as { loan_officer_id: string };
+    return survey.loan_officer_id === targetLoanOfficerId;
+  });
+
+  // Group by month and calculate NPS
+  const monthlyData = new Map<string, { promoters: number; passives: number; detractors: number }>();
+
+  for (const response of filteredData) {
+    const date = new Date(response.submitted_at!);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+    if (!monthlyData.has(monthKey)) {
+      monthlyData.set(monthKey, { promoters: 0, passives: 0, detractors: 0 });
+    }
+
+    const entry = monthlyData.get(monthKey)!;
+    const score = response.nps_score || 0;
+
+    if (score >= 9) {
+      entry.promoters += 1;
+    } else if (score >= 7) {
+      entry.passives += 1;
+    } else {
+      entry.detractors += 1;
+    }
+  }
+
+  // Convert to array with NPS calculation
+  const trendData: TrendDataPoint[] = [];
+  const currentDate = new Date();
+
+  for (let i = months - 1; i >= 0; i--) {
+    const date = new Date(currentDate);
+    date.setMonth(date.getMonth() - i);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+
+    const entry = monthlyData.get(monthKey);
+    let nps = 0;
+
+    if (entry) {
+      const total = entry.promoters + entry.passives + entry.detractors;
+      if (total > 0) {
+        nps = Math.round(((entry.promoters - entry.detractors) / total) * 100);
+      }
+    }
+
+    trendData.push({
+      date: monthLabel,
+      value: nps,
+    });
+  }
+
+  return { success: true, data: trendData };
+}
+
+// Get loan officer profile
+export async function getLoanOfficerProfile(
+  loanOfficerId?: string
+): Promise<ActionResult<LoanOfficerProfile | null>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = await createClient();
+  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+
+  // For loan officers, they can only view their own profile
+  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+    return { success: false, error: "Unauthorized - Can only view own profile" };
+  }
+
+  // If no loan officer ID, return null (user is not a loan officer)
+  if (!targetLoanOfficerId) {
+    return { success: true, data: null };
+  }
+
+  const { data, error } = await supabase
+    .from("loan_officers")
+    .select(`
+      id,
+      full_name,
+      email,
+      phone,
+      photo_url,
+      title,
+      bio,
+      branch,
+      region,
+      nmls_id,
+      linkedin_url,
+      zillow_profile_url,
+      google_place_id
+    `)
+    .eq("id", targetLoanOfficerId)
+    .eq("organization_id", context.organizationId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching loan officer profile:", error);
+    return { success: false, error: "Failed to fetch profile" };
+  }
+
+  if (!data) {
+    return { success: true, data: null };
+  }
+
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      fullName: data.full_name,
+      email: data.email,
+      phone: data.phone,
+      photoUrl: data.photo_url,
+      title: data.title,
+      bio: data.bio,
+      branch: data.branch,
+      region: data.region,
+      nmlsId: data.nmls_id,
+      linkedinUrl: data.linkedin_url,
+      zillowProfileUrl: data.zillow_profile_url,
+      googlePlaceId: data.google_place_id,
+    },
+  };
+}
+
+// Calculate profile completion
+export async function getProfileCompletion(
+  loanOfficerId?: string
+): Promise<ActionResult<{ percentage: number; items: ProfileCompletionItem[] }>> {
+  const profileResult = await getLoanOfficerProfile(loanOfficerId);
+
+  if (!profileResult.success || !profileResult.data) {
+    return {
+      success: true,
+      data: {
+        percentage: 0,
+        items: [],
+      },
+    };
+  }
+
+  const profile = profileResult.data;
+
+  const completionItems: ProfileCompletionItem[] = [
+    { field: "photoUrl", label: "Profile Photo", completed: !!profile.photoUrl },
+    { field: "phone", label: "Phone Number", completed: !!profile.phone },
+    { field: "title", label: "Job Title", completed: !!profile.title },
+    { field: "bio", label: "Bio/Description", completed: !!profile.bio },
+    { field: "branch", label: "Branch", completed: !!profile.branch },
+    { field: "nmlsId", label: "NMLS ID", completed: !!profile.nmlsId },
+    { field: "linkedinUrl", label: "LinkedIn URL", completed: !!profile.linkedinUrl },
+    { field: "googlePlaceId", label: "Google Business Profile", completed: !!profile.googlePlaceId },
+  ];
+
+  const completedCount = completionItems.filter((item) => item.completed).length;
+  const percentage = Math.round((completedCount / completionItems.length) * 100);
+
+  return {
+    success: true,
+    data: {
+      percentage,
+      items: completionItems,
+    },
+  };
+}

@@ -1,21 +1,113 @@
 import { Suspense } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, CardSkeleton } from "@/components/shared";
 import {
-  Star,
-  TrendingUp,
-  Users,
-  MessageSquare,
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight,
-} from "lucide-react";
-import { StatsRowSkeleton, ReviewListSkeleton } from "@/components/shared";
+  LOStatsCards,
+  LOTrendChart,
+  LORecentReviews,
+  LOProfileCompletion,
+  LOQuickActions,
+} from "@/components/dashboard";
+import {
+  getLoanOfficerMetrics,
+  getLoanOfficerRecentReviews,
+  getRatingTrend,
+  getNPSTrend,
+  getProfileCompletion,
+} from "@/lib/dashboard";
 
 export const metadata = {
   title: "Dashboard | ReviewHub",
   description: "Your ReviewHub dashboard overview",
 };
+
+// Server component for stats cards
+async function DashboardStats() {
+  const result = await getLoanOfficerMetrics();
+
+  if (!result.success || !result.data) {
+    return (
+      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        Failed to load metrics. Please try refreshing the page.
+      </div>
+    );
+  }
+
+  return <LOStatsCards metrics={result.data} />;
+}
+
+// Server component for rating trend chart
+async function RatingTrendChart() {
+  const result = await getRatingTrend(undefined, 6);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return (
+    <LOTrendChart
+      data={result.data}
+      title="Rating Trend"
+      color="hsl(var(--chart-1))"
+      type="rating"
+    />
+  );
+}
+
+// Server component for NPS trend chart
+async function NPSTrendChart() {
+  const result = await getNPSTrend(undefined, 6);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return (
+    <LOTrendChart
+      data={result.data}
+      title="NPS Trend"
+      color="hsl(var(--chart-2))"
+      type="nps"
+    />
+  );
+}
+
+// Server component for recent reviews
+async function RecentReviewsList() {
+  const result = await getLoanOfficerRecentReviews(undefined, 5);
+
+  if (!result.success) {
+    return (
+      <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+        Failed to load reviews.
+      </div>
+    );
+  }
+
+  return <LORecentReviews initialReviews={result.data || []} />;
+}
+
+// Server component for profile completion
+async function ProfileCompletionCard() {
+  const result = await getProfileCompletion();
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  // Don't show if no profile (user is not a loan officer)
+  if (result.data.items.length === 0) {
+    return null;
+  }
+
+  return (
+    <LOProfileCompletion
+      percentage={result.data.percentage}
+      items={result.data.items}
+    />
+  );
+}
 
 export default function DashboardPage() {
   return (
@@ -28,213 +120,46 @@ export default function DashboardPage() {
             Welcome back! Here&apos;s an overview of your performance.
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Send Survey
+        <Button asChild>
+          <a href="/dashboard/distribution">
+            <Plus className="mr-2 h-4 w-4" />
+            Send Survey
+          </a>
         </Button>
       </div>
 
       {/* Stats cards */}
       <Suspense fallback={<StatsRowSkeleton />}>
-        <StatsCards />
+        <DashboardStats />
       </Suspense>
 
-      {/* Main content grid */}
+      {/* Charts grid */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent reviews */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg font-semibold">Recent Reviews</CardTitle>
-            <Button variant="ghost" size="sm">
-              View all
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<ReviewListSkeleton count={3} />}>
-              <RecentReviews />
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        {/* Quick actions */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-3">
-            <QuickActionButton
-              icon={<MessageSquare className="h-5 w-5" />}
-              title="Send Survey"
-              description="Request a review from a customer"
-            />
-            <QuickActionButton
-              icon={<Star className="h-5 w-5" />}
-              title="View Reviews"
-              description="See all customer feedback"
-            />
-            <QuickActionButton
-              icon={<TrendingUp className="h-5 w-5" />}
-              title="Analytics"
-              description="Track your performance metrics"
-            />
-            <QuickActionButton
-              icon={<Users className="h-5 w-5" />}
-              title="Team"
-              description="Manage your team members"
-            />
-          </CardContent>
-        </Card>
+        <Suspense fallback={<ChartSkeleton />}>
+          <RatingTrendChart />
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          <NPSTrendChart />
+        </Suspense>
       </div>
-    </div>
-  );
-}
 
-function StatsCards() {
-  // Mock data - will be replaced with real data from Supabase
-  const stats = [
-    {
-      title: "Total Reviews",
-      value: "142",
-      change: "+12%",
-      trend: "up" as const,
-      icon: <Star className="h-4 w-4" />,
-    },
-    {
-      title: "Average Rating",
-      value: "4.8",
-      change: "+0.2",
-      trend: "up" as const,
-      icon: <TrendingUp className="h-4 w-4" />,
-    },
-    {
-      title: "Response Rate",
-      value: "68%",
-      change: "-3%",
-      trend: "down" as const,
-      icon: <MessageSquare className="h-4 w-4" />,
-    },
-    {
-      title: "NPS Score",
-      value: "72",
-      change: "+5",
-      trend: "up" as const,
-      icon: <Users className="h-4 w-4" />,
-    },
-  ];
-
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => (
-        <Card key={stat.title}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </span>
-              <span className="text-muted-foreground">{stat.icon}</span>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold">{stat.value}</span>
-              <span
-                className={`flex items-center text-xs font-medium ${
-                  stat.trend === "up" ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {stat.trend === "up" ? (
-                  <ArrowUpRight className="mr-0.5 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="mr-0.5 h-3 w-3" />
-                )}
-                {stat.change}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function RecentReviews() {
-  // Mock data - will be replaced with real data from Supabase
-  const reviews = [
-    {
-      id: "1",
-      author: "Sarah Johnson",
-      rating: 5,
-      text: "Excellent service! Made the whole process smooth and stress-free.",
-      date: "2 hours ago",
-    },
-    {
-      id: "2",
-      author: "Michael Chen",
-      rating: 5,
-      text: "Very professional and responsive. Highly recommend!",
-      date: "5 hours ago",
-    },
-    {
-      id: "3",
-      author: "Emily Davis",
-      rating: 4,
-      text: "Great experience overall. Quick turnaround on everything.",
-      date: "1 day ago",
-    },
-  ];
-
-  return (
-    <div className="space-y-4">
-      {reviews.map((review) => (
-        <div
-          key={review.id}
-          className="flex gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-            {review.author
-              .split(" ")
-              .map((n) => n[0])
-              .join("")}
-          </div>
-          <div className="flex-1 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{review.author}</span>
-              <div className="flex items-center gap-1">
-                {Array.from({ length: review.rating }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-3 w-3 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {review.text}
-            </p>
-            <span className="text-xs text-muted-foreground">{review.date}</span>
-          </div>
+      {/* Main content grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent reviews - takes 2 columns */}
+        <div className="lg:col-span-2">
+          <Suspense fallback={<ReviewListSkeleton count={5} />}>
+            <RecentReviewsList />
+          </Suspense>
         </div>
-      ))}
-    </div>
-  );
-}
 
-function QuickActionButton({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <button className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        {icon}
+        {/* Sidebar - quick actions and profile completion */}
+        <div className="space-y-6">
+          <LOQuickActions />
+          <Suspense fallback={<CardSkeleton className="h-[280px]" />}>
+            <ProfileCompletionCard />
+          </Suspense>
+        </div>
       </div>
-      <div>
-        <div className="font-medium">{title}</div>
-        <div className="text-sm text-muted-foreground">{description}</div>
-      </div>
-    </button>
+    </div>
   );
 }

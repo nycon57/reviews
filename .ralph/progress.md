@@ -2010,3 +2010,34 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - HeroSection title prop should be React.ReactNode (not string) to support JSX with styled spans
   - staggerContainer with whileInView and viewport={{ once: true }} provides performant scroll animations
 ---
+
+## [2026-01-14 13:35] - S033: Marketing Pages Foundation (Verification)
+Thread: 
+Run: 20260114-132703-38985 (iteration 1)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-132703-38985-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-132703-38985-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 0b871de fix(S033): Update auth links and add newsletter signup to footer
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 7 warnings in unrelated files)
+- Files changed:
+  - src/app/(marketing)/about/about-client.tsx
+  - src/app/(marketing)/features/features-client.tsx
+  - src/app/(marketing)/page.tsx
+  - src/app/(marketing)/pricing/pricing-client.tsx
+  - src/components/marketing/marketing-footer.tsx
+  - src/components/marketing/marketing-nav.tsx
+  - src/components/marketing/mobile-menu.tsx
+- What was implemented:
+  - Fixed auth links across all marketing pages (changed /auth/sign-up to /signup and /auth/sign-in to /login)
+  - Added newsletter signup form to marketing footer with email input, loading state, and success confirmation
+  - S033 was already substantially complete; this run verified and fixed remaining issues
+- **Learnings for future iterations:**
+  - Auth routes are at /login and /signup (using (auth) route group), not /auth/sign-in and /auth/sign-up
+  - Marketing footer should include newsletter signup per acceptance criteria
+  - Verify existing route structure before implementing navigation links
+  - Newsletter signup can use a simple simulated API call for placeholder - actual API integration happens later
+---

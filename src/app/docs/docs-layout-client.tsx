@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Star, Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { DocsSearch } from "@/components/docs/docs-search";

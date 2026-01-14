@@ -20,7 +20,7 @@ function renderContent(content: string): React.ReactNode {
   const elements: React.ReactNode[] = [];
   let inCodeBlock = false;
   let codeBlockContent: string[] = [];
-  let codeBlockLang = "";
+  let _codeBlockLang = "";
 
   lines.forEach((line, index) => {
     // Code block handling
@@ -40,7 +40,7 @@ function renderContent(content: string): React.ReactNode {
         inCodeBlock = false;
       } else {
         inCodeBlock = true;
-        codeBlockLang = line.slice(3);
+        _codeBlockLang = line.slice(3);
       }
       return;
     }

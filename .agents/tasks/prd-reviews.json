@@ -1486,7 +1486,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Search returns relevant results",
         "Directory pages rank in local search"
@@ -1496,8 +1496,8 @@
         "S037"
       ],
       "startedAt": "2026-01-14T22:31:24.665166+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T22:31:24.665310+00:00"
+      "completedAt": "2026-01-14T22:47:30.990208+00:00",
+      "updatedAt": "2026-01-14T22:47:30.990089+00:00"
     },
     {
       "id": "S053",

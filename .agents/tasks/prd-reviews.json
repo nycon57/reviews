@@ -72,15 +72,15 @@
       ],
       "priority": "P0",
       "estimate": "S",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
       ],
       "dependencies": [],
       "startedAt": "2026-01-14T04:09:34.699492+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T04:09:34.699621+00:00"
+      "completedAt": "2026-01-14T04:14:23.500421+00:00",
+      "updatedAt": "2026-01-14T04:14:23.500301+00:00"
     },
     {
       "id": "S002",
@@ -96,14 +96,17 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Database migrations run successfully",
         "TypeScript types generate without errors"
       ],
       "dependencies": [
         "S001"
-      ]
+      ],
+      "startedAt": "2026-01-14T04:16:33.291087+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T04:16:33.291232+00:00"
     },
     {
       "id": "S003",

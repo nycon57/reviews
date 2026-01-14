@@ -540,3 +540,284 @@ export function generateBranchProfilePageSchema(
 
   return schemas;
 }
+
+// ============================================
+// ORGANIZATION PROFILE SCHEMA GENERATORS
+// ============================================
+
+interface OrganizationAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+}
+
+/**
+ * Minimal organization data needed for full schema generation
+ */
+export interface SchemaOrganizationFull {
+  id: string;
+  name: string;
+  slug: string;
+  domain: string | null;
+  logo_url: string | null;
+  description: string | null;
+  mission_statement: string | null;
+  website_url: string | null;
+  headquarters_address?: OrganizationAddress | null;
+  aggregate_rating: number | null;
+  total_reviews: number;
+  total_branches: number;
+  total_loan_officers: number;
+}
+
+/**
+ * Branch data for organization schema
+ */
+export interface SchemaOrgBranch {
+  id: string;
+  name: string;
+  address?: Json;
+}
+
+/**
+ * Loan officer data for organization schema
+ */
+export interface SchemaOrgLoanOfficer {
+  id: string;
+  full_name: string;
+  title: string | null;
+}
+
+/**
+ * Testimonial data for organization schema
+ */
+export interface SchemaOrgTestimonial {
+  id: string;
+  customer_name: string | null;
+  customer_location?: string | null;
+  rating: number;
+  text: string | null;
+  review_date: string;
+}
+
+interface OrganizationWithRatingSchema {
+  "@context": "https://schema.org";
+  "@type": "Organization";
+  "@id": string;
+  name: string;
+  url?: string;
+  logo?: string;
+  description?: string;
+  slogan?: string;
+  address?: PostalAddressSchema;
+  numberOfEmployees?: {
+    "@type": "QuantitativeValue";
+    value: number;
+  };
+  department?: Array<{
+    "@type": "LocalBusiness";
+    name: string;
+    url: string;
+    address?: PostalAddressSchema;
+  }>;
+  employee?: Array<{
+    "@type": "Person";
+    name: string;
+    jobTitle?: string;
+    url: string;
+  }>;
+  aggregateRating?: {
+    "@type": "AggregateRating";
+    ratingValue: number;
+    bestRating: number;
+    worstRating: number;
+    ratingCount: number;
+    reviewCount: number;
+  };
+}
+
+/**
+ * Generate Organization schema with embedded AggregateRating for organization profile
+ */
+export function generateOrganizationWithRatingSchema(
+  org: SchemaOrganizationFull,
+  branches: SchemaOrgBranch[],
+  loanOfficers: SchemaOrgLoanOfficer[],
+  baseUrl: string
+): OrganizationWithRatingSchema {
+  const profileUrl = `${baseUrl}/org/${org.slug}`;
+  const websiteUrl = org.website_url || org.domain || profileUrl;
+
+  // Parse headquarters address if available
+  const address = org.headquarters_address as OrganizationAddress | null;
+  const postalAddress: PostalAddressSchema | undefined = address
+    ? {
+        "@type": "PostalAddress",
+        streetAddress: address.street,
+        addressLocality: address.city,
+        addressRegion: address.state,
+        postalCode: address.zip,
+        addressCountry: address.country || "US",
+      }
+    : undefined;
+
+  const schema: OrganizationWithRatingSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": profileUrl,
+    name: org.name,
+    url: websiteUrl,
+  };
+
+  // Add optional fields only if they have values
+  if (org.logo_url) {
+    schema.logo = org.logo_url;
+  }
+
+  if (org.description) {
+    schema.description = org.description;
+  }
+
+  if (org.mission_statement) {
+    schema.slogan = org.mission_statement;
+  }
+
+  if (postalAddress && (postalAddress.addressLocality || postalAddress.addressRegion)) {
+    schema.address = postalAddress;
+  }
+
+  // Add number of employees
+  if (org.total_loan_officers > 0) {
+    schema.numberOfEmployees = {
+      "@type": "QuantitativeValue",
+      value: org.total_loan_officers,
+    };
+  }
+
+  // Add branches as departments (limit to first 10 for performance)
+  if (branches.length > 0) {
+    schema.department = branches.slice(0, 10).map((branch) => {
+      const branchAddress = branch.address as OrganizationAddress | null;
+      const branchEntry: {
+        "@type": "LocalBusiness";
+        name: string;
+        url: string;
+        address?: PostalAddressSchema;
+      } = {
+        "@type": "LocalBusiness",
+        name: branch.name,
+        url: `${baseUrl}/branch/${branch.id}`,
+      };
+
+      if (branchAddress && (branchAddress.city || branchAddress.state)) {
+        branchEntry.address = {
+          "@type": "PostalAddress",
+          streetAddress: branchAddress.street,
+          addressLocality: branchAddress.city,
+          addressRegion: branchAddress.state,
+          postalCode: branchAddress.zip,
+          addressCountry: branchAddress.country || "US",
+        };
+      }
+
+      return branchEntry;
+    });
+  }
+
+  // Add featured employees (limit to first 6 for performance)
+  if (loanOfficers.length > 0) {
+    schema.employee = loanOfficers.slice(0, 6).map((lo) => ({
+      "@type": "Person",
+      name: lo.full_name,
+      jobTitle: lo.title || "Loan Officer",
+      url: `${baseUrl}/lo/${lo.id}`,
+    }));
+  }
+
+  // Add aggregate rating if organization has reviews
+  if (org.aggregate_rating && org.total_reviews > 0) {
+    schema.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: Number(org.aggregate_rating.toFixed(2)),
+      bestRating: 5,
+      worstRating: 1,
+      ratingCount: org.total_reviews,
+      reviewCount: org.total_reviews,
+    };
+  }
+
+  return schema;
+}
+
+/**
+ * Generate Review schema for an organization testimonial
+ */
+export function generateOrganizationReviewSchema(
+  review: SchemaOrgTestimonial,
+  org: SchemaOrganizationFull,
+  baseUrl: string
+): ReviewSchema {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    itemReviewed: {
+      "@type": "LocalBusiness",
+      name: org.name,
+      url: `${baseUrl}/org/${org.slug}`,
+    },
+    author: {
+      "@type": "Person",
+      name: review.customer_name || "Anonymous",
+      location: review.customer_location || undefined,
+    },
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: review.rating,
+      bestRating: 5,
+      worstRating: 1,
+    },
+    reviewBody: review.text || undefined,
+    datePublished: review.review_date,
+    publisher: {
+      "@type": "Organization",
+      name: org.name,
+    },
+  };
+}
+
+/**
+ * Generate combined JSON-LD script content for an organization profile page
+ * This includes Organization schema, recent Reviews, and Breadcrumbs
+ */
+export function generateOrganizationProfilePageSchema(
+  org: SchemaOrganizationFull,
+  branches: SchemaOrgBranch[],
+  loanOfficers: SchemaOrgLoanOfficer[],
+  testimonials: SchemaOrgTestimonial[],
+  baseUrl: string
+): object[] {
+  const schemas: object[] = [];
+
+  // Organization schema with embedded aggregate rating
+  schemas.push(generateOrganizationWithRatingSchema(org, branches, loanOfficers, baseUrl));
+
+  // Individual review schemas (limit to most recent 5 for performance)
+  const topTestimonials = testimonials.slice(0, 5);
+
+  for (const testimonial of topTestimonials) {
+    schemas.push(generateOrganizationReviewSchema(testimonial, org, baseUrl));
+  }
+
+  // Breadcrumb schema
+  schemas.push(
+    generateBreadcrumbSchema([
+      { name: "Home", url: baseUrl },
+      { name: "Organizations", url: `${baseUrl}/org` },
+      { name: org.name, url: `${baseUrl}/org/${org.slug}` },
+    ])
+  );
+
+  return schemas;
+}

@@ -31,6 +31,9 @@ export {
   generateLocalBusinessSchema,
   generateBranchReviewSchema,
   generateBranchProfilePageSchema,
+  generateOrganizationWithRatingSchema,
+  generateOrganizationReviewSchema,
+  generateOrganizationProfilePageSchema,
   serializeSchemas,
 } from "./schema-generators";
 
@@ -39,6 +42,7 @@ export {
   generateLOProfileMetadata,
   generateLOListingMetadata,
   generateBranchProfileMetadata,
+  generateOrganizationProfileMetadata,
   getBaseUrl,
   truncateForSEO,
   generateLOKeywords,

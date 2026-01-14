@@ -284,3 +284,88 @@ export function generateBranchProfileMetadata(
 
   return metadata;
 }
+
+/**
+ * Minimal organization data needed for metadata generation
+ */
+interface MetadataOrganizationFull {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  description: string | null;
+  aggregate_rating: number | null;
+  total_reviews: number;
+  total_branches: number;
+  total_loan_officers: number;
+}
+
+/**
+ * Generate metadata for an Organization profile page
+ */
+export function generateOrganizationProfileMetadata(
+  organization: MetadataOrganizationFull,
+  baseUrl: string
+): Metadata {
+  const siteName = organization.name;
+  const loCount = organization.total_loan_officers || 0;
+  const branchCount = organization.total_branches || 0;
+  const reviewCount = organization.total_reviews || 0;
+  const avgRating = organization.aggregate_rating
+    ? Number(organization.aggregate_rating).toFixed(1)
+    : null;
+
+  const title = `${organization.name} - Customer Reviews & Locations`;
+
+  const description =
+    organization.description ||
+    `Explore ${organization.name} with ${branchCount} locations and ${loCount} mortgage professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}. Find your local branch and loan officer.`;
+
+  const profileUrl = `${baseUrl}/org/${organization.slug}`;
+
+  const metadata: Metadata = {
+    title,
+    description: description.slice(0, 160),
+    alternates: {
+      canonical: profileUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: profileUrl,
+      type: "website",
+      siteName,
+      locale: "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+
+  // Add image if logo exists
+  if (organization.logo_url) {
+    metadata.openGraph = {
+      ...metadata.openGraph,
+      images: [
+        {
+          url: organization.logo_url,
+          width: 800,
+          height: 800,
+          alt: `${organization.name} logo`,
+        },
+      ],
+    };
+    metadata.twitter = {
+      ...metadata.twitter,
+      images: [organization.logo_url],
+    };
+  }
+
+  return metadata;
+}

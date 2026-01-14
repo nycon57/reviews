@@ -1,6 +1,7 @@
 // AI/Sentiment Analysis Module
 
 export * from './types';
+export * from './insights-types';
 export * from './client';
 export * from './sentiment';
 export {
@@ -13,3 +14,13 @@ export {
   analyzeAllUnanalyzedReviews,
   checkAIStatus,
 } from './actions';
+export {
+  getSentimentTrend,
+  getThemeFrequencies,
+  getTopKeyPhrases,
+  getSentimentDistribution,
+  generateAISummary,
+  getImprovementRecommendations,
+  getIndustryBenchmarks,
+  getAIInsightsData,
+} from './insights-actions';

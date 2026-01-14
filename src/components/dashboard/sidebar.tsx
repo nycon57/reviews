@@ -30,6 +30,7 @@ import {
   LayoutDashboard,
   Layers,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 
 interface NavItem {
@@ -108,6 +109,11 @@ const navGroups: NavGroup[] = [
         title: "Leaderboard",
         href: "/dashboard/analytics/leaderboard",
         icon: <Trophy className="h-4 w-4" />,
+      },
+      {
+        title: "AI Insights",
+        href: "/dashboard/insights",
+        icon: <Sparkles className="h-4 w-4" />,
       },
     ],
   },

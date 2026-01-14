@@ -29,6 +29,7 @@ import {
   PanelLeft,
   LayoutDashboard,
   Layers,
+  MessageSquare,
 } from "lucide-react";
 
 interface NavItem {
@@ -76,6 +77,11 @@ const navGroups: NavGroup[] = [
         title: "Manager Dashboard",
         href: "/dashboard/manager",
         icon: <LayoutDashboard className="h-4 w-4" />,
+      },
+      {
+        title: "Responses",
+        href: "/dashboard/responses",
+        icon: <MessageSquare className="h-4 w-4" />,
       },
       {
         title: "Team",

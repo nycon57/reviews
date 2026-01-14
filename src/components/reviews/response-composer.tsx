@@ -1,0 +1,411 @@
+"use client";
+
+import { useState, useEffect, useTransition, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Sparkles,
+  FileText,
+  Send,
+  Save,
+  CheckCircle,
+  Clock,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
+import {
+  getResponseTemplates,
+  saveDraftResponse,
+  submitResponseForApproval,
+  postResponse,
+  generateAISuggestion,
+  type ResponseTemplate,
+} from "@/lib/reviews/response-actions";
+import { applyTemplateVariables } from "@/lib/reviews/utils";
+import type { AggregatedReview } from "@/lib/reviews/types";
+
+interface ResponseComposerProps {
+  review: AggregatedReview;
+  onSuccess?: () => void;
+  onCancel?: () => void;
+  requireApproval?: boolean;
+  isManager?: boolean;
+}
+
+export function ResponseComposer({
+  review,
+  onSuccess,
+  onCancel,
+  requireApproval = false,
+  isManager = false,
+}: ResponseComposerProps) {
+  const [isPending, startTransition] = useTransition();
+  const [responseText, setResponseText] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [templates, setTemplates] = useState<ResponseTemplate[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(true);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiTone, setAiTone] = useState<"professional" | "friendly" | "empathetic">("professional");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const loadTemplates = useCallback(async () => {
+    setIsLoadingTemplates(true);
+    const result = await getResponseTemplates(
+      selectedCategory === "all" ? undefined : selectedCategory
+    );
+    if (result.success && result.data) {
+      setTemplates(result.data);
+    }
+    setIsLoadingTemplates(false);
+  }, [selectedCategory]);
+
+  // Load templates on mount
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadTemplates();
+  }, [loadTemplates]);
+
+  // Pre-fill with existing response if any
+  useEffect(() => {
+    if (review.responseText) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setResponseText(review.responseText);
+    }
+  }, [review.responseText]);
+
+  const handleTemplateSelect = (templateId: string) => {
+    const template = templates.find((t) => t.id === templateId);
+    if (template) {
+      const variables: Record<string, string> = {
+        customer_name: review.customerName || "Valued Customer",
+        loan_officer_name: review.loanOfficer?.fullName || "Your Loan Officer",
+      };
+      const appliedContent = applyTemplateVariables(template.content, variables);
+      setResponseText(appliedContent);
+      setSelectedTemplateId(templateId);
+    }
+  };
+
+  const handleGenerateAI = async () => {
+    setIsGeneratingAI(true);
+    setError(null);
+
+    const result = await generateAISuggestion(review.id, aiTone);
+
+    if (result.success && result.data) {
+      setResponseText(result.data);
+      setSelectedTemplateId(""); // Clear template selection since using AI
+    } else {
+      setError(result.error || "Failed to generate AI suggestion");
+    }
+
+    setIsGeneratingAI(false);
+  };
+
+  const handleSaveDraft = () => {
+    if (!responseText.trim()) return;
+
+    startTransition(async () => {
+      setError(null);
+      const result = await saveDraftResponse(
+        review.id,
+        responseText.trim(),
+        selectedTemplateId || undefined
+      );
+
+      if (result.success) {
+        setSuccess("Draft saved successfully");
+        setTimeout(() => setSuccess(null), 3000);
+        onSuccess?.();
+      } else {
+        setError(result.error || "Failed to save draft");
+      }
+    });
+  };
+
+  const handleSubmitForApproval = () => {
+    if (!responseText.trim()) return;
+
+    startTransition(async () => {
+      setError(null);
+      const result = await submitResponseForApproval(
+        review.id,
+        responseText.trim(),
+        selectedTemplateId || undefined
+      );
+
+      if (result.success) {
+        setSuccess("Response submitted for approval");
+        setTimeout(() => {
+          setSuccess(null);
+          onSuccess?.();
+        }, 2000);
+      } else {
+        setError(result.error || "Failed to submit for approval");
+      }
+    });
+  };
+
+  const handlePostResponse = () => {
+    if (!responseText.trim()) return;
+
+    startTransition(async () => {
+      setError(null);
+      const result = await postResponse(
+        review.id,
+        responseText.trim(),
+        selectedTemplateId || undefined
+      );
+
+      if (result.success) {
+        setSuccess("Response posted successfully!");
+        setTimeout(() => {
+          setSuccess(null);
+          onSuccess?.();
+        }, 2000);
+      } else {
+        setError(result.error || "Failed to post response");
+      }
+    });
+  };
+
+  const getToneBadge = (tone: string) => {
+    const colors: Record<string, string> = {
+      professional: "bg-blue-100 text-blue-700",
+      friendly: "bg-green-100 text-green-700",
+      empathetic: "bg-purple-100 text-purple-700",
+      formal: "bg-gray-100 text-gray-700",
+    };
+    return colors[tone] || "bg-gray-100 text-gray-700";
+  };
+
+  const wordCount = responseText.trim().split(/\s+/).filter(Boolean).length;
+
+  return (
+    <div className="space-y-4">
+      {/* Template Selection */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Response Templates
+          </label>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger className="w-[140px] h-8 text-xs">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="thank_you">Thank You</SelectItem>
+              <SelectItem value="apologetic">Apologetic</SelectItem>
+              <SelectItem value="follow_up">Follow Up</SelectItem>
+              <SelectItem value="promotional">Promotional</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {isLoadingTemplates ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading templates...
+          </div>
+        ) : templates.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {templates.slice(0, 6).map((template) => (
+              <TooltipProvider key={template.id}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={selectedTemplateId === template.id ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => handleTemplateSelect(template.id)}
+                    >
+                      {template.name}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <p className="text-xs">{template.description || template.content.slice(0, 100)}...</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge className={`${getToneBadge(template.tone)} text-xs`}>
+                        {template.tone}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        Used {template.usageCount} times
+                      </span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No templates available</p>
+        )}
+      </div>
+
+      {/* AI Suggestion */}
+      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-900">AI Response Suggestion</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Generate a response based on the review content
+          </p>
+        </div>
+        <Select value={aiTone} onValueChange={(v) => setAiTone(v as typeof aiTone)}>
+          <SelectTrigger className="w-[120px] h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="professional">Professional</SelectItem>
+            <SelectItem value="friendly">Friendly</SelectItem>
+            <SelectItem value="empathetic">Empathetic</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleGenerateAI}
+          disabled={isGeneratingAI}
+          className="h-8"
+        >
+          {isGeneratingAI ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          <span className="ml-1.5">Generate</span>
+        </Button>
+      </div>
+
+      {/* Response Editor */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Response</label>
+          <span className="text-xs text-muted-foreground">{wordCount} words</span>
+        </div>
+        <Textarea
+          placeholder="Write your response to this review..."
+          value={responseText}
+          onChange={(e) => {
+            setResponseText(e.target.value);
+            setSelectedTemplateId(""); // Clear template selection when editing
+          }}
+          rows={6}
+          className="resize-none"
+        />
+      </div>
+
+      {/* Status Messages */}
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
+          <CheckCircle className="h-4 w-4" />
+          {success}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center justify-between pt-2">
+        <Button variant="ghost" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+
+        <div className="flex items-center gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSaveDraft}
+                  disabled={isPending || !responseText.trim()}
+                >
+                  <Save className="h-4 w-4 mr-1.5" />
+                  Save Draft
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">Save as draft to continue later</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          {requireApproval && !isManager ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={handleSubmitForApproval}
+                    disabled={isPending || !responseText.trim()}
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
+                      <Clock className="h-4 w-4 mr-1.5" />
+                    )}
+                    Submit for Approval
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">Submit for manager approval before posting</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    onClick={handlePostResponse}
+                    disabled={isPending || !responseText.trim()}
+                  >
+                    {isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4 mr-1.5" />
+                    )}
+                    Post Response
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="text-xs">
+                    {review.source === "google"
+                      ? "Post response to Google"
+                      : "Post response to this review"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

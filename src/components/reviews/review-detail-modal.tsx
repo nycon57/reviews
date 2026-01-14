@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -32,6 +31,7 @@ import {
   archiveReview,
   toggleReviewFeatured,
 } from "@/lib/reviews/aggregation-actions";
+import { ResponseComposer } from "./response-composer";
 
 interface ReviewDetailModalProps {
   review: AggregatedReview | null;
@@ -47,7 +47,6 @@ export function ReviewDetailModal({
   onUpdate,
 }: ReviewDetailModalProps) {
   const [isPending, startTransition] = useTransition();
-  const [responseText, setResponseText] = useState("");
   const [showResponseForm, setShowResponseForm] = useState(false);
 
   if (!review) return null;
@@ -296,25 +295,17 @@ export function ReviewDetailModal({
               <div className="space-y-3">
                 <h4 className="font-medium flex items-center gap-2">
                   <MessageSquare className="h-4 w-4" />
-                  Write Response
+                  Compose Response
                 </h4>
-                <Textarea
-                  placeholder="Write a response to this review..."
-                  value={responseText}
-                  onChange={(e) => setResponseText(e.target.value)}
-                  rows={4}
+                <ResponseComposer
+                  review={review}
+                  onSuccess={() => {
+                    setShowResponseForm(false);
+                    onUpdate?.();
+                  }}
+                  onCancel={() => setShowResponseForm(false)}
+                  isManager={true}
                 />
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowResponseForm(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button disabled={!responseText.trim()}>
-                    Send Response
-                  </Button>
-                </div>
               </div>
             </>
           )}

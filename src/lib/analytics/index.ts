@@ -48,9 +48,11 @@ export {
   determinePerformanceStatus,
 } from "./calculations";
 
+// Utility functions (client-safe)
+export { getDateRangeForPeriod } from "./utils";
+
 // Engine functions (server actions with database access)
 export {
-  getDateRangeForPeriod,
   getNPSMetrics,
   getCSATMetrics,
   getResponseRateMetrics,

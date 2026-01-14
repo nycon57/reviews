@@ -6,7 +6,8 @@ export type EmailTemplate =
   | "new_review_notification"
   | "review_pending_approval"
   | "review_approved"
-  | "review_rejected";
+  | "review_rejected"
+  | "scheduled_report";
 
 // Base email data
 export interface BaseEmailData {
@@ -74,6 +75,21 @@ export interface ReviewRejectedEmailData extends BaseEmailData {
   rating: number;
   rejectionReason: string;
   dashboardUrl: string;
+}
+
+// Scheduled report email data
+export interface ScheduledReportEmailData extends BaseEmailData {
+  recipientName: string;
+  reportName: string;
+  reportPeriod: string;
+  summary: {
+    totalReviews: number;
+    averageRating: number;
+    npsScore: number;
+    csatScore: number;
+  };
+  reportUrl: string;
+  organizationName: string;
 }
 
 // Email send result

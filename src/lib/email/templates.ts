@@ -5,6 +5,7 @@ import type {
   ReviewPendingApprovalEmailData,
   ReviewApprovedEmailData,
   ReviewRejectedEmailData,
+  ScheduledReportEmailData,
 } from "./types";
 import { emailConfig } from "./client";
 
@@ -437,6 +438,85 @@ export function getReviewRejectedEmail(data: ReviewRejectedEmailData): {
             View Dashboard
           </a>
         </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Scheduled report email template
+export function getScheduledReportEmail(data: ScheduledReportEmailData): {
+  subject: string;
+  html: string;
+} {
+  const subject = `${data.reportName} - ${data.reportPeriod}`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  // Generate star rating display
+  const ratingDisplay = generateStarRating(Math.round(data.summary.averageRating));
+
+  // Determine NPS color based on score
+  const npsColor = data.summary.npsScore >= 50 ? "#16a34a" : data.summary.npsScore >= 0 ? "#f59e0b" : "#dc2626";
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #6366f1; border-bottom: 1px solid #4f46e5;">
+        <span style="font-size: 24px; font-weight: bold; color: #ffffff;">${data.organizationName}</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          ${data.reportName}
+        </h1>
+        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
+          ${data.reportPeriod}
+        </p>
+
+        <!-- Summary Stats Grid -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+          <tr>
+            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 8px 0 0 0; text-align: center; border-right: 1px solid #e4e4e7; border-bottom: 1px solid #e4e4e7;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">Total Reviews</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">${data.summary.totalReviews}</p>
+            </td>
+            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 0 8px 0 0; text-align: center; border-bottom: 1px solid #e4e4e7;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">Avg Rating</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">${data.summary.averageRating.toFixed(1)}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 0 0 0 8px; text-align: center; border-right: 1px solid #e4e4e7;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">NPS Score</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: ${npsColor};">${data.summary.npsScore}</p>
+            </td>
+            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 0 0 8px 0; text-align: center;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">CSAT Score</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">${data.summary.csatScore}%</p>
+            </td>
+          </tr>
+        </table>
+
+        <div style="text-align: center; margin: 24px 0;">
+          ${ratingDisplay}
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
+            Average Rating: ${data.summary.averageRating.toFixed(1)} out of 5
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${data.reportUrl}" style="display: inline-block; padding: 16px 32px; background-color: #6366f1; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            View Full Report
+          </a>
+        </div>
+        <p style="margin: 24px 0 0 0; font-size: 12px; color: #71717a; text-align: center;">
+          This report was automatically generated and sent to you as part of your scheduled reports.
+        </p>
       </td>
     </tr>
   `;

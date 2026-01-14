@@ -1024,6 +1024,273 @@ export type Database = {
           },
         ]
       }
+      report_templates: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          description: string | null
+          template_type: string
+          config: Json
+          is_default: boolean | null
+          created_by: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          description?: string | null
+          template_type: string
+          config?: Json
+          is_default?: boolean | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          description?: string | null
+          template_type?: string
+          config?: Json
+          is_default?: boolean | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_reports: {
+        Row: {
+          id: string
+          organization_id: string
+          template_id: string
+          name: string
+          recipients: string[]
+          schedule: string
+          schedule_day_of_week: number | null
+          schedule_day_of_month: number | null
+          schedule_time: string | null
+          filters: Json
+          is_active: boolean | null
+          next_run_at: string | null
+          last_run_at: string | null
+          created_by: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          template_id: string
+          name: string
+          recipients?: string[]
+          schedule: string
+          schedule_day_of_week?: number | null
+          schedule_day_of_month?: number | null
+          schedule_time?: string | null
+          filters?: Json
+          is_active?: boolean | null
+          next_run_at?: string | null
+          last_run_at?: string | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          template_id?: string
+          name?: string
+          recipients?: string[]
+          schedule?: string
+          schedule_day_of_week?: number | null
+          schedule_day_of_month?: number | null
+          schedule_time?: string | null
+          filters?: Json
+          is_active?: boolean | null
+          next_run_at?: string | null
+          last_run_at?: string | null
+          created_by?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_shares: {
+        Row: {
+          id: string
+          organization_id: string
+          template_id: string
+          share_token: string
+          title: string
+          date_range_start: string
+          date_range_end: string
+          filters: Json
+          shared_by: string | null
+          expires_at: string | null
+          access_count: number | null
+          last_accessed_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          template_id: string
+          share_token: string
+          title: string
+          date_range_start: string
+          date_range_end: string
+          filters?: Json
+          shared_by?: string | null
+          expires_at?: string | null
+          access_count?: number | null
+          last_accessed_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          template_id?: string
+          share_token?: string
+          title?: string
+          date_range_start?: string
+          date_range_end?: string
+          filters?: Json
+          shared_by?: string | null
+          expires_at?: string | null
+          access_count?: number | null
+          last_accessed_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_shares_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_shares_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_shares_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_exports: {
+        Row: {
+          id: string
+          organization_id: string
+          template_id: string
+          export_format: string
+          file_name: string
+          date_range_start: string
+          date_range_end: string
+          filters: Json
+          row_count: number | null
+          created_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          template_id: string
+          export_format: string
+          file_name: string
+          date_range_start: string
+          date_range_end: string
+          filters?: Json
+          row_count?: number | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          template_id?: string
+          export_format?: string
+          file_name?: string
+          date_range_start?: string
+          date_range_end?: string
+          filters?: Json
+          row_count?: number | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_exports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_exports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_exports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

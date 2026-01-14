@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Analytics Engine - Core Calculation Functions
  * Pure functions for calculating NPS, CSAT, response rates, and review velocity

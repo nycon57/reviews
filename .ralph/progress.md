@@ -36,7 +36,7 @@ _No stories currently in progress._
 
 ### Phase 2: Enhanced Features
 - [ ] S009: Review Approval Workflow
-- [ ] S011: Manager Dashboard
+- [x] S011: Manager Dashboard
 - [ ] S013: Gamification & Leaderboards
 - [ ] S014: Reporting & Export
 - [ ] S015: Google Business Profile Integration
@@ -78,6 +78,61 @@ npm run lint     # Run ESLint
 npm run db:types # Generate TypeScript types from Supabase
 ```
 
+---
+
+## [2026-01-14T19:00:00] - S011: Manager Dashboard
+Thread:
+Run: 20260114-001521-85850 (iteration 10)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e2f3d97 feat(S011): Implement manager dashboard with team metrics
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - src/lib/dashboard/manager-actions.ts (new - server actions for manager dashboard data)
+  - src/lib/dashboard/index.ts (updated - added manager-actions export)
+  - src/components/dashboard/manager/team-stats-cards.tsx (new - team aggregate metrics display)
+  - src/components/dashboard/manager/lo-comparison-table.tsx (new - sortable LO comparison table)
+  - src/components/dashboard/manager/performance-leaderboard.tsx (new - top performers display)
+  - src/components/dashboard/manager/performance-alerts.tsx (new - low performer alert indicators)
+  - src/components/dashboard/manager/team-filters.tsx (new - branch/region filter controls)
+  - src/components/dashboard/manager/index.ts (new - component exports)
+  - src/components/dashboard/index.ts (updated - added manager component exports)
+  - src/components/dashboard/sidebar.tsx (updated - added Manager Dashboard navigation)
+  - src/components/ui/table.tsx (new - shadcn table component)
+  - src/app/(dashboard)/dashboard/manager/page.tsx (new - manager dashboard page)
+  - src/app/(dashboard)/dashboard/manager/manager-dashboard-client.tsx (new - client filtering component)
+  - src/app/(dashboard)/dashboard/manager/loading.tsx (new - loading skeleton)
+  - .agents/tasks/prd-reviews.json (updated - S011 status)
+- What was implemented:
+  - S011 acceptance criteria fully met:
+    1. ✅ Team overview with aggregate metrics - `TeamStatsCards` showing team members, total reviews, avg rating, NPS
+    2. ✅ LO comparison table with sorting - `LOComparisonTable` with sortable columns (reviews, rating, NPS, response rate)
+    3. ✅ Branch/region filtering - `TeamFilters` with dropdowns and `ManagerDashboardClient` for client-side state
+    4. ✅ Performance leaderboard - `PerformanceLeaderboard` showing top 5 performers with rank icons
+    5. ✅ Alert indicators for low performers - `PerformanceAlerts` highlighting at_risk/needs_attention status
+    6. ✅ Drill-down to individual LO dashboards - Links to /dashboard?lo_id= for each LO
+  - Server actions for data fetching:
+    - `getTeamMetrics` - aggregate team statistics with change indicators
+    - `getLoanOfficerComparison` - all LOs with performance metrics and status
+    - `getFilterOptions` - available branches and regions
+    - `getLeaderboard` - top performers by reputation score
+    - `getLowPerformers` - LOs needing attention with alert reasons
+    - `getTeamRatingTrend` - team-wide rating trend
+  - Role-based access control: redirects non-managers/admins to /dashboard
+  - Client-side filtering with useTransition for smooth UX
+  - Performance status badges: excellent, good, needs_attention, at_risk
+- Gates verified:
+  - Dashboard shows aggregated team data ✓
+  - Filter by branch/region works ✓
+  - Managers can drill-down to individual LO views ✓
+- **Learnings for future iterations:**
+  - shadcn table component needs eslint-disable no-undef for TypeScript DOM types
+  - Manager context pattern: check role from users table, get org_id for filtering
+  - Performance status calculation: combine rating + NPS + response rate thresholds
+  - Client filtering with server actions: use useTransition to avoid UI jank
 ---
 
 ## [2026-01-14T18:30:00] - S010: Loan Officer Dashboard - Final Verification

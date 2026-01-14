@@ -123,7 +123,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Auth flows work end-to-end",
         "RLS policies enforce role access"
@@ -132,8 +132,8 @@
         "S002"
       ],
       "startedAt": "2026-01-14T04:24:13.238342+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T04:28:00.392023+00:00"
+      "completedAt": "2026-01-14T06:30:00.000000+00:00",
+      "updatedAt": "2026-01-14T06:30:00.000000+00:00"
     },
     {
       "id": "S004",

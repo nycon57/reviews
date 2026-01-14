@@ -23,10 +23,10 @@ _No stories currently in progress._
 ## Phase Overview
 
 ### Phase 1: Foundation (MVP)
-- [ ] S001: Initialize Next.js 14 Project with ShadCN
-- [ ] S002: Supabase Project Setup & Database Schema
-- [ ] S003: Authentication System
-- [ ] S004: Base Layout & Navigation
+- [x] S001: Initialize Next.js 14 Project with ShadCN
+- [x] S002: Supabase Project Setup & Database Schema
+- [x] S003: Authentication System
+- [x] S004: Base Layout & Navigation
 - [ ] S005: Survey Builder & Templates
 - [ ] S006: Public Survey Form
 - [ ] S007: Email Service Integration with Resend
@@ -78,6 +78,59 @@ npm run lint     # Run ESLint
 npm run db:types # Generate TypeScript types from Supabase
 ```
 
+---
+
+## [2026-01-14T02:00:00] - S003: Authentication System
+Thread:
+Run: session (iteration 1)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 1f44774 feat(S003): Implement authentication system
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - src/app/(auth)/layout.tsx (auth pages layout)
+  - src/app/(auth)/login/page.tsx (sign in with password and magic link)
+  - src/app/(auth)/signup/page.tsx (sign up with organization creation)
+  - src/app/(auth)/forgot-password/page.tsx (password reset request)
+  - src/app/(auth)/reset-password/page.tsx (password reset completion)
+  - src/app/(auth)/verify-email/page.tsx (email verification waiting page)
+  - src/app/auth/callback/route.ts (Supabase auth callback handler)
+  - src/app/(dashboard)/layout.tsx (dashboard layout with auth)
+  - src/app/(dashboard)/profile/page.tsx (user profile page)
+  - src/app/(dashboard)/profile/profile-form.tsx (profile update form)
+  - src/app/(dashboard)/profile/password-form.tsx (password change form)
+  - src/lib/auth/actions.ts (server actions for auth)
+  - src/lib/auth/schemas.ts (Zod validation schemas)
+  - src/lib/auth/profile-actions.ts (profile server actions)
+  - src/lib/auth/profile-schemas.ts (profile validation schemas)
+  - src/hooks/use-auth.ts (client-side auth hook)
+  - src/middleware.ts (role-based access control)
+  - src/components/dashboard/header.tsx (dashboard header with user menu)
+  - src/components/dashboard/sidebar.tsx (dashboard sidebar navigation)
+  - src/components/dashboard/dashboard-layout.tsx (dashboard layout wrapper)
+  - src/components/dashboard/mobile-nav.tsx (mobile navigation)
+  - src/components/shared/theme-toggle.tsx (dark mode toggle)
+  - src/components/shared/breadcrumbs.tsx (navigation breadcrumbs)
+  - src/components/ui/avatar.tsx, dropdown-menu.tsx, sheet.tsx, etc. (UI components)
+- What was implemented:
+  - Full sign up flow with email verification and organization creation
+  - Sign in with email/password and magic link options
+  - Password reset flow (forgot password + reset page)
+  - Email verification waiting page with resend functionality
+  - Auth callback route for Supabase redirects (magic link, password recovery)
+  - Role-based middleware protecting routes by user role (admin, manager, loan_officer)
+  - User profile management with avatar upload, name editing, password change
+  - Dashboard layout with sidebar, header, mobile navigation
+  - Theme toggle (dark/light mode)
+  - Breadcrumbs navigation
+- **Learnings for future iterations:**
+  - Server Actions files ("use server") can only export async functions, not objects - separate schemas into their own file
+  - useSearchParams() in Next.js 16 must be wrapped in Suspense boundary for static generation
+  - Import naming conflicts (e.g., User interface vs User icon) should use aliases
+  - Role-based access control should use user metadata from Supabase auth + custom users table
 ---
 
 ## [2026-01-14T00:30:00] - S002: Supabase Project Setup & Database Schema

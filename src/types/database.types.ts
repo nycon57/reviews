@@ -1512,6 +1512,217 @@ export type Database = {
           },
         ]
       }
+      testimonials: {
+        Row: {
+          id: string
+          organization_id: string
+          review_id: string
+          loan_officer_id: string | null
+          format: string
+          content: string
+          original_quote: string | null
+          key_highlights: string[] | null
+          ai_generated: boolean | null
+          generation_prompt: string | null
+          status: string
+          approved_at: string | null
+          approved_by: string | null
+          rejection_reason: string | null
+          published_at: string | null
+          published_platforms: string[] | null
+          last_exported_at: string | null
+          export_count: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          review_id: string
+          loan_officer_id?: string | null
+          format?: string
+          content: string
+          original_quote?: string | null
+          key_highlights?: string[] | null
+          ai_generated?: boolean | null
+          generation_prompt?: string | null
+          status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          rejection_reason?: string | null
+          published_at?: string | null
+          published_platforms?: string[] | null
+          last_exported_at?: string | null
+          export_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          review_id?: string
+          loan_officer_id?: string | null
+          format?: string
+          content?: string
+          original_quote?: string | null
+          key_highlights?: string[] | null
+          ai_generated?: boolean | null
+          generation_prompt?: string | null
+          status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          rejection_reason?: string | null
+          published_at?: string | null
+          published_platforms?: string[] | null
+          last_exported_at?: string | null
+          export_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonial_graphics: {
+        Row: {
+          id: string
+          testimonial_id: string
+          organization_id: string
+          image_url: string | null
+          image_data: string | null
+          width: number
+          height: number
+          format: string
+          template_name: string | null
+          background_color: string | null
+          text_color: string | null
+          accent_color: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          testimonial_id: string
+          organization_id: string
+          image_url?: string | null
+          image_data?: string | null
+          width?: number
+          height?: number
+          format?: string
+          template_name?: string | null
+          background_color?: string | null
+          text_color?: string | null
+          accent_color?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          testimonial_id?: string
+          organization_id?: string
+          image_url?: string | null
+          image_data?: string | null
+          width?: number
+          height?: number
+          format?: string
+          template_name?: string | null
+          background_color?: string | null
+          text_color?: string | null
+          accent_color?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonial_graphics_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: false
+            referencedRelation: "testimonials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonial_graphics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonial_templates: {
+        Row: {
+          id: string
+          organization_id: string | null
+          name: string
+          description: string | null
+          format: string
+          prompt_template: string
+          example_output: string | null
+          is_system: boolean | null
+          is_active: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          name: string
+          description?: string | null
+          format: string
+          prompt_template: string
+          example_output?: string | null
+          is_system?: boolean | null
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          name?: string
+          description?: string | null
+          format?: string
+          prompt_template?: string
+          example_output?: string | null
+          is_system?: boolean | null
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonial_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -31,6 +31,7 @@ import {
   Layers,
   MessageSquare,
   Sparkles,
+  Quote,
 } from "lucide-react";
 
 interface NavItem {
@@ -114,6 +115,11 @@ const navGroups: NavGroup[] = [
         title: "AI Insights",
         href: "/dashboard/insights",
         icon: <Sparkles className="h-4 w-4" />,
+      },
+      {
+        title: "Testimonials",
+        href: "/dashboard/testimonials",
+        icon: <Quote className="h-4 w-4" />,
       },
     ],
   },

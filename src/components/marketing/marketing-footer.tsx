@@ -74,29 +74,31 @@ export function MarketingFooter() {
       whileInView="visible"
       viewport={viewportOnce}
       variants={staggerContainer}
-      className="border-t bg-muted/30"
+      className="border-t border-brand-silver/50 bg-brand-snow"
     >
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
+      <div className="container mx-auto px-4 py-16">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand Column */}
           <motion.div variants={fadeInUp} className="lg:col-span-2">
-            <Link href="/" className="inline-flex items-center gap-2 mb-4">
-              <Star className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">ReviewHub</span>
+            <Link href="/" className="inline-flex items-center gap-2.5 mb-5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue">
+                <Star className="h-5 w-5 text-white" fill="currentColor" />
+              </div>
+              <span className="text-xl font-bold text-brand-navy">ReviewHub</span>
             </Link>
-            <p className="text-sm text-muted-foreground max-w-xs mb-4">
+            <p className="text-body-sm text-brand-slate max-w-xs mb-6">
               Collect customer reviews, manage your reputation, and gain
               AI-powered insights to improve customer experience.
             </p>
             {/* Social Links */}
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-8">
               {socialLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-frost text-brand-slate hover:bg-brand-blue hover:text-white transition-all duration-200"
                   aria-label={link.label}
                 >
                   {link.label === "LinkedIn" && <Linkedin className="h-5 w-5" />}
@@ -107,9 +109,9 @@ export function MarketingFooter() {
 
             {/* Newsletter Signup */}
             <div>
-              <h3 className="font-semibold text-sm mb-3">Stay Updated</h3>
+              <h3 className="font-semibold text-body-sm text-brand-navy mb-3">Stay Updated</h3>
               {subscribed ? (
-                <p className="text-sm text-green-600 dark:text-green-400">
+                <p className="text-body-sm text-brand-emerald font-medium">
                   Thanks for subscribing!
                 </p>
               ) : (
@@ -119,15 +121,16 @@ export function MarketingFooter() {
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-9 text-sm"
+                    className="h-10 text-body-sm"
                     required
                     aria-label="Email address"
                   />
                   <Button
                     type="submit"
                     size="sm"
+                    variant="brand"
                     disabled={isSubmitting}
-                    className="shrink-0"
+                    className="shrink-0 h-10"
                   >
                     {isSubmitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -143,7 +146,7 @@ export function MarketingFooter() {
           {/* Link Columns */}
           {footerSections.map((section) => (
             <motion.div key={section.title} variants={fadeInUp}>
-              <h3 className="font-semibold text-sm mb-4">{section.title}</h3>
+              <h3 className="font-semibold text-body-sm text-brand-navy mb-4">{section.title}</h3>
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.href}>
@@ -152,14 +155,14 @@ export function MarketingFooter() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-body-sm text-brand-slate hover:text-brand-blue transition-colors"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-body-sm text-brand-slate hover:text-brand-blue transition-colors"
                       >
                         {link.label}
                       </Link>
@@ -174,9 +177,9 @@ export function MarketingFooter() {
         {/* Copyright */}
         <motion.div
           variants={fadeInUp}
-          className="mt-12 pt-8 border-t text-center"
+          className="mt-12 pt-8 border-t border-brand-silver/50 text-center"
         >
-          <p className="text-sm text-muted-foreground">
+          <p className="text-body-sm text-brand-slate">
             &copy; {currentYear} ReviewHub. All rights reserved.
           </p>
         </motion.div>

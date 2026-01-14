@@ -23,6 +23,7 @@ interface NavLink {
 const navLinks: NavLink[] = [
   { label: "Features", href: "/features" },
   { label: "Pricing", href: "/pricing" },
+  { label: "Find a Pro", href: "/directory" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];

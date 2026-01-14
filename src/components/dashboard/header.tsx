@@ -13,9 +13,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
-import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { NotificationCenter } from "@/components/notifications";
-import { Search, LogOut, User as UserIcon, Settings, CreditCard } from "lucide-react";
+import {
+  Search,
+  LogOut,
+  User as UserIcon,
+  Settings,
+  CreditCard,
+  UserPlus,
+  Command,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface HeaderUser {
@@ -36,7 +43,7 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-brand-silver bg-white/95 px-4 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80",
         className
       )}
     >
@@ -45,31 +52,53 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
         <div className="md:hidden">{mobileMenuTrigger}</div>
       )}
 
-      {/* Breadcrumbs */}
-      <div className="hidden flex-1 md:block">
-        <Breadcrumbs />
-      </div>
-
-      {/* Mobile spacer */}
-      <div className="flex-1 md:hidden" />
+      {/* Spacer - pushes actions to right */}
+      <div className="flex-1" />
 
       {/* Right side actions */}
       <div className="flex items-center gap-2">
-        {/* Search button */}
+        {/* Search button with keyboard shortcut hint */}
         <Button
           variant="ghost"
-          size="icon"
-          className="h-9 w-9"
+          size="sm"
+          className="h-9 px-3 text-brand-slate hover:text-brand-navy hover:bg-brand-frost gap-2 hidden sm:flex"
           aria-label="Search"
         >
           <Search className="h-4 w-4" />
+          <span className="text-sm font-normal">Search</span>
+          <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-brand-silver bg-brand-snow px-1.5 font-mono text-[10px] font-medium text-brand-slate">
+            <Command className="h-3 w-3" />K
+          </kbd>
+        </Button>
+
+        {/* Mobile search button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-brand-slate hover:text-brand-navy hover:bg-brand-frost sm:hidden"
+          aria-label="Search"
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+
+        {/* Divider */}
+        <div className="hidden sm:block h-6 w-px bg-brand-silver mx-1" />
+
+        {/* Invite Team button */}
+        <Button
+          variant="brand-outline"
+          size="sm"
+          className="h-9 hidden md:flex"
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Invite Team
         </Button>
 
         {/* Notifications */}
         <NotificationCenter />
 
         {/* Theme toggle */}
-        <ThemeToggle className="h-9 w-9" />
+        <ThemeToggle className="h-9 w-9 text-brand-slate hover:text-brand-navy hover:bg-brand-frost" />
 
         {/* User menu */}
         {user && (
@@ -91,49 +120,49 @@ function UserMenu({ user, onSignOut }: UserMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-9 w-9 rounded-full"
+          className="relative h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-brand-frost hover:ring-offset-2 transition-all duration-150"
           aria-label="User menu"
         >
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="bg-primary/10 text-primary">
+            <AvatarFallback className="bg-brand-frost text-brand-blue font-semibold text-sm">
               {user.initials}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
+      <DropdownMenuContent className="w-56 border-brand-silver" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal p-3">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm font-semibold leading-none text-brand-navy">{user.name}</p>
+            <p className="text-xs leading-none text-brand-slate">
               {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/profile">
+        <DropdownMenuSeparator className="bg-brand-silver" />
+        <DropdownMenuItem asChild className="text-brand-slate hover:text-brand-navy hover:bg-brand-frost cursor-pointer">
+          <Link href="/profile" className="flex items-center">
             <UserIcon className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings">
+        <DropdownMenuItem asChild className="text-brand-slate hover:text-brand-navy hover:bg-brand-frost cursor-pointer">
+          <Link href="/dashboard/settings" className="flex items-center">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings/billing">
+        <DropdownMenuItem asChild className="text-brand-slate hover:text-brand-navy hover:bg-brand-frost cursor-pointer">
+          <Link href="/dashboard/settings/billing" className="flex items-center">
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Billing</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="bg-brand-silver" />
         <DropdownMenuItem
           onClick={onSignOut}
-          className="text-destructive focus:text-destructive"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer focus:text-red-700 focus:bg-red-50"
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>

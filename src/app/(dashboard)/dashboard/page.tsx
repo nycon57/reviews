@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Send } from "lucide-react";
 import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, CardSkeleton } from "@/components/shared";
 import {
   LOStatsCards,
@@ -117,18 +117,20 @@ async function ProfileCompletionCard() {
 
 export default function DashboardPage() {
   return (
-    <div className="flex-1 space-y-6">
+    <div className="flex-1 space-y-8">
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-heading-lg font-bold tracking-tight text-brand-navy">
+            Dashboard
+          </h1>
+          <p className="text-body-base text-brand-slate mt-1">
             Welcome back! Here&apos;s an overview of your performance.
           </p>
         </div>
-        <Button asChild>
+        <Button variant="brand" asChild>
           <a href="/dashboard/distribution">
-            <Plus className="mr-2 h-4 w-4" />
+            <Send className="mr-2 h-4 w-4" />
             Send Survey
           </a>
         </Button>
@@ -143,19 +145,27 @@ export default function DashboardPage() {
       <GamificationStatsCard />
 
       {/* Charts grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          <RatingTrendChart />
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          <NPSTrendChart />
-        </Suspense>
-      </div>
+      <section>
+        <h2 className="text-heading-sm font-semibold text-brand-navy mb-4">
+          Performance Trends
+        </h2>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Suspense fallback={<ChartSkeleton />}>
+            <RatingTrendChart />
+          </Suspense>
+          <Suspense fallback={<ChartSkeleton />}>
+            <NPSTrendChart />
+          </Suspense>
+        </div>
+      </section>
 
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent reviews - takes 2 columns */}
         <div className="lg:col-span-2">
+          <h2 className="text-heading-sm font-semibold text-brand-navy mb-4">
+            Recent Reviews
+          </h2>
           <Suspense fallback={<ReviewListSkeleton count={5} />}>
             <RecentReviewsList />
           </Suspense>
@@ -173,9 +183,14 @@ export default function DashboardPage() {
       </div>
 
       {/* Reputation breakdown section */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ReputationBreakdownCard />
-      </div>
+      <section>
+        <h2 className="text-heading-sm font-semibold text-brand-navy mb-4">
+          Reputation Insights
+        </h2>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ReputationBreakdownCard />
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Star,
@@ -9,6 +10,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
+import { cardHover, cardTap, staggerContainer, fadeInUp } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/dashboard";
 
 interface StatsCardsProps {
@@ -21,14 +24,14 @@ export function LOStatsCards({ metrics }: StatsCardsProps) {
       title: "Total Reviews",
       value: metrics.totalReviews.toString(),
       change: metrics.totalReviewsChange,
-      icon: <Star className="h-4 w-4" />,
+      icon: Star,
       format: "number",
     },
     {
       title: "Average Rating",
       value: metrics.averageRating.toFixed(1),
       change: metrics.averageRatingChange,
-      icon: <TrendingUp className="h-4 w-4" />,
+      icon: TrendingUp,
       suffix: "/5",
       format: "decimal",
     },
@@ -36,67 +39,88 @@ export function LOStatsCards({ metrics }: StatsCardsProps) {
       title: "Response Rate",
       value: `${metrics.responseRate}%`,
       change: metrics.responseRateChange,
-      icon: <MessageSquare className="h-4 w-4" />,
+      icon: MessageSquare,
       format: "percent",
     },
     {
       title: "NPS Score",
       value: metrics.npsScore.toString(),
       change: metrics.npsScoreChange,
-      icon: <Users className="h-4 w-4" />,
+      icon: Users,
       format: "number",
     },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat) => (
-        <Card key={stat.title} className="relative overflow-hidden">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </span>
-              <span className="text-muted-foreground">{stat.icon}</span>
-            </div>
-            <div className="mt-2 flex items-baseline gap-2">
-              <span className="text-2xl font-bold">
-                {stat.value}
-                {stat.suffix && (
-                  <span className="text-base font-normal text-muted-foreground">
-                    {stat.suffix}
-                  </span>
-                )}
-              </span>
-              {stat.change !== 0 && (
-                <span
-                  className={`flex items-center text-xs font-medium ${
-                    stat.change > 0 ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {stat.change > 0 ? (
-                    <ArrowUpRight className="mr-0.5 h-3 w-3" />
-                  ) : (
-                    <ArrowDownRight className="mr-0.5 h-3 w-3" />
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={staggerContainer}
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+    >
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+        const isPositive = stat.change > 0;
+        const isNegative = stat.change < 0;
+
+        return (
+          <motion.div key={stat.title} variants={fadeInUp}>
+            <motion.div
+              whileHover={cardHover}
+              whileTap={cardTap}
+              className="h-full"
+            >
+              <Card className="h-full border-brand-silver hover:border-brand-blue/30 transition-colors duration-200">
+                <CardContent className="p-6">
+                  {/* Header with title and icon */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-body-sm font-medium text-brand-slate">
+                      {stat.title}
+                    </span>
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-frost">
+                      <Icon className="h-5 w-5 text-brand-blue" />
+                    </div>
+                  </div>
+
+                  {/* Value */}
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-brand-navy tracking-tight">
+                      {stat.value}
+                    </span>
+                    {stat.suffix && (
+                      <span className="text-lg font-normal text-brand-slate">
+                        {stat.suffix}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Change indicator */}
+                  {stat.change !== 0 && (
+                    <div className="mt-3 flex items-center gap-1.5">
+                      <div
+                        className={cn(
+                          "flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold",
+                          isPositive && "bg-brand-emerald/10 text-brand-emerald",
+                          isNegative && "bg-red-50 text-red-600"
+                        )}
+                      >
+                        {isPositive ? (
+                          <ArrowUpRight className="h-3 w-3" />
+                        ) : (
+                          <ArrowDownRight className="h-3 w-3" />
+                        )}
+                        {isPositive ? "+" : ""}
+                        {stat.change}%
+                      </div>
+                      <span className="text-xs text-brand-slate">vs last month</span>
+                    </div>
                   )}
-                  {stat.change > 0 ? "+" : ""}
-                  {stat.change}%
-                </span>
-              )}
-            </div>
-            {/* Subtle gradient background indicator */}
-            <div
-              className={`absolute bottom-0 left-0 h-1 w-full ${
-                stat.change > 0
-                  ? "bg-gradient-to-r from-green-500/20 to-green-500/40"
-                  : stat.change < 0
-                    ? "bg-gradient-to-r from-red-500/20 to-red-500/40"
-                    : "bg-gradient-to-r from-primary/10 to-primary/20"
-              }`}
-            />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        );
+      })}
+    </motion.div>
   );
 }

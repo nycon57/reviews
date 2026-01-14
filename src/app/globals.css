@@ -4,115 +4,148 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Brand Colors */
+    --brand-blue: 215 100% 50%;
+    --navy: 207 78% 19%;
+    --navy-dark: 207 64% 27%;
+    --slate: 210 30% 41%;
+    --snow: 220 27% 98%;
+    --ice: 217 100% 98%;
+    --frost: 217 100% 95%;
+    --silver: 212 38% 88%;
+
+    /* Accent Colors */
+    --amber: 39 100% 50%;
+    --orchid: 289 66% 52%;
+    --iris: 259 89% 62%;
+    --emerald: 136 30% 40%;
+
+    /* Semantic Mappings (using brand colors) */
+    --background: var(--snow);
+    --foreground: var(--navy);
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: var(--navy);
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: var(--navy);
 
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: var(--brand-blue);
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: var(--frost);
+    --secondary-foreground: var(--navy);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: var(--ice);
+    --muted-foreground: var(--slate);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: var(--frost);
+    --accent-foreground: var(--navy);
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --border: var(--silver);
+    --input: var(--silver);
+    --ring: var(--brand-blue);
 
     --radius: 0.5rem;
 
     /* Semantic status colors */
-    --success: 142.1 76.2% 36.3%;
-    --success-foreground: 355.7 100% 97.3%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 48 96% 5%;
-    --info: 199 89% 48%;
+    --success: var(--emerald);
+    --success-foreground: 0 0% 100%;
+    --warning: var(--amber);
+    --warning-foreground: 0 0% 0%;
+    --info: var(--brand-blue);
     --info-foreground: 0 0% 100%;
 
     /* Chart colors for data visualization */
-    --chart-1: 221.2 83.2% 53.3%;
-    --chart-2: 142.1 76.2% 36.3%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 280 67% 48%;
-    --chart-5: 160 60% 45%;
+    --chart-1: var(--brand-blue);
+    --chart-2: var(--emerald);
+    --chart-3: var(--amber);
+    --chart-4: var(--orchid);
+    --chart-5: var(--iris);
 
     /* Sidebar colors */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 221.2 83.2% 53.3%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: var(--navy);
+    --sidebar-primary: var(--brand-blue);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 221.2 83.2% 53.3%;
+    --sidebar-accent: var(--frost);
+    --sidebar-accent-foreground: var(--navy);
+    --sidebar-border: var(--silver);
+    --sidebar-ring: var(--brand-blue);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* Dark mode brand colors (adjusted for dark backgrounds) */
+    --brand-blue: 215 100% 60%;
+    --navy: 207 78% 85%;
+    --navy-dark: 207 64% 75%;
+    --slate: 210 30% 65%;
+    --snow: 220 20% 10%;
+    --ice: 217 30% 12%;
+    --frost: 217 30% 18%;
+    --silver: 212 20% 25%;
+
+    /* Accent Colors (slightly brighter for dark mode) */
+    --amber: 39 100% 55%;
+    --orchid: 289 66% 62%;
+    --iris: 259 89% 72%;
+    --emerald: 136 40% 50%;
+
+    --background: var(--snow);
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 217 30% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 217 30% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: var(--brand-blue);
+    --primary-foreground: 220 20% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: var(--frost);
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: var(--ice);
+    --muted-foreground: var(--slate);
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: var(--frost);
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --border: var(--silver);
+    --input: var(--silver);
+    --ring: var(--brand-blue);
 
     /* Semantic status colors (dark mode) */
-    --success: 142.1 70.6% 45.3%;
-    --success-foreground: 144.9 80.4% 10%;
-    --warning: 38 90% 56%;
-    --warning-foreground: 48 96% 5%;
-    --info: 199 89% 58%;
+    --success: var(--emerald);
+    --success-foreground: 0 0% 100%;
+    --warning: var(--amber);
+    --warning-foreground: 0 0% 0%;
+    --info: var(--brand-blue);
     --info-foreground: 0 0% 100%;
 
     /* Chart colors (dark mode) */
-    --chart-1: 217.2 91.2% 59.8%;
-    --chart-2: 142.1 70.6% 45.3%;
-    --chart-3: 38 90% 56%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 160 60% 55%;
+    --chart-1: var(--brand-blue);
+    --chart-2: var(--emerald);
+    --chart-3: var(--amber);
+    --chart-4: var(--orchid);
+    --chart-5: var(--iris);
 
     /* Sidebar colors (dark mode) */
-    --sidebar-background: 222.2 84% 6%;
+    --sidebar-background: 217 30% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
-    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-primary: var(--brand-blue);
+    --sidebar-primary-foreground: 220 20% 10%;
+    --sidebar-accent: var(--frost);
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 224.3 76.3% 48%;
+    --sidebar-border: var(--silver);
+    --sidebar-ring: var(--brand-blue);
   }
 }
 

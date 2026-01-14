@@ -1945,3 +1945,68 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - SEO audit dashboard provides actionable checklist for content teams
   - Public pages at /lo/[id] are separate from dashboard for proper robots.txt scoping
 ---
+
+## [2026-01-14 12:44] - S033: Marketing Pages Foundation
+Thread: 
+Run: 20260114-123810-84754 (iteration 1)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-123810-84754-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-123810-84754-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 998ca1c feat(S033): Implement marketing pages foundation
+- Post-commit status: clean (only .agents/tasks/prd-reviews.json modified - not part of story)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 7 pre-existing warnings)
+- Files changed:
+  - src/lib/motion.ts (animation variants and configuration)
+  - src/components/providers/motion-provider.tsx (MotionConfig with reducedMotion='user')
+  - src/app/layout.tsx (added MotionProvider wrapping ThemeProvider)
+  - src/app/(marketing)/layout.tsx (marketing route group with MarketingNav/Footer)
+  - src/app/(marketing)/page.tsx (homepage with animations)
+  - src/components/marketing/marketing-nav.tsx (sticky header with desktop/mobile nav)
+  - src/components/marketing/mobile-menu.tsx (Sheet-based mobile navigation)
+  - src/components/marketing/marketing-footer.tsx (4-column footer layout)
+  - src/components/marketing/hero-section.tsx (animated hero with title/description/CTAs)
+  - src/components/marketing/feature-card.tsx (Card with scaleOnHover animation)
+  - src/components/marketing/pricing-card.tsx (pricing tier card with highlight state)
+  - src/components/marketing/index.ts (barrel exports)
+  - package.json (framer-motion added)
+  - src/app/page.tsx (deleted - moved to marketing route group)
+- What was implemented:
+  - Framer Motion animation system with variants: fadeIn, fadeInUp, slideInLeft, slideInRight, staggerContainer, scaleOnHover
+  - MotionProvider with reducedMotion='user' for accessibility (respects prefers-reduced-motion)
+  - MarketingNav: sticky header, logo, 5 nav links (Home/Features/Pricing/About/Contact), Sign In/Get Started buttons
+  - MobileMenu: Sheet component with slide-in animation, full nav links + auth buttons
+  - MarketingFooter: 4 columns (Product/Company/Legal/Social) with LinkedIn/Twitter icons
+  - HeroSection: accepts ReactNode title, subtitle, description, CTA buttons array, uses stagger animations
+  - FeatureCard: icon/title/description with Card component, scaleOnHover and tap animations
+  - PricingCard: tier/price/period/features/cta with highlight state and badge support
+  - (marketing) route group with shared layout for all marketing pages
+- Acceptance criteria status:
+  - Install framer-motion package: ✅ Complete
+  - Create src/lib/motion.ts with animation variants: ✅ Complete
+  - Create MotionProvider with reducedMotion='user': ✅ Complete
+  - Add MotionProvider to root layout: ✅ Complete
+  - Create src/app/(marketing)/layout.tsx: ✅ Complete
+  - Build marketing-nav.tsx: ✅ Complete
+  - Build mobile-menu.tsx: ✅ Complete
+  - Build marketing-footer.tsx: ✅ Complete
+  - Create hero-section.tsx: ✅ Complete
+  - Create feature-card.tsx: ✅ Complete
+  - Create pricing-card.tsx: ✅ Complete
+  - Move page.tsx to (marketing)/page.tsx: ✅ Complete
+- Gates:
+  - npm run build passes: ✅ PASS
+  - npm run lint passes: ✅ PASS (0 errors)
+  - Animations disabled when prefers-reduced-motion: ✅ MotionConfig with reducedMotion='user'
+  - Mobile navigation opens/closes via Sheet: ✅ Complete
+  - All marketing routes accessible under (marketing) group: ✅ Complete
+- **Learnings for future iterations:**
+  - framer-motion was already in package.json but not committed - verify installed packages before skipping
+  - MotionConfig reducedMotion='user' automatically handles accessibility without manual media queries
+  - Route groups like (marketing) don't affect URL paths - pages are still at root paths
+  - When moving root page.tsx to route group, delete original to avoid route conflicts
+  - HeroSection title prop should be React.ReactNode (not string) to support JSX with styled spans
+  - staggerContainer with whileInView and viewport={{ once: true }} provides performant scroll animations
+---

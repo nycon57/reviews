@@ -3,41 +3,12 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 import type {
-  SurveyTemplate,
   Question,
   SurveyBranding,
   ThankYouConfig,
 } from "@/types/survey.types";
-
-// Types for public survey data
-export interface PublicSurvey {
-  id: string;
-  token: string;
-  customerName: string;
-  customerEmail: string;
-  status: string;
-  expiresAt: string | null;
-  completedAt: string | null;
-  loanOfficer: {
-    id: string;
-    fullName: string;
-    photoUrl: string | null;
-    title: string | null;
-  };
-  organization: {
-    id: string;
-    name: string;
-    logoUrl: string | null;
-    primaryColor: string | null;
-  };
-  template: SurveyTemplate;
-}
-
-export interface ActionResult<T = void> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+import { applyAutoApprovalRules } from "@/lib/reviews/actions";
+import type { PublicSurvey, ActionResult } from "./public-types";
 
 // Get public survey by token (no auth required)
 export async function getSurveyByToken(
@@ -293,6 +264,43 @@ export async function submitSurveyResponse(
         completed_at: new Date().toISOString(),
       })
       .eq("id", survey.id);
+
+    // Get customer name from survey for review creation
+    const { data: surveyDetails } = await supabase
+      .from("surveys")
+      .select("customer_name")
+      .eq("id", survey.id)
+      .single();
+
+    // Create a review record from the survey response
+    if (overallRating) {
+      const reviewText = testimonialText || null;
+
+      const { data: newReview, error: reviewError } = await supabase
+        .from("reviews")
+        .insert({
+          organization_id: survey.organization_id,
+          loan_officer_id: survey.loan_officer_id,
+          source: "internal",
+          survey_response_id: response.id,
+          rating: overallRating,
+          text: reviewText,
+          customer_name: surveyDetails?.customer_name || null,
+          status: "pending",
+          review_date: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (!reviewError && newReview) {
+        // Apply auto-approval rules
+        await applyAutoApprovalRules(
+          newReview.id,
+          survey.organization_id,
+          overallRating
+        );
+      }
+    }
 
     // Determine if we should show review redirect
     const thankYouConfig = (survey.survey_templates as unknown as {

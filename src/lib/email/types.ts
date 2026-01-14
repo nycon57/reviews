@@ -3,7 +3,10 @@ export type EmailTemplate =
   | "survey_invitation"
   | "survey_reminder_3day"
   | "survey_reminder_7day"
-  | "new_review_notification";
+  | "new_review_notification"
+  | "review_pending_approval"
+  | "review_approved"
+  | "review_rejected";
 
 // Base email data
 export interface BaseEmailData {
@@ -41,6 +44,35 @@ export interface NewReviewNotificationEmailData extends BaseEmailData {
   rating: number;
   reviewText?: string;
   reviewDate: string;
+  dashboardUrl: string;
+}
+
+// Review pending approval email data (sent to managers)
+export interface ReviewPendingApprovalEmailData extends BaseEmailData {
+  managerName: string;
+  loanOfficerName: string;
+  customerName: string;
+  rating: number;
+  reviewText?: string;
+  reviewDate: string;
+  approvalQueueUrl: string;
+}
+
+// Review approved notification email data (sent to loan officers)
+export interface ReviewApprovedEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  rating: number;
+  reviewText?: string;
+  dashboardUrl: string;
+}
+
+// Review rejected notification email data (sent to loan officers)
+export interface ReviewRejectedEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  rating: number;
+  rejectionReason: string;
   dashboardUrl: string;
 }
 

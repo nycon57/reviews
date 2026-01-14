@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { QuestionRenderer } from "@/components/surveys/question-renderer";
-import { submitSurveyResponse, type PublicSurvey } from "@/lib/surveys/public-actions";
+import { submitSurveyResponse } from "@/lib/surveys/public-actions";
+import type { PublicSurvey } from "@/lib/surveys/public-types";
 import type { SurveyAnswer } from "@/types/survey.types";
 import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, Star, ExternalLink } from "lucide-react";
 

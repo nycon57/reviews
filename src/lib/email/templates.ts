@@ -2,6 +2,9 @@ import type {
   SurveyInvitationEmailData,
   SurveyReminderEmailData,
   NewReviewNotificationEmailData,
+  ReviewPendingApprovalEmailData,
+  ReviewApprovedEmailData,
+  ReviewRejectedEmailData,
 } from "./types";
 import { emailConfig } from "./client";
 
@@ -249,6 +252,189 @@ export function getNewReviewNotificationEmail(
         <div style="text-align: center;">
           <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             View in Dashboard
+          </a>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Review pending approval email template (sent to managers)
+export function getReviewPendingApprovalEmail(
+  data: ReviewPendingApprovalEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Review Pending Approval: ${data.rating}-star from ${data.customerName}`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const reviewTextSection = data.reviewText
+    ? `
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0; font-size: 16px; color: #52525b; font-style: italic;">
+            "${data.reviewText}"
+          </p>
+        </div>
+      `
+    : `
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0; font-size: 14px; color: #71717a; text-align: center;">
+            No written review provided
+          </p>
+        </div>
+      `;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #fef3c7; border-bottom: 1px solid #fcd34d;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">ReviewHub</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="background-color: #fef3c7; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
+          <span style="font-size: 14px; font-weight: 600; color: #92400e;">Action Required</span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          New Review Awaiting Approval
+        </h1>
+        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Hi ${data.managerName}, a new review for ${data.loanOfficerName} requires your approval.
+        </p>
+        <div style="text-align: center; margin: 24px 0;">
+          ${generateStarRating(data.rating)}
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
+            ${data.rating} out of 5 stars from ${data.customerName}
+          </p>
+        </div>
+        ${reviewTextSection}
+        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
+          Submitted on ${data.reviewDate}
+        </p>
+        <div style="text-align: center;">
+          <a href="${data.approvalQueueUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            Review &amp; Approve
+          </a>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Review approved notification email template (sent to loan officers)
+export function getReviewApprovedEmail(data: ReviewApprovedEmailData): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Your ${data.rating}-star review has been approved!`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const reviewTextSection = data.reviewText
+    ? `
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0; font-size: 16px; color: #52525b; font-style: italic;">
+            "${data.reviewText}"
+          </p>
+        </div>
+      `
+    : "";
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #dcfce7; border-bottom: 1px solid #86efac;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">ReviewHub</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="display: inline-block; background-color: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
+            Approved
+          </span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Great News, ${data.loanOfficerName}!
+        </h1>
+        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Your review from ${data.customerName} has been approved and is now live on your profile.
+        </p>
+        <div style="text-align: center; margin: 24px 0;">
+          ${generateStarRating(data.rating)}
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
+            ${data.rating} out of 5 stars
+          </p>
+        </div>
+        ${reviewTextSection}
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            View Your Reviews
+          </a>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Review rejected notification email template (sent to loan officers)
+export function getReviewRejectedEmail(data: ReviewRejectedEmailData): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Review Update: ${data.rating}-star review not published`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #fef2f2; border-bottom: 1px solid #fecaca;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">ReviewHub</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="display: inline-block; background-color: #fef2f2; color: #991b1b; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
+            Not Published
+          </span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Review Update
+        </h1>
+        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Hi ${data.loanOfficerName}, the ${data.rating}-star review from ${data.customerName} was not approved for publication.
+        </p>
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #18181b;">
+            Reason:
+          </p>
+          <p style="margin: 0; font-size: 16px; color: #52525b;">
+            ${data.rejectionReason}
+          </p>
+        </div>
+        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
+          If you have questions about this decision, please contact your manager.
+        </p>
+        <div style="text-align: center;">
+          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            View Dashboard
           </a>
         </div>
       </td>

@@ -1,6 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import * as React from "react";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import {
   Star,
   BarChart3,
@@ -21,7 +23,92 @@ import {
 } from "lucide-react";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { FeatureCard } from "@/components/marketing/feature-card";
-import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
+import { staggerContainer, fadeInUp } from "@/lib/motion";
+
+interface FeatureCategorySectionProps {
+  category: {
+    title: string;
+    description: string;
+    features: {
+      icon: React.ReactNode;
+      title: string;
+      description: string;
+    }[];
+  };
+  index: number;
+}
+
+function CTASection() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
+
+  return (
+    <section className="py-16 md:py-24">
+      <motion.div
+        ref={ref}
+        initial="hidden"
+        animate={isInView ? "visible" : "hidden"}
+        variants={staggerContainer}
+        className="container mx-auto px-4 text-center"
+      >
+        <motion.h2 variants={fadeInUp} className="mb-4 text-3xl font-bold">
+          Ready to Transform Your Customer Experience?
+        </motion.h2>
+        <motion.p
+          variants={fadeInUp}
+          className="mx-auto mb-8 max-w-xl text-muted-foreground"
+        >
+          Join thousands of mortgage professionals using ReviewHub to collect
+          more reviews and build stronger client relationships.
+        </motion.p>
+        <motion.div variants={fadeInUp}>
+          <a href="/signup">
+            <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+              Get Started Free
+            </button>
+          </a>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
+
+function FeatureCategorySection({ category, index }: FeatureCategorySectionProps) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.1 });
+
+  return (
+    <section
+      className={`py-16 md:py-24 ${index % 2 === 0 ? "bg-muted/50" : ""}`}
+    >
+      <div className="container mx-auto px-4">
+        <motion.div
+          ref={ref}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          variants={staggerContainer}
+        >
+          <motion.div variants={fadeInUp} className="mb-12 text-center">
+            <h2 className="mb-4 text-3xl font-bold">{category.title}</h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
+              {category.description}
+            </p>
+          </motion.div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {category.features.map((feature) => (
+              <FeatureCard
+                key={feature.title}
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+              />
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
 const featureCategories = [
   {
@@ -191,68 +278,15 @@ export function FeaturesPageClient() {
       />
 
       {featureCategories.map((category, categoryIndex) => (
-        <section
+        <FeatureCategorySection
           key={category.title}
-          className={`py-16 md:py-24 ${
-            categoryIndex % 2 === 0 ? "bg-muted/50" : ""
-          }`}
-        >
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={viewportOnce}
-              variants={staggerContainer}
-            >
-              <motion.div variants={fadeInUp} className="mb-12 text-center">
-                <h2 className="mb-4 text-3xl font-bold">{category.title}</h2>
-                <p className="mx-auto max-w-2xl text-muted-foreground">
-                  {category.description}
-                </p>
-              </motion.div>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                {category.features.map((feature) => (
-                  <FeatureCard
-                    key={feature.title}
-                    icon={feature.icon}
-                    title={feature.title}
-                    description={feature.description}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        </section>
+          category={category}
+          index={categoryIndex}
+        />
       ))}
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          variants={staggerContainer}
-          className="container mx-auto px-4 text-center"
-        >
-          <motion.h2 variants={fadeInUp} className="mb-4 text-3xl font-bold">
-            Ready to Transform Your Customer Experience?
-          </motion.h2>
-          <motion.p
-            variants={fadeInUp}
-            className="mx-auto mb-8 max-w-xl text-muted-foreground"
-          >
-            Join thousands of mortgage professionals using ReviewHub to collect
-            more reviews and build stronger client relationships.
-          </motion.p>
-          <motion.div variants={fadeInUp}>
-            <a href="/signup">
-              <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-                Get Started Free
-              </button>
-            </a>
-          </motion.div>
-        </motion.div>
-      </section>
+      <CTASection />
     </>
   );
 }

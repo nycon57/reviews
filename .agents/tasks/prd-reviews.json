@@ -1132,7 +1132,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Posts publish successfully to all platforms",
         "OAuth flows work reliably"
@@ -1142,8 +1142,8 @@
         "S015"
       ],
       "startedAt": "2026-01-14T21:02:01.170401+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T21:02:01.170543+00:00"
+      "completedAt": "2026-01-14T21:05:30.696964+00:00",
+      "updatedAt": "2026-01-14T21:05:30.696793+00:00"
     },
     {
       "id": "S040",
@@ -1162,14 +1162,17 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Core directories sync successfully",
         "Accuracy score calculates correctly"
       ],
       "dependencies": [
         "S015"
-      ]
+      ],
+      "startedAt": "2026-01-14T21:05:32.759767+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T21:12:00.341648+00:00"
     },
     {
       "id": "S041",
@@ -1429,7 +1432,10 @@
       "dependencies": [
         "S005",
         "S011"
-      ]
+      ],
+      "startedAt": "2026-01-14T21:10:39.439736+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T21:10:39.439862+00:00"
     },
     {
       "id": "S051",

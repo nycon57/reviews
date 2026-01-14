@@ -2228,6 +2228,343 @@ export type Database = {
           },
         ]
       }
+      business_listings: {
+        Row: {
+          id: string
+          organization_id: string
+          branch_id: string | null
+          business_name: string
+          business_phone: string | null
+          business_email: string | null
+          business_website: string | null
+          street_address: string | null
+          street_address_2: string | null
+          city: string | null
+          state: string | null
+          postal_code: string | null
+          country: string
+          business_description: string | null
+          business_categories: string[]
+          business_keywords: string[]
+          hours_of_operation: Json | null
+          logo_url: string | null
+          cover_photo_url: string | null
+          photos: string[]
+          social_links: Json | null
+          accuracy_score: number
+          last_accuracy_check: string | null
+          nap_consistency_status: string
+          potential_duplicates: string[]
+          is_primary: boolean
+          merged_from: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          branch_id?: string | null
+          business_name: string
+          business_phone?: string | null
+          business_email?: string | null
+          business_website?: string | null
+          street_address?: string | null
+          street_address_2?: string | null
+          city?: string | null
+          state?: string | null
+          postal_code?: string | null
+          country?: string
+          business_description?: string | null
+          business_categories?: string[]
+          business_keywords?: string[]
+          hours_of_operation?: Json | null
+          logo_url?: string | null
+          cover_photo_url?: string | null
+          photos?: string[]
+          social_links?: Json | null
+          accuracy_score?: number
+          last_accuracy_check?: string | null
+          nap_consistency_status?: string
+          potential_duplicates?: string[]
+          is_primary?: boolean
+          merged_from?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          branch_id?: string | null
+          business_name?: string
+          business_phone?: string | null
+          business_email?: string | null
+          business_website?: string | null
+          street_address?: string | null
+          street_address_2?: string | null
+          city?: string | null
+          state?: string | null
+          postal_code?: string | null
+          country?: string
+          business_description?: string | null
+          business_categories?: string[]
+          business_keywords?: string[]
+          hours_of_operation?: Json | null
+          logo_url?: string | null
+          cover_photo_url?: string | null
+          photos?: string[]
+          social_links?: Json | null
+          accuracy_score?: number
+          last_accuracy_check?: string | null
+          nap_consistency_status?: string
+          potential_duplicates?: string[]
+          is_primary?: boolean
+          merged_from?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_listings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "business_listings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      directory_connections: {
+        Row: {
+          id: string
+          listing_id: string
+          platform: string
+          is_connected: boolean
+          directory_listing_id: string | null
+          directory_url: string | null
+          claimed_at: string | null
+          verified_at: string | null
+          last_sync_at: string | null
+          sync_status: string
+          sync_error: string | null
+          nap_data: Json | null
+          is_nap_consistent: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          platform: string
+          is_connected?: boolean
+          directory_listing_id?: string | null
+          directory_url?: string | null
+          claimed_at?: string | null
+          verified_at?: string | null
+          last_sync_at?: string | null
+          sync_status?: string
+          sync_error?: string | null
+          nap_data?: Json | null
+          is_nap_consistent?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          platform?: string
+          is_connected?: boolean
+          directory_listing_id?: string | null
+          directory_url?: string | null
+          claimed_at?: string | null
+          verified_at?: string | null
+          last_sync_at?: string | null
+          sync_status?: string
+          sync_error?: string | null
+          nap_data?: Json | null
+          is_nap_consistent?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "directory_connections_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "business_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_sync_logs: {
+        Row: {
+          id: string
+          listing_id: string
+          connection_id: string | null
+          sync_type: string
+          status: string
+          started_at: string
+          completed_at: string | null
+          duration_ms: number | null
+          directories_synced: number
+          conflicts_detected: number
+          conflicts_resolved: number
+          error_message: string | null
+          error_details: Json | null
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          connection_id?: string | null
+          sync_type: string
+          status?: string
+          started_at?: string
+          completed_at?: string | null
+          duration_ms?: number | null
+          directories_synced?: number
+          conflicts_detected?: number
+          conflicts_resolved?: number
+          error_message?: string | null
+          error_details?: Json | null
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          connection_id?: string | null
+          sync_type?: string
+          status?: string
+          started_at?: string
+          completed_at?: string | null
+          duration_ms?: number | null
+          directories_synced?: number
+          conflicts_detected?: number
+          conflicts_resolved?: number
+          error_message?: string | null
+          error_details?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_sync_logs_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "business_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_sync_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "directory_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_accuracy_history: {
+        Row: {
+          id: string
+          listing_id: string
+          score: number
+          previous_score: number | null
+          score_breakdown: Json | null
+          checked_at: string
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          score: number
+          previous_score?: number | null
+          score_breakdown?: Json | null
+          checked_at?: string
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          score?: number
+          previous_score?: number | null
+          score_breakdown?: Json | null
+          checked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_accuracy_history_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "business_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_alerts: {
+        Row: {
+          id: string
+          listing_id: string
+          connection_id: string | null
+          alert_type: string
+          severity: string
+          title: string
+          description: string | null
+          details: Json | null
+          is_read: boolean
+          is_resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          listing_id: string
+          connection_id?: string | null
+          alert_type: string
+          severity?: string
+          title: string
+          description?: string | null
+          details?: Json | null
+          is_read?: boolean
+          is_resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          listing_id?: string
+          connection_id?: string | null
+          alert_type?: string
+          severity?: string
+          title?: string
+          description?: string | null
+          details?: Json | null
+          is_read?: boolean
+          is_resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_alerts_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "business_listings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_alerts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "directory_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2262,6 +2599,14 @@ export type Database = {
         Returns: undefined
       }
       user_has_role: { Args: { required_roles: string[] }; Returns: boolean }
+      detect_listing_duplicates: {
+        Args: { p_listing_id: string }
+        Returns: string[]
+      }
+      calculate_listing_accuracy: {
+        Args: { p_listing_id: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

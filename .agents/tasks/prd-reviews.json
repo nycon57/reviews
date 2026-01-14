@@ -681,8 +681,8 @@
         "S003"
       ],
       "startedAt": "2026-01-14T14:35:26.415814+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T14:35:26.415988+00:00"
+      "completedAt": "2026-01-14T14:44:39.042784+00:00",
+      "updatedAt": "2026-01-14T14:44:39.042663+00:00"
     },
     {
       "id": "S024",
@@ -749,14 +749,17 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Webhooks process reliably",
         "Signature verification works"
       ],
       "dependencies": [
         "S002"
-      ]
+      ],
+      "startedAt": "2026-01-14T14:44:41.104608+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T14:44:41.104763+00:00"
     },
     {
       "id": "S027",

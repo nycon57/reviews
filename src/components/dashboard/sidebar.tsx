@@ -32,6 +32,7 @@ import {
   MessageSquare,
   Sparkles,
   Quote,
+  Building,
 } from "lucide-react";
 
 interface NavItem {
@@ -142,6 +143,11 @@ const navGroups: NavGroup[] = [
 ];
 
 const bottomNavItems: NavItem[] = [
+  {
+    title: "Organization",
+    href: "/dashboard/organization",
+    icon: <Building className="h-4 w-4" />,
+  },
   {
     title: "Settings",
     href: "/dashboard/settings",

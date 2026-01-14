@@ -2110,3 +2110,70 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Marketing pages use server components for metadata with client components for interactivity
   - Resend integration for contact/demo forms was already in place from S007
 ---
+
+## [2026-01-14 14:00] - S034: Marketing Blog System
+Thread:
+Run: 20260114-135548-30591 (iteration 2)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-135548-30591-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-135548-30591-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 34f64b0 feat(S034): Implement marketing blog system with MDX
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS (60 pages generated including blog posts)
+  - Command: npm run lint -> PASS (0 errors, 7 warnings in unrelated files)
+- Blog routes in build output:
+  - /blog (archive page with category filtering)
+  - /blog/[slug] (5 static posts generated)
+  - /blog/rss.xml (RSS feed route)
+- Files changed:
+  - content/blog/*.mdx (5 sample blog posts)
+  - src/app/(marketing)/blog/page.tsx
+  - src/app/(marketing)/blog/blog-archive-client.tsx
+  - src/app/(marketing)/blog/[slug]/page.tsx
+  - src/app/(marketing)/blog/rss.xml/route.ts
+  - src/components/blog/blog-card.tsx
+  - src/components/blog/category-filter.tsx
+  - src/components/blog/social-share.tsx
+  - src/components/blog/related-posts.tsx
+  - src/components/blog/mdx-components.tsx
+  - src/components/blog/json-ld.tsx
+  - src/components/blog/index.ts
+  - src/lib/blog.ts
+  - src/types/blog.ts
+  - src/components/marketing/hero-section.tsx (added compact prop)
+  - package.json (added gray-matter, next-mdx-remote, rehype-highlight, rehype-slug)
+- What was implemented:
+  - Full MDX-based blog system with file-based content management
+  - Blog archive page with horizontal scrollable category filter
+  - Individual blog post pages with MDX rendering and syntax highlighting
+  - Blog post metadata: author info, date, reading time calculation, tags, categories
+  - Category and tag system with 6 pre-defined categories
+  - Related posts algorithm (scores by category match + tag overlap)
+  - Social sharing buttons (Twitter, Facebook, LinkedIn, copy to clipboard)
+  - RSS feed generation at /blog/rss.xml with proper XML formatting
+  - SEO-optimized metadata with Open Graph, Twitter cards, and JSON-LD structured data
+  - 5 sample blog posts across different categories for testing
+  - Custom MDX component styling (headings, code blocks, tables, blockquotes)
+- S034 Acceptance Criteria Status:
+  - ✅ Blog archive page with category filtering
+  - ✅ Individual blog post pages with MDX rendering
+  - ✅ Blog post metadata (author, date, reading time)
+  - ✅ Category and tag system
+  - ✅ Related posts suggestions
+  - ✅ Social sharing buttons
+  - ✅ RSS feed generation
+  - ✅ SEO-optimized meta tags per post
+- Gates verified:
+  - ✅ MDX posts render correctly with code highlighting (rehype-highlight)
+  - ✅ Blog pages have proper SEO metadata (generateMetadata + JSON-LD)
+- **Learnings for future iterations:**
+  - MDX content lives in /content/blog/*.mdx with frontmatter for metadata
+  - gray-matter parses frontmatter, next-mdx-remote renders MDX on server
+  - JSON-LD for blog posts follows BlogPosting schema.org spec
+  - Blog posts are statically generated at build time (SSG with generateStaticParams)
+  - Category filter uses URL searchParams for state, enabling shareable filtered views
+  - Marketing footer already had Blog link from S033, no nav changes needed
+  - HeroSection compact prop allows reuse for inner pages with less vertical padding
+---

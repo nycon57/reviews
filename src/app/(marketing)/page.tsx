@@ -12,7 +12,7 @@ import {
   Globe,
   Shield,
 } from "lucide-react";
-import { HeroSection } from "@/components/marketing/hero-section";
+import { HeroSection, AnimatedStat } from "@/components/marketing";
 import { FeatureCard } from "@/components/marketing/feature-card";
 import { Button } from "@/components/ui/button";
 import { staggerContainer, fadeInUp } from "@/lib/motion";
@@ -78,17 +78,8 @@ export default function HomePage() {
             className="grid grid-cols-2 gap-8 md:grid-cols-4"
           >
             {stats.map((stat) => (
-              <motion.div
-                key={stat.label}
-                variants={fadeInUp}
-                className="text-center"
-              >
-                <div className="text-3xl font-bold text-primary md:text-4xl">
-                  {stat.value}
-                </div>
-                <div className="mt-1 text-sm text-muted-foreground">
-                  {stat.label}
-                </div>
+              <motion.div key={stat.label} variants={fadeInUp}>
+                <AnimatedStat value={stat.value} label={stat.label} />
               </motion.div>
             ))}
           </motion.div>

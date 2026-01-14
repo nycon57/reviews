@@ -987,7 +987,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "MDX posts render correctly with code highlighting",
         "Blog pages have proper SEO metadata"
@@ -996,8 +996,8 @@
         "S033"
       ],
       "startedAt": "2026-01-14T18:59:55.000127+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T18:59:55.000261+00:00"
+      "completedAt": "2026-01-14T19:08:45.913240+00:00",
+      "updatedAt": "2026-01-14T19:08:45.913117+00:00"
     },
     {
       "id": "S035",
@@ -1016,14 +1016,17 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Animations work smoothly at 60fps",
         "Reduced motion preference disables animations"
       ],
       "dependencies": [
         "S033"
-      ]
+      ],
+      "startedAt": "2026-01-14T19:08:47.964653+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T19:08:47.964769+00:00"
     },
     {
       "id": "S036",

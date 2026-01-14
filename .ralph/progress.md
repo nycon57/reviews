@@ -80,6 +80,44 @@ npm run db:types # Generate TypeScript types from Supabase
 
 ---
 
+## [2026-01-14T14:00:00] - S008: Add Manual Survey Send & Webhook Configuration UI
+Thread:
+Run: 20260114-001521-85850 (iteration 4)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d108c33 feat(S008): Add manual survey send and webhook configuration UI
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - src/app/(dashboard)/dashboard/distribution/send-survey-dialog.tsx (new - manual survey send dialog)
+  - src/app/(dashboard)/dashboard/distribution/webhook-config-manager.tsx (new - webhook configuration UI)
+  - src/app/(dashboard)/dashboard/distribution/distribution-dashboard.tsx (updated - added Settings tab, resend button)
+  - src/components/ui/alert-dialog.tsx (new - ShadCN alert dialog component)
+  - src/lib/distribution/actions.ts (updated - added loan officer/template fetching, webhook CRUD actions)
+  - src/lib/distribution/index.ts (updated - exported new functions and types)
+- What was implemented:
+  - SendSurveyDialog component for admin manual survey creation
+  - Select loan officer and template from active records
+  - Customer name/email/phone input with validation
+  - "Send Now" vs "Queue for Later" delivery options
+  - WebhookConfigManager for webhook endpoint management
+  - Create new webhooks with auto-generated secret keys
+  - Toggle webhooks active/inactive
+  - Delete webhooks with confirmation dialog
+  - Regenerate secret keys
+  - Copy secret key to clipboard
+  - Show/hide secret key toggle
+  - Distribution dashboard Settings tab integration
+  - Resend button for failed surveys
+- **Learnings for future iterations:**
+  - React 19 compiler has strict rules about setState in useEffect - use startTransition or event handlers
+  - Use `deleteId !== null` instead of `!!deleteId` for clearer null checks
+  - Function declarations with explicit return types preferred over arrow functions in components
+  - Cast `Record<string, unknown>` to `Json` type when inserting into Supabase JSONB columns
+---
+
 ## [2026-01-14T12:00:00] - S008: Automated Survey Distribution System
 Thread:
 Run: 20260114-001521-85850 (iteration 3)

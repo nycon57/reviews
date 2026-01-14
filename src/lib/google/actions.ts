@@ -15,6 +15,7 @@ import {
   getAuthorizationUrl,
 } from './client';
 import { STAR_RATING_MAP, type GoogleConnection, type GoogleSyncLog, type ActionResult, type GoogleLocation } from './types';
+import { analyzeNewReview } from '@/lib/ai/actions';
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -389,7 +390,7 @@ export async function syncGoogleReviews(
           }
         } else if (connection.loan_officer_id) {
           // Create new review (only if we have a loan officer assigned)
-          await adminClient.from('reviews').insert({
+          const { data: newReview } = await adminClient.from('reviews').insert({
             organization_id: context.organizationId,
             loan_officer_id: connection.loan_officer_id,
             source: 'google',
@@ -406,8 +407,15 @@ export async function syncGoogleReviews(
             response_text: googleReview.reviewReply?.comment ?? null,
             response_synced_at: googleReview.reviewReply?.updateTime ?? null,
             synced_at: new Date().toISOString(),
-          });
+          }).select('id').single();
           reviewsCreated++;
+
+          // Trigger AI sentiment analysis for newly synced review
+          if (newReview && googleReview.comment) {
+            analyzeNewReview(newReview.id, googleReview.comment, rating).catch((err) =>
+              console.error(`Sentiment analysis failed for review ${newReview.id}:`, err)
+            );
+          }
         } else {
           // Skip review - no loan officer assigned
           console.warn(`Skipping review ${googleReview.reviewId} - no loan officer assigned`);

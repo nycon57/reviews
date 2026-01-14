@@ -8,6 +8,7 @@ import type {
   ThankYouConfig,
 } from "@/types/survey.types";
 import { applyAutoApprovalRules } from "@/lib/reviews/actions";
+import { analyzeNewReview } from "@/lib/ai/actions";
 import type { PublicSurvey, ActionResult } from "./public-types";
 
 // Get public survey by token (no auth required)
@@ -298,6 +299,11 @@ export async function submitSurveyResponse(
           newReview.id,
           survey.organization_id,
           overallRating
+        );
+
+        // Trigger AI sentiment analysis (runs async, doesn't block response)
+        analyzeNewReview(newReview.id, reviewText, overallRating).catch((err) =>
+          console.error("Sentiment analysis failed:", err)
         );
       }
     }

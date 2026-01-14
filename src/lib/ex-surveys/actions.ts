@@ -480,6 +480,49 @@ export async function getEXSurveyResponses(surveyId: string): Promise<{ success:
 
 // ==================== METRICS ACTIONS ====================
 
+// Trend data point for charts
+export interface TrendDataPoint {
+  date: string;
+  enpsScore?: number;
+  engagementScore?: number;
+  responseRate?: number;
+  totalResponses: number;
+  surveyName?: string;
+  surveyType?: string;
+}
+
+export async function getEXTrends(limit: number = 12): Promise<{ success: boolean; data?: TrendDataPoint[]; error?: string }> {
+  const result = await checkManagerAccess();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = await createClient();
+
+  // Get completed surveys ordered by close/start date
+  const { data: surveys, error } = await supabase
+    .from("ex_surveys")
+    .select("id, name, survey_type, status, start_date, end_date, enps_score, average_rating, response_rate, total_responses, created_at")
+    .eq("organization_id", result.organizationId)
+    .in("status", ["active", "closed"])
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  const trendData: TrendDataPoint[] = (surveys || []).map((s) => ({
+    date: s.end_date || s.start_date || s.created_at,
+    enpsScore: s.enps_score,
+    engagementScore: s.average_rating ? Math.round(s.average_rating * 20) : undefined,
+    responseRate: s.response_rate,
+    totalResponses: s.total_responses || 0,
+    surveyName: s.name,
+    surveyType: s.survey_type,
+  }));
+
+  return { success: true, data: trendData };
+}
+
 export async function getEXMetrics(): Promise<{ success: boolean; data?: { enpsScore?: number; engagementScore?: number; responseRate?: number; totalResponses: number }; error?: string }> {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
@@ -571,6 +614,7 @@ export async function createActionPlan(input: {
   priority?: "low" | "medium" | "high" | "critical";
   ownerUserId?: string;
   targetDate?: string;
+  notes?: string;
 }): Promise<{ success: boolean; data?: EXActionPlan; error?: string }> {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
@@ -588,6 +632,7 @@ export async function createActionPlan(input: {
       priority: input.priority || "medium",
       owner_user_id: input.ownerUserId,
       target_date: input.targetDate,
+      notes: input.notes,
       created_by: result.userId,
     })
     .select()
@@ -620,4 +665,94 @@ export async function createActionPlan(input: {
       updatedAt: data.updated_at,
     },
   };
+}
+
+export async function updateActionPlan(input: {
+  id: string;
+  title?: string;
+  description?: string;
+  theme?: string;
+  priority?: "low" | "medium" | "high" | "critical";
+  status?: "planned" | "in_progress" | "completed" | "cancelled";
+  ownerUserId?: string | null;
+  targetDate?: string | null;
+  notes?: string;
+}): Promise<{ success: boolean; data?: EXActionPlan; error?: string }> {
+  const result = await checkManagerAccess();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = await createClient();
+
+  // Build update object with only provided fields
+  const updateData: Record<string, unknown> = {};
+  if (input.title !== undefined) updateData.title = input.title;
+  if (input.description !== undefined) updateData.description = input.description;
+  if (input.theme !== undefined) updateData.theme = input.theme;
+  if (input.priority !== undefined) updateData.priority = input.priority;
+  if (input.status !== undefined) {
+    updateData.status = input.status;
+    if (input.status === "completed") {
+      updateData.completed_date = new Date().toISOString().split("T")[0];
+    }
+  }
+  if (input.ownerUserId !== undefined) updateData.owner_user_id = input.ownerUserId;
+  if (input.targetDate !== undefined) updateData.target_date = input.targetDate;
+  if (input.notes !== undefined) updateData.notes = input.notes;
+
+  const { data, error } = await supabase
+    .from("ex_action_plans")
+    .update(updateData)
+    .eq("id", input.id)
+    .eq("organization_id", result.organizationId)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/ex-surveys");
+  revalidatePath("/dashboard/ex-surveys/action-plans");
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      organizationId: data.organization_id,
+      surveyId: data.survey_id,
+      departmentId: data.department_id,
+      title: data.title,
+      description: data.description,
+      theme: data.theme,
+      priority: data.priority,
+      status: data.status,
+      ownerUserId: data.owner_user_id,
+      targetDate: data.target_date,
+      completedDate: data.completed_date,
+      successMetrics: data.success_metrics,
+      notes: data.notes,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    },
+  };
+}
+
+export async function deleteActionPlan(id: string): Promise<{ success: boolean; error?: string }> {
+  const result = await checkManagerAccess();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("ex_action_plans")
+    .delete()
+    .eq("id", id)
+    .eq("organization_id", result.organizationId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/ex-surveys");
+  revalidatePath("/dashboard/ex-surveys/action-plans");
+  return { success: true };
 }

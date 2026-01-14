@@ -2675,3 +2675,53 @@ Thread: Continuation from context compaction
   - Template `type: "title"` was a typo that should be `type: "text"` for text input questions
   - Case blocks with lexical declarations need braces to avoid no-case-declarations lint error
 ---
+
+## [2026-01-14 17:30] - S050: Employee Experience Survey System - Iteration 2
+Thread: Continuation from context compaction
+- Guardrails reviewed: yes
+- No-commit run: false
+- Post-commit status: pending commit
+- Verification:
+  - Command: npx tsc --noEmit -> PASS (no TypeScript errors)
+  - Command: npm run lint -> PASS (only pre-existing warnings)
+- Files created:
+  - src/components/ex-surveys/trend-chart.tsx - EXTrendChart and EXMultiMetricChart components for visualizing eNPS, engagement, and response rate trends over time
+  - src/app/(dashboard)/dashboard/ex-surveys/action-plans/page.tsx - Full action plans management page with tabs, stats, and CRUD operations
+  - src/app/(dashboard)/dashboard/ex-surveys/action-plans/action-plan-dialog.tsx - Create/edit/delete action plan dialog component
+- Files modified:
+  - src/lib/ex-surveys/actions.ts - Added getEXTrends(), updateActionPlan(), deleteActionPlan() server actions, added notes parameter to createActionPlan()
+  - src/components/ex-surveys/index.ts - Added exports for EXTrendChart and EXMultiMetricChart
+  - src/app/(dashboard)/dashboard/ex-surveys/page.tsx - Added trend chart section and enabled action plans navigation link
+- What was implemented:
+  - Trend Analysis Dashboard:
+    - TrendDataPoint interface for time-series data
+    - getEXTrends() server action fetches historical survey data
+    - EXTrendChart: Single metric area chart for eNPS over time
+    - EXMultiMetricChart: Multi-metric line chart with eNPS, engagement, response rate on dual Y-axes
+    - Integration with main EX dashboard (shows when 2+ data points available)
+  - Action Plan Management UI:
+    - Full CRUD operations: create, read, update, delete
+    - Status management: planned, in_progress, completed, cancelled
+    - Priority levels: low, medium, high, critical
+    - Theme categorization: engagement, leadership, communication, work-life balance, career growth, compensation, culture, other
+    - Target date tracking with overdue detection
+    - Tabbed interface filtering by status
+    - Stats cards: total plans, active, completed, overdue
+    - Notes field support for additional context
+- S050 Acceptance Criteria Status (Complete):
+  - ✅ EX survey templates (engagement, pulse, exit, onboarding)
+  - ✅ Anonymous response option with true anonymity
+  - ✅ Manager hierarchy for results access via RLS
+  - ✅ eNPS tracking with calculation and interpretation
+  - ✅ Response rate tracking per survey
+  - ✅ Department/team filtering via targetDepartmentId
+  - ✅ Trend analysis over time - EXTrendChart, EXMultiMetricChart, getEXTrends()
+  - ✅ Action planning from results - Full CRUD UI with action-plans page
+- Gates verified:
+  - ✅ Anonymous surveys are truly anonymous (no employee ID stored when isAnonymous=true)
+  - ✅ Results visible only to appropriate managers (RLS policies restrict by organization_id)
+- **Learnings for future iterations:**
+  - When adding new parameters to server actions, ensure both input type and insert/update statements are updated
+  - Form state with union types (like priority/status) needs explicit typing to avoid TypeScript errors with Select components
+  - Pre-existing build issues (Turbopack panics, facebook callback route errors) don't indicate failures in new code - run tsc --noEmit for clean type checking
+---

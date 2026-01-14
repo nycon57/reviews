@@ -18,8 +18,9 @@ import {
   Clock,
   BarChart3,
 } from "lucide-react";
-import { getEXSurveys, getEXMetrics, getActionPlans, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
+import { getEXSurveys, getEXMetrics, getActionPlans, getEXTrends, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
 import { interpretENPS } from "@/types/ex-survey.types";
+import { EXMultiMetricChart } from "@/components/ex-surveys";
 
 export const metadata = {
   title: "Employee Experience | ReviewHub",
@@ -209,6 +210,17 @@ async function RecentSurveysList() {
   );
 }
 
+async function TrendChartSection() {
+  const result = await getEXTrends(12);
+  const trendData = result.data || [];
+
+  if (trendData.length < 2) {
+    return null; // Don't show chart if not enough data points
+  }
+
+  return <EXMultiMetricChart data={trendData} />;
+}
+
 async function ActionPlansList() {
   const result = await getActionPlans();
   const plans = result.data?.filter((p) => p.status !== "completed" && p.status !== "cancelled").slice(0, 5) || [];
@@ -317,6 +329,11 @@ export default async function EXSurveysPage() {
         <EXStatsCards />
       </Suspense>
 
+      {/* Trend chart */}
+      <Suspense fallback={<Skeleton className="h-[350px] w-full" />}>
+        <TrendChartSection />
+      </Suspense>
+
       {/* Main content */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Surveys */}
@@ -355,9 +372,11 @@ export default async function EXSurveysPage() {
               <CardTitle>Action Plans</CardTitle>
               <CardDescription>Improvements in progress</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" disabled>
-              View all
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard/ex-surveys/action-plans">
+                View all
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardHeader>
           <CardContent>

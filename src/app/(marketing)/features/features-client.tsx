@@ -185,7 +185,7 @@ export function FeaturesPageClient() {
         title="Everything You Need to Manage Customer Experience"
         description="A complete platform for collecting reviews, tracking metrics, and building your reputation. From automated surveys to AI-powered insights."
         cta={[
-          { label: "Start Free Trial", href: "/auth/sign-up" },
+          { label: "Start Free Trial", href: "/signup" },
           { label: "View Pricing", href: "/pricing", variant: "outline" },
         ]}
       />
@@ -245,7 +245,7 @@ export function FeaturesPageClient() {
             more reviews and build stronger client relationships.
           </motion.p>
           <motion.div variants={fadeInUp}>
-            <a href="/auth/sign-up">
+            <a href="/signup">
               <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
                 Get Started Free
               </button>

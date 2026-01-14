@@ -306,7 +306,7 @@ export function AboutPageClient() {
             customer experience management.
           </motion.p>
           <motion.div variants={fadeInUp} className="flex justify-center gap-4">
-            <a href="/auth/sign-up">
+            <a href="/signup">
               <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
                 Get Started Free
               </button>

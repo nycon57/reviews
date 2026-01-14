@@ -93,12 +93,12 @@ export function MobileMenu({ className }: MobileMenuProps) {
 
           {/* Auth Links */}
           <div className="flex flex-col gap-2">
-            <Link href="/auth/sign-in" onClick={handleNavClick}>
+            <Link href="/login" onClick={handleNavClick}>
               <Button variant="outline" className="w-full">
                 Sign In
               </Button>
             </Link>
-            <Link href="/auth/sign-up" onClick={handleNavClick}>
+            <Link href="/signup" onClick={handleNavClick}>
               <Button className="w-full">Get Started</Button>
             </Link>
           </div>

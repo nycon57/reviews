@@ -3,8 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Star, Linkedin, Twitter } from "lucide-react";
+import { Star, Linkedin, Twitter, Loader2 } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface FooterLink {
   label: string;
@@ -50,6 +52,21 @@ const socialLinks: FooterLink[] = [
 
 export function MarketingFooter() {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = React.useState("");
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [subscribed, setSubscribed] = React.useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsSubmitting(true);
+    // Simulate API call - in production, connect to Resend or other email service
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setSubscribed(true);
+    setIsSubmitting(false);
+    setEmail("");
+  };
 
   return (
     <motion.footer
@@ -72,7 +89,7 @@ export function MarketingFooter() {
               AI-powered insights to improve customer experience.
             </p>
             {/* Social Links */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-6">
               {socialLinks.map((link) => (
                 <a
                   key={link.label}
@@ -86,6 +103,40 @@ export function MarketingFooter() {
                   {link.label === "Twitter" && <Twitter className="h-5 w-5" />}
                 </a>
               ))}
+            </div>
+
+            {/* Newsletter Signup */}
+            <div>
+              <h3 className="font-semibold text-sm mb-3">Stay Updated</h3>
+              {subscribed ? (
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  Thanks for subscribing!
+                </p>
+              ) : (
+                <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-9 text-sm"
+                    required
+                    aria-label="Email address"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={isSubmitting}
+                    className="shrink-0"
+                  >
+                    {isSubmitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Subscribe"
+                    )}
+                  </Button>
+                </form>
+              )}
             </div>
           </motion.div>
 

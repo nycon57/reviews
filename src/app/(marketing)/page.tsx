@@ -62,7 +62,7 @@ export default function HomePage() {
         }
         description="Collect reviews, track satisfaction metrics, and gain AI-powered insights to deliver exceptional customer experiences. Built for mortgage professionals."
         cta={[
-          { label: "Start Free Trial", href: "/auth/sign-up" },
+          { label: "Start Free Trial", href: "/signup" },
           { label: "Watch Demo", href: "/demo", variant: "outline" },
         ]}
       />
@@ -317,7 +317,7 @@ export default function HomePage() {
             more reviews and build their reputation.
           </motion.p>
           <motion.div variants={fadeInUp} className="flex justify-center gap-4">
-            <Link href="/auth/sign-up">
+            <Link href="/signup">
               <Button size="lg">Start Free Trial</Button>
             </Link>
             <Link href="/contact">

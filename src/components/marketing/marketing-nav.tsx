@@ -88,12 +88,12 @@ export function MarketingNav() {
 
         {/* Auth Buttons */}
         <div className="hidden items-center gap-2 md:flex">
-          <Link href="/auth/sign-in">
+          <Link href="/login">
             <Button variant="ghost" size="sm">
               Sign In
             </Button>
           </Link>
-          <Link href="/auth/sign-up">
+          <Link href="/signup">
             <Button size="sm">Get Started</Button>
           </Link>
         </div>

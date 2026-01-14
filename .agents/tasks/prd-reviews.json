@@ -5,14 +5,17 @@
     "version": "1.0.0",
     "repository": "nycon57/reviews",
     "tech_stack": {
-      "frontend": "Next.js 14 (App Router)",
+      "frontend": "Next.js 16 (App Router)",
       "ui_components": "ShadCN/UI + Tailwind CSS",
       "backend": "Supabase (PostgreSQL + Edge Functions)",
       "auth": "Supabase Auth",
       "email": "Resend",
       "mobile": "React Native + Expo",
-      "ai": "OpenAI API (GPT-4)",
-      "integrations": ["Google Business Profile API", "Zapier Webhooks"]
+      "ai": "OpenAI API",
+      "integrations": [
+        "Google Business Profile API",
+        "Zapier Webhooks"
+      ]
     }
   },
   "epics": [
@@ -56,8 +59,8 @@
     {
       "id": "S001",
       "epic": "E1",
-      "title": "Initialize Next.js 14 Project with ShadCN",
-      "description": "Set up Next.js 14 with App Router, TypeScript, Tailwind CSS, and ShadCN/UI components. Configure ESLint, Prettier, and project structure.",
+      "title": "Initialize Next.js 16 Project with ShadCN",
+      "description": "Set up Next.js 16 with App Router, TypeScript, Tailwind CSS, and ShadCN/UI components. Configure ESLint, Prettier, and project structure.",
       "acceptance_criteria": [
         "Next.js 14 project initialized with TypeScript",
         "Tailwind CSS configured with custom theme",
@@ -67,9 +70,15 @@
       ],
       "priority": "P0",
       "estimate": "S",
-      "status": "open",
-      "gates": ["npm run build passes", "npm run lint passes"],
-      "dependencies": []
+      "status": "in_progress",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [],
+      "startedAt": "2026-01-14T03:43:21.320547+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T03:43:21.320715+00:00"
     },
     {
       "id": "S002",
@@ -86,8 +95,13 @@
       "priority": "P0",
       "estimate": "M",
       "status": "open",
-      "gates": ["Database migrations run successfully", "TypeScript types generate without errors"],
-      "dependencies": ["S001"]
+      "gates": [
+        "Database migrations run successfully",
+        "TypeScript types generate without errors"
+      ],
+      "dependencies": [
+        "S001"
+      ]
     },
     {
       "id": "S003",
@@ -105,8 +119,13 @@
       "priority": "P0",
       "estimate": "M",
       "status": "open",
-      "gates": ["Auth flows work end-to-end", "RLS policies enforce role access"],
-      "dependencies": ["S002"]
+      "gates": [
+        "Auth flows work end-to-end",
+        "RLS policies enforce role access"
+      ],
+      "dependencies": [
+        "S002"
+      ]
     },
     {
       "id": "S004",
@@ -124,8 +143,14 @@
       "priority": "P0",
       "estimate": "M",
       "status": "open",
-      "gates": ["Responsive design works on mobile/tablet/desktop", "Navigation accessible via keyboard"],
-      "dependencies": ["S001", "S003"]
+      "gates": [
+        "Responsive design works on mobile/tablet/desktop",
+        "Navigation accessible via keyboard"
+      ],
+      "dependencies": [
+        "S001",
+        "S003"
+      ]
     },
     {
       "id": "S005",
@@ -143,8 +168,14 @@
       "priority": "P1",
       "estimate": "L",
       "status": "open",
-      "gates": ["Survey templates save and load correctly", "All question types render properly"],
-      "dependencies": ["S002", "S004"]
+      "gates": [
+        "Survey templates save and load correctly",
+        "All question types render properly"
+      ],
+      "dependencies": [
+        "S002",
+        "S004"
+      ]
     },
     {
       "id": "S006",
@@ -162,8 +193,13 @@
       "priority": "P1",
       "estimate": "M",
       "status": "open",
-      "gates": ["Survey submission saves to database", "Form works on mobile devices"],
-      "dependencies": ["S005"]
+      "gates": [
+        "Survey submission saves to database",
+        "Form works on mobile devices"
+      ],
+      "dependencies": [
+        "S005"
+      ]
     },
     {
       "id": "S007",
@@ -181,8 +217,13 @@
       "priority": "P1",
       "estimate": "M",
       "status": "open",
-      "gates": ["Emails send successfully", "Templates render correctly"],
-      "dependencies": ["S002"]
+      "gates": [
+        "Emails send successfully",
+        "Templates render correctly"
+      ],
+      "dependencies": [
+        "S002"
+      ]
     },
     {
       "id": "S008",
@@ -200,8 +241,14 @@
       "priority": "P1",
       "estimate": "L",
       "status": "open",
-      "gates": ["Webhooks trigger survey sends", "Reminders scheduled correctly"],
-      "dependencies": ["S006", "S007"]
+      "gates": [
+        "Webhooks trigger survey sends",
+        "Reminders scheduled correctly"
+      ],
+      "dependencies": [
+        "S006",
+        "S007"
+      ]
     },
     {
       "id": "S009",
@@ -219,8 +266,13 @@
       "priority": "P2",
       "estimate": "M",
       "status": "open",
-      "gates": ["Approval workflow functions end-to-end", "Only approved reviews appear publicly"],
-      "dependencies": ["S006"]
+      "gates": [
+        "Approval workflow functions end-to-end",
+        "Only approved reviews appear publicly"
+      ],
+      "dependencies": [
+        "S006"
+      ]
     },
     {
       "id": "S010",
@@ -238,8 +290,14 @@
       "priority": "P1",
       "estimate": "L",
       "status": "open",
-      "gates": ["Dashboard loads within 2 seconds", "Metrics calculate correctly"],
-      "dependencies": ["S004", "S002"]
+      "gates": [
+        "Dashboard loads within 2 seconds",
+        "Metrics calculate correctly"
+      ],
+      "dependencies": [
+        "S004",
+        "S002"
+      ]
     },
     {
       "id": "S011",
@@ -257,8 +315,13 @@
       "priority": "P1",
       "estimate": "L",
       "status": "open",
-      "gates": ["Manager can view all team members", "Comparisons calculate correctly"],
-      "dependencies": ["S010"]
+      "gates": [
+        "Manager can view all team members",
+        "Comparisons calculate correctly"
+      ],
+      "dependencies": [
+        "S010"
+      ]
     },
     {
       "id": "S012",
@@ -276,8 +339,13 @@
       "priority": "P1",
       "estimate": "M",
       "status": "open",
-      "gates": ["Metrics match manual calculations", "Performance acceptable with 10k+ records"],
-      "dependencies": ["S002"]
+      "gates": [
+        "Metrics match manual calculations",
+        "Performance acceptable with 10k+ records"
+      ],
+      "dependencies": [
+        "S002"
+      ]
     },
     {
       "id": "S013",
@@ -295,8 +363,13 @@
       "priority": "P2",
       "estimate": "M",
       "status": "open",
-      "gates": ["Scores calculate consistently", "Leaderboard updates accurately"],
-      "dependencies": ["S012"]
+      "gates": [
+        "Scores calculate consistently",
+        "Leaderboard updates accurately"
+      ],
+      "dependencies": [
+        "S012"
+      ]
     },
     {
       "id": "S014",
@@ -314,8 +387,13 @@
       "priority": "P2",
       "estimate": "M",
       "status": "open",
-      "gates": ["Reports generate correctly", "Exports contain accurate data"],
-      "dependencies": ["S012"]
+      "gates": [
+        "Reports generate correctly",
+        "Exports contain accurate data"
+      ],
+      "dependencies": [
+        "S012"
+      ]
     },
     {
       "id": "S015",
@@ -333,8 +411,14 @@
       "priority": "P1",
       "estimate": "L",
       "status": "open",
-      "gates": ["Google OAuth flow works", "Reviews sync correctly"],
-      "dependencies": ["S002", "S003"]
+      "gates": [
+        "Google OAuth flow works",
+        "Reviews sync correctly"
+      ],
+      "dependencies": [
+        "S002",
+        "S003"
+      ]
     },
     {
       "id": "S016",
@@ -352,8 +436,14 @@
       "priority": "P1",
       "estimate": "M",
       "status": "open",
-      "gates": ["All sources display correctly", "Filtering works accurately"],
-      "dependencies": ["S010", "S015"]
+      "gates": [
+        "All sources display correctly",
+        "Filtering works accurately"
+      ],
+      "dependencies": [
+        "S010",
+        "S015"
+      ]
     },
     {
       "id": "S017",
@@ -371,8 +461,13 @@
       "priority": "P2",
       "estimate": "M",
       "status": "open",
-      "gates": ["Responses post to correct platforms", "Templates save and load correctly"],
-      "dependencies": ["S016"]
+      "gates": [
+        "Responses post to correct platforms",
+        "Templates save and load correctly"
+      ],
+      "dependencies": [
+        "S016"
+      ]
     },
     {
       "id": "S018",
@@ -390,8 +485,14 @@
       "priority": "P2",
       "estimate": "M",
       "status": "open",
-      "gates": ["Notifications trigger correctly", "User preferences respected"],
-      "dependencies": ["S007", "S016"]
+      "gates": [
+        "Notifications trigger correctly",
+        "User preferences respected"
+      ],
+      "dependencies": [
+        "S007",
+        "S016"
+      ]
     },
     {
       "id": "S019",
@@ -409,8 +510,13 @@
       "priority": "P2",
       "estimate": "L",
       "status": "open",
-      "gates": ["Sentiment scores align with manual assessment", "API costs within budget"],
-      "dependencies": ["S002"]
+      "gates": [
+        "Sentiment scores align with manual assessment",
+        "API costs within budget"
+      ],
+      "dependencies": [
+        "S002"
+      ]
     },
     {
       "id": "S020",
@@ -428,8 +534,14 @@
       "priority": "P2",
       "estimate": "L",
       "status": "open",
-      "gates": ["Insights generate correctly", "Summaries are accurate and helpful"],
-      "dependencies": ["S019", "S012"]
+      "gates": [
+        "Insights generate correctly",
+        "Summaries are accurate and helpful"
+      ],
+      "dependencies": [
+        "S019",
+        "S012"
+      ]
     },
     {
       "id": "S021",
@@ -447,8 +559,14 @@
       "priority": "P3",
       "estimate": "M",
       "status": "open",
-      "gates": ["Suggestions are appropriate and professional", "Generation time under 3 seconds"],
-      "dependencies": ["S019", "S017"]
+      "gates": [
+        "Suggestions are appropriate and professional",
+        "Generation time under 3 seconds"
+      ],
+      "dependencies": [
+        "S019",
+        "S017"
+      ]
     },
     {
       "id": "S022",
@@ -466,8 +584,13 @@
       "priority": "P3",
       "estimate": "M",
       "status": "open",
-      "gates": ["Generated testimonials are accurate", "Output formats are usable"],
-      "dependencies": ["S019"]
+      "gates": [
+        "Generated testimonials are accurate",
+        "Output formats are usable"
+      ],
+      "dependencies": [
+        "S019"
+      ]
     },
     {
       "id": "S023",
@@ -485,8 +608,13 @@
       "priority": "P3",
       "estimate": "M",
       "status": "open",
-      "gates": ["App runs on iOS and Android simulators", "Auth flow works"],
-      "dependencies": ["S003"]
+      "gates": [
+        "App runs on iOS and Android simulators",
+        "Auth flow works"
+      ],
+      "dependencies": [
+        "S003"
+      ]
     },
     {
       "id": "S024",
@@ -504,8 +632,14 @@
       "priority": "P3",
       "estimate": "L",
       "status": "open",
-      "gates": ["Dashboard matches web data", "Performance acceptable on older devices"],
-      "dependencies": ["S023", "S010"]
+      "gates": [
+        "Dashboard matches web data",
+        "Performance acceptable on older devices"
+      ],
+      "dependencies": [
+        "S023",
+        "S010"
+      ]
     },
     {
       "id": "S025",
@@ -523,8 +657,14 @@
       "priority": "P3",
       "estimate": "M",
       "status": "open",
-      "gates": ["Survey sends work from mobile", "Contact picker works correctly"],
-      "dependencies": ["S023", "S008"]
+      "gates": [
+        "Survey sends work from mobile",
+        "Contact picker works correctly"
+      ],
+      "dependencies": [
+        "S023",
+        "S008"
+      ]
     },
     {
       "id": "S026",
@@ -542,8 +682,13 @@
       "priority": "P1",
       "estimate": "M",
       "status": "open",
-      "gates": ["Webhooks process reliably", "Signature verification works"],
-      "dependencies": ["S002"]
+      "gates": [
+        "Webhooks process reliably",
+        "Signature verification works"
+      ],
+      "dependencies": [
+        "S002"
+      ]
     },
     {
       "id": "S027",
@@ -561,8 +706,14 @@
       "priority": "P2",
       "estimate": "L",
       "status": "open",
-      "gates": ["API endpoints function correctly", "Documentation is complete"],
-      "dependencies": ["S002", "S003"]
+      "gates": [
+        "API endpoints function correctly",
+        "Documentation is complete"
+      ],
+      "dependencies": [
+        "S002",
+        "S003"
+      ]
     },
     {
       "id": "S028",
@@ -580,8 +731,13 @@
       "priority": "P2",
       "estimate": "L",
       "status": "open",
-      "gates": ["Plugin installs and activates correctly", "Reviews display on WordPress pages"],
-      "dependencies": ["S027"]
+      "gates": [
+        "Plugin installs and activates correctly",
+        "Reviews display on WordPress pages"
+      ],
+      "dependencies": [
+        "S027"
+      ]
     },
     {
       "id": "S029",
@@ -599,8 +755,13 @@
       "priority": "P2",
       "estimate": "M",
       "status": "open",
-      "gates": ["Widget loads correctly on third-party sites", "Styling is customizable"],
-      "dependencies": ["S027"]
+      "gates": [
+        "Widget loads correctly on third-party sites",
+        "Styling is customizable"
+      ],
+      "dependencies": [
+        "S027"
+      ]
     },
     {
       "id": "S030",
@@ -618,8 +779,13 @@
       "priority": "P3",
       "estimate": "M",
       "status": "open",
-      "gates": ["Zapier triggers fire correctly", "Actions execute successfully"],
-      "dependencies": ["S027"]
+      "gates": [
+        "Zapier triggers fire correctly",
+        "Actions execute successfully"
+      ],
+      "dependencies": [
+        "S027"
+      ]
     },
     {
       "id": "S031",
@@ -637,8 +803,13 @@
       "priority": "P2",
       "estimate": "L",
       "status": "open",
-      "gates": ["Data isolation verified", "Organization admin functions work"],
-      "dependencies": ["S003"]
+      "gates": [
+        "Data isolation verified",
+        "Organization admin functions work"
+      ],
+      "dependencies": [
+        "S003"
+      ]
     },
     {
       "id": "S032",
@@ -656,8 +827,13 @@
       "priority": "P2",
       "estimate": "M",
       "status": "open",
-      "gates": ["Structured data validates correctly", "Google Search Console shows rich results"],
-      "dependencies": ["S010"]
+      "gates": [
+        "Structured data validates correctly",
+        "Google Search Console shows rich results"
+      ],
+      "dependencies": [
+        "S010"
+      ]
     }
   ],
   "phases": [
@@ -665,28 +841,64 @@
       "id": "Phase1",
       "name": "Foundation (MVP)",
       "description": "Core infrastructure, authentication, and basic survey/review functionality",
-      "stories": ["S001", "S002", "S003", "S004", "S005", "S006", "S007", "S008", "S010", "S012"],
+      "stories": [
+        "S001",
+        "S002",
+        "S003",
+        "S004",
+        "S005",
+        "S006",
+        "S007",
+        "S008",
+        "S010",
+        "S012"
+      ],
       "target_completion": "Phase 1 Complete"
     },
     {
       "id": "Phase2",
       "name": "Enhanced Features",
       "description": "Manager dashboards, Google integration, approval workflows, and analytics",
-      "stories": ["S009", "S011", "S013", "S014", "S015", "S016", "S026", "S031"],
+      "stories": [
+        "S009",
+        "S011",
+        "S013",
+        "S014",
+        "S015",
+        "S016",
+        "S026",
+        "S031"
+      ],
       "target_completion": "Phase 2 Complete"
     },
     {
       "id": "Phase3",
       "name": "AI & Advanced",
       "description": "AI-powered features, response management, notifications",
-      "stories": ["S017", "S018", "S019", "S020", "S021", "S022", "S032"],
+      "stories": [
+        "S017",
+        "S018",
+        "S019",
+        "S020",
+        "S021",
+        "S022",
+        "S032"
+      ],
       "target_completion": "Phase 3 Complete"
     },
     {
       "id": "Phase4",
       "name": "Mobile & Integrations",
       "description": "Mobile app, public API, integrations, and widgets",
-      "stories": ["S023", "S024", "S025", "S027", "S028", "S029", "S030"],
+      "stories": [
+        "S023",
+        "S024",
+        "S025",
+        "S027",
+        "S028",
+        "S029",
+        "S030"
+      ],
       "target_completion": "Phase 4 Complete"
     }
   ],

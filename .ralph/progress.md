@@ -2322,12 +2322,14 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
 ---
 
 ## [2026-01-14 15:30:00] - S037: Public Branch Profiles
-Thread: 
-Run: manual
+Thread:
+Run: 20260114-144000-70140 (iterations 1-4)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-144000-70140-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-144000-70140-iter-4.md
 - Guardrails reviewed: yes
 - No-commit run: false
-- Commit: pending
-- Post-commit status: pending
+- Commit: ccbaa6b feat(S037): Implement public branch profiles
+- Post-commit status: clean
 - Verification:
   - Command: npm run build -> PASS (66 pages generated including /branch/[id])
   - Command: npm run lint -> PASS (0 errors, 7 warnings - pre-existing)

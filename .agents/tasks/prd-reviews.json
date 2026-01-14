@@ -749,7 +749,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Webhooks process reliably",
         "Signature verification works"
@@ -757,9 +757,9 @@
       "dependencies": [
         "S002"
       ],
-      "startedAt": "2026-01-14T14:44:41.104608+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T14:44:41.104763+00:00"
+      "startedAt": "2026-01-14T14:55:46.939478+00:00",
+      "completedAt": "2026-01-14T15:03:57.900613+00:00",
+      "updatedAt": "2026-01-14T15:03:57.900504+00:00"
     },
     {
       "id": "S027",
@@ -873,14 +873,17 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "completed",
       "gates": [
         "Data isolation verified",
         "Organization admin functions work"
       ],
       "dependencies": [
         "S003"
-      ]
+      ],
+      "startedAt": "2026-01-14T15:03:59.966964+00:00",
+      "completedAt": "2026-01-14T21:30:00.000000+00:00",
+      "updatedAt": "2026-01-14T21:30:00.000000+00:00"
     },
     {
       "id": "S032",

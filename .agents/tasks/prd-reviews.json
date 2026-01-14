@@ -515,9 +515,9 @@
       "dependencies": [
         "S016"
       ],
-      "startedAt": "2026-01-14T08:31:22.099871+00:00",
-      "completedAt": "2026-01-14T09:15:00.000000+00:00",
-      "updatedAt": "2026-01-14T09:15:00.000000+00:00"
+      "startedAt": "2026-01-14T08:48:54.687608+00:00",
+      "completedAt": "2026-01-14T08:52:09.649127+00:00",
+      "updatedAt": "2026-01-14T08:52:09.649016+00:00"
     },
     {
       "id": "S018",
@@ -534,7 +534,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Notifications trigger correctly",
         "User preferences respected"
@@ -542,7 +542,10 @@
       "dependencies": [
         "S007",
         "S016"
-      ]
+      ],
+      "startedAt": "2026-01-14T08:52:11.704817+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T08:52:11.704957+00:00"
     },
     {
       "id": "S019",

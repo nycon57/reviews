@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/shared";
 import { GoogleIntegrationCard } from "@/components/google/google-integration-card";
+import { NotificationPreferencesCard } from "@/components/notifications";
 
 export const metadata = {
   title: "Settings | ReviewHub",
@@ -21,6 +22,25 @@ function GoogleCardSkeleton() {
       </CardHeader>
       <CardContent>
         <Skeleton className="h-24 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function NotificationCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-72" />
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="space-y-4">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ))}
       </CardContent>
     </Card>
   );
@@ -93,19 +113,9 @@ export default function SettingsPage() {
         </Card>
 
         {/* Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <CardDescription>
-              Configure how you receive notifications
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Notification settings will be implemented in S018: Alert & Notification System
-            </p>
-          </CardContent>
-        </Card>
+        <Suspense fallback={<NotificationCardSkeleton />}>
+          <NotificationPreferencesCard />
+        </Suspense>
       </div>
     </div>
   );

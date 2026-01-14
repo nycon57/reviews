@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { Bell, Search, LogOut, User as UserIcon, Settings, CreditCard } from "lucide-react";
+import { NotificationCenter } from "@/components/notifications";
+import { Search, LogOut, User as UserIcon, Settings, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface HeaderUser {
@@ -65,15 +66,7 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
         </Button>
 
         {/* Notifications */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative h-9 w-9"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
-        </Button>
+        <NotificationCenter />
 
         {/* Theme toggle */}
         <ThemeToggle className="h-9 w-9" />

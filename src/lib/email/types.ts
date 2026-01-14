@@ -7,7 +7,9 @@ export type EmailTemplate =
   | "review_pending_approval"
   | "review_approved"
   | "review_rejected"
-  | "scheduled_report";
+  | "scheduled_report"
+  | "negative_review_alert"
+  | "notification_digest";
 
 // Base email data
 export interface BaseEmailData {
@@ -90,6 +92,36 @@ export interface ScheduledReportEmailData extends BaseEmailData {
   };
   reportUrl: string;
   organizationName: string;
+}
+
+// Negative review alert email data (instant alert for low ratings)
+export interface NegativeReviewAlertEmailData extends BaseEmailData {
+  recipientName: string;
+  customerName: string;
+  rating: number;
+  reviewText?: string;
+  reviewDate: string;
+  dashboardUrl: string;
+  reviewId: string;
+}
+
+// Notification digest email data
+export interface NotificationDigestEmailData extends BaseEmailData {
+  recipientName: string;
+  digestPeriod: string; // e.g., "Daily", "Weekly", "Monthly"
+  notifications: Array<{
+    type: string;
+    title: string;
+    message: string;
+    actionUrl?: string;
+    createdAt: string;
+  }>;
+  summary: {
+    totalNotifications: number;
+    newReviews: number;
+    negativeReviews: number;
+  };
+  dashboardUrl: string;
 }
 
 // Email send result

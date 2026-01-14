@@ -6,6 +6,8 @@ import type {
   ReviewApprovedEmailData,
   ReviewRejectedEmailData,
   ScheduledReportEmailData,
+  NegativeReviewAlertEmailData,
+  NotificationDigestEmailData,
 } from "./types";
 import { emailConfig } from "./client";
 
@@ -516,6 +518,197 @@ export function getScheduledReportEmail(data: ScheduledReportEmailData): {
         </div>
         <p style="margin: 24px 0 0 0; font-size: 12px; color: #71717a; text-align: center;">
           This report was automatically generated and sent to you as part of your scheduled reports.
+        </p>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Negative review alert email template (instant alert for low ratings)
+export function getNegativeReviewAlertEmail(
+  data: NegativeReviewAlertEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Alert: ${data.rating}-star review requires attention`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const reviewTextSection = data.reviewText
+    ? `
+        <div style="background-color: #fef2f2; border-radius: 8px; padding: 20px; margin: 24px 0; border: 1px solid #fecaca;">
+          <p style="margin: 0; font-size: 16px; color: #52525b; font-style: italic;">
+            "${data.reviewText}"
+          </p>
+        </div>
+      `
+    : `
+        <div style="background-color: #fef2f2; border-radius: 8px; padding: 20px; margin: 24px 0; border: 1px solid #fecaca;">
+          <p style="margin: 0; font-size: 14px; color: #71717a; text-align: center;">
+            No written review provided
+          </p>
+        </div>
+      `;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #dc2626; border-bottom: 1px solid #b91c1c;">
+        <span style="font-size: 24px; font-weight: bold; color: #ffffff;">Urgent Alert</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="display: inline-block; background-color: #fef2f2; color: #991b1b; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
+            Low Rating Alert
+          </span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Attention Required
+        </h1>
+        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Hi ${data.recipientName}, a customer has left a low rating that may require immediate attention.
+        </p>
+        <div style="text-align: center; margin: 24px 0;">
+          ${generateStarRating(data.rating)}
+          <p style="margin: 8px 0 0 0; font-size: 14px; color: #dc2626; font-weight: 600;">
+            ${data.rating} out of 5 stars from ${data.customerName}
+          </p>
+        </div>
+        ${reviewTextSection}
+        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
+          Received on ${data.reviewDate}
+        </p>
+        <div style="text-align: center;">
+          <a href="${data.dashboardUrl}/reviews/${data.reviewId}" style="display: inline-block; padding: 16px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            View & Respond
+          </a>
+        </div>
+        <p style="margin: 24px 0 0 0; font-size: 12px; color: #71717a; text-align: center;">
+          Quick response to negative reviews can help improve customer satisfaction.
+        </p>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Notification digest email template
+export function getNotificationDigestEmail(
+  data: NotificationDigestEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Your ${data.digestPeriod} ReviewHub Digest`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  // Generate notification items HTML
+  const notificationItems = data.notifications
+    .slice(0, 10) // Limit to 10 items in email
+    .map(
+      (notification) => `
+        <tr>
+          <td style="padding: 16px; border-bottom: 1px solid #e4e4e7;">
+            <p style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #18181b;">
+              ${notification.title}
+            </p>
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #52525b;">
+              ${notification.message}
+            </p>
+            <p style="margin: 0; font-size: 12px; color: #71717a;">
+              ${notification.createdAt}
+            </p>
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+  const moreNotificationsText =
+    data.notifications.length > 10
+      ? `<p style="margin: 16px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+          And ${data.notifications.length - 10} more notifications...
+        </p>`
+      : "";
+
+  // Determine if there are negative reviews requiring attention
+  const alertSection =
+    data.summary.negativeReviews > 0
+      ? `
+        <div style="background-color: #fef2f2; border-radius: 8px; padding: 16px; margin-bottom: 24px; border: 1px solid #fecaca; text-align: center;">
+          <span style="font-size: 14px; font-weight: 600; color: #991b1b;">
+            ⚠️ ${data.summary.negativeReviews} negative review${data.summary.negativeReviews > 1 ? "s" : ""} require${data.summary.negativeReviews === 1 ? "s" : ""} attention
+          </span>
+        </div>
+      `
+      : "";
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #6366f1; border-bottom: 1px solid #4f46e5;">
+        <span style="font-size: 24px; font-weight: bold; color: #ffffff;">ReviewHub</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <h1 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Your ${data.digestPeriod} Digest
+        </h1>
+        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
+          Hi ${data.recipientName}, here's a summary of your recent activity.
+        </p>
+
+        ${alertSection}
+
+        <!-- Summary Stats Grid -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px;">
+          <tr>
+            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 8px 0 0 8px; text-align: center; border-right: 1px solid #e4e4e7;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">Notifications</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #18181b;">${data.summary.totalNotifications}</p>
+            </td>
+            <td style="padding: 16px; background-color: #f4f4f5; text-align: center; border-right: 1px solid #e4e4e7;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">New Reviews</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: #16a34a;">${data.summary.newReviews}</p>
+            </td>
+            <td style="padding: 16px; background-color: #f4f4f5; border-radius: 0 8px 8px 0; text-align: center;">
+              <p style="margin: 0 0 4px 0; font-size: 12px; color: #71717a; text-transform: uppercase;">Needs Attention</p>
+              <p style="margin: 0; font-size: 24px; font-weight: 700; color: ${data.summary.negativeReviews > 0 ? "#dc2626" : "#18181b"};">${data.summary.negativeReviews}</p>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Notification List -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fafafa; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="padding: 16px; background-color: #f4f4f5; border-bottom: 2px solid #e4e4e7;">
+              <p style="margin: 0; font-size: 14px; font-weight: 600; color: #18181b;">Recent Activity</p>
+            </td>
+          </tr>
+          ${notificationItems}
+        </table>
+        ${moreNotificationsText}
+
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            View Dashboard
+          </a>
+        </div>
+        <p style="margin: 24px 0 0 0; font-size: 12px; color: #71717a; text-align: center;">
+          You're receiving this digest based on your notification preferences.
+          <a href="${data.dashboardUrl}/settings" style="color: #6366f1;">Manage preferences</a>
         </p>
       </td>
     </tr>

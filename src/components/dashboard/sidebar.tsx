@@ -28,6 +28,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   LayoutDashboard,
+  Layers,
 } from "lucide-react";
 
 interface NavItem {
@@ -50,7 +51,12 @@ const mainNavItems: NavItem[] = [
     icon: <Home className="h-4 w-4" />,
   },
   {
-    title: "Reviews",
+    title: "All Reviews",
+    href: "/dashboard/all-reviews",
+    icon: <Layers className="h-4 w-4" />,
+  },
+  {
+    title: "Review Queue",
     href: "/dashboard/reviews",
     icon: <Star className="h-4 w-4" />,
   },

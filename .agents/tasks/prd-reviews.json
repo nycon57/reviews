@@ -451,7 +451,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Google OAuth flow works",
         "Reviews sync correctly"
@@ -459,7 +459,10 @@
       "dependencies": [
         "S002",
         "S003"
-      ]
+      ],
+      "updatedAt": "2026-01-14T08:19:36.303618+00:00",
+      "completedAt": "2026-01-14T08:19:36.303726+00:00",
+      "startedAt": "2026-01-14T08:19:36.303727+00:00"
     },
     {
       "id": "S016",
@@ -476,7 +479,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "All sources display correctly",
         "Filtering works accurately"
@@ -484,7 +487,10 @@
       "dependencies": [
         "S010",
         "S015"
-      ]
+      ],
+      "startedAt": "2026-01-14T08:19:38.361748+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T08:19:38.361881+00:00"
     },
     {
       "id": "S017",

@@ -33,6 +33,7 @@ import {
   submitResponseForApproval,
   postResponse,
   generateAISuggestion,
+  trackResponseEdit,
   type ResponseTemplate,
 } from "@/lib/reviews/response-actions";
 import { applyTemplateVariables } from "@/lib/reviews/utils";
@@ -63,6 +64,10 @@ export function ResponseComposer({
   const [aiTone, setAiTone] = useState<"professional" | "friendly" | "empathetic">("professional");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Track AI suggestion source for analytics and learning
+  const [originalAISuggestion, setOriginalAISuggestion] = useState<string | null>(null);
+  const [wasAIGenerated, setWasAIGenerated] = useState(false);
 
   const loadTemplates = useCallback(async () => {
     setIsLoadingTemplates(true);
@@ -99,6 +104,9 @@ export function ResponseComposer({
       const appliedContent = applyTemplateVariables(template.content, variables);
       setResponseText(appliedContent);
       setSelectedTemplateId(templateId);
+      // Clear AI tracking when switching to template
+      setWasAIGenerated(false);
+      setOriginalAISuggestion(null);
     }
   };
 
@@ -111,6 +119,9 @@ export function ResponseComposer({
     if (result.success && result.data) {
       setResponseText(result.data);
       setSelectedTemplateId(""); // Clear template selection since using AI
+      // Track AI suggestion source
+      setWasAIGenerated(true);
+      setOriginalAISuggestion(result.data);
     } else {
       setError(result.error || "Failed to generate AI suggestion");
     }
@@ -167,13 +178,26 @@ export function ResponseComposer({
 
     startTransition(async () => {
       setError(null);
-      const result = await postResponse(
-        review.id,
-        responseText.trim(),
-        selectedTemplateId || undefined
-      );
+
+      // Determine if response was edited from AI suggestion
+      const wasEditedFromAI = wasAIGenerated && originalAISuggestion !== responseText.trim();
+
+      // Post response with AI tracking info
+      const result = await postResponse(review.id, responseText.trim(), {
+        templateId: selectedTemplateId || undefined,
+        wasAISuggested: wasAIGenerated,
+        wasEditedFromAI,
+        originalAISuggestion: originalAISuggestion || undefined,
+      });
 
       if (result.success) {
+        // Track response edit for learning if AI suggestion was modified
+        if (wasEditedFromAI && originalAISuggestion) {
+          trackResponseEdit(review.id, originalAISuggestion, responseText.trim()).catch(
+            (err) => console.error("Failed to track response edit:", err)
+          );
+        }
+
         setSuccess("Response posted successfully!");
         setTimeout(() => {
           setSuccess(null);

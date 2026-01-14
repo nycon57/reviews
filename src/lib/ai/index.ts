@@ -24,3 +24,11 @@ export {
   getIndustryBenchmarks,
   getAIInsightsData,
 } from './insights-actions';
+export {
+  generateResponseSuggestion,
+  generateMultipleResponseSuggestions,
+  improveResponseWithContext,
+  type ResponseTone,
+  type ResponseSuggestion,
+  type ReviewContext,
+} from './response-suggestions';

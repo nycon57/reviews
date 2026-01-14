@@ -3,6 +3,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "./types";
+import {
+  generateResponseSuggestion,
+  improveResponseWithContext,
+  type ResponseTone,
+  type ReviewContext,
+} from "@/lib/ai/response-suggestions";
 
 // Response template types
 export interface ResponseTemplate {
@@ -329,15 +335,31 @@ export async function submitResponseForApproval(
   return { success: true };
 }
 
+// Post response options for tracking AI usage
+export interface PostResponseOptions {
+  templateId?: string;
+  wasAISuggested?: boolean;
+  wasEditedFromAI?: boolean;
+  originalAISuggestion?: string;
+}
+
 // Post response directly (for managers or when approval not required)
 export async function postResponse(
   reviewId: string,
   responseText: string,
-  templateId?: string
+  templateIdOrOptions?: string | PostResponseOptions
 ): Promise<ActionResult> {
   const context = await requireAuth();
   if (!context) {
     return { success: false, error: "Unauthorized" };
+  }
+
+  // Parse options - support both old and new signature
+  let options: PostResponseOptions = {};
+  if (typeof templateIdOrOptions === "string") {
+    options.templateId = templateIdOrOptions;
+  } else if (templateIdOrOptions) {
+    options = templateIdOrOptions;
   }
 
   const supabase = await createClient();
@@ -366,7 +388,7 @@ export async function postResponse(
       response_status: "posted",
       response_by: context.userId,
       response_at: now,
-      response_template_id: templateId || null,
+      response_template_id: options.templateId || null,
       response_posted_at: now,
     })
     .eq("id", reviewId)
@@ -382,16 +404,18 @@ export async function postResponse(
   const responseDate = new Date(now);
   const responseTimeHours = (responseDate.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
 
-  // Record analytics
+  // Record analytics with AI tracking
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabase as any).from("response_analytics").insert({
     organization_id: context.organizationId,
     review_id: reviewId,
     loan_officer_id: review.loan_officer_id,
     response_time_hours: Math.round(responseTimeHours * 100) / 100,
-    template_used: templateId || null,
-    was_ai_suggested: false, // Will be set to true when AI suggestions are implemented
-    was_edited_from_template: templateId ? true : false,
+    template_used: options.templateId || null,
+    was_ai_suggested: options.wasAISuggested || false,
+    was_edited_from_template: options.templateId
+      ? true
+      : options.wasEditedFromAI || false,
     word_count: responseText.split(/\s+/).length,
     sentiment_before: review.sentiment_score,
     platform: review.source,
@@ -744,13 +768,13 @@ export async function getResponseAnalytics(
 }
 
 // ============================================
-// AI Response Suggestions (Integration Point)
+// AI Response Suggestions (S021)
 // ============================================
 
-// This is a placeholder for AI response generation - will be implemented in S021
+// Generate AI-powered response suggestion for a review
 export async function generateAISuggestion(
   reviewId: string,
-  _tone: "professional" | "friendly" | "empathetic" = "professional"
+  tone: ResponseTone = "professional"
 ): Promise<ActionResult<string>> {
   const context = await requireAuth();
   if (!context) {
@@ -759,11 +783,21 @@ export async function generateAISuggestion(
 
   const supabase = await createClient();
 
-  // Get the review content
+  // Get the review content with sentiment data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: review, error } = await (supabase as any)
     .from("reviews")
-    .select("text, customer_name, rating, source, loan_officers!inner(full_name)")
+    .select(`
+      text,
+      customer_name,
+      rating,
+      source,
+      sentiment_score,
+      sentiment_label,
+      themes,
+      key_phrases,
+      loan_officers!inner(full_name)
+    `)
     .eq("id", reviewId)
     .eq("organization_id", context.organizationId)
     .single();
@@ -772,49 +806,118 @@ export async function generateAISuggestion(
     return { success: false, error: "Review not found" };
   }
 
-  // For now, return a placeholder message indicating this will be implemented in S021
-  // When S021 is implemented, this will call OpenAI API
-  const loanOfficerName = (review.loan_officers as unknown as { full_name: string }).full_name;
-  const customerName = review.customer_name || "Valued Customer";
+  // Build review context for AI
+  const loanOfficer = review.loan_officers as unknown as { full_name: string };
+  const reviewContext: ReviewContext = {
+    text: review.text,
+    rating: review.rating,
+    customerName: review.customer_name,
+    loanOfficerName: loanOfficer.full_name,
+    source: review.source,
+    sentimentScore: review.sentiment_score,
+    sentimentLabel: review.sentiment_label,
+    themes: review.themes,
+    keyPhrases: review.key_phrases,
+  };
 
-  // Generate a basic template-based suggestion based on rating
-  let suggestion: string;
-  if (review.rating >= 4) {
-    suggestion = `Dear ${customerName},
+  try {
+    // Generate AI-powered response
+    const suggestion = await generateResponseSuggestion(reviewContext, tone);
 
-Thank you so much for taking the time to share your experience! Your kind words mean a lot to me and my team. It was a pleasure working with you throughout your mortgage journey.
+    // Save the AI suggestion to the review
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from("reviews")
+      .update({ ai_suggested_response: suggestion.response })
+      .eq("id", reviewId)
+      .eq("organization_id", context.organizationId);
 
-If you ever need assistance in the future or know someone looking to buy a home or refinance, please don't hesitate to reach out. Referrals from clients like you are the greatest compliment I can receive.
+    return { success: true, data: suggestion.response };
+  } catch (error) {
+    console.error("Failed to generate AI suggestion:", error);
+    return {
+      success: false,
+      error: "Failed to generate AI suggestion. Please try again."
+    };
+  }
+}
 
-Best regards,
-${loanOfficerName}`;
-  } else if (review.rating >= 3) {
-    suggestion = `Dear ${customerName},
-
-Thank you for sharing your feedback. I appreciate you taking the time to let me know about your experience.
-
-Your input helps me improve my service. If there's anything I can do to address your concerns or make things right, please don't hesitate to contact me directly.
-
-Best regards,
-${loanOfficerName}`;
-  } else {
-    suggestion = `Dear ${customerName},
-
-Thank you for sharing your feedback. I sincerely apologize that your experience didn't meet the high standards I strive to provide.
-
-Your satisfaction is extremely important to me, and I would welcome the opportunity to discuss your concerns and make things right. Please feel free to contact me directly at your earliest convenience.
-
-Sincerely,
-${loanOfficerName}`;
+// Track when a user edits an AI-suggested response (for learning)
+export async function trackResponseEdit(
+  reviewId: string,
+  originalSuggestion: string,
+  editedResponse: string
+): Promise<ActionResult<{ learnings: string[] }>> {
+  const context = await requireAuth();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
   }
 
-  // Save the AI suggestion to the review
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any)
-    .from("reviews")
-    .update({ ai_suggested_response: suggestion })
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId);
+  const supabase = await createClient();
 
-  return { success: true, data: suggestion };
+  // Get the review context for analysis
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: review, error } = await (supabase as any)
+    .from("reviews")
+    .select(`
+      text,
+      customer_name,
+      rating,
+      source,
+      sentiment_score,
+      sentiment_label,
+      themes,
+      key_phrases,
+      loan_officers!inner(full_name)
+    `)
+    .eq("id", reviewId)
+    .eq("organization_id", context.organizationId)
+    .single();
+
+  if (error || !review) {
+    return { success: false, error: "Review not found" };
+  }
+
+  const loanOfficer = review.loan_officers as unknown as { full_name: string };
+  const reviewContext: ReviewContext = {
+    text: review.text,
+    rating: review.rating,
+    customerName: review.customer_name,
+    loanOfficerName: loanOfficer.full_name,
+    source: review.source,
+    sentimentScore: review.sentiment_score,
+    sentimentLabel: review.sentiment_label,
+    themes: review.themes,
+    keyPhrases: review.key_phrases,
+  };
+
+  try {
+    // Analyze the edit to extract learnings
+    const { learnings } = await improveResponseWithContext(
+      originalSuggestion,
+      editedResponse,
+      reviewContext
+    );
+
+    // Store the edit data for future learning (optional table)
+    // This could be used to fine-tune future suggestions
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("ai_response_learnings").insert({
+      organization_id: context.organizationId,
+      review_id: reviewId,
+      original_suggestion: originalSuggestion,
+      edited_response: editedResponse,
+      learnings: learnings,
+      rating: review.rating,
+      sentiment_label: review.sentiment_label,
+      created_by: context.userId,
+    }).catch(() => {
+      // Table may not exist yet, silently continue
+    });
+
+    return { success: true, data: { learnings } };
+  } catch (error) {
+    console.error("Failed to track response edit:", error);
+    return { success: true, data: { learnings: [] } };
+  }
 }

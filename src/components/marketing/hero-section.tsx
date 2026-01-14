@@ -20,6 +20,7 @@ interface HeroSectionProps {
   cta?: CTAButton | CTAButton[];
   className?: string;
   children?: React.ReactNode;
+  compact?: boolean;
 }
 
 export function HeroSection({
@@ -29,11 +30,12 @@ export function HeroSection({
   cta,
   className,
   children,
+  compact = false,
 }: HeroSectionProps) {
   const ctaButtons = cta ? (Array.isArray(cta) ? cta : [cta]) : [];
 
   return (
-    <section className={cn("py-16 md:py-24", className)}>
+    <section className={cn(compact ? "py-12 md:py-16" : "py-16 md:py-24", className)}>
       <motion.div
         initial="hidden"
         animate="visible"

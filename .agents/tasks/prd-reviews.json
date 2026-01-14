@@ -53,6 +53,31 @@
       "id": "E7",
       "name": "Integrations & API",
       "description": "Third-party integrations and public API"
+    },
+    {
+      "id": "E8",
+      "name": "Marketing & Public Website",
+      "description": "Public-facing marketing pages, blog, and brand presence"
+    },
+    {
+      "id": "E9",
+      "name": "Advanced Integrations",
+      "description": "Direct CRM integrations, social platforms, and business listings"
+    },
+    {
+      "id": "E10",
+      "name": "AI Visibility & GEO",
+      "description": "Generative Engine Optimization for AI search visibility"
+    },
+    {
+      "id": "E11",
+      "name": "Documentation",
+      "description": "Admin documentation portal and API reference documentation"
+    },
+    {
+      "id": "E12",
+      "name": "Employee Experience",
+      "description": "Internal employee surveys and engagement tracking"
     }
   ],
   "stories": [
@@ -911,6 +936,588 @@
       "startedAt": "2026-01-14T15:36:55.193690+00:00",
       "completedAt": "2026-01-14T15:53:27.721219+00:00",
       "updatedAt": "2026-01-14T15:53:27.721054+00:00"
+    },
+    {
+      "id": "S033",
+      "epic": "E8",
+      "title": "Marketing Pages Foundation",
+      "description": "Create public-facing marketing website with responsive navigation, footer, and core pages including homepage, features, pricing, and about.",
+      "acceptance_criteria": [
+        "Marketing route group with shared layout",
+        "Responsive marketing navigation with mobile menu",
+        "Full-width footer with links and newsletter signup",
+        "Homepage with hero section and feature highlights",
+        "Features page with detailed product capabilities",
+        "Pricing page with 3-tier comparison (Free/Pro/Enterprise)",
+        "About page with company mission and team section",
+        "Contact page with form using Resend integration",
+        "Privacy policy and terms of service pages",
+        "Demo request page with lead capture form"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "done",
+      "gates": [
+        "All pages render correctly on mobile/tablet/desktop",
+        "Contact form submissions work via Resend",
+        "Navigation is accessible via keyboard"
+      ],
+      "dependencies": [
+        "S001",
+        "S004"
+      ],
+      "startedAt": "2026-01-14T18:55:48.148661+00:00",
+      "completedAt": "2026-01-14T18:59:52.943197+00:00",
+      "updatedAt": "2026-01-14T18:59:52.943061+00:00"
+    },
+    {
+      "id": "S034",
+      "epic": "E8",
+      "title": "Marketing Blog System",
+      "description": "Implement a blog system using MDX for content management with categories, search, and SEO optimization.",
+      "acceptance_criteria": [
+        "Blog archive page with category filtering",
+        "Individual blog post pages with MDX rendering",
+        "Blog post metadata (author, date, reading time)",
+        "Category and tag system",
+        "Related posts suggestions",
+        "Social sharing buttons",
+        "RSS feed generation",
+        "SEO-optimized meta tags per post"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "in_progress",
+      "gates": [
+        "MDX posts render correctly with code highlighting",
+        "Blog pages have proper SEO metadata"
+      ],
+      "dependencies": [
+        "S033"
+      ],
+      "startedAt": "2026-01-14T18:59:55.000127+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T18:59:55.000261+00:00"
+    },
+    {
+      "id": "S035",
+      "epic": "E8",
+      "title": "Framer Motion Animation System",
+      "description": "Implement a comprehensive animation system using Framer Motion with scroll-triggered animations, page transitions, and micro-interactions.",
+      "acceptance_criteria": [
+        "Motion provider component respecting prefers-reduced-motion",
+        "Reusable animation variants library",
+        "Scroll-reveal animations for marketing content",
+        "Page transition animations between routes",
+        "Hover and tap animations for interactive elements",
+        "Staggered children animations for lists",
+        "Animated counters for statistics",
+        "Loading state animations"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Animations work smoothly at 60fps",
+        "Reduced motion preference disables animations"
+      ],
+      "dependencies": [
+        "S033"
+      ]
+    },
+    {
+      "id": "S036",
+      "epic": "E3",
+      "title": "Dashboard Route Completion",
+      "description": "Fix all 404 dashboard routes by implementing missing pages for team management, analytics trends, leaderboard, campaigns, manual send, and help center.",
+      "acceptance_criteria": [
+        "/dashboard/team - Team member management with invites",
+        "/dashboard/analytics/trends - Time-series analysis charts",
+        "/dashboard/analytics/leaderboard - Performance rankings (reuse gamification)",
+        "/dashboard/campaigns - Email campaign management",
+        "/dashboard/send - Manual survey sending form",
+        "/dashboard/help - Help center with FAQ and documentation links",
+        "Role-based access control on team and campaigns pages"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "All dashboard routes return 200",
+        "Role restrictions enforced correctly"
+      ],
+      "dependencies": [
+        "S004",
+        "S013"
+      ]
+    },
+    {
+      "id": "S037",
+      "epic": "E3",
+      "title": "Public Branch Profiles",
+      "description": "Create public-facing branch profile pages that aggregate reviews and ratings for all loan officers at a branch location.",
+      "acceptance_criteria": [
+        "Public /branch/[id] route with aggregate data",
+        "Branch overview with location info and contact",
+        "Aggregate rating and review count for branch",
+        "List of loan officers at the branch",
+        "Recent reviews carousel from all branch LOs",
+        "LocalBusiness structured data (schema.org)",
+        "Social sharing meta tags",
+        "Call-to-action to find a loan officer"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "Structured data validates in Google Rich Results Test",
+        "Branch aggregates calculate correctly"
+      ],
+      "dependencies": [
+        "S032"
+      ]
+    },
+    {
+      "id": "S038",
+      "epic": "E3",
+      "title": "Public Organization Profiles",
+      "description": "Create public-facing organization profile pages that aggregate all branches and loan officers across the company.",
+      "acceptance_criteria": [
+        "Public /org/[slug] route with organization data",
+        "Organization overview with branding and mission",
+        "Aggregate rating across all branches",
+        "Branch directory with locations",
+        "Featured loan officers section",
+        "Organization structured data (schema.org)",
+        "Custom domain support preparation",
+        "Testimonials showcase section"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "Structured data validates correctly",
+        "Organization aggregates accurate"
+      ],
+      "dependencies": [
+        "S037"
+      ]
+    },
+    {
+      "id": "S039",
+      "epic": "E9",
+      "title": "Social Media Auto-Publish",
+      "description": "Automatically publish approved reviews to social media platforms including Facebook, Twitter/X, LinkedIn, and Instagram.",
+      "acceptance_criteria": [
+        "OAuth connections for Facebook, Twitter, LinkedIn",
+        "Auto-publish toggle per review",
+        "Customizable post templates per platform",
+        "Image generation for visual posts",
+        "Scheduling options for posts",
+        "Post analytics tracking (impressions, engagement)",
+        "Bulk publish historical reviews",
+        "Social post preview before publishing"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Posts publish successfully to all platforms",
+        "OAuth flows work reliably"
+      ],
+      "dependencies": [
+        "S009",
+        "S015"
+      ]
+    },
+    {
+      "id": "S040",
+      "epic": "E9",
+      "title": "Business Listings Management",
+      "description": "Manage and sync business information across 100+ online directories including Google, Yelp, Zillow, Bing, Yahoo, and industry-specific sites.",
+      "acceptance_criteria": [
+        "Listing profile with NAP (Name, Address, Phone) data",
+        "Directory connection status dashboard",
+        "Sync business info to connected directories",
+        "Listings accuracy score (0-100)",
+        "Duplicate listing detection and cleanup",
+        "Category and keyword optimization",
+        "Photo sync across platforms",
+        "Listing change monitoring and alerts"
+      ],
+      "priority": "P2",
+      "estimate": "XL",
+      "status": "pending",
+      "gates": [
+        "Core directories sync successfully",
+        "Accuracy score calculates correctly"
+      ],
+      "dependencies": [
+        "S015"
+      ]
+    },
+    {
+      "id": "S041",
+      "epic": "E9",
+      "title": "Apple Business Connect Integration",
+      "description": "Integrate with Apple Business Connect for Apple Maps visibility, reviews, and business profile management.",
+      "acceptance_criteria": [
+        "Apple Business Connect API integration",
+        "Sync business info to Apple Maps",
+        "Apple review monitoring and alerts",
+        "Reply to Apple reviews from platform",
+        "Apple-specific analytics",
+        "Showcase photos and services on Apple Maps"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "Apple Business profile syncs successfully",
+        "Reviews appear in aggregated feed"
+      ],
+      "dependencies": [
+        "S015",
+        "S040"
+      ]
+    },
+    {
+      "id": "S042",
+      "epic": "E3",
+      "title": "Website Analytics & SEO Audit",
+      "description": "Provide website analytics and technical SEO audit capabilities similar to experience.com's Web Analytics Score.",
+      "acceptance_criteria": [
+        "Website visitor analytics (page views, sessions, sources)",
+        "Geographic visitor distribution",
+        "Search query tracking (what queries bring visitors)",
+        "Technical SEO audit (meta tags, headings, images)",
+        "Page speed analysis",
+        "Mobile-friendliness check",
+        "SEO score calculation (0-100)",
+        "Improvement recommendations"
+      ],
+      "priority": "P3",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Analytics data accurate within 5%",
+        "SEO recommendations actionable"
+      ],
+      "dependencies": [
+        "S032"
+      ]
+    },
+    {
+      "id": "S043",
+      "epic": "E10",
+      "title": "AI Visibility & GEO Platform",
+      "description": "Build a Generative Engine Optimization (GEO) platform to optimize content for AI search engines like ChatGPT, Perplexity, and Google AI Overviews.",
+      "acceptance_criteria": [
+        "AI visibility score calculation",
+        "Content optimization suggestions for AI search",
+        "AI search mention monitoring",
+        "Competitor AI visibility comparison",
+        "AI-optimized content templates",
+        "Schema markup recommendations for AI",
+        "FAQ generation for AI snippet inclusion",
+        "AI search performance tracking over time"
+      ],
+      "priority": "P3",
+      "estimate": "XL",
+      "status": "pending",
+      "gates": [
+        "AI visibility score correlates with actual AI citations",
+        "Recommendations improve AI search presence"
+      ],
+      "dependencies": [
+        "S019",
+        "S032"
+      ]
+    },
+    {
+      "id": "S044",
+      "epic": "E10",
+      "title": "AI Content Agent",
+      "description": "Build an AI content agent (similar to VOCE) that automatically creates and optimizes content for maximum AI search visibility.",
+      "acceptance_criteria": [
+        "AI-powered content generation for profiles",
+        "Automated bio optimization",
+        "Service description generation",
+        "FAQ content creation",
+        "Local content optimization",
+        "Multi-platform content adaptation",
+        "Content calendar with AI suggestions",
+        "A/B testing for AI-optimized content"
+      ],
+      "priority": "P3",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Generated content passes quality review",
+        "Content improves AI visibility scores"
+      ],
+      "dependencies": [
+        "S043"
+      ]
+    },
+    {
+      "id": "S045",
+      "epic": "E9",
+      "title": "Social Compliance & Moderation",
+      "description": "Implement social media compliance monitoring with stop words, content flagging, and escalation workflows for enterprise control.",
+      "acceptance_criteria": [
+        "Stop word dictionary configuration",
+        "Automatic content flagging on violations",
+        "Escalation workflow to managers",
+        "Compliance audit trail",
+        "Social post approval workflow",
+        "Brand guideline enforcement",
+        "Risk level categorization",
+        "Compliance reporting and exports"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "Stop words detected and flagged",
+        "Escalation workflow functions correctly"
+      ],
+      "dependencies": [
+        "S039"
+      ]
+    },
+    {
+      "id": "S046",
+      "epic": "E9",
+      "title": "HubSpot Integration",
+      "description": "Native integration with HubSpot CRM to sync contacts, reviews, and trigger workflows.",
+      "acceptance_criteria": [
+        "HubSpot OAuth connection",
+        "Bi-directional contact sync",
+        "Review data sync to HubSpot contact properties",
+        "Survey triggers from HubSpot deal stages",
+        "HubSpot workflow triggers on new reviews",
+        "Custom HubSpot dashboard widget",
+        "Activity timeline integration"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Contact sync works bi-directionally",
+        "Deal stage triggers send surveys"
+      ],
+      "dependencies": [
+        "S026",
+        "S027"
+      ]
+    },
+    {
+      "id": "S047",
+      "epic": "E9",
+      "title": "Salesforce Integration",
+      "description": "Native integration with Salesforce CRM for enterprise customers to sync reviews and automate workflows.",
+      "acceptance_criteria": [
+        "Salesforce OAuth connection",
+        "Contact and account sync",
+        "Review data on contact records",
+        "Opportunity stage survey triggers",
+        "Salesforce process builder integration",
+        "Custom Salesforce component for reviews",
+        "Reporting integration"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Salesforce sync reliable",
+        "Survey triggers on opportunity close"
+      ],
+      "dependencies": [
+        "S026",
+        "S027"
+      ]
+    },
+    {
+      "id": "S048",
+      "epic": "E9",
+      "title": "Microsoft Teams Integration",
+      "description": "Microsoft Teams integration for real-time notifications and review management within Teams.",
+      "acceptance_criteria": [
+        "Teams app installation from marketplace",
+        "Real-time review notifications in channels",
+        "Review response directly from Teams",
+        "Weekly digest summaries",
+        "Personal notifications via Teams bot",
+        "Team leaderboard in Teams tab"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "Teams notifications deliver reliably",
+        "Response from Teams works"
+      ],
+      "dependencies": [
+        "S018",
+        "S027"
+      ]
+    },
+    {
+      "id": "S049",
+      "epic": "E3",
+      "title": "Profile Completion Gamification",
+      "description": "Points-based system for profile completion that incentivizes loan officers to complete their profiles with all recommended information.",
+      "acceptance_criteria": [
+        "Profile completion score (0-100 points)",
+        "Points breakdown by section (photo, bio, services, etc.)",
+        "Visual progress indicator on profile",
+        "Completion tips and recommendations",
+        "Points for external connections (Google, social)",
+        "Search Rank Score similar to experience.com (850 points)",
+        "Profile completion leaderboard",
+        "Badges for profile milestones"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "Score calculates correctly",
+        "Visual feedback motivates completion"
+      ],
+      "dependencies": [
+        "S013"
+      ]
+    },
+    {
+      "id": "S050",
+      "epic": "E12",
+      "title": "Employee Experience Survey System",
+      "description": "Build an Employee Experience (EX) survey system for internal culture and engagement measurement.",
+      "acceptance_criteria": [
+        "EX survey templates (engagement, pulse, exit)",
+        "Anonymous response option",
+        "Manager hierarchy for results access",
+        "eNPS (employee Net Promoter Score) tracking",
+        "Trend analysis over time",
+        "Department/team filtering",
+        "Benchmark comparisons",
+        "Action planning from results"
+      ],
+      "priority": "P3",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Anonymous surveys truly anonymous",
+        "Results visible only to appropriate managers"
+      ],
+      "dependencies": [
+        "S005",
+        "S011"
+      ]
+    },
+    {
+      "id": "S051",
+      "epic": "E12",
+      "title": "Employee Recognition & Feedback",
+      "description": "Peer-to-peer recognition and continuous feedback system for employees.",
+      "acceptance_criteria": [
+        "Peer recognition with badges/kudos",
+        "Manager feedback tools",
+        "Recognition feed visible to team",
+        "Recognition analytics",
+        "Integration with review performance",
+        "Monthly/quarterly recognition summaries"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "Recognition posts to feed",
+        "Analytics track recognition trends"
+      ],
+      "dependencies": [
+        "S050"
+      ]
+    },
+    {
+      "id": "S052",
+      "epic": "E8",
+      "title": "Consumer Search Directory",
+      "description": "Public-facing 'Find a Professional' directory where consumers can search and discover loan officers by location, specialty, and ratings.",
+      "acceptance_criteria": [
+        "Public /find-lo or /directory route",
+        "Search by location (city, state, zip)",
+        "Filter by rating, specialty, language",
+        "Sort by rating, reviews, distance",
+        "Individual LO cards with key info",
+        "Map view of nearby professionals",
+        "Click-to-contact functionality",
+        "SEO-optimized for local search"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Search returns relevant results",
+        "Directory pages rank in local search"
+      ],
+      "dependencies": [
+        "S032",
+        "S037"
+      ]
+    },
+    {
+      "id": "S053",
+      "epic": "E11",
+      "title": "Admin Documentation Portal",
+      "description": "Build a comprehensive documentation portal for platform administrators with guides, tutorials, and best practices.",
+      "acceptance_criteria": [
+        "Documentation site at /docs route",
+        "Navigation sidebar with sections",
+        "Search functionality (Fuse.js)",
+        "Getting started guides",
+        "Feature documentation",
+        "Admin settings documentation",
+        "Integration guides",
+        "FAQ section"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "Search returns relevant docs",
+        "All major features documented"
+      ],
+      "dependencies": [
+        "S033"
+      ]
+    },
+    {
+      "id": "S054",
+      "epic": "E11",
+      "title": "API Documentation Portal",
+      "description": "Interactive API documentation portal with OpenAPI spec, code samples, and live playground.",
+      "acceptance_criteria": [
+        "API docs at /api-docs route",
+        "OpenAPI 3.0 spec generation from Zod schemas",
+        "Interactive API playground",
+        "Multi-language code samples (curl, JS, Python)",
+        "Authentication documentation",
+        "Webhook event documentation",
+        "Rate limit documentation",
+        "Error code reference"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "OpenAPI spec validates",
+        "Playground executes requests correctly"
+      ],
+      "dependencies": [
+        "S027"
+      ]
     }
   ],
   "phases": [
@@ -1027,6 +1634,108 @@
           "S029": "/code-simplifier (Widget must be <50KB)"
         },
         "notes": "Mobile UI must feel native. Widgets must be lightweight. API design should prioritize extensibility."
+      }
+    },
+    {
+      "id": "Phase5",
+      "name": "Marketing & Growth",
+      "description": "Public marketing website, blog, animations, and public profiles",
+      "stories": [
+        "S033",
+        "S034",
+        "S035",
+        "S036",
+        "S037",
+        "S038",
+        "S049",
+        "S052",
+        "S053",
+        "S054"
+      ],
+      "target_completion": "Phase 5 Complete",
+      "plugins": {
+        "required": [
+          "/frontend-design",
+          "/feature-dev",
+          "/code-simplifier"
+        ],
+        "recommended_for": {
+          "S033": "/frontend-design (Marketing pages need polished visuals)",
+          "S035": "feature-dev:code-architect (Animation system architecture)",
+          "S052": "/frontend-design (Consumer directory needs intuitive UX)"
+        },
+        "notes": "Marketing pages define brand identity. Prioritize visual polish and responsive design."
+      }
+    },
+    {
+      "id": "Phase6",
+      "name": "Advanced Integrations",
+      "description": "CRM integrations, social media, listings, and compliance",
+      "stories": [
+        "S039",
+        "S040",
+        "S041",
+        "S045",
+        "S046",
+        "S047",
+        "S048"
+      ],
+      "target_completion": "Phase 6 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/code-simplifier",
+          "/code-review"
+        ],
+        "recommended_for": {
+          "S040": "feature-dev:code-architect (Listings requires extensible directory system)",
+          "S046": "/code-review (CRM integrations need security review)",
+          "S047": "/code-review (Salesforce integration needs security review)"
+        },
+        "notes": "Integration code must handle OAuth flows securely. Rate limiting essential for external APIs."
+      }
+    },
+    {
+      "id": "Phase7",
+      "name": "AI Visibility & Analytics",
+      "description": "GEO platform, AI content agent, and advanced analytics",
+      "stories": [
+        "S042",
+        "S043",
+        "S044"
+      ],
+      "target_completion": "Phase 7 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/code-simplifier",
+          "/code-review"
+        ],
+        "recommended_for": {
+          "S043": "feature-dev:code-architect (GEO platform is a major new capability)",
+          "S044": "/code-review (AI content agent needs quality safeguards)"
+        },
+        "notes": "AI visibility is cutting-edge. Monitor industry developments. Start with basic scoring then iterate."
+      }
+    },
+    {
+      "id": "Phase8",
+      "name": "Employee Experience",
+      "description": "Internal employee surveys and recognition",
+      "stories": [
+        "S050",
+        "S051"
+      ],
+      "target_completion": "Phase 8 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/code-simplifier"
+        ],
+        "recommended_for": {
+          "S050": "feature-dev:code-architect (EX system can reuse CX survey patterns)"
+        },
+        "notes": "EX features can leverage existing survey infrastructure. Focus on privacy and anonymity guarantees."
       }
     }
   ],

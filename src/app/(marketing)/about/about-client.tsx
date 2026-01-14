@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Target, Heart, Lightbulb, Shield, Users, Sparkles } from "lucide-react";
 import { HeroSection } from "@/components/marketing/hero-section";
-import { staggerContainer, fadeInUp, slideInLeft, slideInRight } from "@/lib/motion";
+import { staggerContainer, fadeInUp, slideInLeft, slideInRight, viewportOnce } from "@/lib/motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -121,7 +121,7 @@ export function AboutPageClient() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
             className="mx-auto max-w-3xl text-center"
           >
@@ -156,7 +156,7 @@ export function AboutPageClient() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -194,7 +194,7 @@ export function AboutPageClient() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -247,7 +247,7 @@ export function AboutPageClient() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -291,7 +291,7 @@ export function AboutPageClient() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={viewportOnce}
           variants={staggerContainer}
           className="container mx-auto px-4 text-center"
         >

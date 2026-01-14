@@ -67,7 +67,7 @@ export function GoogleIntegrationCard() {
   const [loanOfficers, setLoanOfficers] = useState<
     { id: string; fullName: string }[]
   >([]);
-  const [selectedLoanOfficer, setSelectedLoanOfficer] = useState<string>('');
+  const [selectedLoanOfficer, setSelectedLoanOfficer] = useState<string>('__all__');
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -127,7 +127,7 @@ export function GoogleIntegrationCard() {
 
   const handleConnect = () => {
     // Redirect to OAuth flow
-    const url = selectedLoanOfficer
+    const url = selectedLoanOfficer && selectedLoanOfficer !== '__all__'
       ? `/api/auth/google/connect?loan_officer_id=${selectedLoanOfficer}`
       : '/api/auth/google/connect';
     window.location.href = url;
@@ -318,7 +318,7 @@ export function GoogleIntegrationCard() {
                       <SelectValue placeholder="Select loan officer" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Organization-wide</SelectItem>
+                      <SelectItem value="__all__">Organization-wide</SelectItem>
                       {loanOfficers.map((lo) => (
                         <SelectItem key={lo.id} value={lo.id}>
                           {lo.fullName}

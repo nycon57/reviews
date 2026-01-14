@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { HeroSection } from "@/components/marketing/hero-section";
-import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
 
 export function PrivacyPageClient() {
   return (
@@ -18,7 +18,7 @@ export function PrivacyPageClient() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
             className="prose prose-neutral mx-auto max-w-3xl dark:prose-invert"
           >

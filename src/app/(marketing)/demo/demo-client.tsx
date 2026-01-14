@@ -14,7 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 import { HeroSection } from "@/components/marketing/hero-section";
-import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -129,7 +129,7 @@ export function DemoPageClient() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
             className="grid gap-12 lg:grid-cols-2"
           >

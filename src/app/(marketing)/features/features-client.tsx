@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { FeatureCard } from "@/components/marketing/feature-card";
-import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
 
 const featureCategories = [
   {
@@ -201,7 +201,7 @@ export function FeaturesPageClient() {
             <motion.div
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true, margin: "-100px" }}
+              viewport={viewportOnce}
               variants={staggerContainer}
             >
               <motion.div variants={fadeInUp} className="mb-12 text-center">
@@ -230,7 +230,7 @@ export function FeaturesPageClient() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={viewportOnce}
           variants={staggerContainer}
           className="container mx-auto px-4 text-center"
         >

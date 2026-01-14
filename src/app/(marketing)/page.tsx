@@ -15,7 +15,7 @@ import {
 import { HeroSection, AnimatedStat } from "@/components/marketing";
 import { FeatureCard } from "@/components/marketing/feature-card";
 import { Button } from "@/components/ui/button";
-import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
 
 const stats = [
   { value: "10,000+", label: "Surveys Sent Monthly" },
@@ -73,7 +73,7 @@ export default function HomePage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
             className="grid grid-cols-2 gap-8 md:grid-cols-4"
           >
@@ -92,7 +92,7 @@ export default function HomePage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -140,7 +140,7 @@ export default function HomePage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -201,7 +201,7 @@ export default function HomePage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -253,7 +253,7 @@ export default function HomePage() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -293,7 +293,7 @@ export default function HomePage() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={viewportOnce}
           variants={staggerContainer}
           className="container mx-auto px-4 text-center"
         >

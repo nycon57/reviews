@@ -360,7 +360,8 @@ export const shimmerAnimation: Variants = {
 };
 
 // Viewport settings for scroll-triggered animations
-export const viewportOnce = { once: true, margin: "-100px" };
+// amount: "some" triggers when any part is visible, works reliably with client navigation
+export const viewportOnce = { once: true, amount: "some" } as const;
 export const viewportAlways = { once: false, margin: "-50px" };
 
 // Helper function to create custom fade variants

@@ -4,7 +4,7 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { PricingCard } from "@/components/marketing/pricing-card";
-import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -212,7 +212,7 @@ export function PricingPageClient() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={viewportOnce}
           variants={staggerContainer}
           className="container mx-auto px-4"
         >
@@ -240,7 +240,7 @@ export function PricingPageClient() {
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={viewportOnce}
             variants={staggerContainer}
           >
             <motion.h2
@@ -275,7 +275,7 @@ export function PricingPageClient() {
         <motion.div
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={viewportOnce}
           variants={staggerContainer}
           className="container mx-auto px-4 text-center"
         >

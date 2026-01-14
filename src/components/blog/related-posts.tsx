@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { BlogPostMeta } from "@/types/blog";
 import { BlogCard } from "./blog-card";
-import { staggerContainer, fadeInUp } from "@/lib/motion";
+import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
 
 interface RelatedPostsProps {
   posts: BlogPostMeta[];
@@ -17,7 +17,7 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
       <motion.div
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
+        viewport={viewportOnce}
         variants={staggerContainer}
       >
         <motion.h2

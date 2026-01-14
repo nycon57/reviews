@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Star, Linkedin, Twitter, Loader2 } from "lucide-react";
-import { fadeInUp, staggerContainer } from "@/lib/motion";
+import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -72,7 +72,7 @@ export function MarketingFooter() {
     <motion.footer
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
+      viewport={viewportOnce}
       variants={staggerContainer}
       className="border-t bg-muted/30"
     >

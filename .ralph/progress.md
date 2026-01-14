@@ -85,7 +85,7 @@ Thread:
 Run: 20260113-232603-3866 (iteration 3)
 - Guardrails reviewed: yes
 - No-commit run: false
-- Commit: 6651133 feat(S005): Implement survey builder and templates
+- Commit: 35447a4 feat(S005): Implement survey builder and templates
 - Post-commit status: clean
 - Verification:
   - Command: npm run build -> PASS

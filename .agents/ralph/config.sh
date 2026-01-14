@@ -2,7 +2,7 @@
 # All paths are relative to repo root unless absolute.
 # Uncomment and edit as needed.
 
-# PRD_PATH=".agents/tasks/prd.json"
+PRD_PATH=".agents/tasks/prd-reviews.json"
 # PROGRESS_PATH=".ralph/progress.md"
 # GUARDRAILS_PATH=".ralph/guardrails.md"
 # ERRORS_LOG_PATH=".ralph/errors.log"

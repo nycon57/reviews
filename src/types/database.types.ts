@@ -2227,7 +2227,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
+      },
       business_listings: {
         Row: {
           id: string

@@ -33,6 +33,7 @@ import {
   Sparkles,
   Quote,
   Building,
+  MapPin,
 } from "lucide-react";
 
 interface NavItem {
@@ -68,6 +69,11 @@ const mainNavItems: NavItem[] = [
     title: "Surveys",
     href: "/dashboard/surveys",
     icon: <FileText className="h-4 w-4" />,
+  },
+  {
+    title: "Listings",
+    href: "/dashboard/listings",
+    icon: <MapPin className="h-4 w-4" />,
   },
 ];
 

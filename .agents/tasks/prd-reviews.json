@@ -343,7 +343,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Manager can view all team members",
         "Comparisons calculate correctly"
@@ -424,7 +424,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Reports generate correctly",
         "Exports contain accurate data"
@@ -653,9 +653,9 @@
       "dependencies": [
         "S019"
       ],
-      "startedAt": "2026-01-14T14:14:00.263603+00:00",
-      "completedAt": "2026-01-14T14:52:00.000000+00:00",
-      "updatedAt": "2026-01-14T14:52:00.000000+00:00"
+      "startedAt": "2026-01-14T14:30:49.384598+00:00",
+      "completedAt": "2026-01-14T14:35:24.355010+00:00",
+      "updatedAt": "2026-01-14T14:35:24.354892+00:00"
     },
     {
       "id": "S023",
@@ -672,14 +672,17 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "App runs on iOS and Android simulators",
         "Auth flow works"
       ],
       "dependencies": [
         "S003"
-      ]
+      ],
+      "startedAt": "2026-01-14T14:35:26.415814+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T14:35:26.415988+00:00"
     },
     {
       "id": "S024",
@@ -696,7 +699,7 @@
       ],
       "priority": "P3",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Dashboard matches web data",
         "Performance acceptable on older devices"
@@ -721,7 +724,7 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Survey sends work from mobile",
         "Contact picker works correctly"
@@ -770,7 +773,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "API endpoints function correctly",
         "Documentation is complete"
@@ -795,7 +798,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Plugin installs and activates correctly",
         "Reviews display on WordPress pages"
@@ -819,7 +822,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Widget loads correctly on third-party sites",
         "Styling is customizable"
@@ -843,7 +846,7 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Zapier triggers fire correctly",
         "Actions execute successfully"

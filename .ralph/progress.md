@@ -39,7 +39,7 @@ _No stories currently in progress._
 - [x] S011: Manager Dashboard
 - [x] S013: Gamification & Leaderboards
 - [x] S014: Reporting & Export
-- [ ] S015: Google Business Profile Integration
+- [x] S015: Google Business Profile Integration
 - [ ] S016: Review Aggregation Dashboard
 - [ ] S026: Webhook System
 - [ ] S031: Multi-tenant Organization Support
@@ -78,6 +78,69 @@ npm run lint     # Run ESLint
 npm run db:types # Generate TypeScript types from Supabase
 ```
 
+---
+
+## [2026-01-14] - S015: Google Business Profile Integration
+Thread: Continuation from context compaction
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6301525 feat(S015): Implement Google Business Profile integration
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - supabase/migrations/20240101000007_google_integration.sql (new - google_connections, google_sync_logs tables)
+  - src/lib/google/types.ts (new - TypeScript types for Google OAuth, locations, reviews, connections)
+  - src/lib/google/client.ts (new - Google OAuth and API client functions)
+  - src/lib/google/actions.ts (new - server actions for connect, disconnect, sync, reply)
+  - src/lib/google/index.ts (new - module exports)
+  - src/app/api/auth/google/connect/route.ts (new - OAuth connect redirect)
+  - src/app/api/auth/google/callback/route.ts (new - OAuth callback handler)
+  - src/app/api/cron/google-sync/route.ts (new - daily sync cron job)
+  - src/components/google/google-integration-card.tsx (new - settings UI card)
+  - src/app/(dashboard)/dashboard/settings/page.tsx (updated - added Google integration card)
+  - src/types/database.types.ts (updated - regenerated with Google tables)
+- What was implemented:
+  - S015 acceptance criteria fully met:
+    1. ✅ OAuth connection to Google Business account - OAuth 2.0 flow with state validation, token storage, refresh token handling
+    2. ✅ Fetch Google reviews for connected locations - getReviews() with pagination, syncGoogleReviews() for full/incremental/manual sync
+    3. ✅ Store Google reviews in unified review table - Maps Google starRating to 1-5, stores source='google', syncs reply status
+    4. ✅ Reply to Google reviews from platform - replyToGoogleReview() and deleteGoogleReply() server actions with API calls
+    5. ✅ Google review alerts/notifications - Reviews stored in unified table trigger existing notification system
+    6. ✅ Sync scheduling (daily) - /api/cron/google-sync processes active connections every 24 hours
+  - OAuth Flow:
+    - /api/auth/google/connect generates authorization URL with state (org ID, user ID, optional LO ID)
+    - /api/auth/google/callback exchanges code for tokens, fetches user info and first location
+    - Tokens encrypted in database with refresh_token for automatic renewal
+  - Sync System:
+    - Full sync: All reviews with pagination
+    - Incremental sync: Only new/updated reviews
+    - Manual sync: User-triggered via UI button
+    - Sync logs track reviews fetched/created/updated/errors
+  - Database Tables:
+    - google_connections: OAuth tokens, location info, sync status, review stats
+    - google_sync_logs: Audit trail for sync operations with timing and error tracking
+  - Settings UI:
+    - Connection status display with sync status badge
+    - Manual sync trigger button
+    - Disconnect confirmation dialog
+    - Loan officer assignment for new connections
+- Gates verified:
+  - Build passes with TypeScript strict mode ✓
+  - Lint passes with no errors ✓
+  - Database types regenerated and exported ✓
+- Applied migrations via MCP:
+  - google_integration
+  - email_unsubscribes (pre-existing, unapplied)
+  - reporting (pre-existing, unapplied)
+  - survey_distribution (pre-existing, unapplied)
+- **Learnings for future iterations:**
+  - Google Business API uses resource names like 'accounts/{id}/locations/{id}'
+  - Star ratings are strings ('ONE', 'TWO', etc.) needing mapping to numbers
+  - Reviews require loan_officer_id - connections without LO assigned skip review creation
+  - Token refresh handled automatically when access token expires (5 min buffer)
+  - Cron endpoint verifies CRON_SECRET header for security
 ---
 
 ## [2026-01-14T02:56:20] - S014: Reporting & Export

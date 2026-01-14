@@ -370,14 +370,17 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Metrics match manual calculations",
         "Performance acceptable with 10k+ records"
       ],
       "dependencies": [
         "S002"
-      ]
+      ],
+      "updatedAt": "2026-01-14T06:50:02.687984+00:00",
+      "completedAt": "2026-01-14T06:50:02.688262+00:00",
+      "startedAt": "2026-01-14T06:50:02.688264+00:00"
     },
     {
       "id": "S013",
@@ -394,14 +397,17 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Scores calculate consistently",
         "Leaderboard updates accurately"
       ],
       "dependencies": [
         "S012"
-      ]
+      ],
+      "startedAt": "2026-01-14T06:50:04.739838+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T06:50:04.739997+00:00"
     },
     {
       "id": "S014",

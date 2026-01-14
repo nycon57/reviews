@@ -10,6 +10,12 @@ import {
   LOQuickActions,
 } from "@/components/dashboard";
 import {
+  GamificationStatsCard,
+  BadgeShowcase,
+  ReputationBreakdownCard,
+  ImprovementTipsCard,
+} from "@/components/gamification";
+import {
   getLoanOfficerMetrics,
   getLoanOfficerRecentReviews,
   getRatingTrend,
@@ -133,6 +139,9 @@ export default function DashboardPage() {
         <DashboardStats />
       </Suspense>
 
+      {/* Gamification progress */}
+      <GamificationStatsCard />
+
       {/* Charts grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Suspense fallback={<ChartSkeleton />}>
@@ -152,13 +161,20 @@ export default function DashboardPage() {
           </Suspense>
         </div>
 
-        {/* Sidebar - quick actions and profile completion */}
+        {/* Sidebar - quick actions, badges, and profile completion */}
         <div className="space-y-6">
           <LOQuickActions />
+          <BadgeShowcase />
+          <ImprovementTipsCard />
           <Suspense fallback={<CardSkeleton className="h-[280px]" />}>
             <ProfileCompletionCard />
           </Suspense>
         </div>
+      </div>
+
+      {/* Reputation breakdown section */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ReputationBreakdownCard />
       </div>
     </div>
   );

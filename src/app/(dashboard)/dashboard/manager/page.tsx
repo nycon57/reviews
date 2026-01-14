@@ -8,6 +8,7 @@ import {
   PerformanceAlerts,
   LOTrendChart,
 } from "@/components/dashboard";
+import { EnhancedLeaderboard } from "@/components/gamification";
 import { ManagerDashboardClient } from "./manager-dashboard-client";
 import {
   getTeamMetrics,
@@ -157,6 +158,9 @@ export default async function ManagerDashboardPage() {
       <Suspense fallback={<CardSkeleton className="h-[200px]" />}>
         <AlertsSection />
       </Suspense>
+
+      {/* Enhanced Leaderboard */}
+      <EnhancedLeaderboard filterOptions={initialData.filters} />
 
       {/* Comparison table with client-side filtering */}
       <ManagerDashboardClient

@@ -1,13 +1,30 @@
+import { Suspense } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/shared";
+import { GoogleIntegrationCard } from "@/components/google/google-integration-card";
 
 export const metadata = {
   title: "Settings | ReviewHub",
   description: "Manage your account settings and preferences",
 };
+
+function GoogleCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-72" />
+      </CardHeader>
+      <CardContent>
+        <Skeleton className="h-24 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function SettingsPage() {
   return (
@@ -42,6 +59,11 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Google Integration */}
+        <Suspense fallback={<GoogleCardSkeleton />}>
+          <GoogleIntegrationCard />
+        </Suspense>
 
         {/* Profile */}
         <Card>

@@ -13,9 +13,18 @@ import {
   RefreshCw,
   Mail,
   Webhook,
+  RotateCcw,
+  Settings,
 } from "lucide-react";
-import { getDistributionQueue, getSurveysForDistribution } from "@/lib/distribution/actions";
+import {
+  getDistributionQueue,
+  getSurveysForDistribution,
+  resendSurvey,
+} from "@/lib/distribution/actions";
 import { formatDistanceToNow } from "date-fns";
+import { SendSurveyDialog } from "./send-survey-dialog";
+import { WebhookConfigManager } from "./webhook-config-manager";
+import { useToast } from "@/hooks/use-toast";
 
 interface QueueItem {
   id: string;
@@ -58,6 +67,7 @@ interface Stats {
 
 export function DistributionDashboard() {
   const [isPending, startTransition] = useTransition();
+  const [resendingId, setResendingId] = useState<string | null>(null);
   const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -66,6 +76,7 @@ export function DistributionDashboard() {
     sent: 0,
     failed: 0,
   });
+  const { toast } = useToast();
 
   const loadData = () => {
     startTransition(async () => {
@@ -133,6 +144,26 @@ export function DistributionDashboard() {
     loadData();
   }, []);
 
+  const handleResend = async (surveyId: string) => {
+    setResendingId(surveyId);
+    const result = await resendSurvey(surveyId);
+    setResendingId(null);
+
+    if (result.success) {
+      toast({
+        title: "Survey resent",
+        description: "The survey invitation has been sent again.",
+      });
+      loadData();
+    } else {
+      toast({
+        title: "Failed to resend",
+        description: result.error || "Could not resend the survey",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string | null) => {
     switch (status) {
       case "pending":
@@ -193,6 +224,11 @@ export function DistributionDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Header with Send Survey button */}
+      <div className="flex justify-end">
+        <SendSurveyDialog onSuccess={loadData} />
+      </div>
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
@@ -265,6 +301,10 @@ export function DistributionDashboard() {
                 <TabsTrigger value="webhooks" className="flex items-center gap-2">
                   <Webhook className="h-4 w-4" />
                   Webhook Logs
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Settings
                 </TabsTrigger>
               </TabsList>
               <Button
@@ -366,6 +406,21 @@ export function DistributionDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        {(survey.status === "sent" || survey.status === "pending") && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResend(survey.id)}
+                            disabled={resendingId === survey.id}
+                          >
+                            {resendingId === survey.id ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <RotateCcw className="h-4 w-4" />
+                            )}
+                            <span className="ml-1 hidden sm:inline">Resend</span>
+                          </Button>
+                        )}
                         {getStatusBadge(survey.status)}
                       </div>
                     </div>
@@ -378,6 +433,12 @@ export function DistributionDashboard() {
           <TabsContent value="webhooks" className="m-0">
             <CardContent>
               <WebhookLogsList />
+            </CardContent>
+          </TabsContent>
+
+          <TabsContent value="settings" className="m-0">
+            <CardContent>
+              <WebhookConfigManager />
             </CardContent>
           </TabsContent>
         </Tabs>

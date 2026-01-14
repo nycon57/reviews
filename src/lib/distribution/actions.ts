@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
+import { randomBytes } from "crypto";
 import {
   processQueueItem,
   scheduleReminders,
@@ -12,6 +13,7 @@ import {
 import { sendSurveyInvitationEmail } from "@/lib/email";
 import { emailConfig } from "@/lib/email/client";
 import type { SurveyInvitationEmailData } from "@/lib/email/types";
+import type { Json } from "@/types/database.types";
 
 // Input validation schemas
 const createSurveyInputSchema = z.object({
@@ -142,14 +144,12 @@ export async function createSurveyAndQueue(
       };
     }
 
-    // Calculate scheduled time
-    let scheduledAt = new Date();
-    if (validated.data.scheduledAt) {
-      scheduledAt = new Date(validated.data.scheduledAt);
-      if (scheduledAt < new Date()) {
-        scheduledAt = new Date();
-      }
-    }
+    // Calculate scheduled time (use provided time if in future, otherwise now)
+    const now = new Date();
+    const requestedTime = validated.data.scheduledAt
+      ? new Date(validated.data.scheduledAt)
+      : now;
+    const scheduledAt = requestedTime > now ? requestedTime : now;
 
     // Calculate expiration (14 days from scheduled send)
     const expiresAt = new Date(scheduledAt);
@@ -532,6 +532,102 @@ export async function getSurveysForDistribution(params?: {
   }
 }
 
+// Get loan officers for the current organization
+export async function getLoanOfficersForSend(): Promise<
+  ActionResult<Array<{ id: string; fullName: string; email: string }>>
+> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const { data, error } = await supabase
+      .from("loan_officers")
+      .select("id, full_name, email")
+      .eq("organization_id", userData.organization_id)
+      .eq("is_active", true)
+      .order("full_name", { ascending: true });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const loanOfficers = (data || []).map((lo) => ({
+      id: lo.id,
+      fullName: lo.full_name,
+      email: lo.email,
+    }));
+
+    return { success: true, data: loanOfficers };
+  } catch (error) {
+    console.error("Error fetching loan officers:", error);
+    return { success: false, error: "Failed to fetch loan officers" };
+  }
+}
+
+// Get active survey templates for the current organization
+export async function getActiveTemplatesForSend(): Promise<
+  ActionResult<Array<{ id: string; name: string; description: string | null }>>
+> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const { data, error } = await supabase
+      .from("survey_templates")
+      .select("id, name, description")
+      .eq("organization_id", userData.organization_id)
+      .eq("is_active", true)
+      .order("name", { ascending: true });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const templates = (data || []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      description: t.description,
+    }));
+
+    return { success: true, data: templates };
+  } catch (error) {
+    console.error("Error fetching templates:", error);
+    return { success: false, error: "Failed to fetch templates" };
+  }
+}
+
 // Get distribution queue items
 export async function getDistributionQueue(params?: {
   status?: string;
@@ -630,5 +726,304 @@ export async function getDistributionQueue(params?: {
   } catch (error) {
     console.error("Error fetching distribution queue:", error);
     return { success: false, error: "Failed to fetch distribution queue" };
+  }
+}
+
+// Webhook configuration types
+export interface WebhookConfig {
+  id: string;
+  name: string;
+  secretKey: string;
+  isActive: boolean;
+  allowedIps: string[] | null;
+  defaultTemplateId: string | null;
+  settings: Record<string, unknown> | null;
+  lastTriggeredAt: string | null;
+  triggerCount: number;
+  createdAt: string;
+}
+
+const createWebhookConfigSchema = z.object({
+  name: z.string().min(1, "Name is required").max(100),
+  allowedIps: z.array(z.string()).optional(),
+  defaultTemplateId: z.string().uuid().optional(),
+  settings: z.record(z.unknown()).optional(),
+});
+
+// Get webhook configurations for the current organization
+export async function getWebhookConfigs(): Promise<ActionResult<WebhookConfig[]>> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only admins can view webhook configs
+    if (userData.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    const { data, error } = await supabase
+      .from("webhook_configs")
+      .select("*")
+      .eq("organization_id", userData.organization_id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    const configs: WebhookConfig[] = (data || []).map((config) => ({
+      id: config.id,
+      name: config.name,
+      secretKey: config.secret_key,
+      isActive: config.is_active ?? true,
+      allowedIps: config.allowed_ips as string[] | null,
+      defaultTemplateId: config.default_template_id,
+      settings: config.settings as Record<string, unknown> | null,
+      lastTriggeredAt: config.last_triggered_at,
+      triggerCount: config.trigger_count || 0,
+      createdAt: config.created_at || "",
+    }));
+
+    return { success: true, data: configs };
+  } catch (error) {
+    console.error("Error fetching webhook configs:", error);
+    return { success: false, error: "Failed to fetch webhook configurations" };
+  }
+}
+
+// Create a new webhook configuration
+export async function createWebhookConfig(
+  input: z.infer<typeof createWebhookConfigSchema>
+): Promise<ActionResult<WebhookConfig>> {
+  try {
+    const validated = createWebhookConfigSchema.safeParse(input);
+    if (!validated.success) {
+      return {
+        success: false,
+        error: validated.error.errors[0]?.message || "Validation failed",
+      };
+    }
+
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only admins can create webhook configs
+    if (userData.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    // Generate a secure secret key
+    const secretKey = `whk_${randomBytes(32).toString("hex")}`;
+
+    const { data, error } = await supabase
+      .from("webhook_configs")
+      .insert({
+        organization_id: userData.organization_id,
+        name: validated.data.name,
+        secret_key: secretKey,
+        is_active: true,
+        allowed_ips: validated.data.allowedIps || null,
+        default_template_id: validated.data.defaultTemplateId || null,
+        settings: validated.data.settings
+          ? (JSON.parse(JSON.stringify(validated.data.settings)) as Json)
+          : null,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/dashboard/distribution");
+
+    const config: WebhookConfig = {
+      id: data.id,
+      name: data.name,
+      secretKey: data.secret_key,
+      isActive: data.is_active ?? true,
+      allowedIps: data.allowed_ips as string[] | null,
+      defaultTemplateId: data.default_template_id,
+      settings: data.settings as Record<string, unknown> | null,
+      lastTriggeredAt: data.last_triggered_at,
+      triggerCount: data.trigger_count || 0,
+      createdAt: data.created_at || "",
+    };
+
+    return { success: true, data: config };
+  } catch (error) {
+    console.error("Error creating webhook config:", error);
+    return { success: false, error: "Failed to create webhook configuration" };
+  }
+}
+
+// Toggle webhook configuration active status
+export async function toggleWebhookConfig(
+  id: string,
+  isActive: boolean
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    if (userData.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    const { error } = await supabase
+      .from("webhook_configs")
+      .update({ is_active: isActive })
+      .eq("id", id)
+      .eq("organization_id", userData.organization_id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/dashboard/distribution");
+    return { success: true };
+  } catch (error) {
+    console.error("Error toggling webhook config:", error);
+    return { success: false, error: "Failed to update webhook configuration" };
+  }
+}
+
+// Delete a webhook configuration
+export async function deleteWebhookConfig(id: string): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    if (userData.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    const { error } = await supabase
+      .from("webhook_configs")
+      .delete()
+      .eq("id", id)
+      .eq("organization_id", userData.organization_id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/dashboard/distribution");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting webhook config:", error);
+    return { success: false, error: "Failed to delete webhook configuration" };
+  }
+}
+
+// Regenerate webhook secret key
+export async function regenerateWebhookSecret(
+  id: string
+): Promise<ActionResult<{ secretKey: string }>> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    if (userData.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    const newSecretKey = `whk_${randomBytes(32).toString("hex")}`;
+
+    const { error } = await supabase
+      .from("webhook_configs")
+      .update({ secret_key: newSecretKey })
+      .eq("id", id)
+      .eq("organization_id", userData.organization_id);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath("/dashboard/distribution");
+    return { success: true, data: { secretKey: newSecretKey } };
+  } catch (error) {
+    console.error("Error regenerating webhook secret:", error);
+    return { success: false, error: "Failed to regenerate webhook secret" };
   }
 }

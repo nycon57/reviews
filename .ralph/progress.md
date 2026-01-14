@@ -40,7 +40,7 @@ _No stories currently in progress._
 - [x] S013: Gamification & Leaderboards
 - [x] S014: Reporting & Export
 - [x] S015: Google Business Profile Integration
-- [ ] S016: Review Aggregation Dashboard
+- [x] S016: Review Aggregation Dashboard
 - [ ] S026: Webhook System
 - [ ] S031: Multi-tenant Organization Support
 
@@ -1067,8 +1067,8 @@ Thread:
 Run: 20260114-001521-85850 (iteration 18)
 - Guardrails reviewed: yes
 - No-commit run: false
-- Commit: (pending)
-- Post-commit status: (pending)
+- Commit: d052193 feat(S016): Implement review aggregation dashboard
+- Post-commit status: clean
 - Verification:
   - Command: npm run build -> PASS
   - Command: npm run lint -> PASS

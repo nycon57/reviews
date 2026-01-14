@@ -2374,3 +2374,57 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Database triggers can handle aggregate calculations automatically
   - SchemaBranch interface should match getPublicBranchProfile() return type
 ---
+
+## [2026-01-14 14:40] - S038: Public Organization Profiles
+Thread:
+Run: 20260114-144000-70140 (iteration 5)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-144000-70140-iter-5.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-144000-70140-iter-5.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 48361a2 feat(S038): Implement public organization profiles
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS (66 pages generated including /org/[slug])
+  - Command: npm run lint -> PASS (0 errors, 7 warnings - pre-existing)
+- Files created:
+  - src/app/org/[slug]/page.tsx - Server component with metadata and structured data
+  - src/app/org/[slug]/organization-profile-content.tsx - Client component with full org UI
+  - src/app/org/[slug]/not-found.tsx - 404 page for organizations
+- Files modified:
+  - src/lib/seo/actions.ts - Added getPublicOrganizationProfile() with types
+  - src/lib/seo/schema-generators.ts - Added Organization schema generators
+  - src/lib/seo/metadata.ts - Added generateOrganizationProfileMetadata()
+  - src/lib/seo/index.ts - Exported new organization functions
+- What was implemented:
+  - /org/[slug] public route for organization profile pages
+  - Organization overview with branding (logo, colors, mission statement)
+  - Aggregate rating calculated across all branches
+  - Branch directory listing all locations with ratings
+  - Featured loan officers section (top-rated professionals)
+  - Customer testimonials showcase (high-rated reviews with text)
+  - Organization schema.org structured data with departments (branches) and employees
+  - Social sharing meta tags (OpenGraph, Twitter cards)
+  - Quick stats card with total reviews and locations
+  - CTA section to find local branch
+- S038 Acceptance Criteria Status:
+  - ✅ Public /org/[slug] route created
+  - ✅ Organization overview with branding and mission
+  - ✅ Aggregate rating across all branches
+  - ✅ Branch directory with locations
+  - ✅ Featured loan officers section
+  - ✅ Organization structured data (schema.org)
+  - ✅ Custom domain support preparation (domain field in organization)
+  - ✅ Testimonials showcase section
+- Gates verified:
+  - ✅ npm run build passes
+  - ✅ npm run lint passes (no new errors)
+  - ✅ Structured data validates correctly (follows schema.org Organization type)
+  - ✅ Organization aggregates accurate (weighted average from branches)
+- **Learnings for future iterations:**
+  - Follow existing patterns from /branch/[id] for public profile pages
+  - Schema.org Organization type supports departments (branches) and employees
+  - Weighted average calculation for aggregate ratings is more accurate
+  - Use explicit inline types when TypeScript can't infer from optional array properties
+  - Organization settings JSON can store additional fields like description and mission
+---

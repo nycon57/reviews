@@ -33,9 +33,9 @@ export function RecognitionAnalyticsDashboard({
     setIsLoading(true);
     const result = await getRecognitionAnalytics(selectedPeriod);
     if (result.success && result.data) {
-      const analyticsData = result.data;
+      const data = result.data;
       startTransition(() => {
-        setAnalytics(analyticsData);
+        setAnalytics(data);
       });
     }
     setIsLoading(false);

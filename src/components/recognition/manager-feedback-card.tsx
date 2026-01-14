@@ -27,26 +27,9 @@ import {
   formatRecognitionDate,
 } from "@/types/recognition.types";
 import { deleteManagerFeedback } from "@/lib/recognition/actions";
-import {
-  MoreHorizontal,
-  Trash2,
-  Lock,
-  Star,
-  MessageSquare,
-  TrendingUp,
-  ClipboardList,
-  FileText,
-} from "lucide-react";
+import { MoreHorizontal, Trash2, Lock, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-// Icon mapping for feedback types
-const FEEDBACK_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Star,
-  MessageSquare,
-  TrendingUp,
-  ClipboardList,
-  FileText,
-};
+import { FEEDBACK_ICONS } from "./constants";
 
 interface ManagerFeedbackCardProps {
   feedback: ManagerFeedback;

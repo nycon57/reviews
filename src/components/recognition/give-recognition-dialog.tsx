@@ -43,7 +43,6 @@ export function GiveRecognitionDialog({ trigger, onSuccess }: GiveRecognitionDia
   const [selectedBadge, setSelectedBadge] = useState<RecognitionBadge | null>(null);
   const [message, setMessage] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [visibility, setVisibility] = useState<RecognitionVisibility>("public");
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -102,7 +101,6 @@ export function GiveRecognitionDialog({ trigger, onSuccess }: GiveRecognitionDia
         toUserId: selectedUser.id,
         badgeId: selectedBadge?.id,
         message: message.trim(),
-        visibility,
         isAnonymous,
       });
 
@@ -112,7 +110,6 @@ export function GiveRecognitionDialog({ trigger, onSuccess }: GiveRecognitionDia
         setSelectedBadge(null);
         setMessage("");
         setIsAnonymous(false);
-        setVisibility("public");
         setSearchQuery("");
         setOpen(false);
         onSuccess?.();
@@ -127,7 +124,6 @@ export function GiveRecognitionDialog({ trigger, onSuccess }: GiveRecognitionDia
     setSelectedBadge(null);
     setMessage("");
     setIsAnonymous(false);
-    setVisibility("public");
     setSearchQuery("");
     setSearchResults([]);
   };

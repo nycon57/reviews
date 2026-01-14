@@ -17,39 +17,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  FeedbackType,
-  FEEDBACK_TYPE_CONFIG,
-} from "@/types/recognition.types";
+import { FeedbackType, FEEDBACK_TYPE_CONFIG } from "@/types/recognition.types";
 import { createManagerFeedback, searchUsers } from "@/lib/recognition/actions";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
-import {
-  Search,
-  Plus,
-  Check,
-  Loader2,
-  Send,
-  Star,
-  MessageSquare,
-  TrendingUp,
-  ClipboardList,
-  FileText,
-} from "lucide-react";
-
-// Icon mapping for feedback types
-const FEEDBACK_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Star,
-  MessageSquare,
-  TrendingUp,
-  ClipboardList,
-  FileText,
-};
+import { Search, Plus, Check, Loader2, Send, MessageSquare } from "lucide-react";
+import { FEEDBACK_ICONS } from "./constants";
 
 interface GiveFeedbackDialogProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
-  preselectedUserId?: string;
   preselectedUser?: {
     id: string;
     name: string;
@@ -61,7 +38,6 @@ interface GiveFeedbackDialogProps {
 export function GiveFeedbackDialog({
   trigger,
   onSuccess,
-  preselectedUserId: _preselectedUserId,
   preselectedUser,
 }: GiveFeedbackDialogProps) {
   const [open, setOpen] = useState(false);

@@ -4,15 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Award,
-  Gift,
-  TrendingUp,
-  Users,
-  Target,
-  MessageSquare,
-  CheckCircle2,
-} from "lucide-react";
+import { Award, Gift, TrendingUp, Users, Target, MessageSquare, CheckCircle2 } from "lucide-react";
 import {
   getRecognitions,
   getRecognitionAnalytics,

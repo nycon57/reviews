@@ -96,7 +96,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Database migrations run successfully",
         "TypeScript types generate without errors"
@@ -105,8 +105,8 @@
         "S001"
       ],
       "startedAt": "2026-01-14T04:16:33.291087+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T04:16:33.291232+00:00"
+      "completedAt": "2026-01-14T04:23:55.487990+00:00",
+      "updatedAt": "2026-01-14T04:23:55.487753+00:00"
     },
     {
       "id": "S003",
@@ -123,14 +123,17 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Auth flows work end-to-end",
         "RLS policies enforce role access"
       ],
       "dependencies": [
         "S002"
-      ]
+      ],
+      "startedAt": "2026-01-14T04:24:13.238342+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T04:28:00.392023+00:00"
     },
     {
       "id": "S004",
@@ -155,7 +158,10 @@
       "dependencies": [
         "S001",
         "S003"
-      ]
+      ],
+      "startedAt": "2026-01-14T04:26:03.129313+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T04:26:03.129467+00:00"
     },
     {
       "id": "S005",

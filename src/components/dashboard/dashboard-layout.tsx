@@ -1,0 +1,56 @@
+"use client";
+
+import * as React from "react";
+import { Sidebar } from "./sidebar";
+import { Header } from "./header";
+import { MobileNavTrigger } from "./mobile-nav";
+import { cn } from "@/lib/utils";
+
+interface User {
+  name: string;
+  email: string;
+  avatar?: string;
+  initials: string;
+}
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  user?: User | null;
+  onSignOut?: () => void;
+}
+
+export function DashboardLayout({ children, user, onSignOut }: DashboardLayoutProps) {
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Desktop Sidebar - hidden on mobile */}
+      <div className="hidden md:block">
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
+        />
+      </div>
+
+      {/* Main content area */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Header */}
+        <Header
+          user={user}
+          onSignOut={onSignOut}
+          mobileMenuTrigger={<MobileNavTrigger />}
+        />
+
+        {/* Page content */}
+        <main
+          className={cn(
+            "flex-1 overflow-y-auto",
+            "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border"
+          )}
+        >
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

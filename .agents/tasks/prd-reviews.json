@@ -1103,14 +1103,17 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Structured data validates correctly",
         "Organization aggregates accurate"
       ],
       "dependencies": [
         "S037"
-      ]
+      ],
+      "updatedAt": "2026-01-14T20:16:52.205992+00:00",
+      "completedAt": "2026-01-14T20:16:52.206136+00:00",
+      "startedAt": "2026-01-14T20:16:52.206139+00:00"
     },
     {
       "id": "S039",
@@ -1129,7 +1132,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "pending",
+      "status": "in_progress",
       "gates": [
         "Posts publish successfully to all platforms",
         "OAuth flows work reliably"
@@ -1137,7 +1140,10 @@
       "dependencies": [
         "S009",
         "S015"
-      ]
+      ],
+      "startedAt": "2026-01-14T20:38:21.443713+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T20:38:21.443837+00:00"
     },
     {
       "id": "S040",
@@ -1156,7 +1162,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "pending",
+      "status": "open",
       "gates": [
         "Core directories sync successfully",
         "Accuracy score calculates correctly"

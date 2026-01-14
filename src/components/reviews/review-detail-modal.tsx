@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Tags,
   Clock,
+  Share2,
 } from "lucide-react";
 import type { AggregatedReview } from "@/lib/reviews/types";
 import {
@@ -32,6 +33,7 @@ import {
   toggleReviewFeatured,
 } from "@/lib/reviews/aggregation-actions";
 import { ResponseComposer } from "./response-composer";
+import { SocialPostComposer } from "@/components/social";
 
 interface ReviewDetailModalProps {
   review: AggregatedReview | null;
@@ -48,6 +50,7 @@ export function ReviewDetailModal({
 }: ReviewDetailModalProps) {
   const [isPending, startTransition] = useTransition();
   const [showResponseForm, setShowResponseForm] = useState(false);
+  const [showSocialComposer, setShowSocialComposer] = useState(false);
 
   if (!review) return null;
 
@@ -373,6 +376,16 @@ export function ReviewDetailModal({
                 Archive
               </Button>
             )}
+            {review.status === "approved" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSocialComposer(true)}
+              >
+                <Share2 className="h-4 w-4 mr-1" />
+                Share to Social
+              </Button>
+            )}
           </div>
 
           {/* Metadata */}
@@ -388,6 +401,17 @@ export function ReviewDetailModal({
           </div>
         </div>
       </DialogContent>
+
+      {/* Social Post Composer */}
+      <SocialPostComposer
+        reviewId={review.id}
+        reviewRating={review.rating}
+        reviewText={review.text}
+        customerName={review.customerName}
+        open={showSocialComposer}
+        onOpenChange={setShowSocialComposer}
+        onSuccess={onUpdate}
+      />
     </Dialog>
   );
 }

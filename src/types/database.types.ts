@@ -1822,6 +1822,412 @@ export type Database = {
           },
         ]
       }
+      social_connections: {
+        Row: {
+          id: string
+          organization_id: string
+          platform: string
+          platform_user_id: string
+          platform_username: string | null
+          platform_display_name: string | null
+          platform_profile_url: string | null
+          platform_avatar_url: string | null
+          access_token: string
+          refresh_token: string | null
+          token_expires_at: string | null
+          token_scope: string | null
+          page_id: string | null
+          page_name: string | null
+          page_access_token: string | null
+          is_active: boolean | null
+          auto_publish_enabled: boolean | null
+          auto_publish_min_rating: number | null
+          last_post_at: string | null
+          posts_count: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          platform: string
+          platform_user_id: string
+          platform_username?: string | null
+          platform_display_name?: string | null
+          platform_profile_url?: string | null
+          platform_avatar_url?: string | null
+          access_token: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          token_scope?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          page_access_token?: string | null
+          is_active?: boolean | null
+          auto_publish_enabled?: boolean | null
+          auto_publish_min_rating?: number | null
+          last_post_at?: string | null
+          posts_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          platform?: string
+          platform_user_id?: string
+          platform_username?: string | null
+          platform_display_name?: string | null
+          platform_profile_url?: string | null
+          platform_avatar_url?: string | null
+          access_token?: string
+          refresh_token?: string | null
+          token_expires_at?: string | null
+          token_scope?: string | null
+          page_id?: string | null
+          page_name?: string | null
+          page_access_token?: string | null
+          is_active?: boolean | null
+          auto_publish_enabled?: boolean | null
+          auto_publish_min_rating?: number | null
+          last_post_at?: string | null
+          posts_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_templates: {
+        Row: {
+          id: string
+          organization_id: string | null
+          platform: string
+          name: string
+          description: string | null
+          is_default: boolean | null
+          is_system: boolean | null
+          is_active: boolean | null
+          template_text: string
+          include_image: boolean | null
+          include_link: boolean | null
+          link_text: string | null
+          max_length: number | null
+          default_hashtags: string[] | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          platform: string
+          name: string
+          description?: string | null
+          is_default?: boolean | null
+          is_system?: boolean | null
+          is_active?: boolean | null
+          template_text: string
+          include_image?: boolean | null
+          include_link?: boolean | null
+          link_text?: string | null
+          max_length?: number | null
+          default_hashtags?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          platform?: string
+          name?: string
+          description?: string | null
+          is_default?: boolean | null
+          is_system?: boolean | null
+          is_active?: boolean | null
+          template_text?: string
+          include_image?: boolean | null
+          include_link?: boolean | null
+          link_text?: string | null
+          max_length?: number | null
+          default_hashtags?: string[] | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_posts: {
+        Row: {
+          id: string
+          organization_id: string
+          connection_id: string
+          review_id: string | null
+          testimonial_id: string | null
+          template_id: string | null
+          platform: string
+          content: string
+          image_url: string | null
+          link_url: string | null
+          status: string
+          scheduled_for: string | null
+          published_at: string | null
+          platform_post_id: string | null
+          platform_post_url: string | null
+          error_message: string | null
+          retry_count: number | null
+          last_retry_at: string | null
+          created_by: string | null
+          is_auto_generated: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          connection_id: string
+          review_id?: string | null
+          testimonial_id?: string | null
+          template_id?: string | null
+          platform: string
+          content: string
+          image_url?: string | null
+          link_url?: string | null
+          status?: string
+          scheduled_for?: string | null
+          published_at?: string | null
+          platform_post_id?: string | null
+          platform_post_url?: string | null
+          error_message?: string | null
+          retry_count?: number | null
+          last_retry_at?: string | null
+          created_by?: string | null
+          is_auto_generated?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          connection_id?: string
+          review_id?: string | null
+          testimonial_id?: string | null
+          template_id?: string | null
+          platform?: string
+          content?: string
+          image_url?: string | null
+          link_url?: string | null
+          status?: string
+          scheduled_for?: string | null
+          published_at?: string | null
+          platform_post_id?: string | null
+          platform_post_url?: string | null
+          error_message?: string | null
+          retry_count?: number | null
+          last_retry_at?: string | null
+          created_by?: string | null
+          is_auto_generated?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "social_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_testimonial_id_fkey"
+            columns: ["testimonial_id"]
+            isOneToOne: false
+            referencedRelation: "testimonials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_analytics: {
+        Row: {
+          id: string
+          post_id: string
+          organization_id: string
+          impressions: number | null
+          reach: number | null
+          engagements: number | null
+          likes: number | null
+          comments: number | null
+          shares: number | null
+          clicks: number | null
+          engagement_rate: number | null
+          last_fetched_at: string | null
+          fetch_count: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          organization_id: string
+          impressions?: number | null
+          reach?: number | null
+          engagements?: number | null
+          likes?: number | null
+          comments?: number | null
+          shares?: number | null
+          clicks?: number | null
+          engagement_rate?: number | null
+          last_fetched_at?: string | null
+          fetch_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          organization_id?: string
+          impressions?: number | null
+          reach?: number | null
+          engagements?: number | null
+          likes?: number | null
+          comments?: number | null
+          shares?: number | null
+          clicks?: number | null
+          engagement_rate?: number | null
+          last_fetched_at?: string | null
+          fetch_count?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_analytics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_post_analytics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_publish_queue: {
+        Row: {
+          id: string
+          organization_id: string
+          review_id: string
+          connection_id: string
+          status: string
+          priority: number | null
+          scheduled_for: string | null
+          processed_at: string | null
+          post_id: string | null
+          error_message: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          review_id: string
+          connection_id: string
+          status?: string
+          priority?: number | null
+          scheduled_for?: string | null
+          processed_at?: string | null
+          post_id?: string | null
+          error_message?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          review_id?: string
+          connection_id?: string
+          status?: string
+          priority?: number | null
+          scheduled_for?: string | null
+          processed_at?: string | null
+          post_id?: string | null
+          error_message?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_publish_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_publish_queue_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_publish_queue_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "social_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_publish_queue_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

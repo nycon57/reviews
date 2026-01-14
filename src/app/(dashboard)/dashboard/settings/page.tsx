@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/shared";
 import { GoogleIntegrationCard } from "@/components/google/google-integration-card";
+import { SocialIntegrationCard } from "@/components/social";
 import { NotificationPreferencesCard } from "@/components/notifications";
 
 export const metadata = {
@@ -22,6 +23,21 @@ function GoogleCardSkeleton() {
       </CardHeader>
       <CardContent>
         <Skeleton className="h-24 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function SocialCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-36" />
+        <Skeleton className="h-4 w-80" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-20 w-full" />
       </CardContent>
     </Card>
   );
@@ -83,6 +99,11 @@ export default function SettingsPage() {
         {/* Google Integration */}
         <Suspense fallback={<GoogleCardSkeleton />}>
           <GoogleIntegrationCard />
+        </Suspense>
+
+        {/* Social Media Integration */}
+        <Suspense fallback={<SocialCardSkeleton />}>
+          <SocialIntegrationCard />
         </Suspense>
 
         {/* Profile */}

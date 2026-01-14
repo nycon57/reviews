@@ -49,6 +49,70 @@ export interface WebhookStats {
   successRate: number;
 }
 
+// Database row type for webhook logs query
+interface WebhookLogRow {
+  id: string;
+  event_type: string;
+  status: string | null;
+  payload: unknown;
+  ip_address: unknown;
+  user_agent: string | null;
+  error_message: string | null;
+  survey_id: string | null;
+  processing_time_ms: number | null;
+  created_at: string | null;
+  webhook_configs: { name: string } | null;
+}
+
+// Map database row to WebhookLog interface
+function mapRowToWebhookLog(row: WebhookLogRow): WebhookLog {
+  return {
+    id: row.id,
+    eventType: row.event_type,
+    status: row.status || "unknown",
+    payload: row.payload as Record<string, unknown> | null,
+    ipAddress: (row.ip_address as string) || null,
+    userAgent: row.user_agent,
+    errorMessage: row.error_message,
+    surveyId: row.survey_id,
+    processingTimeMs: row.processing_time_ms,
+    createdAt: row.created_at || "",
+    webhookConfigName: row.webhook_configs?.name || null,
+  };
+}
+
+// Common admin authorization check
+async function requireAdminAccess(): Promise<
+  | { success: true; organizationId: string }
+  | { success: false; error: string }
+> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userError || !userData?.organization_id) {
+    return { success: false, error: "Organization not found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Admin access required" };
+  }
+
+  return { success: true, organizationId: userData.organization_id };
+}
+
 // Get webhook logs with advanced filtering
 export async function getWebhookLogs(
   filters?: WebhookLogFilters,
@@ -56,31 +120,12 @@ export async function getWebhookLogs(
   pageSize: number = 25
 ): Promise<ActionResult<{ logs: WebhookLog[]; total: number }>> {
   try {
+    const auth = await requireAdminAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
     const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    // Only admins can view webhook logs
-    if (userData.role !== "admin") {
-      return { success: false, error: "Admin access required" };
-    }
-
     const offset = (page - 1) * pageSize;
 
     let query = supabase
@@ -103,27 +148,22 @@ export async function getWebhookLogs(
       `,
         { count: "exact" }
       )
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", auth.organizationId)
       .order("created_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
 
-    // Apply filters
     if (filters?.status) {
       query = query.eq("status", filters.status);
     }
-
     if (filters?.eventType) {
       query = query.eq("event_type", filters.eventType);
     }
-
     if (filters?.webhookConfigId) {
       query = query.eq("webhook_config_id", filters.webhookConfigId);
     }
-
     if (filters?.startDate) {
       query = query.gte("created_at", filters.startDate);
     }
-
     if (filters?.endDate) {
       query = query.lte("created_at", filters.endDate);
     }
@@ -134,22 +174,9 @@ export async function getWebhookLogs(
       return { success: false, error: error.message };
     }
 
-    const logs: WebhookLog[] = (data || []).map((log) => {
-      const config = log.webhook_configs as unknown as { name: string } | null;
-      return {
-        id: log.id,
-        eventType: log.event_type,
-        status: log.status || "unknown",
-        payload: log.payload as Record<string, unknown> | null,
-        ipAddress: (log.ip_address as string) || null,
-        userAgent: log.user_agent,
-        errorMessage: log.error_message,
-        surveyId: log.survey_id,
-        processingTimeMs: log.processing_time_ms,
-        createdAt: log.created_at || "",
-        webhookConfigName: config?.name || null,
-      };
-    });
+    const logs = (data || []).map((row) =>
+      mapRowToWebhookLog(row as unknown as WebhookLogRow)
+    );
 
     return {
       success: true,
@@ -167,39 +194,21 @@ export async function getWebhookStats(
   endDate?: string
 ): Promise<ActionResult<WebhookStats>> {
   try {
+    const auth = await requireAdminAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
     const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    if (userData.role !== "admin") {
-      return { success: false, error: "Admin access required" };
-    }
 
     let query = supabase
       .from("webhook_logs")
       .select("status, event_type, processing_time_ms")
-      .eq("organization_id", userData.organization_id);
+      .eq("organization_id", auth.organizationId);
 
     if (startDate) {
       query = query.gte("created_at", startDate);
     }
-
     if (endDate) {
       query = query.lte("created_at", endDate);
     }
@@ -225,19 +234,26 @@ export async function getWebhookStats(
     let processedWithTime = 0;
 
     for (const log of data || []) {
-      // Count by status
-      if (log.status === "processed") stats.processed++;
-      else if (log.status === "failed") stats.failed++;
-      else if (log.status === "received") stats.received++;
-      else if (log.status === "ignored") stats.ignored++;
+      switch (log.status) {
+        case "processed":
+          stats.processed++;
+          break;
+        case "failed":
+          stats.failed++;
+          break;
+        case "received":
+          stats.received++;
+          break;
+        case "ignored":
+          stats.ignored++;
+          break;
+      }
 
-      // Count by event type
       if (log.event_type) {
         stats.byEventType[log.event_type] =
           (stats.byEventType[log.event_type] || 0) + 1;
       }
 
-      // Calculate average processing time
       if (log.processing_time_ms !== null) {
         totalProcessingTime += log.processing_time_ms;
         processedWithTime++;
@@ -266,29 +282,12 @@ export async function getWebhookLogDetail(
   logId: string
 ): Promise<ActionResult<WebhookLog>> {
   try {
+    const auth = await requireAdminAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
     const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    if (userData.role !== "admin") {
-      return { success: false, error: "Admin access required" };
-    }
 
     const { data, error } = await supabase
       .from("webhook_logs")
@@ -310,30 +309,17 @@ export async function getWebhookLogDetail(
       `
       )
       .eq("id", logId)
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", auth.organizationId)
       .single();
 
     if (error) {
       return { success: false, error: "Webhook log not found" };
     }
 
-    const config = data.webhook_configs as unknown as { name: string } | null;
-
-    const log: WebhookLog = {
-      id: data.id,
-      eventType: data.event_type,
-      status: data.status || "unknown",
-      payload: data.payload as Record<string, unknown> | null,
-      ipAddress: (data.ip_address as string) || null,
-      userAgent: data.user_agent,
-      errorMessage: data.error_message,
-      surveyId: data.survey_id,
-      processingTimeMs: data.processing_time_ms,
-      createdAt: data.created_at || "",
-      webhookConfigName: config?.name || null,
+    return {
+      success: true,
+      data: mapRowToWebhookLog(data as unknown as WebhookLogRow),
     };
-
-    return { success: true, data: log };
   } catch (error) {
     console.error("Error fetching webhook log detail:", error);
     return { success: false, error: "Failed to fetch webhook log" };
@@ -345,31 +331,13 @@ export async function retryFailedQueueItem(
   queueItemId: string
 ): Promise<ActionResult<{ scheduledAt: string }>> {
   try {
+    const auth = await requireAdminAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
     const supabase = await createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    if (userData.role !== "admin") {
-      return { success: false, error: "Admin access required" };
-    }
-
-    // Get the queue item
     const { data: queueItem, error: queueError } = await supabase
       .from("survey_distribution_queue")
       .select("id, status, retry_count, error_message, organization_id")
@@ -380,7 +348,7 @@ export async function retryFailedQueueItem(
       return { success: false, error: "Queue item not found" };
     }
 
-    if (queueItem.organization_id !== userData.organization_id) {
+    if (queueItem.organization_id !== auth.organizationId) {
       return { success: false, error: "Queue item not in your organization" };
     }
 
@@ -390,7 +358,6 @@ export async function retryFailedQueueItem(
 
     const currentRetryCount = queueItem.retry_count || 0;
 
-    // Check if we should retry based on error type
     if (queueItem.error_message) {
       const category = categorizeError(queueItem.error_message);
       if (category === "permanent") {
@@ -401,7 +368,6 @@ export async function retryFailedQueueItem(
       }
     }
 
-    // Check retry limits
     if (!shouldRetry(currentRetryCount + 1, DEFAULT_RETRY_CONFIG)) {
       return {
         success: false,
@@ -409,13 +375,11 @@ export async function retryFailedQueueItem(
       };
     }
 
-    // Calculate next retry time
     const nextRetryTime = getNextRetryTime(
       currentRetryCount + 1,
       DEFAULT_RETRY_CONFIG
     );
 
-    // Update the queue item
     const adminSupabase = createAdminClient();
     const { error: updateError } = await adminSupabase
       .from("survey_distribution_queue")
@@ -444,41 +408,23 @@ export async function retryFailedQueueItem(
 // Get unique event types for filtering
 export async function getWebhookEventTypes(): Promise<ActionResult<string[]>> {
   try {
+    const auth = await requireAdminAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
     const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    if (userData.role !== "admin") {
-      return { success: false, error: "Admin access required" };
-    }
 
     const { data, error } = await supabase
       .from("webhook_logs")
       .select("event_type")
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", auth.organizationId)
       .not("event_type", "is", null);
 
     if (error) {
       return { success: false, error: error.message };
     }
 
-    // Get unique event types
     const eventTypes = [...new Set((data || []).map((log) => log.event_type))];
 
     return { success: true, data: eventTypes.filter(Boolean) as string[] };

@@ -547,7 +547,7 @@ async function processWebhook(
       transaction_id: transactionId,
       transaction_type: transactionType,
       transaction_date: transactionDate,
-      status: delayHours > 0 ? "pending" : "pending",
+      status: "pending",
       expires_at: expiresAt.toISOString(),
       source: "webhook",
       source_metadata: {

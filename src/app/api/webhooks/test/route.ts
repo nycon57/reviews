@@ -10,6 +10,96 @@ const testWebhookSchema = z.object({
   payload: z.record(z.unknown()).optional(),
 });
 
+interface ValidatedRequest {
+  webhookConfigId: string;
+  eventType: string;
+  payload?: Record<string, unknown>;
+  webhookConfig: {
+    id: string;
+    secret_key: string;
+    organization_id: string;
+    is_active: boolean | null;
+  };
+  loanOfficerEmail: string;
+}
+
+// Validate request and return common data needed by both handlers
+async function validateTestRequest(
+  request: NextRequest
+): Promise<{ data: ValidatedRequest } | { error: NextResponse }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
+  }
+
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userError || !userData?.organization_id) {
+    return { error: NextResponse.json({ error: "Organization not found" }, { status: 403 }) };
+  }
+
+  if (userData.role !== "admin") {
+    return { error: NextResponse.json({ error: "Admin access required" }, { status: 403 }) };
+  }
+
+  const body = await request.json();
+  const validated = testWebhookSchema.safeParse(body);
+
+  if (!validated.success) {
+    return {
+      error: NextResponse.json(
+        { error: "Invalid request", details: validated.error.errors },
+        { status: 400 }
+      ),
+    };
+  }
+
+  const { data: webhookConfig, error: configError } = await supabase
+    .from("webhook_configs")
+    .select("id, secret_key, organization_id, is_active")
+    .eq("id", validated.data.webhookConfigId)
+    .single();
+
+  if (configError || !webhookConfig) {
+    return {
+      error: NextResponse.json({ error: "Webhook configuration not found" }, { status: 404 }),
+    };
+  }
+
+  if (webhookConfig.organization_id !== userData.organization_id) {
+    return {
+      error: NextResponse.json({ error: "Webhook not in your organization" }, { status: 403 }),
+    };
+  }
+
+  const { data: loanOfficer } = await supabase
+    .from("loan_officers")
+    .select("email")
+    .eq("organization_id", userData.organization_id)
+    .eq("is_active", true)
+    .limit(1)
+    .single();
+
+  return {
+    data: {
+      webhookConfigId: validated.data.webhookConfigId,
+      eventType: validated.data.eventType,
+      payload: validated.data.payload,
+      webhookConfig,
+      loanOfficerEmail: loanOfficer?.email || "lo@example.com",
+    },
+  };
+}
+
 // Generate a sample payload for each event type
 function generateSamplePayload(
   eventType: string,
@@ -77,93 +167,17 @@ function generateSignature(payload: string, secret: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const result = await validateTestRequest(request);
+    if ("error" in result) {
+      return result.error;
     }
 
-    // Get user's organization and role
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
+    const { eventType, payload: customPayload, webhookConfig, loanOfficerEmail } = result.data;
 
-    if (userError || !userData?.organization_id) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 403 }
-      );
-    }
-
-    // Only admins can test webhooks
-    if (userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
-    }
-
-    const body = await request.json();
-    const validated = testWebhookSchema.safeParse(body);
-
-    if (!validated.success) {
-      return NextResponse.json(
-        { error: "Invalid request", details: validated.error.errors },
-        { status: 400 }
-      );
-    }
-
-    // Get webhook config
-    const { data: webhookConfig, error: configError } = await supabase
-      .from("webhook_configs")
-      .select("id, secret_key, organization_id, is_active")
-      .eq("id", validated.data.webhookConfigId)
-      .single();
-
-    if (configError || !webhookConfig) {
-      return NextResponse.json(
-        { error: "Webhook configuration not found" },
-        { status: 404 }
-      );
-    }
-
-    if (webhookConfig.organization_id !== userData.organization_id) {
-      return NextResponse.json(
-        { error: "Webhook not in your organization" },
-        { status: 403 }
-      );
-    }
-
-    // Get a loan officer email for sample payload
-    const { data: loanOfficer } = await supabase
-      .from("loan_officers")
-      .select("email")
-      .eq("organization_id", userData.organization_id)
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-
-    const loanOfficerEmail = loanOfficer?.email || "lo@example.com";
-
-    // Generate or use provided payload
-    const payload =
-      validated.data.payload ||
-      generateSamplePayload(validated.data.eventType, loanOfficerEmail);
-
+    const payload = customPayload || generateSamplePayload(eventType, loanOfficerEmail);
     const payloadString = JSON.stringify(payload, null, 2);
-    const signature = generateSignature(
-      JSON.stringify(payload),
-      webhookConfig.secret_key
-    );
+    const signature = generateSignature(JSON.stringify(payload), webhookConfig.secret_key);
 
-    // Generate curl command for testing
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       request.headers.get("origin") ||
@@ -202,69 +216,12 @@ export async function POST(request: NextRequest) {
 // Send a live test webhook to the endpoint
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const result = await validateTestRequest(request);
+    if ("error" in result) {
+      return result.error;
     }
 
-    // Get user's organization and role
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return NextResponse.json(
-        { error: "Organization not found" },
-        { status: 403 }
-      );
-    }
-
-    // Only admins can test webhooks
-    if (userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
-    }
-
-    const body = await request.json();
-    const validated = testWebhookSchema.safeParse(body);
-
-    if (!validated.success) {
-      return NextResponse.json(
-        { error: "Invalid request", details: validated.error.errors },
-        { status: 400 }
-      );
-    }
-
-    // Get webhook config
-    const { data: webhookConfig, error: configError } = await supabase
-      .from("webhook_configs")
-      .select("id, secret_key, organization_id, is_active")
-      .eq("id", validated.data.webhookConfigId)
-      .single();
-
-    if (configError || !webhookConfig) {
-      return NextResponse.json(
-        { error: "Webhook configuration not found" },
-        { status: 404 }
-      );
-    }
-
-    if (webhookConfig.organization_id !== userData.organization_id) {
-      return NextResponse.json(
-        { error: "Webhook not in your organization" },
-        { status: 403 }
-      );
-    }
+    const { eventType, payload: customPayload, webhookConfig, loanOfficerEmail } = result.data;
 
     if (!webhookConfig.is_active) {
       return NextResponse.json(
@@ -273,26 +230,10 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Get a loan officer email for sample payload
-    const { data: loanOfficer } = await supabase
-      .from("loan_officers")
-      .select("email")
-      .eq("organization_id", userData.organization_id)
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-
-    const loanOfficerEmail = loanOfficer?.email || "lo@example.com";
-
-    // Generate or use provided payload
-    const payload =
-      validated.data.payload ||
-      generateSamplePayload(validated.data.eventType, loanOfficerEmail);
-
+    const payload = customPayload || generateSamplePayload(eventType, loanOfficerEmail);
     const payloadString = JSON.stringify(payload);
     const signature = generateSignature(payloadString, webhookConfig.secret_key);
 
-    // Make the actual webhook call
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       request.headers.get("origin") ||
@@ -300,12 +241,9 @@ export async function PUT(request: NextRequest) {
     const webhookUrl = `${baseUrl}/api/webhooks/survey-trigger`;
 
     const startTime = Date.now();
-    let webhookResponse;
-    let responseBody;
-    let responseStatus;
 
     try {
-      webhookResponse = await fetch(webhookUrl, {
+      const webhookResponse = await fetch(webhookUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -315,8 +253,17 @@ export async function PUT(request: NextRequest) {
         body: payloadString,
       });
 
-      responseStatus = webhookResponse.status;
-      responseBody = await webhookResponse.json();
+      const responseBody = await webhookResponse.json();
+      const duration = Date.now() - startTime;
+
+      return NextResponse.json({
+        success: webhookResponse.ok,
+        status: webhookResponse.status,
+        response: responseBody,
+        duration,
+        payload,
+        signature,
+      });
     } catch (fetchError) {
       return NextResponse.json({
         success: false,
@@ -325,17 +272,6 @@ export async function PUT(request: NextRequest) {
         duration: Date.now() - startTime,
       });
     }
-
-    const duration = Date.now() - startTime;
-
-    return NextResponse.json({
-      success: webhookResponse.ok,
-      status: responseStatus,
-      response: responseBody,
-      duration,
-      payload,
-      signature,
-    });
   } catch (error) {
     console.error("Error executing test webhook:", error);
     return NextResponse.json(

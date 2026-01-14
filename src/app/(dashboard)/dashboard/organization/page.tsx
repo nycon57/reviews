@@ -10,6 +10,7 @@ import { OrganizationBranding } from "@/components/organization/organization-bra
 import { OrganizationTeam } from "@/components/organization/organization-team";
 import { OrganizationBilling } from "@/components/organization/organization-billing";
 import { OrganizationOverview } from "@/components/organization/organization-overview";
+import { OrganizationSEO } from "@/components/organization/organization-seo";
 
 export const metadata = {
   title: "Organization Settings | ReviewHub",
@@ -85,6 +86,7 @@ export default async function OrganizationPage() {
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="seo">SEO</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
 
@@ -109,6 +111,12 @@ export default async function OrganizationPage() {
         <TabsContent value="team" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
             <OrganizationTeam />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="seo" className="space-y-6">
+          <Suspense fallback={<TabSkeleton />}>
+            <OrganizationSEO />
           </Suspense>
         </TabsContent>
 

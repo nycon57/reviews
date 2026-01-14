@@ -60,13 +60,15 @@
       "id": "S001",
       "epic": "E1",
       "title": "Initialize Next.js 16 Project with ShadCN",
-      "description": "Set up Next.js 16 with App Router, TypeScript, Tailwind CSS, and ShadCN/UI components. Configure ESLint, Prettier, and project structure.",
+      "description": "Set up Next.js 16 with App Router, TypeScript, Tailwind CSS, and ShadCN/UI components. Configure ESLint, Prettier, and project structure. Establish design system foundations for professional UI quality.",
       "acceptance_criteria": [
-        "Next.js 14 project initialized with TypeScript",
-        "Tailwind CSS configured with custom theme",
+        "Next.js 16 project initialized with TypeScript and React 19",
+        "Tailwind CSS configured with custom theme matching design system",
         "ShadCN/UI installed with base components (Button, Card, Input, Form)",
-        "ESLint and Prettier configured",
-        "Project folder structure established per architecture docs"
+        "ESLint 9 and Prettier configured",
+        "Project folder structure established per architecture docs",
+        "Design system color palette and spacing defined in Tailwind config",
+        "Typography scale configured for consistent hierarchy"
       ],
       "priority": "P0",
       "estimate": "S",
@@ -76,9 +78,9 @@
         "npm run lint passes"
       ],
       "dependencies": [],
-      "startedAt": "2026-01-14T03:43:21.320547+00:00",
+      "startedAt": "2026-01-14T04:09:34.699492+00:00",
       "completedAt": null,
-      "updatedAt": "2026-01-14T03:43:21.320715+00:00"
+      "updatedAt": "2026-01-14T04:09:34.699621+00:00"
     },
     {
       "id": "S002",
@@ -853,7 +855,18 @@
         "S010",
         "S012"
       ],
-      "target_completion": "Phase 1 Complete"
+      "target_completion": "Phase 1 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/code-simplifier"
+        ],
+        "recommended_for": {
+          "S003": "feature-dev:code-architect (Auth system architecture)",
+          "S005": "feature-dev:code-architect (Survey builder is complex)"
+        },
+        "notes": "Establish patterns that later phases will follow. Prioritize solid foundations."
+      }
     },
     {
       "id": "Phase2",
@@ -869,7 +882,20 @@
         "S026",
         "S031"
       ],
-      "target_completion": "Phase 2 Complete"
+      "target_completion": "Phase 2 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/frontend-design",
+          "/code-simplifier"
+        ],
+        "recommended_for": {
+          "S011": "/frontend-design (Manager dashboard UI)",
+          "S013": "/frontend-design (Gamification/leaderboard UI)",
+          "S015": "feature-dev:code-explorer (Understand existing auth before Google integration)"
+        },
+        "notes": "Reuse Phase 1 patterns. Dashboard stories need polished UI via /frontend-design."
+      }
     },
     {
       "id": "Phase3",
@@ -884,7 +910,20 @@
         "S022",
         "S032"
       ],
-      "target_completion": "Phase 3 Complete"
+      "target_completion": "Phase 3 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/code-simplifier",
+          "/code-review"
+        ],
+        "recommended_for": {
+          "S019": "feature-dev:code-architect (Sentiment analysis sets AI patterns for S020-S022)",
+          "S020": "/code-review (Review AI cost and security)",
+          "S021": "/code-review (AI response suggestions need security review)"
+        },
+        "notes": "AI code complexity requires aggressive simplification. Review all AI integrations for security and rate limiting."
+      }
     },
     {
       "id": "Phase4",
@@ -899,7 +938,21 @@
         "S029",
         "S030"
       ],
-      "target_completion": "Phase 4 Complete"
+      "target_completion": "Phase 4 Complete",
+      "plugins": {
+        "required": [
+          "/frontend-design",
+          "/feature-dev",
+          "/code-simplifier"
+        ],
+        "recommended_for": {
+          "S023": "feature-dev:code-architect (Expo setup establishes mobile patterns)",
+          "S024": "/frontend-design (Mobile dashboard needs native-feeling UI)",
+          "S027": "feature-dev:code-architect (Public API needs extensible design)",
+          "S029": "/code-simplifier (Widget must be <50KB)"
+        },
+        "notes": "Mobile UI must feel native. Widgets must be lightweight. API design should prioritize extensibility."
+      }
     }
   ],
   "global_gates": [

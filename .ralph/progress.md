@@ -29,8 +29,8 @@ _No stories currently in progress._
 - [x] S004: Base Layout & Navigation
 - [x] S005: Survey Builder & Templates
 - [x] S006: Public Survey Form
-- [ ] S007: Email Service Integration with Resend
-- [ ] S008: Automated Survey Distribution System
+- [x] S007: Email Service Integration with Resend
+- [x] S008: Automated Survey Distribution System
 - [ ] S010: Loan Officer Dashboard
 - [ ] S012: Analytics Engine
 
@@ -78,6 +78,57 @@ npm run lint     # Run ESLint
 npm run db:types # Generate TypeScript types from Supabase
 ```
 
+---
+
+## [2026-01-14T12:00:00] - S008: Automated Survey Distribution System
+Thread:
+Run: 20260114-001521-85850 (iteration 3)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4593181 feat(S008): Implement automated survey distribution system
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - supabase/migrations/20240101000004_survey_distribution.sql (new - distribution queue, rate limits, webhook configs, webhook logs tables with RLS)
+  - src/lib/distribution/service.ts (new - queue processing, email sending, reminder scheduling)
+  - src/lib/distribution/actions.ts (new - server actions for queue management, manual sends)
+  - src/lib/distribution/index.ts (new - module exports)
+  - src/app/api/webhooks/survey-trigger/route.ts (new - webhook endpoint for loan.closed, contact.created, survey.trigger events)
+  - src/app/api/cron/process-queue/route.ts (new - cron endpoint for queue processing with rate limiting)
+  - src/app/api/distribution/webhook-logs/route.ts (new - API for fetching webhook logs)
+  - src/app/(dashboard)/dashboard/distribution/page.tsx (new - distribution dashboard page)
+  - src/app/(dashboard)/dashboard/distribution/distribution-dashboard.tsx (new - dashboard with stats, queue, logs tabs)
+  - src/types/database.types.ts (updated - added distribution system types and functions)
+- What was implemented:
+  - Survey distribution queue with priority scheduling and retry logic
+  - Webhook endpoint supporting three event types: loan.closed, contact.created, survey.trigger
+  - HMAC SHA256 webhook signature verification with timing-safe comparison
+  - IP allowlist support for webhook security
+  - Automatic reminder scheduling (3-day and 7-day) after initial survey send
+  - Rate limiting per organization (100/hour, 1000/day default)
+  - Cron-based queue processing with batch handling and error recovery
+  - Distribution dashboard with stats cards, queue view, and webhook logs
+  - Manual survey send and reminder send actions for admins
+  - Webhook logging with request/response tracking and processing time metrics
+  - Duplicate survey detection to prevent re-sending to same customer/transaction
+- Database changes:
+  - survey_distribution_queue table with status tracking and retry counts
+  - distribution_rate_limits table for org-specific limits
+  - webhook_configs table with secret keys and IP allowlists
+  - webhook_logs table for audit trail
+  - get_pending_distribution_items function for queue processing
+  - check_rate_limit function for throttling
+  - schedule_survey_reminders function for automatic reminder scheduling
+  - increment_webhook_trigger_count function for atomic stats updates
+- **Learnings for future iterations:**
+  - Supabase JS client doesn't have onConflict() method - use existence check before insert instead
+  - RPC calls may not exist in schema - provide fallback logic or ensure migration is applied first
+  - Database column names use snake_case (loan_officer) not camelCase (loanOfficer)
+  - ESLint requires lexical declarations (const) in switch cases to be wrapped in braces
+  - Cast payload as Json type when inserting into Supabase JSONB columns
+  - Use pageSize instead of limit for action parameters to match schema
 ---
 
 ## [2026-01-14T08:00:00] - S005: Survey Builder & Templates
@@ -408,6 +459,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Design system should include semantic colors early - success/warning/info are needed for status indicators throughout the app
   - Chart colors should be defined upfront for consistent data visualization across dashboards
   - Sidebar colors should be defined separately for dashboard layouts that need distinct sidebar styling
+---
+
+## [2026-01-14T10:00:00] - S007: Email Service Integration with Resend
+Thread:
+Run: 20260114-001521-85850 (iteration 2)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 75a234b feat(S007): Implement email service integration with Resend
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - src/lib/email/client.ts (new - Resend client singleton with config)
+  - src/lib/email/types.ts (new - TypeScript types for templates, send results, webhooks)
+  - src/lib/email/templates.ts (new - HTML email templates for all 4 email types)
+  - src/lib/email/send.ts (new - Server actions for sending emails with logging)
+  - src/lib/email/index.ts (new - Module exports)
+  - src/app/api/webhooks/resend/route.ts (new - Webhook handler for email tracking events)
+  - src/app/api/email/unsubscribe/route.ts (new - Unsubscribe/resubscribe endpoints)
+  - src/app/api/email/send/route.ts (new - API for sending survey emails)
+  - src/app/unsubscribed/page.tsx (new - Unsubscribe confirmation page)
+  - supabase/migrations/20240101000003_email_unsubscribes.sql (new - Unsubscribes table with RLS)
+  - src/types/database.types.ts (updated - Added email_unsubscribes table type)
+- What was implemented:
+  - Resend SDK integration with singleton client pattern
+  - Four email templates: Survey Invitation, 3-Day Reminder, 7-Day Reminder, New Review Notification
+  - Responsive HTML email templates with organization branding, loan officer photos, star ratings
+  - Unsubscribe handling via email link (GET) and API (POST/DELETE for resubscribe)
+  - Email tracking via Resend webhooks (delivered, opened, clicked, bounced)
+  - Automatic unsubscribe on bounce/complaint events
+  - Email logging to email_logs table with status tracking
+  - Token-based resubscribe functionality
+  - Unsubscribe confirmation page with resubscribe option
+- **Learnings for future iterations:**
+  - Import `createClient` from `@/lib/supabase/server`, not `createServerClient` - the export name differs
+  - When adding new database tables before running migrations, manually add types to database.types.ts
+  - Resend webhook events include: email.sent, email.delivered, email.opened, email.clicked, email.bounced, email.complained
+  - Use token-based unsubscribe links that allow stateless resubscribe without authentication
+  - RLS policies with `WITH CHECK (true)` allow public unsubscribe operations
 ---
 
 ## [2026-01-14T00:20:00] - S006: Public Survey Form

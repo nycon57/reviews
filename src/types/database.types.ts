@@ -793,6 +793,237 @@ export type Database = {
           },
         ]
       }
+      survey_distribution_queue: {
+        Row: {
+          id: string
+          organization_id: string
+          survey_id: string
+          type: string
+          scheduled_at: string
+          processed_at: string | null
+          status: string | null
+          priority: number | null
+          retry_count: number | null
+          max_retries: number | null
+          error_message: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          survey_id: string
+          type: string
+          scheduled_at: string
+          processed_at?: string | null
+          status?: string | null
+          priority?: number | null
+          retry_count?: number | null
+          max_retries?: number | null
+          error_message?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          survey_id?: string
+          type?: string
+          scheduled_at?: string
+          processed_at?: string | null
+          status?: string | null
+          priority?: number | null
+          retry_count?: number | null
+          max_retries?: number | null
+          error_message?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "survey_distribution_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_distribution_queue_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      distribution_rate_limits: {
+        Row: {
+          id: string
+          organization_id: string
+          window_start: string
+          window_end: string
+          emails_sent: number | null
+          max_emails_per_hour: number | null
+          max_emails_per_day: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          window_start: string
+          window_end: string
+          emails_sent?: number | null
+          max_emails_per_hour?: number | null
+          max_emails_per_day?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          window_start?: string
+          window_end?: string
+          emails_sent?: number | null
+          max_emails_per_hour?: number | null
+          max_emails_per_day?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "distribution_rate_limits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_configs: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          secret_key: string
+          is_active: boolean | null
+          allowed_ips: string[] | null
+          default_template_id: string | null
+          settings: Json | null
+          last_triggered_at: string | null
+          trigger_count: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          secret_key: string
+          is_active?: boolean | null
+          allowed_ips?: string[] | null
+          default_template_id?: string | null
+          settings?: Json | null
+          last_triggered_at?: string | null
+          trigger_count?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          secret_key?: string
+          is_active?: boolean | null
+          allowed_ips?: string[] | null
+          default_template_id?: string | null
+          settings?: Json | null
+          last_triggered_at?: string | null
+          trigger_count?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_configs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_configs_default_template_id_fkey"
+            columns: ["default_template_id"]
+            isOneToOne: false
+            referencedRelation: "survey_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_logs: {
+        Row: {
+          id: string
+          organization_id: string | null
+          webhook_config_id: string | null
+          event_type: string
+          payload: Json | null
+          ip_address: string | null
+          user_agent: string | null
+          status: string | null
+          error_message: string | null
+          survey_id: string | null
+          processing_time_ms: number | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          webhook_config_id?: string | null
+          event_type: string
+          payload?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          status?: string | null
+          error_message?: string | null
+          survey_id?: string | null
+          processing_time_ms?: number | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          webhook_config_id?: string | null
+          event_type?: string
+          payload?: Json | null
+          ip_address?: string | null
+          user_agent?: string | null
+          status?: string | null
+          error_message?: string | null
+          survey_id?: string | null
+          processing_time_ms?: number | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_logs_webhook_config_id_fkey"
+            columns: ["webhook_config_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_logs_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -800,6 +1031,33 @@ export type Database = {
     Functions: {
       get_user_organization_id: { Args: Record<string, never>; Returns: string }
       user_has_role: { Args: { required_roles: string[] }; Returns: boolean }
+      get_pending_distribution_items: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          survey_id: string
+          organization_id: string
+          type: string
+          scheduled_at: string
+        }[]
+      }
+      check_rate_limit: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
+      schedule_survey_reminders: {
+        Args: {
+          p_survey_id: string
+          p_organization_id: string
+          p_send_3day?: boolean
+          p_send_7day?: boolean
+        }
+        Returns: void
+      }
+      increment_webhook_trigger_count: {
+        Args: { config_id: string }
+        Returns: void
+      }
     }
     Enums: {
       [_ in never]: never

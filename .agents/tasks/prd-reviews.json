@@ -1,0 +1,720 @@
+{
+  "project": {
+    "name": "ReviewHub",
+    "description": "Internal Customer Experience & Review Management Platform - A comprehensive solution for collecting customer reviews, sending surveys, managing online reputation, and providing AI-powered analytics. Designed to replace Experience.com/Birdeye with a custom solution.",
+    "version": "1.0.0",
+    "repository": "nycon57/reviews",
+    "tech_stack": {
+      "frontend": "Next.js 14 (App Router)",
+      "ui_components": "ShadCN/UI + Tailwind CSS",
+      "backend": "Supabase (PostgreSQL + Edge Functions)",
+      "auth": "Supabase Auth",
+      "email": "Resend",
+      "mobile": "React Native + Expo",
+      "ai": "OpenAI API (GPT-4)",
+      "integrations": ["Google Business Profile API", "Zapier Webhooks"]
+    }
+  },
+  "epics": [
+    {
+      "id": "E1",
+      "name": "Foundation & Infrastructure",
+      "description": "Core project setup, authentication, and database schema"
+    },
+    {
+      "id": "E2",
+      "name": "Survey & Review Collection",
+      "description": "Automated survey system with email/SMS distribution"
+    },
+    {
+      "id": "E3",
+      "name": "Dashboard & Analytics",
+      "description": "User dashboards, metrics, and performance insights"
+    },
+    {
+      "id": "E4",
+      "name": "Review Aggregation",
+      "description": "Multi-platform review aggregation and monitoring"
+    },
+    {
+      "id": "E5",
+      "name": "AI Integration",
+      "description": "Sentiment analysis, insights, and AI-powered features"
+    },
+    {
+      "id": "E6",
+      "name": "Mobile Application",
+      "description": "React Native mobile app for on-the-go management"
+    },
+    {
+      "id": "E7",
+      "name": "Integrations & API",
+      "description": "Third-party integrations and public API"
+    }
+  ],
+  "stories": [
+    {
+      "id": "S001",
+      "epic": "E1",
+      "title": "Initialize Next.js 14 Project with ShadCN",
+      "description": "Set up Next.js 14 with App Router, TypeScript, Tailwind CSS, and ShadCN/UI components. Configure ESLint, Prettier, and project structure.",
+      "acceptance_criteria": [
+        "Next.js 14 project initialized with TypeScript",
+        "Tailwind CSS configured with custom theme",
+        "ShadCN/UI installed with base components (Button, Card, Input, Form)",
+        "ESLint and Prettier configured",
+        "Project folder structure established per architecture docs"
+      ],
+      "priority": "P0",
+      "estimate": "S",
+      "status": "open",
+      "gates": ["npm run build passes", "npm run lint passes"],
+      "dependencies": []
+    },
+    {
+      "id": "S002",
+      "epic": "E1",
+      "title": "Supabase Project Setup & Database Schema",
+      "description": "Initialize Supabase project, create database schema for all core entities including organizations, users, loan officers, surveys, reviews, and analytics.",
+      "acceptance_criteria": [
+        "Supabase client configured in Next.js",
+        "Database migrations created for all core tables",
+        "Row Level Security (RLS) policies defined",
+        "Database types generated for TypeScript",
+        "Seed data script for development"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Database migrations run successfully", "TypeScript types generate without errors"],
+      "dependencies": ["S001"]
+    },
+    {
+      "id": "S003",
+      "epic": "E1",
+      "title": "Authentication System",
+      "description": "Implement authentication using Supabase Auth with email/password and magic link options. Include role-based access control for Admin, Manager, and LoanOfficer roles.",
+      "acceptance_criteria": [
+        "Sign up flow with email verification",
+        "Sign in with email/password and magic link",
+        "Password reset functionality",
+        "Role-based middleware for protected routes",
+        "User profile management",
+        "Organization-based multi-tenancy support"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Auth flows work end-to-end", "RLS policies enforce role access"],
+      "dependencies": ["S002"]
+    },
+    {
+      "id": "S004",
+      "epic": "E1",
+      "title": "Base Layout & Navigation",
+      "description": "Create the main application layout with responsive navigation, sidebar for dashboard views, and mobile-friendly design.",
+      "acceptance_criteria": [
+        "Responsive sidebar navigation component",
+        "Top navigation bar with user menu",
+        "Mobile hamburger menu",
+        "Breadcrumb component",
+        "Dark/light mode toggle",
+        "Loading states and skeleton components"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Responsive design works on mobile/tablet/desktop", "Navigation accessible via keyboard"],
+      "dependencies": ["S001", "S003"]
+    },
+    {
+      "id": "S005",
+      "epic": "E2",
+      "title": "Survey Builder & Templates",
+      "description": "Create a survey builder that allows creating customizable survey templates with various question types (rating, NPS, text, multiple choice).",
+      "acceptance_criteria": [
+        "Survey template CRUD operations",
+        "Question types: Star rating, NPS (0-10), Text, Multiple choice",
+        "Question ordering and conditional logic",
+        "Preview mode for surveys",
+        "Default templates (Post-Transaction, NPS, CSAT)",
+        "Survey branding options (logo, colors)"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Survey templates save and load correctly", "All question types render properly"],
+      "dependencies": ["S002", "S004"]
+    },
+    {
+      "id": "S006",
+      "epic": "E2",
+      "title": "Public Survey Form",
+      "description": "Build the public-facing survey form page that customers access via unique links. Must be mobile-optimized and support all question types.",
+      "acceptance_criteria": [
+        "Public survey page with unique token-based URLs",
+        "Mobile-responsive survey form",
+        "Progress indicator for multi-page surveys",
+        "Form validation and error handling",
+        "Thank you page with optional review redirect",
+        "Survey expiration handling"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Survey submission saves to database", "Form works on mobile devices"],
+      "dependencies": ["S005"]
+    },
+    {
+      "id": "S007",
+      "epic": "E2",
+      "title": "Email Service Integration with Resend",
+      "description": "Integrate Resend for transactional emails including survey invitations, reminders, and notifications.",
+      "acceptance_criteria": [
+        "Resend SDK configured",
+        "Email templates for survey invitations",
+        "Email templates for reminders (3-day, 7-day)",
+        "Email templates for new review notifications",
+        "Unsubscribe handling",
+        "Email tracking (opens, clicks)"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Emails send successfully", "Templates render correctly"],
+      "dependencies": ["S002"]
+    },
+    {
+      "id": "S008",
+      "epic": "E2",
+      "title": "Automated Survey Distribution System",
+      "description": "Build the automation engine that sends survey invitations based on triggers (loan closure, webhook) with automatic follow-up reminders.",
+      "acceptance_criteria": [
+        "Webhook endpoint for external triggers (loan closure)",
+        "Queue system for email distribution",
+        "Automatic reminder scheduling (3-day, 7-day)",
+        "Survey send throttling and rate limiting",
+        "Distribution logs and analytics",
+        "Manual survey send option for admins"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Webhooks trigger survey sends", "Reminders scheduled correctly"],
+      "dependencies": ["S006", "S007"]
+    },
+    {
+      "id": "S009",
+      "epic": "E2",
+      "title": "Review Approval Workflow",
+      "description": "Implement a workflow for reviewing and approving survey responses before publishing as public testimonials.",
+      "acceptance_criteria": [
+        "Review queue for pending responses",
+        "Approve/reject actions with notes",
+        "Edit review text before publishing",
+        "Auto-approval rules (e.g., 5-star reviews)",
+        "Notification to LO on new reviews",
+        "Bulk approval actions"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Approval workflow functions end-to-end", "Only approved reviews appear publicly"],
+      "dependencies": ["S006"]
+    },
+    {
+      "id": "S010",
+      "epic": "E3",
+      "title": "Loan Officer Dashboard",
+      "description": "Create the main dashboard for Loan Officers showing their reviews, ratings, metrics, and performance indicators.",
+      "acceptance_criteria": [
+        "Overview cards (total reviews, avg rating, NPS, response rate)",
+        "Recent reviews list with filtering",
+        "Rating trend chart over time",
+        "NPS trend chart",
+        "Quick actions (share review, respond)",
+        "Profile completion indicator"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Dashboard loads within 2 seconds", "Metrics calculate correctly"],
+      "dependencies": ["S004", "S002"]
+    },
+    {
+      "id": "S011",
+      "epic": "E3",
+      "title": "Manager Dashboard",
+      "description": "Build the manager dashboard with team-level analytics, LO comparisons, and performance oversight capabilities.",
+      "acceptance_criteria": [
+        "Team overview with aggregate metrics",
+        "LO comparison table with sorting",
+        "Branch/region filtering",
+        "Performance leaderboard",
+        "Alert indicators for low performers",
+        "Drill-down to individual LO dashboards"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Manager can view all team members", "Comparisons calculate correctly"],
+      "dependencies": ["S010"]
+    },
+    {
+      "id": "S012",
+      "epic": "E3",
+      "title": "Analytics Engine",
+      "description": "Implement the core analytics engine that calculates NPS, CSAT, response rates, and other key metrics.",
+      "acceptance_criteria": [
+        "NPS calculation (promoters - detractors %)",
+        "CSAT calculation (avg satisfaction score)",
+        "Response rate calculation",
+        "Review velocity (reviews per period)",
+        "Metric caching for performance",
+        "Historical data aggregation"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Metrics match manual calculations", "Performance acceptable with 10k+ records"],
+      "dependencies": ["S002"]
+    },
+    {
+      "id": "S013",
+      "epic": "E3",
+      "title": "Gamification & Leaderboards",
+      "description": "Add gamification elements including leaderboards, badges, and reputation scores to drive engagement.",
+      "acceptance_criteria": [
+        "Reputation score algorithm (0-100)",
+        "Monthly/quarterly leaderboards",
+        "Achievement badges (first review, 50 reviews, top performer)",
+        "Score breakdown and improvement tips",
+        "Leaderboard filters (by branch, region, time period)",
+        "Public leaderboard option for teams"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Scores calculate consistently", "Leaderboard updates accurately"],
+      "dependencies": ["S012"]
+    },
+    {
+      "id": "S014",
+      "epic": "E3",
+      "title": "Reporting & Export",
+      "description": "Build reporting features for generating and exporting performance reports in various formats.",
+      "acceptance_criteria": [
+        "Pre-built report templates (Monthly Performance, Team Summary)",
+        "Custom date range selection",
+        "Export to PDF and CSV",
+        "Scheduled report emails",
+        "Report sharing via link",
+        "Data filtering options"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Reports generate correctly", "Exports contain accurate data"],
+      "dependencies": ["S012"]
+    },
+    {
+      "id": "S015",
+      "epic": "E4",
+      "title": "Google Business Profile Integration",
+      "description": "Integrate with Google Business Profile API to fetch and manage Google reviews.",
+      "acceptance_criteria": [
+        "OAuth connection to Google Business account",
+        "Fetch Google reviews for connected locations",
+        "Store Google reviews in unified review table",
+        "Reply to Google reviews from platform",
+        "Google review alerts/notifications",
+        "Sync scheduling (daily)"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Google OAuth flow works", "Reviews sync correctly"],
+      "dependencies": ["S002", "S003"]
+    },
+    {
+      "id": "S016",
+      "epic": "E4",
+      "title": "Review Aggregation Dashboard",
+      "description": "Create a unified view of all reviews from all sources (internal surveys, Google, etc.) in one dashboard.",
+      "acceptance_criteria": [
+        "Combined review feed from all sources",
+        "Source filtering (internal, Google, etc.)",
+        "Review search functionality",
+        "Bulk actions (respond, flag, archive)",
+        "Review detail modal with full context",
+        "Export filtered reviews"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["All sources display correctly", "Filtering works accurately"],
+      "dependencies": ["S010", "S015"]
+    },
+    {
+      "id": "S017",
+      "epic": "E4",
+      "title": "Review Response Management",
+      "description": "Build tools for managing and responding to reviews across all platforms from a single interface.",
+      "acceptance_criteria": [
+        "Response composer with templates",
+        "Response approval workflow for managers",
+        "Response tracking and analytics",
+        "AI-suggested responses (integration point)",
+        "Response time tracking",
+        "Multi-platform response posting"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Responses post to correct platforms", "Templates save and load correctly"],
+      "dependencies": ["S016"]
+    },
+    {
+      "id": "S018",
+      "epic": "E4",
+      "title": "Alert & Notification System",
+      "description": "Implement a comprehensive notification system for new reviews, mentions, and important events.",
+      "acceptance_criteria": [
+        "In-app notification center",
+        "Email notifications (configurable)",
+        "Instant alerts for negative reviews (< 3 stars)",
+        "Daily/weekly digest options",
+        "Notification preferences per user",
+        "Slack integration (optional)"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Notifications trigger correctly", "User preferences respected"],
+      "dependencies": ["S007", "S016"]
+    },
+    {
+      "id": "S019",
+      "epic": "E5",
+      "title": "Sentiment Analysis Engine",
+      "description": "Integrate AI-powered sentiment analysis for review text using OpenAI API.",
+      "acceptance_criteria": [
+        "OpenAI API integration for sentiment analysis",
+        "Sentiment score (positive/neutral/negative) per review",
+        "Key phrase extraction",
+        "Theme categorization (communication, process, service)",
+        "Batch processing for historical reviews",
+        "Real-time analysis on new reviews"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Sentiment scores align with manual assessment", "API costs within budget"],
+      "dependencies": ["S002"]
+    },
+    {
+      "id": "S020",
+      "epic": "E5",
+      "title": "AI Insights Dashboard",
+      "description": "Create a dashboard showing AI-generated insights including trends, common themes, and improvement suggestions.",
+      "acceptance_criteria": [
+        "Sentiment trend visualization",
+        "Common theme word cloud",
+        "AI-generated monthly summary per LO",
+        "Improvement recommendations based on feedback",
+        "Comparison with industry benchmarks",
+        "Exportable insights reports"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Insights generate correctly", "Summaries are accurate and helpful"],
+      "dependencies": ["S019", "S012"]
+    },
+    {
+      "id": "S021",
+      "epic": "E5",
+      "title": "AI Response Suggestions",
+      "description": "Implement AI-powered response suggestions for reviews using OpenAI API.",
+      "acceptance_criteria": [
+        "Generate response suggestions based on review content",
+        "Multiple response tone options (professional, friendly, apologetic)",
+        "One-click copy/use suggested response",
+        "Learning from edited responses",
+        "Response templates based on review sentiment",
+        "Response preview before posting"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Suggestions are appropriate and professional", "Generation time under 3 seconds"],
+      "dependencies": ["S019", "S017"]
+    },
+    {
+      "id": "S022",
+      "epic": "E5",
+      "title": "Testimonial Generator",
+      "description": "Build an AI-powered tool that creates marketing-ready testimonial snippets from reviews.",
+      "acceptance_criteria": [
+        "Extract key quotes from positive reviews",
+        "Generate marketing-friendly testimonial formats",
+        "Social media ready snippets",
+        "Image generation for testimonial graphics",
+        "Export testimonials for various platforms",
+        "Testimonial approval workflow"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Generated testimonials are accurate", "Output formats are usable"],
+      "dependencies": ["S019"]
+    },
+    {
+      "id": "S023",
+      "epic": "E6",
+      "title": "Expo Project Setup",
+      "description": "Initialize React Native project with Expo, configure navigation, and set up shared component library.",
+      "acceptance_criteria": [
+        "Expo project initialized with TypeScript",
+        "Navigation structure (Tab Navigator, Stack Navigator)",
+        "Shared UI components (matching web ShadCN style)",
+        "Supabase client configured for mobile",
+        "Environment configuration",
+        "Basic authentication flow"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["App runs on iOS and Android simulators", "Auth flow works"],
+      "dependencies": ["S003"]
+    },
+    {
+      "id": "S024",
+      "epic": "E6",
+      "title": "Mobile Dashboard",
+      "description": "Build the mobile version of the LO dashboard with key metrics and recent reviews.",
+      "acceptance_criteria": [
+        "Dashboard home screen with key metrics",
+        "Recent reviews list with pull-to-refresh",
+        "Review detail screen",
+        "Quick actions (share, respond)",
+        "Push notifications for new reviews",
+        "Offline support for cached data"
+      ],
+      "priority": "P3",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Dashboard matches web data", "Performance acceptable on older devices"],
+      "dependencies": ["S023", "S010"]
+    },
+    {
+      "id": "S025",
+      "epic": "E6",
+      "title": "Mobile Survey Request",
+      "description": "Allow LOs to send survey requests directly from their mobile device.",
+      "acceptance_criteria": [
+        "Manual survey send form",
+        "Contact picker integration",
+        "SMS survey option",
+        "Survey send confirmation",
+        "Recent sends history",
+        "Quick send from contact"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Survey sends work from mobile", "Contact picker works correctly"],
+      "dependencies": ["S023", "S008"]
+    },
+    {
+      "id": "S026",
+      "epic": "E7",
+      "title": "Webhook System",
+      "description": "Build a webhook system for receiving events from external systems (LOS, CRM) to trigger actions.",
+      "acceptance_criteria": [
+        "Webhook endpoint with signature verification",
+        "Support for multiple event types (loan.closed, contact.created)",
+        "Webhook logs and debugging tools",
+        "Retry logic for failed processing",
+        "Webhook testing tools",
+        "Documentation for integrators"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Webhooks process reliably", "Signature verification works"],
+      "dependencies": ["S002"]
+    },
+    {
+      "id": "S027",
+      "epic": "E7",
+      "title": "Public API",
+      "description": "Create a public REST API for programmatic access to reviews and metrics.",
+      "acceptance_criteria": [
+        "API key authentication",
+        "Endpoints: GET reviews, GET metrics, POST survey request",
+        "Rate limiting",
+        "API documentation (OpenAPI/Swagger)",
+        "SDK/client library (TypeScript)",
+        "API versioning"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["API endpoints function correctly", "Documentation is complete"],
+      "dependencies": ["S002", "S003"]
+    },
+    {
+      "id": "S028",
+      "epic": "E7",
+      "title": "WordPress Integration Plugin",
+      "description": "Create a WordPress plugin to display reviews on LO profile pages via shortcodes or widgets.",
+      "acceptance_criteria": [
+        "WordPress plugin structure",
+        "Shortcode for displaying reviews",
+        "Elementor widget for reviews",
+        "Settings page for API connection",
+        "Caching for performance",
+        "Custom styling options"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Plugin installs and activates correctly", "Reviews display on WordPress pages"],
+      "dependencies": ["S027"]
+    },
+    {
+      "id": "S029",
+      "epic": "E7",
+      "title": "Embeddable Widget",
+      "description": "Build an embeddable JavaScript widget for displaying reviews on any website.",
+      "acceptance_criteria": [
+        "Lightweight JavaScript embed script",
+        "Multiple display formats (carousel, grid, list)",
+        "Customizable styling",
+        "Responsive design",
+        "Lazy loading for performance",
+        "Widget builder in admin panel"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Widget loads correctly on third-party sites", "Styling is customizable"],
+      "dependencies": ["S027"]
+    },
+    {
+      "id": "S030",
+      "epic": "E7",
+      "title": "Zapier Integration",
+      "description": "Build Zapier triggers and actions for integration with thousands of apps.",
+      "acceptance_criteria": [
+        "Zapier app registration",
+        "Triggers: New Review, New Survey Response, Low Rating Alert",
+        "Actions: Send Survey Request, Create Contact",
+        "Authentication via API key",
+        "Documentation and examples",
+        "Testing with common Zaps"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Zapier triggers fire correctly", "Actions execute successfully"],
+      "dependencies": ["S027"]
+    },
+    {
+      "id": "S031",
+      "epic": "E1",
+      "title": "Multi-tenant Organization Support",
+      "description": "Implement full multi-tenant support for future SaaS offering with organization-level isolation.",
+      "acceptance_criteria": [
+        "Organization entity with settings",
+        "User-organization membership with roles",
+        "Organization-scoped data isolation (RLS)",
+        "Organization branding settings",
+        "Subscription/billing placeholder",
+        "Organization admin panel"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "open",
+      "gates": ["Data isolation verified", "Organization admin functions work"],
+      "dependencies": ["S003"]
+    },
+    {
+      "id": "S032",
+      "epic": "E3",
+      "title": "SEO Optimization & Structured Data",
+      "description": "Implement SEO features including structured data (schema.org) for reviews and LO profiles.",
+      "acceptance_criteria": [
+        "JSON-LD schema for Person (LO profiles)",
+        "JSON-LD schema for AggregateRating",
+        "JSON-LD schema for Review",
+        "Dynamic meta tags for profile pages",
+        "Sitemap generation",
+        "SEO audit checklist in admin"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": ["Structured data validates correctly", "Google Search Console shows rich results"],
+      "dependencies": ["S010"]
+    }
+  ],
+  "phases": [
+    {
+      "id": "Phase1",
+      "name": "Foundation (MVP)",
+      "description": "Core infrastructure, authentication, and basic survey/review functionality",
+      "stories": ["S001", "S002", "S003", "S004", "S005", "S006", "S007", "S008", "S010", "S012"],
+      "target_completion": "Phase 1 Complete"
+    },
+    {
+      "id": "Phase2",
+      "name": "Enhanced Features",
+      "description": "Manager dashboards, Google integration, approval workflows, and analytics",
+      "stories": ["S009", "S011", "S013", "S014", "S015", "S016", "S026", "S031"],
+      "target_completion": "Phase 2 Complete"
+    },
+    {
+      "id": "Phase3",
+      "name": "AI & Advanced",
+      "description": "AI-powered features, response management, notifications",
+      "stories": ["S017", "S018", "S019", "S020", "S021", "S022", "S032"],
+      "target_completion": "Phase 3 Complete"
+    },
+    {
+      "id": "Phase4",
+      "name": "Mobile & Integrations",
+      "description": "Mobile app, public API, integrations, and widgets",
+      "stories": ["S023", "S024", "S025", "S027", "S028", "S029", "S030"],
+      "target_completion": "Phase 4 Complete"
+    }
+  ],
+  "global_gates": [
+    "All TypeScript strict mode enabled with no errors",
+    "ESLint passes with zero warnings",
+    "All API routes have proper error handling",
+    "RLS policies cover all database tables",
+    "Core flows have integration tests",
+    "Responsive design works on mobile devices",
+    "Accessibility WCAG 2.1 AA compliance"
+  ],
+  "non_functional_requirements": {
+    "performance": {
+      "page_load": "< 3 seconds on 3G connection",
+      "api_response": "< 500ms for standard queries",
+      "dashboard_load": "< 2 seconds with 1000+ reviews"
+    },
+    "security": {
+      "auth": "Supabase Auth with MFA support",
+      "data": "Row Level Security on all tables",
+      "api": "Rate limiting and API key authentication",
+      "compliance": "GDPR-ready data deletion support"
+    },
+    "scalability": {
+      "users": "Support 1000+ concurrent users",
+      "data": "Handle 100k+ reviews per organization",
+      "storage": "Efficient blob storage for attachments"
+    }
+  }
+}

@@ -48,7 +48,7 @@ function NotificationCardSkeleton() {
 
 export default function SettingsPage() {
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex-1 space-y-6">
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>

@@ -44,7 +44,7 @@ export function DashboardLayout({ children, user, onSignOut }: DashboardLayoutPr
         {/* Page content */}
         <main
           className={cn(
-            "flex-1 overflow-y-auto",
+            "flex-1 overflow-y-auto p-6",
             "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border"
           )}
         >

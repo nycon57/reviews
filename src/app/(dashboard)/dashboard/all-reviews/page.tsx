@@ -42,7 +42,7 @@ export default async function AllReviewsPage() {
   const loanOfficers = loanOfficersResult.success ? loanOfficersResult.data ?? [] : [];
 
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

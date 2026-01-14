@@ -124,7 +124,7 @@ export default async function ManagerDashboardPage() {
   const initialData = await getInitialData();
 
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

@@ -1054,8 +1054,8 @@
         "S013"
       ],
       "startedAt": "2026-01-14T19:40:00.066990+00:00",
-      "completedAt": "2026-01-14T20:15:00.000000+00:00",
-      "updatedAt": "2026-01-14T20:15:00.000000+00:00"
+      "completedAt": "2026-01-14T19:55:53.498857+00:00",
+      "updatedAt": "2026-01-14T19:55:53.498708+00:00"
     },
     {
       "id": "S037",
@@ -1074,14 +1074,17 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Structured data validates in Google Rich Results Test",
         "Branch aggregates calculate correctly"
       ],
       "dependencies": [
         "S032"
-      ]
+      ],
+      "startedAt": "2026-01-14T19:55:55.554858+00:00",
+      "completedAt": "2026-01-14T21:30:00.000000+00:00",
+      "updatedAt": "2026-01-14T21:30:00.000000+00:00"
     },
     {
       "id": "S038",

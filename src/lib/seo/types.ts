@@ -112,6 +112,50 @@ export interface PersonWithRatingSchema extends WithContext<"Person"> {
   };
 }
 
+// LocalBusiness schema for branch profiles
+export interface LocalBusinessSchema extends WithContext<"LocalBusiness"> {
+  name: string;
+  description?: string;
+  url?: string;
+  image?: string;
+  telephone?: string;
+  email?: string;
+  address?: PostalAddressSchema;
+  geo?: GeoCoordinatesSchema;
+  openingHoursSpecification?: OpeningHoursSpecificationSchema[];
+  priceRange?: string;
+  aggregateRating?: Omit<AggregateRatingSchema, "@context" | "@type" | "itemReviewed"> & {
+    "@type": "AggregateRating";
+  };
+  parentOrganization?: {
+    "@type": "Organization";
+    name: string;
+    url?: string;
+  };
+  employee?: Array<{
+    "@type": "Person";
+    name: string;
+    jobTitle?: string;
+    url?: string;
+  }>;
+  hasMap?: string;
+}
+
+// GeoCoordinates schema for location
+export interface GeoCoordinatesSchema {
+  "@type": "GeoCoordinates";
+  latitude?: number;
+  longitude?: number;
+}
+
+// Opening hours specification
+export interface OpeningHoursSpecificationSchema {
+  "@type": "OpeningHoursSpecification";
+  dayOfWeek: string | string[];
+  opens?: string;
+  closes?: string;
+}
+
 // BreadcrumbList schema for navigation
 export interface BreadcrumbListSchema extends WithContext<"BreadcrumbList"> {
   itemListElement: BreadcrumbItemSchema[];

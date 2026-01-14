@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import type { Tables } from "@/types/database.types";
 
 type LoanOfficer = Tables<"loan_officers">;
+type Branch = Tables<"branches">;
 
 /**
  * Minimal LO data needed for metadata generation
@@ -22,6 +23,22 @@ interface MetadataLoanOfficer {
   address?: LoanOfficer["address"];
   average_rating: number | null;
   total_reviews: number | null;
+}
+
+/**
+ * Minimal branch data needed for metadata generation
+ */
+interface MetadataBranch {
+  id: string;
+  name: string;
+  description: string | null;
+  photo_url: string | null;
+  cover_image_url?: string | null;
+  address?: Branch["address"];
+  region?: string | null;
+  average_rating: number | null;
+  total_reviews: number | null;
+  total_loan_officers?: number | null;
 }
 
 interface MetadataOrganization {
@@ -186,4 +203,84 @@ export function generateLOKeywords(
   if (address?.state) keywords.push(address.state);
 
   return keywords.filter(Boolean);
+}
+
+/**
+ * Generate metadata for a Branch profile page
+ */
+export function generateBranchProfileMetadata(
+  branch: MetadataBranch,
+  organization: MetadataOrganization | null,
+  baseUrl: string
+): Metadata {
+  const siteName = organization?.name || "ReviewHub";
+
+  // Parse address for location context
+  const address = branch.address as { city?: string; state?: string } | null;
+  const locationStr = address
+    ? [address.city, address.state].filter(Boolean).join(", ")
+    : branch.region || "";
+
+  const title = locationStr
+    ? `${branch.name} - ${locationStr} - ${siteName}`
+    : `${branch.name} - ${siteName}`;
+
+  const loCount = branch.total_loan_officers || 0;
+  const reviewCount = branch.total_reviews || 0;
+  const avgRating = branch.average_rating
+    ? Number(branch.average_rating).toFixed(1)
+    : null;
+
+  const description =
+    branch.description ||
+    `Visit ${branch.name}${locationStr ? ` in ${locationStr}` : ""}. Meet our team of ${loCount} experienced loan officers. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}.`;
+
+  const profileUrl = `${baseUrl}/branch/${branch.id}`;
+
+  const metadata: Metadata = {
+    title,
+    description: description.slice(0, 160),
+    alternates: {
+      canonical: profileUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: profileUrl,
+      type: "website",
+      siteName,
+      locale: "en_US",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+  };
+
+  // Add image if photo exists (prefer cover image)
+  const imageUrl = branch.cover_image_url || branch.photo_url;
+  if (imageUrl) {
+    metadata.openGraph = {
+      ...metadata.openGraph,
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${branch.name} branch location`,
+        },
+      ],
+    };
+    metadata.twitter = {
+      ...metadata.twitter,
+      images: [imageUrl],
+    };
+  }
+
+  return metadata;
 }

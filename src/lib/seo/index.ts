@@ -11,6 +11,9 @@ export type {
   BreadcrumbListSchema,
   OrganizationSchema,
   PostalAddressSchema,
+  LocalBusinessSchema,
+  GeoCoordinatesSchema,
+  OpeningHoursSpecificationSchema,
   SEOMetadata,
   SEOAuditItem,
   SEOAuditResult,
@@ -25,6 +28,9 @@ export {
   generateReviewListSchema,
   generateBreadcrumbSchema,
   generateProfilePageSchema,
+  generateLocalBusinessSchema,
+  generateBranchReviewSchema,
+  generateBranchProfilePageSchema,
   serializeSchemas,
 } from "./schema-generators";
 
@@ -32,6 +38,7 @@ export {
 export {
   generateLOProfileMetadata,
   generateLOListingMetadata,
+  generateBranchProfileMetadata,
   getBaseUrl,
   truncateForSEO,
   generateLOKeywords,

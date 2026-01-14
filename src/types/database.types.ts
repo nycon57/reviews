@@ -14,6 +14,95 @@ export type Database = {
   }
   public: {
     Tables: {
+      branches: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          slug: string
+          description: string | null
+          address: Json | null
+          phone: string | null
+          email: string | null
+          website_url: string | null
+          hours_of_operation: Json | null
+          manager_name: string | null
+          manager_email: string | null
+          google_place_id: string | null
+          google_maps_url: string | null
+          photo_url: string | null
+          cover_image_url: string | null
+          region: string | null
+          is_active: boolean | null
+          is_public: boolean | null
+          average_rating: number | null
+          total_reviews: number | null
+          total_loan_officers: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          slug: string
+          description?: string | null
+          address?: Json | null
+          phone?: string | null
+          email?: string | null
+          website_url?: string | null
+          hours_of_operation?: Json | null
+          manager_name?: string | null
+          manager_email?: string | null
+          google_place_id?: string | null
+          google_maps_url?: string | null
+          photo_url?: string | null
+          cover_image_url?: string | null
+          region?: string | null
+          is_active?: boolean | null
+          is_public?: boolean | null
+          average_rating?: number | null
+          total_reviews?: number | null
+          total_loan_officers?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          slug?: string
+          description?: string | null
+          address?: Json | null
+          phone?: string | null
+          email?: string | null
+          website_url?: string | null
+          hours_of_operation?: Json | null
+          manager_name?: string | null
+          manager_email?: string | null
+          google_place_id?: string | null
+          google_maps_url?: string | null
+          photo_url?: string | null
+          cover_image_url?: string | null
+          region?: string | null
+          is_active?: boolean | null
+          is_public?: boolean | null
+          average_rating?: number | null
+          total_reviews?: number | null
+          total_loan_officers?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branches_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       api_keys: {
         Row: {
           created_at: string | null
@@ -466,6 +555,7 @@ export type Database = {
           average_rating: number | null
           bio: string | null
           branch: string | null
+          branch_id: string | null
           created_at: string | null
           email: string
           full_name: string
@@ -494,6 +584,7 @@ export type Database = {
           average_rating?: number | null
           bio?: string | null
           branch?: string | null
+          branch_id?: string | null
           created_at?: string | null
           email: string
           full_name: string
@@ -522,6 +613,7 @@ export type Database = {
           average_rating?: number | null
           bio?: string | null
           branch?: string | null
+          branch_id?: string | null
           created_at?: string | null
           email?: string
           full_name?: string
@@ -545,6 +637,13 @@ export type Database = {
           zillow_profile_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "loan_officers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "loan_officers_organization_id_fkey"
             columns: ["organization_id"]

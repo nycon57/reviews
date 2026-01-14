@@ -2320,3 +2320,55 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Reusing existing components (CardSkeleton, ChartSkeleton) maintains consistency
   - Iteration 1 completed all work; iteration 2 was verification only
 ---
+
+## [2026-01-14 15:30:00] - S037: Public Branch Profiles
+Thread: 
+Run: manual
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: pending
+- Post-commit status: pending
+- Verification:
+  - Command: npm run build -> PASS (66 pages generated including /branch/[id])
+  - Command: npm run lint -> PASS (0 errors, 7 warnings - pre-existing)
+- Files created:
+  - supabase/migrations/20240101000012_branches.sql - Database migration with RLS policies
+  - src/app/branch/[id]/page.tsx - Server component with metadata and structured data
+  - src/app/branch/[id]/branch-profile-content.tsx - Client component with full branch UI
+  - src/app/branch/[id]/not-found.tsx - 404 page for branches
+- Files modified:
+  - src/types/database.types.ts - Added branches table and branch_id to loan_officers
+  - src/lib/seo/actions.ts - Added getPublicBranchProfile() and getAllPublicBranchIds()
+  - src/lib/seo/types.ts - Added LocalBusinessSchema and related types
+  - src/lib/seo/schema-generators.ts - Added LocalBusiness schema generators
+  - src/lib/seo/metadata.ts - Added generateBranchProfileMetadata()
+  - src/lib/seo/index.ts - Exported new branch functions and types
+- What was implemented:
+  - /branch/[id] public route for branch profile pages
+  - Branch overview with location info, contact, and hours of operation
+  - Aggregate rating and review count display
+  - List of loan officers at the branch with links to their profiles
+  - Recent reviews carousel from all branch loan officers
+  - LocalBusiness schema.org structured data for SEO
+  - Social sharing meta tags (OpenGraph, Twitter cards)
+  - Call-to-action section to contact branch
+  - Database migration with branches table and RLS policies
+  - Triggers for automatic rating/review aggregation
+- S037 Acceptance Criteria Status:
+  - ✅ /branch/[id] public route created
+  - ✅ Branch overview with location info and contact details
+  - ✅ Aggregate rating and review count for branch
+  - ✅ List of loan officers at the branch with profile links
+  - ✅ Recent reviews from all branch loan officers
+  - ✅ LocalBusiness structured data (schema.org)
+  - ✅ Social sharing meta tags (OpenGraph, Twitter)
+  - ✅ CTA to find a loan officer
+- Gates verified:
+  - ✅ npm run build passes
+  - ✅ npm run lint passes (no new errors)
+- **Learnings for future iterations:**
+  - Follow existing patterns from /lo/[id] for public profile pages
+  - Schema.org LocalBusiness type is ideal for branch locations
+  - Database triggers can handle aggregate calculations automatically
+  - SchemaBranch interface should match getPublicBranchProfile() return type
+---

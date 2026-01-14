@@ -80,6 +80,51 @@ npm run db:types # Generate TypeScript types from Supabase
 
 ---
 
+## [2026-01-14T04:30:00] - S004: Base Layout & Navigation
+Thread:
+Run: 20260113-232603-3866 (iteration 1)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 1f44774 feat(S003): Implement authentication system (combined with S003)
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed (S004 specific):
+  - src/components/dashboard/sidebar.tsx (collapsible sidebar with nav groups)
+  - src/components/dashboard/header.tsx (top nav with user menu, search, notifications)
+  - src/components/dashboard/mobile-nav.tsx (Sheet-based mobile navigation)
+  - src/components/dashboard/dashboard-layout.tsx (layout wrapper with responsive design)
+  - src/components/dashboard/index.ts (exports)
+  - src/components/shared/breadcrumbs.tsx (auto-generated breadcrumbs from pathname)
+  - src/components/shared/theme-toggle.tsx (dropdown + segmented variants)
+  - src/components/shared/skeletons.tsx (Card, Table, ReviewList, Chart, Dashboard skeletons)
+  - src/components/shared/index.ts (exports)
+  - src/components/ui/avatar.tsx, collapsible.tsx, dropdown-menu.tsx, scroll-area.tsx
+  - src/components/ui/separator.tsx, sheet.tsx, skeleton.tsx (ShadCN components)
+  - src/app/(dashboard)/layout.tsx (dashboard route layout with auth)
+  - src/app/(dashboard)/dashboard/page.tsx (dashboard home with stats)
+  - src/app/(dashboard)/dashboard/reviews/page.tsx (reviews list page)
+  - src/app/(dashboard)/dashboard/analytics/page.tsx (analytics placeholder)
+  - src/app/(dashboard)/dashboard/settings/page.tsx (settings with theme toggle)
+  - src/app/(dashboard)/dashboard/loading.tsx (loading state)
+- What was implemented:
+  - Responsive sidebar with collapsible sections and keyboard accessibility
+  - Main navigation items: Dashboard, Reviews, Surveys, Reports, Analytics, Team
+  - Top navigation bar with search button, notifications bell, theme toggle, user menu
+  - Mobile hamburger menu using Sheet component with full navigation
+  - Breadcrumb component with automatic path segment detection and route labels
+  - Dark/light mode toggle with icon-dropdown and full segmented control variants
+  - Comprehensive skeleton components for loading states (cards, tables, charts, dashboard)
+  - Dashboard layout wrapper managing sidebar state and responsive behavior
+  - Dashboard pages with mock data for reviews, analytics, settings
+- **Learnings for future iterations:**
+  - "use server" files can only export async functions - move schemas to separate files
+  - useSearchParams() requires Suspense boundary in Next.js 16 for static generation
+  - Avoid naming conflicts between lucide-react icons and interfaces (use aliases)
+  - Mobile navigation should mirror desktop navigation structure for consistency
+---
+
 ## [2026-01-14T02:00:00] - S003: Authentication System
 Thread:
 Run: session (iteration 1)

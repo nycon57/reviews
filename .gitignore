@@ -54,6 +54,7 @@ supabase/.branches/
 
 # Ralph state (keep templates, ignore state)
 .ralph/runs/
+.ralph/.tmp/
 .ralph/activity.log
 .ralph/errors.log
 

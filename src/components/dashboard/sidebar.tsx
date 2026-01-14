@@ -25,8 +25,6 @@ import {
   Trophy,
   Send,
   Mail,
-  PanelLeftClose,
-  PanelLeft,
   LayoutDashboard,
   Layers,
   MessageSquare,
@@ -38,6 +36,7 @@ import {
   ClipboardList,
   Zap,
   ArrowRight,
+  Eye,
 } from "lucide-react";
 
 interface NavItem {
@@ -147,6 +146,12 @@ const navGroups: NavGroup[] = [
         isNew: true,
       },
       {
+        title: "AI Visibility",
+        href: "/dashboard/geo",
+        icon: <Eye className="h-4 w-4" />,
+        isNew: true,
+      },
+      {
         title: "Testimonials",
         href: "/dashboard/testimonials",
         icon: <Quote className="h-4 w-4" />,
@@ -232,24 +237,6 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange }: Sid
             )}
           </AnimatePresence>
         </Link>
-        {onCollapsedChange && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "ml-auto h-8 w-8 text-brand-slate hover:text-brand-navy hover:bg-brand-frost transition-colors duration-150",
-              collapsed && "ml-0"
-            )}
-            onClick={() => onCollapsedChange(!collapsed)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {collapsed ? (
-              <PanelLeft className="h-4 w-4" />
-            ) : (
-              <PanelLeftClose className="h-4 w-4" />
-            )}
-          </Button>
-        )}
       </div>
 
       {/* Main Navigation */}
@@ -348,7 +335,7 @@ function NavLink({ item, isActive, collapsed }: NavLinkProps) {
       {isActive && (
         <motion.div
           layoutId="sidebar-active-indicator"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-brand-blue rounded-r-full"
+          className="absolute left-0 inset-y-0 my-auto w-[3px] h-5 bg-brand-blue rounded-r-full"
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         />
       )}

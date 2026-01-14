@@ -159,6 +159,41 @@ export type Database = {
           },
         ]
       }
+      email_unsubscribes: {
+        Row: {
+          id: string
+          email: string
+          organization_id: string | null
+          reason: string | null
+          unsubscribed_at: string | null
+          token: string
+        }
+        Insert: {
+          id?: string
+          email: string
+          organization_id?: string | null
+          reason?: string | null
+          unsubscribed_at?: string | null
+          token?: string
+        }
+        Update: {
+          id?: string
+          email?: string
+          organization_id?: string | null
+          reason?: string | null
+          unsubscribed_at?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_unsubscribes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_officers: {
         Row: {
           address: Json | null

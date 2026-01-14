@@ -28,7 +28,7 @@ _No stories currently in progress._
 - [x] S003: Authentication System
 - [x] S004: Base Layout & Navigation
 - [x] S005: Survey Builder & Templates
-- [ ] S006: Public Survey Form
+- [x] S006: Public Survey Form
 - [ ] S007: Email Service Integration with Resend
 - [ ] S008: Automated Survey Distribution System
 - [ ] S010: Loan Officer Dashboard
@@ -408,4 +408,37 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Design system should include semantic colors early - success/warning/info are needed for status indicators throughout the app
   - Chart colors should be defined upfront for consistent data visualization across dashboards
   - Sidebar colors should be defined separately for dashboard layouts that need distinct sidebar styling
+---
+
+## [2026-01-14T00:20:00] - S006: Public Survey Form
+Thread:
+Run: 20260114-001521-85850 (iteration 1)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5d23d08 feat(S006): Implement public survey form
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - src/lib/surveys/public-actions.ts (new - server actions for public survey access without auth)
+  - src/app/survey/[token]/page.tsx (new - server component page with metadata generation)
+  - src/app/survey/[token]/public-survey-form.tsx (new - client component with mobile-responsive form)
+  - src/app/survey/[token]/survey-error.tsx (new - error display component for various states)
+  - src/app/survey/[token]/layout.tsx (new - layout wrapper with ThemeProvider)
+- What was implemented:
+  - Public survey page accessible via unique token-based URLs (/survey/[token])
+  - Mobile-responsive survey form with step-through navigation and progress indicator
+  - Support for all question types: Star Rating, NPS, Text (short/long), Multiple Choice
+  - Form validation with error handling and submission feedback
+  - Thank you page with custom branding and optional Google review redirect
+  - Survey expiration handling with contextual error messages
+  - Survey opened_at tracking when customer first accesses the form
+  - Admin client used to bypass RLS for public anonymous access
+  - Custom branding support (logo, primary color, background color)
+- **Learnings for future iterations:**
+  - Use `JSON.parse(JSON.stringify(data))` to properly serialize complex objects for Supabase JSON columns
+  - Admin client (service role) is required for public endpoints that need to bypass RLS
+  - Survey templates should include `is_active` flag to prevent submissions to disabled templates
+  - Track `opened_at` separately from `completed_at` to measure survey engagement
 ---

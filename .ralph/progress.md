@@ -27,7 +27,7 @@ _No stories currently in progress._
 - [x] S002: Supabase Project Setup & Database Schema
 - [x] S003: Authentication System
 - [x] S004: Base Layout & Navigation
-- [ ] S005: Survey Builder & Templates
+- [x] S005: Survey Builder & Templates
 - [ ] S006: Public Survey Form
 - [ ] S007: Email Service Integration with Resend
 - [ ] S008: Automated Survey Distribution System
@@ -78,6 +78,49 @@ npm run lint     # Run ESLint
 npm run db:types # Generate TypeScript types from Supabase
 ```
 
+---
+
+## [2026-01-14T08:00:00] - S005: Survey Builder & Templates
+Thread:
+Run: 20260113-232603-3866 (iteration 3)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6651133 feat(S005): Implement survey builder and templates
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS
+- Files changed:
+  - src/types/survey.types.ts (new - TypeScript types and Zod schemas)
+  - src/lib/surveys/actions.ts (new - server actions for CRUD operations)
+  - src/components/surveys/index.ts (new - component exports)
+  - src/components/surveys/question-types.tsx (new - Star Rating, NPS, Text, Multiple Choice renderers)
+  - src/components/surveys/question-renderer.tsx (new - wrapper component for question rendering)
+  - src/components/surveys/question-editor.tsx (new - question editing with type-specific settings)
+  - src/components/surveys/survey-builder.tsx (new - main builder with tabs for Questions, Settings, Branding, Thank You)
+  - src/components/surveys/survey-preview.tsx (new - step-through survey preview)
+  - src/app/(dashboard)/dashboard/surveys/page.tsx (new - surveys page with templates list)
+  - src/app/(dashboard)/dashboard/surveys/new/page.tsx (new - create new template page)
+  - src/app/(dashboard)/dashboard/surveys/[id]/edit/page.tsx (new - edit existing template)
+  - src/app/(dashboard)/dashboard/surveys/survey-templates-list.tsx (new - templates grid with CRUD)
+  - src/components/ui/*.tsx (new - badge, checkbox, dialog, progress, radio-group, select, slider, switch, tabs, textarea, tooltip)
+  - package.json (updated - added @radix-ui components for new UI elements)
+- What was implemented:
+  - Survey template CRUD operations with Supabase (create, read, update, delete, duplicate)
+  - Four question types: Star Rating (1-5), NPS (0-10), Text (short/long), Multiple Choice (single/multi)
+  - Question ordering with drag handle UI (ready for dnd-kit integration)
+  - Survey preview mode with step-through navigation and progress bar
+  - Three default templates: Post-Transaction, NPS Survey, CSAT Survey
+  - Survey branding options: logo URL, primary/background colors, progress bar toggle, question numbers toggle
+  - Thank you page configuration with optional review redirect button
+  - Toggle template active/inactive status
+  - All ShadCN UI components needed for builder interface
+- **Learnings for future iterations:**
+  - JSON fields from Supabase need double casting: `as unknown as Type` for TypeScript safety
+  - Use `globalThis.crypto.randomUUID()` instead of bare `crypto` for browser compatibility
+  - ESLint rule `@next/next/no-img-element` may not exist in some Next.js configs - check before adding disable comments
+  - useEffect with setState on mount is acceptable pattern - use eslint-disable with explanation comment
+  - When linter auto-fixes conflict with edits, re-read file and allow linter fixes to apply
 ---
 
 ## [2026-01-14T06:30:00] - S004: Base Layout & Navigation

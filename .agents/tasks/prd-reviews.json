@@ -150,7 +150,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "done",
+      "status": "in_progress",
       "gates": [
         "Responsive design works on mobile/tablet/desktop",
         "Navigation accessible via keyboard"
@@ -159,9 +159,9 @@
         "S001",
         "S003"
       ],
-      "startedAt": "2026-01-14T04:26:03.129313+00:00",
-      "completedAt": "2026-01-14T09:30:00.000000+00:00",
-      "updatedAt": "2026-01-14T09:30:00.000000+00:00"
+      "startedAt": "2026-01-14T04:42:48.800641+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T04:42:48.800821+00:00"
     },
     {
       "id": "S005",

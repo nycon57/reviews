@@ -9,3 +9,12 @@ export { LOTrendChart } from "./lo-trend-chart";
 export { LORecentReviews } from "./lo-recent-reviews";
 export { LOProfileCompletion } from "./lo-profile-completion";
 export { LOQuickActions } from "./lo-quick-actions";
+
+// Manager Dashboard Components
+export {
+  TeamStatsCards,
+  LOComparisonTable,
+  PerformanceLeaderboard,
+  PerformanceAlerts,
+  TeamFilters,
+} from "./manager";

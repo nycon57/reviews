@@ -315,7 +315,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Dashboard loads within 2 seconds",
         "Metrics calculate correctly"
@@ -324,9 +324,9 @@
         "S004",
         "S002"
       ],
-      "startedAt": "2026-01-14T06:21:54.909897+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T06:21:54.910134+00:00"
+      "startedAt": "2026-01-14T06:28:56.265332+00:00",
+      "completedAt": "2026-01-14T06:30:57.443156+00:00",
+      "updatedAt": "2026-01-14T06:30:57.443042+00:00"
     },
     {
       "id": "S011",
@@ -343,14 +343,17 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Manager can view all team members",
         "Comparisons calculate correctly"
       ],
       "dependencies": [
         "S010"
-      ]
+      ],
+      "startedAt": "2026-01-14T06:30:59.495031+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-14T06:30:59.495159+00:00"
     },
     {
       "id": "S012",

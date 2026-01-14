@@ -27,6 +27,7 @@ import {
   Mail,
   PanelLeftClose,
   PanelLeft,
+  LayoutDashboard,
 } from "lucide-react";
 
 interface NavItem {
@@ -62,8 +63,24 @@ const mainNavItems: NavItem[] = [
 
 const navGroups: NavGroup[] = [
   {
-    title: "Analytics",
+    title: "Management",
     defaultOpen: true,
+    items: [
+      {
+        title: "Manager Dashboard",
+        href: "/dashboard/manager",
+        icon: <LayoutDashboard className="h-4 w-4" />,
+      },
+      {
+        title: "Team",
+        href: "/dashboard/team",
+        icon: <Users className="h-4 w-4" />,
+      },
+    ],
+  },
+  {
+    title: "Analytics",
+    defaultOpen: false,
     items: [
       {
         title: "Overview",
@@ -101,11 +118,6 @@ const navGroups: NavGroup[] = [
 ];
 
 const bottomNavItems: NavItem[] = [
-  {
-    title: "Team",
-    href: "/dashboard/team",
-    icon: <Users className="h-4 w-4" />,
-  },
   {
     title: "Settings",
     href: "/dashboard/settings",

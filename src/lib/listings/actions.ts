@@ -3,6 +3,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createUntypedAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import type {
   ActionResult,
@@ -13,6 +14,13 @@ import type {
   ListingSyncLog,
   ListingAccuracyHistory,
 } from './types';
+import {
+  getLocation as getAppleLocation,
+  updateLocation as updateAppleLocation,
+  isTokenExpired as isAppleTokenExpired,
+  refreshAccessToken as refreshAppleToken,
+  formatAppleAddress,
+} from '@/lib/apple';
 
 // Transform database row to BusinessListing
 function transformListing(row: Record<string, unknown>): BusinessListing {
@@ -454,6 +462,304 @@ export async function syncDirectory(connectionId: string): Promise<ActionResult<
   } catch (error) {
     console.error('Error in syncDirectory:', error);
     return { success: false, error: 'Failed to sync directory' };
+  }
+}
+
+// Sync Apple Business Connect directory using real Apple API
+export async function syncAppleDirectory(connectionId: string): Promise<ActionResult<DirectoryConnection>> {
+  try {
+    const supabase = await createClient();
+    const adminClient = createUntypedAdminClient();
+
+    // Get directory connection and listing
+    const { data: connection, error: connError } = await supabase
+      .from('directory_connections')
+      .select('*, business_listings(*)')
+      .eq('id', connectionId)
+      .eq('platform', 'apple_maps')
+      .single();
+
+    if (connError || !connection) {
+      return { success: false, error: 'Apple directory connection not found' };
+    }
+
+    // Get Apple connection for this organization
+    const { data: appleConnection, error: appleConnError } = await supabase
+      .from('apple_connections')
+      .select('*')
+      .eq('organization_id', connection.organization_id)
+      .eq('is_active', true)
+      .single();
+
+    if (appleConnError || !appleConnection) {
+      return { success: false, error: 'No active Apple Business Connect connection found. Please connect Apple Business Connect first.' };
+    }
+
+    // Mark as syncing
+    await supabase
+      .from('directory_connections')
+      .update({ sync_status: 'syncing' })
+      .eq('id', connectionId);
+
+    // Create sync log
+    const { data: syncLog } = await supabase
+      .from('listing_sync_logs')
+      .insert({
+        listing_id: connection.listing_id,
+        connection_id: connectionId,
+        sync_type: 'manual',
+        status: 'in_progress',
+      })
+      .select()
+      .single();
+
+    try {
+      // Get valid access token
+      let accessToken = appleConnection.access_token;
+
+      if (isAppleTokenExpired(new Date(appleConnection.token_expires_at))) {
+        const newTokens = await refreshAppleToken(appleConnection.refresh_token);
+        accessToken = newTokens.accessToken;
+
+        // Update tokens in database using admin client
+        await adminClient
+          .from('apple_connections')
+          .update({
+            access_token: newTokens.accessToken,
+            refresh_token: newTokens.refreshToken,
+            token_expires_at: newTokens.expiresAt.toISOString(),
+          })
+          .eq('id', appleConnection.id);
+      }
+
+      // Fetch location data from Apple
+      const appleLocation = await getAppleLocation(accessToken, appleConnection.location_id);
+
+      // Calculate NAP match score
+      const listing = connection.business_listings;
+      let matchPoints = 0;
+      let totalPoints = 0;
+
+      // Compare business name
+      if (listing.business_name && appleLocation.name) {
+        totalPoints += 20;
+        if (listing.business_name.toLowerCase() === appleLocation.name.toLowerCase()) {
+          matchPoints += 20;
+        }
+      }
+
+      // Compare phone
+      if (listing.business_phone && appleLocation.phoneNumber) {
+        totalPoints += 20;
+        const localPhone = listing.business_phone.replace(/\D/g, '');
+        const remotePhone = appleLocation.phoneNumber.replace(/\D/g, '');
+        if (localPhone === remotePhone || localPhone.endsWith(remotePhone) || remotePhone.endsWith(localPhone)) {
+          matchPoints += 20;
+        }
+      }
+
+      // Compare address
+      if (listing.street_address && appleLocation.address) {
+        totalPoints += 30;
+        const localAddress = listing.street_address.toLowerCase();
+        const remoteAddress = formatAppleAddress(appleLocation.address).toLowerCase();
+        if (localAddress.includes(remoteAddress) || remoteAddress.includes(localAddress)) {
+          matchPoints += 30;
+        }
+      }
+
+      // Compare website
+      if (listing.business_website && appleLocation.websiteUrl) {
+        totalPoints += 15;
+        const localSite = listing.business_website.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+        const remoteSite = appleLocation.websiteUrl.toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
+        if (localSite === remoteSite) {
+          matchPoints += 15;
+        }
+      }
+
+      // Compare city/state
+      if (listing.city && appleLocation.address?.city) {
+        totalPoints += 15;
+        if (listing.city.toLowerCase() === appleLocation.address.city.toLowerCase()) {
+          matchPoints += 15;
+        }
+      }
+
+      const napMatchScore = totalPoints > 0 ? Math.round((matchPoints / totalPoints) * 100) : 0;
+
+      // Build conflicts object
+      const conflicts: DirectoryConnection['conflicts'] = {};
+      if (listing.business_name !== appleLocation.name) {
+        conflicts.businessName = { local: listing.business_name, remote: appleLocation.name };
+      }
+      if (listing.business_phone !== appleLocation.phoneNumber) {
+        conflicts.businessPhone = { local: listing.business_phone, remote: appleLocation.phoneNumber || '' };
+      }
+      if (listing.street_address !== formatAppleAddress(appleLocation.address)) {
+        conflicts.streetAddress = { local: listing.street_address, remote: formatAppleAddress(appleLocation.address) };
+      }
+      if (listing.business_website !== appleLocation.websiteUrl) {
+        conflicts.website = { local: listing.business_website, remote: appleLocation.websiteUrl || '' };
+      }
+
+      // Update connection with sync results
+      const { data: updatedConnection, error: updateError } = await supabase
+        .from('directory_connections')
+        .update({
+          directory_listing_id: appleConnection.location_id,
+          directory_url: `https://businessconnect.apple.com/locations/${appleConnection.location_id}`,
+          sync_status: 'synced',
+          last_sync_at: new Date().toISOString(),
+          sync_error: null,
+          is_connected: true,
+          is_verified: true,
+          remote_nap_data: {
+            businessName: appleLocation.name,
+            businessPhone: appleLocation.phoneNumber,
+            streetAddress: formatAppleAddress(appleLocation.address),
+            city: appleLocation.address?.city,
+            state: appleLocation.address?.state,
+            postalCode: appleLocation.address?.postalCode,
+            website: appleLocation.websiteUrl,
+          },
+          nap_match_score: napMatchScore,
+          has_conflicts: Object.keys(conflicts).length > 0,
+          conflicts,
+        })
+        .eq('id', connectionId)
+        .select()
+        .single();
+
+      // Complete sync log
+      if (syncLog) {
+        await supabase
+          .from('listing_sync_logs')
+          .update({
+            status: 'completed',
+            completed_at: new Date().toISOString(),
+            directories_synced: 1,
+            conflicts_detected: Object.keys(conflicts).length,
+          })
+          .eq('id', syncLog.id);
+      }
+
+      if (updateError) {
+        return { success: false, error: updateError.message };
+      }
+
+      revalidatePath('/dashboard/listings');
+      return {
+        success: true,
+        data: transformConnection(updatedConnection),
+      };
+    } catch (apiError) {
+      // Mark sync as failed
+      await supabase
+        .from('directory_connections')
+        .update({
+          sync_status: 'error',
+          sync_error: apiError instanceof Error ? apiError.message : 'Apple API sync failed',
+        })
+        .eq('id', connectionId);
+
+      if (syncLog) {
+        await supabase
+          .from('listing_sync_logs')
+          .update({
+            status: 'failed',
+            completed_at: new Date().toISOString(),
+            errors: [apiError instanceof Error ? apiError.message : 'Apple API sync failed'],
+          })
+          .eq('id', syncLog.id);
+      }
+
+      throw apiError;
+    }
+  } catch (error) {
+    console.error('Error in syncAppleDirectory:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to sync Apple directory' };
+  }
+}
+
+// Push local listing data to Apple Business Connect
+export async function pushToAppleDirectory(
+  connectionId: string,
+  fields: Array<'name' | 'description' | 'phone' | 'website' | 'categories'>
+): Promise<ActionResult<DirectoryConnection>> {
+  try {
+    const supabase = await createClient();
+    const adminClient = createUntypedAdminClient();
+
+    // Get directory connection and listing
+    const { data: connection, error: connError } = await supabase
+      .from('directory_connections')
+      .select('*, business_listings(*)')
+      .eq('id', connectionId)
+      .eq('platform', 'apple_maps')
+      .single();
+
+    if (connError || !connection) {
+      return { success: false, error: 'Apple directory connection not found' };
+    }
+
+    // Get Apple connection for this organization
+    const { data: appleConnection, error: appleConnError } = await supabase
+      .from('apple_connections')
+      .select('*')
+      .eq('organization_id', connection.organization_id)
+      .eq('is_active', true)
+      .single();
+
+    if (appleConnError || !appleConnection) {
+      return { success: false, error: 'No active Apple Business Connect connection found' };
+    }
+
+    // Get valid access token
+    let accessToken = appleConnection.access_token;
+
+    if (isAppleTokenExpired(new Date(appleConnection.token_expires_at))) {
+      const newTokens = await refreshAppleToken(appleConnection.refresh_token);
+      accessToken = newTokens.accessToken;
+
+      await adminClient
+        .from('apple_connections')
+        .update({
+          access_token: newTokens.accessToken,
+          refresh_token: newTokens.refreshToken,
+          token_expires_at: newTokens.expiresAt.toISOString(),
+        })
+        .eq('id', appleConnection.id);
+    }
+
+    // Build update data
+    const listing = connection.business_listings;
+    const updateData: Parameters<typeof updateAppleLocation>[2] = {};
+
+    if (fields.includes('name') && listing.business_name) {
+      updateData.name = listing.business_name;
+    }
+    if (fields.includes('description') && listing.business_description) {
+      updateData.description = listing.business_description;
+    }
+    if (fields.includes('phone') && listing.business_phone) {
+      updateData.phoneNumber = listing.business_phone;
+    }
+    if (fields.includes('website') && listing.business_website) {
+      updateData.websiteUrl = listing.business_website;
+    }
+    if (fields.includes('categories') && listing.business_categories?.length > 0) {
+      updateData.categories = listing.business_categories;
+    }
+
+    // Update Apple location
+    await updateAppleLocation(accessToken, appleConnection.location_id, updateData);
+
+    // Sync back to get updated data
+    return syncAppleDirectory(connectionId);
+  } catch (error) {
+    console.error('Error in pushToAppleDirectory:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to push to Apple directory' };
   }
 }
 

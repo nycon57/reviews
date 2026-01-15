@@ -548,6 +548,308 @@ export type Database = {
           },
         ]
       }
+      apple_connections: {
+        Row: {
+          access_token: string
+          apple_business_id: string
+          apple_team_id: string
+          average_rating: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          loan_officer_id: string | null
+          location_address: string | null
+          location_id: string
+          location_name: string | null
+          organization_id: string
+          photos: Json | null
+          place_action_links: Json | null
+          refresh_token: string
+          reviews_count: number | null
+          scopes: string[] | null
+          showcases: Json | null
+          sync_error: string | null
+          sync_status: string | null
+          token_expires_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_token: string
+          apple_business_id: string
+          apple_team_id: string
+          average_rating?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          loan_officer_id?: string | null
+          location_address?: string | null
+          location_id: string
+          location_name?: string | null
+          organization_id: string
+          photos?: Json | null
+          place_action_links?: Json | null
+          refresh_token: string
+          reviews_count?: number | null
+          scopes?: string[] | null
+          showcases?: Json | null
+          sync_error?: string | null
+          sync_status?: string | null
+          token_expires_at: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string
+          apple_business_id?: string
+          apple_team_id?: string
+          average_rating?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          loan_officer_id?: string | null
+          location_address?: string | null
+          location_id?: string
+          location_name?: string | null
+          organization_id?: string
+          photos?: Json | null
+          place_action_links?: Json | null
+          refresh_token?: string
+          reviews_count?: number | null
+          scopes?: string[] | null
+          showcases?: Json | null
+          sync_error?: string | null
+          sync_status?: string | null
+          token_expires_at?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apple_connections_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apple_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apple_sync_logs: {
+        Row: {
+          business_info_updated: boolean | null
+          completed_at: string | null
+          connection_id: string
+          duration_ms: number | null
+          errors: string[] | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          photos_synced: number | null
+          reviews_created: number | null
+          reviews_fetched: number | null
+          reviews_updated: number | null
+          started_at: string | null
+          status: string | null
+          sync_type: string
+        }
+        Insert: {
+          business_info_updated?: boolean | null
+          completed_at?: string | null
+          connection_id: string
+          duration_ms?: number | null
+          errors?: string[] | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          photos_synced?: number | null
+          reviews_created?: number | null
+          reviews_fetched?: number | null
+          reviews_updated?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_type: string
+        }
+        Update: {
+          business_info_updated?: boolean | null
+          completed_at?: string | null
+          connection_id?: string
+          duration_ms?: number | null
+          errors?: string[] | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          photos_synced?: number | null
+          reviews_created?: number | null
+          reviews_fetched?: number | null
+          reviews_updated?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apple_sync_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "apple_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apple_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apple_review_replies: {
+        Row: {
+          apple_reply_time: string | null
+          connection_id: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          organization_id: string
+          reply_text: string
+          review_id: string
+          sent_at: string | null
+          sent_by: string | null
+          status: string | null
+        }
+        Insert: {
+          apple_reply_time?: string | null
+          connection_id: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          reply_text: string
+          review_id: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string | null
+        }
+        Update: {
+          apple_reply_time?: string | null
+          connection_id?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          reply_text?: string
+          review_id?: string
+          sent_at?: string | null
+          sent_by?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apple_review_replies_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "apple_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apple_review_replies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apple_review_replies_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apple_review_replies_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apple_analytics: {
+        Row: {
+          actions: number | null
+          average_rating: number | null
+          connection_id: string
+          created_at: string | null
+          date: string
+          direction_requests: number | null
+          id: string
+          impressions: number | null
+          new_reviews: number | null
+          organization_id: string
+          phone_calls: number | null
+          photo_views: number | null
+          review_responses: number | null
+          updated_at: string | null
+          website_clicks: number | null
+        }
+        Insert: {
+          actions?: number | null
+          average_rating?: number | null
+          connection_id: string
+          created_at?: string | null
+          date: string
+          direction_requests?: number | null
+          id?: string
+          impressions?: number | null
+          new_reviews?: number | null
+          organization_id: string
+          phone_calls?: number | null
+          photo_views?: number | null
+          review_responses?: number | null
+          updated_at?: string | null
+          website_clicks?: number | null
+        }
+        Update: {
+          actions?: number | null
+          average_rating?: number | null
+          connection_id?: string
+          created_at?: string | null
+          date?: string
+          direction_requests?: number | null
+          id?: string
+          impressions?: number | null
+          new_reviews?: number | null
+          organization_id?: string
+          phone_calls?: number | null
+          photo_views?: number | null
+          review_responses?: number | null
+          updated_at?: string | null
+          website_clicks?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apple_analytics_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "apple_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "apple_analytics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       loan_officers: {
         Row: {
           address: Json | null

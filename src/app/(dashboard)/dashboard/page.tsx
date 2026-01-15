@@ -1,12 +1,11 @@
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Send } from "lucide-react";
-import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, CardSkeleton } from "@/components/shared";
+import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton } from "@/components/shared";
 import {
   LOStatsCards,
   LOTrendChart,
   LORecentReviews,
-  LOProfileCompletion,
   LOQuickActions,
 } from "@/components/dashboard";
 import {
@@ -14,13 +13,14 @@ import {
   BadgeShowcase,
   ReputationBreakdownCard,
   ImprovementTipsCard,
+  ProfileCompletionCard,
+  CompactProfileLeaderboard,
 } from "@/components/gamification";
 import {
   getLoanOfficerMetrics,
   getLoanOfficerRecentReviews,
   getRatingTrend,
   getNPSTrend,
-  getProfileCompletion,
 } from "@/lib/dashboard";
 
 export const metadata = {
@@ -94,26 +94,6 @@ async function RecentReviewsList() {
   return <LORecentReviews initialReviews={result.data || []} />;
 }
 
-// Server component for profile completion
-async function ProfileCompletionCard() {
-  const result = await getProfileCompletion();
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  // Don't show if no profile (user is not a loan officer)
-  if (result.data.items.length === 0) {
-    return null;
-  }
-
-  return (
-    <LOProfileCompletion
-      percentage={result.data.percentage}
-      items={result.data.items}
-    />
-  );
-}
 
 export default function DashboardPage() {
   return (
@@ -178,9 +158,8 @@ export default function DashboardPage() {
         {/* Sidebar - quick actions and profile completion */}
         <div className="space-y-6">
           <LOQuickActions />
-          <Suspense fallback={<CardSkeleton className="h-[280px]" />}>
-            <ProfileCompletionCard />
-          </Suspense>
+          <ProfileCompletionCard showMilestones={true} showTips={true} />
+          <CompactProfileLeaderboard limit={5} />
         </div>
       </div>
     </div>

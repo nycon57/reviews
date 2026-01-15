@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { EnhancedLeaderboard } from "@/components/gamification";
+import { EnhancedLeaderboard, ProfileCompletionLeaderboard } from "@/components/gamification";
 import { Crown, Medal, Award, Users, Loader2 } from "lucide-react";
 import { getEnhancedLeaderboard } from "@/lib/gamification/actions";
 import type { FilterOptions } from "@/lib/dashboard";
@@ -236,6 +236,9 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
 
       {/* Full leaderboard */}
       <EnhancedLeaderboard filterOptions={initialFilters} initialPeriod="monthly" />
+
+      {/* Profile completion leaderboard */}
+      <ProfileCompletionLeaderboard limit={10} showPodium={false} />
 
       {/* Info card */}
       <Card className="bg-muted/30 border-dashed">

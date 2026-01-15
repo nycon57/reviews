@@ -92,6 +92,13 @@ export default function SettingsPage() {
 
       {/* Settings sections */}
       <div className="grid gap-6">
+        {/* Profile Completion Score */}
+        <ProfileCompletionCard
+          showSections={true}
+          showMilestones={true}
+          showTips={true}
+        />
+
         {/* Appearance */}
         <Card>
           <CardHeader>

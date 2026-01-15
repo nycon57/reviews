@@ -223,7 +223,7 @@ export async function handleSalesforceOAuthCallback(
 // Get Salesforce connection for organization
 export async function getSalesforceConnection(): Promise<ActionResult<SalesforceConnection | null>> {
   const context = await getUserContext();
-  if (!context) {
+  if (!context || !context.organization_id) {
     return { success: false, error: 'Unauthorized' };
   }
 
@@ -706,12 +706,14 @@ async function triggerSurveyForOpportunity(
       opportunity.Id
     );
 
-    if (contacts.length === 0 || !contacts[0].Email) {
+    const contactWithEmail = contacts.find((c) => c.Email);
+    if (!contactWithEmail || !contactWithEmail.Email) {
       console.warn(`No contact with email found for opportunity ${opportunity.Id}`);
       return;
     }
 
-    const contact = contacts[0];
+    const contact = contactWithEmail;
+    const contactEmail = contactWithEmail.Email; // Guaranteed to exist after check
 
     // Get default survey template
     const { data: template } = await adminClient
@@ -752,8 +754,8 @@ async function triggerSurveyForOpportunity(
         template_id: template.id,
         loan_officer_id: loanOfficer.id,
         customer_name: contact.Name,
-        customer_email: contact.Email,
-        customer_phone: contact.Phone || contact.MobilePhone,
+        customer_email: contactEmail,
+        customer_phone: contact.Phone || contact.MobilePhone || null,
         transaction_id: opportunity.Id,
         transaction_type: 'salesforce_opportunity',
         status: 'pending',
@@ -807,7 +809,7 @@ export async function syncReviewToSalesforce(
   connectionId: string
 ): Promise<ActionResult> {
   const context = await getUserContext();
-  if (!context) {
+  if (!context || !context.organization_id) {
     return { success: false, error: 'Unauthorized' };
   }
 
@@ -836,23 +838,35 @@ export async function syncReviewToSalesforce(
     let salesforceContactId: string | undefined;
     let salesforceAccountId: string | undefined;
 
-    // Check if review came from Salesforce survey
-    const sourceMetadata = review.source_metadata as Record<string, unknown> | null;
-    if (sourceMetadata?.salesforce_contact_id) {
-      salesforceContactId = sourceMetadata.salesforce_contact_id as string;
-      salesforceAccountId = sourceMetadata.salesforce_account_id as string | undefined;
-    } else if (review.customer_email) {
-      // Try to find contact by email
+    // If review came from a survey, check if survey has Salesforce link
+    if (review.survey_response_id) {
+      const { data: surveyResponse } = await adminClient
+        .from('survey_responses')
+        .select('survey_id, surveys!inner(source_metadata)')
+        .eq('id', review.survey_response_id)
+        .single();
+
+      if (surveyResponse?.surveys) {
+        const surveySourceMetadata = (surveyResponse.surveys as unknown as { source_metadata: Record<string, unknown> | null }).source_metadata;
+        if (surveySourceMetadata?.salesforce_contact_id) {
+          salesforceContactId = surveySourceMetadata.salesforce_contact_id as string;
+          salesforceAccountId = surveySourceMetadata.salesforce_account_id as string | undefined;
+        }
+      }
+    }
+
+    // Fallback: Try to find contact by customer name if we have it
+    if (!salesforceContactId && review.customer_name) {
       const { data: mapping } = await adminClient
         .from('salesforce_contact_mappings')
         .select('salesforce_contact_id, salesforce_account_id')
         .eq('connection_id', connectionId)
-        .eq('customer_email', review.customer_email)
+        .eq('customer_name', review.customer_name)
         .single();
 
       if (mapping) {
         salesforceContactId = mapping.salesforce_contact_id;
-        salesforceAccountId = mapping.salesforce_account_id;
+        salesforceAccountId = mapping.salesforce_account_id ?? undefined;
       }
     }
 
@@ -924,7 +938,7 @@ export async function getSalesforceSyncLogs(
   limit: number = 10
 ): Promise<ActionResult<SalesforceSyncLog[]>> {
   const context = await getUserContext();
-  if (!context) {
+  if (!context || !context.organization_id) {
     return { success: false, error: 'Unauthorized' };
   }
 

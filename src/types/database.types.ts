@@ -3723,6 +3723,392 @@ export type Database = {
           },
         ]
       }
+      salesforce_connections: {
+        Row: {
+          id: string
+          organization_id: string
+          instance_url: string
+          salesforce_org_id: string
+          salesforce_user_id: string
+          salesforce_username: string | null
+          access_token: string
+          refresh_token: string
+          token_expires_at: string
+          scopes: string[] | null
+          is_active: boolean | null
+          last_sync_at: string | null
+          sync_status: string | null
+          sync_error: string | null
+          sync_contacts: boolean | null
+          sync_accounts: boolean | null
+          sync_opportunities: boolean | null
+          auto_create_surveys: boolean | null
+          opportunity_stage_trigger: string | null
+          contacts_synced: number | null
+          accounts_synced: number | null
+          opportunities_synced: number | null
+          field_mappings: Json | null
+          metadata: Json | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          instance_url: string
+          salesforce_org_id: string
+          salesforce_user_id: string
+          salesforce_username?: string | null
+          access_token: string
+          refresh_token: string
+          token_expires_at: string
+          scopes?: string[] | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          sync_status?: string | null
+          sync_error?: string | null
+          sync_contacts?: boolean | null
+          sync_accounts?: boolean | null
+          sync_opportunities?: boolean | null
+          auto_create_surveys?: boolean | null
+          opportunity_stage_trigger?: string | null
+          contacts_synced?: number | null
+          accounts_synced?: number | null
+          opportunities_synced?: number | null
+          field_mappings?: Json | null
+          metadata?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          instance_url?: string
+          salesforce_org_id?: string
+          salesforce_user_id?: string
+          salesforce_username?: string | null
+          access_token?: string
+          refresh_token?: string
+          token_expires_at?: string
+          scopes?: string[] | null
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          sync_status?: string | null
+          sync_error?: string | null
+          sync_contacts?: boolean | null
+          sync_accounts?: boolean | null
+          sync_opportunities?: boolean | null
+          auto_create_surveys?: boolean | null
+          opportunity_stage_trigger?: string | null
+          contacts_synced?: number | null
+          accounts_synced?: number | null
+          opportunities_synced?: number | null
+          field_mappings?: Json | null
+          metadata?: Json | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      salesforce_sync_logs: {
+        Row: {
+          id: string
+          organization_id: string
+          connection_id: string
+          sync_type: string
+          sync_direction: string | null
+          object_type: string | null
+          status: string | null
+          records_fetched: number | null
+          records_created: number | null
+          records_updated: number | null
+          records_failed: number | null
+          errors: string[] | null
+          started_at: string | null
+          completed_at: string | null
+          duration_ms: number | null
+          metadata: Json | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          connection_id: string
+          sync_type: string
+          sync_direction?: string | null
+          object_type?: string | null
+          status?: string | null
+          records_fetched?: number | null
+          records_created?: number | null
+          records_updated?: number | null
+          records_failed?: number | null
+          errors?: string[] | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          metadata?: Json | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          connection_id?: string
+          sync_type?: string
+          sync_direction?: string | null
+          object_type?: string | null
+          status?: string | null
+          records_fetched?: number | null
+          records_created?: number | null
+          records_updated?: number | null
+          records_failed?: number | null
+          errors?: string[] | null
+          started_at?: string | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_sync_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      salesforce_contact_mappings: {
+        Row: {
+          id: string
+          organization_id: string
+          connection_id: string
+          salesforce_contact_id: string
+          salesforce_account_id: string | null
+          loan_officer_id: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          salesforce_data: Json | null
+          last_synced_at: string | null
+          sync_status: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          connection_id: string
+          salesforce_contact_id: string
+          salesforce_account_id?: string | null
+          loan_officer_id?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          salesforce_data?: Json | null
+          last_synced_at?: string | null
+          sync_status?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          connection_id?: string
+          salesforce_contact_id?: string
+          salesforce_account_id?: string | null
+          loan_officer_id?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          salesforce_data?: Json | null
+          last_synced_at?: string | null
+          sync_status?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_contact_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_contact_mappings_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_contact_mappings_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      salesforce_opportunity_mappings: {
+        Row: {
+          id: string
+          organization_id: string
+          connection_id: string
+          salesforce_opportunity_id: string
+          salesforce_account_id: string | null
+          salesforce_contact_id: string | null
+          opportunity_name: string | null
+          opportunity_stage: string | null
+          opportunity_amount: number | null
+          close_date: string | null
+          survey_id: string | null
+          survey_triggered_at: string | null
+          salesforce_data: Json | null
+          last_synced_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          connection_id: string
+          salesforce_opportunity_id: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id?: string | null
+          opportunity_name?: string | null
+          opportunity_stage?: string | null
+          opportunity_amount?: number | null
+          close_date?: string | null
+          survey_id?: string | null
+          survey_triggered_at?: string | null
+          salesforce_data?: Json | null
+          last_synced_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          connection_id?: string
+          salesforce_opportunity_id?: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id?: string | null
+          opportunity_name?: string | null
+          opportunity_stage?: string | null
+          opportunity_amount?: number | null
+          close_date?: string | null
+          survey_id?: string | null
+          survey_triggered_at?: string | null
+          salesforce_data?: Json | null
+          last_synced_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_opportunity_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_opportunity_mappings_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_opportunity_mappings_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      salesforce_review_data: {
+        Row: {
+          id: string
+          organization_id: string
+          connection_id: string
+          review_id: string
+          salesforce_contact_id: string | null
+          salesforce_account_id: string | null
+          synced_to_salesforce: boolean | null
+          salesforce_record_id: string | null
+          synced_at: string | null
+          sync_error: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          connection_id: string
+          review_id: string
+          salesforce_contact_id?: string | null
+          salesforce_account_id?: string | null
+          synced_to_salesforce?: boolean | null
+          salesforce_record_id?: string | null
+          synced_at?: string | null
+          sync_error?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          connection_id?: string
+          review_id?: string
+          salesforce_contact_id?: string | null
+          salesforce_account_id?: string | null
+          synced_to_salesforce?: boolean | null
+          salesforce_record_id?: string | null
+          synced_at?: string | null
+          sync_error?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_review_data_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_review_data_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_review_data_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never

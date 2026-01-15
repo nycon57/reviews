@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { NotificationCenter } from "@/components/notifications";
+import { SearchDialog } from "@/components/dashboard/search-dialog";
+import { InviteTeamDialog } from "@/components/dashboard/invite-team-dialog";
 import {
   Search,
   LogOut,
@@ -22,6 +24,9 @@ import {
   CreditCard,
   UserPlus,
   Command,
+  ExternalLink,
+  PanelLeftClose,
+  PanelLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +35,7 @@ interface HeaderUser {
   email: string;
   avatar?: string;
   initials: string;
+  loanOfficerId?: string;
 }
 
 interface HeaderProps {
@@ -37,9 +43,34 @@ interface HeaderProps {
   user?: HeaderUser | null;
   onSignOut?: () => void;
   mobileMenuTrigger?: React.ReactNode;
+  sidebarCollapsed?: boolean;
+  onSidebarCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Header({ className, user, onSignOut, mobileMenuTrigger }: HeaderProps) {
+export function Header({
+  className,
+  user,
+  onSignOut,
+  mobileMenuTrigger,
+  sidebarCollapsed,
+  onSidebarCollapsedChange,
+}: HeaderProps) {
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+
+  // Keyboard shortcut: ⌘K to open search
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   return (
     <header
       className={cn(
@@ -50,6 +81,23 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
       {/* Mobile menu trigger */}
       {mobileMenuTrigger && (
         <div className="md:hidden">{mobileMenuTrigger}</div>
+      )}
+
+      {/* Sidebar collapse toggle - desktop only */}
+      {onSidebarCollapsedChange && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hidden md:flex h-9 w-9 text-brand-slate hover:text-brand-navy hover:bg-brand-frost transition-colors duration-150"
+          onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
+          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {sidebarCollapsed ? (
+            <PanelLeft className="h-4 w-4" />
+          ) : (
+            <PanelLeftClose className="h-4 w-4" />
+          )}
+        </Button>
       )}
 
       {/* Spacer - pushes actions to right */}
@@ -63,6 +111,7 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
           size="sm"
           className="h-9 px-3 text-brand-slate hover:text-brand-navy hover:bg-brand-frost gap-2 hidden sm:flex"
           aria-label="Search"
+          onClick={() => setSearchOpen(true)}
         >
           <Search className="h-4 w-4" />
           <span className="text-sm font-normal">Search</span>
@@ -77,6 +126,7 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
           size="icon"
           className="h-9 w-9 text-brand-slate hover:text-brand-navy hover:bg-brand-frost sm:hidden"
           aria-label="Search"
+          onClick={() => setSearchOpen(true)}
         >
           <Search className="h-4 w-4" />
         </Button>
@@ -89,6 +139,7 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
           variant="brand-outline"
           size="sm"
           className="h-9 hidden md:flex"
+          onClick={() => setInviteOpen(true)}
         >
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Team
@@ -105,6 +156,10 @@ export function Header({ className, user, onSignOut, mobileMenuTrigger }: Header
           <UserMenu user={user} onSignOut={onSignOut} />
         )}
       </div>
+
+      {/* Dialogs */}
+      <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+      <InviteTeamDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </header>
   );
 }
@@ -147,6 +202,14 @@ function UserMenu({ user, onSignOut }: UserMenuProps) {
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
+        {user.loanOfficerId && (
+          <DropdownMenuItem asChild className="text-brand-slate hover:text-brand-navy hover:bg-brand-frost cursor-pointer">
+            <Link href={`/lo/${user.loanOfficerId}`} target="_blank" className="flex items-center">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              <span>View Public Profile</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem asChild className="text-brand-slate hover:text-brand-navy hover:bg-brand-frost cursor-pointer">
           <Link href="/dashboard/settings" className="flex items-center">
             <Settings className="mr-2 h-4 w-4" />

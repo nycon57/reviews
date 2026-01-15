@@ -161,36 +161,28 @@ export default function DashboardPage() {
 
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent reviews - takes 2 columns */}
-        <div className="lg:col-span-2">
-          <h2 className="text-heading-sm font-semibold text-brand-navy mb-4">
-            Recent Reviews
-          </h2>
+        {/* Main column - takes 2 columns */}
+        <div className="lg:col-span-2 space-y-6">
           <Suspense fallback={<ReviewListSkeleton count={5} />}>
             <RecentReviewsList />
           </Suspense>
+
+          <ReputationBreakdownCard />
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <ImprovementTipsCard />
+            <BadgeShowcase />
+          </div>
         </div>
 
-        {/* Sidebar - quick actions, badges, and profile completion */}
+        {/* Sidebar - quick actions and profile completion */}
         <div className="space-y-6">
           <LOQuickActions />
-          <BadgeShowcase />
-          <ImprovementTipsCard />
           <Suspense fallback={<CardSkeleton className="h-[280px]" />}>
             <ProfileCompletionCard />
           </Suspense>
         </div>
       </div>
-
-      {/* Reputation breakdown section */}
-      <section>
-        <h2 className="text-heading-sm font-semibold text-brand-navy mb-4">
-          Reputation Insights
-        </h2>
-        <div className="grid gap-6 lg:grid-cols-2">
-          <ReputationBreakdownCard />
-        </div>
-      </section>
     </div>
   );
 }

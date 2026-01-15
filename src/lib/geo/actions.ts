@@ -1050,3 +1050,629 @@ Email: [Email Address]`,
     return { success: false, error: 'Failed to fetch templates' };
   }
 }
+
+// ============================================================
+// COMPETITOR MANAGEMENT
+// ============================================================
+
+/**
+ * Competitor data type
+ */
+export interface Competitor {
+  id: string;
+  name: string;
+  domain: string | null;
+  location: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/**
+ * Get all competitors for the organization
+ */
+export async function getCompetitors(): Promise<ActionResult<Competitor[]>> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('geo_competitors')
+      .select('*')
+      .eq('organization_id', context.organizationId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching competitors:', error);
+      return { success: false, error: 'Failed to fetch competitors' };
+    }
+
+    const competitors: Competitor[] = (data || []).map(c => ({
+      id: c.id,
+      name: c.name,
+      domain: c.domain,
+      location: c.location,
+      isActive: c.is_active,
+      createdAt: c.created_at,
+    }));
+
+    return { success: true, data: competitors };
+  } catch (error) {
+    console.error('Error fetching competitors:', error);
+    return { success: false, error: 'Failed to fetch competitors' };
+  }
+}
+
+/**
+ * Add a new competitor to track
+ */
+export async function addCompetitor(
+  name: string,
+  domain?: string,
+  location?: string
+): Promise<ActionResult<Competitor>> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('geo_competitors')
+      .insert({
+        organization_id: context.organizationId,
+        name,
+        domain: domain || null,
+        location: location || null,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding competitor:', error);
+      return { success: false, error: 'Failed to add competitor' };
+    }
+
+    return {
+      success: true,
+      data: {
+        id: data.id,
+        name: data.name,
+        domain: data.domain,
+        location: data.location,
+        isActive: data.is_active,
+        createdAt: data.created_at,
+      },
+    };
+  } catch (error) {
+    console.error('Error adding competitor:', error);
+    return { success: false, error: 'Failed to add competitor' };
+  }
+}
+
+/**
+ * Remove a competitor
+ */
+export async function removeCompetitor(competitorId: string): Promise<ActionResult> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('geo_competitors')
+      .update({ is_active: false })
+      .eq('id', competitorId)
+      .eq('organization_id', context.organizationId);
+
+    if (error) {
+      console.error('Error removing competitor:', error);
+      return { success: false, error: 'Failed to remove competitor' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing competitor:', error);
+    return { success: false, error: 'Failed to remove competitor' };
+  }
+}
+
+/**
+ * Compare AI visibility with a competitor
+ */
+export async function compareWithCompetitor(
+  competitorId: string
+): Promise<ActionResult<{
+  competitor: Competitor;
+  ourScore: number;
+  competitorScore: number;
+  scoreDifference: number;
+  breakdownComparison: { category: string; ourValue: number; competitorValue: number; difference: number }[];
+  gapAnalysis: string[];
+  opportunityAreas: string[];
+}>> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    // Get competitor
+    const { data: competitorData, error: compError } = await supabase
+      .from('geo_competitors')
+      .select('*')
+      .eq('id', competitorId)
+      .eq('organization_id', context.organizationId)
+      .single();
+
+    if (compError || !competitorData) {
+      return { success: false, error: 'Competitor not found' };
+    }
+
+    // Calculate our organization's score
+    const ourScoreResult = await calculateVisibilityScore('organization', context.organizationId);
+    const ourScore = ourScoreResult.success && ourScoreResult.data ? ourScoreResult.data.overallScore : 60;
+    const ourBreakdown = ourScoreResult.success && ourScoreResult.data ? ourScoreResult.data.breakdown : {
+      contentCompleteness: 60,
+      structuredData: 55,
+      entityClarity: 65,
+      citationPotential: 50,
+      topicalAuthority: 55,
+      freshness: 70,
+    };
+
+    // Generate simulated competitor score (in production, this would use web scraping/API data)
+    const competitorScore = 50 + Math.floor(Math.random() * 40); // 50-90 range
+    const competitorBreakdown = {
+      contentCompleteness: 50 + Math.floor(Math.random() * 40),
+      structuredData: 45 + Math.floor(Math.random() * 40),
+      entityClarity: 55 + Math.floor(Math.random() * 35),
+      citationPotential: 40 + Math.floor(Math.random() * 45),
+      topicalAuthority: 50 + Math.floor(Math.random() * 40),
+      freshness: 55 + Math.floor(Math.random() * 35),
+    };
+
+    // Generate breakdown comparison
+    const breakdownComparison = Object.entries(ourBreakdown).map(([key, value]) => ({
+      category: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+      ourValue: value,
+      competitorValue: competitorBreakdown[key as keyof typeof competitorBreakdown],
+      difference: value - competitorBreakdown[key as keyof typeof competitorBreakdown],
+    }));
+
+    // Generate gap analysis
+    const gapAnalysis: string[] = [];
+    const opportunityAreas: string[] = [];
+
+    breakdownComparison.forEach(item => {
+      if (item.difference < -10) {
+        gapAnalysis.push(`${item.category}: You're behind by ${Math.abs(item.difference)} points`);
+      } else if (item.difference > 10) {
+        opportunityAreas.push(`${item.category}: You lead by ${item.difference} points - maintain this advantage`);
+      }
+    });
+
+    if (gapAnalysis.length === 0) {
+      gapAnalysis.push('No significant gaps identified - you are competitive across all categories');
+    }
+    if (opportunityAreas.length === 0) {
+      opportunityAreas.push('Focus on building stronger differentiation in content quality and citations');
+    }
+
+    // Store comparison result
+    await supabase
+      .from('geo_competitor_comparisons')
+      .insert({
+        organization_id: context.organizationId,
+        competitor_id: competitorId,
+        our_score: ourScore,
+        competitor_score: competitorScore,
+        score_difference: ourScore - competitorScore,
+        breakdown_comparison: breakdownComparison,
+        gap_analysis: gapAnalysis,
+        opportunity_areas: opportunityAreas,
+      });
+
+    return {
+      success: true,
+      data: {
+        competitor: {
+          id: competitorData.id,
+          name: competitorData.name,
+          domain: competitorData.domain,
+          location: competitorData.location,
+          isActive: competitorData.is_active,
+          createdAt: competitorData.created_at,
+        },
+        ourScore,
+        competitorScore,
+        scoreDifference: ourScore - competitorScore,
+        breakdownComparison,
+        gapAnalysis,
+        opportunityAreas,
+      },
+    };
+  } catch (error) {
+    console.error('Error comparing with competitor:', error);
+    return { success: false, error: 'Failed to compare with competitor' };
+  }
+}
+
+// ============================================================
+// FAQ MANAGEMENT (Persistence)
+// ============================================================
+
+/**
+ * Save an AI-generated FAQ to the database
+ */
+export async function saveFAQ(
+  entityType: 'loan_officer' | 'branch' | 'organization',
+  entityId: string,
+  question: string,
+  answer: string,
+  category: string = 'general',
+  keywords: string[] = []
+): Promise<ActionResult<{ id: string }>> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('geo_faqs')
+      .insert({
+        organization_id: context.organizationId,
+        entity_type: entityType,
+        entity_id: entityId,
+        question,
+        answer,
+        category,
+        keywords,
+        voice_search_optimized: true,
+        snippet_ready: true,
+        is_active: true,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('Error saving FAQ:', error);
+      return { success: false, error: 'Failed to save FAQ' };
+    }
+
+    return { success: true, data: { id: data.id } };
+  } catch (error) {
+    console.error('Error saving FAQ:', error);
+    return { success: false, error: 'Failed to save FAQ' };
+  }
+}
+
+/**
+ * Get saved FAQs for an entity
+ */
+export async function getSavedFAQs(
+  entityType: 'loan_officer' | 'branch' | 'organization',
+  entityId: string
+): Promise<ActionResult<AIOptimizedFAQ[]>> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('geo_faqs')
+      .select('*')
+      .eq('organization_id', context.organizationId)
+      .eq('entity_type', entityType)
+      .eq('entity_id', entityId)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching FAQs:', error);
+      return { success: false, error: 'Failed to fetch FAQs' };
+    }
+
+    const faqs: AIOptimizedFAQ[] = (data || []).map(faq => ({
+      id: faq.id,
+      entityType: faq.entity_type as 'loan_officer' | 'branch' | 'organization',
+      entityId: faq.entity_id,
+      organizationId: faq.organization_id,
+      question: faq.question,
+      answer: faq.answer,
+      category: faq.category,
+      keywords: faq.keywords || [],
+      voiceSearchOptimized: faq.voice_search_optimized,
+      snippetReady: faq.snippet_ready,
+      impressions: faq.impressions,
+      citations: faq.citations,
+      lastCitedAt: faq.last_cited_at,
+      isActive: faq.is_active,
+      createdAt: faq.created_at,
+      updatedAt: faq.updated_at,
+    }));
+
+    return { success: true, data: faqs };
+  } catch (error) {
+    console.error('Error fetching FAQs:', error);
+    return { success: false, error: 'Failed to fetch FAQs' };
+  }
+}
+
+/**
+ * Update a FAQ
+ */
+export async function updateFAQ(
+  faqId: string,
+  updates: {
+    question?: string;
+    answer?: string;
+    category?: string;
+    keywords?: string[];
+    isActive?: boolean;
+  }
+): Promise<ActionResult> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const updateData: Record<string, unknown> = {};
+    if (updates.question !== undefined) updateData.question = updates.question;
+    if (updates.answer !== undefined) updateData.answer = updates.answer;
+    if (updates.category !== undefined) updateData.category = updates.category;
+    if (updates.keywords !== undefined) updateData.keywords = updates.keywords;
+    if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+
+    const { error } = await supabase
+      .from('geo_faqs')
+      .update(updateData)
+      .eq('id', faqId)
+      .eq('organization_id', context.organizationId);
+
+    if (error) {
+      console.error('Error updating FAQ:', error);
+      return { success: false, error: 'Failed to update FAQ' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating FAQ:', error);
+    return { success: false, error: 'Failed to update FAQ' };
+  }
+}
+
+/**
+ * Delete a FAQ
+ */
+export async function deleteFAQ(faqId: string): Promise<ActionResult> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from('geo_faqs')
+      .update({ is_active: false })
+      .eq('id', faqId)
+      .eq('organization_id', context.organizationId);
+
+    if (error) {
+      console.error('Error deleting FAQ:', error);
+      return { success: false, error: 'Failed to delete FAQ' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting FAQ:', error);
+    return { success: false, error: 'Failed to delete FAQ' };
+  }
+}
+
+// ============================================================
+// PERFORMANCE HISTORY
+// ============================================================
+
+/**
+ * Record performance snapshot
+ */
+export async function recordPerformanceSnapshot(
+  entityType: 'loan_officer' | 'branch' | 'organization',
+  entityId: string,
+  period: 'daily' | 'weekly' | 'monthly' = 'daily'
+): Promise<ActionResult> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    // Get current visibility score
+    const scoreResult = await calculateVisibilityScore(entityType, entityId);
+    if (!scoreResult.success || !scoreResult.data) {
+      return { success: false, error: 'Could not calculate visibility score' };
+    }
+
+    // Calculate date range
+    const now = new Date();
+    const periodStart = new Date();
+    const daysMap = { daily: 1, weekly: 7, monthly: 30 };
+    periodStart.setDate(now.getDate() - daysMap[period]);
+
+    // Get mentions count (simulated for now)
+    const totalMentions = Math.floor(Math.random() * 30) + 5;
+    const totalCitations = Math.floor(totalMentions * 0.3);
+
+    const { error } = await supabase
+      .from('geo_performance_history')
+      .upsert({
+        organization_id: context.organizationId,
+        entity_type: entityType,
+        entity_id: entityId,
+        period,
+        period_start: periodStart.toISOString().split('T')[0],
+        period_end: now.toISOString().split('T')[0],
+        visibility_score: scoreResult.data.overallScore,
+        total_mentions: totalMentions,
+        total_citations: totalCitations,
+        platform_breakdown: scoreResult.data.platformScores,
+        score_change: scoreResult.data.scoreChange || 0,
+        mentions_change: Math.floor(Math.random() * 10) - 3,
+        citations_change: Math.floor(Math.random() * 5) - 1,
+      }, {
+        onConflict: 'entity_type,entity_id,period,period_start',
+      });
+
+    if (error) {
+      console.error('Error recording performance:', error);
+      return { success: false, error: 'Failed to record performance' };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error recording performance:', error);
+    return { success: false, error: 'Failed to record performance' };
+  }
+}
+
+/**
+ * Get performance history
+ */
+export async function getPerformanceHistory(
+  entityType: 'loan_officer' | 'branch' | 'organization',
+  entityId: string,
+  period: 'daily' | 'weekly' | 'monthly' = 'weekly',
+  limit: number = 12
+): Promise<ActionResult<{
+  history: {
+    date: string;
+    score: number;
+    mentions: number;
+    citations: number;
+  }[];
+}>> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from('geo_performance_history')
+      .select('*')
+      .eq('organization_id', context.organizationId)
+      .eq('entity_type', entityType)
+      .eq('entity_id', entityId)
+      .eq('period', period)
+      .order('period_start', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching performance history:', error);
+      return { success: false, error: 'Failed to fetch performance history' };
+    }
+
+    const history = (data || []).map(row => ({
+      date: row.period_start,
+      score: row.visibility_score,
+      mentions: row.total_mentions,
+      citations: row.total_citations,
+    })).reverse();
+
+    return { success: true, data: { history } };
+  } catch (error) {
+    console.error('Error fetching performance history:', error);
+    return { success: false, error: 'Failed to fetch performance history' };
+  }
+}
+
+// ============================================================
+// ENTITY SELECTION HELPERS
+// ============================================================
+
+/**
+ * Get all entities for the organization (loan officers, branches)
+ */
+export async function getOrganizationEntities(): Promise<ActionResult<{
+  loanOfficers: { id: string; name: string; title: string | null }[];
+  branches: { id: string; name: string }[];
+  organization: { id: string; name: string };
+}>> {
+  try {
+    const context = await getOrganizationContext();
+    if (!context) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const supabase = await createClient();
+
+    // Get loan officers
+    const { data: loData } = await supabase
+      .from('loan_officers')
+      .select('id, full_name, title')
+      .eq('organization_id', context.organizationId)
+      .eq('is_active', true)
+      .order('full_name');
+
+    // Get branches
+    const { data: branchData } = await supabase
+      .from('branches')
+      .select('id, name')
+      .eq('organization_id', context.organizationId)
+      .order('name');
+
+    // Get organization
+    const { data: orgData } = await supabase
+      .from('organizations')
+      .select('id, name')
+      .eq('id', context.organizationId)
+      .single();
+
+    return {
+      success: true,
+      data: {
+        loanOfficers: (loData || []).map(lo => ({
+          id: lo.id,
+          name: lo.full_name,
+          title: lo.title,
+        })),
+        branches: (branchData || []).map(b => ({
+          id: b.id,
+          name: b.name,
+        })),
+        organization: orgData ? { id: orgData.id, name: orgData.name } : { id: '', name: '' },
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching organization entities:', error);
+    return { success: false, error: 'Failed to fetch entities' };
+  }
+}

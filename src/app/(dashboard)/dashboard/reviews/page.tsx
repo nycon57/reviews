@@ -13,7 +13,7 @@ export const metadata = {
 export default async function ReviewsPage() {
   // Fetch initial data server-side
   const [reviewsResult, statsResult, loanOfficersResult] = await Promise.all([
-    getReviews({ status: "pending" }),
+    getReviews({ status: "all" }),
     getReviewStats(),
     getLoanOfficersForFilter(),
   ]);

@@ -131,7 +131,8 @@ export async function getPublicLOProfile(
         total_reviews,
         nps_score,
         is_active,
-        organization_id
+        organization_id,
+        user_id
       `
       )
       .eq("id", loId)
@@ -140,6 +141,20 @@ export async function getPublicLOProfile(
 
     if (loError || !loanOfficer) {
       return { success: false, error: "Loan officer not found" };
+    }
+
+    // Fetch linked user's avatar as fallback if loan officer has no photo
+    let photoUrl = loanOfficer.photo_url;
+    if (!photoUrl && loanOfficer.user_id) {
+      const { data: linkedUser } = await supabase
+        .from("users")
+        .select("avatar_url")
+        .eq("id", loanOfficer.user_id)
+        .single();
+
+      if (linkedUser?.avatar_url) {
+        photoUrl = linkedUser.avatar_url;
+      }
     }
 
     // Fetch the organization
@@ -179,7 +194,7 @@ export async function getPublicLOProfile(
           full_name: loanOfficer.full_name,
           title: loanOfficer.title,
           bio: loanOfficer.bio,
-          photo_url: loanOfficer.photo_url,
+          photo_url: photoUrl,
           email: loanOfficer.email,
           phone: loanOfficer.phone,
           branch: loanOfficer.branch,

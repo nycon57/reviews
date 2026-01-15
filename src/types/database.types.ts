@@ -2565,6 +2565,556 @@ export type Database = {
           },
         ]
       }
+      geo_visibility_scores: {
+        Row: {
+          id: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          overall_score: number
+          previous_score: number | null
+          score_change: number | null
+          content_completeness: number
+          structured_data: number
+          entity_clarity: number
+          citation_potential: number
+          topical_authority: number
+          freshness: number
+          platform_scores: Json
+          calculated_at: string
+          next_calculation_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          overall_score: number
+          previous_score?: number | null
+          score_change?: number | null
+          content_completeness?: number
+          structured_data?: number
+          entity_clarity?: number
+          citation_potential?: number
+          topical_authority?: number
+          freshness?: number
+          platform_scores?: Json
+          calculated_at?: string
+          next_calculation_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          entity_type?: string
+          entity_id?: string
+          overall_score?: number
+          previous_score?: number | null
+          score_change?: number | null
+          content_completeness?: number
+          structured_data?: number
+          entity_clarity?: number
+          citation_potential?: number
+          topical_authority?: number
+          freshness?: number
+          platform_scores?: Json
+          calculated_at?: string
+          next_calculation_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_visibility_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_faqs: {
+        Row: {
+          id: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          question: string
+          answer: string
+          category: string
+          keywords: string[]
+          voice_search_optimized: boolean
+          snippet_ready: boolean
+          impressions: number
+          citations: number
+          last_cited_at: string | null
+          is_active: boolean
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          question: string
+          answer: string
+          category?: string
+          keywords?: string[]
+          voice_search_optimized?: boolean
+          snippet_ready?: boolean
+          impressions?: number
+          citations?: number
+          last_cited_at?: string | null
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          entity_type?: string
+          entity_id?: string
+          question?: string
+          answer?: string
+          category?: string
+          keywords?: string[]
+          voice_search_optimized?: boolean
+          snippet_ready?: boolean
+          impressions?: number
+          citations?: number
+          last_cited_at?: string | null
+          is_active?: boolean
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_faqs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_schema_implementations: {
+        Row: {
+          id: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          schema_type: string
+          markup: Json
+          is_valid: boolean
+          validation_errors: string[]
+          validation_warnings: string[]
+          last_validated_at: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          schema_type: string
+          markup: Json
+          is_valid?: boolean
+          validation_errors?: string[]
+          validation_warnings?: string[]
+          last_validated_at?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          entity_type?: string
+          entity_id?: string
+          schema_type?: string
+          markup?: Json
+          is_valid?: boolean
+          validation_errors?: string[]
+          validation_warnings?: string[]
+          last_validated_at?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_schema_implementations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_ai_mentions: {
+        Row: {
+          id: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          platform: string
+          query: string
+          context: string | null
+          mention_type: string
+          sentiment: string
+          source_url: string | null
+          source_title: string | null
+          is_verified: boolean
+          verified_at: string | null
+          detected_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          platform: string
+          query: string
+          context?: string | null
+          mention_type?: string
+          sentiment?: string
+          source_url?: string | null
+          source_title?: string | null
+          is_verified?: boolean
+          verified_at?: string | null
+          detected_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          entity_type?: string
+          entity_id?: string
+          platform?: string
+          query?: string
+          context?: string | null
+          mention_type?: string
+          sentiment?: string
+          source_url?: string | null
+          source_title?: string | null
+          is_verified?: boolean
+          verified_at?: string | null
+          detected_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_ai_mentions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_competitors: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          domain: string | null
+          location: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          domain?: string | null
+          location?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          domain?: string | null
+          location?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_competitors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_competitor_comparisons: {
+        Row: {
+          id: string
+          organization_id: string
+          competitor_id: string
+          our_score: number
+          competitor_score: number
+          score_difference: number
+          breakdown_comparison: Json
+          gap_analysis: string[]
+          opportunity_areas: string[]
+          compared_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          competitor_id: string
+          our_score: number
+          competitor_score: number
+          score_difference: number
+          breakdown_comparison?: Json
+          gap_analysis?: string[]
+          opportunity_areas?: string[]
+          compared_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          competitor_id?: string
+          our_score?: number
+          competitor_score?: number
+          score_difference?: number
+          breakdown_comparison?: Json
+          gap_analysis?: string[]
+          opportunity_areas?: string[]
+          compared_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_competitor_comparisons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "geo_competitor_comparisons_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "geo_competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_performance_history: {
+        Row: {
+          id: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          period: string
+          period_start: string
+          period_end: string
+          visibility_score: number
+          total_mentions: number
+          total_citations: number
+          platform_breakdown: Json
+          score_change: number
+          mentions_change: number
+          citations_change: number
+          top_queries: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          period: string
+          period_start: string
+          period_end: string
+          visibility_score: number
+          total_mentions?: number
+          total_citations?: number
+          platform_breakdown?: Json
+          score_change?: number
+          mentions_change?: number
+          citations_change?: number
+          top_queries?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          entity_type?: string
+          entity_id?: string
+          period?: string
+          period_start?: string
+          period_end?: string
+          visibility_score?: number
+          total_mentions?: number
+          total_citations?: number
+          platform_breakdown?: Json
+          score_change?: number
+          mentions_change?: number
+          citations_change?: number
+          top_queries?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_performance_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_optimization_suggestions: {
+        Row: {
+          id: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          category: string
+          priority: string
+          title: string
+          description: string
+          current_value: string | null
+          suggested_value: string | null
+          estimated_impact: number
+          estimated_effort: string
+          status: string
+          implemented_at: string | null
+          dismissed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          entity_type: string
+          entity_id: string
+          category: string
+          priority: string
+          title: string
+          description: string
+          current_value?: string | null
+          suggested_value?: string | null
+          estimated_impact?: number
+          estimated_effort?: string
+          status?: string
+          implemented_at?: string | null
+          dismissed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          entity_type?: string
+          entity_id?: string
+          category?: string
+          priority?: string
+          title?: string
+          description?: string
+          current_value?: string | null
+          suggested_value?: string | null
+          estimated_impact?: number
+          estimated_effort?: string
+          status?: string
+          implemented_at?: string | null
+          dismissed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_optimization_suggestions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      geo_content_templates: {
+        Row: {
+          id: string
+          organization_id: string | null
+          name: string
+          category: string
+          description: string | null
+          template: string
+          variables: Json
+          target_platforms: string[]
+          optimization_tips: string[]
+          use_count: number
+          last_used_at: string | null
+          is_active: boolean
+          is_system: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id?: string | null
+          name: string
+          category: string
+          description?: string | null
+          template: string
+          variables?: Json
+          target_platforms?: string[]
+          optimization_tips?: string[]
+          use_count?: number
+          last_used_at?: string | null
+          is_active?: boolean
+          is_system?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string | null
+          name?: string
+          category?: string
+          description?: string | null
+          template?: string
+          variables?: Json
+          target_platforms?: string[]
+          optimization_tips?: string[]
+          use_count?: number
+          last_used_at?: string | null
+          is_active?: boolean
+          is_system?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "geo_content_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

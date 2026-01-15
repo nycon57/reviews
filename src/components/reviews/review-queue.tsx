@@ -74,7 +74,7 @@ export function ReviewQueue({
   const [isPending, startTransition] = useTransition();
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState<string>("pending");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [loanOfficerFilter, setLoanOfficerFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
 

@@ -19,6 +19,19 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
+  // Calculate user initials from full name
+  const getInitials = (name: string | null): string => {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const userInitials = getInitials(profile.full_name);
+
   return (
     <div className="container max-w-3xl py-8">
       <div className="mb-8">
@@ -43,6 +56,7 @@ export default async function ProfilePage() {
                 fullName: profile.full_name || "",
                 avatarUrl: profile.avatar_url || "",
               }}
+              userInitials={userInitials}
             />
           </CardContent>
         </Card>

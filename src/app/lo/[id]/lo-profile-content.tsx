@@ -14,8 +14,86 @@ import {
   Building2,
   Award,
 } from "lucide-react";
+import Image from "next/image";
 import type { PublicLoanOfficer, PublicReview } from "@/lib/seo/actions";
 import type { Tables } from "@/types/database.types";
+
+// Source icon configuration
+const SOURCE_CONFIG: Record<string, { icon: string; name: string; color: string }> = {
+  google: { icon: "/icons/google.svg", name: "Google", color: "#4285F4" },
+  zillow: { icon: "/icons/zillow.svg", name: "Zillow", color: "#006AFF" },
+  facebook: { icon: "/icons/facebook.svg", name: "Facebook", color: "#1877F2" },
+  yelp: { icon: "/icons/yelp.svg", name: "Yelp", color: "#D32323" },
+};
+
+interface SourceIconProps {
+  source: string;
+  zillowUrl?: string | null;
+  linkedinUrl?: string | null;
+  googlePlaceId?: string | null;
+}
+
+function SourceIcon({ source, zillowUrl, linkedinUrl, googlePlaceId }: SourceIconProps) {
+  const normalizedSource = source.toLowerCase();
+
+  // Hide internal sources
+  if (normalizedSource === "internal" || normalizedSource === "survey") {
+    return null;
+  }
+
+  const config = SOURCE_CONFIG[normalizedSource];
+
+  // Determine the link URL based on source
+  let href: string | null = null;
+  if (normalizedSource === "google" && googlePlaceId) {
+    href = `https://search.google.com/local/reviews?placeid=${googlePlaceId}`;
+  } else if (normalizedSource === "zillow" && zillowUrl) {
+    href = zillowUrl;
+  } else if (normalizedSource === "linkedin" && linkedinUrl) {
+    href = linkedinUrl;
+  }
+
+  // If we have a known source with icon
+  if (config) {
+    const iconElement = (
+      <div
+        className="flex items-center justify-center h-5 w-5 rounded"
+        title={`View on ${config.name}`}
+      >
+        <Image
+          src={config.icon}
+          alt={config.name}
+          width={20}
+          height={20}
+          className="h-5 w-5"
+        />
+      </div>
+    );
+
+    if (href) {
+      return (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:opacity-80 transition-opacity"
+          title={`View on ${config.name}`}
+        >
+          {iconElement}
+        </a>
+      );
+    }
+
+    return iconElement;
+  }
+
+  // Fallback for unknown sources - show badge
+  return (
+    <Badge variant="outline" className="text-xs">
+      {source}
+    </Badge>
+  );
+}
 
 interface LOProfileContentProps {
   loanOfficer: PublicLoanOfficer;
@@ -264,9 +342,11 @@ export function LOProfileContent({
                             </p>
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="outline" className="text-xs">
-                              {review.source}
-                            </Badge>
+                            <SourceIcon
+                              source={review.source}
+                              zillowUrl={loanOfficer.zillow_profile_url}
+                              linkedinUrl={loanOfficer.linkedin_url}
+                            />
                             <span>{formatDate(review.review_date)}</span>
                           </div>
                         </div>

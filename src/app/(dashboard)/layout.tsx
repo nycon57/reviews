@@ -32,11 +32,19 @@ export default async function DashboardRootLayout({
     .eq("id", authUser.id)
     .single();
 
+  // Fetch loan officer ID if user is linked to a loan officer record
+  const { data: loanOfficer } = await supabase
+    .from("loan_officers")
+    .select("id")
+    .eq("user_id", authUser.id)
+    .single();
+
   const user = {
     name: profile?.full_name || authUser.user_metadata?.full_name || "User",
     email: authUser.email || "",
     avatar: profile?.avatar_url || undefined,
     initials: getInitials(profile?.full_name || authUser.user_metadata?.full_name),
+    loanOfficerId: loanOfficer?.id || undefined,
   };
 
   return (

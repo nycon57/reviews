@@ -1247,7 +1247,7 @@
       ],
       "priority": "P3",
       "estimate": "XL",
-      "status": "pending",
+      "status": "in_progress",
       "gates": [
         "AI visibility score correlates with actual AI citations",
         "Recommendations improve AI search presence"
@@ -1255,7 +1255,10 @@
       "dependencies": [
         "S019",
         "S032"
-      ]
+      ],
+      "startedAt": "2026-01-15T01:07:43.718182+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-15T01:07:43.718288+00:00"
     },
     {
       "id": "S044",
@@ -1516,7 +1519,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Search returns relevant docs",
         "All major features documented"
@@ -1525,8 +1528,8 @@
         "S033"
       ],
       "startedAt": "2026-01-14T22:38:43.352619+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-14T22:38:43.352752+00:00"
+      "completedAt": "2026-01-14T22:51:13.717611+00:00",
+      "updatedAt": "2026-01-14T22:51:13.717487+00:00"
     },
     {
       "id": "S054",

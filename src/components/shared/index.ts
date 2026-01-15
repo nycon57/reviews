@@ -1,5 +1,6 @@
 export { ThemeToggle } from "./theme-toggle";
 export { Breadcrumbs } from "./breadcrumbs";
+export { AvatarUpload } from "./avatar-upload";
 export {
   CardSkeleton,
   StatsRowSkeleton,

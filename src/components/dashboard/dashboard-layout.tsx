@@ -11,6 +11,7 @@ interface User {
   email: string;
   avatar?: string;
   initials: string;
+  loanOfficerId?: string;
 }
 
 interface DashboardLayoutProps {
@@ -39,6 +40,8 @@ export function DashboardLayout({ children, user, onSignOut }: DashboardLayoutPr
           user={user}
           onSignOut={onSignOut}
           mobileMenuTrigger={<MobileNavTrigger />}
+          sidebarCollapsed={sidebarCollapsed}
+          onSidebarCollapsedChange={setSidebarCollapsed}
         />
 
         {/* Page content */}

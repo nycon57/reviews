@@ -16,8 +16,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { AvatarUpload } from "@/components/shared";
 import { useToast } from "@/hooks/use-toast";
-import { updateProfile } from "@/lib/auth/profile-actions";
+import { updateProfile, uploadAvatar } from "@/lib/auth/profile-actions";
 import {
   updateProfileSchema,
   type UpdateProfileInput,
@@ -25,9 +26,10 @@ import {
 
 interface ProfileFormProps {
   defaultValues: UpdateProfileInput;
+  userInitials?: string;
 }
 
-export function ProfileForm({ defaultValues }: ProfileFormProps) {
+export function ProfileForm({ defaultValues, userInitials = "?" }: ProfileFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -90,16 +92,35 @@ export function ProfileForm({ defaultValues }: ProfileFormProps) {
           name="avatarUrl"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Avatar URL</FormLabel>
+              <FormLabel>Profile Photo</FormLabel>
               <FormControl>
-                <Input
-                  type="url"
-                  placeholder="https://example.com/avatar.jpg"
-                  {...field}
+                <AvatarUpload
+                  currentAvatarUrl={field.value}
+                  fallbackInitials={userInitials}
+                  onUpload={async (file) => {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    const result = await uploadAvatar(formData);
+                    if (result.success && result.url) {
+                      field.onChange(result.url);
+                      toast({
+                        title: "Photo updated",
+                        description: "Your profile photo has been updated.",
+                      });
+                    } else {
+                      toast({
+                        title: "Upload failed",
+                        description: result.error || "Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                    return result;
+                  }}
+                  disabled={isLoading}
                 />
               </FormControl>
               <FormDescription>
-                Link to your profile photo (optional)
+                Upload a photo for your profile (optional)
               </FormDescription>
               <FormMessage />
             </FormItem>

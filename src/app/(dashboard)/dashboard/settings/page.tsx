@@ -7,7 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/shared";
 import { GoogleIntegrationCard } from "@/components/google/google-integration-card";
 import { SocialIntegrationCard } from "@/components/social";
+import { SalesforceIntegrationCard } from "@/components/salesforce";
 import { NotificationPreferencesCard } from "@/components/notifications";
+import { ProfileCompletionCard } from "@/components/gamification";
 
 export const metadata = {
   title: "Settings | ReviewHub",
@@ -38,6 +40,21 @@ function SocialCardSkeleton() {
       <CardContent className="space-y-4">
         <Skeleton className="h-32 w-full" />
         <Skeleton className="h-20 w-full" />
+      </CardContent>
+    </Card>
+  );
+}
+
+function SalesforceCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-6 w-36" />
+        <Skeleton className="h-4 w-80" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-32 w-full" />
       </CardContent>
     </Card>
   );
@@ -104,6 +121,11 @@ export default function SettingsPage() {
         {/* Social Media Integration */}
         <Suspense fallback={<SocialCardSkeleton />}>
           <SocialIntegrationCard />
+        </Suspense>
+
+        {/* Salesforce CRM Integration */}
+        <Suspense fallback={<SalesforceCardSkeleton />}>
+          <SalesforceIntegrationCard />
         </Suspense>
 
         {/* Profile */}

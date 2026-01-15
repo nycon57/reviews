@@ -3176,3 +3176,89 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Uncommitted changes from other stories/contexts should be checked and reverted if unrelated
   - Pre-existing lint errors in other files (avatar-upload.tsx from S043) don't block S041 completion
 ---
+
+## [2026-01-14 21:30] - S042: Website Analytics & SEO Audit
+Thread: 
+Run: session-continuation
+Run log: N/A (continued from previous session)
+Run summary: N/A
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 793a713 feat(S042): Implement Website Analytics & SEO Audit
+- Post-commit status: clean (other uncommitted changes are from different stories)
+- Verification:
+  - Command: npm run build -> PASS (production build successful)
+  - Command: npm run lint -> S042 files PASS (pre-existing errors in other files)
+- Files changed:
+  - supabase/migrations/20240101000018_website_analytics.sql (new - database schema)
+  - src/lib/website-analytics/types.ts (new - TypeScript types)
+  - src/lib/website-analytics/actions.ts (new - server actions)
+  - src/lib/website-analytics/seo-audit.ts (new - SEO audit engine)
+  - src/lib/website-analytics/index.ts (new - module exports)
+  - src/app/(dashboard)/dashboard/analytics/website/page.tsx (new - dashboard page)
+  - src/app/(dashboard)/dashboard/analytics/website/website-analytics-dashboard.tsx (new - dashboard component)
+  - src/components/dashboard/sidebar.tsx (modified - added navigation)
+  - src/types/database.types.ts (modified - added table types)
+- What was implemented:
+  - Database schema with website_analytics, website_seo_audits, website_analytics_summary tables
+  - RLS policies for multi-tenant isolation
+  - Analytics server actions: getWebsiteAnalytics, getWebsiteSEOOverview, getPageSEOAudit, recordAnalytics
+  - SEO audit engine with HTML parsing for meta tags, headers, images, links, mobile friendliness
+  - SEO scoring algorithm (0-100) with issue detection and recommendations
+  - Full dashboard UI with tabs for Overview and SEO Audit
+  - Traffic sources chart, device breakdown, geographic map, top pages table
+  - SEO issues and recommendations display with severity badges
+  - Sidebar navigation link under Analytics group with "New" badge
+- S042 Acceptance Criteria - All Complete:
+  - ✅ Website visitor analytics dashboard (pageviews, sessions, visitors)
+  - ✅ Geographic visitor distribution tracking
+  - ✅ Search query tracking (top queries by impressions/clicks)
+  - ✅ Technical SEO audit (meta tags, headings, images, links)
+  - ✅ Mobile-friendliness checks
+  - ✅ SEO score calculation (0-100) with breakdown
+  - ✅ Improvement recommendations with priority and effort estimates
+- Security review: PASS
+  - RLS policies enforce organization-level data isolation
+  - Server actions verify user authentication and organization membership
+  - No sensitive data exposure in client components
+- Performance review: PASS
+  - Uses React Query patterns for client-side data fetching
+  - Pagination for large data sets
+  - useCallback for memoized fetch function
+- Regression review: PASS
+  - No changes to existing functionality
+  - Sidebar navigation maintains existing structure
+---
+
+## [2026-01-14 20:51] - S042: Website Analytics & SEO Audit (Iteration 2 - Verification)
+Thread: 
+Run: 20260114-204113-95572 (iteration 2)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-204113-95572-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-204113-95572-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 793a713 feat(S042): Implement Website Analytics & SEO Audit (from iteration 1)
+- Post-commit status: clean (S042 changes committed in iteration 1)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no errors in S042 files, 2 pre-existing errors in unrelated files)
+  - Command: npx eslint src/lib/website-analytics/ src/app/(dashboard)/dashboard/analytics/website/ -> PASS (no errors)
+- Files verified:
+  - src/app/(dashboard)/dashboard/analytics/website/page.tsx
+  - src/app/(dashboard)/dashboard/analytics/website/website-analytics-dashboard.tsx
+  - src/lib/website-analytics/index.ts
+  - src/lib/website-analytics/actions.ts
+  - src/lib/website-analytics/seo-audit.ts
+  - src/lib/website-analytics/types.ts
+  - src/components/dashboard/sidebar.tsx (navigation link)
+  - supabase/migrations/20240101000018_website_analytics.sql
+- Summary:
+  - All S042 implementation complete and verified
+  - Build passes, lint passes for all S042 files
+  - Dashboard UI includes Overview tab (traffic, devices, geographic data, pages, queries) and SEO Audit tab (scores, issues, recommendations)
+  - SEO audit engine performs comprehensive HTML analysis with scoring
+  - Migration includes proper RLS policies for multi-tenant isolation
+- **Learnings for future iterations:**
+  - Iteration 1 completed full implementation, iteration 2 was verification only
+  - Pre-existing lint errors in unrelated files should not block story completion
+---

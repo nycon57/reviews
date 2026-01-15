@@ -3080,3 +3080,61 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - RLS policies follow organization-based access pattern consistent with other tables
   - Migration uses ON CONFLICT DO NOTHING for system templates to allow re-runs
 ---
+
+
+## [2026-01-14T21:00:00] - S041: Apple Business Connect Integration
+Run: Manual implementation session
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5496190 feat(S041): Implement Apple Business Connect integration
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS (TypeScript compilation successful)
+  - Command: npm run lint -> PASS (0 errors, pre-existing warnings only)
+- Files created:
+  - src/app/api/auth/apple/callback/route.ts - OAuth callback handler
+  - src/app/api/auth/apple/connect/route.ts - OAuth initiation endpoint
+  - src/app/api/cron/apple-sync/route.ts - Automated review sync cron job
+  - src/lib/apple/actions.ts - Server actions for Apple Business Connect
+  - src/lib/apple/client.ts - OAuth and API client functions
+  - src/lib/apple/index.ts - Module exports
+  - src/lib/apple/types.ts - TypeScript types for Apple API
+  - supabase/migrations/20240101000017_apple_business_connect.sql - Database migration
+- Files modified:
+  - src/lib/listings/actions.ts - Added Apple sync functions (syncAppleDirectory, pushToAppleDirectory)
+  - src/types/database.types.ts - Added Apple table types (apple_connections, apple_sync_logs, apple_review_replies, apple_analytics)
+- What was implemented:
+  - Apple Business Connect OAuth 2.0 flow with state-based authorization
+  - Database migration with 4 tables and full RLS policies:
+    - apple_connections (OAuth tokens, connection info, location metadata)
+    - apple_sync_logs (sync operation tracking)
+    - apple_review_replies (reply management for Apple reviews)
+    - apple_analytics (Apple-specific metrics: impressions, actions, directions, calls)
+  - OAuth client functions:
+    - getAuthorizationUrl() - Generate OAuth URL with scopes
+    - exchangeCodeForTokens() - Token exchange
+    - refreshAccessToken() - Token refresh with expiry handling
+  - Apple API client functions:
+    - getTeams(), getBusinesses(), getLocations(), getLocation()
+    - updateLocation() - Push business info to Apple Maps
+    - getReviews() - Fetch reviews with pagination
+    - replyToReview(), deleteReply() - Review reply management
+    - getPhotos(), uploadPhoto() - Photo management
+    - getAnalytics() - Visibility and engagement metrics
+    - getPlaceActionLinks(), getShowcases() - Apple Maps features
+  - Server actions with proper error handling:
+    - initiateAppleOAuth() - Start OAuth flow
+    - handleAppleOAuthCallback() - Process OAuth callback
+    - getAppleConnections() - List connections
+    - syncAppleReviews() - Full and incremental sync
+    - replyToAppleReview() - Send replies to Apple
+  - Cron job for automated syncing (follows Google sync pattern)
+  - Listings integration for NAP consistency scoring
+- S041 Acceptance Criteria - All Complete:
+  - ✅ Apple Business Connect API integration with OAuth 2.0
+  - ✅ Sync business info to Apple Maps (updateLocation)
+  - ✅ Apple review monitoring with automated sync
+  - ✅ Reply to Apple reviews from platform
+  - ✅ Apple-specific analytics (impressions, actions, direction requests, etc.)
+  - ✅ Showcase photos and services on Apple Maps (photos, showcases, place action links)
+---

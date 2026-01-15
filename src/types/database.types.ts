@@ -3417,6 +3417,312 @@ export type Database = {
           },
         ]
       }
+      website_analytics: {
+        Row: {
+          id: string
+          organization_id: string
+          date: string
+          page_path: string
+          page_title: string | null
+          pageviews: number
+          unique_visitors: number
+          sessions: number
+          avg_session_duration_seconds: number | null
+          bounce_rate: number | null
+          exit_rate: number | null
+          traffic_sources: Json
+          device_breakdown: Json
+          geographic_data: Json
+          search_queries: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          date: string
+          page_path: string
+          page_title?: string | null
+          pageviews?: number
+          unique_visitors?: number
+          sessions?: number
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          exit_rate?: number | null
+          traffic_sources?: Json
+          device_breakdown?: Json
+          geographic_data?: Json
+          search_queries?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          date?: string
+          page_path?: string
+          page_title?: string | null
+          pageviews?: number
+          unique_visitors?: number
+          sessions?: number
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          exit_rate?: number | null
+          traffic_sources?: Json
+          device_breakdown?: Json
+          geographic_data?: Json
+          search_queries?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_analytics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_seo_audits: {
+        Row: {
+          id: string
+          organization_id: string
+          page_url: string
+          page_path: string
+          page_title: string | null
+          seo_score: number
+          previous_score: number | null
+          score_change: number | null
+          technical_score: number
+          content_score: number
+          performance_score: number
+          mobile_score: number
+          has_meta_title: boolean | null
+          has_meta_description: boolean | null
+          meta_title_length: number | null
+          meta_description_length: number | null
+          has_canonical_url: boolean | null
+          has_robots_meta: boolean | null
+          h1_count: number | null
+          h2_count: number | null
+          h3_count: number | null
+          headers_hierarchy_valid: boolean | null
+          total_images: number | null
+          images_with_alt: number | null
+          images_without_alt: number | null
+          internal_links_count: number | null
+          external_links_count: number | null
+          broken_links_count: number | null
+          page_load_time_ms: number | null
+          first_contentful_paint_ms: number | null
+          largest_contentful_paint_ms: number | null
+          cumulative_layout_shift: number | null
+          total_blocking_time_ms: number | null
+          is_mobile_friendly: boolean | null
+          viewport_configured: boolean | null
+          font_size_readable: boolean | null
+          tap_targets_sized: boolean | null
+          has_structured_data: boolean | null
+          structured_data_types: string[] | null
+          structured_data_valid: boolean | null
+          word_count: number | null
+          reading_time_minutes: number | null
+          content_freshness_days: number | null
+          issues: Json
+          recommendations: Json
+          audit_type: string
+          audited_at: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          page_url: string
+          page_path: string
+          page_title?: string | null
+          seo_score: number
+          previous_score?: number | null
+          score_change?: number | null
+          technical_score?: number
+          content_score?: number
+          performance_score?: number
+          mobile_score?: number
+          has_meta_title?: boolean | null
+          has_meta_description?: boolean | null
+          meta_title_length?: number | null
+          meta_description_length?: number | null
+          has_canonical_url?: boolean | null
+          has_robots_meta?: boolean | null
+          h1_count?: number | null
+          h2_count?: number | null
+          h3_count?: number | null
+          headers_hierarchy_valid?: boolean | null
+          total_images?: number | null
+          images_with_alt?: number | null
+          images_without_alt?: number | null
+          internal_links_count?: number | null
+          external_links_count?: number | null
+          broken_links_count?: number | null
+          page_load_time_ms?: number | null
+          first_contentful_paint_ms?: number | null
+          largest_contentful_paint_ms?: number | null
+          cumulative_layout_shift?: number | null
+          total_blocking_time_ms?: number | null
+          is_mobile_friendly?: boolean | null
+          viewport_configured?: boolean | null
+          font_size_readable?: boolean | null
+          tap_targets_sized?: boolean | null
+          has_structured_data?: boolean | null
+          structured_data_types?: string[] | null
+          structured_data_valid?: boolean | null
+          word_count?: number | null
+          reading_time_minutes?: number | null
+          content_freshness_days?: number | null
+          issues?: Json
+          recommendations?: Json
+          audit_type?: string
+          audited_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          page_url?: string
+          page_path?: string
+          page_title?: string | null
+          seo_score?: number
+          previous_score?: number | null
+          score_change?: number | null
+          technical_score?: number
+          content_score?: number
+          performance_score?: number
+          mobile_score?: number
+          has_meta_title?: boolean | null
+          has_meta_description?: boolean | null
+          meta_title_length?: number | null
+          meta_description_length?: number | null
+          has_canonical_url?: boolean | null
+          has_robots_meta?: boolean | null
+          h1_count?: number | null
+          h2_count?: number | null
+          h3_count?: number | null
+          headers_hierarchy_valid?: boolean | null
+          total_images?: number | null
+          images_with_alt?: number | null
+          images_without_alt?: number | null
+          internal_links_count?: number | null
+          external_links_count?: number | null
+          broken_links_count?: number | null
+          page_load_time_ms?: number | null
+          first_contentful_paint_ms?: number | null
+          largest_contentful_paint_ms?: number | null
+          cumulative_layout_shift?: number | null
+          total_blocking_time_ms?: number | null
+          is_mobile_friendly?: boolean | null
+          viewport_configured?: boolean | null
+          font_size_readable?: boolean | null
+          tap_targets_sized?: boolean | null
+          has_structured_data?: boolean | null
+          structured_data_types?: string[] | null
+          structured_data_valid?: boolean | null
+          word_count?: number | null
+          reading_time_minutes?: number | null
+          content_freshness_days?: number | null
+          issues?: Json
+          recommendations?: Json
+          audit_type?: string
+          audited_at?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_seo_audits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      website_analytics_summary: {
+        Row: {
+          id: string
+          organization_id: string
+          period: string
+          period_start: string
+          period_end: string
+          total_pageviews: number
+          total_unique_visitors: number
+          total_sessions: number
+          avg_session_duration_seconds: number | null
+          avg_bounce_rate: number | null
+          top_pages: Json
+          traffic_sources_total: Json
+          device_breakdown_total: Json
+          geographic_total: Json
+          top_search_queries: Json
+          previous_period_pageviews: number | null
+          pageviews_change_percent: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          period: string
+          period_start: string
+          period_end: string
+          total_pageviews?: number
+          total_unique_visitors?: number
+          total_sessions?: number
+          avg_session_duration_seconds?: number | null
+          avg_bounce_rate?: number | null
+          top_pages?: Json
+          traffic_sources_total?: Json
+          device_breakdown_total?: Json
+          geographic_total?: Json
+          top_search_queries?: Json
+          previous_period_pageviews?: number | null
+          pageviews_change_percent?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          period?: string
+          period_start?: string
+          period_end?: string
+          total_pageviews?: number
+          total_unique_visitors?: number
+          total_sessions?: number
+          avg_session_duration_seconds?: number | null
+          avg_bounce_rate?: number | null
+          top_pages?: Json
+          traffic_sources_total?: Json
+          device_breakdown_total?: Json
+          geographic_total?: Json
+          top_search_queries?: Json
+          previous_period_pageviews?: number | null
+          pageviews_change_percent?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_analytics_summary_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

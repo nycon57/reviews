@@ -26,7 +26,6 @@ import {
   Send,
   Mail,
   LayoutDashboard,
-  Layers,
   MessageSquare,
   Sparkles,
   Quote,
@@ -37,6 +36,7 @@ import {
   Zap,
   ArrowRight,
   Eye,
+  Globe,
 } from "lucide-react";
 
 interface NavItem {
@@ -60,12 +60,7 @@ const mainNavItems: NavItem[] = [
     icon: <Home className="h-4 w-4" />,
   },
   {
-    title: "All Reviews",
-    href: "/dashboard/all-reviews",
-    icon: <Layers className="h-4 w-4" />,
-  },
-  {
-    title: "Review Queue",
+    title: "Reviews",
     href: "/dashboard/reviews",
     icon: <Star className="h-4 w-4" />,
   },
@@ -133,6 +128,12 @@ const navGroups: NavGroup[] = [
         title: "Trends",
         href: "/dashboard/analytics/trends",
         icon: <TrendingUp className="h-4 w-4" />,
+      },
+      {
+        title: "Website Analytics",
+        href: "/dashboard/analytics/website",
+        icon: <Globe className="h-4 w-4" />,
+        isNew: true,
       },
       {
         title: "Leaderboard",

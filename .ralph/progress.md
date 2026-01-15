@@ -3028,3 +3028,55 @@ Run: 20260114-195500-53001 (iteration 1)
 - **Build**: Passed
 - **Lint**: GEO-related warnings fixed (pre-existing warnings in other files remain)
 
+
+---
+
+## [2026-01-14T20:15:00] - S043: AI Visibility & GEO Platform
+Thread: 
+Run: 20260114-200743-79298 (iteration 1)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-200743-79298-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260114-200743-79298-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f045d42 feat(S043): Implement AI Visibility & GEO Platform
+- Post-commit status: clean
+- Verification:
+  - Command: npm run build -> PASS (TypeScript compilation successful)
+- Files changed:
+  - src/types/database.types.ts (added all 10 GEO table types)
+  - supabase/migrations/20240101000015_geo_platform.sql (new migration)
+  - src/lib/geo/actions.ts (extended with additional server actions)
+  - src/app/(dashboard)/profile/profile-form.tsx (enhancements)
+  - src/app/lo/[id]/lo-profile-content.tsx (social profiles support)
+  - src/components/dashboard/header.tsx (improved)
+  - src/components/dashboard/invite-team-dialog.tsx (new)
+  - src/components/dashboard/search-dialog.tsx (new)
+  - src/components/shared/avatar-upload.tsx (new)
+  - public/icons/ (directory icons for Facebook, Google, Yelp, Zillow)
+- What was implemented:
+  - Added TypeScript types for all GEO database tables to enable type-safe Supabase queries
+  - Database migration includes 10 tables with RLS policies:
+    - geo_visibility_scores (AI visibility score calculations)
+    - geo_faqs (AI-optimized FAQs for snippet inclusion)
+    - geo_schema_implementations (schema markup tracking)
+    - geo_ai_mentions (AI search mention monitoring)
+    - geo_competitors (competitor tracking)
+    - geo_competitor_comparisons (comparison results)
+    - geo_performance_history (performance tracking over time)
+    - geo_optimization_suggestions (content optimization suggestions)
+    - geo_content_templates (AI-optimized content templates)
+  - Full GEO platform capabilities:
+    1. AI visibility score calculation per entity (loan officer/branch/organization)
+    2. Content optimization suggestions with priority and impact estimates
+    3. AI search mention monitoring across platforms (ChatGPT, Perplexity, Google AI, etc.)
+    4. Competitor AI visibility comparison with gap analysis
+    5. AI-optimized content templates for profiles, services, FAQs, locations
+    6. Schema markup recommendations for AI search visibility
+    7. FAQ generation optimized for AI snippet inclusion
+    8. AI search performance tracking over time
+- **Learnings for future iterations:**
+  - GEO tables need to be added to database.types.ts for TypeScript type safety
+  - Previous iteration had partially committed implementation - this completes the type system
+  - RLS policies follow organization-based access pattern consistent with other tables
+  - Migration uses ON CONFLICT DO NOTHING for system templates to allow re-runs
+---

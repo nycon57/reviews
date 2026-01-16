@@ -3,18 +3,32 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Role-based access control configuration
 type UserRole = "admin" | "manager" | "loan_officer";
+type SubscriptionTier = "free" | "starter" | "professional" | "enterprise";
 
 interface RouteConfig {
   path: string;
   allowedRoles?: UserRole[];
+  /** Minimum subscription tier required (free allows all) */
+  minTier?: SubscriptionTier;
 }
 
-// Routes that require specific roles
+// Tier hierarchy for comparison
+const TIER_LEVELS: Record<SubscriptionTier, number> = {
+  free: 0,
+  starter: 1,
+  professional: 2,
+  enterprise: 3,
+};
+
+// Routes that require specific roles or subscription tiers
 const roleProtectedRoutes: RouteConfig[] = [
   { path: "/team", allowedRoles: ["admin", "manager"] },
   { path: "/settings/organization", allowedRoles: ["admin"] },
   { path: "/settings/billing", allowedRoles: ["admin"] },
   { path: "/analytics/team", allowedRoles: ["admin", "manager"] },
+  // Premium features requiring subscription
+  { path: "/integrations/api", minTier: "professional" },
+  { path: "/integrations/webhooks", minTier: "professional" },
 ];
 
 export async function middleware(request: NextRequest) {
@@ -84,28 +98,45 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Role-based access control for authenticated users
+  // Role-based and subscription-based access control for authenticated users
   if (user && isProtectedPath) {
-    // Find if current path requires role-based access
-    const roleRoute = roleProtectedRoutes.find((route) =>
+    // Find if current path requires role-based or subscription-based access
+    const routeConfig = roleProtectedRoutes.find((route) =>
       request.nextUrl.pathname.startsWith(route.path)
     );
 
-    if (roleRoute?.allowedRoles) {
-      // Fetch user's role from the database
+    if (routeConfig?.allowedRoles || routeConfig?.minTier) {
+      // Fetch user's role and organization subscription from the database
       const { data: userData } = await supabase
         .from("users")
-        .select("role")
+        .select("role, organization_id, organizations(subscription_tier)")
         .eq("id", user.id)
         .single();
 
       const userRole = userData?.role as UserRole | undefined;
+      const orgData = userData?.organizations as { subscription_tier?: string } | null;
+      const subscriptionTier = (orgData?.subscription_tier || "free") as SubscriptionTier;
 
-      // If user doesn't have required role, redirect to dashboard with error
-      if (!userRole || !roleRoute.allowedRoles.includes(userRole)) {
-        const redirectUrl = new URL("/dashboard", request.url);
-        redirectUrl.searchParams.set("error", "unauthorized");
-        return NextResponse.redirect(redirectUrl);
+      // Check role-based access
+      if (routeConfig.allowedRoles) {
+        if (!userRole || !routeConfig.allowedRoles.includes(userRole)) {
+          const redirectUrl = new URL("/dashboard", request.url);
+          redirectUrl.searchParams.set("error", "unauthorized");
+          return NextResponse.redirect(redirectUrl);
+        }
+      }
+
+      // Check subscription tier requirement
+      if (routeConfig.minTier) {
+        const requiredLevel = TIER_LEVELS[routeConfig.minTier];
+        const userLevel = TIER_LEVELS[subscriptionTier];
+
+        if (userLevel < requiredLevel) {
+          const redirectUrl = new URL("/pricing", request.url);
+          redirectUrl.searchParams.set("upgrade", routeConfig.minTier);
+          redirectUrl.searchParams.set("feature", request.nextUrl.pathname);
+          return NextResponse.redirect(redirectUrl);
+        }
       }
     }
   }

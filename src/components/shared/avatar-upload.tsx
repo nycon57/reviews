@@ -1,5 +1,8 @@
 "use client";
 
+/* eslint-disable no-undef */
+// FileReader and Image are browser globals available in client components
+
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import Cropper from "react-easy-crop";

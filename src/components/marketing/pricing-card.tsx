@@ -32,6 +32,10 @@ interface PricingCardProps {
   /** Savings text shown as pill badge */
   savings?: string;
   className?: string;
+  /** Optional onClick handler for checkout flow */
+  onSelect?: () => void;
+  /** Whether checkout is in progress */
+  isLoading?: boolean;
 }
 
 export function PricingCard({
@@ -45,6 +49,8 @@ export function PricingCard({
   badge,
   savings,
   className,
+  onSelect,
+  isLoading = false,
 }: PricingCardProps) {
   return (
     <motion.div
@@ -102,15 +108,27 @@ export function PricingCard({
           </ul>
         </CardContent>
         <CardFooter className="pt-6">
-          <Link href={cta.href} className="w-full">
+          {onSelect ? (
             <Button
               className="w-full"
               size="brand-lg"
               variant={highlighted ? "brand" : "brand-outline"}
+              onClick={onSelect}
+              disabled={isLoading}
             >
-              {cta.label}
+              {isLoading ? "Processing..." : cta.label}
             </Button>
-          </Link>
+          ) : (
+            <Link href={cta.href} className="w-full">
+              <Button
+                className="w-full"
+                size="brand-lg"
+                variant={highlighted ? "brand" : "brand-outline"}
+              >
+                {cta.label}
+              </Button>
+            </Link>
+          )}
         </CardFooter>
       </Card>
     </motion.div>

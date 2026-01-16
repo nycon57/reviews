@@ -1,19 +1,56 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CreditCard, Calendar, TrendingUp, AlertTriangle, CheckCircle, Zap } from "lucide-react";
+import {
+  CreditCard,
+  Calendar,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+  Zap,
+  ExternalLink,
+  Download,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import {
   getCurrentOrganization,
   type Organization,
   TIER_FEATURES,
   TIER_LIMITS,
 } from "@/lib/organization";
+import {
+  getBillingOverview,
+  createPortalSession,
+  cancelSubscription,
+  resumeSubscription,
+  type BillingOverview,
+  formatPriceFromCents,
+  isStripeAvailable,
+} from "@/lib/stripe";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const TIER_PRICING: Record<string, { monthly: number; annual: number; name: string }> = {
   free: { monthly: 0, annual: 0, name: "Free" },
@@ -26,28 +63,50 @@ const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secon
   active: { label: "Active", variant: "default", icon: <CheckCircle className="h-4 w-4" /> },
   trialing: { label: "Trial", variant: "secondary", icon: <Zap className="h-4 w-4" /> },
   past_due: { label: "Past Due", variant: "destructive", icon: <AlertTriangle className="h-4 w-4" /> },
+  canceled: { label: "Canceled", variant: "outline", icon: <AlertTriangle className="h-4 w-4" /> },
   cancelled: { label: "Cancelled", variant: "outline", icon: <AlertTriangle className="h-4 w-4" /> },
   paused: { label: "Paused", variant: "outline", icon: <AlertTriangle className="h-4 w-4" /> },
+  unpaid: { label: "Unpaid", variant: "destructive", icon: <AlertTriangle className="h-4 w-4" /> },
 };
 
 export function OrganizationBilling() {
+  const router = useRouter();
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [billingData, setBillingData] = useState<BillingOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const stripeAvailable = isStripeAvailable();
 
   useEffect(() => {
     let mounted = true;
 
-    async function loadOrganization() {
-      const result = await getCurrentOrganization();
-      if (mounted) {
-        if (result.organization) {
-          setOrganization(result.organization);
+    async function loadData() {
+      try {
+        const [orgResult, billingResult] = await Promise.all([
+          getCurrentOrganization(),
+          getBillingOverview(),
+        ]);
+
+        if (mounted) {
+          if (orgResult.organization) {
+            setOrganization(orgResult.organization);
+          }
+          if (billingResult.success && billingResult.data) {
+            setBillingData(billingResult.data);
+          }
+          setLoading(false);
         }
-        setLoading(false);
+      } catch (error) {
+        console.error("Error loading billing data:", error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
-    loadOrganization();
+    loadData();
 
     return () => {
       mounted = false;
@@ -55,20 +114,73 @@ export function OrganizationBilling() {
   }, []);
 
   const currentTier = organization?.subscription_tier || "free";
-  const currentStatus = organization?.subscription_status || "active";
+  const currentStatus = billingData?.subscription?.status || organization?.subscription_status || "active";
   const pricing = TIER_PRICING[currentTier] || TIER_PRICING.free;
   const status = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.active;
   const limits = TIER_LIMITS[currentTier] || TIER_LIMITS.free;
 
-  const subscriptionEndsAt = organization?.subscription_ends_at ? new Date(organization.subscription_ends_at) : null;
+  const subscriptionEndsAt = billingData?.subscription?.currentPeriodEnd
+    ? billingData.subscription.currentPeriodEnd
+    : organization?.subscription_ends_at
+    ? new Date(organization.subscription_ends_at)
+    : null;
 
   const { isTrialing, daysRemaining } = useMemo(() => {
-    const trialEndsAt = organization?.trial_ends_at ? new Date(organization.trial_ends_at) : null;
+    const trialEndsAt = billingData?.subscription?.trialEnd
+      ? billingData.subscription.trialEnd
+      : organization?.trial_ends_at
+      ? new Date(organization.trial_ends_at)
+      : null;
     const now = new Date();
     const trialing = currentStatus === "trialing" && trialEndsAt && trialEndsAt > now;
     const days = trialEndsAt ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))) : 0;
     return { isTrialing: trialing, daysRemaining: days };
-  }, [currentStatus, organization]);
+  }, [currentStatus, billingData, organization]);
+
+  const handleManagePlan = async () => {
+    setActionLoading(true);
+    try {
+      const result = await createPortalSession();
+      if (result.success && result.url) {
+        window.location.href = result.url;
+      }
+    } catch (error) {
+      console.error("Error opening billing portal:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!billingData?.subscription?.id) return;
+    setActionLoading(true);
+    try {
+      const result = await cancelSubscription(billingData.subscription.id, false);
+      if (result.success) {
+        setCancelDialogOpen(false);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Error canceling subscription:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResumeSubscription = async () => {
+    if (!billingData?.subscription?.id) return;
+    setActionLoading(true);
+    try {
+      const result = await resumeSubscription(billingData.subscription.id);
+      if (result.success) {
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Error resuming subscription:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -139,6 +251,11 @@ export function OrganizationBilling() {
                   {status.icon}
                   {status.label}
                 </Badge>
+                {billingData?.subscription?.cancelAtPeriodEnd && (
+                  <Badge variant="outline" className="text-orange-600">
+                    Cancels at period end
+                  </Badge>
+                )}
               </div>
               <p className="text-muted-foreground">
                 {pricing.monthly === 0 ? (
@@ -150,10 +267,35 @@ export function OrganizationBilling() {
                 )}
               </p>
             </div>
-            <Button variant="outline" disabled>
-              <CreditCard className="mr-2 h-4 w-4" />
-              Manage Plan
-            </Button>
+            <div className="flex gap-2">
+              {billingData?.subscription?.cancelAtPeriodEnd ? (
+                <Button
+                  variant="outline"
+                  onClick={handleResumeSubscription}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Resume Subscription
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleManagePlan}
+                  disabled={actionLoading || !stripeAvailable || currentTier === "free"}
+                >
+                  {actionLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="mr-2 h-4 w-4" />
+                  )}
+                  Manage Plan
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Billing Cycle */}
@@ -196,11 +338,11 @@ export function OrganizationBilling() {
               <div className="flex justify-between text-sm">
                 <span>Team Members</span>
                 <span className="text-muted-foreground">
-                  {limits.max_users === -1 ? "Unlimited" : `0 / ${limits.max_users}`}
+                  {limits.max_users === -1 ? "Unlimited" : `${billingData?.usage?.currentUsers || 0} / ${limits.max_users}`}
                 </span>
               </div>
               {limits.max_users !== -1 && (
-                <Progress value={0} className="h-2" />
+                <Progress value={((billingData?.usage?.currentUsers || 0) / limits.max_users) * 100} className="h-2" />
               )}
             </div>
 
@@ -208,11 +350,11 @@ export function OrganizationBilling() {
               <div className="flex justify-between text-sm">
                 <span>Loan Officers</span>
                 <span className="text-muted-foreground">
-                  {limits.max_loan_officers === -1 ? "Unlimited" : `0 / ${limits.max_loan_officers}`}
+                  {limits.max_loan_officers === -1 ? "Unlimited" : `${billingData?.usage?.currentLoanOfficers || 0} / ${limits.max_loan_officers}`}
                 </span>
               </div>
               {limits.max_loan_officers !== -1 && (
-                <Progress value={0} className="h-2" />
+                <Progress value={((billingData?.usage?.currentLoanOfficers || 0) / limits.max_loan_officers) * 100} className="h-2" />
               )}
             </div>
 
@@ -220,11 +362,11 @@ export function OrganizationBilling() {
               <div className="flex justify-between text-sm">
                 <span>Surveys This Month</span>
                 <span className="text-muted-foreground">
-                  {limits.max_surveys_per_month === -1 ? "Unlimited" : `0 / ${limits.max_surveys_per_month}`}
+                  {limits.max_surveys_per_month === -1 ? "Unlimited" : `${billingData?.usage?.surveysThisMonth || 0} / ${limits.max_surveys_per_month}`}
                 </span>
               </div>
               {limits.max_surveys_per_month !== -1 && (
-                <Progress value={0} className="h-2" />
+                <Progress value={((billingData?.usage?.surveysThisMonth || 0) / limits.max_surveys_per_month) * 100} className="h-2" />
               )}
             </div>
 
@@ -232,11 +374,11 @@ export function OrganizationBilling() {
               <div className="flex justify-between text-sm">
                 <span>API Calls Today</span>
                 <span className="text-muted-foreground">
-                  {limits.max_api_calls_per_day === -1 ? "Unlimited" : `0 / ${limits.max_api_calls_per_day.toLocaleString()}`}
+                  {limits.max_api_calls_per_day === -1 ? "Unlimited" : `${billingData?.usage?.apiCallsToday || 0} / ${limits.max_api_calls_per_day.toLocaleString()}`}
                 </span>
               </div>
               {limits.max_api_calls_per_day !== -1 && (
-                <Progress value={0} className="h-2" />
+                <Progress value={((billingData?.usage?.apiCallsToday || 0) / limits.max_api_calls_per_day) * 100} className="h-2" />
               )}
             </div>
           </div>
@@ -284,8 +426,12 @@ export function OrganizationBilling() {
                         {tierFeatures.api_access && <li>API access</li>}
                         {tierFeatures.webhooks && <li>Webhooks</li>}
                       </ul>
-                      <Button className="w-full mt-4" variant="outline" disabled>
-                        Upgrade
+                      <Button
+                        className="w-full mt-4"
+                        variant="outline"
+                        onClick={() => router.push(`/pricing?upgrade=${tier}`)}
+                      >
+                        Upgrade to {info.name}
                       </Button>
                     </div>
                   );
@@ -298,28 +444,235 @@ export function OrganizationBilling() {
         </Card>
       )}
 
-      {/* Payment Method Placeholder */}
+      {/* Payment Methods */}
       <Card>
-        <CardHeader>
-          <CardTitle>Payment Method</CardTitle>
-          <CardDescription>
-            Manage your payment methods and billing history
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Payment Methods</CardTitle>
+            <CardDescription>
+              Manage your payment methods
+            </CardDescription>
+          </div>
+          {currentTier !== "free" && stripeAvailable && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManagePlan}
+              disabled={actionLoading}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Add Payment Method
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
-            <div className="text-center">
-              <CreditCard className="h-12 w-12 mx-auto text-muted-foreground" />
-              <p className="mt-2 text-muted-foreground">
-                Payment integration coming soon
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Stripe integration will be available in a future update
-              </p>
+          {billingData?.paymentMethods && billingData.paymentMethods.length > 0 ? (
+            <div className="space-y-3">
+              {billingData.paymentMethods.map((pm) => (
+                <div
+                  key={pm.id}
+                  className="flex items-center justify-between p-3 border rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium capitalize">
+                        {pm.cardBrand} ending in {pm.cardLast4}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Expires {pm.cardExpMonth}/{pm.cardExpYear}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {pm.isDefault && (
+                      <Badge variant="secondary">Default</Badge>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
+              <div className="text-center">
+                <CreditCard className="h-12 w-12 mx-auto text-muted-foreground" />
+                <p className="mt-2 text-muted-foreground">
+                  No payment methods on file
+                </p>
+                {currentTier === "free" && (
+                  <p className="text-sm text-muted-foreground">
+                    Add a payment method when you upgrade
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Invoice History */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Invoice History</CardTitle>
+            <CardDescription>
+              View and download your past invoices
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {billingData?.invoices && billingData.invoices.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Invoice</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {billingData.invoices.map((invoice) => (
+                  <TableRow key={invoice.id}>
+                    <TableCell className="font-medium">
+                      {invoice.number || invoice.stripeInvoiceId.slice(-8)}
+                    </TableCell>
+                    <TableCell>
+                      {invoice.createdAt.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      {formatPriceFromCents(invoice.amountDue, invoice.currency)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          invoice.status === "paid"
+                            ? "default"
+                            : invoice.status === "open"
+                            ? "secondary"
+                            : "outline"
+                        }
+                      >
+                        {invoice.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {invoice.hostedInvoiceUrl && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={invoice.hostedInvoiceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {invoice.pdfUrl && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            asChild
+                          >
+                            <a
+                              href={invoice.pdfUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex items-center justify-center py-8 border-2 border-dashed rounded-lg">
+              <div className="text-center">
+                <Calendar className="h-12 w-12 mx-auto text-muted-foreground" />
+                <p className="mt-2 text-muted-foreground">
+                  No invoices yet
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Invoices will appear here after your first payment
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone - Cancel Subscription */}
+      {currentTier !== "free" && !billingData?.subscription?.cancelAtPeriodEnd && (
+        <Card className="border-destructive/50">
+          <CardHeader>
+            <CardTitle className="text-destructive">Danger Zone</CardTitle>
+            <CardDescription>
+              Irreversible and destructive actions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 border border-destructive/50 rounded-lg">
+              <div>
+                <p className="font-medium">Cancel Subscription</p>
+                <p className="text-sm text-muted-foreground">
+                  Your subscription will remain active until the end of the billing period
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={() => setCancelDialogOpen(true)}
+                disabled={actionLoading}
+              >
+                Cancel Subscription
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cancel Confirmation Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Subscription</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing period
+              {subscriptionEndsAt && (
+                <> on {subscriptionEndsAt.toLocaleDateString()}</>
+              )}.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+              disabled={actionLoading}
+            >
+              Keep Subscription
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelSubscription}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Yes, Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

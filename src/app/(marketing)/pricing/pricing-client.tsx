@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { HeroSection } from "@/components/marketing/hero-section";
 import { PricingCard } from "@/components/marketing/pricing-card";
@@ -13,6 +14,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { createCheckoutSession, getPricingForCheckout } from "@/lib/stripe";
+import { createClient } from "@/lib/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const pricingPlans = {
   monthly: [
@@ -170,9 +174,113 @@ const faqs = [
   },
 ];
 
+interface StripePricing {
+  id: string;
+  stripePriceIdMonthly: string | null;
+  stripePriceIdYearly: string | null;
+}
+
 export function PricingPageClient() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isYearly, setIsYearly] = React.useState(false);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [loadingTier, setLoadingTier] = React.useState<string | null>(null);
+  const [stripePricing, setStripePricing] = React.useState<StripePricing[]>([]);
+
   const plans = isYearly ? pricingPlans.yearly : pricingPlans.monthly;
+
+  // Check auth state and load pricing on mount
+  React.useEffect(() => {
+    const supabase = createClient();
+
+    async function checkAuth() {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsAuthenticated(!!user);
+    }
+
+    async function loadPricing() {
+      const result = await getPricingForCheckout();
+      if (result.success && result.data) {
+        setStripePricing(result.data);
+      }
+    }
+
+    checkAuth();
+    loadPricing();
+
+    // Handle upgrade param from billing page
+    const upgradeTier = searchParams.get("upgrade");
+    if (upgradeTier) {
+      // Scroll to pricing section
+      document.getElementById("pricing-cards")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [searchParams]);
+
+  const handleSelectPlan = async (tier: string) => {
+    // Free tier - go to signup
+    if (tier.toLowerCase() === "starter" && plans[0].price === 0) {
+      router.push("/signup");
+      return;
+    }
+
+    // Enterprise - go to contact
+    if (tier.toLowerCase() === "enterprise") {
+      router.push("/contact?plan=enterprise");
+      return;
+    }
+
+    // If not authenticated, redirect to signup with plan
+    if (!isAuthenticated) {
+      const billingParam = isYearly ? "&billing=yearly" : "";
+      router.push(`/signup?plan=${tier.toLowerCase()}${billingParam}`);
+      return;
+    }
+
+    // Get Stripe price ID
+    const tierPricing = stripePricing.find(
+      (p) => p.id.toLowerCase() === tier.toLowerCase()
+    );
+    const priceId = isYearly
+      ? tierPricing?.stripePriceIdYearly
+      : tierPricing?.stripePriceIdMonthly;
+
+    if (!priceId) {
+      toast({
+        title: "Configuration Error",
+        description: "Pricing not configured. Please contact support.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Start checkout
+    setLoadingTier(tier.toLowerCase());
+    try {
+      const result = await createCheckoutSession({
+        priceId,
+        billingCycle: isYearly ? "year" : "month",
+      });
+
+      if (result.success && result.url) {
+        window.location.href = result.url;
+      } else {
+        toast({
+          title: "Checkout Error",
+          description: result.error || "Failed to start checkout",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingTier(null);
+    }
+  };
 
   return (
     <>
@@ -208,7 +316,7 @@ export function PricingPageClient() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="pb-16 md:pb-24">
+      <section id="pricing-cards" className="pb-16 md:pb-24">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -228,6 +336,8 @@ export function PricingPageClient() {
                 cta={plan.cta}
                 highlighted={plan.highlighted}
                 badge={plan.badge}
+                onSelect={() => handleSelectPlan(plan.tier)}
+                isLoading={loadingTier === plan.tier.toLowerCase()}
               />
             ))}
           </div>

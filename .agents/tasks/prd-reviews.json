@@ -83,6 +83,11 @@
       "id": "E13",
       "name": "Design System Overhaul",
       "description": "Transform the site from stock Shadcn/UI to a world-class, distinctive design system with brand identity, micro-interactions, and animations"
+    },
+    {
+      "id": "E14",
+      "name": "Billing & Subscriptions",
+      "description": "Stripe-powered billing, subscription management, invoicing, and payment processing for individual and enterprise tiers"
     }
   ],
   "stories": [
@@ -1600,6 +1605,171 @@
       "startedAt": "2026-01-14T23:00:00.000000+00:00",
       "completedAt": null,
       "updatedAt": "2026-01-14T23:00:00.000000+00:00"
+    },
+    {
+      "id": "S056",
+      "epic": "E14",
+      "title": "Stripe Payment & Subscription System",
+      "description": "Implement comprehensive Stripe payment infrastructure supporting individual self-service subscriptions via Customer Portal and enterprise invoice-based billing. Integrate subscription validation into all auth flows (signup, login, onboarding, offboarding) with real-time sync to Supabase users and organizations. Handle payment failures, subscription lifecycle, seat-based pricing, and prorated upgrades/downgrades.",
+      "acceptance_criteria": [
+        "Stripe SDK configured with server/client separation (src/lib/stripe/)",
+        "Database schema: subscriptions, subscription_items, invoices, payment_methods tables with RLS",
+        "Organizations table extended with stripe_customer_id, subscription_status, billing_tier",
+        "Users table extended with subscription_role (owner, admin, member) for seat management",
+        "Pricing page with 3 tiers: Starter (free trial), Professional ($99/mo), Enterprise (custom)",
+        "Stripe Checkout integration for new subscriptions with success/cancel redirects",
+        "Stripe Customer Portal integration for individual tier self-service (update payment, cancel, view invoices)",
+        "Enterprise tier invoice generation with NET 30 payment terms via Stripe Invoicing API",
+        "Signup flow: Create Stripe customer on org creation, redirect to plan selection",
+        "Onboarding flow: Block dashboard access until subscription active or trial valid",
+        "Login flow: Check subscription status, show grace period banner for past_due, block access for canceled/unpaid",
+        "Offboarding flow: Cancel subscription with immediate or end-of-period options, handle prorations",
+        "Webhook handler (api/webhooks/stripe) for subscription lifecycle events with signature verification",
+        "Handle events: checkout.session.completed, customer.subscription.*, invoice.*, payment_intent.*",
+        "Billing settings page showing current plan, usage, next billing date, payment method",
+        "Subscription upgrade/downgrade with prorated billing calculations",
+        "Seat-based pricing for Professional tier with add/remove member billing",
+        "Failed payment retry logic with dunning email sequence via Resend integration",
+        "Subscription status real-time sync: Stripe webhook \u2192 Supabase \u2192 UI refresh",
+        "Usage metering preparation for future per-survey or per-review pricing models",
+        "Billing history with downloadable PDF invoices",
+        "Tax calculation integration (Stripe Tax or manual tax_rates)"
+      ],
+      "priority": "P0",
+      "estimate": "XL",
+      "status": "in_progress",
+      "gates": [
+        "Stripe test mode checkout completes successfully",
+        "Webhook signature verification works with test events",
+        "Subscription status syncs within 5 seconds of Stripe event",
+        "Customer Portal redirect works for individual tier",
+        "Invoice generation works for enterprise tier",
+        "Auth flows block/allow based on subscription status",
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S002",
+        "S003",
+        "S031"
+      ],
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/frontend-design",
+          "stripe"
+        ],
+        "recommended_for": {
+          "architecture": "feature-dev:code-architect (Payment system architecture before implementation)",
+          "billing_ui": "/frontend-design (Pricing page, billing dashboard, invoice history)",
+          "stripe_integration": "stripe plugin (Create products, prices, test customers)",
+          "security_review": "/code-review (Webhook security, payment data handling)"
+        }
+      },
+      "implementation_notes": {
+        "stripe_products": [
+          {
+            "name": "ReviewHub Starter",
+            "price": 0,
+            "trial_days": 14
+          },
+          {
+            "name": "ReviewHub Professional",
+            "price": 9900,
+            "currency": "usd",
+            "interval": "month"
+          },
+          {
+            "name": "ReviewHub Enterprise",
+            "price": null,
+            "billing": "invoice",
+            "terms": "net30"
+          }
+        ],
+        "webhook_events": [
+          "checkout.session.completed",
+          "customer.subscription.created",
+          "customer.subscription.updated",
+          "customer.subscription.deleted",
+          "invoice.paid",
+          "invoice.payment_failed",
+          "invoice.upcoming",
+          "payment_intent.succeeded",
+          "payment_intent.payment_failed",
+          "customer.updated"
+        ],
+        "database_tables": [
+          "subscriptions (id, org_id, stripe_subscription_id, stripe_customer_id, status, plan_tier, billing_cycle, current_period_start, current_period_end, cancel_at_period_end, trial_end)",
+          "subscription_items (id, subscription_id, stripe_item_id, price_id, quantity)",
+          "invoices (id, org_id, stripe_invoice_id, amount_due, amount_paid, status, due_date, pdf_url)",
+          "payment_methods (id, org_id, stripe_payment_method_id, type, card_brand, card_last4, is_default)"
+        ],
+        "auth_flow_integration": {
+          "signup": "Create Stripe customer \u2192 Store stripe_customer_id \u2192 Redirect to pricing \u2192 Checkout \u2192 Webhook confirms \u2192 Allow dashboard",
+          "login": "Fetch subscription status \u2192 Check active/trialing/past_due \u2192 Show appropriate UI/banners \u2192 Block if canceled",
+          "onboarding": "Middleware checks subscription_status \u2192 Redirect to billing if none \u2192 Complete onboarding after active",
+          "offboarding": "User clicks cancel \u2192 Confirm dialog \u2192 Call Stripe cancel \u2192 Webhook updates status \u2192 Show confirmation"
+        },
+        "file_structure": [
+          "src/lib/stripe/client.ts - Stripe SDK initialization",
+          "src/lib/stripe/server.ts - Server-side Stripe client",
+          "src/lib/stripe/actions.ts - Server actions (createCheckout, createPortalSession, cancelSubscription)",
+          "src/lib/stripe/webhooks.ts - Webhook event handlers",
+          "src/lib/stripe/sync.ts - Supabase sync utilities",
+          "src/app/api/webhooks/stripe/route.ts - Webhook endpoint",
+          "src/app/(dashboard)/settings/billing/page.tsx - Billing dashboard",
+          "src/app/(marketing)/pricing/page.tsx - Public pricing page",
+          "src/app/(auth)/checkout/page.tsx - Checkout flow page",
+          "src/app/(auth)/checkout/success/page.tsx - Post-checkout success",
+          "src/app/(auth)/checkout/cancel/page.tsx - Checkout canceled",
+          "src/components/billing/PricingCard.tsx - Pricing tier card",
+          "src/components/billing/BillingStatus.tsx - Current plan display",
+          "src/components/billing/InvoiceHistory.tsx - Invoice list",
+          "src/components/billing/PaymentMethodCard.tsx - Payment method display",
+          "src/components/billing/SubscriptionBanner.tsx - Status banners (trial ending, past due)",
+          "src/middleware.ts - Add subscription check to protected routes",
+          "supabase/migrations/20260116_stripe_billing.sql - Schema migration"
+        ],
+        "environment_variables": [
+          "STRIPE_SECRET_KEY",
+          "STRIPE_PUBLISHABLE_KEY",
+          "STRIPE_WEBHOOK_SECRET",
+          "STRIPE_STARTER_PRICE_ID",
+          "STRIPE_PROFESSIONAL_PRICE_ID",
+          "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
+        ]
+      },
+      "updatedAt": "2026-01-16T06:23:47.035739+00:00",
+      "startedAt": "2026-01-16T06:23:47.035418+00:00",
+      "completedAt": null
+    },
+    {
+      "id": "S056",
+      "title": "Stripe Payment & Subscription System",
+      "status": "in_progress",
+      "estimate": "XL",
+      "priority": "P0",
+      "epic": "E14",
+      "blocked_by": null,
+      "description": "Implement complete billing and subscription system with Stripe integration. Include subscription tiers (Free/Pro/Enterprise), payment processing, billing portal, usage-based billing, invoice management, and subscription lifecycle management (upgrades, downgrades, cancellations, trials).",
+      "acceptance_criteria": [
+        "Stripe SDK integration with secure payment processing",
+        "Subscription tiers: Free, Pro ($X/mo), Enterprise (custom pricing)",
+        "Stripe Checkout for new subscriptions",
+        "Stripe Customer Portal for self-service billing management",
+        "Webhook handlers for subscription events (created, updated, canceled, payment_failed)",
+        "Database schema for subscriptions, invoices, and payment history",
+        "Usage tracking for metered billing features",
+        "Subscription status checks and feature gating",
+        "Trial period support with automatic conversion",
+        "Proration handling for plan changes",
+        "Invoice history and downloadable receipts",
+        "Admin dashboard for subscription management",
+        "Email notifications for billing events"
+      ],
+      "startedAt": "2026-01-16T05:39:18.034715+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-16T05:39:18.034873+00:00"
     }
   ],
   "phases": [
@@ -1818,6 +1988,26 @@
           "S050": "feature-dev:code-architect (EX system can reuse CX survey patterns)"
         },
         "notes": "EX features can leverage existing survey infrastructure. Focus on privacy and anonymity guarantees."
+      }
+    },
+    {
+      "id": "Phase9",
+      "name": "Billing & Monetization",
+      "description": "Stripe payment integration, subscription management, and billing infrastructure",
+      "stories": [
+        "S056"
+      ],
+      "target_completion": "Phase 9 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/frontend-design",
+          "stripe"
+        ],
+        "recommended_for": {
+          "S056": "stripe plugin (Create Stripe products/prices), feature-dev:code-architect (Payment architecture), /frontend-design (Pricing/billing UI)"
+        },
+        "notes": "Critical revenue infrastructure. Test thoroughly in Stripe test mode. Security review mandatory for webhook handlers."
       }
     }
   ],

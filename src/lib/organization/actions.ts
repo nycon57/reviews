@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { Tables } from "@/types/database.types";
 import {
   updateOrganizationSettingsSchema,
   updateOrganizationBrandingSchema,
@@ -16,7 +17,43 @@ import {
   type UpdateOrganizationBranding,
   type UpdateOrganizationBilling,
   type CreateInvitation,
+  type SubscriptionTier,
+  type SubscriptionStatus,
 } from "./types";
+
+// Transform database row to full Organization type
+function transformDbOrganization(row: Tables<"organizations">): Organization {
+  const settings = row.settings as Record<string, unknown> | null;
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    domain: row.domain ?? null,
+    logo_url: row.logo_url ?? null,
+    primary_color: (settings?.primary_color as string) ?? row.primary_color ?? "#3B82F6",
+    secondary_color: (settings?.secondary_color as string) ?? "#1E40AF",
+    font_family: (settings?.font_family as string) ?? "Inter",
+    company_email: (settings?.company_email as string) ?? null,
+    company_phone: (settings?.company_phone as string) ?? null,
+    company_address: (settings?.company_address as Organization["company_address"]) ?? null,
+    timezone: (settings?.timezone as string) ?? "America/New_York",
+    date_format: (settings?.date_format as string) ?? "MM/DD/YYYY",
+    billing_email: row.billing_email ?? null,
+    billing_address: (settings?.billing_address as Organization["billing_address"]) ?? null,
+    subscription_tier: (row.subscription_tier as SubscriptionTier) ?? "free",
+    subscription_status: (row.subscription_status as SubscriptionStatus) ?? "active",
+    subscription_started_at: (settings?.subscription_started_at as string) ?? null,
+    subscription_ends_at: (settings?.subscription_ends_at as string) ?? null,
+    subscription_cancelled_at: (settings?.subscription_cancelled_at as string) ?? null,
+    trial_ends_at: row.trial_ends_at ?? null,
+    features: settings?.features as Organization["features"],
+    limits: settings?.limits as Organization["limits"],
+    settings: settings ?? undefined,
+    metadata: (settings?.metadata as Record<string, unknown>) ?? undefined,
+    created_at: row.created_at ?? new Date().toISOString(),
+    updated_at: row.updated_at ?? new Date().toISOString(),
+  };
+}
 
 // Get current user's organization
 export async function getCurrentOrganization(): Promise<{
@@ -52,7 +89,7 @@ export async function getCurrentOrganization(): Promise<{
     return { organization: null, error: error.message };
   }
 
-  return { organization: org as Organization, error: null };
+  return { organization: transformDbOrganization(org), error: null };
 }
 
 // Update organization settings

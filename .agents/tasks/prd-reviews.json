@@ -1194,7 +1194,7 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "Apple Business profile syncs successfully",
         "Reviews appear in aggregated feed"
@@ -1202,7 +1202,10 @@
       "dependencies": [
         "S015",
         "S040"
-      ]
+      ],
+      "updatedAt": "2026-01-15T01:37:55.063839+00:00",
+      "completedAt": "2026-01-15T01:37:55.063946+00:00",
+      "startedAt": "2026-01-15T01:37:55.063947+00:00"
     },
     {
       "id": "S042",
@@ -1221,14 +1224,17 @@
       ],
       "priority": "P3",
       "estimate": "L",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "Analytics data accurate within 5%",
         "SEO recommendations actionable"
       ],
       "dependencies": [
         "S032"
-      ]
+      ],
+      "startedAt": "2026-01-15T02:02:36.918729+00:00",
+      "completedAt": "2026-01-15T02:05:10.810187+00:00",
+      "updatedAt": "2026-01-15T02:05:10.810023+00:00"
     },
     {
       "id": "S043",
@@ -1247,7 +1253,7 @@
       ],
       "priority": "P3",
       "estimate": "XL",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "AI visibility score correlates with actual AI citations",
         "Recommendations improve AI search presence"
@@ -1277,7 +1283,7 @@
       ],
       "priority": "P3",
       "estimate": "L",
-      "status": "pending",
+      "status": "removed",
       "gates": [
         "Generated content passes quality review",
         "Content improves AI visibility scores"
@@ -1303,7 +1309,7 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "pending",
+      "status": "removed",
       "gates": [
         "Stop words detected and flagged",
         "Escalation workflow functions correctly"
@@ -1328,7 +1334,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "pending",
+      "status": "removed",
       "gates": [
         "Contact sync works bi-directionally",
         "Deal stage triggers send surveys"
@@ -1354,7 +1360,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "Salesforce sync reliable",
         "Survey triggers on opportunity close"
@@ -1362,7 +1368,10 @@
       "dependencies": [
         "S026",
         "S027"
-      ]
+      ],
+      "startedAt": "2026-01-15T18:40:35.435966+00:00",
+      "completedAt": "2026-01-15T18:49:31.766894+00:00",
+      "updatedAt": "2026-01-15T18:49:31.766750+00:00"
     },
     {
       "id": "S048",
@@ -1379,7 +1388,7 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "pending",
+      "status": "removed",
       "gates": [
         "Teams notifications deliver reliably",
         "Response from Teams works"
@@ -1406,14 +1415,17 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "pending",
+      "status": "done",
       "gates": [
         "Score calculates correctly",
         "Visual feedback motivates completion"
       ],
       "dependencies": [
         "S013"
-      ]
+      ],
+      "startedAt": "2026-01-15T18:44:30.134541+00:00",
+      "completedAt": "2026-01-15T18:49:10.390727+00:00",
+      "updatedAt": "2026-01-15T18:49:10.390450+00:00"
     },
     {
       "id": "S050",

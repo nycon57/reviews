@@ -1,9 +1,35 @@
-import { ReviewQueue } from "@/components/reviews/review-queue";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  getReviews,
   getReviewStats,
   getLoanOfficersForFilter,
 } from "@/lib/reviews/actions";
+import {
+  getAggregatedReviews,
+  getReviewAggregationStats,
+} from "@/lib/reviews/aggregation-actions";
+
+// Dynamic import for heavy ReviewQueue component (1,260 lines)
+const ReviewQueue = dynamic(
+  () => import("@/components/reviews/review-queue").then((mod) => mod.ReviewQueue),
+  {
+    loading: () => (
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-12" />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
 
 export const metadata = {
   title: "Reviews | ReviewHub",
@@ -12,9 +38,10 @@ export const metadata = {
 
 export default async function ReviewsPage() {
   // Fetch initial data server-side
-  const [reviewsResult, statsResult, loanOfficersResult] = await Promise.all([
-    getReviews({ status: "all" }),
+  const [reviewsResult, statsResult, aggregatedStatsResult, loanOfficersResult] = await Promise.all([
+    getAggregatedReviews({ page: 1, limit: 20 }),
     getReviewStats(),
+    getReviewAggregationStats(),
     getLoanOfficersForFilter(),
   ]);
 
@@ -23,6 +50,9 @@ export default async function ReviewsPage() {
   const initialStats = statsResult.success
     ? statsResult.data ?? { pending: 0, approved: 0, rejected: 0, total: 0 }
     : { pending: 0, approved: 0, rejected: 0, total: 0 };
+  const initialAggregatedStats = aggregatedStatsResult.success
+    ? aggregatedStatsResult.data ?? undefined
+    : undefined;
   const loanOfficers = loanOfficersResult.success
     ? loanOfficersResult.data ?? []
     : [];
@@ -45,6 +75,7 @@ export default async function ReviewsPage() {
         initialTotal={initialTotal}
         loanOfficers={loanOfficers}
         initialStats={initialStats}
+        initialAggregatedStats={initialAggregatedStats}
       />
     </div>
   );

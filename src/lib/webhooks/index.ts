@@ -1,2 +1,30 @@
-export * from "./retry";
-export * from "./actions";
+// Retry utilities
+export type { RetryConfig, ErrorCategory } from "./retry";
+
+export {
+  DEFAULT_RETRY_CONFIG,
+  calculateRetryDelay,
+  getNextRetryTime,
+  shouldRetry,
+  formatRetryDelay,
+  getRetrySchedule,
+  categorizeError,
+  isRetryableError,
+} from "./retry";
+
+// Actions
+export type {
+  WebhookLog,
+  WebhookLogFilters,
+  ActionResult,
+  WebhookStats,
+} from "./actions";
+
+export {
+  getWebhookLogs,
+  getWebhookStats,
+  getWebhookLogDetail,
+  retryFailedQueueItem,
+  getWebhookEventTypes,
+  scheduleRetryWithBackoff,
+} from "./actions";

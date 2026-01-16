@@ -76,13 +76,68 @@ Key tables: `organizations`, `users`, `loan_officers`, `survey_templates`, `surv
 3. Run `npm run db:types` after any schema changes
 4. Ensure build and lint pass before PR
 
-## Automatic Skill Invocation
+## Automatic Skill & Plugin Invocation
 
-Invoke these skills automatically when relevant:
+**IMPORTANT:** Proactively invoke skills and MCP plugins without being asked. Do not wait for explicit requests.
 
-| Skill | When to Use |
-|-------|-------------|
-| `vercel-react-best-practices` | Writing, reviewing, or refactoring React/Next.js components |
-| `frontend-design:frontend-design` | Creating new UI components or pages |
-| `commit` | User asks to commit or save work |
-| `code-review:code-review` | User asks to review code or a PR |
+### Skills - Invoke Automatically
+
+| Skill | Trigger Conditions |
+|-------|-------------------|
+| `vercel-react-best-practices` | ANY React/Next.js work: writing components, reviewing code, refactoring, fixing bugs, adding features. Use on EVERY component change. |
+| `frontend-design:frontend-design` | Creating ANY new UI: pages, components, layouts, modals, forms. Always use for visual work. |
+| `feature-dev:feature-dev` | Starting ANY new feature implementation. Use at the beginning of feature work. |
+| `commit` | After completing ANY task, fixing bugs, or when code is in a good state. Proactively offer to commit. |
+| `commit-commands:commit-push-pr` | When feature is complete and ready for review. |
+| `code-review:code-review` | Before merging, after completing features, or when user mentions "review", "PR", or "check". |
+| `web-design-guidelines` | After creating UI, reviewing components, or when user mentions "accessibility", "UX", "design review". |
+| `prd` | When user discusses new features, requirements, planning, or mentions "PRD", "spec", "requirements". |
+| `cartographer:cartographer` | When onboarding, exploring unfamiliar code, or user asks about codebase structure. |
+| `dev-browser` | ANY browser interaction: testing UI, filling forms, screenshots, navigating sites, web automation. |
+
+### MCP Plugins - Use Proactively
+
+#### Supabase Plugin (`mcp__plugin_supabase_supabase__*`)
+- **Database queries**: Use `execute_sql` for reading data, checking schema, debugging
+- **Migrations**: Use `apply_migration` for ANY schema changes (tables, columns, indexes, RLS policies)
+- **Type generation**: After migrations, remind to run `npm run db:types`
+- **Logs**: Use `get_logs` when debugging errors, checking auth issues, or investigating bugs
+- **Advisors**: Use `get_advisors` after DDL changes to check for security/performance issues
+- **Edge Functions**: Use `deploy_edge_function` for serverless functions
+
+#### GitHub Plugin (`mcp__plugin_github_github__*`)
+- **PRs**: Use `create_pull_request` after pushing feature branches
+- **Issues**: Use `list_issues`, `search_issues` when discussing bugs or features
+- **Code Search**: Use `search_code` to find patterns across the repo
+- **Reviews**: Use `pull_request_read` and `pull_request_review_write` for PR reviews
+- **Branches**: Use `list_branches`, `create_branch` for branch management
+
+#### Context7 Plugin (`mcp__plugin_context7_context7__*`)
+- **Documentation lookup**: Use `resolve-library-id` then `query-docs` when:
+  - Implementing features with external libraries (React Query, Zod, Supabase, etc.)
+  - Uncertain about API usage or best practices
+  - User asks "how do I..." for any library
+  - Debugging library-specific issues
+- **Always check docs** for: Next.js, Supabase, TanStack Query, Zod, Radix UI, Tailwind, Framer Motion
+
+#### Browser Automation (`mcp__claude-in-chrome__*`)
+- Use for ANY request involving:
+  - Testing the app in browser
+  - Taking screenshots
+  - Filling out forms
+  - Navigating websites
+  - Web scraping or data extraction
+  - Visual verification of UI changes
+
+### Invocation Rules
+
+1. **Don't ask permission** - Invoke skills/plugins when conditions are met
+2. **Chain skills** - Use multiple skills in sequence (e.g., `feature-dev` → code → `vercel-react-best-practices` → `commit`)
+3. **Lookup before implementing** - Use Context7 to check library docs before writing integration code
+4. **Verify with Supabase plugin** - Query database directly to verify schema, test queries, check RLS
+5. **Always review** - Use `code-review` or `web-design-guidelines` after significant changes
+
+## Plan Mode
+
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if any.

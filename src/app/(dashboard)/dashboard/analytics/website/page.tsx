@@ -1,7 +1,12 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { WebsiteAnalyticsDashboard } from "./website-analytics-dashboard";
+import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Dynamic import for heavy dashboard with recharts (Suspense handles loading)
+const WebsiteAnalyticsDashboard = dynamic(
+  () => import("./website-analytics-dashboard").then((mod) => mod.WebsiteAnalyticsDashboard)
+);
 
 export const metadata: Metadata = {
   title: "Website Analytics | ReviewHub",

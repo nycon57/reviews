@@ -22,7 +22,7 @@ import { THEME_DESCRIPTIONS } from "./types";
 import { randomUUID } from "crypto";
 
 /**
- * Get user context for analytics operations
+ * Get user context for analytics operations - parallelized queries
  */
 async function getUserContext() {
   const supabase = await createClient();
@@ -34,28 +34,31 @@ async function getUserContext() {
     return null;
   }
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("id, organization_id, role")
-    .eq("id", user.id)
-    .single();
+  // Parallelize independent queries
+  const [userDataResult, loanOfficerResult] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, organization_id, role")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("loan_officers")
+      .select("id, full_name")
+      .eq("user_id", user.id)
+      .single(),
+  ]);
 
+  const userData = userDataResult.data;
   if (!userData) {
     return null;
   }
-
-  const { data: loanOfficer } = await supabase
-    .from("loan_officers")
-    .select("id, full_name")
-    .eq("user_id", user.id)
-    .single();
 
   return {
     userId: userData.id,
     organizationId: userData.organization_id!,
     role: userData.role,
-    loanOfficerId: loanOfficer?.id || null,
-    loanOfficerName: loanOfficer?.full_name || null,
+    loanOfficerId: loanOfficerResult.data?.id || null,
+    loanOfficerName: loanOfficerResult.data?.full_name || null,
   };
 }
 

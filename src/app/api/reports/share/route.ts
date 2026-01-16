@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createReportShare, revokeReportShare, getReportShares } from "@/lib/reporting";
+import { verifyNotBot } from "@/lib/botid";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -54,6 +55,10 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify request is not from a bot
+    const botResponse = await verifyNotBot();
+    if (botResponse) return botResponse;
+
     const supabase = await createClient();
     const {
       data: { user },

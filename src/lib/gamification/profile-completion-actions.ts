@@ -16,7 +16,7 @@ import {
   type ProfileMilestone,
 } from "./profile-completion-types";
 
-// Get user context
+// Get user context - parallelized queries for better performance
 async function getUserContext() {
   const supabase = await createClient();
   const {
@@ -25,25 +25,28 @@ async function getUserContext() {
 
   if (!user) return null;
 
-  const { data: userData } = await supabase
-    .from("users")
-    .select("id, organization_id, role")
-    .eq("id", user.id)
-    .single();
+  // Parallelize independent queries
+  const [userDataResult, loDataResult] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, organization_id, role")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("loan_officers")
+      .select("id")
+      .eq("user_id", user.id)
+      .single(),
+  ]);
 
+  const userData = userDataResult.data;
   if (!userData) return null;
-
-  const { data: loData } = await supabase
-    .from("loan_officers")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
 
   return {
     userId: userData.id,
     organizationId: userData.organization_id!,
     role: userData.role,
-    loanOfficerId: loData?.id || null,
+    loanOfficerId: loDataResult.data?.id || null,
   };
 }
 

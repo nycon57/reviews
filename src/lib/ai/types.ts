@@ -71,7 +71,7 @@ export interface OpenAIChatResponse {
 
 // Configuration constants
 export const AI_CONFIG = {
-  model: 'gpt-4o-mini',
+  model: 'gemini-2.5-flash',
   maxTokens: 500,
   temperature: 0.3, // Low temperature for consistent analysis
   maxRetries: 3,

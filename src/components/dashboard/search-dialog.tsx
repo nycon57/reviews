@@ -15,7 +15,6 @@ import {
   Settings,
   BarChart3,
   Send,
-  MessageSquare,
   LayoutDashboard,
   TrendingUp,
   Bell,
@@ -49,14 +48,6 @@ const quickLinks: SearchResult[] = [
     description: "View and manage all reviews",
     href: "/dashboard/reviews",
     icon: Star,
-    category: "Pages",
-  },
-  {
-    id: "all-reviews",
-    title: "All Reviews",
-    description: "Comprehensive review list",
-    href: "/dashboard/all-reviews",
-    icon: MessageSquare,
     category: "Pages",
   },
   {

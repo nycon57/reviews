@@ -1,6 +1,8 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import type { DatabaseWithoutInternals } from "@/types/database.types";
+import type { User } from "@supabase/supabase-js";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -35,3 +37,15 @@ export async function createClient() {
     }
   );
 }
+
+/**
+ * Get the authenticated user with React.cache() for request-level deduplication.
+ * This prevents multiple auth calls within the same request tree.
+ *
+ * @returns The authenticated user or null if not authenticated
+ */
+export const getUser = cache(async (): Promise<User | null> => {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return user;
+});

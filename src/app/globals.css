@@ -4,148 +4,192 @@
 
 @layer base {
   :root {
-    /* Brand Colors */
-    --brand-blue: 215 100% 50%;
-    --navy: 207 78% 19%;
-    --navy-dark: 207 64% 27%;
-    --slate: 210 30% 41%;
-    --snow: 220 27% 98%;
-    --ice: 217 100% 98%;
-    --frost: 217 100% 95%;
-    --silver: 212 38% 88%;
+    /* ========================================
+       Color Palette - OKLCH Format
+       ======================================== */
 
-    /* Accent Colors */
-    --amber: 39 100% 50%;
-    --orchid: 289 66% 52%;
-    --iris: 259 89% 62%;
-    --emerald: 136 30% 40%;
+    /* Ash Grey - Neutral warm grey (hue ~134) */
+    --color-ash-grey-50: oklch(96.48% 0.004 134.85);
+    --color-ash-grey-100: oklch(92.90% 0.010 131.36);
+    --color-ash-grey-200: oklch(85.60% 0.021 134.11);
+    --color-ash-grey-300: oklch(78.05% 0.030 133.78);
+    --color-ash-grey-400: oklch(70.52% 0.041 133.36);
+    --color-ash-grey-500: oklch(62.83% 0.053 133.24);
+    --color-ash-grey-600: oklch(53.47% 0.044 133.54);
+    --color-ash-grey-700: oklch(43.68% 0.034 134.06);
+    --color-ash-grey-800: oklch(33.55% 0.027 134.46);
+    --color-ash-grey-900: oklch(22.40% 0.015 131.85);
+    --color-ash-grey-950: oklch(18.64% 0.009 137.85);
 
-    /* Semantic Mappings (using brand colors) */
-    --background: var(--snow);
-    --foreground: var(--navy);
+    /* Muted Teal - Subtle teal (hue ~151) */
+    --color-muted-teal-50: oklch(96.53% 0.007 151.89);
+    --color-muted-teal-100: oklch(92.83% 0.013 152.59);
+    --color-muted-teal-200: oklch(85.55% 0.027 152.31);
+    --color-muted-teal-300: oklch(78.16% 0.042 151.95);
+    --color-muted-teal-400: oklch(70.66% 0.056 151.47);
+    --color-muted-teal-500: oklch(63.03% 0.073 150.10);
+    --color-muted-teal-600: oklch(53.71% 0.060 150.88);
+    --color-muted-teal-700: oklch(43.94% 0.047 150.96);
+    --color-muted-teal-800: oklch(33.59% 0.034 151.09);
+    --color-muted-teal-900: oklch(22.35% 0.019 151.40);
+    --color-muted-teal-950: oklch(18.75% 0.014 149.78);
 
-    --card: 0 0% 100%;
-    --card-foreground: var(--navy);
+    /* Deep Teal - Cyan-ish teal (hue ~178) */
+    --color-deep-teal-50: oklch(96.58% 0.006 170.45);
+    --color-deep-teal-100: oklch(92.97% 0.010 181.40);
+    --color-deep-teal-200: oklch(85.97% 0.023 179.10);
+    --color-deep-teal-300: oklch(78.73% 0.033 179.19);
+    --color-deep-teal-400: oklch(71.38% 0.043 178.89);
+    --color-deep-teal-500: oklch(64.11% 0.056 177.40);
+    --color-deep-teal-600: oklch(54.48% 0.045 178.11);
+    --color-deep-teal-700: oklch(44.59% 0.036 177.85);
+    --color-deep-teal-800: oklch(34.12% 0.027 177.36);
+    --color-deep-teal-900: oklch(22.54% 0.014 179.89);
+    --color-deep-teal-950: oklch(18.81% 0.011 185.58);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: var(--navy);
+    /* Dark Slate Grey - Blue-grey (hue ~204) - PRIMARY */
+    --color-dark-slate-grey-50: oklch(96.44% 0.004 214.33);
+    --color-dark-slate-grey-100: oklch(92.98% 0.011 204.12);
+    --color-dark-slate-grey-200: oklch(85.86% 0.022 204.02);
+    --color-dark-slate-grey-300: oklch(78.43% 0.032 206.69);
+    --color-dark-slate-grey-400: oklch(71.15% 0.042 204.25);
+    --color-dark-slate-grey-500: oklch(63.74% 0.052 204.16);
+    --color-dark-slate-grey-600: oklch(54.24% 0.043 204.24);
+    --color-dark-slate-grey-700: oklch(44.27% 0.035 206.76);
+    --color-dark-slate-grey-800: oklch(34.01% 0.026 203.83);
+    --color-dark-slate-grey-900: oklch(22.58% 0.014 203.85);
+    --color-dark-slate-grey-950: oklch(18.90% 0.011 207.05);
 
-    --primary: var(--brand-blue);
-    --primary-foreground: 0 0% 100%;
+    /* Charcoal Blue - Cool blue-grey (hue ~232) */
+    --color-charcoal-blue-50: oklch(96.24% 0.004 236.50);
+    --color-charcoal-blue-100: oklch(92.38% 0.009 232.37);
+    --color-charcoal-blue-200: oklch(84.67% 0.017 230.95);
+    --color-charcoal-blue-300: oklch(76.76% 0.027 231.75);
+    --color-charcoal-blue-400: oklch(68.73% 0.036 231.49);
+    --color-charcoal-blue-500: oklch(60.50% 0.046 232.35);
+    --color-charcoal-blue-600: oklch(51.59% 0.038 231.93);
+    --color-charcoal-blue-700: oklch(42.26% 0.031 232.48);
+    --color-charcoal-blue-800: oklch(32.41% 0.021 231.77);
+    --color-charcoal-blue-900: oklch(21.69% 0.013 233.22);
+    --color-charcoal-blue-950: oklch(18.23% 0.009 224.02);
 
-    --secondary: var(--frost);
-    --secondary-foreground: var(--navy);
+    /* ========================================
+       Semantic Mappings - Light Mode
+       ======================================== */
 
-    --muted: var(--ice);
-    --muted-foreground: var(--slate);
+    --background: var(--color-ash-grey-50);
+    --foreground: var(--color-dark-slate-grey-900);
 
-    --accent: var(--frost);
-    --accent-foreground: var(--navy);
+    --card: oklch(99% 0.002 134);
+    --card-foreground: var(--color-dark-slate-grey-900);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
+    --popover: oklch(99% 0.002 134);
+    --popover-foreground: var(--color-dark-slate-grey-900);
 
-    --border: var(--silver);
-    --input: var(--silver);
-    --ring: var(--brand-blue);
+    --primary: var(--color-dark-slate-grey-700);
+    --primary-foreground: var(--color-ash-grey-50);
+
+    --secondary: var(--color-ash-grey-100);
+    --secondary-foreground: var(--color-dark-slate-grey-800);
+
+    --muted: var(--color-ash-grey-100);
+    --muted-foreground: var(--color-ash-grey-600);
+
+    --accent: var(--color-muted-teal-100);
+    --accent-foreground: var(--color-muted-teal-800);
+
+    --destructive: oklch(55% 0.2 25);
+    --destructive-foreground: oklch(98% 0.01 25);
+
+    --border: var(--color-ash-grey-200);
+    --input: var(--color-ash-grey-200);
+    --ring: var(--color-dark-slate-grey-500);
 
     --radius: 0.5rem;
 
-    /* Semantic status colors */
-    --success: var(--emerald);
-    --success-foreground: 0 0% 100%;
-    --warning: var(--amber);
-    --warning-foreground: 0 0% 0%;
-    --info: var(--brand-blue);
-    --info-foreground: 0 0% 100%;
+    /* Status Colors */
+    --success: var(--color-deep-teal-600);
+    --success-foreground: var(--color-deep-teal-50);
+    --warning: oklch(75% 0.15 85);
+    --warning-foreground: oklch(25% 0.05 85);
+    --info: var(--color-charcoal-blue-500);
+    --info-foreground: var(--color-charcoal-blue-50);
 
-    /* Chart colors for data visualization */
-    --chart-1: var(--brand-blue);
-    --chart-2: var(--emerald);
-    --chart-3: var(--amber);
-    --chart-4: var(--orchid);
-    --chart-5: var(--iris);
+    /* Chart Colors */
+    --chart-1: var(--color-dark-slate-grey-500);
+    --chart-2: var(--color-muted-teal-500);
+    --chart-3: var(--color-deep-teal-500);
+    --chart-4: var(--color-charcoal-blue-500);
+    --chart-5: var(--color-ash-grey-500);
 
-    /* Sidebar colors */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: var(--navy);
-    --sidebar-primary: var(--brand-blue);
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: var(--frost);
-    --sidebar-accent-foreground: var(--navy);
-    --sidebar-border: var(--silver);
-    --sidebar-ring: var(--brand-blue);
+    /* Sidebar Colors */
+    --sidebar-background: oklch(99% 0.002 134);
+    --sidebar-foreground: var(--color-dark-slate-grey-900);
+    --sidebar-primary: var(--color-dark-slate-grey-700);
+    --sidebar-primary-foreground: var(--color-ash-grey-50);
+    --sidebar-accent: var(--color-muted-teal-100);
+    --sidebar-accent-foreground: var(--color-muted-teal-800);
+    --sidebar-border: var(--color-ash-grey-200);
+    --sidebar-ring: var(--color-dark-slate-grey-500);
   }
 
   .dark {
-    /* Dark mode brand colors (adjusted for dark backgrounds) */
-    --brand-blue: 215 100% 60%;
-    --navy: 207 78% 85%;
-    --navy-dark: 207 64% 75%;
-    --slate: 210 30% 65%;
-    --snow: 220 20% 10%;
-    --ice: 217 30% 12%;
-    --frost: 217 30% 18%;
-    --silver: 212 20% 25%;
+    /* ========================================
+       Semantic Mappings - Dark Mode
+       ======================================== */
 
-    /* Accent Colors (slightly brighter for dark mode) */
-    --amber: 39 100% 55%;
-    --orchid: 289 66% 62%;
-    --iris: 259 89% 72%;
-    --emerald: 136 40% 50%;
+    --background: var(--color-dark-slate-grey-950);
+    --foreground: var(--color-ash-grey-100);
 
-    --background: var(--snow);
-    --foreground: 210 40% 98%;
+    --card: var(--color-dark-slate-grey-900);
+    --card-foreground: var(--color-ash-grey-100);
 
-    --card: 217 30% 12%;
-    --card-foreground: 210 40% 98%;
+    --popover: var(--color-dark-slate-grey-900);
+    --popover-foreground: var(--color-ash-grey-100);
 
-    --popover: 217 30% 12%;
-    --popover-foreground: 210 40% 98%;
+    --primary: var(--color-dark-slate-grey-400);
+    --primary-foreground: var(--color-dark-slate-grey-950);
 
-    --primary: var(--brand-blue);
-    --primary-foreground: 220 20% 10%;
+    --secondary: var(--color-dark-slate-grey-800);
+    --secondary-foreground: var(--color-ash-grey-200);
 
-    --secondary: var(--frost);
-    --secondary-foreground: 210 40% 98%;
+    --muted: var(--color-dark-slate-grey-800);
+    --muted-foreground: var(--color-ash-grey-400);
 
-    --muted: var(--ice);
-    --muted-foreground: var(--slate);
+    --accent: var(--color-muted-teal-800);
+    --accent-foreground: var(--color-muted-teal-200);
 
-    --accent: var(--frost);
-    --accent-foreground: 210 40% 98%;
+    --destructive: oklch(60% 0.2 25);
+    --destructive-foreground: oklch(98% 0.01 25);
 
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --border: var(--color-dark-slate-grey-700);
+    --input: var(--color-dark-slate-grey-700);
+    --ring: var(--color-dark-slate-grey-400);
 
-    --border: var(--silver);
-    --input: var(--silver);
-    --ring: var(--brand-blue);
+    /* Status Colors - Dark Mode */
+    --success: var(--color-deep-teal-400);
+    --success-foreground: var(--color-deep-teal-950);
+    --warning: oklch(80% 0.15 85);
+    --warning-foreground: oklch(20% 0.05 85);
+    --info: var(--color-charcoal-blue-400);
+    --info-foreground: var(--color-charcoal-blue-950);
 
-    /* Semantic status colors (dark mode) */
-    --success: var(--emerald);
-    --success-foreground: 0 0% 100%;
-    --warning: var(--amber);
-    --warning-foreground: 0 0% 0%;
-    --info: var(--brand-blue);
-    --info-foreground: 0 0% 100%;
+    /* Chart Colors - Dark Mode */
+    --chart-1: var(--color-dark-slate-grey-400);
+    --chart-2: var(--color-muted-teal-400);
+    --chart-3: var(--color-deep-teal-400);
+    --chart-4: var(--color-charcoal-blue-400);
+    --chart-5: var(--color-ash-grey-400);
 
-    /* Chart colors (dark mode) */
-    --chart-1: var(--brand-blue);
-    --chart-2: var(--emerald);
-    --chart-3: var(--amber);
-    --chart-4: var(--orchid);
-    --chart-5: var(--iris);
-
-    /* Sidebar colors (dark mode) */
-    --sidebar-background: 217 30% 8%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: var(--brand-blue);
-    --sidebar-primary-foreground: 220 20% 10%;
-    --sidebar-accent: var(--frost);
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: var(--silver);
-    --sidebar-ring: var(--brand-blue);
+    /* Sidebar Colors - Dark Mode */
+    --sidebar-background: var(--color-dark-slate-grey-950);
+    --sidebar-foreground: var(--color-ash-grey-200);
+    --sidebar-primary: var(--color-muted-teal-400);
+    --sidebar-primary-foreground: var(--color-dark-slate-grey-950);
+    --sidebar-accent: var(--color-dark-slate-grey-800);
+    --sidebar-accent-foreground: var(--color-ash-grey-200);
+    --sidebar-border: var(--color-dark-slate-grey-700);
+    --sidebar-ring: var(--color-dark-slate-grey-400);
   }
 }
 

@@ -8,6 +8,7 @@ import {
   sendNewReviewNotificationEmail,
 } from "@/lib/email";
 import { emailConfig } from "@/lib/email/client";
+import { verifyNotBot } from "@/lib/botid";
 
 // Schema for survey invitation request
 const surveyInvitationSchema = z.object({
@@ -36,6 +37,10 @@ const sendEmailSchema = z.discriminatedUnion("type", [
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify request is not from a bot
+    const botResponse = await verifyNotBot();
+    if (botResponse) return botResponse;
+
     // Verify user is authenticated
     const supabase = await createClient();
     const {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
+import { verifyNotBot } from "@/lib/botid";
 
 const unsubscribeSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -15,6 +16,10 @@ const resubscribeSchema = z.object({
 // Handle unsubscribe requests
 export async function POST(request: NextRequest) {
   try {
+    // Verify request is not from a bot
+    const botResponse = await verifyNotBot();
+    if (botResponse) return botResponse;
+
     const body = await request.json();
     const validated = unsubscribeSchema.safeParse(body);
 

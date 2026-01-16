@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 import crypto from "crypto";
 import type { Json } from "@/types/database.types";
+import { verifyNotBot, hasApiKey } from "@/lib/botid";
 
 // Webhook payload schemas
 const loanClosedPayloadSchema = z.object({
@@ -122,6 +123,14 @@ async function logWebhook(params: {
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+
+  // Dual-mode auth: if no API key (browser request), require BotID verification
+  // If API key present (server-to-server), skip BotID and use existing auth
+  if (!hasApiKey(request)) {
+    const botResponse = await verifyNotBot();
+    if (botResponse) return botResponse;
+  }
+
   const supabase = createAdminClient();
 
   // Get request metadata

@@ -89,7 +89,7 @@ export async function searchLoanOfficers(
         average_rating,
         total_reviews,
         organization_id,
-        organizations!loan_officers_organization_id_fkey (
+        organizations (
           id,
           name,
           logo_url
@@ -153,7 +153,12 @@ export async function searchLoanOfficers(
     const { data, error, count } = await query;
 
     if (error) {
-      console.error("Directory search error:", error);
+      console.error("Directory search error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
       return { success: false, error: "Failed to search loan officers" };
     }
 
@@ -213,7 +218,7 @@ export async function searchLoanOfficers(
       },
     };
   } catch (error) {
-    console.error("Directory search error:", error);
+    console.error("Directory search error:", error instanceof Error ? error.message : error);
     return { success: false, error: "Failed to search loan officers" };
   }
 }

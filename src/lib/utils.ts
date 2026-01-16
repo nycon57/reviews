@@ -60,3 +60,19 @@ export function generateToken(length: number = 32): string {
   }
   return result;
 }
+
+/**
+ * Extract initials from a name string.
+ * @param name - Full name or null
+ * @returns Uppercase initials (e.g., "John Doe" → "JD")
+ */
+export function getInitials(name: string | null | undefined): string {
+  if (!name) return "";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}

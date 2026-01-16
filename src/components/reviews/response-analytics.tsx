@@ -21,6 +21,20 @@ interface ResponseAnalyticsDashboardProps {
   endDate?: string;
 }
 
+// Helper functions extracted outside component to prevent recreation on every render
+function getResponseTimeLabel(hours: number): string {
+  if (hours < 1) return "< 1 hour";
+  if (hours < 24) return `${Math.round(hours)} hours`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days !== 1 ? "s" : ""}`;
+}
+
+function getResponseTimeColor(hours: number): string {
+  if (hours < 24) return "text-green-600";
+  if (hours < 48) return "text-yellow-600";
+  return "text-red-600";
+}
+
 export function ResponseAnalyticsDashboard({
   startDate,
   endDate,
@@ -74,19 +88,6 @@ export function ResponseAnalyticsDashboard({
   }
 
   if (!analytics) return null;
-
-  const getResponseTimeLabel = (hours: number) => {
-    if (hours < 1) return "< 1 hour";
-    if (hours < 24) return `${Math.round(hours)} hours`;
-    const days = Math.round(hours / 24);
-    return `${days} day${days !== 1 ? "s" : ""}`;
-  };
-
-  const getResponseTimeColor = (hours: number) => {
-    if (hours < 24) return "text-green-600";
-    if (hours < 48) return "text-yellow-600";
-    return "text-red-600";
-  };
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,36 @@
 // Google Business Profile Integration - Public exports
 
-export * from './types';
-export * from './actions';
+// Types
+export type {
+  GoogleOAuthTokens,
+  GoogleAccount,
+  GoogleLocation,
+  GoogleReview,
+  GoogleConnection,
+  GoogleSyncLog,
+  ActionResult,
+} from "./types";
+
+export {
+  GOOGLE_OAUTH_CONFIG,
+  GOOGLE_API_ENDPOINTS,
+  STAR_RATING_MAP,
+} from "./types";
+
+// Actions
+export {
+  initiateGoogleOAuth,
+  handleGoogleOAuthCallback,
+  getGoogleConnections,
+  disconnectGoogle,
+  syncGoogleReviews,
+  replyToGoogleReview,
+  getSyncLogs,
+  getAvailableLocations,
+  getLoanOfficersForGoogle,
+} from "./actions";
+
+// Client utilities
 export {
   getAuthorizationUrl,
   exchangeCodeForTokens,
@@ -13,4 +42,4 @@ export {
   replyToReview,
   deleteReply,
   isTokenExpired,
-} from './client';
+} from "./client";

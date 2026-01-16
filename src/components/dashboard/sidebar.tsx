@@ -317,7 +317,7 @@ interface NavLinkProps {
   collapsed: boolean;
 }
 
-function NavLink({ item, isActive, collapsed }: NavLinkProps) {
+const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLinkProps) {
   return (
     <Link
       href={item.href}
@@ -376,7 +376,7 @@ function NavLink({ item, isActive, collapsed }: NavLinkProps) {
       )}
     </Link>
   );
-}
+});
 
 interface NavGroupSectionProps {
   group: NavGroup;
@@ -386,7 +386,12 @@ interface NavGroupSectionProps {
 
 function NavGroupSection({ group, isActive, collapsed }: NavGroupSectionProps) {
   const [open, setOpen] = React.useState(group.defaultOpen ?? false);
-  const hasActiveItem = group.items.some((item) => isActive(item.href));
+
+  // Memoize hasActiveItem to prevent unnecessary recalculations
+  const hasActiveItem = React.useMemo(
+    () => group.items.some((item) => isActive(item.href)),
+    [group.items, isActive]
+  );
 
   // Expand if any item is active
   React.useEffect(() => {

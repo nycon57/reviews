@@ -1,12 +1,34 @@
 import { notFound } from "next/navigation";
 import { format } from "date-fns";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/server";
 import { getReportShareByToken, generateReport } from "@/lib/reporting";
-import { ReportViewer } from "@/components/reporting/report-viewer";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle, Calendar, Link2 } from "lucide-react";
 import type { Metadata } from "next";
+
+// Dynamic import for heavy ReportViewer with recharts
+const ReportViewer = dynamic(
+  () => import("@/components/reporting/report-viewer").then((mod) => mod.ReportViewer),
+  {
+    loading: () => (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface SharedReportPageProps {
   params: Promise<{ token: string }>;

@@ -1,6 +1,6 @@
 // AI Response Suggestions Service
 
-import { createChatCompletion, isAIEnabled, getOpenAIClient } from './client';
+import { createChatCompletion, isAIEnabled } from './client';
 import { AI_CONFIG, type SentimentLabel, type ReviewTheme } from './types';
 
 // Response tone options
@@ -304,26 +304,16 @@ export async function improveResponseWithContext(
     };
   }
 
-  const client = getOpenAIClient();
-
-  try {
-    const response = await client.chat.completions.create({
-      model: AI_CONFIG.model,
-      messages: [
-        {
-          role: 'system',
-          content: `You are an expert at analyzing response edits to improve future AI suggestions.
+  const systemPrompt = `You are an expert at analyzing response edits to improve future AI suggestions.
 Compare the original AI suggestion with the user's edited version to identify patterns and improvements.
 
 Respond with JSON:
 {
   "learnings": ["<specific improvements the user made>"],
   "improvedPrompt": "<how to adjust future prompts based on this feedback>"
-}`,
-        },
-        {
-          role: 'user',
-          content: `Review context:
+}`;
+
+  const userPrompt = `Review context:
 - Rating: ${context.rating} stars
 - Sentiment: ${context.sentimentLabel || 'unknown'}
 - Customer: ${context.customerName || 'unknown'}
@@ -334,22 +324,15 @@ Original AI suggestion:
 User's edited version:
 "${editedResponse}"
 
-Analyze the differences and extract learnings.`,
-        },
-      ],
-      max_tokens: 300,
-      temperature: 0.3,
-      response_format: { type: 'json_object' },
-    });
+Analyze the differences and extract learnings.`;
 
-    const content = response.choices[0]?.message?.content;
-    if (content) {
-      const parsed = JSON.parse(content);
-      return {
-        improvedPrompt: parsed.improvedPrompt || '',
-        learnings: Array.isArray(parsed.learnings) ? parsed.learnings : [],
-      };
-    }
+  try {
+    const response = await createChatCompletion(systemPrompt, userPrompt);
+    const parsed = JSON.parse(response);
+    return {
+      improvedPrompt: parsed.improvedPrompt || '',
+      learnings: Array.isArray(parsed.learnings) ? parsed.learnings : [],
+    };
   } catch (error) {
     console.error('Failed to analyze response edits:', error);
   }

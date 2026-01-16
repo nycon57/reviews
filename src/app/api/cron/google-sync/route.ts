@@ -7,6 +7,9 @@ import {
   STAR_RATING_MAP,
 } from '@/lib/google';
 
+// Concurrency limit for parallel connection processing
+const CONCURRENCY_LIMIT = 5;
+
 // Verify cron secret (set in Vercel or your cron service)
 function verifyCronSecret(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization');
@@ -18,6 +21,21 @@ function verifyCronSecret(request: NextRequest): boolean {
   }
 
   return authHeader === `Bearer ${cronSecret}`;
+}
+
+// Process connections in batches for controlled parallelism
+async function processBatch<T, R>(
+  items: T[],
+  processor: (item: T) => Promise<R>,
+  batchSize: number
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize);
+    const batchResults = await Promise.all(batch.map(processor));
+    results.push(...batchResults);
+  }
+  return results;
 }
 
 export async function GET(request: NextRequest) {
@@ -60,8 +78,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Process each connection
-    for (const connection of connections) {
+    // Process single connection - extracted for parallel processing
+    async function processConnection(connection: NonNullable<typeof connections>[0]) {
       const connectionResult: (typeof results)[0] = {
         connectionId: connection.id,
         organizationId: connection.organization_id,
@@ -93,24 +111,25 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        // Create sync log
-        const { data: syncLog } = await adminClient
-          .from('google_sync_logs')
-          .insert({
-            organization_id: connection.organization_id,
-            connection_id: connection.id,
-            sync_type: 'incremental',
-            status: 'started',
-          })
-          .select('id')
-          .single();
+        // Create sync log and update connection status in parallel
+        const [syncLogResult] = await Promise.all([
+          adminClient
+            .from('google_sync_logs')
+            .insert({
+              organization_id: connection.organization_id,
+              connection_id: connection.id,
+              sync_type: 'incremental',
+              status: 'started',
+            })
+            .select('id')
+            .single(),
+          adminClient
+            .from('google_connections')
+            .update({ sync_status: 'syncing' })
+            .eq('id', connection.id),
+        ]);
 
-        // Update connection status
-        await adminClient
-          .from('google_connections')
-          .update({ sync_status: 'syncing' })
-          .eq('id', connection.id);
-
+        const syncLog = syncLogResult.data;
         const startTime = Date.now();
 
         // Fetch reviews
@@ -123,40 +142,53 @@ export async function GET(request: NextRequest) {
         do {
           const response = await getReviews(accessToken, locationName, pageToken);
 
+          // Batch check existing reviews for this page
+          const reviewIds = response.reviews.map(r => r.reviewId);
+          const { data: existingReviews } = await adminClient
+            .from('reviews')
+            .select('id, updated_at, source_review_id')
+            .eq('organization_id', connection.organization_id)
+            .eq('source', 'google')
+            .in('source_review_id', reviewIds);
+
+          const existingMap = new Map(
+            existingReviews?.map(r => [r.source_review_id, r]) || []
+          );
+
+          // Prepare batch operations
+          const updates: PromiseLike<unknown>[] = [];
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const inserts: Record<string, unknown>[] = [];
+
           for (const googleReview of response.reviews) {
             const rating = STAR_RATING_MAP[googleReview.starRating];
-
-            // Check if review exists
-            const { data: existingReview } = await adminClient
-              .from('reviews')
-              .select('id, updated_at')
-              .eq('organization_id', connection.organization_id)
-              .eq('source', 'google')
-              .eq('source_review_id', googleReview.reviewId)
-              .single();
+            const existingReview = existingMap.get(googleReview.reviewId);
 
             if (existingReview) {
               const googleUpdateTime = new Date(googleReview.updateTime);
               const dbUpdateTime = new Date(existingReview.updated_at!);
 
               if (googleUpdateTime > dbUpdateTime) {
-                await adminClient
-                  .from('reviews')
-                  .update({
-                    rating,
-                    text: googleReview.comment,
-                    customer_name: googleReview.reviewer.displayName,
-                    review_date: googleReview.createTime,
-                    response_text: googleReview.reviewReply?.comment,
-                    response_synced_at: googleReview.reviewReply?.updateTime,
-                    synced_at: new Date().toISOString(),
-                  })
-                  .eq('id', existingReview.id);
+                updates.push(
+                  adminClient
+                    .from('reviews')
+                    .update({
+                      rating,
+                      text: googleReview.comment,
+                      customer_name: googleReview.reviewer.displayName,
+                      review_date: googleReview.createTime,
+                      response_text: googleReview.reviewReply?.comment,
+                      response_synced_at: googleReview.reviewReply?.updateTime,
+                      synced_at: new Date().toISOString(),
+                    })
+                    .eq('id', existingReview.id)
+                    .then(() => {})
+                );
                 updated++;
               }
             } else if (connection.loan_officer_id) {
               // Only create new reviews if we have a loan officer assigned
-              await adminClient.from('reviews').insert({
+              inserts.push({
                 organization_id: connection.organization_id,
                 loan_officer_id: connection.loan_officer_id,
                 source: 'google',
@@ -182,39 +214,42 @@ export async function GET(request: NextRequest) {
             totalReviews++;
           }
 
+          // Execute batch operations in parallel
+          await Promise.all([
+            ...updates,
+            inserts.length > 0 ? adminClient.from('reviews').insert(inserts as any) : Promise.resolve(),
+          ]);
+
           pageToken = response.nextPageToken;
         } while (pageToken);
 
         const durationMs = Date.now() - startTime;
 
-        // Calculate average rating (tracked but not stored in cron)
-        const _averageRating = totalReviews > 0 ? totalReviews : 0;
-
-        // Update connection
-        await adminClient
-          .from('google_connections')
-          .update({
-            sync_status: 'completed',
-            last_sync_at: new Date().toISOString(),
-            sync_error: null,
-            reviews_count: totalReviews,
-          })
-          .eq('id', connection.id);
-
-        // Update sync log
-        if (syncLog) {
-          await adminClient
-            .from('google_sync_logs')
+        // Update connection and sync log in parallel
+        await Promise.all([
+          adminClient
+            .from('google_connections')
             .update({
-              status: 'completed',
-              reviews_fetched: totalReviews,
-              reviews_created: created,
-              reviews_updated: updated,
-              completed_at: new Date().toISOString(),
-              duration_ms: durationMs,
+              sync_status: 'completed',
+              last_sync_at: new Date().toISOString(),
+              sync_error: null,
+              reviews_count: totalReviews,
             })
-            .eq('id', syncLog.id);
-        }
+            .eq('id', connection.id),
+          syncLog
+            ? adminClient
+                .from('google_sync_logs')
+                .update({
+                  status: 'completed',
+                  reviews_fetched: totalReviews,
+                  reviews_created: created,
+                  reviews_updated: updated,
+                  completed_at: new Date().toISOString(),
+                  duration_ms: durationMs,
+                })
+                .eq('id', syncLog.id)
+            : Promise.resolve(),
+        ]);
 
         connectionResult.reviewsSynced = totalReviews;
       } catch (error) {
@@ -233,8 +268,16 @@ export async function GET(request: NextRequest) {
           .eq('id', connection.id);
       }
 
-      results.push(connectionResult);
+      return connectionResult;
     }
+
+    // Process connections in parallel batches
+    const batchResults = await processBatch(
+      connections,
+      processConnection,
+      CONCURRENCY_LIMIT
+    );
+    results.push(...batchResults);
 
     const successCount = results.filter((r) => r.status === 'success').length;
     const failedCount = results.filter((r) => r.status === 'failed').length;

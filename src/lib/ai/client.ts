@@ -1,31 +1,31 @@
-// OpenAI API Client
+// Google Gemini API Client
 
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { AI_CONFIG } from './types';
 
-let openaiClient: OpenAI | null = null;
+let geminiClient: GoogleGenAI | null = null;
 
-function getOpenAIConfig() {
-  const apiKey = process.env.OPENAI_API_KEY;
+function getGeminiConfig() {
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    throw new Error('Missing OPENAI_API_KEY environment variable');
+    throw new Error('Missing GEMINI_API_KEY environment variable');
   }
 
   return { apiKey };
 }
 
-export function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    const { apiKey } = getOpenAIConfig();
-    openaiClient = new OpenAI({ apiKey });
+export function getGeminiClient(): GoogleGenAI {
+  if (!geminiClient) {
+    const { apiKey } = getGeminiConfig();
+    geminiClient = new GoogleGenAI({ apiKey });
   }
-  return openaiClient;
+  return geminiClient;
 }
 
 export function isAIEnabled(): boolean {
   return (
-    !!process.env.OPENAI_API_KEY &&
+    !!process.env.GEMINI_API_KEY &&
     process.env.FEATURE_AI_ANALYSIS !== 'false'
   );
 }
@@ -34,22 +34,22 @@ export async function createChatCompletion(
   systemPrompt: string,
   userPrompt: string
 ): Promise<string> {
-  const client = getOpenAIClient();
+  const client = getGeminiClient();
 
-  const response = await client.chat.completions.create({
+  const response = await client.models.generateContent({
     model: AI_CONFIG.model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    max_tokens: AI_CONFIG.maxTokens,
-    temperature: AI_CONFIG.temperature,
-    response_format: { type: 'json_object' },
+    contents: userPrompt,
+    config: {
+      systemInstruction: systemPrompt,
+      maxOutputTokens: AI_CONFIG.maxTokens,
+      temperature: AI_CONFIG.temperature,
+      responseMimeType: 'application/json',
+    },
   });
 
-  const content = response.choices[0]?.message?.content;
+  const content = response.text;
   if (!content) {
-    throw new Error('Empty response from OpenAI');
+    throw new Error('Empty response from Gemini');
   }
 
   return content;

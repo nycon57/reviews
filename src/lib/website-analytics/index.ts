@@ -4,7 +4,33 @@
  */
 
 // Types
-export * from "./types";
+export type {
+  TrafficSource,
+  DeviceType,
+  IssueSeverity,
+  IssueCategory,
+  TrafficSourceBreakdown,
+  DeviceBreakdown,
+  GeographicEntry,
+  SearchQueryData,
+  PageAnalytics,
+  DailyAnalytics,
+  WebsiteAnalyticsOverview,
+  SEOIssue,
+  SEORecommendation,
+  PerformanceMetrics,
+  MobileFriendliness,
+  HeadersAnalysis,
+  ImagesAnalysis,
+  LinksAnalysis,
+  MetaTagsAnalysis,
+  ContentAnalysis,
+  StructuredDataAnalysis,
+  SEOAuditResult,
+  WebsiteSEOOverview,
+  WebsiteAnalyticsSEO,
+  AnalyticsPeriod,
+} from "./types";
 
 // Analytics actions
 export {

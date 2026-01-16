@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateReport, exportReportToCSV, generateReportHTML, exportAndRecordReport } from "@/lib/reporting";
 import type { DateRangePreset, ExportFormat } from "@/lib/reporting/types";
+import { verifyNotBot } from "@/lib/botid";
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify request is not from a bot
+    const botResponse = await verifyNotBot();
+    if (botResponse) return botResponse;
+
     const supabase = await createClient();
     const {
       data: { user },

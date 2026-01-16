@@ -1,16 +1,39 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { FileText, Download, Clock, Share2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TemplateSelector } from "@/components/reporting/template-selector";
 import { DateRangeSelector } from "@/components/reporting/date-range-selector";
 import { ReportFiltersPanel } from "@/components/reporting/report-filters";
 import { ExportOptions } from "@/components/reporting/export-options";
-import { ReportViewer } from "@/components/reporting/report-viewer";
 import { generateReport, exportReportToCSV, generateReportHTML } from "@/lib/reporting";
+
+// Dynamic import for ReportViewer with recharts
+const ReportViewer = dynamic(
+  () => import("@/components/reporting/report-viewer").then((mod) => mod.ReportViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
+        </div>
+      </div>
+    ),
+  }
+);
 import type {
   ReportTemplate,
   GeneratedReport,

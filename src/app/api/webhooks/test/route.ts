@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import crypto from "crypto";
 import { z } from "zod";
+import { verifyNotBot } from "@/lib/botid";
 
 // Schema for test webhook request
 const testWebhookSchema = z.object({
@@ -167,6 +168,10 @@ function generateSignature(payload: string, secret: string): string {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify request is not from a bot
+    const botResponse = await verifyNotBot();
+    if (botResponse) return botResponse;
+
     const result = await validateTestRequest(request);
     if ("error" in result) {
       return result.error;
@@ -216,6 +221,10 @@ export async function POST(request: NextRequest) {
 // Send a live test webhook to the endpoint
 export async function PUT(request: NextRequest) {
   try {
+    // Verify request is not from a bot
+    const botResponse = await verifyNotBot();
+    if (botResponse) return botResponse;
+
     const result = await validateTestRequest(request);
     if ("error" in result) {
       return result.error;

@@ -80,38 +80,42 @@ export async function POST(request: NextRequest) {
 
     for (const user of usersNeedingDigest) {
       try {
-        // Get user profile
-        const { data: profile, error: profileError } = await supabase
-          .from("users")
-          .select("id, email, full_name")
-          .eq("id", user.user_id)
-          .single() as { data: UserProfile | null; error: Error | null };
+        // Fetch profile and notifications in parallel
+        const [profileResult, queueResult] = await Promise.all([
+          supabase
+            .from("users")
+            .select("id, email, full_name")
+            .eq("id", user.user_id)
+            .single(),
+          supabase
+            .from("notification_digest_queue")
+            .select(`
+              id,
+              notification_id,
+              notifications (
+                id,
+                type,
+                title,
+                message,
+                action_url,
+                created_at
+              )
+            `)
+            .eq("user_id", user.user_id)
+            .eq("sent", false)
+            .order("queued_at", { ascending: false })
+            .limit(50),
+        ]);
+
+        const profile = profileResult.data as UserProfile | null;
+        const profileError = profileResult.error;
+        const { data: queuedNotifications, error: queueError } = queueResult;
 
         if (profileError || !profile) {
           errors.push(`Failed to get profile for user ${user.user_id}`);
           failed++;
           continue;
         }
-
-        // Get pending notifications for the user from the digest queue
-        const { data: queuedNotifications, error: queueError } = await supabase
-          .from("notification_digest_queue")
-          .select(`
-            id,
-            notification_id,
-            notifications (
-              id,
-              type,
-              title,
-              message,
-              action_url,
-              created_at
-            )
-          `)
-          .eq("user_id", user.user_id)
-          .eq("sent", false)
-          .order("queued_at", { ascending: false })
-          .limit(50);
 
         if (queueError) {
           errors.push(`Failed to get notifications for user ${user.user_id}: ${queueError.message}`);
@@ -195,18 +199,18 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Mark all queued notifications as sent
+        // Mark notifications as sent and update user's last digest time in parallel
         const queueIds = queuedNotifications.map((q) => q.id);
-        await supabase
-          .from("notification_digest_queue")
-          .update({ sent: true, sent_at: new Date().toISOString() })
-          .in("id", queueIds);
-
-        // Update the user's last digest time
-        await supabase
-          .from("notification_preferences")
-          .update({ last_digest_sent_at: new Date().toISOString() })
-          .eq("user_id", user.user_id);
+        await Promise.all([
+          supabase
+            .from("notification_digest_queue")
+            .update({ sent: true, sent_at: new Date().toISOString() })
+            .in("id", queueIds),
+          supabase
+            .from("notification_preferences")
+            .update({ last_digest_sent_at: new Date().toISOString() })
+            .eq("user_id", user.user_id),
+        ]);
 
         sent++;
       } catch (userError) {

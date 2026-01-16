@@ -16,7 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "AI Insights | ReviewHub",
+  title: "AI Insights | RepWell",
   description: "AI-powered insights and analytics for your reviews",
 };
 

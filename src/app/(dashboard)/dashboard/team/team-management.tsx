@@ -262,8 +262,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{activeMembers.length}</p>
@@ -275,8 +275,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-                <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+                <Clock className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{invitations.length}</p>
@@ -288,8 +288,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                <Shield className="h-5 w-5 text-purple-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">
@@ -303,8 +303,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
-                <Star className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                <Star className="h-5 w-5 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">
@@ -472,7 +472,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
                       Active
                     </Badge>
                   </TableCell>

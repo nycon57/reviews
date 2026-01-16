@@ -6,7 +6,7 @@ import { Send } from "lucide-react";
 import { SendSurveyForm } from "./send-survey-form";
 
 export const metadata = {
-  title: "Send Survey | ReviewHub",
+  title: "Send Survey | RepWell",
   description: "Manually send survey invitations to customers",
 };
 

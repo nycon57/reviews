@@ -60,17 +60,17 @@ const notificationIcons: Record<NotificationType, React.ElementType> = {
 };
 
 const notificationColors: Record<NotificationType, string> = {
-  new_review: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
-  negative_review: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
-  review_approved: "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-  review_rejected: "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400",
-  response_posted: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  badge_earned: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-  milestone_reached: "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-  mention: "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-  report_ready: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
-  digest: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
-  system: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  new_review: "bg-amber-100 text-amber-600",
+  negative_review: "bg-red-100 text-red-600",
+  review_approved: "bg-green-100 text-green-600",
+  review_rejected: "bg-red-100 text-red-600",
+  response_posted: "bg-blue-100 text-blue-600",
+  badge_earned: "bg-purple-100 text-purple-600",
+  milestone_reached: "bg-purple-100 text-purple-600",
+  mention: "bg-blue-100 text-blue-600",
+  report_ready: "bg-indigo-100 text-indigo-600",
+  digest: "bg-indigo-100 text-indigo-600",
+  system: "bg-gray-100 text-gray-600",
 };
 
 const notificationTypeLabels: Record<NotificationType, string> = {

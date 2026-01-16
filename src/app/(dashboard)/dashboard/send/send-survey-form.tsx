@@ -234,8 +234,8 @@ export function SendSurveyForm() {
       <Card className="max-w-2xl">
         <CardContent className="pt-12 pb-8">
           <div className="text-center space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-              <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
             </div>
             <h2 className="text-2xl font-bold">Surveys Sent!</h2>
             <p className="text-muted-foreground">

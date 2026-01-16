@@ -9,7 +9,7 @@ import { MessageSquare, BarChart3, FileText } from "lucide-react";
 import { ResponseTemplatesManager } from "./templates-manager";
 
 export const metadata = {
-  title: "Response Management - ReviewHub",
+  title: "Response Management - RepWell",
   description: "Manage review responses, approvals, and templates",
 };
 

@@ -49,10 +49,29 @@ const manualTriggerPayloadSchema = z.object({
   }),
 });
 
+// Encompass milestone event schema (custom format)
+const encompassMilestonePayloadSchema = z.object({
+  event_type: z.literal("encompass.milestone"),
+  milestone: z.string().min(1),
+  loan_id: z.string().min(1),
+  loan_officer_email: z.string().email(),
+  borrower_name: z.string().min(1),
+  borrower_email: z.string().email(),
+  borrower_phone: z.string().optional(),
+  co_borrower_name: z.string().optional(),
+  co_borrower_email: z.string().email().optional(),
+  loan_amount: z.number().optional(),
+  property_address: z.string().optional(),
+  loan_number: z.string().optional(),
+  milestone_date: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
 const webhookPayloadSchema = z.discriminatedUnion("event_type", [
   loanClosedPayloadSchema,
   contactCreatedPayloadSchema,
   manualTriggerPayloadSchema,
+  encompassMilestonePayloadSchema,
 ]);
 
 type WebhookPayload = z.infer<typeof webhookPayloadSchema>;
@@ -456,6 +475,61 @@ async function processWebhook(
       delayHours = payload.data.delay_hours ?? 0;
       sourceMetadata = payload.data.metadata;
       break;
+
+    case "encompass.milestone": {
+      // Look up milestone mapping for this organization
+      const { data: milestoneMapping, error: mappingError } = await supabase
+        .from("milestone_survey_mappings")
+        .select("template_id, delay_hours, is_active")
+        .eq("organization_id", organizationId)
+        .eq("milestone_name", payload.milestone)
+        .single();
+
+      if (mappingError || !milestoneMapping) {
+        // Check if milestone is simply not configured (not an error)
+        const { count } = await supabase
+          .from("milestone_survey_mappings")
+          .select("*", { count: "exact", head: true })
+          .eq("organization_id", organizationId)
+          .eq("milestone_name", payload.milestone);
+
+        if (count === 0) {
+          throw new Error(
+            `Milestone "${payload.milestone}" is not configured for this organization. ` +
+              "Configure milestone mappings in Settings > Webhooks > Encompass."
+          );
+        }
+        throw new Error(`Failed to load milestone mapping: ${mappingError?.message}`);
+      }
+
+      if (!milestoneMapping.is_active) {
+        throw new Error(
+          `Milestone "${payload.milestone}" is configured but disabled. ` +
+            "Enable it in Settings > Webhooks > Encompass."
+        );
+      }
+
+      loanOfficerEmail = payload.loan_officer_email;
+      customerName = payload.borrower_name;
+      customerEmail = payload.borrower_email;
+      customerPhone = payload.borrower_phone;
+      templateId = milestoneMapping.template_id || templateId;
+      transactionId = payload.loan_id;
+      transactionType = "mortgage";
+      transactionDate = payload.milestone_date;
+      delayHours = milestoneMapping.delay_hours ?? 24;
+      sourceMetadata = {
+        milestone: payload.milestone,
+        loan_number: payload.loan_number,
+        loan_amount: payload.loan_amount,
+        property_address: payload.property_address,
+        co_borrower_name: payload.co_borrower_name,
+        co_borrower_email: payload.co_borrower_email,
+        source: "encompass",
+        ...payload.metadata,
+      };
+      break;
+    }
   }
 
   // Find the loan officer

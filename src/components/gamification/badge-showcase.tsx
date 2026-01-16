@@ -112,12 +112,14 @@ export function BadgeShowcase({
             )}
           </div>
         ) : (
-          <div className="flex items-center justify-center py-4 text-muted-foreground">
-            <div className="text-center">
-              <Lock className="h-8 w-8 mx-auto mb-2 opacity-40" />
-              <p className="text-sm">No badges earned yet</p>
-              <p className="text-xs">Complete milestones to unlock badges</p>
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-50 to-purple-100">
+              <Lock className="h-6 w-6 text-purple-400" />
             </div>
+            <p className="text-sm font-medium text-repwell-teal-500">No badges earned yet</p>
+            <p className="mt-1 max-w-[220px] text-xs text-repwell-teal-400">
+              Complete reviews, surveys, and milestones to unlock achievement badges.
+            </p>
           </div>
         )}
 

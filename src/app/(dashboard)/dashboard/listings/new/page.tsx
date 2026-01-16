@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ListingForm } from '@/components/listings/listing-form';
 
 export const metadata = {
-  title: 'Create Listing | Business Listings | ReviewHub',
+  title: 'Create Listing | Business Listings | RepWell',
   description: 'Create a new business listing to manage across directories',
 };
 

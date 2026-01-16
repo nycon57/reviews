@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: article.title,
     description: article.description,
     openGraph: {
-      title: `${article.title} | ReviewHub Docs`,
+      title: `${article.title} | RepWell Docs`,
       description: article.description,
       type: "article",
     },

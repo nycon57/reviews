@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
+import type { UserContext, AccountType, SubscriptionTier } from "@/lib/permissions";
 
 function getInitials(name: string | null): string {
   if (!name) return "U";
@@ -25,12 +26,29 @@ export default async function DashboardRootLayout({
     redirect("/login");
   }
 
-  // Fetch user profile from database
-  const { data: profile } = await supabase
+  // Fetch user profile with organization details for permission context
+  // Note: Using * and casting because is_owner and account_type may not be in generated types yet
+  const { data: profileData } = await supabase
     .from("users")
-    .select("full_name, avatar_url, role")
+    .select(`
+      *,
+      organizations (*)
+    `)
     .eq("id", authUser.id)
     .single();
+
+  // Cast to access potentially untyped columns (is_owner, account_type)
+  const profile = profileData as {
+    full_name?: string | null;
+    avatar_url?: string | null;
+    role?: string | null;
+    is_owner?: boolean | null;
+    organization_id?: string | null;
+    organizations?: {
+      account_type?: string | null;
+      subscription_tier?: string | null;
+    } | null;
+  } | null;
 
   // Fetch loan officer ID if user is linked to a loan officer record
   const { data: loanOfficer } = await supabase
@@ -47,8 +65,22 @@ export default async function DashboardRootLayout({
     loanOfficerId: loanOfficer?.id || undefined,
   };
 
+  // Build user context for permission system
+  const orgData = profile?.organizations;
+
+  const userContext: UserContext | null = profile?.organization_id
+    ? {
+        userId: authUser.id,
+        role: (profile.role || "loan_officer") as UserContext["role"],
+        accountType: (orgData?.account_type || "enterprise") as AccountType,
+        isOwner: profile.is_owner || false,
+        subscriptionTier: (orgData?.subscription_tier || "basic") as SubscriptionTier,
+        organizationId: profile.organization_id,
+      }
+    : null;
+
   return (
-    <DashboardLayout user={user} onSignOut={signOut}>
+    <DashboardLayout user={user} userContext={userContext} onSignOut={signOut}>
       {children}
     </DashboardLayout>
   );

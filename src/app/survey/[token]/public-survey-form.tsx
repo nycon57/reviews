@@ -159,7 +159,7 @@ export function PublicSurveyForm({ survey }: PublicSurveyFormProps) {
       <SurveyContainer backgroundColor={backgroundColor}>
         <Card className="mx-auto max-w-xl shadow-lg">
           <CardContent className="py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
               <CheckCircle2 className="h-10 w-10" />
             </div>
             <h2 className="text-2xl font-semibold">{thankYouConfig.title}</h2>

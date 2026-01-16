@@ -25,6 +25,8 @@ export interface DirectoryLoanOfficer {
   linkedin_url: string | null;
   average_rating: number | null;
   total_reviews: number | null;
+  latitude: number | null;
+  longitude: number | null;
   specialties?: string[];
   languages?: string[];
   organization: {
@@ -88,6 +90,8 @@ export async function searchLoanOfficers(
         linkedin_url,
         average_rating,
         total_reviews,
+        latitude,
+        longitude,
         organization_id,
         organizations (
           id,
@@ -181,6 +185,8 @@ export async function searchLoanOfficers(
         linkedin_url: lo.linkedin_url,
         average_rating: lo.average_rating,
         total_reviews: lo.total_reviews,
+        latitude: lo.latitude,
+        longitude: lo.longitude,
         organization: org,
       };
     });
@@ -251,5 +257,107 @@ export async function getAvailableStates(): Promise<{ value: string; label: stri
       }));
   } catch {
     return [];
+  }
+}
+
+/**
+ * Update a loan officer's coordinates
+ */
+export async function updateLoanOfficerCoordinates(
+  id: string,
+  latitude: number,
+  longitude: number
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = createAdminClient();
+
+    const { error } = await supabase
+      .from("loan_officers")
+      .update({ latitude, longitude })
+      .eq("id", id);
+
+    if (error) {
+      console.error("Update coordinates error:", error);
+      return { success: false, error: "Failed to update coordinates" };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Update coordinates error:", error instanceof Error ? error.message : error);
+    return { success: false, error: "Failed to update coordinates" };
+  }
+}
+
+/**
+ * Batch geocode loan officers that don't have coordinates
+ * This is intended for initial data migration
+ */
+export async function batchGeocodeLoanOfficers(
+  limit = 10
+): Promise<{ success: boolean; processed: number; error?: string }> {
+  // Import geocoding at runtime to avoid circular dependencies
+  const { geocodeAddressWithFallback } = await import("./geocoding");
+
+  try {
+    const supabase = createAdminClient();
+
+    // Get loan officers without coordinates
+    const { data: officers, error: fetchError } = await supabase
+      .from("loan_officers")
+      .select("id, address")
+      .eq("is_active", true)
+      .is("latitude", null)
+      .limit(limit);
+
+    if (fetchError) {
+      console.error("Fetch error:", fetchError);
+      return { success: false, processed: 0, error: "Failed to fetch loan officers" };
+    }
+
+    if (!officers?.length) {
+      return { success: true, processed: 0 };
+    }
+
+    let processed = 0;
+
+    for (const officer of officers) {
+      const addr = officer.address as {
+        street?: string;
+        city?: string;
+        state?: string;
+        zip?: string;
+      } | null;
+
+      if (!addr) continue;
+
+      const result = await geocodeAddressWithFallback(
+        addr.street,
+        addr.city,
+        addr.state,
+        addr.zip
+      );
+
+      if (result) {
+        const { error: updateError } = await supabase
+          .from("loan_officers")
+          .update({
+            latitude: result.latitude,
+            longitude: result.longitude,
+          })
+          .eq("id", officer.id);
+
+        if (!updateError) {
+          processed++;
+        }
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+
+    return { success: true, processed };
+  } catch (error) {
+    console.error("Batch geocode error:", error instanceof Error ? error.message : error);
+    return { success: false, processed: 0, error: "Failed to geocode loan officers" };
   }
 }

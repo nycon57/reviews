@@ -130,9 +130,9 @@ export function ProfileCompletionCard({
   }
 
   const getScoreColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600 dark:text-green-400";
-    if (percentage >= 50) return "text-yellow-600 dark:text-yellow-400";
-    return "text-orange-600 dark:text-orange-400";
+    if (percentage >= 80) return "text-green-600";
+    if (percentage >= 50) return "text-yellow-600";
+    return "text-orange-600";
   };
 
   const getProgressColor = (percentage: number) => {
@@ -157,7 +157,7 @@ export function ProfileCompletionCard({
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-brand-teal" />
+            <Target className="h-5 w-5 text-repwell-teal-300" />
             <span className="text-lg">Profile Score</span>
           </div>
           {data.rank && (
@@ -175,7 +175,7 @@ export function ProfileCompletionCard({
             <div
               className={cn(
                 "h-20 w-20 rounded-full flex items-center justify-center",
-                "bg-gradient-to-br from-brand-teal/20 to-brand-navy/20",
+                "bg-gradient-to-br from-repwell-teal-300/20 to-repwell-teal-500/20",
                 "border-4",
                 data.percentage >= 80
                   ? "border-green-500"
@@ -246,7 +246,7 @@ export function ProfileCompletionCard({
                           className={cn(
                             "flex-1 h-8 rounded-md flex items-center justify-center transition-colors",
                             milestone.achieved
-                              ? "bg-brand-teal/20 text-brand-teal"
+                              ? "bg-repwell-teal-300/20 text-repwell-teal-300"
                               : "bg-muted text-muted-foreground"
                           )}
                         >
@@ -364,7 +364,7 @@ function SectionRow({
             className={cn(
               "h-8 w-8 rounded-full flex items-center justify-center",
               section.completed
-                ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                ? "bg-green-100 text-green-600"
                 : "bg-muted text-muted-foreground"
             )}
           >

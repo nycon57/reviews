@@ -87,7 +87,7 @@ export function SignUpScreen({ navigation }: Props) {
         >
           <View style={styles.header}>
             <Text variant="h1" style={styles.title}>
-              ReviewHub
+              RepWell
             </Text>
             <Text variant="muted" style={styles.subtitle}>
               Create your account

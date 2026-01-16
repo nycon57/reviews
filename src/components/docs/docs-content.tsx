@@ -29,9 +29,9 @@ function renderContent(content: string): React.ReactNode {
         elements.push(
           <pre
             key={`code-${index}`}
-            className="my-4 overflow-x-auto rounded-lg bg-brand-navy p-4 text-body-sm"
+            className="my-4 overflow-x-auto rounded-lg bg-repwell-teal-500 p-4 text-body-sm"
           >
-            <code className="text-brand-snow font-mono">
+            <code className="text-background font-mono">
               {codeBlockContent.join("\n")}
             </code>
           </pre>
@@ -55,7 +55,7 @@ function renderContent(content: string): React.ReactNode {
       elements.push(
         <h1
           key={`h1-${index}`}
-          className="text-display-sm text-brand-navy mb-4 mt-8 first:mt-0"
+          className="text-display-sm text-repwell-teal-500 mb-4 mt-8 first:mt-0"
         >
           {line.slice(2)}
         </h1>
@@ -67,7 +67,7 @@ function renderContent(content: string): React.ReactNode {
       elements.push(
         <h2
           key={`h2-${index}`}
-          className="text-heading-lg text-brand-navy mb-3 mt-8 border-b border-brand-silver/30 pb-2"
+          className="text-heading-lg text-repwell-teal-500 mb-3 mt-8 border-b border-border/30 pb-2"
         >
           {line.slice(3)}
         </h2>
@@ -77,7 +77,7 @@ function renderContent(content: string): React.ReactNode {
 
     if (line.startsWith("### ")) {
       elements.push(
-        <h3 key={`h3-${index}`} className="text-heading-md text-brand-navy mb-2 mt-6">
+        <h3 key={`h3-${index}`} className="text-heading-md text-repwell-teal-500 mb-2 mt-6">
           {line.slice(4)}
         </h3>
       );
@@ -88,7 +88,7 @@ function renderContent(content: string): React.ReactNode {
     if (line.startsWith("- ")) {
       const content = line.slice(2);
       elements.push(
-        <li key={`li-${index}`} className="text-body-md text-brand-slate ml-4 my-1">
+        <li key={`li-${index}`} className="text-body-md text-repwell-teal-400 ml-4 my-1">
           {renderInlineContent(content)}
         </li>
       );
@@ -99,7 +99,7 @@ function renderContent(content: string): React.ReactNode {
     const numberedMatch = line.match(/^(\d+)\.\s(.+)/);
     if (numberedMatch) {
       elements.push(
-        <li key={`oli-${index}`} className="text-body-md text-brand-slate ml-4 my-1 list-decimal">
+        <li key={`oli-${index}`} className="text-body-md text-repwell-teal-400 ml-4 my-1 list-decimal">
           {renderInlineContent(numberedMatch[2])}
         </li>
       );
@@ -114,7 +114,7 @@ function renderContent(content: string): React.ReactNode {
 
     // Regular paragraph
     elements.push(
-      <p key={`p-${index}`} className="text-body-md text-brand-slate my-2">
+      <p key={`p-${index}`} className="text-body-md text-repwell-teal-400 my-2">
         {renderInlineContent(line)}
       </p>
     );
@@ -158,7 +158,7 @@ function renderInlineContent(text: string): React.ReactNode {
         parts.push(
           <code
             key={`inline-code-${key++}`}
-            className="rounded bg-brand-frost px-1.5 py-0.5 text-body-sm font-mono text-brand-navy"
+            className="rounded bg-repwell-sage-100 px-1.5 py-0.5 text-body-sm font-mono text-repwell-teal-500"
           >
             {earliest.match[1]}
           </code>
@@ -166,7 +166,7 @@ function renderInlineContent(text: string): React.ReactNode {
         remaining = remaining.slice(earliest.index + earliest.match[0].length);
       } else if (earliest.type === "bold" && earliest.match) {
         parts.push(
-          <strong key={`bold-${key++}`} className="font-semibold text-brand-navy">
+          <strong key={`bold-${key++}`} className="font-semibold text-repwell-teal-500">
             {earliest.match[1]}
           </strong>
         );
@@ -176,7 +176,7 @@ function renderInlineContent(text: string): React.ReactNode {
           <Link
             key={`link-${key++}`}
             href={linkMatch[2]}
-            className="text-brand-blue hover:underline font-medium"
+            className="text-repwell-teal-300 hover:underline font-medium"
           >
             {linkMatch[1]}
           </Link>
@@ -266,31 +266,31 @@ export function DocsContent({ article }: DocsContentProps) {
     >
       {/* Breadcrumb */}
       <motion.nav variants={fadeInUp} className="mb-6 flex items-center gap-2 text-body-sm">
-        <Link href="/docs" className="text-brand-slate hover:text-brand-blue transition-colors">
+        <Link href="/docs" className="text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors">
           Docs
         </Link>
-        <ChevronRight className="h-4 w-4 text-brand-silver" />
+        <ChevronRight className="h-4 w-4 text-border" />
         <Link
           href={`/docs/${article.section}`}
-          className="text-brand-slate hover:text-brand-blue transition-colors"
+          className="text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
         >
           {article.sectionTitle}
         </Link>
-        <ChevronRight className="h-4 w-4 text-brand-silver" />
-        <span className="text-brand-navy font-medium">{article.title}</span>
+        <ChevronRight className="h-4 w-4 text-border" />
+        <span className="text-repwell-teal-500 font-medium">{article.title}</span>
       </motion.nav>
 
       {/* Article Header */}
       <motion.header variants={fadeInUp} className="mb-8">
-        <h1 className="text-display-sm text-brand-navy mb-3">{article.title}</h1>
-        <p className="text-body-lg text-brand-slate mb-4">{article.description}</p>
+        <h1 className="text-display-sm text-repwell-teal-500 mb-3">{article.title}</h1>
+        <p className="text-body-lg text-repwell-teal-400 mb-4">{article.description}</p>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-1.5 text-body-sm text-brand-slate">
+          <div className="flex items-center gap-1.5 text-body-sm text-repwell-teal-400">
             <Clock className="h-4 w-4" />
             <span>{readingTime} min read</span>
           </div>
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-brand-slate" />
+            <Tag className="h-4 w-4 text-repwell-teal-400" />
             <div className="flex flex-wrap gap-1.5">
               {article.tags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-caption">
@@ -307,10 +307,10 @@ export function DocsContent({ article }: DocsContentProps) {
         variants={fadeInUp}
         className={cn(
           "prose prose-slate max-w-none",
-          "[&>h1]:text-display-sm [&>h1]:text-brand-navy",
-          "[&>h2]:text-heading-lg [&>h2]:text-brand-navy [&>h2]:border-b [&>h2]:border-brand-silver/30 [&>h2]:pb-2",
-          "[&>h3]:text-heading-md [&>h3]:text-brand-navy",
-          "[&>p]:text-body-md [&>p]:text-brand-slate",
+          "[&>h1]:text-display-sm [&>h1]:text-repwell-teal-500",
+          "[&>h2]:text-heading-lg [&>h2]:text-repwell-teal-500 [&>h2]:border-b [&>h2]:border-border/30 [&>h2]:pb-2",
+          "[&>h3]:text-heading-md [&>h3]:text-repwell-teal-500",
+          "[&>p]:text-body-md [&>p]:text-repwell-teal-400",
           "[&>ul]:list-disc [&>ol]:list-decimal"
         )}
       >
@@ -320,14 +320,14 @@ export function DocsContent({ article }: DocsContentProps) {
       {/* Navigation */}
       <motion.nav
         variants={fadeInUp}
-        className="mt-12 flex items-center justify-between border-t border-brand-silver/30 pt-8"
+        className="mt-12 flex items-center justify-between border-t border-border/30 pt-8"
       >
         {prev ? (
           <Link href={prev.href}>
             <Button variant="ghost" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Previous:</span>
-              <span className="text-brand-slate">{prev.title}</span>
+              <span className="text-repwell-teal-400">{prev.title}</span>
             </Button>
           </Link>
         ) : (
@@ -337,7 +337,7 @@ export function DocsContent({ article }: DocsContentProps) {
           <Link href={next.href}>
             <Button variant="ghost" className="gap-2">
               <span className="hidden sm:inline">Next:</span>
-              <span className="text-brand-slate">{next.title}</span>
+              <span className="text-repwell-teal-400">{next.title}</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

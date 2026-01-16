@@ -2,12 +2,12 @@ import type { Metadata } from "next";
 import { TermsPageClient } from "./terms-client";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | ReviewHub",
+  title: "Terms of Service | RepWell",
   description:
-    "ReviewHub Terms of Service - Read the terms and conditions governing your use of our customer experience management platform.",
+    "RepWell Terms of Service - Read the terms and conditions governing your use of our customer experience management platform.",
   openGraph: {
-    title: "Terms of Service | ReviewHub",
-    description: "Terms and conditions for using ReviewHub.",
+    title: "Terms of Service | RepWell",
+    description: "Terms and conditions for using RepWell.",
     type: "website",
   },
   robots: {

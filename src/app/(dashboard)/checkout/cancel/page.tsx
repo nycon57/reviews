@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Checkout Cancelled | ReviewHub",
+  title: "Checkout Cancelled | RepWell",
   description: "Your checkout was cancelled. No charges were made.",
 };
 

@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
-import { Star, Linkedin, Twitter, Loader2 } from "lucide-react";
+import { Linkedin, Twitter, Loader2 } from "lucide-react";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,19 +75,22 @@ export function MarketingFooter() {
       whileInView="visible"
       viewport={viewportOnce}
       variants={staggerContainer}
-      className="border-t border-brand-silver/50 bg-brand-snow"
+      className="border-t border-border/50 bg-background"
     >
       <div className="container mx-auto px-4 py-16">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand Column */}
           <motion.div variants={fadeInUp} className="lg:col-span-2">
-            <Link href="/" className="inline-flex items-center gap-2.5 mb-5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue">
-                <Star className="h-5 w-5 text-white" fill="currentColor" />
-              </div>
-              <span className="text-xl font-bold text-brand-navy">ReviewHub</span>
+            <Link href="/" className="inline-block mb-5">
+              <Image
+                src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                alt="RepWell"
+                width={140}
+                height={32}
+                className="h-8 w-auto"
+              />
             </Link>
-            <p className="text-body-sm text-brand-slate max-w-xs mb-6">
+            <p className="text-body-sm text-repwell-teal-400 max-w-xs mb-6">
               Collect customer reviews, manage your reputation, and gain
               AI-powered insights to improve customer experience.
             </p>
@@ -98,7 +102,7 @@ export function MarketingFooter() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-frost text-brand-slate hover:bg-brand-blue hover:text-white transition-all duration-200"
+                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100 text-repwell-teal-400 hover:bg-repwell-teal-300 hover:text-white transition-all duration-200"
                   aria-label={link.label}
                 >
                   {link.label === "LinkedIn" && <Linkedin className="h-5 w-5" />}
@@ -109,9 +113,9 @@ export function MarketingFooter() {
 
             {/* Newsletter Signup */}
             <div>
-              <h3 className="font-semibold text-body-sm text-brand-navy mb-3">Stay Updated</h3>
+              <h3 className="font-semibold text-body-sm text-repwell-teal-500 mb-3">Stay Updated</h3>
               {subscribed ? (
-                <p className="text-body-sm text-brand-emerald font-medium">
+                <p className="text-body-sm text-success font-medium">
                   Thanks for subscribing!
                 </p>
               ) : (
@@ -128,7 +132,7 @@ export function MarketingFooter() {
                   <Button
                     type="submit"
                     size="sm"
-                    variant="brand"
+                    variant="default"
                     disabled={isSubmitting}
                     className="shrink-0 h-10"
                   >
@@ -146,7 +150,7 @@ export function MarketingFooter() {
           {/* Link Columns */}
           {footerSections.map((section) => (
             <motion.div key={section.title} variants={fadeInUp}>
-              <h3 className="font-semibold text-body-sm text-brand-navy mb-4">{section.title}</h3>
+              <h3 className="font-semibold text-body-sm text-repwell-teal-500 mb-4">{section.title}</h3>
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.href}>
@@ -155,14 +159,14 @@ export function MarketingFooter() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-body-sm text-brand-slate hover:text-brand-blue transition-colors"
+                        className="text-body-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
                       >
                         {link.label}
                       </a>
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-body-sm text-brand-slate hover:text-brand-blue transition-colors"
+                        className="text-body-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
                       >
                         {link.label}
                       </Link>
@@ -177,10 +181,10 @@ export function MarketingFooter() {
         {/* Copyright */}
         <motion.div
           variants={fadeInUp}
-          className="mt-12 pt-8 border-t border-brand-silver/50 text-center"
+          className="mt-12 pt-8 border-t border-border/50 text-center"
         >
-          <p className="text-body-sm text-brand-slate">
-            &copy; {currentYear} ReviewHub. All rights reserved.
+          <p className="text-body-sm text-repwell-teal-400">
+            &copy; {currentYear} RepWell. All rights reserved.
           </p>
         </motion.div>
       </div>

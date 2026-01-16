@@ -20,12 +20,12 @@ export function PrivacyPageClient() {
             whileInView="visible"
             viewport={viewportOnce}
             variants={staggerContainer}
-            className="prose prose-neutral mx-auto max-w-3xl dark:prose-invert"
+            className="prose prose-neutral mx-auto max-w-3xl"
           >
             <motion.div variants={fadeInUp}>
               <h2>Introduction</h2>
               <p>
-                ReviewHub ("we," "our," or "us") is committed to protecting your
+                RepWell ("we," "our," or "us") is committed to protecting your
                 privacy. This Privacy Policy explains how we collect, use,
                 disclose, and safeguard your information when you use our
                 platform, website, and services (collectively, the "Service").
@@ -183,7 +183,7 @@ export function PrivacyPageClient() {
               </ul>
               <p>
                 To exercise these rights, please contact us at{" "}
-                <a href="mailto:privacy@reviewhub.com">privacy@reviewhub.com</a>.
+                <a href="mailto:privacy@repwell.com">privacy@repwell.com</a>.
               </p>
 
               <h2>Cookies and Tracking</h2>
@@ -233,9 +233,9 @@ export function PrivacyPageClient() {
               <ul>
                 <li>
                   Email:{" "}
-                  <a href="mailto:privacy@reviewhub.com">privacy@reviewhub.com</a>
+                  <a href="mailto:privacy@repwell.com">privacy@repwell.com</a>
                 </li>
-                <li>Address: ReviewHub, Austin, TX</li>
+                <li>Address: RepWell, Austin, TX</li>
               </ul>
             </motion.div>
           </motion.div>

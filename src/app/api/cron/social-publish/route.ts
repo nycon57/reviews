@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createUntypedAdminClient } from '@/lib/supabase/admin';
 import { fillTemplatePlaceholders } from '@/lib/social/types';
 import {
   postToFacebook,
@@ -26,7 +26,7 @@ function verifyCronSecret(request: NextRequest): boolean {
 
 // Get valid access token (refreshing if needed)
 async function getValidToken(
-  adminClient: ReturnType<typeof createAdminClient>,
+  adminClient: ReturnType<typeof createUntypedAdminClient>,
   connectionId: string
 ): Promise<{
   accessToken: string;
@@ -82,7 +82,7 @@ async function getValidToken(
 
 // Process scheduled posts
 async function processScheduledPosts(
-  adminClient: ReturnType<typeof createAdminClient>,
+  adminClient: ReturnType<typeof createUntypedAdminClient>,
   batchSize: number
 ): Promise<{ processed: number; failed: number; errors: string[] }> {
   const errors: string[] = [];
@@ -222,7 +222,7 @@ async function processScheduledPosts(
 
 // Process the publish queue (auto-generated posts from approved reviews)
 async function processPublishQueue(
-  adminClient: ReturnType<typeof createAdminClient>,
+  adminClient: ReturnType<typeof createUntypedAdminClient>,
   batchSize: number
 ): Promise<{ processed: number; failed: number; errors: string[] }> {
   const errors: string[] = [];
@@ -359,7 +359,7 @@ export async function POST(request: NextRequest) {
     const batchSize = parseInt(url.searchParams.get('batch_size') || '10', 10);
     const clampedBatchSize = Math.min(Math.max(batchSize, 1), 50);
 
-    const adminClient = createAdminClient();
+    const adminClient = createUntypedAdminClient();
 
     // Process scheduled posts
     const scheduledResult = await processScheduledPosts(adminClient, clampedBatchSize);

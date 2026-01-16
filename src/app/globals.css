@@ -1,195 +1,87 @@
+@import "leaflet/dist/leaflet.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Custom Fonts */
+@font-face {
+  font-family: 'Erstoria';
+  src: url('/fonts/Erstoria.woff2') format('woff2'),
+       url('/fonts/Erstoria.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     /* ========================================
-       Color Palette - OKLCH Format
+       RepWell Design System - HSL Format
+       Light-only theme (no dark mode)
        ======================================== */
 
-    /* Ash Grey - Neutral warm grey (hue ~134) */
-    --color-ash-grey-50: oklch(96.48% 0.004 134.85);
-    --color-ash-grey-100: oklch(92.90% 0.010 131.36);
-    --color-ash-grey-200: oklch(85.60% 0.021 134.11);
-    --color-ash-grey-300: oklch(78.05% 0.030 133.78);
-    --color-ash-grey-400: oklch(70.52% 0.041 133.36);
-    --color-ash-grey-500: oklch(62.83% 0.053 133.24);
-    --color-ash-grey-600: oklch(53.47% 0.044 133.54);
-    --color-ash-grey-700: oklch(43.68% 0.034 134.06);
-    --color-ash-grey-800: oklch(33.55% 0.027 134.46);
-    --color-ash-grey-900: oklch(22.40% 0.015 131.85);
-    --color-ash-grey-950: oklch(18.64% 0.009 137.85);
+    /* Core semantic tokens mapped to design system */
+    --background: 97 14% 96%;
+    --foreground: 201 20% 23%;
 
-    /* Muted Teal - Subtle teal (hue ~151) */
-    --color-muted-teal-50: oklch(96.53% 0.007 151.89);
-    --color-muted-teal-100: oklch(92.83% 0.013 152.59);
-    --color-muted-teal-200: oklch(85.55% 0.027 152.31);
-    --color-muted-teal-300: oklch(78.16% 0.042 151.95);
-    --color-muted-teal-400: oklch(70.66% 0.056 151.47);
-    --color-muted-teal-500: oklch(63.03% 0.073 150.10);
-    --color-muted-teal-600: oklch(53.71% 0.060 150.88);
-    --color-muted-teal-700: oklch(43.94% 0.047 150.96);
-    --color-muted-teal-800: oklch(33.59% 0.034 151.09);
-    --color-muted-teal-900: oklch(22.35% 0.019 151.40);
-    --color-muted-teal-950: oklch(18.75% 0.014 149.78);
+    --card: 0 0% 100%;
+    --card-foreground: 201 20% 23%;
 
-    /* Deep Teal - Cyan-ish teal (hue ~178) */
-    --color-deep-teal-50: oklch(96.58% 0.006 170.45);
-    --color-deep-teal-100: oklch(92.97% 0.010 181.40);
-    --color-deep-teal-200: oklch(85.97% 0.023 179.10);
-    --color-deep-teal-300: oklch(78.73% 0.033 179.19);
-    --color-deep-teal-400: oklch(71.38% 0.043 178.89);
-    --color-deep-teal-500: oklch(64.11% 0.056 177.40);
-    --color-deep-teal-600: oklch(54.48% 0.045 178.11);
-    --color-deep-teal-700: oklch(44.59% 0.036 177.85);
-    --color-deep-teal-800: oklch(34.12% 0.027 177.36);
-    --color-deep-teal-900: oklch(22.54% 0.014 179.89);
-    --color-deep-teal-950: oklch(18.81% 0.011 185.58);
+    --popover: 0 0% 100%;
+    --popover-foreground: 201 20% 23%;
 
-    /* Dark Slate Grey - Blue-grey (hue ~204) - PRIMARY */
-    --color-dark-slate-grey-50: oklch(96.44% 0.004 214.33);
-    --color-dark-slate-grey-100: oklch(92.98% 0.011 204.12);
-    --color-dark-slate-grey-200: oklch(85.86% 0.022 204.02);
-    --color-dark-slate-grey-300: oklch(78.43% 0.032 206.69);
-    --color-dark-slate-grey-400: oklch(71.15% 0.042 204.25);
-    --color-dark-slate-grey-500: oklch(63.74% 0.052 204.16);
-    --color-dark-slate-grey-600: oklch(54.24% 0.043 204.24);
-    --color-dark-slate-grey-700: oklch(44.27% 0.035 206.76);
-    --color-dark-slate-grey-800: oklch(34.01% 0.026 203.83);
-    --color-dark-slate-grey-900: oklch(22.58% 0.014 203.85);
-    --color-dark-slate-grey-950: oklch(18.90% 0.011 207.05);
+    /* Primary: repwell-teal-300 (#52796f) */
+    --primary: 165 19% 40%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Charcoal Blue - Cool blue-grey (hue ~232) */
-    --color-charcoal-blue-50: oklch(96.24% 0.004 236.50);
-    --color-charcoal-blue-100: oklch(92.38% 0.009 232.37);
-    --color-charcoal-blue-200: oklch(84.67% 0.017 230.95);
-    --color-charcoal-blue-300: oklch(76.76% 0.027 231.75);
-    --color-charcoal-blue-400: oklch(68.73% 0.036 231.49);
-    --color-charcoal-blue-500: oklch(60.50% 0.046 232.35);
-    --color-charcoal-blue-600: oklch(51.59% 0.038 231.93);
-    --color-charcoal-blue-700: oklch(42.26% 0.031 232.48);
-    --color-charcoal-blue-800: oklch(32.41% 0.021 231.77);
-    --color-charcoal-blue-900: oklch(21.69% 0.013 233.22);
-    --color-charcoal-blue-950: oklch(18.23% 0.009 224.02);
+    /* Secondary: repwell-sage-100 (#cad2c5) */
+    --secondary: 97 14% 80%;
+    --secondary-foreground: 201 20% 23%;
 
-    /* ========================================
-       Semantic Mappings - Light Mode
-       ======================================== */
+    /* Muted */
+    --muted: 97 14% 92%;
+    --muted-foreground: 186 21% 40%;
 
-    --background: var(--color-ash-grey-50);
-    --foreground: var(--color-dark-slate-grey-900);
+    /* Accent: repwell-sage-200 (#84a98c) */
+    --accent: 133 17% 59%;
+    --accent-foreground: 201 20% 23%;
 
-    --card: oklch(99% 0.002 134);
-    --card-foreground: var(--color-dark-slate-grey-900);
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --popover: oklch(99% 0.002 134);
-    --popover-foreground: var(--color-dark-slate-grey-900);
-
-    --primary: var(--color-dark-slate-grey-700);
-    --primary-foreground: var(--color-ash-grey-50);
-
-    --secondary: var(--color-ash-grey-100);
-    --secondary-foreground: var(--color-dark-slate-grey-800);
-
-    --muted: var(--color-ash-grey-100);
-    --muted-foreground: var(--color-ash-grey-600);
-
-    --accent: var(--color-muted-teal-100);
-    --accent-foreground: var(--color-muted-teal-800);
-
-    --destructive: oklch(55% 0.2 25);
-    --destructive-foreground: oklch(98% 0.01 25);
-
-    --border: var(--color-ash-grey-200);
-    --input: var(--color-ash-grey-200);
-    --ring: var(--color-dark-slate-grey-500);
+    /* Border: light sage */
+    --border: 97 14% 85%;
+    --input: 97 14% 85%;
+    --ring: 165 19% 40%;
 
     --radius: 0.5rem;
 
     /* Status Colors */
-    --success: var(--color-deep-teal-600);
-    --success-foreground: var(--color-deep-teal-50);
-    --warning: oklch(75% 0.15 85);
-    --warning-foreground: oklch(25% 0.05 85);
-    --info: var(--color-charcoal-blue-500);
-    --info-foreground: var(--color-charcoal-blue-50);
+    --success: 165 19% 40%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 10%;
+    --info: 201 20% 40%;
+    --info-foreground: 0 0% 100%;
 
     /* Chart Colors */
-    --chart-1: var(--color-dark-slate-grey-500);
-    --chart-2: var(--color-muted-teal-500);
-    --chart-3: var(--color-deep-teal-500);
-    --chart-4: var(--color-charcoal-blue-500);
-    --chart-5: var(--color-ash-grey-500);
+    --chart-1: 165 19% 40%;
+    --chart-2: 133 17% 59%;
+    --chart-3: 186 21% 26%;
+    --chart-4: 201 20% 35%;
+    --chart-5: 97 14% 70%;
 
     /* Sidebar Colors */
-    --sidebar-background: oklch(99% 0.002 134);
-    --sidebar-foreground: var(--color-dark-slate-grey-900);
-    --sidebar-primary: var(--color-dark-slate-grey-700);
-    --sidebar-primary-foreground: var(--color-ash-grey-50);
-    --sidebar-accent: var(--color-muted-teal-100);
-    --sidebar-accent-foreground: var(--color-muted-teal-800);
-    --sidebar-border: var(--color-ash-grey-200);
-    --sidebar-ring: var(--color-dark-slate-grey-500);
-  }
-
-  .dark {
-    /* ========================================
-       Semantic Mappings - Dark Mode
-       ======================================== */
-
-    --background: var(--color-dark-slate-grey-950);
-    --foreground: var(--color-ash-grey-100);
-
-    --card: var(--color-dark-slate-grey-900);
-    --card-foreground: var(--color-ash-grey-100);
-
-    --popover: var(--color-dark-slate-grey-900);
-    --popover-foreground: var(--color-ash-grey-100);
-
-    --primary: var(--color-dark-slate-grey-400);
-    --primary-foreground: var(--color-dark-slate-grey-950);
-
-    --secondary: var(--color-dark-slate-grey-800);
-    --secondary-foreground: var(--color-ash-grey-200);
-
-    --muted: var(--color-dark-slate-grey-800);
-    --muted-foreground: var(--color-ash-grey-400);
-
-    --accent: var(--color-muted-teal-800);
-    --accent-foreground: var(--color-muted-teal-200);
-
-    --destructive: oklch(60% 0.2 25);
-    --destructive-foreground: oklch(98% 0.01 25);
-
-    --border: var(--color-dark-slate-grey-700);
-    --input: var(--color-dark-slate-grey-700);
-    --ring: var(--color-dark-slate-grey-400);
-
-    /* Status Colors - Dark Mode */
-    --success: var(--color-deep-teal-400);
-    --success-foreground: var(--color-deep-teal-950);
-    --warning: oklch(80% 0.15 85);
-    --warning-foreground: oklch(20% 0.05 85);
-    --info: var(--color-charcoal-blue-400);
-    --info-foreground: var(--color-charcoal-blue-950);
-
-    /* Chart Colors - Dark Mode */
-    --chart-1: var(--color-dark-slate-grey-400);
-    --chart-2: var(--color-muted-teal-400);
-    --chart-3: var(--color-deep-teal-400);
-    --chart-4: var(--color-charcoal-blue-400);
-    --chart-5: var(--color-ash-grey-400);
-
-    /* Sidebar Colors - Dark Mode */
-    --sidebar-background: var(--color-dark-slate-grey-950);
-    --sidebar-foreground: var(--color-ash-grey-200);
-    --sidebar-primary: var(--color-muted-teal-400);
-    --sidebar-primary-foreground: var(--color-dark-slate-grey-950);
-    --sidebar-accent: var(--color-dark-slate-grey-800);
-    --sidebar-accent-foreground: var(--color-ash-grey-200);
-    --sidebar-border: var(--color-dark-slate-grey-700);
-    --sidebar-ring: var(--color-dark-slate-grey-400);
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 201 20% 23%;
+    --sidebar-primary: 165 19% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 133 17% 90%;
+    --sidebar-accent-foreground: 201 20% 23%;
+    --sidebar-border: 97 14% 85%;
+    --sidebar-ring: 165 19% 40%;
   }
 }
 
@@ -213,4 +105,108 @@
   h4 {
     @apply text-heading-sm;
   }
+}
+
+/* ========================================
+   Leaflet Map Styles
+   Custom styling for directory map
+   ======================================== */
+
+/* Custom marker styles */
+.custom-map-marker {
+  background: transparent;
+  border: none;
+}
+
+/* Marker cluster styles - Repwell sage theme */
+.marker-cluster {
+  background-clip: padding-box;
+  border-radius: 50%;
+}
+
+.marker-cluster div {
+  width: 30px;
+  height: 30px;
+  margin-left: 5px;
+  margin-top: 5px;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-cluster-small {
+  background-color: rgba(202, 210, 197, 0.6); /* sage-100 */
+}
+.marker-cluster-small div {
+  background-color: rgba(202, 210, 197, 0.9);
+  color: #354f52; /* teal-400 */
+}
+
+.marker-cluster-medium {
+  background-color: rgba(132, 169, 140, 0.6); /* sage-200 */
+}
+.marker-cluster-medium div {
+  background-color: rgba(132, 169, 140, 0.9);
+  color: #354f52;
+}
+
+.marker-cluster-large {
+  background-color: rgba(82, 121, 111, 0.6); /* teal-300 */
+}
+.marker-cluster-large div {
+  background-color: rgba(82, 121, 111, 0.9);
+  color: white;
+}
+
+/* Custom popup styles */
+.repwell-popup .leaflet-popup-content-wrapper {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 0;
+  border: 1px solid hsl(97 14% 85%);
+}
+
+.repwell-popup .leaflet-popup-content {
+  margin: 0;
+  min-width: 240px;
+}
+
+.repwell-popup .leaflet-popup-tip {
+  background: white;
+  border: 1px solid hsl(97 14% 85%);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide default Leaflet attribution styling conflict */
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* Map attribution styling */
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.8) !important;
+  padding: 2px 5px;
+}
+
+/* Zoom controls styling */
+.leaflet-control-zoom a {
+  background-color: white !important;
+  color: #354f52 !important;
+  border-color: hsl(97 14% 85%) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: hsl(97 14% 96%) !important;
+}
+
+/* Ensure map container has proper sizing */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
 }

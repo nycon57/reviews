@@ -11,24 +11,24 @@ interface ThemeCloudProps {
 }
 
 const themeColors: Record<string, string> = {
-  communication: "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300",
-  process: "bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-300",
-  service: "bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300",
-  responsiveness: "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300",
-  professionalism: "bg-indigo-100 text-indigo-800 hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300",
-  knowledge: "bg-cyan-100 text-cyan-800 hover:bg-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-300",
-  rates: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300",
-  closing: "bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300",
-  documentation: "bg-orange-100 text-orange-800 hover:bg-orange-200 dark:bg-orange-900/30 dark:text-orange-300",
-  timeliness: "bg-teal-100 text-teal-800 hover:bg-teal-200 dark:bg-teal-900/30 dark:text-teal-300",
+  communication: "bg-blue-100 text-blue-800 hover:bg-blue-200",
+  process: "bg-purple-100 text-purple-800 hover:bg-purple-200",
+  service: "bg-green-100 text-green-800 hover:bg-green-200",
+  responsiveness: "bg-amber-100 text-amber-800 hover:bg-amber-200",
+  professionalism: "bg-indigo-100 text-indigo-800 hover:bg-indigo-200",
+  knowledge: "bg-cyan-100 text-cyan-800 hover:bg-cyan-200",
+  rates: "bg-emerald-100 text-emerald-800 hover:bg-emerald-200",
+  closing: "bg-rose-100 text-rose-800 hover:bg-rose-200",
+  documentation: "bg-orange-100 text-orange-800 hover:bg-orange-200",
+  timeliness: "bg-teal-100 text-teal-800 hover:bg-teal-200",
 };
 
 function TrendIcon({ trend }: { trend: "increasing" | "stable" | "decreasing" }) {
   if (trend === "increasing") {
-    return <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />;
+    return <TrendingUp className="h-3 w-3 text-green-600" />;
   }
   if (trend === "decreasing") {
-    return <TrendingDown className="h-3 w-3 text-red-600 dark:text-red-400" />;
+    return <TrendingDown className="h-3 w-3 text-red-600" />;
   }
   return <Minus className="h-3 w-3 text-muted-foreground" />;
 }
@@ -76,7 +76,7 @@ export function ThemeCloud({ data }: ThemeCloudProps) {
               key={theme.theme}
               className={cn(
                 "group relative inline-flex cursor-default items-center gap-1 rounded-lg px-3 py-1.5 transition-colors",
-                themeColors[theme.theme] || "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                themeColors[theme.theme] || "bg-gray-100 text-gray-800"
               )}
             >
               <span className={getSize(theme.count)} style={{ textTransform: "capitalize" }}>
@@ -91,9 +91,9 @@ export function ThemeCloud({ data }: ThemeCloudProps) {
                   {THEME_DESCRIPTIONS[theme.theme]}
                 </div>
                 <div className="mt-1 flex gap-2 text-[10px]">
-                  <span className="text-green-600 dark:text-green-400">+{theme.sentimentBreakdown.positive}</span>
+                  <span className="text-green-600">+{theme.sentimentBreakdown.positive}</span>
                   <span className="text-muted-foreground">{theme.sentimentBreakdown.neutral}</span>
-                  <span className="text-red-600 dark:text-red-400">-{theme.sentimentBreakdown.negative}</span>
+                  <span className="text-red-600">-{theme.sentimentBreakdown.negative}</span>
                 </div>
               </div>
             </div>

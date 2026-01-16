@@ -1,10 +1,10 @@
-# ReviewHub - Customer Experience & Review Management Platform
+# RepWell - Customer Experience & Review Management Platform
 
 An internal Customer Experience & Review Management Platform built to replace Experience.com/Birdeye with a custom solution tailored for mortgage and financial services companies.
 
 ## Overview
 
-ReviewHub is a comprehensive platform for:
+RepWell is a comprehensive platform for:
 - **Automated Review Collection**: Send surveys automatically when loans close
 - **Multi-Platform Aggregation**: Consolidate reviews from Google, Zillow, and internal surveys
 - **AI-Powered Analytics**: Sentiment analysis, NPS tracking, and actionable insights

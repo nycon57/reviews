@@ -88,16 +88,16 @@ export function SentimentDistribution({
               <SmilePlus className="h-5 w-5 text-green-600" />
               <span className="text-2xl font-bold text-green-600">{positive}</span>
             </div>
-            <p className="text-sm font-medium text-green-700 dark:text-green-400">Positive</p>
+            <p className="text-sm font-medium text-green-700">Positive</p>
             <p className="text-xs text-muted-foreground">{positivePercent}%</p>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-1">
               <Meh className="h-5 w-5 text-gray-500" />
-              <span className="text-2xl font-bold text-gray-600 dark:text-gray-400">{neutral}</span>
+              <span className="text-2xl font-bold text-gray-600">{neutral}</span>
             </div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Neutral</p>
+            <p className="text-sm font-medium text-gray-600">Neutral</p>
             <p className="text-xs text-muted-foreground">{neutralPercent}%</p>
           </div>
 
@@ -106,7 +106,7 @@ export function SentimentDistribution({
               <Frown className="h-5 w-5 text-red-600" />
               <span className="text-2xl font-bold text-red-600">{negative}</span>
             </div>
-            <p className="text-sm font-medium text-red-700 dark:text-red-400">Negative</p>
+            <p className="text-sm font-medium text-red-700">Negative</p>
             <p className="text-xs text-muted-foreground">{negativePercent}%</p>
           </div>
         </div>
@@ -114,9 +114,9 @@ export function SentimentDistribution({
         {/* Health indicator */}
         <div className={cn(
           "rounded-lg p-3 text-sm",
-          positivePercent >= 70 && "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-300",
-          positivePercent >= 50 && positivePercent < 70 && "bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300",
-          positivePercent < 50 && "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-300"
+          positivePercent >= 70 && "bg-green-50 text-green-800",
+          positivePercent >= 50 && positivePercent < 70 && "bg-amber-50 text-amber-800",
+          positivePercent < 50 && "bg-red-50 text-red-800"
         )}>
           {positivePercent >= 70 && (
             <p>Your sentiment score is excellent. Most customers have a positive experience.</p>

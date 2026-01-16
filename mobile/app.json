@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "ReviewHub",
-    "slug": "reviewhub-mobile",
+    "name": "RepWell",
+    "slug": "repwell-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "reviewhub",
+    "scheme": "repwell",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.reviewhub.mobile"
+      "bundleIdentifier": "com.repwell.mobile"
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +24,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.reviewhub.mobile"
+      "package": "com.repwell.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"

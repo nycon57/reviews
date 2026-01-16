@@ -41,10 +41,10 @@ export async function submitContactForm(
     const validated = contactFormSchema.parse(data);
     const resend = getResendClient();
 
-    const contactEmail = process.env.CONTACT_EMAIL || "contact@reviewhub.com";
+    const contactEmail = process.env.CONTACT_EMAIL || "contact@repwell.com";
 
     await resend.emails.send({
-      from: `ReviewHub Contact <${emailConfig.defaultFromEmail}>`,
+      from: `RepWell Contact <${emailConfig.defaultFromEmail}>`,
       to: contactEmail,
       replyTo: validated.email,
       subject: `[Contact Form] ${validated.subject}`,
@@ -63,9 +63,9 @@ export async function submitContactForm(
 
     // Send auto-reply to user
     await resend.emails.send({
-      from: `ReviewHub <${emailConfig.defaultFromEmail}>`,
+      from: `RepWell <${emailConfig.defaultFromEmail}>`,
       to: validated.email,
-      subject: "We've received your message - ReviewHub",
+      subject: "We've received your message - RepWell",
       html: `
         <h2>Thank you for contacting us!</h2>
         <p>Hi ${validated.name},</p>
@@ -76,7 +76,7 @@ export async function submitContactForm(
           <li><a href="${emailConfig.baseUrl}/pricing">View pricing plans</a></li>
           <li><a href="${emailConfig.baseUrl}/demo">Schedule a demo</a></li>
         </ul>
-        <p>Best regards,<br />The ReviewHub Team</p>
+        <p>Best regards,<br />The RepWell Team</p>
       `,
     });
 
@@ -98,10 +98,10 @@ export async function submitDemoRequest(
     const validated = demoRequestSchema.parse(data);
     const resend = getResendClient();
 
-    const salesEmail = process.env.SALES_EMAIL || "sales@reviewhub.com";
+    const salesEmail = process.env.SALES_EMAIL || "sales@repwell.com";
 
     await resend.emails.send({
-      from: `ReviewHub Demo Request <${emailConfig.defaultFromEmail}>`,
+      from: `RepWell Demo Request <${emailConfig.defaultFromEmail}>`,
       to: salesEmail,
       replyTo: validated.email,
       subject: `[Demo Request] ${validated.firstName} ${validated.lastName} from ${validated.company}`,
@@ -119,14 +119,14 @@ export async function submitDemoRequest(
 
     // Send confirmation to user
     await resend.emails.send({
-      from: `ReviewHub <${emailConfig.defaultFromEmail}>`,
+      from: `RepWell <${emailConfig.defaultFromEmail}>`,
       to: validated.email,
-      subject: "Demo Request Received - ReviewHub",
+      subject: "Demo Request Received - RepWell",
       html: `
-        <h2>Thank you for your interest in ReviewHub!</h2>
+        <h2>Thank you for your interest in RepWell!</h2>
         <p>Hi ${validated.firstName},</p>
         <p>We've received your demo request and one of our team members will reach out within 24 hours to schedule a personalized demo.</p>
-        <p>During the demo, we'll show you how ReviewHub can help ${validated.company}:</p>
+        <p>During the demo, we'll show you how RepWell can help ${validated.company}:</p>
         <ul>
           <li>Automate review collection with smart surveys</li>
           <li>Track NPS, CSAT, and other key metrics</li>
@@ -134,7 +134,7 @@ export async function submitDemoRequest(
           <li>Manage your team's reputation across platforms</li>
         </ul>
         <p>Looking forward to speaking with you!</p>
-        <p>Best regards,<br />The ReviewHub Team</p>
+        <p>Best regards,<br />The RepWell Team</p>
       `,
     });
 

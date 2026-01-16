@@ -9,25 +9,21 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "border-transparent bg-repwell-teal-300 text-white hover:bg-repwell-teal-400",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "border-transparent bg-repwell-sage-100 text-repwell-teal-500 hover:bg-repwell-sage-200/80",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-        // Brand variants
+        outline:
+          "border-border bg-transparent text-repwell-teal-500 hover:border-repwell-teal-300 hover:text-repwell-teal-300",
         highlight:
-          "border-transparent bg-brand-amber text-black font-bold shadow-sm hover:shadow-md hover:scale-105",
+          "border-transparent bg-warning text-warning-foreground font-bold shadow-sm hover:shadow-md hover:scale-105",
         featured:
-          "border-transparent bg-brand-iris text-white font-bold shadow-sm hover:shadow-md hover:scale-105",
+          "border-transparent bg-repwell-teal-300 text-white font-bold shadow-sm hover:shadow-md hover:scale-105",
         success:
-          "border-transparent bg-brand-emerald text-white font-bold shadow-sm hover:shadow-md hover:scale-105",
-        "brand-blue":
-          "border-transparent bg-brand-blue text-white font-bold shadow-sm hover:shadow-md hover:scale-105",
-        "brand-outline":
-          "border-brand-silver bg-transparent text-brand-navy hover:border-brand-blue hover:text-brand-blue",
-        "brand-subtle":
-          "border-transparent bg-brand-frost text-brand-blue font-medium",
+          "border-transparent bg-success text-success-foreground font-bold shadow-sm hover:shadow-md hover:scale-105",
+        subtle:
+          "border-transparent bg-repwell-sage-100 text-repwell-teal-300 font-medium",
       },
     },
     defaultVariants: {

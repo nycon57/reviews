@@ -108,7 +108,7 @@ export default function SignUpPage() {
           title: "Account created!",
           description: "Please check your email to verify your account.",
         });
-        router.push(result.redirectTo || "/auth/verify-email");
+        router.push(result.redirectTo || "/verify-email");
       } else {
         toast({
           title: "Sign up failed",
@@ -132,7 +132,7 @@ export default function SignUpPage() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Create an account</CardTitle>
         <CardDescription>
-          Get started with ReviewHub for your organization
+          Get started with RepWell for your organization
         </CardDescription>
       </CardHeader>
       <CardContent>

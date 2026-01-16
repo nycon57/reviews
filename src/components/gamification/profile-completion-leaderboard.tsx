@@ -57,7 +57,7 @@ export function ProfileCompletionLeaderboard({
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-brand-teal" />
+            <Target className="h-5 w-5 text-repwell-teal-300" />
             Profile Completion Leaderboard
           </CardTitle>
         </CardHeader>
@@ -83,7 +83,7 @@ export function ProfileCompletionLeaderboard({
       <Card className={className}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-brand-teal" />
+            <Target className="h-5 w-5 text-repwell-teal-300" />
             Profile Completion Leaderboard
           </CardTitle>
         </CardHeader>
@@ -104,7 +104,7 @@ export function ProfileCompletionLeaderboard({
     <Card className={className}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-brand-teal" />
+          <Target className="h-5 w-5 text-repwell-teal-300" />
           Profile Completion Leaderboard
         </CardTitle>
       </CardHeader>
@@ -263,7 +263,7 @@ function PodiumCard({
         : "3rd Place";
 
   const cardBorder = isWinner
-    ? "border-yellow-200 dark:border-yellow-800 bg-gradient-to-b from-yellow-50/50 to-transparent dark:from-yellow-950/30"
+    ? "border-yellow-200 bg-gradient-to-b from-yellow-50/50 to-transparent"
     : "";
 
   return (
@@ -276,10 +276,10 @@ function PodiumCard({
                 isWinner ? "h-16 w-16" : "h-14 w-14",
                 "ring-4",
                 entry.rank === 1
-                  ? "ring-yellow-400 dark:ring-yellow-600"
+                  ? "ring-yellow-400"
                   : entry.rank === 2
-                    ? "ring-gray-300 dark:ring-gray-600"
-                    : "ring-amber-400 dark:ring-amber-700"
+                    ? "ring-gray-300"
+                    : "ring-amber-400"
               )}
             >
               {entry.photoUrl && (
@@ -289,10 +289,10 @@ function PodiumCard({
                 className={cn(
                   isWinner ? "text-xl" : "text-lg",
                   entry.rank === 1
-                    ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300"
+                    ? "bg-yellow-100 text-yellow-700"
                     : entry.rank === 2
-                      ? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
+                      ? "bg-gray-100 text-gray-700"
+                      : "bg-amber-100 text-amber-700"
                 )}
               >
                 {getInitials(entry.fullName)}
@@ -313,7 +313,7 @@ function PodiumCard({
             className={cn(
               "text-xs font-medium",
               entry.rank === 1
-                ? "text-yellow-600 dark:text-yellow-400"
+                ? "text-yellow-600"
                 : "text-muted-foreground"
             )}
           >
@@ -406,7 +406,7 @@ export function CompactProfileLeaderboard({
     <Card className={className}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
-          <Target className="h-4 w-4 text-brand-teal" />
+          <Target className="h-4 w-4 text-repwell-teal-300" />
           Profile Leaders
         </CardTitle>
       </CardHeader>

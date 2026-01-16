@@ -171,7 +171,7 @@ export function generateRssFeed(siteUrl: string): string {
       <pubDate>${new Date(post.date).toUTCString()}</pubDate>
       <category>${post.category}</category>
       ${post.tags.map((tag) => `<category>${tag}</category>`).join("\n      ")}
-      <author>noreply@reviewhub.com (${post.author.name})</author>
+      <author>noreply@repwell.com (${post.author.name})</author>
     </item>`
     )
     .join("");
@@ -179,7 +179,7 @@ export function generateRssFeed(siteUrl: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>ReviewHub Blog</title>
+    <title>RepWell Blog</title>
     <link>${siteUrl}/blog</link>
     <description>Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.</description>
     <language>en-us</language>

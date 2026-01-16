@@ -12,23 +12,27 @@ interface FeatureCardProps {
   description: string;
   className?: string;
   /** Optional accent color for top border */
-  accentColor?: "blue" | "amber" | "emerald" | "iris" | "orchid";
+  accentColor?: "blue" | "amber" | "emerald" | "iris" | "orchid" | "teal" | "sage";
   /** Icon background style */
   iconStyle?: "filled" | "outline" | "gradient";
+  /** Card size variant */
+  size?: "default" | "lg";
 }
 
 const accentColorMap = {
-  blue: "before:bg-brand-blue",
-  amber: "before:bg-brand-amber",
-  emerald: "before:bg-brand-emerald",
-  iris: "before:bg-brand-iris",
-  orchid: "before:bg-brand-orchid",
+  blue: "before:bg-repwell-teal-300",
+  amber: "before:bg-warning",
+  emerald: "before:bg-success",
+  iris: "before:bg-repwell-teal-300",
+  orchid: "before:bg-repwell-sage-200",
+  teal: "before:bg-gradient-to-r before:from-repwell-teal-300 before:to-repwell-sage-200",
+  sage: "before:bg-gradient-to-r before:from-repwell-sage-200 before:to-repwell-teal-300",
 };
 
 const iconBgMap = {
-  filled: "bg-brand-frost text-brand-blue",
-  outline: "bg-transparent border-2 border-brand-silver text-brand-blue",
-  gradient: "bg-gradient-to-br from-brand-blue/10 to-brand-iris/10 text-brand-blue",
+  filled: "bg-repwell-sage-100 text-repwell-teal-300",
+  outline: "bg-transparent border-2 border-border text-repwell-teal-300",
+  gradient: "bg-gradient-to-br from-repwell-teal-300/10 to-repwell-teal-300/10 text-repwell-teal-300",
 };
 
 export function FeatureCard({
@@ -38,7 +42,10 @@ export function FeatureCard({
   className,
   accentColor,
   iconStyle = "filled",
+  size = "default",
 }: FeatureCardProps) {
+  const isLarge = size === "lg";
+
   return (
     <motion.div
       variants={fadeInUp}
@@ -49,30 +56,42 @@ export function FeatureCard({
       <Card
         className={cn(
           "relative h-full overflow-hidden transition-all duration-200",
-          "hover:border-brand-blue/30",
+          "hover:border-repwell-teal-300/30",
           accentColor && [
-            "before:absolute before:top-0 before:left-0 before:right-0 before:h-1",
+            "before:absolute before:top-0 before:left-0 before:right-0",
+            isLarge ? "before:h-1.5" : "before:h-1",
             accentColorMap[accentColor],
           ],
           className
         )}
       >
-        <CardHeader className="pb-4">
+        <CardHeader className={cn(isLarge ? "pb-6" : "pb-4")}>
           <motion.div
             whileHover={featureIconHover}
             className={cn(
-              "mb-4 inline-flex h-14 w-14 items-center justify-center rounded-xl",
+              "mb-4 inline-flex items-center justify-center rounded-xl",
+              isLarge ? "h-16 w-16" : "h-14 w-14",
               iconBgMap[iconStyle]
             )}
           >
-            <div className="h-7 w-7">{icon}</div>
+            <div className={cn(isLarge ? "h-8 w-8" : "h-7 w-7")}>{icon}</div>
           </motion.div>
-          <CardTitle className="text-heading-sm text-brand-navy">
+          <CardTitle
+            className={cn(
+              "text-repwell-teal-500",
+              isLarge ? "text-heading-md" : "text-heading-sm"
+            )}
+          >
             {title}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-body-sm text-brand-slate leading-relaxed">
+          <p
+            className={cn(
+              "text-repwell-teal-400 leading-relaxed",
+              isLarge ? "text-body-md" : "text-body-sm"
+            )}
+          >
             {description}
           </p>
         </CardContent>

@@ -45,7 +45,7 @@ export function TrustLogosBar({
           <motion.p
             variants={fadeInUp}
             className={cn(
-              "mb-8 text-center font-medium text-brand-slate",
+              "mb-8 text-center font-medium text-repwell-teal-400",
               variant === "default" && "text-body-md",
               variant === "compact" && "text-body-sm mb-6",
               variant === "minimal" && "text-caption mb-4"
@@ -87,7 +87,7 @@ export function TrustLogosBar({
                   className="h-full w-auto object-contain"
                 />
               ) : (
-                <span className="text-body-sm font-semibold text-brand-slate">
+                <span className="text-body-sm font-semibold text-repwell-teal-400">
                   {item.name}
                 </span>
               )}

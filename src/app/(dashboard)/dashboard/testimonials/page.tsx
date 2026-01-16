@@ -10,7 +10,7 @@ import type { TestimonialStats, TestimonialFormat, TestimonialStatus } from "@/l
 import type { SentimentLabel, ReviewTheme } from "@/lib/ai/types";
 
 export const metadata = {
-  title: "Testimonials | ReviewHub",
+  title: "Testimonials | RepWell",
   description: "Generate and manage marketing-ready testimonials from your reviews",
 };
 
@@ -58,13 +58,14 @@ async function getTestimonialCandidates() {
 
   // Check which reviews already have testimonials
   const reviewIds = reviews?.map((r) => r.id) || [];
-  const { data: existingTestimonials } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existingTestimonials } = await (supabase as any)
     .from("testimonials")
     .select("review_id")
     .in("review_id", reviewIds);
 
   const existingReviewIds = new Set(
-    existingTestimonials?.map((t) => t.review_id) || []
+    existingTestimonials?.map((t: { review_id: string }) => t.review_id) || []
   );
 
   // Filter and transform
@@ -96,7 +97,8 @@ async function getTestimonials() {
     redirect("/login");
   }
 
-  const { data: testimonials, error, count } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: testimonials, error, count } = await (supabase as any)
     .from("testimonials")
     .select(
       `
@@ -126,7 +128,8 @@ async function getTestimonials() {
   }
 
   return {
-    testimonials: (testimonials || []).map((t) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    testimonials: (testimonials || []).map((t: any) => ({
       id: t.id,
       organizationId: t.organization_id,
       reviewId: t.review_id,

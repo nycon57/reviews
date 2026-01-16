@@ -51,7 +51,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
             {topPerformers[1] ? (
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-3">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 ring-4 ring-gray-300 dark:ring-gray-600">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 ring-4 ring-gray-300">
                     {topPerformers[1].photoUrl ? (
                       <img
                         src={topPerformers[1].photoUrl}
@@ -59,7 +59,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                         className="h-14 w-14 rounded-full object-cover"
                       />
                     ) : (
-                      <span className="text-lg font-semibold text-gray-600 dark:text-gray-400">
+                      <span className="text-lg font-semibold text-gray-600">
                         {getInitials(topPerformers[1].fullName)}
                       </span>
                     )}
@@ -85,12 +85,12 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
         </Card>
 
         {/* First place */}
-        <Card className="order-first sm:order-2 border-yellow-200 dark:border-yellow-800 bg-gradient-to-b from-yellow-50/50 to-transparent dark:from-yellow-950/30">
+        <Card className="order-first sm:order-2 border-yellow-200 bg-gradient-to-b from-yellow-50/50 to-transparent">
           <CardContent className="p-4">
             {topPerformers[0] ? (
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-3">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 dark:bg-yellow-900/50 ring-4 ring-yellow-400 dark:ring-yellow-600">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 ring-4 ring-yellow-400">
                     {topPerformers[0].photoUrl ? (
                       <img
                         src={topPerformers[0].photoUrl}
@@ -98,7 +98,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                         className="h-16 w-16 rounded-full object-cover"
                       />
                     ) : (
-                      <span className="text-xl font-semibold text-yellow-700 dark:text-yellow-300">
+                      <span className="text-xl font-semibold text-yellow-700">
                         {getInitials(topPerformers[0].fullName)}
                       </span>
                     )}
@@ -106,10 +106,10 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                   <Crown className="absolute -top-3 left-1/2 -translate-x-1/2 h-7 w-7 text-yellow-500" />
                 </div>
                 <p className="font-semibold truncate max-w-full">{topPerformers[0].fullName}</p>
-                <p className="text-xs text-yellow-600 dark:text-yellow-400 font-medium">1st Place</p>
+                <p className="text-xs text-yellow-600 font-medium">1st Place</p>
                 <div className="mt-2 flex items-center gap-3 text-sm">
                   <span className="text-muted-foreground">{topPerformers[0].totalReviews} reviews</span>
-                  <span className="font-bold text-yellow-600 dark:text-yellow-400">{topPerformers[0].reputationScore} pts</span>
+                  <span className="font-bold text-yellow-600">{topPerformers[0].reputationScore} pts</span>
                 </div>
               </div>
             ) : (
@@ -135,7 +135,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
             {topPerformers[2] ? (
               <div className="flex flex-col items-center text-center">
                 <div className="relative mb-3">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 ring-4 ring-amber-500 dark:ring-amber-700">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 ring-4 ring-amber-500">
                     {topPerformers[2].photoUrl ? (
                       <img
                         src={topPerformers[2].photoUrl}
@@ -143,7 +143,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                         className="h-14 w-14 rounded-full object-cover"
                       />
                     ) : (
-                      <span className="text-lg font-semibold text-amber-700 dark:text-amber-300">
+                      <span className="text-lg font-semibold text-amber-700">
                         {getInitials(topPerformers[2].fullName)}
                       </span>
                     )}
@@ -174,8 +174,8 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{topPerformers.length > 0 ? topPerformers.length : "-"}</p>
@@ -188,8 +188,8 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-                <Crown className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+                <Crown className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">
@@ -204,8 +204,8 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
-                <Award className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                <Award className="h-5 w-5 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">
@@ -220,8 +220,8 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Medal className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                <Medal className="h-5 w-5 text-purple-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">

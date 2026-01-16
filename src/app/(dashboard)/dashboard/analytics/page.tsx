@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = {
-  title: "Analytics | ReviewHub",
+  title: "Analytics | RepWell",
   description: "Track your performance metrics and insights",
 };
 

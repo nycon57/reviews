@@ -5,7 +5,7 @@ import { HelpCircle } from "lucide-react";
 import { HelpCenter } from "./help-center";
 
 export const metadata = {
-  title: "Help Center | ReviewHub",
+  title: "Help Center | RepWell",
   description: "Get help and find answers to common questions",
 };
 

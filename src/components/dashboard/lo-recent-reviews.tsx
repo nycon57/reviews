@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star, Share2, MessageCircle, Filter } from "lucide-react";
+import { Star, Share2, MessageCircle, Filter, Send, Plus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { RecentReview } from "@/lib/dashboard";
 import { getLoanOfficerRecentReviews } from "@/lib/dashboard";
@@ -99,11 +99,27 @@ export function LORecentReviews({
             ))}
           </div>
         ) : reviews.length === 0 ? (
-          <div className="flex h-[200px] items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <Star className="mx-auto mb-2 h-8 w-8 opacity-50" />
-              <p className="text-sm">No reviews yet</p>
-              <p className="text-xs">Start collecting customer feedback</p>
+          <div className="flex h-[280px] flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-gradient-to-br from-repwell-sage-100/30 to-white p-6 text-center">
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-amber-50 to-amber-100">
+              <Star className="h-7 w-7 text-amber-500" />
+            </div>
+            <h4 className="text-base font-semibold text-repwell-teal-500">No reviews yet</h4>
+            <p className="mt-1 max-w-[280px] text-sm text-repwell-teal-400">
+              Start collecting customer feedback to build your reputation and grow your business.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
+              <Button variant="default" size="sm" asChild>
+                <a href="/dashboard/send">
+                  <Send className="mr-1.5 h-3.5 w-3.5" />
+                  Send Survey
+                </a>
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a href="/dashboard/reviews">
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Add Review
+                </a>
+              </Button>
             </div>
           </div>
         ) : (

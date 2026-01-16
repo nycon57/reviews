@@ -38,7 +38,7 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
     company_address: (settings?.company_address as Organization["company_address"]) ?? null,
     timezone: (settings?.timezone as string) ?? "America/New_York",
     date_format: (settings?.date_format as string) ?? "MM/DD/YYYY",
-    billing_email: row.billing_email ?? null,
+    billing_email: (settings?.billing_email as string) ?? null,
     billing_address: (settings?.billing_address as Organization["billing_address"]) ?? null,
     subscription_tier: (row.subscription_tier as SubscriptionTier) ?? "free",
     subscription_status: (row.subscription_status as SubscriptionStatus) ?? "active",
@@ -276,7 +276,7 @@ export async function getOrganizationMembers(): Promise<{
   return { members: members as OrganizationMember[], error: null };
 }
 
-// Update member role
+// Update member role (enterprise accounts only)
 export async function updateMemberRole(
   memberId: string,
   newRole: "admin" | "manager" | "loan_officer"
@@ -288,10 +288,21 @@ export async function updateMemberRole(
     return { success: false, error: "Not authenticated" };
   }
 
-  // Get user's organization and role
+  // Cannot change your own role
+  if (memberId === user.id) {
+    return { success: false, error: "Cannot change your own role" };
+  }
+
+  // Get user's organization, role, and account type
   const { data: userData } = await supabase
     .from("users")
-    .select("organization_id, role")
+    .select(`
+      organization_id,
+      role,
+      organizations (
+        account_type
+      )
+    `)
     .eq("id", user.id)
     .single();
 
@@ -299,15 +310,29 @@ export async function updateMemberRole(
     return { success: false, error: "Only admins can update member roles" };
   }
 
+  // Role elevation only applies to enterprise accounts
+  const orgData = userData.organizations as { account_type?: string } | null;
+  if (orgData?.account_type !== "enterprise") {
+    return { success: false, error: "Role management is only available for enterprise accounts" };
+  }
+
   // Verify member belongs to same organization
-  const { data: memberData } = await supabase
+  // Note: Using * and casting because is_owner may not be in generated types yet
+  const { data: memberDataRaw } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("*")
     .eq("id", memberId)
     .single();
 
+  const memberData = memberDataRaw as { organization_id?: string; is_owner?: boolean } | null;
+
   if (memberData?.organization_id !== userData.organization_id) {
     return { success: false, error: "Member not found in organization" };
+  }
+
+  // Cannot demote the owner of the organization
+  if (memberData?.is_owner && newRole !== "admin") {
+    return { success: false, error: "Cannot demote the organization owner" };
   }
 
   // Update role
@@ -321,6 +346,7 @@ export async function updateMemberRole(
   }
 
   revalidatePath("/dashboard/organization/team");
+  revalidatePath("/dashboard/team");
   return { success: true, error: null };
 }
 

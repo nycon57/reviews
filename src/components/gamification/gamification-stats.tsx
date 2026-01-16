@@ -60,7 +60,27 @@ export function GamificationStatsCard({
   }
 
   if (!stats) {
-    return null;
+    return (
+      <Card className={className}>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-yellow-500" />
+            Your Progress
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/10">
+              <Trophy className="h-7 w-7 text-repwell-teal-300" />
+            </div>
+            <p className="text-sm font-medium text-repwell-teal-500">Start earning achievements</p>
+            <p className="mt-1 max-w-[260px] text-xs text-repwell-teal-400">
+              Complete surveys and collect reviews to unlock badges, climb the leaderboard, and boost your reputation score.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const getTrendIcon = (trend: "up" | "down" | "stable") => {

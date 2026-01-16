@@ -15,7 +15,7 @@ export function SurveyError({ message }: SurveyErrorProps) {
         icon: Clock,
         title: "Survey Expired",
         iconColor: "text-amber-500",
-        bgColor: "bg-amber-100 dark:bg-amber-900/30",
+        bgColor: "bg-amber-100",
       };
     }
 
@@ -24,7 +24,7 @@ export function SurveyError({ message }: SurveyErrorProps) {
         icon: CheckCircle,
         title: "Already Completed",
         iconColor: "text-green-500",
-        bgColor: "bg-green-100 dark:bg-green-900/30",
+        bgColor: "bg-green-100",
       };
     }
 

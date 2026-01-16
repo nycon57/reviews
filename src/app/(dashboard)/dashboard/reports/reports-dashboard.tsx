@@ -137,7 +137,7 @@ export function ReportsDashboard({
           setError(result.error || "Failed to export CSV");
         }
       } else if (format === "pdf") {
-        const result = await generateReportHTML(generatedReport, "ReviewHub");
+        const result = await generateReportHTML(generatedReport, "RepWell");
         if (result.success && result.data) {
           // Download as HTML file that can be opened and printed to PDF
           downloadFile(result.data, `${baseFilename}.html`, "text/html");

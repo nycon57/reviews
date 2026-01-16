@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ThemeToggle } from "@/components/shared";
 import { GoogleIntegrationCard } from "@/components/google/google-integration-card";
 import { SocialIntegrationCard } from "@/components/social";
 import { SalesforceIntegrationCard } from "@/components/salesforce";
@@ -12,7 +11,7 @@ import { NotificationPreferencesCard } from "@/components/notifications";
 import { ProfileCompletionCard } from "@/components/gamification";
 
 export const metadata = {
-  title: "Settings | ReviewHub",
+  title: "Settings | RepWell",
   description: "Manage your account settings and preferences",
 };
 
@@ -98,27 +97,6 @@ export default function SettingsPage() {
           showMilestones={true}
           showTips={true}
         />
-
-        {/* Appearance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Appearance</CardTitle>
-            <CardDescription>
-              Customize how ReviewHub looks on your device
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Theme</Label>
-                <p className="text-sm text-muted-foreground">
-                  Select your preferred color theme
-                </p>
-              </div>
-              <ThemeToggle variant="full" />
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Google Integration */}
         <Suspense fallback={<GoogleCardSkeleton />}>

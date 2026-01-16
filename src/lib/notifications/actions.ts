@@ -324,7 +324,7 @@ export async function sendSlackNotification(
               ]
             : []),
         ],
-        footer: "ReviewHub",
+        footer: "RepWell",
         ts: Math.floor(new Date(notification.created_at).getTime() / 1000),
       },
     ],
@@ -380,13 +380,13 @@ export async function testSlackWebhook(
   webhookUrl: string
 ): Promise<{ success: boolean; error?: string }> {
   const testPayload = {
-    text: "This is a test message from ReviewHub",
+    text: "This is a test message from RepWell",
     attachments: [
       {
         color: "#6366f1",
         title: "Webhook Test Successful",
         text: "Your Slack integration is configured correctly.",
-        footer: "ReviewHub",
+        footer: "RepWell",
         ts: Math.floor(Date.now() / 1000),
       },
     ],

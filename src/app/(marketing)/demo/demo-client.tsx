@@ -120,8 +120,8 @@ export function DemoPageClient() {
     <>
       <HeroSection
         subtitle="Request a Demo"
-        title="See ReviewHub in Action"
-        description="Schedule a personalized demo with our team. We'll show you how ReviewHub can transform your customer experience management in just 30 minutes."
+        title="See RepWell in Action"
+        description="Schedule a personalized demo with our team. We'll show you how RepWell can transform your customer experience management in just 30 minutes."
       />
 
       <section className="py-16 md:py-24">

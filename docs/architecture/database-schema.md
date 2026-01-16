@@ -2,7 +2,7 @@
 
 ## Overview
 
-ReviewHub uses Supabase (PostgreSQL) with Row Level Security (RLS) for multi-tenant data isolation. This document describes all database tables, relationships, and security policies.
+RepWell uses Supabase (PostgreSQL) with Row Level Security (RLS) for multi-tenant data isolation. This document describes all database tables, relationships, and security policies.
 
 ## Entity Relationship Diagram
 

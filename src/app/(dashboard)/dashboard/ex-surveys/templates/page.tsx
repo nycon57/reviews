@@ -22,7 +22,7 @@ import {
 import { getEXSurveyTemplates, getEXSurveys, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
 
 export const metadata = {
-  title: "Survey Templates | Employee Experience | ReviewHub",
+  title: "Survey Templates | Employee Experience | RepWell",
   description: "Choose a template to create your employee experience survey",
 };
 

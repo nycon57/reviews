@@ -31,15 +31,15 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: "Post Not Found | ReviewHub Blog",
+      title: "Post Not Found | RepWell Blog",
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://reviewhub.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.com";
   const postUrl = `${siteUrl}/blog/${slug}`;
 
   return {
-    title: `${post.title} | ReviewHub Blog`,
+    title: `${post.title} | RepWell Blog`,
     description: post.description,
     authors: [{ name: post.author.name }],
     keywords: post.tags,
@@ -83,7 +83,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const relatedPosts = getRelatedPosts(slug, post.category, post.tags, 3);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://reviewhub.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.com";
   const postUrl = `${siteUrl}/blog/${slug}`;
 
   // JSON-LD structured data for SEO
@@ -101,7 +101,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     },
     publisher: {
       "@type": "Organization",
-      name: "ReviewHub",
+      name: "RepWell",
       logo: {
         "@type": "ImageObject",
         url: `${siteUrl}/logo.png`,
@@ -187,7 +187,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </header>
 
         {/* Article Content */}
-        <div className="max-w-3xl mx-auto prose prose-gray dark:prose-invert">
+        <div className="max-w-3xl mx-auto prose prose-gray">
           <MDXRemote
             source={post.content}
             components={mdxComponents}

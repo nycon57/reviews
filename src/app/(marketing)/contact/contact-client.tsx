@@ -54,8 +54,8 @@ const contactInfo = [
   {
     icon: <Mail className="h-5 w-5" />,
     title: "Email",
-    value: "hello@reviewhub.com",
-    href: "mailto:hello@reviewhub.com",
+    value: "hello@repwell.com",
+    href: "mailto:hello@repwell.com",
   },
   {
     icon: <Phone className="h-5 w-5" />,
@@ -109,7 +109,7 @@ export function ContactPageClient() {
       <HeroSection
         subtitle="Contact Us"
         title="Get in Touch"
-        description="Have a question or want to learn more about ReviewHub? We'd love to hear from you. Our team typically responds within one business day."
+        description="Have a question or want to learn more about RepWell? We'd love to hear from you. Our team typically responds within one business day."
       />
 
       <section className="py-16 md:py-24">

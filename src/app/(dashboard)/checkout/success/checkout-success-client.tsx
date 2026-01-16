@@ -47,7 +47,7 @@ export function CheckoutSuccessClient() {
           </div>
           <CardTitle className="text-2xl">Payment Successful!</CardTitle>
           <CardDescription className="text-base">
-            Thank you for subscribing to ReviewHub
+            Thank you for subscribing to RepWell
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

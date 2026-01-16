@@ -36,7 +36,7 @@ function wrapInEmailTemplate(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ReviewHub</title>
+  <title>RepWell</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5; line-height: 1.6;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
@@ -48,7 +48,7 @@ function wrapInEmailTemplate(
         <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 24px;">
           <tr>
             <td align="center" style="color: #71717a; font-size: 12px; padding: 0 20px;">
-              <p style="margin: 0 0 8px 0;">Powered by ReviewHub</p>
+              <p style="margin: 0 0 8px 0;">Powered by RepWell</p>
               <p style="margin: 0;">
                 <a href="${unsubscribeUrl}" style="color: #71717a; text-decoration: underline;">Unsubscribe</a>
               </p>
@@ -231,7 +231,7 @@ export function getNewReviewNotificationEmail(
   const content = `
     <tr>
       <td style="padding: 32px; text-align: center; background-color: #fafafa; border-bottom: 1px solid #e4e4e7;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">ReviewHub</span>
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
       </td>
     </tr>
     <tr>
@@ -297,7 +297,7 @@ export function getReviewPendingApprovalEmail(
   const content = `
     <tr>
       <td style="padding: 32px; text-align: center; background-color: #fef3c7; border-bottom: 1px solid #fcd34d;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">ReviewHub</span>
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
       </td>
     </tr>
     <tr>
@@ -358,7 +358,7 @@ export function getReviewApprovedEmail(data: ReviewApprovedEmailData): {
   const content = `
     <tr>
       <td style="padding: 32px; text-align: center; background-color: #dcfce7; border-bottom: 1px solid #86efac;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">ReviewHub</span>
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
       </td>
     </tr>
     <tr>
@@ -408,7 +408,7 @@ export function getReviewRejectedEmail(data: ReviewRejectedEmailData): {
   const content = `
     <tr>
       <td style="padding: 32px; text-align: center; background-color: #fef2f2; border-bottom: 1px solid #fecaca;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">ReviewHub</span>
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
       </td>
     </tr>
     <tr>
@@ -610,7 +610,7 @@ export function getNotificationDigestEmail(
   subject: string;
   html: string;
 } {
-  const subject = `Your ${data.digestPeriod} ReviewHub Digest`;
+  const subject = `Your ${data.digestPeriod} RepWell Digest`;
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
@@ -658,7 +658,7 @@ export function getNotificationDigestEmail(
   const content = `
     <tr>
       <td style="padding: 32px; text-align: center; background-color: #6366f1; border-bottom: 1px solid #4f46e5;">
-        <span style="font-size: 24px; font-weight: bold; color: #ffffff;">ReviewHub</span>
+        <span style="font-size: 24px; font-weight: bold; color: #ffffff;">RepWell</span>
       </td>
     </tr>
     <tr>

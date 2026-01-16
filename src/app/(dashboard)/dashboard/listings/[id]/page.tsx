@@ -19,12 +19,12 @@ export async function generateMetadata({ params }: ListingDetailPageProps) {
 
   if (!result.success || !result.data) {
     return {
-      title: 'Listing Not Found | ReviewHub',
+      title: 'Listing Not Found | RepWell',
     };
   }
 
   return {
-    title: `${result.data.businessName} | Business Listings | ReviewHub`,
+    title: `${result.data.businessName} | Business Listings | RepWell`,
     description: `Manage business listing for ${result.data.businessName}`,
   };
 }

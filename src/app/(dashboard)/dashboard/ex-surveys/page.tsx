@@ -23,7 +23,7 @@ import { interpretENPS } from "@/types/ex-survey.types";
 import { EXMultiMetricChart } from "@/components/ex-surveys";
 
 export const metadata = {
-  title: "Employee Experience | ReviewHub",
+  title: "Employee Experience | RepWell",
   description: "Employee engagement surveys and culture measurement",
 };
 

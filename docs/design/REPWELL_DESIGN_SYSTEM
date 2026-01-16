@@ -1,0 +1,2046 @@
+# Repwell Design System
+## Comprehensive UI/UX & Art Direction Guide
+
+> **Purpose**: This document provides complete design direction for building Repwell's frontend. Follow these guidelines precisely to maintain brand consistency and create a cohesive, premium user experience.
+
+---
+
+## Table of Contents
+
+1. [Brand Foundation](#brand-foundation)
+2. [Color System](#color-system)
+3. [Typography](#typography)
+4. [Spacing & Layout](#spacing--layout)
+5. [Components](#components)
+6. [Motion & Animation](#motion--animation)
+7. [Micro-interactions](#micro-interactions)
+8. [Iconography](#iconography)
+9. [Photography & Imagery](#photography--imagery)
+10. [Logo Usage](#logo-usage)
+11. [Tailwind Configuration](#tailwind-configuration)
+12. [shadcn/ui Customization](#shadcnui-customization)
+13. [Page Patterns](#page-patterns)
+14. [Responsive Design](#responsive-design)
+15. [Accessibility](#accessibility)
+16. [Do's and Don'ts](#dos-and-donts)
+
+---
+
+## Brand Foundation
+
+### Brand Essence
+**"Reputation done well."**
+
+Repwell is an AI-powered reputation management platform for mortgage professionals. The brand conveys:
+- **Trust**: Established, reliable, secure
+- **Intelligence**: AI-powered, data-driven, smart automation
+- **Growth**: Upward trajectory, improvement, building over time
+- **Warmth**: Approachable, human-centered despite being tech-forward
+
+### Brand Personality
+- Professional but not corporate
+- Sophisticated but not cold
+- Tech-forward but not sterile
+- Confident but not arrogant
+- Supportive and empowering
+
+### Design Philosophy
+Repwell's visual language draws inspiration from premium SaaS products like Calendly, Linear, and Notion while maintaining its own earthy, trust-building aesthetic. The design should feel:
+- **Clean**: Generous whitespace, uncluttered layouts
+- **Calm**: Soft, natural color palette that doesn't overwhelm
+- **Credible**: Professional polish that instills confidence
+- **Modern**: Contemporary patterns without being trendy
+
+---
+
+## Color System
+
+### Primary Palette
+
+```css
+/* Core Brand Colors - Use these CSS custom properties */
+--repwell-sage-100: #cad2c5;    /* Lightest sage - backgrounds, subtle fills */
+--repwell-sage-200: #84a98c;    /* Mid sage - secondary elements, "Well" in logo */
+--repwell-teal-300: #52796f;    /* Primary teal - buttons, links, accents */
+--repwell-teal-400: #354f52;    /* Deep teal - "Rep" in logo, headings */
+--repwell-teal-500: #2f3e46;    /* Darkest - text, dark sections */
+```
+
+### Tailwind Color Configuration
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        repwell: {
+          sage: {
+            100: '#cad2c5',
+            200: '#84a98c',
+          },
+          teal: {
+            300: '#52796f',
+            400: '#354f52',
+            500: '#2f3e46',
+          }
+        },
+        // Semantic aliases
+        primary: {
+          DEFAULT: '#52796f',
+          hover: '#354f52',
+          light: '#84a98c',
+        },
+        secondary: {
+          DEFAULT: '#84a98c',
+          hover: '#52796f',
+        },
+        background: {
+          DEFAULT: '#ffffff',
+          subtle: '#f8faf8',
+          muted: '#f0f4f0',
+          sage: '#cad2c5',
+        },
+        foreground: {
+          DEFAULT: '#2f3e46',
+          muted: '#52796f',
+          subtle: '#84a98c',
+        },
+        border: {
+          DEFAULT: '#e2e8e4',
+          subtle: '#eef2ee',
+        }
+      }
+    }
+  }
+}
+```
+
+### Color Usage Rules
+
+#### Backgrounds
+| Use Case | Color | Tailwind Class |
+|----------|-------|----------------|
+| Page background | White | `bg-white` |
+| Subtle sections | Off-white with sage tint | `bg-background-subtle` or `bg-[#f8faf8]` |
+| Muted sections | Light sage | `bg-background-muted` or `bg-repwell-sage-100/30` |
+| Dark sections (CTAs, hero variants) | Deep teal | `bg-repwell-teal-500` |
+| Cards | White with subtle border | `bg-white border border-border` |
+
+#### Text
+| Use Case | Color | Tailwind Class |
+|----------|-------|----------------|
+| Headings | Deep teal | `text-repwell-teal-500` |
+| Body text | Deep teal (slightly lighter) | `text-repwell-teal-400` |
+| Secondary/muted text | Mid teal | `text-repwell-teal-300` |
+| Links | Primary teal | `text-primary hover:text-primary-hover` |
+| Text on dark backgrounds | White or sage-100 | `text-white` or `text-repwell-sage-100` |
+
+#### Interactive Elements
+| Element | Default | Hover | Active |
+|---------|---------|-------|--------|
+| Primary button | `bg-repwell-teal-300` | `bg-repwell-teal-400` | `bg-repwell-teal-500` |
+| Secondary button | `bg-transparent border-repwell-teal-300` | `bg-repwell-sage-100/50` | `bg-repwell-sage-100` |
+| Ghost button | `bg-transparent` | `bg-repwell-sage-100/30` | `bg-repwell-sage-100/50` |
+| Links | `text-repwell-teal-300` | `text-repwell-teal-400` | Underline |
+
+#### Accent Colors (Use Sparingly)
+For data visualization, status indicators, or highlighting:
+
+```css
+--accent-success: #84a98c;  /* Sage green - positive, success */
+--accent-warning: #d4a574;  /* Warm amber - warnings, attention */
+--accent-error: #c47c7c;    /* Muted coral - errors, destructive */
+--accent-info: #7c9eb8;     /* Muted blue - informational */
+```
+
+---
+
+## Typography
+
+### Font Stack
+
+**Display/Headlines**: `"Erstoria", Georgia, serif` (Custom font)
+- Use for: H1, H2, hero text, marketing headlines
+- Conveys: Trust, establishment, editorial quality
+- Loaded via @font-face in globals.css from /fonts/Erstoria.woff2
+
+**Body/UI**: `"Source Sans 3", system-ui, sans-serif`
+- Use for: Body text, UI elements, buttons, navigation, H3-H6
+- Conveys: Clean, readable, modern, professional
+- Loaded via next/font/google in layout.tsx
+
+### Font Loading
+
+```tsx
+// In layout.tsx - Google Fonts via Next.js
+import { Source_Sans_3 } from "next/font/google";
+const sourceSans = Source_Sans_3({ subsets: ["latin"] });
+
+// In globals.css - Custom font via @font-face
+@font-face {
+  font-family: 'Erstoria';
+  src: url('/fonts/Erstoria.woff2') format('woff2'),
+       url('/fonts/Erstoria.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+```
+
+### Tailwind Font Configuration
+
+```javascript
+// tailwind.config.ts
+module.exports = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['Erstoria', 'Georgia', 'serif'],
+        sans: ['Source Sans 3', 'system-ui', 'sans-serif'],
+      }
+    }
+  }
+}
+```
+
+### Type Scale
+
+```css
+/* Headings - Use font-display (Libre Baskerville) */
+h1: text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight
+h2: text-3xl md:text-4xl lg:text-5xl font-display font-bold tracking-tight
+h3: text-xl md:text-2xl font-sans font-semibold  /* Switch to sans at H3 */
+h4: text-lg md:text-xl font-sans font-semibold
+h5: text-base md:text-lg font-sans font-semibold
+h6: text-sm md:text-base font-sans font-semibold uppercase tracking-wide
+
+/* Body */
+body-lg: text-lg md:text-xl font-sans font-normal leading-relaxed
+body: text-base font-sans font-normal leading-relaxed
+body-sm: text-sm font-sans font-normal leading-relaxed
+caption: text-xs font-sans font-medium uppercase tracking-wider
+
+/* Special */
+quote: text-xl md:text-2xl font-display italic
+stat-number: text-4xl md:text-5xl lg:text-6xl font-display font-bold
+```
+
+### Typography Component Examples
+
+```jsx
+// Hero headline
+<h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-repwell-teal-500">
+  Reputation done <span className="text-repwell-sage-200">well</span>
+</h1>
+
+// Section headline
+<h2 className="font-display text-3xl md:text-4xl font-bold text-repwell-teal-500">
+  Build trust with every review
+</h2>
+
+// Subheading
+<h3 className="font-sans text-xl md:text-2xl font-semibold text-repwell-teal-400">
+  AI-powered insights
+</h3>
+
+// Body paragraph
+<p className="font-sans text-base md:text-lg text-repwell-teal-400 leading-relaxed">
+  Transform how mortgage professionals manage their online reputation...
+</p>
+
+// Eyebrow/label
+<span className="font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-300">
+  Features
+</span>
+```
+
+---
+
+## Spacing & Layout
+
+### Spacing Scale (Tailwind default + custom)
+
+Use Tailwind's default spacing scale consistently:
+- `4` (1rem/16px) - Minimum comfortable spacing
+- `6` (1.5rem/24px) - Default component internal spacing
+- `8` (2rem/32px) - Standard gap between related elements
+- `12` (3rem/48px) - Section internal padding
+- `16` (4rem/64px) - Gap between sections
+- `24` (6rem/96px) - Large section breaks
+- `32` (8rem/128px) - Hero/major section vertical padding
+
+### Container Widths
+
+```jsx
+// Standard content container
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+// Narrow content (blog, forms)
+<div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+
+// Wide content (dashboards, feature grids)
+<div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+```
+
+### Section Patterns
+
+```jsx
+// Standard section
+<section className="py-16 md:py-24 lg:py-32">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {/* Content */}
+  </div>
+</section>
+
+// Alternating background section
+<section className="py-16 md:py-24 bg-background-subtle">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {/* Content */}
+  </div>
+</section>
+
+// Dark CTA section
+<section className="py-16 md:py-24 bg-repwell-teal-500">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {/* White text content */}
+  </div>
+</section>
+```
+
+### Grid Systems
+
+```jsx
+// 2-column feature layout
+<div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-center">
+
+// 3-column card grid
+<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+
+// 4-column icon/logo grid
+<div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+
+// Asymmetric content layout (text + visual)
+<div className="grid lg:grid-cols-5 gap-12 items-center">
+  <div className="lg:col-span-2">{/* Text */}</div>
+  <div className="lg:col-span-3">{/* Visual */}</div>
+</div>
+```
+
+---
+
+## Components
+
+### Buttons
+
+#### Primary Button
+```jsx
+<button className="
+  inline-flex items-center justify-center gap-2
+  px-6 py-3
+  bg-repwell-teal-300 hover:bg-repwell-teal-400 active:bg-repwell-teal-500
+  text-white font-sans font-semibold text-sm
+  rounded-lg
+  shadow-sm hover:shadow-md
+  transition-all duration-200
+  focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2
+">
+  Get started
+</button>
+```
+
+#### Secondary Button
+```jsx
+<button className="
+  inline-flex items-center justify-center gap-2
+  px-6 py-3
+  bg-transparent hover:bg-repwell-sage-100/50 active:bg-repwell-sage-100
+  text-repwell-teal-400 font-sans font-semibold text-sm
+  border-2 border-repwell-teal-300 hover:border-repwell-teal-400
+  rounded-lg
+  transition-all duration-200
+  focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2
+">
+  Learn more
+</button>
+```
+
+#### Ghost Button
+```jsx
+<button className="
+  inline-flex items-center justify-center gap-2
+  px-4 py-2
+  bg-transparent hover:bg-repwell-sage-100/30
+  text-repwell-teal-300 hover:text-repwell-teal-400 font-sans font-medium text-sm
+  rounded-lg
+  transition-all duration-200
+">
+  View all <ArrowRight className="w-4 h-4" />
+</button>
+```
+
+#### Button on Dark Background
+```jsx
+<button className="
+  inline-flex items-center justify-center gap-2
+  px-6 py-3
+  bg-white hover:bg-repwell-sage-100
+  text-repwell-teal-500 font-sans font-semibold text-sm
+  rounded-lg
+  shadow-sm hover:shadow-md
+  transition-all duration-200
+">
+  Sign up for free
+</button>
+```
+
+### Cards
+
+#### Feature Card
+```jsx
+<div className="
+  bg-white
+  border border-border rounded-xl
+  p-6 lg:p-8
+  shadow-sm hover:shadow-md
+  transition-shadow duration-300
+">
+  <div className="
+    w-12 h-12 mb-6
+    bg-repwell-sage-100/50 rounded-lg
+    flex items-center justify-center
+  ">
+    <IconComponent className="w-6 h-6 text-repwell-teal-300" />
+  </div>
+  <h3 className="font-sans text-xl font-semibold text-repwell-teal-500 mb-3">
+    Feature Title
+  </h3>
+  <p className="font-sans text-repwell-teal-400 leading-relaxed">
+    Description text goes here...
+  </p>
+</div>
+```
+
+#### Card with Colored Top Border (Calendly-style)
+```jsx
+<div className="
+  bg-white
+  border border-border rounded-xl
+  overflow-hidden
+  shadow-sm hover:shadow-md
+  transition-shadow duration-300
+">
+  {/* Colored accent bar */}
+  <div className="h-1.5 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200" />
+  <div className="p-6">
+    <h3 className="font-sans text-lg font-semibold text-repwell-teal-500 mb-2">
+      Card Title
+    </h3>
+    <p className="font-sans text-sm text-repwell-teal-400 mb-4">
+      Description text...
+    </p>
+    <button className="text-repwell-teal-300 hover:text-repwell-teal-400 font-medium text-sm">
+      Book now
+    </button>
+  </div>
+</div>
+```
+
+#### Stats Card
+```jsx
+<div className="text-center p-6">
+  <div className="font-display text-5xl lg:text-6xl font-bold text-repwell-teal-300 mb-2">
+    94%
+  </div>
+  <div className="font-sans text-repwell-teal-400">
+    increase in positive reviews
+  </div>
+  <div className="mt-4 h-1 bg-repwell-sage-200/30 rounded-full overflow-hidden">
+    <div className="h-full w-[94%] bg-repwell-teal-300 rounded-full" />
+  </div>
+</div>
+```
+
+### Form Elements
+
+#### Input Field
+```jsx
+<div className="space-y-2">
+  <label className="block font-sans text-sm font-medium text-repwell-teal-500">
+    Email address
+  </label>
+  <input
+    type="email"
+    className="
+      w-full px-4 py-3
+      bg-white
+      border border-border rounded-lg
+      font-sans text-repwell-teal-500 placeholder:text-repwell-teal-300/50
+      focus:outline-none focus:ring-2 focus:ring-repwell-teal-300/50 focus:border-repwell-teal-300
+      transition-all duration-200
+    "
+    placeholder="you@company.com"
+  />
+</div>
+```
+
+#### Select Dropdown
+```jsx
+<select className="
+  w-full px-4 py-3
+  bg-white
+  border border-border rounded-lg
+  font-sans text-repwell-teal-500
+  focus:outline-none focus:ring-2 focus:ring-repwell-teal-300/50 focus:border-repwell-teal-300
+  transition-all duration-200
+  appearance-none
+  bg-[url('data:image/svg+xml;...')] bg-no-repeat bg-right-4
+">
+  <option>Select option</option>
+</select>
+```
+
+### Navigation
+
+#### Header Navigation
+```jsx
+<header className="
+  fixed top-0 left-0 right-0 z-50
+  bg-white/80 backdrop-blur-md
+  border-b border-border/50
+">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex items-center justify-between h-16 lg:h-20">
+      {/* Logo */}
+      <a href="/" className="flex-shrink-0">
+        <RepwellLogo className="h-8 w-auto" />
+      </a>
+      
+      {/* Nav links */}
+      <nav className="hidden md:flex items-center gap-8">
+        <a href="#" className="font-sans text-sm font-medium text-repwell-teal-400 hover:text-repwell-teal-500 transition-colors">
+          Product
+        </a>
+        <a href="#" className="font-sans text-sm font-medium text-repwell-teal-400 hover:text-repwell-teal-500 transition-colors">
+          Solutions
+        </a>
+        <a href="#" className="font-sans text-sm font-medium text-repwell-teal-400 hover:text-repwell-teal-500 transition-colors">
+          Pricing
+        </a>
+      </nav>
+      
+      {/* CTA */}
+      <div className="flex items-center gap-4">
+        <a href="#" className="hidden sm:block font-sans text-sm font-medium text-repwell-teal-400 hover:text-repwell-teal-500">
+          Log in
+        </a>
+        <button className="px-4 py-2 bg-repwell-teal-300 hover:bg-repwell-teal-400 text-white font-sans font-semibold text-sm rounded-lg transition-colors">
+          Get started
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+```
+
+### Testimonial/Quote Block
+```jsx
+<blockquote className="relative">
+  {/* Optional decorative quote mark */}
+  <div className="absolute -top-4 -left-2 text-6xl text-repwell-sage-200/30 font-display">
+    "
+  </div>
+  <p className="font-display text-xl md:text-2xl italic text-repwell-teal-500 leading-relaxed mb-6">
+    Repwell transformed how we manage our online presence. Our review response time dropped from days to hours.
+  </p>
+  <footer className="flex items-center gap-4">
+    <img 
+      src="/avatar.jpg" 
+      alt="" 
+      className="w-12 h-12 rounded-full object-cover ring-2 ring-repwell-sage-200"
+    />
+    <div>
+      <div className="font-sans font-semibold text-repwell-teal-500">Sarah Johnson</div>
+      <div className="font-sans text-sm text-repwell-teal-300">Branch Manager, ABC Mortgage</div>
+    </div>
+  </footer>
+</blockquote>
+```
+
+---
+
+## Motion & Animation
+
+### Philosophy
+Motion in Repwell should feel:
+- **Purposeful**: Every animation serves a function
+- **Subtle**: Enhances without distracting
+- **Smooth**: Consistent easing, no jarring transitions
+- **Professional**: Not playful or bouncy
+
+### Framer Motion Configuration
+
+```jsx
+// motion-config.js
+export const defaultTransition = {
+  duration: 0.3,
+  ease: [0.25, 0.1, 0.25, 1], // Custom easing - smooth deceleration
+};
+
+export const springTransition = {
+  type: "spring",
+  stiffness: 300,
+  damping: 30,
+};
+
+export const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+export const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    transition: defaultTransition,
+  },
+};
+
+export const fadeIn = {
+  hidden: { opacity: 0 },
+  show: { 
+    opacity: 1,
+    transition: { duration: 0.5 },
+  },
+};
+
+export const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  show: { 
+    opacity: 1, 
+    scale: 1,
+    transition: defaultTransition,
+  },
+};
+```
+
+### Page Load Animations
+
+```jsx
+import { motion } from "framer-motion";
+
+// Hero section entrance
+function HeroSection() {
+  return (
+    <motion.section
+      initial="hidden"
+      animate="show"
+      variants={staggerContainer}
+    >
+      <motion.h1 variants={fadeInUp}>
+        Reputation done well
+      </motion.h1>
+      <motion.p variants={fadeInUp}>
+        AI-powered reputation management...
+      </motion.p>
+      <motion.div variants={fadeInUp}>
+        <Button>Get started</Button>
+      </motion.div>
+    </motion.section>
+  );
+}
+```
+
+### Scroll-Triggered Animations
+
+```jsx
+import { motion } from "framer-motion";
+
+// Section that animates when scrolled into view
+function AnimatedSection({ children }) {
+  return (
+    <motion.section
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-100px" }}
+      variants={staggerContainer}
+    >
+      {children}
+    </motion.section>
+  );
+}
+
+// Individual animated elements
+function AnimatedCard({ children, index }) {
+  return (
+    <motion.div
+      variants={fadeInUp}
+      custom={index}
+      transition={{ delay: index * 0.1 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+### Hover Animations
+
+```jsx
+// Card hover lift effect
+<motion.div
+  whileHover={{ y: -4 }}
+  transition={{ duration: 0.2 }}
+  className="bg-white rounded-xl shadow-sm hover:shadow-md"
+>
+  {/* Card content */}
+</motion.div>
+
+// Button hover scale
+<motion.button
+  whileHover={{ scale: 1.02 }}
+  whileTap={{ scale: 0.98 }}
+  transition={{ duration: 0.15 }}
+>
+  Get started
+</motion.button>
+
+// Link arrow slide
+<motion.a className="inline-flex items-center gap-2 group">
+  Learn more
+  <motion.span
+    className="inline-block"
+    initial={{ x: 0 }}
+    whileHover={{ x: 4 }}
+  >
+    →
+  </motion.span>
+</motion.a>
+```
+
+### Page Transitions
+
+```jsx
+// Layout wrapper for page transitions
+import { AnimatePresence, motion } from "framer-motion";
+
+function PageTransition({ children }) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.3 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+```
+
+### Loading States
+
+```jsx
+// Skeleton shimmer effect (CSS)
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    theme('colors.repwell.sage.100/30') 0%,
+    theme('colors.repwell.sage.100/60') 50%,
+    theme('colors.repwell.sage.100/30') 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// Spinner
+<motion.div
+  className="w-5 h-5 border-2 border-repwell-sage-200 border-t-repwell-teal-300 rounded-full"
+  animate={{ rotate: 360 }}
+  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+/>
+```
+
+---
+
+## Micro-interactions
+
+### Button States
+
+```jsx
+// Complete button with all states
+<button className="
+  relative overflow-hidden
+  px-6 py-3
+  bg-repwell-teal-300 
+  text-white font-semibold
+  rounded-lg
+  
+  /* Hover */
+  hover:bg-repwell-teal-400
+  
+  /* Focus */
+  focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2
+  
+  /* Active/pressed */
+  active:scale-[0.98]
+  
+  /* Disabled */
+  disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-repwell-teal-300
+  
+  /* Transition */
+  transition-all duration-200
+">
+  {/* Ripple effect on click (optional) */}
+  <span className="relative z-10">Get started</span>
+</button>
+```
+
+### Form Input Interactions
+
+```jsx
+// Input with focus ring animation
+<input className="
+  px-4 py-3
+  border border-border rounded-lg
+  
+  /* Focus states */
+  focus:outline-none
+  focus:border-repwell-teal-300
+  focus:ring-2 focus:ring-repwell-teal-300/20
+  
+  /* Valid state */
+  valid:border-repwell-sage-200
+  
+  /* Invalid state */
+  invalid:border-red-300 invalid:ring-red-100
+  
+  transition-all duration-200
+"/>
+
+// Floating label pattern
+<div className="relative">
+  <input
+    id="email"
+    placeholder=" "
+    className="peer px-4 pt-6 pb-2 ..."
+  />
+  <label
+    htmlFor="email"
+    className="
+      absolute left-4 top-4
+      text-repwell-teal-300/70
+      transition-all duration-200
+      peer-placeholder-shown:top-4 peer-placeholder-shown:text-base
+      peer-focus:top-2 peer-focus:text-xs peer-focus:text-repwell-teal-300
+      peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs
+    "
+  >
+    Email address
+  </label>
+</div>
+```
+
+### Link Interactions
+
+```jsx
+// Text link with underline animation
+<a className="
+  relative
+  text-repwell-teal-300 hover:text-repwell-teal-400
+  
+  /* Animated underline */
+  after:absolute after:bottom-0 after:left-0
+  after:h-[2px] after:w-0 after:bg-repwell-teal-300
+  hover:after:w-full
+  after:transition-all after:duration-300
+">
+  Learn more
+</a>
+
+// Arrow link
+<a className="
+  inline-flex items-center gap-2
+  text-repwell-teal-300 hover:text-repwell-teal-400
+  group
+">
+  View all features
+  <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform">
+    {/* Arrow icon */}
+  </svg>
+</a>
+```
+
+### Card Interactions
+
+```jsx
+// Elevated card on hover
+<div className="
+  bg-white rounded-xl
+  border border-border
+  shadow-sm
+  
+  /* Hover lift effect */
+  hover:shadow-lg hover:-translate-y-1
+  
+  /* Smooth transition */
+  transition-all duration-300 ease-out
+">
+  {/* Content */}
+</div>
+
+// Card with border color change on hover
+<div className="
+  bg-white rounded-xl
+  border-2 border-transparent
+  shadow-sm
+  
+  hover:border-repwell-sage-200
+  hover:shadow-md
+  
+  transition-all duration-300
+">
+  {/* Content */}
+</div>
+```
+
+### Toggle/Switch Interactions
+
+```jsx
+<button
+  role="switch"
+  aria-checked={enabled}
+  onClick={() => setEnabled(!enabled)}
+  className={`
+    relative w-12 h-6 rounded-full
+    transition-colors duration-200
+    ${enabled ? 'bg-repwell-teal-300' : 'bg-repwell-sage-100'}
+  `}
+>
+  <span
+    className={`
+      absolute top-0.5 left-0.5
+      w-5 h-5 rounded-full bg-white
+      shadow-sm
+      transition-transform duration-200
+      ${enabled ? 'translate-x-6' : 'translate-x-0'}
+    `}
+  />
+</button>
+```
+
+### Tooltip Interactions
+
+```jsx
+// CSS-only tooltip
+<div className="relative group">
+  <button>Hover me</button>
+  <div className="
+    absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+    px-3 py-2
+    bg-repwell-teal-500 text-white text-sm rounded-lg
+    
+    /* Hidden by default */
+    opacity-0 invisible
+    
+    /* Show on hover */
+    group-hover:opacity-100 group-hover:visible
+    
+    /* Animation */
+    transform translate-y-1 group-hover:translate-y-0
+    transition-all duration-200
+    
+    /* Arrow */
+    after:absolute after:top-full after:left-1/2 after:-translate-x-1/2
+    after:border-4 after:border-transparent after:border-t-repwell-teal-500
+  ">
+    Tooltip content
+  </div>
+</div>
+```
+
+### Accordion Interactions
+
+```jsx
+import { motion, AnimatePresence } from "framer-motion";
+
+function Accordion({ title, children, isOpen, onToggle }) {
+  return (
+    <div className="border-b border-border">
+      <button
+        onClick={onToggle}
+        className="w-full py-4 flex items-center justify-between text-left"
+      >
+        <span className="font-semibold text-repwell-teal-500">{title}</span>
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="w-5 h-5 text-repwell-teal-300" />
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pb-4 text-repwell-teal-400">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+```
+
+---
+
+## Iconography
+
+### Icon Style Guidelines
+- **Library**: Use Lucide React icons (consistent with shadcn/ui)
+- **Stroke width**: 1.5px-2px (default Lucide)
+- **Size scale**: 16px (inline), 20px (buttons), 24px (standalone), 32px+ (feature icons)
+- **Color**: Match text color or use `text-repwell-teal-300` for accent
+
+### Common Icon Patterns
+
+```jsx
+// Inline with text
+<span className="inline-flex items-center gap-2">
+  <CheckCircle className="w-4 h-4 text-repwell-sage-200" />
+  Feature included
+</span>
+
+// In buttons
+<button className="inline-flex items-center gap-2">
+  <ArrowRight className="w-5 h-5" />
+  Continue
+</button>
+
+// Feature icon with background
+<div className="w-12 h-12 bg-repwell-sage-100/50 rounded-xl flex items-center justify-center">
+  <Star className="w-6 h-6 text-repwell-teal-300" />
+</div>
+
+// Large decorative icon
+<div className="w-16 h-16 bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50 rounded-2xl flex items-center justify-center">
+  <TrendingUp className="w-8 h-8 text-repwell-teal-400" />
+</div>
+```
+
+### Icon Color Rules
+| Context | Icon Color |
+|---------|------------|
+| Default UI | `text-repwell-teal-400` |
+| Interactive (links, buttons) | `text-repwell-teal-300` |
+| Success/positive | `text-repwell-sage-200` |
+| Muted/secondary | `text-repwell-teal-300/50` |
+| On dark background | `text-white` or `text-repwell-sage-100` |
+| Error/warning | Use semantic accent colors |
+
+---
+
+## Photography & Imagery
+
+### Photo Style
+- **People**: Diverse, professional, approachable mortgage/finance professionals
+- **Expressions**: Confident, friendly, engaged (not stiff corporate poses)
+- **Environments**: Modern offices, home offices, client meetings
+- **Treatment**: Slightly desaturated, warm tones to match brand palette
+- **Crop**: Favor environmental portraits over tight headshots
+
+### Avatar Treatment (Calendly-style)
+
+```jsx
+// Avatar with brand-colored ring
+<div className="relative">
+  <img
+    src="/avatar.jpg"
+    alt="Jane Smith"
+    className="w-16 h-16 rounded-full object-cover"
+  />
+  {/* Decorative ring */}
+  <div className="
+    absolute inset-0 
+    rounded-full 
+    ring-4 ring-repwell-sage-200 ring-offset-2 ring-offset-white
+  " />
+</div>
+
+// Avatar with status indicator
+<div className="relative">
+  <img
+    src="/avatar.jpg"
+    alt=""
+    className="w-12 h-12 rounded-full object-cover"
+  />
+  <span className="
+    absolute bottom-0 right-0
+    w-3 h-3 
+    bg-repwell-sage-200 
+    border-2 border-white 
+    rounded-full
+  " />
+</div>
+
+// Floating avatars with colored accent shapes (like Calendly hero)
+<div className="relative">
+  <img
+    src="/avatar.jpg"
+    alt=""
+    className="w-20 h-20 rounded-full object-cover relative z-10"
+  />
+  {/* Decorative shape behind */}
+  <div className="
+    absolute -bottom-2 -right-2
+    w-8 h-8
+    bg-repwell-sage-200
+    rounded-lg
+    transform rotate-12
+  " />
+</div>
+```
+
+### Decorative Elements
+
+```jsx
+// Floating shapes (Calendly-style background accents)
+<div className="absolute inset-0 overflow-hidden pointer-events-none">
+  {/* Circles */}
+  <div className="absolute top-20 left-10 w-4 h-4 bg-repwell-teal-300 rounded-full opacity-60" />
+  <div className="absolute top-40 right-20 w-3 h-3 bg-repwell-sage-200 rounded-full opacity-40" />
+  
+  {/* Squares */}
+  <div className="absolute bottom-32 left-1/4 w-4 h-4 bg-repwell-sage-100 transform rotate-12" />
+  
+  {/* Diamonds */}
+  <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-repwell-teal-300/30 transform rotate-45" />
+  
+  {/* Stars/plus shapes */}
+  <svg className="absolute top-1/4 right-1/4 w-4 h-4 text-repwell-sage-200">
+    <path d="M8 0v16M0 8h16" stroke="currentColor" strokeWidth="2" />
+  </svg>
+</div>
+```
+
+### Background Patterns
+
+```jsx
+// Subtle dot grid pattern
+<div 
+  className="absolute inset-0 opacity-30"
+  style={{
+    backgroundImage: `radial-gradient(circle, #84a98c 1px, transparent 1px)`,
+    backgroundSize: '24px 24px',
+  }}
+/>
+
+// Soft gradient mesh
+<div className="
+  absolute inset-0
+  bg-gradient-to-br from-repwell-sage-100/20 via-transparent to-repwell-teal-300/10
+"/>
+
+// Subtle texture overlay (add noise for depth)
+<div 
+  className="absolute inset-0 opacity-[0.015]"
+  style={{
+    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+  }}
+/>
+```
+
+### Product Screenshots/UI Images
+
+```jsx
+// Browser mockup for product shots
+<div className="relative">
+  {/* Browser chrome */}
+  <div className="bg-repwell-sage-100/50 rounded-t-xl px-4 py-3 flex items-center gap-2">
+    <div className="flex gap-1.5">
+      <div className="w-3 h-3 rounded-full bg-repwell-sage-200/60" />
+      <div className="w-3 h-3 rounded-full bg-repwell-sage-200/60" />
+      <div className="w-3 h-3 rounded-full bg-repwell-sage-200/60" />
+    </div>
+    <div className="flex-1 bg-white rounded-md px-4 py-1.5 text-xs text-repwell-teal-300">
+      app.repwell.ai
+    </div>
+  </div>
+  {/* Screenshot */}
+  <div className="bg-white rounded-b-xl shadow-2xl overflow-hidden">
+    <img src="/dashboard-screenshot.png" alt="Repwell dashboard" className="w-full" />
+  </div>
+</div>
+
+// Floating UI cards (like Calendly meeting cards)
+<div className="
+  absolute right-10 bottom-10
+  bg-white rounded-xl shadow-xl
+  p-4 w-64
+  transform rotate-3 hover:rotate-0 transition-transform
+">
+  <div className="h-1.5 bg-repwell-sage-200 rounded-full mb-3" />
+  <h4 className="font-semibold text-repwell-teal-500">New Review Alert</h4>
+  <p className="text-sm text-repwell-teal-400 mt-1">5-star review from John D.</p>
+</div>
+```
+
+---
+
+## Logo Usage
+
+### Logo Files
+- **Full color**: Primary usage on light backgrounds
+- **Reversed**: White version for dark backgrounds
+- **Monochrome**: Single color for special applications
+
+### Clear Space
+Maintain minimum clear space equal to the height of the "R" in "Rep" on all sides.
+
+### Minimum Sizes
+- **Digital**: Minimum 80px wide (full logo), 24px (icon only)
+- **Print**: Minimum 1 inch wide
+
+### Logo Placement in UI
+
+```jsx
+// Header logo
+<a href="/" className="flex-shrink-0">
+  <img 
+    src="/repwell-logo.svg" 
+    alt="Repwell" 
+    className="h-8 w-auto"  // Fixed height, auto width
+  />
+</a>
+
+// Footer logo (slightly smaller)
+<img 
+  src="/repwell-logo.svg" 
+  alt="Repwell" 
+  className="h-6 w-auto"
+/>
+
+// Logo on dark background
+<img 
+  src="/repwell-logo-white.svg" 
+  alt="Repwell" 
+  className="h-8 w-auto"
+/>
+
+// Favicon/icon only usage
+<img 
+  src="/repwell-icon.svg" 
+  alt="" 
+  className="w-8 h-8"
+/>
+```
+
+### Logo Don'ts
+- ❌ Don't rotate or skew
+- ❌ Don't change the colors outside brand palette
+- ❌ Don't add effects (shadows, gradients, outlines)
+- ❌ Don't place on busy backgrounds
+- ❌ Don't stretch or distort proportions
+- ❌ Don't recreate with different fonts
+
+---
+
+## Tailwind Configuration
+
+### Complete tailwind.config.js
+
+```javascript
+const defaultTheme = require('tailwindcss/defaultTheme');
+
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: ["class"],
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // Brand colors
+        repwell: {
+          sage: {
+            100: '#cad2c5',
+            200: '#84a98c',
+          },
+          teal: {
+            300: '#52796f',
+            400: '#354f52',
+            500: '#2f3e46',
+          },
+        },
+        
+        // Semantic colors for shadcn/ui compatibility
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
+        primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
+      },
+      
+      fontFamily: {
+        display: ['"Libre Baskerville"', ...defaultTheme.fontFamily.serif],
+        sans: ['"Source Sans 3"', ...defaultTheme.fontFamily.sans],
+      },
+      
+      fontSize: {
+        // Custom sizes if needed
+        '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
+      },
+      
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      
+      boxShadow: {
+        'soft': '0 2px 8px -2px rgba(47, 62, 70, 0.1), 0 4px 16px -4px rgba(47, 62, 70, 0.1)',
+        'medium': '0 4px 12px -2px rgba(47, 62, 70, 0.12), 0 8px 24px -4px rgba(47, 62, 70, 0.12)',
+        'large': '0 8px 24px -4px rgba(47, 62, 70, 0.15), 0 16px 48px -8px rgba(47, 62, 70, 0.15)',
+      },
+      
+      animation: {
+        'fade-in': 'fadeIn 0.5s ease-out',
+        'fade-in-up': 'fadeInUp 0.5s ease-out',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+        'shimmer': 'shimmer 1.5s infinite',
+      },
+      
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(20px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideInRight: {
+          '0%': { opacity: '0', transform: 'translateX(-10px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
+      },
+    },
+  },
+  plugins: [
+    require("tailwindcss-animate"),
+    require("@tailwindcss/typography"),
+  ],
+};
+```
+
+### CSS Variables (globals.css)
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Base colors mapped to Repwell palette */
+    --background: 0 0% 100%;
+    --foreground: 195 21% 23%;  /* repwell-teal-500 */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 195 21% 23%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 195 21% 23%;
+    
+    --primary: 163 18% 40%;  /* repwell-teal-300 */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 135 16% 59%;  /* repwell-sage-200 */
+    --secondary-foreground: 195 21% 23%;
+    
+    --muted: 100 10% 90%;
+    --muted-foreground: 163 18% 40%;
+    
+    --accent: 100 10% 90%;
+    --accent-foreground: 195 21% 23%;
+    
+    --destructive: 0 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 100 10% 88%;
+    --input: 100 10% 88%;
+    --ring: 163 18% 40%;
+    
+    --radius: 0.5rem;
+  }
+  
+  /* Optional: Dark mode (future consideration) */
+  .dark {
+    --background: 195 21% 23%;
+    --foreground: 100 10% 83%;
+    /* ... etc */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2 {
+    @apply font-display;
+  }
+}
+
+@layer utilities {
+  /* Custom utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-repwell-teal-400 to-repwell-teal-300 bg-clip-text text-transparent;
+  }
+}
+```
+
+---
+
+## shadcn/ui Customization
+
+### Component Overrides
+
+When using shadcn/ui components, apply these customizations:
+
+#### Button Component
+
+```tsx
+// components/ui/button.tsx
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold font-sans ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-repwell-teal-300 text-white hover:bg-repwell-teal-400 active:bg-repwell-teal-500 shadow-sm hover:shadow-md",
+        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline: "border-2 border-repwell-teal-300 text-repwell-teal-400 bg-transparent hover:bg-repwell-sage-100/50",
+        secondary: "bg-repwell-sage-100 text-repwell-teal-500 hover:bg-repwell-sage-200/70",
+        ghost: "text-repwell-teal-400 hover:bg-repwell-sage-100/50",
+        link: "text-repwell-teal-300 underline-offset-4 hover:underline hover:text-repwell-teal-400",
+      },
+      size: {
+        default: "h-11 px-6 py-3",
+        sm: "h-9 px-4",
+        lg: "h-12 px-8 text-base",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+```
+
+#### Card Component
+
+```tsx
+// components/ui/card.tsx
+const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-xl border border-border bg-card text-card-foreground shadow-soft transition-shadow duration-300 hover:shadow-medium",
+        className
+      )}
+      {...props}
+    />
+  )
+)
+```
+
+#### Input Component
+
+```tsx
+// components/ui/input.tsx
+const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref) => {
+    return (
+      <input
+        type={type}
+        className={cn(
+          "flex h-11 w-full rounded-lg border border-input bg-background px-4 py-3 text-sm font-sans text-repwell-teal-500 ring-offset-background",
+          "placeholder:text-repwell-teal-300/50",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30 focus-visible:border-repwell-teal-300",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          "transition-all duration-200",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+```
+
+#### Badge Component
+
+```tsx
+// components/ui/badge.tsx
+const badgeVariants = cva(
+  "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold font-sans transition-colors",
+  {
+    variants: {
+      variant: {
+        default: "bg-repwell-teal-300 text-white",
+        secondary: "bg-repwell-sage-100 text-repwell-teal-500",
+        outline: "border border-repwell-teal-300 text-repwell-teal-400 bg-transparent",
+        success: "bg-repwell-sage-200/20 text-repwell-sage-200 border border-repwell-sage-200/30",
+        new: "bg-repwell-teal-300/10 text-repwell-teal-300 border border-repwell-teal-300/20",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+```
+
+---
+
+## Page Patterns
+
+### Hero Section Pattern
+
+```jsx
+<section className="relative pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden">
+  {/* Background decorations */}
+  <div className="absolute inset-0 bg-gradient-to-b from-repwell-sage-100/20 to-transparent" />
+  
+  {/* Floating shapes (optional) */}
+  <FloatingShapes />
+  
+  <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center max-w-4xl mx-auto">
+      {/* Eyebrow */}
+      <motion.div variants={fadeInUp} className="mb-6">
+        <Badge variant="new">Now with AI-powered insights</Badge>
+      </motion.div>
+      
+      {/* Headline */}
+      <motion.h1 
+        variants={fadeInUp}
+        className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-repwell-teal-500 tracking-tight mb-6"
+      >
+        Reputation done{' '}
+        <span className="text-repwell-sage-200">well</span>
+      </motion.h1>
+      
+      {/* Subheadline */}
+      <motion.p 
+        variants={fadeInUp}
+        className="font-sans text-lg md:text-xl text-repwell-teal-400 leading-relaxed mb-10 max-w-2xl mx-auto"
+      >
+        AI-powered reputation management for mortgage professionals. 
+        Build trust, automate reviews, and grow your business.
+      </motion.p>
+      
+      {/* CTAs */}
+      <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button size="lg">Get started free</Button>
+        <Button variant="outline" size="lg">Book a demo</Button>
+      </motion.div>
+    </div>
+    
+    {/* Optional: Hero visual/product shot */}
+    <motion.div 
+      variants={scaleIn}
+      className="mt-16 md:mt-24"
+    >
+      <ProductScreenshot />
+    </motion.div>
+  </div>
+</section>
+```
+
+### Social Proof/Logo Bar Pattern
+
+```jsx
+<section className="py-12 md:py-16 bg-background-subtle">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <p className="text-center font-sans text-sm text-repwell-teal-300 mb-8">
+      Trusted by <span className="font-semibold">500+</span> mortgage professionals nationwide
+    </p>
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-items-center opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+      {logos.map((logo) => (
+        <img key={logo.name} src={logo.src} alt={logo.name} className="h-8 w-auto" />
+      ))}
+    </div>
+  </div>
+</section>
+```
+
+### Feature Grid Pattern
+
+```jsx
+<section className="py-16 md:py-24">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {/* Section header */}
+    <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
+      <span className="font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-300 mb-4 block">
+        Features
+      </span>
+      <h2 className="font-display text-3xl md:text-4xl font-bold text-repwell-teal-500 mb-4">
+        Everything you need to manage your reputation
+      </h2>
+      <p className="font-sans text-lg text-repwell-teal-400">
+        Powerful tools designed specifically for mortgage professionals.
+      </p>
+    </div>
+    
+    {/* Feature cards */}
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+      {features.map((feature, index) => (
+        <motion.div
+          key={feature.title}
+          variants={fadeInUp}
+          custom={index}
+          className="bg-white border border-border rounded-xl p-6 lg:p-8 hover:shadow-medium transition-shadow duration-300"
+        >
+          <div className="w-12 h-12 bg-repwell-sage-100/50 rounded-xl flex items-center justify-center mb-6">
+            <feature.icon className="w-6 h-6 text-repwell-teal-300" />
+          </div>
+          <h3 className="font-sans text-xl font-semibold text-repwell-teal-500 mb-3">
+            {feature.title}
+          </h3>
+          <p className="font-sans text-repwell-teal-400 leading-relaxed">
+            {feature.description}
+          </p>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
+```
+
+### Alternating Content Sections Pattern
+
+```jsx
+<section className="py-16 md:py-24">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {sections.map((section, index) => (
+      <div 
+        key={section.id}
+        className={cn(
+          "grid lg:grid-cols-2 gap-12 lg:gap-16 items-center",
+          index !== 0 && "mt-24 md:mt-32"
+        )}
+      >
+        {/* Text content */}
+        <div className={cn(index % 2 === 1 && "lg:order-2")}>
+          <span className="font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-300 mb-4 block">
+            {section.eyebrow}
+          </span>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-repwell-teal-500 mb-6">
+            {section.title}
+          </h2>
+          <p className="font-sans text-lg text-repwell-teal-400 leading-relaxed mb-8">
+            {section.description}
+          </p>
+          <ul className="space-y-4">
+            {section.features.map((feature) => (
+              <li key={feature} className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-repwell-sage-200 flex-shrink-0 mt-0.5" />
+                <span className="font-sans text-repwell-teal-400">{feature}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        {/* Visual */}
+        <div className={cn(index % 2 === 1 && "lg:order-1")}>
+          <div className="relative">
+            <div className="absolute -inset-4 bg-gradient-to-br from-repwell-sage-100/50 to-repwell-teal-300/10 rounded-3xl" />
+            <img 
+              src={section.image} 
+              alt="" 
+              className="relative rounded-2xl shadow-large"
+            />
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</section>
+```
+
+### Stats Section Pattern
+
+```jsx
+<section className="py-16 md:py-24 bg-repwell-teal-500">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+      {stats.map((stat) => (
+        <div key={stat.label} className="text-center">
+          <div className="font-display text-5xl lg:text-6xl font-bold text-white mb-2">
+            {stat.value}
+          </div>
+          <div className="font-sans text-repwell-sage-100/80">
+            {stat.label}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+```
+
+### CTA Section Pattern
+
+```jsx
+<section className="py-16 md:py-24">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="relative bg-repwell-teal-500 rounded-3xl overflow-hidden px-8 py-16 md:px-16 md:py-20">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-repwell-teal-400/50 to-transparent" />
+      
+      <div className="relative text-center max-w-2xl mx-auto">
+        <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
+          Ready to build your reputation?
+        </h2>
+        <p className="font-sans text-lg text-repwell-sage-100/80 mb-10">
+          Join hundreds of mortgage professionals already using Repwell to grow their business.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <Button variant="secondary" size="lg" className="bg-white text-repwell-teal-500 hover:bg-repwell-sage-100">
+            Start free trial
+          </Button>
+          <Button variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
+            Talk to sales
+          </Button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+```
+
+### Footer Pattern
+
+```jsx
+<footer className="bg-repwell-teal-500 pt-16 md:pt-20 pb-8">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    {/* Main footer content */}
+    <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12 pb-12 border-b border-white/10">
+      {/* Brand column */}
+      <div className="lg:col-span-2">
+        <img src="/repwell-logo-white.svg" alt="Repwell" className="h-8 w-auto mb-4" />
+        <p className="font-sans text-repwell-sage-100/70 max-w-sm mb-6">
+          AI-powered reputation management for mortgage professionals. Build trust at scale.
+        </p>
+        <div className="flex gap-4">
+          {socialLinks.map((social) => (
+            <a 
+              key={social.name}
+              href={social.href}
+              className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            >
+              <social.icon className="w-5 h-5" />
+            </a>
+          ))}
+        </div>
+      </div>
+      
+      {/* Link columns */}
+      {footerLinks.map((column) => (
+        <div key={column.title}>
+          <h4 className="font-sans font-semibold text-white mb-4">{column.title}</h4>
+          <ul className="space-y-3">
+            {column.links.map((link) => (
+              <li key={link.name}>
+                <a 
+                  href={link.href}
+                  className="font-sans text-sm text-repwell-sage-100/70 hover:text-white transition-colors"
+                >
+                  {link.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+    
+    {/* Bottom bar */}
+    <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p className="font-sans text-sm text-repwell-sage-100/50">
+        © {new Date().getFullYear()} Repwell. All rights reserved.
+      </p>
+      <div className="flex gap-6">
+        <a href="#" className="font-sans text-sm text-repwell-sage-100/50 hover:text-white transition-colors">
+          Privacy Policy
+        </a>
+        <a href="#" className="font-sans text-sm text-repwell-sage-100/50 hover:text-white transition-colors">
+          Terms of Service
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+```
+
+---
+
+## Responsive Design
+
+### Breakpoint Strategy
+
+Follow Tailwind's default breakpoints:
+- `sm`: 640px (large phones)
+- `md`: 768px (tablets)
+- `lg`: 1024px (laptops)
+- `xl`: 1280px (desktops)
+- `2xl`: 1536px (large desktops)
+
+### Mobile-First Principles
+
+1. **Start with mobile layout**, then add complexity at larger breakpoints
+2. **Stack elements vertically** on mobile, arrange horizontally on larger screens
+3. **Reduce spacing** on mobile (e.g., `py-12` → `py-8`)
+4. **Simplify navigation** to hamburger menu on mobile
+5. **Full-width buttons** on mobile, inline on desktop
+
+### Responsive Patterns
+
+```jsx
+// Typography scaling
+<h1 className="
+  text-3xl      /* mobile */
+  sm:text-4xl   /* tablet */
+  md:text-5xl   /* small laptop */
+  lg:text-6xl   /* laptop */
+  xl:text-7xl   /* desktop */
+">
+
+// Grid changes
+<div className="
+  grid 
+  grid-cols-1       /* mobile: single column */
+  sm:grid-cols-2    /* tablet: two columns */
+  lg:grid-cols-3    /* laptop: three columns */
+  gap-4 md:gap-6 lg:gap-8
+">
+
+// Section padding
+<section className="
+  py-12        /* mobile */
+  md:py-16     /* tablet */
+  lg:py-24     /* laptop */
+  xl:py-32     /* desktop */
+">
+
+// Flex direction
+<div className="
+  flex 
+  flex-col     /* mobile: stack */
+  md:flex-row  /* tablet+: horizontal */
+  gap-4
+">
+
+// Hide/show elements
+<div className="hidden md:block">  {/* Show only on md+ */}
+<div className="md:hidden">         {/* Show only below md */}
+```
+
+---
+
+## Accessibility
+
+### Color Contrast
+- All text must meet WCAG AA standards (4.5:1 for normal text, 3:1 for large text)
+- Primary teal (#52796f) on white: ✓ 4.9:1
+- Deep teal (#2f3e46) on white: ✓ 9.3:1
+- White on deep teal (#2f3e46): ✓ 9.3:1
+
+### Focus States
+Always provide visible focus indicators:
+```jsx
+className="focus:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2"
+```
+
+### Interactive Elements
+- Minimum touch target: 44x44px
+- Clear hover/active states
+- Sufficient color contrast for all states
+
+### Semantic HTML
+- Use proper heading hierarchy (h1 → h2 → h3)
+- Use `<button>` for actions, `<a>` for navigation
+- Provide alt text for images
+- Use ARIA labels where needed
+
+### Reduced Motion
+Respect user preferences:
+```jsx
+// In Framer Motion
+<motion.div
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{
+    ...defaultTransition,
+    // Disable animation if user prefers reduced motion
+    ...(prefersReducedMotion && { duration: 0 }),
+  }}
+>
+```
+
+```css
+/* In CSS */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+---
+
+## Do's and Don'ts
+
+### ✅ Do
+
+- **Use the brand colors consistently** — stick to the defined palette
+- **Maintain generous whitespace** — let content breathe
+- **Use serif (Libre Baskerville) for headlines** — it builds trust and warmth
+- **Apply subtle animations** — enhance without distracting
+- **Keep CTAs clear and prominent** — one primary action per section
+- **Use real photography when possible** — avoid generic stock
+- **Test at all breakpoints** — ensure responsive excellence
+- **Follow the component patterns** — maintain consistency
+- **Use the correct font weights** — semibold for headings, regular for body
+
+### ❌ Don't
+
+- **Don't introduce new colors** — stay within the brand palette
+- **Don't use pure black (#000)** — use deep teal (#2f3e46) instead
+- **Don't use flashy animations** — keep motion subtle and purposeful
+- **Don't mix multiple serif fonts** — stick to Libre Baskerville
+- **Don't clutter layouts** — embrace minimalism
+- **Don't use thin font weights** — maintain readability
+- **Don't skip focus states** — accessibility is mandatory
+- **Don't use generic stock photos** — curate imagery carefully
+- **Don't overuse the sage accent** — it's for highlights, not dominance
+- **Don't forget mobile** — design mobile-first
+- **Don't use bouncy/playful animations** — maintain professionalism
+- **Don't add drop shadows to everything** — use shadows purposefully
+
+---
+
+## Quick Reference
+
+### Color Shortcuts
+```
+Primary button: bg-repwell-teal-300 hover:bg-repwell-teal-400
+Heading text: text-repwell-teal-500
+Body text: text-repwell-teal-400
+Muted text: text-repwell-teal-300
+Link: text-repwell-teal-300 hover:text-repwell-teal-400
+Success/positive: text-repwell-sage-200
+Light background: bg-repwell-sage-100/30
+Dark section: bg-repwell-teal-500
+```
+
+### Type Shortcuts
+```
+Hero headline: font-display text-5xl md:text-6xl lg:text-7xl font-bold
+Section headline: font-display text-3xl md:text-4xl font-bold
+Card title: font-sans text-xl font-semibold
+Body text: font-sans text-base leading-relaxed
+Eyebrow: font-sans text-xs font-semibold uppercase tracking-wider
+```
+
+### Spacing Shortcuts
+```
+Section padding: py-16 md:py-24
+Container: max-w-7xl mx-auto px-4 sm:px-6 lg:px-8
+Card padding: p-6 lg:p-8
+Grid gap: gap-6 lg:gap-8
+Element margin: mb-4 md:mb-6
+```
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0.0 | January 2026 | Initial design system release |
+
+---
+
+*This design system is a living document. Update it as the brand evolves.*

@@ -4,7 +4,7 @@ import { getReportTemplates, initializeDefaultTemplates } from "@/lib/reporting"
 import { ReportsDashboard } from "./reports-dashboard";
 
 export const metadata = {
-  title: "Reports | ReviewHub",
+  title: "Reports | RepWell",
   description: "Generate and export performance reports",
 };
 

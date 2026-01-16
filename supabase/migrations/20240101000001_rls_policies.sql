@@ -1,4 +1,4 @@
--- Row Level Security Policies for ReviewHub
+-- Row Level Security Policies for RepWell
 -- This migration sets up RLS policies for multi-tenant data isolation
 
 -- Enable RLS on all tables

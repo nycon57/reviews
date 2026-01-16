@@ -21,7 +21,7 @@ export function getStripe(): Stripe {
       apiVersion: "2025-12-15.clover",
       typescript: true,
       appInfo: {
-        name: "ReviewHub",
+        name: "RepWell",
         version: "1.0.0",
       },
     });

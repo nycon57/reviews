@@ -22,23 +22,23 @@ export const docSections: DocSection[] = [
     id: "getting-started",
     title: "Getting Started",
     slug: "getting-started",
-    description: "Learn the basics of ReviewHub and get up and running quickly",
+    description: "Learn the basics of RepWell and get up and running quickly",
     icon: "Rocket",
     articles: [
       {
         id: "introduction",
-        title: "Introduction to ReviewHub",
+        title: "Introduction to RepWell",
         slug: "introduction",
-        description: "Overview of ReviewHub and its key features",
+        description: "Overview of RepWell and its key features",
         tags: ["basics", "overview"],
         content: `
-# Introduction to ReviewHub
+# Introduction to RepWell
 
-ReviewHub is a comprehensive customer experience and review management platform designed specifically for mortgage professionals and lending organizations.
+RepWell is a comprehensive customer experience and review management platform designed specifically for mortgage professionals and lending organizations.
 
-## What is ReviewHub?
+## What is RepWell?
 
-ReviewHub helps you:
+RepWell helps you:
 - **Collect customer feedback** through customizable surveys
 - **Manage your online reputation** across multiple platforms
 - **Gain AI-powered insights** from customer sentiment analysis
@@ -70,19 +70,19 @@ ReviewHub helps you:
 If you need assistance:
 - Browse the documentation sections in the sidebar
 - Search for specific topics using the search bar
-- Contact support at support@reviewhub.com
+- Contact support at support@repwell.com
         `,
       },
       {
         id: "quick-start",
         title: "Quick Start Guide",
         slug: "quick-start",
-        description: "Get started with ReviewHub in 5 minutes",
+        description: "Get started with RepWell in 5 minutes",
         tags: ["basics", "setup"],
         content: `
 # Quick Start Guide
 
-Follow these steps to get up and running with ReviewHub in just a few minutes.
+Follow these steps to get up and running with RepWell in just a few minutes.
 
 ## Step 1: Accept Your Invitation
 
@@ -140,7 +140,7 @@ Now that you're set up:
         content: `
 # Account Setup
 
-Learn how to configure your ReviewHub account for optimal performance.
+Learn how to configure your RepWell account for optimal performance.
 
 ## Profile Settings
 
@@ -215,7 +215,7 @@ Templates define the questions and structure of your customer surveys.
 
 ## Default Templates
 
-ReviewHub includes pre-built templates:
+RepWell includes pre-built templates:
 
 ### Post-Transaction Survey
 - Star rating (1-5)
@@ -311,7 +311,7 @@ Connect your LOS for automatic triggers:
 1. Go to **Settings** > **Integrations**
 2. Copy your webhook URL
 3. Configure your LOS to send events
-4. Map fields to ReviewHub data
+4. Map fields to RepWell data
 
 ### Trigger Events
 Supported trigger events:
@@ -449,7 +449,7 @@ Track your response performance:
         content: `
 # Understanding Metrics
 
-ReviewHub tracks several key metrics to measure customer satisfaction and team performance.
+RepWell tracks several key metrics to measure customer satisfaction and team performance.
 
 ## Net Promoter Score (NPS)
 
@@ -540,7 +540,7 @@ Compare metrics:
         content: `
 # Dashboard Guide
 
-Learn how to use and customize your ReviewHub dashboard.
+Learn how to use and customize your RepWell dashboard.
 
 ## Dashboard Types
 
@@ -909,7 +909,7 @@ Manage API keys:
         content: `
 # Billing & Subscription
 
-Manage your ReviewHub subscription and billing details.
+Manage your RepWell subscription and billing details.
 
 ## Subscription Plans
 
@@ -1015,7 +1015,7 @@ You'll receive warnings before hitting limits. Contact sales for custom plans.
     id: "integrations",
     title: "Integrations",
     slug: "integrations",
-    description: "Connect ReviewHub with other tools",
+    description: "Connect RepWell with other tools",
     icon: "Puzzle",
     articles: [
       {
@@ -1027,11 +1027,11 @@ You'll receive warnings before hitting limits. Contact sales for custom plans.
         content: `
 # Webhook Integration
 
-Connect external systems to automatically trigger actions in ReviewHub.
+Connect external systems to automatically trigger actions in RepWell.
 
 ## What are Webhooks?
 
-Webhooks are HTTP callbacks that notify ReviewHub when events occur in your other systems. Use them to:
+Webhooks are HTTP callbacks that notify RepWell when events occur in your other systems. Use them to:
 - Automatically send surveys when loans close
 - Sync contact information from your CRM
 - Trigger workflows based on external events
@@ -1046,13 +1046,13 @@ Webhooks are HTTP callbacks that notify ReviewHub when events occur in your othe
 ### Step 2: Configure Your System
 In your LOS or CRM:
 1. Find webhook or integration settings
-2. Add your ReviewHub webhook URL
+2. Add your RepWell webhook URL
 3. Select events to send
 4. Save configuration
 
 ### Step 3: Test the Connection
 1. Send a test event from your system
-2. Check **Webhook Logs** in ReviewHub
+2. Check **Webhook Logs** in RepWell
 3. Verify event received successfully
 
 ## Supported Events
@@ -1090,7 +1090,7 @@ When a new contact is added:
 
 ### Signature Verification
 All webhooks include a signature header:
-- Header: \`X-ReviewHub-Signature\`
+- Header: \`X-RepWell-Signature\`
 - Algorithm: HMAC-SHA256
 - Verify before processing
 
@@ -1124,13 +1124,13 @@ View recent webhook activity:
         content: `
 # Google Business Profile Integration
 
-Sync your Google Business reviews and manage your Google presence from ReviewHub.
+Sync your Google Business reviews and manage your Google presence from RepWell.
 
 ## Overview
 
 The Google Business integration allows you to:
 - View Google reviews alongside internal reviews
-- Reply to Google reviews from ReviewHub
+- Reply to Google reviews from RepWell
 - Track Google rating trends
 - Get alerts for new Google reviews
 
@@ -1144,7 +1144,7 @@ The Google Business integration allows you to:
 ### Step 2: Authorize Access
 1. Sign in to Google with your business account
 2. Select the Google Business profile to connect
-3. Grant ReviewHub permission to access reviews
+3. Grant RepWell permission to access reviews
 
 ### Step 3: Configure Settings
 - **Sync Frequency**: How often to check for new reviews
@@ -1205,12 +1205,12 @@ Compare Google to other sources:
         id: "api",
         title: "Public API",
         slug: "api",
-        description: "Use the ReviewHub API for custom integrations",
+        description: "Use the RepWell API for custom integrations",
         tags: ["integrations", "api", "developers"],
         content: `
 # Public API
 
-Build custom integrations with the ReviewHub API.
+Build custom integrations with the RepWell API.
 
 ## Getting Started
 
@@ -1225,7 +1225,7 @@ Use API keys for authentication:
 
 ### Base URL
 \`\`\`
-https://api.reviewhub.com/v1
+https://api.repwell.com/v1
 \`\`\`
 
 ## Authentication
@@ -1314,8 +1314,8 @@ Official SDKs available:
 ## Support
 
 For API support:
-- Documentation: docs.reviewhub.com/api
-- Email: api-support@reviewhub.com
+- Documentation: docs.repwell.com/api
+- Email: api-support@repwell.com
         `,
       },
       {
@@ -1327,19 +1327,19 @@ For API support:
         content: `
 # Zapier Integration
 
-Connect ReviewHub with thousands of apps using Zapier.
+Connect RepWell with thousands of apps using Zapier.
 
 ## What is Zapier?
 
-Zapier lets you connect ReviewHub with 5,000+ apps to automate workflows without code. Create "Zaps" that trigger actions based on events.
+Zapier lets you connect RepWell with 5,000+ apps to automate workflows without code. Create "Zaps" that trigger actions based on events.
 
 ## Getting Started
 
 ### Step 1: Create Zapier Account
 Sign up at zapier.com if you don't have an account.
 
-### Step 2: Connect ReviewHub
-1. Search for "ReviewHub" in Zapier
+### Step 2: Connect RepWell
+1. Search for "RepWell" in Zapier
 2. Click **Connect Account**
 3. Enter your API key
 4. Test the connection
@@ -1377,7 +1377,7 @@ Trigger a survey to a customer:
 - Template selection
 
 ### Create Contact
-Add a new contact to ReviewHub:
+Add a new contact to RepWell:
 - Email address
 - Name
 - Phone number
@@ -1388,16 +1388,16 @@ Add a new contact to ReviewHub:
 ### CRM to Survey
 When a deal closes in your CRM:
 1. Trigger: Deal closed in [CRM]
-2. Action: Send survey in ReviewHub
+2. Action: Send survey in RepWell
 
 ### Review to Slack
 Get notified of new reviews:
-1. Trigger: New review in ReviewHub
+1. Trigger: New review in RepWell
 2. Action: Send message to Slack channel
 
 ### Low Rating to Email
 Alert team of negative feedback:
-1. Trigger: Low rating alert in ReviewHub
+1. Trigger: Low rating alert in RepWell
 2. Action: Send email via Gmail
 
 ## Best Practices
@@ -1434,12 +1434,12 @@ Set up error notifications:
         id: "general",
         title: "General Questions",
         slug: "general",
-        description: "Common questions about ReviewHub",
+        description: "Common questions about RepWell",
         tags: ["faq", "general"],
         content: `
 # General Questions
 
-Answers to frequently asked questions about ReviewHub.
+Answers to frequently asked questions about RepWell.
 
 ## Account & Access
 
@@ -1454,7 +1454,7 @@ Answers to frequently asked questions about ReviewHub.
 Yes, go to **Settings** > **Profile** > **Email** to update your email address. You'll need to verify the new email.
 
 ### How do I delete my account?
-Contact support at support@reviewhub.com to request account deletion. Note that this action is permanent.
+Contact support at support@repwell.com to request account deletion. Note that this action is permanent.
 
 ## Surveys
 
@@ -1490,14 +1490,14 @@ Possible reasons:
 ## Technical
 
 ### What browsers are supported?
-ReviewHub works on:
+RepWell works on:
 - Chrome (latest 2 versions)
 - Firefox (latest 2 versions)
 - Safari (latest 2 versions)
 - Edge (latest 2 versions)
 
 ### Is there a mobile app?
-Yes, ReviewHub has mobile apps for iOS and Android. Download from the App Store or Google Play.
+Yes, RepWell has mobile apps for iOS and Android. Download from the App Store or Google Play.
 
 ### How secure is my data?
 We use:
@@ -1516,7 +1516,7 @@ We use:
         content: `
 # Troubleshooting
 
-Solutions to common issues in ReviewHub.
+Solutions to common issues in RepWell.
 
 ## Login Issues
 
@@ -1600,7 +1600,7 @@ Each survey link is single-use. If the customer needs to retake:
 ## Contact Support
 
 If you can't resolve your issue:
-- Email: support@reviewhub.com
+- Email: support@repwell.com
 - Live chat: Available in-app
 - Phone: See contact page
         `,

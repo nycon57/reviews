@@ -9,32 +9,24 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default:
+          "bg-repwell-teal-300 text-white font-semibold hover:bg-repwell-teal-400 hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-0 active:shadow-none",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+          "border-2 border-repwell-teal-300 bg-transparent text-repwell-teal-400 font-semibold hover:border-repwell-teal-400 hover:text-repwell-teal-400 hover:bg-repwell-sage-100/50",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        // Brand variants
-        brand:
-          "bg-brand-blue text-white font-semibold hover:-translate-y-0.5 hover:shadow-button-hover active:translate-y-0 active:shadow-none",
-        "brand-outline":
-          "border-2 border-brand-slate/30 bg-transparent text-brand-navy font-semibold hover:border-brand-blue hover:text-brand-blue hover:bg-brand-frost/50",
-        "brand-ghost":
-          "text-brand-navy hover:bg-brand-frost hover:text-brand-blue",
+          "bg-repwell-sage-100 text-repwell-teal-500 hover:bg-repwell-sage-200/50",
+        ghost:
+          "text-repwell-teal-400 hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500",
+        link: "text-repwell-teal-300 underline-offset-4 hover:underline hover:text-repwell-teal-400",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-lg",
         sm: "h-9 rounded-lg px-3 text-xs",
-        lg: "h-11 rounded-lg px-8",
+        lg: "h-12 px-6 py-3 rounded-lg text-base",
+        xl: "h-14 px-8 py-4 rounded-lg text-base",
         icon: "h-10 w-10 rounded-lg",
-        // Brand sizes
-        "brand-default": "h-10 px-4 py-2.5 rounded-lg",
-        "brand-lg": "h-12 px-6 py-3 rounded-lg text-base",
-        "brand-xl": "h-14 px-8 py-4 rounded-lg text-base",
       },
     },
     defaultVariants: {

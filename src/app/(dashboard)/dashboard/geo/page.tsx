@@ -6,7 +6,7 @@ import { CardSkeleton } from "@/components/shared";
 import { GeoDashboard } from "./geo-dashboard";
 
 export const metadata = {
-  title: "AI Visibility & GEO | ReviewHub",
+  title: "AI Visibility & GEO | RepWell",
   description: "Optimize your content for AI search engines like ChatGPT, Perplexity, and Google AI Overviews",
 };
 

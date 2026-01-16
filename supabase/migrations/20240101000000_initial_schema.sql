@@ -1,4 +1,4 @@
--- ReviewHub Initial Database Schema
+-- RepWell Initial Database Schema
 -- This migration creates all core tables for the platform
 
 -- Enable UUID extension

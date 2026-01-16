@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -37,7 +38,10 @@ import {
   ArrowRight,
   Eye,
   Globe,
+  Lock,
 } from "lucide-react";
+import { usePermissions } from "@/lib/permissions/context";
+import { PERMISSIONS, type Permission } from "@/lib/permissions";
 
 interface NavItem {
   title: string;
@@ -45,12 +49,18 @@ interface NavItem {
   icon: React.ReactNode;
   badge?: string;
   isNew?: boolean;
+  /** Permission required to see this item (hide if not allowed) */
+  permission?: Permission;
+  /** Requires Pro tier - shows lock icon if not Pro */
+  requiresPro?: boolean;
 }
 
 interface NavGroup {
   title: string;
   items: NavItem[];
   defaultOpen?: boolean;
+  /** Permission required to see entire group (hide if not allowed) */
+  permission?: Permission;
 }
 
 const mainNavItems: NavItem[] = [
@@ -58,21 +68,25 @@ const mainNavItems: NavItem[] = [
     title: "Dashboard",
     href: "/dashboard",
     icon: <Home className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_DASHBOARD,
   },
   {
     title: "Reviews",
     href: "/dashboard/reviews",
     icon: <Star className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_REVIEWS,
   },
   {
     title: "Surveys",
     href: "/dashboard/surveys",
     icon: <FileText className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_SURVEYS,
   },
   {
     title: "Listings",
     href: "/dashboard/listings",
     icon: <MapPin className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_LISTINGS,
   },
 ];
 
@@ -80,38 +94,45 @@ const navGroups: NavGroup[] = [
   {
     title: "Management",
     defaultOpen: true,
+    // Only enterprise managers+ see this group (except Responses which is for everyone)
     items: [
       {
         title: "Manager Dashboard",
         href: "/dashboard/manager",
         icon: <LayoutDashboard className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_MANAGER_DASHBOARD,
       },
       {
         title: "Responses",
         href: "/dashboard/responses",
         icon: <MessageSquare className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_RESPONSES,
       },
       {
         title: "Team",
         href: "/dashboard/team",
         icon: <Users className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_TEAM,
       },
     ],
   },
   {
     title: "People",
     defaultOpen: true,
+    // Enterprise-only team features
     items: [
       {
         title: "Recognition",
         href: "/dashboard/recognition",
         icon: <Award className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_RECOGNITION,
       },
       {
         title: "EX Surveys",
         href: "/dashboard/ex-surveys",
         icon: <ClipboardList className="h-4 w-4" />,
         isNew: true,
+        permission: PERMISSIONS.VIEW_EX_SURVEYS,
       },
     ],
   },
@@ -123,39 +144,49 @@ const navGroups: NavGroup[] = [
         title: "Overview",
         href: "/dashboard/analytics",
         icon: <BarChart3 className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_ANALYTICS,
       },
       {
         title: "Trends",
         href: "/dashboard/analytics/trends",
         icon: <TrendingUp className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_TRENDS,
       },
       {
         title: "Website Analytics",
         href: "/dashboard/analytics/website",
         icon: <Globe className="h-4 w-4" />,
         isNew: true,
+        permission: PERMISSIONS.VIEW_WEBSITE_ANALYTICS,
+        requiresPro: true,
       },
       {
         title: "Leaderboard",
         href: "/dashboard/analytics/leaderboard",
         icon: <Trophy className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_LEADERBOARD,
       },
       {
         title: "AI Insights",
         href: "/dashboard/insights",
         icon: <Sparkles className="h-4 w-4" />,
         isNew: true,
+        permission: PERMISSIONS.VIEW_AI_INSIGHTS,
+        requiresPro: true,
       },
       {
         title: "AI Visibility",
         href: "/dashboard/geo",
         icon: <Eye className="h-4 w-4" />,
         isNew: true,
+        permission: PERMISSIONS.VIEW_GEO_VISIBILITY,
+        requiresPro: true,
       },
       {
         title: "Testimonials",
         href: "/dashboard/testimonials",
         icon: <Quote className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_TESTIMONIALS,
       },
     ],
   },
@@ -167,11 +198,13 @@ const navGroups: NavGroup[] = [
         title: "Email Campaigns",
         href: "/dashboard/campaigns",
         icon: <Mail className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_CAMPAIGNS,
       },
       {
         title: "Send Survey",
         href: "/dashboard/send",
         icon: <Send className="h-4 w-4" />,
+        permission: PERMISSIONS.SEND_SURVEY,
       },
     ],
   },
@@ -182,16 +215,19 @@ const bottomNavItems: NavItem[] = [
     title: "Organization",
     href: "/dashboard/organization",
     icon: <Building className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_ORGANIZATION,
   },
   {
     title: "Settings",
     href: "/dashboard/settings",
     icon: <Settings className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_SETTINGS,
   },
   {
     title: "Help & Support",
     href: "/dashboard/help",
     icon: <HelpCircle className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_HELP,
   },
 ];
 
@@ -201,8 +237,9 @@ interface SidebarProps {
   onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ className, collapsed = false, onCollapsedChange }: SidebarProps) {
+export function Sidebar({ className, collapsed = false, onCollapsedChange: _onCollapsedChange }: SidebarProps) {
   const pathname = usePathname();
+  const { hasPermission, shouldShowUpgradeCTA, canAccessProFeature } = usePermissions();
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -211,30 +248,73 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange }: Sid
     return pathname.startsWith(href);
   };
 
+  // Filter nav items by permission
+  const filterItems = (items: NavItem[]): NavItem[] => {
+    return items.filter((item) => {
+      // If no permission required, show the item
+      if (!item.permission) return true;
+      // Check if user has the required permission
+      return hasPermission(item.permission);
+    });
+  };
+
+  // Filter nav groups - only show groups that have at least one visible item
+  const filterGroups = (groups: NavGroup[]): NavGroup[] => {
+    return groups
+      .map((group) => ({
+        ...group,
+        items: filterItems(group.items),
+      }))
+      .filter((group) => group.items.length > 0);
+  };
+
+  const visibleMainItems = filterItems(mainNavItems);
+  const visibleGroups = filterGroups(navGroups);
+  const visibleBottomItems = filterItems(bottomNavItems);
+
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-brand-silver bg-white transition-all duration-300 ease-out",
+        "flex h-full flex-col border-r border-border bg-white transition-all duration-300 ease-out",
         collapsed ? "w-16" : "w-64",
         className
       )}
     >
       {/* Logo */}
-      <div className="flex h-14 items-center border-b border-brand-silver px-4">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue shadow-sm">
-            <Star className="h-5 w-5 text-white" fill="currentColor" />
-          </div>
-          <AnimatePresence>
-            {!collapsed && (
-              <motion.span
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0 }}
-                className="text-lg font-bold text-brand-navy overflow-hidden whitespace-nowrap"
+      <div className="flex h-14 items-center border-b border-border px-4">
+        <Link href="/dashboard" className="flex items-center">
+          <AnimatePresence mode="wait">
+            {collapsed ? (
+              <motion.div
+                key="collapsed"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex h-8 w-8 items-center justify-center"
               >
-                ReviewHub
-              </motion.span>
+                <Image
+                  src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                  alt="RepWell"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 object-contain object-left"
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="expanded"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <Image
+                  src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                  alt="RepWell"
+                  width={130}
+                  height={32}
+                  className="h-8 w-auto"
+                />
+              </motion.div>
             )}
           </AnimatePresence>
         </Link>
@@ -244,34 +324,36 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange }: Sid
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="flex flex-col gap-1" aria-label="Main navigation">
           {/* Primary nav items */}
-          {mainNavItems.map((item) => (
+          {visibleMainItems.map((item) => (
             <NavLink
               key={item.href}
               item={item}
               isActive={isActive(item.href)}
               collapsed={collapsed}
+              isProLocked={item.requiresPro && !canAccessProFeature()}
             />
           ))}
 
           {/* Divider */}
-          <div className="my-4 h-px bg-brand-silver" />
+          <div className="my-4 h-px bg-border" />
 
           {/* Grouped nav items */}
-          {navGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <NavGroupSection
               key={group.title}
               group={group}
               isActive={isActive}
               collapsed={collapsed}
+              canAccessProFeature={canAccessProFeature()}
             />
           ))}
         </nav>
       </ScrollArea>
 
-      {/* Upgrade CTA */}
-      {!collapsed && (
+      {/* Upgrade CTA - Only show for individual Basic users */}
+      {!collapsed && shouldShowUpgradeCTA() && (
         <div className="px-3 pb-3">
-          <div className="rounded-xl bg-gradient-to-br from-brand-blue to-brand-iris p-4 text-white shadow-lg">
+          <div className="rounded-xl bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-300 p-4 text-white shadow-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
                 <Zap className="h-4 w-4" />
@@ -284,7 +366,7 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange }: Sid
             <Link href="/dashboard/settings/billing">
               <Button
                 size="sm"
-                className="w-full bg-white text-brand-blue hover:bg-white/90 font-medium text-sm h-9 group"
+                className="w-full bg-white text-repwell-teal-300 hover:bg-white/90 font-medium text-sm h-9 group"
               >
                 View Plans
                 <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -295,9 +377,9 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange }: Sid
       )}
 
       {/* Bottom Navigation */}
-      <div className="border-t border-brand-silver px-3 py-4">
+      <div className="border-t border-border px-3 py-4">
         <nav className="flex flex-col gap-1" aria-label="Secondary navigation">
-          {bottomNavItems.map((item) => (
+          {visibleBottomItems.map((item) => (
             <NavLink
               key={item.href}
               item={item}
@@ -315,35 +397,46 @@ interface NavLinkProps {
   item: NavItem;
   isActive: boolean;
   collapsed: boolean;
+  /** When true, shows a lock icon and links to billing page instead */
+  isProLocked?: boolean;
 }
 
-const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLinkProps) {
+const NavLink = React.memo(function NavLink({ item, isActive, collapsed, isProLocked }: NavLinkProps) {
+  // If Pro locked, link to billing instead of the actual route
+  const href = isProLocked ? "/dashboard/settings/billing" : item.href;
+
   return (
     <Link
-      href={item.href}
+      href={href}
       className={cn(
         "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-out",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30",
-        isActive
-          ? "bg-brand-frost text-brand-blue"
-          : "text-brand-slate hover:bg-brand-frost/50 hover:text-brand-navy",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30",
+        isActive && !isProLocked
+          ? "bg-repwell-sage-100 text-repwell-teal-300"
+          : isProLocked
+            ? "text-repwell-teal-400/60 hover:bg-repwell-sage-100/30 hover:text-repwell-teal-400"
+            : "text-repwell-teal-400 hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500",
         collapsed && "justify-center px-2"
       )}
-      aria-current={isActive ? "page" : undefined}
-      title={collapsed ? item.title : undefined}
+      aria-current={isActive && !isProLocked ? "page" : undefined}
+      title={collapsed ? (isProLocked ? `${item.title} (Pro)` : item.title) : undefined}
     >
       {/* Active indicator */}
-      {isActive && (
+      {isActive && !isProLocked && (
         <motion.div
           layoutId="sidebar-active-indicator"
-          className="absolute left-0 inset-y-0 my-auto w-[3px] h-5 bg-brand-blue rounded-r-full"
+          className="absolute left-0 inset-y-0 my-auto w-[3px] h-5 bg-repwell-teal-300 rounded-r-full"
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         />
       )}
 
       <span className={cn(
         "transition-colors duration-150",
-        isActive ? "text-brand-blue" : "text-brand-slate group-hover:text-brand-navy"
+        isActive && !isProLocked
+          ? "text-repwell-teal-300"
+          : isProLocked
+            ? "text-repwell-teal-400/60 group-hover:text-repwell-teal-400"
+            : "text-repwell-teal-400 group-hover:text-repwell-teal-500"
       )}>
         {item.icon}
       </span>
@@ -354,23 +447,35 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex-1"
+            className={cn("flex-1", isProLocked && "text-repwell-teal-400/60")}
           >
             {item.title}
           </motion.span>
         )}
       </AnimatePresence>
 
-      {/* NEW badge */}
-      {!collapsed && item.isNew && (
-        <span className="rounded-full bg-brand-amber px-2 py-0.5 text-[10px] font-bold text-black uppercase tracking-wide shadow-sm">
+      {/* Pro lock icon */}
+      {!collapsed && isProLocked && (
+        <Lock className="h-3.5 w-3.5 text-repwell-teal-400/50" />
+      )}
+
+      {/* NEW badge - don't show if Pro locked */}
+      {!collapsed && item.isNew && !isProLocked && (
+        <span className="rounded-full bg-warning px-2 py-0.5 text-[10px] font-bold text-black uppercase tracking-wide shadow-sm">
           New
         </span>
       )}
 
+      {/* Pro badge for locked items */}
+      {!collapsed && isProLocked && (
+        <span className="rounded-full bg-repwell-teal-300/10 px-2 py-0.5 text-[10px] font-bold text-repwell-teal-300 uppercase tracking-wide">
+          Pro
+        </span>
+      )}
+
       {/* Badge count */}
-      {!collapsed && item.badge && (
-        <span className="rounded-full bg-brand-frost px-2 py-0.5 text-xs font-semibold text-brand-blue">
+      {!collapsed && item.badge && !isProLocked && (
+        <span className="rounded-full bg-repwell-sage-100 px-2 py-0.5 text-xs font-semibold text-repwell-teal-300">
           {item.badge}
         </span>
       )}
@@ -382,9 +487,10 @@ interface NavGroupSectionProps {
   group: NavGroup;
   isActive: (href: string) => boolean;
   collapsed: boolean;
+  canAccessProFeature: boolean;
 }
 
-function NavGroupSection({ group, isActive, collapsed }: NavGroupSectionProps) {
+function NavGroupSection({ group, isActive, collapsed, canAccessProFeature }: NavGroupSectionProps) {
   const [open, setOpen] = React.useState(group.defaultOpen ?? false);
 
   // Memoize hasActiveItem to prevent unnecessary recalculations
@@ -409,6 +515,7 @@ function NavGroupSection({ group, isActive, collapsed }: NavGroupSectionProps) {
             item={item}
             isActive={isActive(item.href)}
             collapsed={collapsed}
+            isProLocked={item.requiresPro && !canAccessProFeature}
           />
         ))}
       </>
@@ -419,7 +526,7 @@ function NavGroupSection({ group, isActive, collapsed }: NavGroupSectionProps) {
     <Collapsible open={open} onOpenChange={setOpen} className="space-y-1">
       <CollapsibleTrigger asChild>
         <button
-          className="flex w-full items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-brand-slate/70 hover:text-brand-slate transition-colors duration-150"
+          className="flex w-full items-center justify-between px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-repwell-teal-400/70 hover:text-repwell-teal-400 transition-colors duration-150"
         >
           <span>{group.title}</span>
           <ChevronDown
@@ -437,6 +544,7 @@ function NavGroupSection({ group, isActive, collapsed }: NavGroupSectionProps) {
             item={item}
             isActive={isActive(item.href)}
             collapsed={collapsed}
+            isProLocked={item.requiresPro && !canAccessProFeature}
           />
         ))}
       </CollapsibleContent>

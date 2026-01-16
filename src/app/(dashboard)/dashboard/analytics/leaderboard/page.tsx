@@ -7,7 +7,7 @@ import { LeaderboardDashboard } from "./leaderboard-dashboard";
 import { getFilterOptions } from "@/lib/dashboard";
 
 export const metadata = {
-  title: "Leaderboard | ReviewHub",
+  title: "Leaderboard | RepWell",
   description: "View team performance rankings and achievements",
 };
 
@@ -45,8 +45,8 @@ export default async function LeaderboardPage() {
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-          <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+          <Trophy className="h-5 w-5 text-yellow-600" />
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Performance Leaderboard</h1>

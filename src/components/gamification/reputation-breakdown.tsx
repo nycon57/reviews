@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,6 +11,7 @@ import {
   BarChart3,
   Info,
   ChevronRight,
+  Send,
 } from "lucide-react";
 import {
   Tooltip,
@@ -77,7 +79,33 @@ export function ReputationBreakdownCard({
   }
 
   if (!breakdown) {
-    return null;
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-blue-500" />
+            Reputation Breakdown
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50">
+              <BarChart3 className="h-8 w-8 text-blue-500" />
+            </div>
+            <p className="text-sm font-medium text-repwell-teal-500">Build your reputation score</p>
+            <p className="mt-1 max-w-[280px] text-xs text-repwell-teal-400">
+              Your reputation score is calculated from NPS, customer satisfaction, response rates, and reviews. Start collecting feedback to see your breakdown.
+            </p>
+            <Button variant="default" size="sm" className="mt-4" asChild>
+              <a href="/dashboard/send">
+                <Send className="mr-1.5 h-3.5 w-3.5" />
+                Send Survey
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   const components = [

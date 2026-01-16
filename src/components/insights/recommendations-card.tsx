@@ -18,17 +18,17 @@ interface RecommendationsCardProps {
 
 const priorityConfig = {
   high: {
-    badge: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+    badge: "bg-red-100 text-red-800",
     icon: AlertTriangle,
     label: "High Priority",
   },
   medium: {
-    badge: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
+    badge: "bg-amber-100 text-amber-800",
     icon: Lightbulb,
     label: "Medium Priority",
   },
   low: {
-    badge: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    badge: "bg-green-100 text-green-800",
     icon: CheckSquare,
     label: "Opportunity",
   },
@@ -91,9 +91,9 @@ export function RecommendationsCard({ data }: RecommendationsCardProps) {
                   <div className="flex flex-1 items-center gap-3 text-left">
                     <Icon className={cn(
                       "h-4 w-4 flex-shrink-0",
-                      rec.priority === "high" && "text-red-600 dark:text-red-400",
-                      rec.priority === "medium" && "text-amber-600 dark:text-amber-400",
-                      rec.priority === "low" && "text-green-600 dark:text-green-400"
+                      rec.priority === "high" && "text-red-600",
+                      rec.priority === "medium" && "text-amber-600",
+                      rec.priority === "low" && "text-green-600"
                     )} />
                     <span className="font-medium">{rec.title}</span>
                     <Badge variant="secondary" className={cn("ml-auto mr-2 text-xs", config.badge)}>

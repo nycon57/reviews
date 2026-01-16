@@ -2,7 +2,7 @@ import { NotificationsList } from "@/components/notifications/notifications-list
 import { getNotifications, getUnreadNotificationCount } from "@/lib/notifications/actions";
 
 export const metadata = {
-  title: "Notifications | ReviewHub",
+  title: "Notifications | RepWell",
   description: "View and manage your notifications",
 };
 

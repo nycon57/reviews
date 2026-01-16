@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 interface CTAButton {
   label: string;
   href: string;
-  variant?: "default" | "outline" | "ghost" | "secondary" | "brand" | "brand-outline";
+  variant?: "default" | "outline" | "ghost" | "secondary" | "default" | "outline";
 }
 
 interface HeroSectionProps {
@@ -59,7 +59,7 @@ export function HeroSection({
     >
       {badge && (
         <motion.div variants={fadeInUp} className="mb-4">
-          <Badge variant="brand-subtle" className="px-3 py-1 text-xs">
+          <Badge variant="subtle" className="px-3 py-1 text-xs">
             {badge}
           </Badge>
         </motion.div>
@@ -68,7 +68,7 @@ export function HeroSection({
       {subtitle && (
         <motion.p
           variants={fadeInUp}
-          className="mb-4 text-body-md font-semibold uppercase tracking-wider text-brand-blue"
+          className="mb-4 text-body-md font-semibold uppercase tracking-wider text-repwell-teal-300"
         >
           {subtitle}
         </motion.p>
@@ -76,7 +76,7 @@ export function HeroSection({
 
       <motion.h1
         variants={fadeInUp}
-        className="mb-6 text-display-sm md:text-display-lg text-brand-navy"
+        className="mb-6 text-display-sm md:text-display-lg text-repwell-teal-500"
       >
         {title}
       </motion.h1>
@@ -85,7 +85,7 @@ export function HeroSection({
         <motion.p
           variants={fadeInUp}
           className={cn(
-            "mb-8 text-body-lg text-brand-slate",
+            "mb-8 text-body-lg text-repwell-teal-400",
             layout === "center" && "mx-auto max-w-2xl"
           )}
         >
@@ -104,8 +104,8 @@ export function HeroSection({
           {ctaButtons.map((button, index) => (
             <Link key={button.href} href={button.href}>
               <Button
-                size="brand-lg"
-                variant={button.variant || (index === 0 ? "brand" : "brand-outline")}
+                size="lg"
+                variant={button.variant || (index === 0 ? "default" : "outline")}
               >
                 {button.label}
               </Button>
@@ -137,13 +137,13 @@ export function HeroSection({
             initial="initial"
             animate="animate"
             variants={blobFloat}
-            className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-gradient-to-br from-brand-frost to-brand-ice opacity-60 blur-3xl"
+            className="absolute -top-20 -right-20 h-72 w-72 rounded-full bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-100 opacity-60 blur-3xl"
           />
           <motion.div
             initial="initial"
             animate="animate"
             variants={blobFloatRotate}
-            className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-gradient-to-tr from-brand-blue/10 to-brand-iris/10 opacity-40 blur-3xl"
+            className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-gradient-to-tr from-repwell-teal-300/10 to-repwell-teal-300/10 opacity-40 blur-3xl"
           />
         </>
       )}

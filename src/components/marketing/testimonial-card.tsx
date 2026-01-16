@@ -51,7 +51,7 @@ export function TestimonialCard({
       <Card
         className={cn(
           "h-full flex flex-col",
-          variant === "featured" && "border-brand-blue/30 bg-gradient-to-br from-white to-brand-frost/30",
+          variant === "featured" && "border-repwell-teal-300/30 bg-gradient-to-br from-white to-repwell-sage-100/30",
           variant === "minimal" && "border-0 shadow-none bg-transparent",
           className
         )}
@@ -62,11 +62,11 @@ export function TestimonialCard({
         )}>
           {/* Stat highlight */}
           {stat && (
-            <div className="mb-6 pb-6 border-b border-brand-silver">
-              <div className="text-display-sm font-bold text-brand-blue">
+            <div className="mb-6 pb-6 border-b border-border">
+              <div className="text-display-sm font-bold text-repwell-teal-300">
                 {stat.value}
               </div>
-              <div className="text-body-sm text-brand-slate mt-1">
+              <div className="text-body-sm text-repwell-teal-400 mt-1">
                 {stat.label}
               </div>
             </div>
@@ -75,10 +75,10 @@ export function TestimonialCard({
           {/* Quote */}
           <div className="flex-1">
             {variant !== "minimal" && (
-              <Quote className="h-8 w-8 text-brand-blue/20 mb-4" />
+              <Quote className="h-8 w-8 text-repwell-teal-300/20 mb-4" />
             )}
             <blockquote className={cn(
-              "text-brand-navy leading-relaxed",
+              "text-repwell-teal-500 leading-relaxed",
               variant === "featured" ? "text-body-lg" : "text-body-md"
             )}>
               &ldquo;{quote}&rdquo;
@@ -94,8 +94,8 @@ export function TestimonialCard({
                   className={cn(
                     "h-4 w-4",
                     i < rating
-                      ? "text-brand-amber fill-brand-amber"
-                      : "text-brand-silver"
+                      ? "text-warning fill-warning"
+                      : "text-border"
                   )}
                 />
               ))}
@@ -103,22 +103,22 @@ export function TestimonialCard({
           )}
 
           {/* Author info */}
-          <div className="flex items-center gap-3 mt-6 pt-6 border-t border-brand-silver/50">
+          <div className="flex items-center gap-3 mt-6 pt-6 border-t border-border/50">
             {avatarUrl ? (
               <img
                 src={avatarUrl}
                 alt={author}
-                className="h-12 w-12 rounded-full object-cover ring-2 ring-brand-frost"
+                className="h-12 w-12 rounded-full object-cover ring-2 ring-repwell-sage-100"
               />
             ) : (
-              <div className="h-12 w-12 rounded-full bg-brand-frost flex items-center justify-center text-brand-blue font-semibold">
+              <div className="h-12 w-12 rounded-full bg-repwell-sage-100 flex items-center justify-center text-repwell-teal-300 font-semibold">
                 {author.charAt(0)}
               </div>
             )}
             <div>
-              <div className="font-semibold text-brand-navy">{author}</div>
+              <div className="font-semibold text-repwell-teal-500">{author}</div>
               {(role || company) && (
-                <div className="text-body-sm text-brand-slate">
+                <div className="text-body-sm text-repwell-teal-400">
                   {role}
                   {role && company && " at "}
                   {company && (

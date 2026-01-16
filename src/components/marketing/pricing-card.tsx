@@ -61,7 +61,7 @@ export function PricingCard({
     >
       {badge && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-          <Badge variant={highlighted ? "featured" : "brand-blue"} className="px-4 py-1 shadow-md">
+          <Badge variant={highlighted ? "featured" : "outline"} className="px-4 py-1 shadow-md">
             {badge}
           </Badge>
         </div>
@@ -70,21 +70,21 @@ export function PricingCard({
         className={cn(
           "h-full flex flex-col transition-all duration-200",
           highlighted
-            ? "border-brand-blue shadow-lg ring-2 ring-brand-blue/20 scale-[1.02]"
-            : "hover:border-brand-blue/30"
+            ? "border-repwell-teal-300 shadow-lg ring-2 ring-repwell-teal-300/20 scale-[1.02]"
+            : "hover:border-repwell-teal-300/30"
         )}
       >
         <CardHeader className="text-center pb-2">
-          <CardTitle className="text-heading-md text-brand-navy">{tier}</CardTitle>
+          <CardTitle className="text-heading-md text-repwell-teal-500">{tier}</CardTitle>
           {description && (
             <CardDescription className="text-body-sm">{description}</CardDescription>
           )}
           <div className="mt-6 flex items-baseline justify-center gap-1">
-            <span className="text-display-sm font-bold text-brand-navy">
+            <span className="text-display-sm font-bold text-repwell-teal-500">
               {typeof price === "number" ? `$${price}` : price}
             </span>
             {typeof price === "number" && (
-              <span className="text-body-md text-brand-slate">/{period}</span>
+              <span className="text-body-md text-repwell-teal-400">/{period}</span>
             )}
           </div>
           {savings && (
@@ -99,10 +99,10 @@ export function PricingCard({
           <ul className="space-y-4">
             {features.map((feature, index) => (
               <li key={index} className="flex items-start gap-3">
-                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-frost">
-                  <Check className="h-3.5 w-3.5 text-brand-blue" strokeWidth={3} />
+                <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-repwell-sage-100">
+                  <Check className="h-3.5 w-3.5 text-repwell-teal-300" strokeWidth={3} />
                 </div>
-                <span className="text-body-sm text-brand-slate">{feature}</span>
+                <span className="text-body-sm text-repwell-teal-400">{feature}</span>
               </li>
             ))}
           </ul>
@@ -111,8 +111,8 @@ export function PricingCard({
           {onSelect ? (
             <Button
               className="w-full"
-              size="brand-lg"
-              variant={highlighted ? "brand" : "brand-outline"}
+              size="lg"
+              variant={highlighted ? "default" : "outline"}
               onClick={onSelect}
               disabled={isLoading}
             >
@@ -122,8 +122,8 @@ export function PricingCard({
             <Link href={cta.href} className="w-full">
               <Button
                 className="w-full"
-                size="brand-lg"
-                variant={highlighted ? "brand" : "brand-outline"}
+                size="lg"
+                variant={highlighted ? "default" : "outline"}
               >
                 {cta.label}
               </Button>

@@ -14,7 +14,7 @@ const tabsListVariants = cva(
     variants: {
       variant: {
         default: "h-10 rounded-lg bg-muted p-1",
-        underline: "h-auto gap-6 border-b border-brand-silver bg-transparent p-0",
+        underline: "h-auto gap-6 border-b border-border bg-transparent p-0",
         pills: "h-auto gap-2 bg-transparent p-0",
       },
     },
@@ -32,9 +32,9 @@ const tabsTriggerVariants = cva(
         default:
           "rounded-md px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
         underline:
-          "relative px-1 py-3 text-brand-slate hover:text-brand-navy data-[state=active]:text-brand-blue data-[state=active]:font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-brand-blue after:scale-x-0 after:transition-transform after:duration-200 after:ease-out data-[state=active]:after:scale-x-100",
+          "relative px-1 py-3 text-repwell-teal-400 hover:text-repwell-teal-500 data-[state=active]:text-repwell-teal-300 data-[state=active]:font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-repwell-teal-300 after:scale-x-0 after:transition-transform after:duration-200 after:ease-out data-[state=active]:after:scale-x-100",
         pills:
-          "rounded-full px-4 py-2 text-brand-slate hover:bg-brand-frost hover:text-brand-navy data-[state=active]:bg-brand-blue data-[state=active]:text-white data-[state=active]:shadow-sm",
+          "rounded-full px-4 py-2 text-repwell-teal-400 hover:bg-repwell-sage-100 hover:text-repwell-teal-500 data-[state=active]:bg-repwell-teal-300 data-[state=active]:text-white data-[state=active]:shadow-sm",
       },
     },
     defaultVariants: {

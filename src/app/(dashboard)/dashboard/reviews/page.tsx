@@ -32,7 +32,7 @@ const ReviewQueue = dynamic(
 );
 
 export const metadata = {
-  title: "Reviews | ReviewHub",
+  title: "Reviews | RepWell",
   description: "View and manage all customer reviews",
 };
 

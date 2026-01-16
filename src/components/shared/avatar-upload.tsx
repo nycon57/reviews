@@ -153,9 +153,9 @@ export function AvatarUpload({
       <div className={cn("flex items-center gap-4", className)}>
         {/* Avatar preview */}
         <div className="relative group">
-          <Avatar className="h-20 w-20 border-2 border-brand-silver">
+          <Avatar className="h-20 w-20 border-2 border-border">
             <AvatarImage src={avatarUrl || undefined} alt="Profile photo" />
-            <AvatarFallback className="text-lg bg-brand-frost text-brand-blue font-semibold">
+            <AvatarFallback className="text-lg bg-repwell-sage-100 text-repwell-teal-300 font-semibold">
               {fallbackInitials}
             </AvatarFallback>
           </Avatar>
@@ -165,7 +165,7 @@ export function AvatarUpload({
             {...getRootProps()}
             className={cn(
               "absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
-              isDragActive && "opacity-100 bg-brand-blue/50",
+              isDragActive && "opacity-100 bg-repwell-teal-300/50",
               (disabled || isUploading) && "cursor-not-allowed"
             )}
           >
@@ -183,23 +183,23 @@ export function AvatarUpload({
           <div
             {...getRootProps()}
             className={cn(
-              "border-2 border-dashed border-brand-silver rounded-lg p-4 text-center cursor-pointer transition-colors",
-              "hover:border-brand-blue hover:bg-brand-frost/50",
-              isDragActive && "border-brand-blue bg-brand-frost",
+              "border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer transition-colors",
+              "hover:border-repwell-teal-300 hover:bg-repwell-sage-100/50",
+              isDragActive && "border-repwell-teal-300 bg-repwell-sage-100",
               (disabled || isUploading) && "opacity-50 cursor-not-allowed"
             )}
           >
             <input {...getInputProps()} />
             <div className="flex flex-col items-center gap-2">
-              <Upload className="h-6 w-6 text-brand-slate" />
+              <Upload className="h-6 w-6 text-repwell-teal-400" />
               {isDragActive ? (
-                <p className="text-sm text-brand-blue font-medium">Drop image here...</p>
+                <p className="text-sm text-repwell-teal-300 font-medium">Drop image here...</p>
               ) : (
                 <>
-                  <p className="text-sm text-brand-slate">
-                    <span className="font-medium text-brand-navy">Click to upload</span> or drag and drop
+                  <p className="text-sm text-repwell-teal-400">
+                    <span className="font-medium text-repwell-teal-500">Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-xs text-brand-slate">PNG, JPG or WebP (max 5MB)</p>
+                  <p className="text-xs text-repwell-teal-400">PNG, JPG or WebP (max 5MB)</p>
                 </>
               )}
             </div>
@@ -236,7 +236,7 @@ export function AvatarUpload({
 
           {/* Zoom slider */}
           <div className="flex items-center gap-4 px-2">
-            <ZoomIn className="h-4 w-4 text-brand-slate flex-shrink-0" />
+            <ZoomIn className="h-4 w-4 text-repwell-teal-400 flex-shrink-0" />
             <Slider
               value={[zoom]}
               onValueChange={([value]) => setZoom(value)}
@@ -245,7 +245,7 @@ export function AvatarUpload({
               step={0.1}
               className="flex-1"
             />
-            <span className="text-sm text-brand-slate w-12 text-right">{zoom.toFixed(1)}x</span>
+            <span className="text-sm text-repwell-teal-400 w-12 text-right">{zoom.toFixed(1)}x</span>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">
@@ -260,7 +260,7 @@ export function AvatarUpload({
             </Button>
             <Button
               type="button"
-              variant="brand"
+              variant="default"
               onClick={handleCropConfirm}
               disabled={isUploading}
             >

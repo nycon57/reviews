@@ -70,25 +70,25 @@ export function LOStatsCards({ metrics }: StatsCardsProps) {
               whileTap={cardTap}
               className="h-full"
             >
-              <Card className="h-full border-brand-silver hover:border-brand-blue/30 transition-colors duration-200">
+              <Card className="h-full border-border hover:border-repwell-teal-300/30 transition-colors duration-200">
                 <CardContent className="p-6">
                   {/* Header with title and icon */}
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-body-sm font-medium text-brand-slate">
+                    <span className="text-body-sm font-medium text-repwell-teal-400">
                       {stat.title}
                     </span>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-frost">
-                      <Icon className="h-5 w-5 text-brand-blue" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100">
+                      <Icon className="h-5 w-5 text-repwell-teal-300" />
                     </div>
                   </div>
 
                   {/* Value */}
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-brand-navy tracking-tight">
+                    <span className="text-3xl font-bold text-repwell-teal-500 tracking-tight">
                       {stat.value}
                     </span>
                     {stat.suffix && (
-                      <span className="text-lg font-normal text-brand-slate">
+                      <span className="text-lg font-normal text-repwell-teal-400">
                         {stat.suffix}
                       </span>
                     )}
@@ -100,7 +100,7 @@ export function LOStatsCards({ metrics }: StatsCardsProps) {
                       <div
                         className={cn(
                           "flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold",
-                          isPositive && "bg-brand-emerald/10 text-brand-emerald",
+                          isPositive && "bg-success/10 text-success",
                           isNegative && "bg-red-50 text-red-600"
                         )}
                       >
@@ -112,7 +112,7 @@ export function LOStatsCards({ metrics }: StatsCardsProps) {
                         {isPositive ? "+" : ""}
                         {stat.change}%
                       </div>
-                      <span className="text-xs text-brand-slate">vs last month</span>
+                      <span className="text-xs text-repwell-teal-400">vs last month</span>
                     </div>
                   )}
                 </CardContent>

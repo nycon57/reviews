@@ -95,7 +95,7 @@ export function AISummaryCard({ summary, onRefresh, isLoading }: AISummaryCardPr
         {/* Highlights */}
         {summary.highlights.length > 0 && (
           <div className="space-y-2">
-            <h4 className="flex items-center gap-1.5 text-sm font-medium text-green-700 dark:text-green-400">
+            <h4 className="flex items-center gap-1.5 text-sm font-medium text-green-700">
               <CheckCircle className="h-4 w-4" />
               Highlights
             </h4>
@@ -116,7 +116,7 @@ export function AISummaryCard({ summary, onRefresh, isLoading }: AISummaryCardPr
         {/* Areas for improvement */}
         {summary.areasOfImprovement.length > 0 && (
           <div className="space-y-2">
-            <h4 className="flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-400">
+            <h4 className="flex items-center gap-1.5 text-sm font-medium text-amber-700">
               <AlertCircle className="h-4 w-4" />
               Areas for Improvement
             </h4>

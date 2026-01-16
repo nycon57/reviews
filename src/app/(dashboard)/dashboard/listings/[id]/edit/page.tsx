@@ -15,12 +15,12 @@ export async function generateMetadata({ params }: EditListingPageProps) {
 
   if (!result.success || !result.data) {
     return {
-      title: 'Listing Not Found | ReviewHub',
+      title: 'Listing Not Found | RepWell',
     };
   }
 
   return {
-    title: `Edit ${result.data.businessName} | Business Listings | ReviewHub`,
+    title: `Edit ${result.data.businessName} | Business Listings | RepWell`,
     description: `Edit business listing for ${result.data.businessName}`,
   };
 }

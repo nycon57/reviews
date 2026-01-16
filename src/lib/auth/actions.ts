@@ -59,12 +59,15 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     return { success: false, error: "Failed to create user" };
   }
 
-  // Create the organization
+  // Create the organization with pending onboarding status
+  // Self-serve signups create individual accounts (B2C)
   const { data: orgData, error: orgError } = await supabase
     .from("organizations")
     .insert({
       name: organizationName,
       slug: orgSlug,
+      onboarding_status: "pending",
+      account_type: "individual", // Self-serve = individual account
     })
     .select()
     .single();
@@ -85,6 +88,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
         full_name: fullName,
         role: "admin", // First user is admin
         is_active: true,
+        is_owner: true, // Self-serve signup = owner of their org
       });
 
     if (userError) {
@@ -94,7 +98,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
 
   return {
     success: true,
-    redirectTo: "/auth/verify-email",
+    redirectTo: "/verify-email",
   };
 }
 

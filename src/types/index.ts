@@ -1,6 +1,10 @@
-// Application types for ReviewHub
+// Application types for RepWell
 
 export type UserRole = "admin" | "manager" | "loan_officer";
+
+export type AccountType = "individual" | "enterprise";
+
+export type SubscriptionTier = "basic" | "pro" | "enterprise";
 
 export type SurveyStatus = "pending" | "sent" | "opened" | "completed" | "expired";
 
@@ -17,6 +21,7 @@ export interface User {
   fullName: string | null;
   avatarUrl: string | null;
   role: UserRole;
+  isOwner: boolean;
   isActive: boolean;
   createdAt: string;
 }
@@ -29,7 +34,8 @@ export interface Organization {
   logoUrl: string | null;
   primaryColor: string;
   settings: OrganizationSettings;
-  subscriptionTier: string;
+  accountType: AccountType;
+  subscriptionTier: SubscriptionTier;
   subscriptionStatus: string;
   createdAt: string;
 }

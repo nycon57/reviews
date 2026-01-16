@@ -1,5 +1,5 @@
 /**
- * ReviewHub Mobile App
+ * RepWell Mobile App
  *
  * Entry point for all shared exports from the mobile app.
  */

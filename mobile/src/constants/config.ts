@@ -9,7 +9,7 @@ export const Config = {
   supabaseAnonKey: Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
 
   // App configuration
-  appName: 'ReviewHub',
+  appName: 'RepWell',
   appVersion: Constants.expoConfig?.version || '1.0.0',
 
   // Feature flags

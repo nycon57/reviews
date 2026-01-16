@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AuthLayout({
   children,
@@ -10,11 +11,15 @@ export default function AuthLayout({
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-              R
-            </div>
-            <span className="text-xl font-bold">ReviewHub</span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+              alt="RepWell"
+              width={140}
+              height={32}
+              className="h-8 w-auto"
+              priority
+            />
           </Link>
         </div>
       </header>
@@ -28,7 +33,7 @@ export default function AuthLayout({
       <footer className="border-t py-6">
         <div className="container flex flex-col items-center justify-center gap-4 md:flex-row md:justify-between">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} ReviewHub. All rights reserved.
+            &copy; {new Date().getFullYear()} RepWell. All rights reserved.
           </p>
           <nav className="flex gap-4">
             <Link

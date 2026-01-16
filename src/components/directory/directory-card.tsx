@@ -17,6 +17,7 @@ import type { DirectoryLoanOfficer } from "@/lib/directory/actions";
 
 interface DirectoryCardProps {
   loanOfficer: DirectoryLoanOfficer;
+  variant?: "grid" | "list";
 }
 
 function getInitials(name: string): string {
@@ -45,13 +46,124 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function DirectoryCard({ loanOfficer }: DirectoryCardProps) {
+export function DirectoryCard({ loanOfficer, variant = "grid" }: DirectoryCardProps) {
   const location = loanOfficer.address
     ? [loanOfficer.address.city, loanOfficer.address.state]
         .filter(Boolean)
         .join(", ")
     : [loanOfficer.branch, loanOfficer.region].filter(Boolean).join(", ");
 
+  // List variant - horizontal, compact layout
+  if (variant === "list") {
+    return (
+      <Card className="group transition-all hover:shadow-md hover:border-primary/50">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            {/* Avatar + Main Info */}
+            <div className="flex items-center gap-4 flex-1 min-w-0">
+              <Link href={`/lo/${loanOfficer.id}`} className="shrink-0">
+                <Avatar className="h-14 w-14 border-2 border-muted transition-transform group-hover:scale-105">
+                  <AvatarImage
+                    src={loanOfficer.photo_url || undefined}
+                    alt={loanOfficer.full_name}
+                  />
+                  <AvatarFallback className="text-base font-semibold bg-primary/10 text-primary">
+                    {getInitials(loanOfficer.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                  <Link href={`/lo/${loanOfficer.id}`}>
+                    <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
+                      {loanOfficer.full_name}
+                    </h3>
+                  </Link>
+                  {/* Rating inline on desktop */}
+                  {loanOfficer.average_rating && loanOfficer.total_reviews ? (
+                    <div className="hidden sm:flex items-center gap-1.5">
+                      <StarRating rating={Math.round(Number(loanOfficer.average_rating))} />
+                      <span className="font-semibold text-sm">
+                        {Number(loanOfficer.average_rating).toFixed(1)}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({loanOfficer.total_reviews})
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-sm text-muted-foreground">
+                  <span className="truncate">{loanOfficer.title || "Loan Officer"}</span>
+                  {loanOfficer.organization && (
+                    <>
+                      <span className="hidden sm:inline text-muted-foreground/50">·</span>
+                      <span className="flex items-center gap-1">
+                        <Building2 className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{loanOfficer.organization.name}</span>
+                      </span>
+                    </>
+                  )}
+                  {location && (
+                    <>
+                      <span className="hidden sm:inline text-muted-foreground/50">·</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{location}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Rating on mobile */}
+                {loanOfficer.average_rating && loanOfficer.total_reviews ? (
+                  <div className="flex sm:hidden items-center gap-1.5 mt-2">
+                    <StarRating rating={Math.round(Number(loanOfficer.average_rating))} />
+                    <span className="font-semibold text-sm">
+                      {Number(loanOfficer.average_rating).toFixed(1)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      ({loanOfficer.total_reviews} {loanOfficer.total_reviews === 1 ? "review" : "reviews"})
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-xs text-muted-foreground mt-2 sm:hidden">No reviews yet</span>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 sm:shrink-0">
+              {loanOfficer.phone && (
+                <Button variant="outline" size="sm" asChild className="h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3">
+                  <a href={`tel:${loanOfficer.phone}`} title="Call">
+                    <Phone className="h-4 w-4 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Call</span>
+                  </a>
+                </Button>
+              )}
+              {loanOfficer.email && (
+                <Button variant="outline" size="sm" asChild className="h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3">
+                  <a href={`mailto:${loanOfficer.email}`} title="Email">
+                    <Mail className="h-4 w-4 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Email</span>
+                  </a>
+                </Button>
+              )}
+              <Button variant="default" size="sm" asChild className="h-9 flex-1 sm:flex-none">
+                <Link href={`/lo/${loanOfficer.id}`}>
+                  View Profile
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Grid variant - original vertical layout
   return (
     <Card className="group h-full transition-all hover:shadow-lg hover:border-primary/50">
       <CardContent className="p-5">

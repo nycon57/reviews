@@ -13,7 +13,7 @@ import { OrganizationOverview } from "@/components/organization/organization-ove
 import { OrganizationSEO } from "@/components/organization/organization-seo";
 
 export const metadata = {
-  title: "Organization Settings | ReviewHub",
+  title: "Organization Settings | RepWell",
   description: "Manage your organization settings, branding, and team",
 };
 

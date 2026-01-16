@@ -507,11 +507,11 @@ export function WebhookLogsViewer() {
                 </div>
 
                 {selectedLog.errorMessage && (
-                  <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-3">
-                    <Label className="text-xs text-red-600 dark:text-red-400">
+                  <div className="rounded-md bg-red-50 p-3">
+                    <Label className="text-xs text-red-600">
                       Error Message
                     </Label>
-                    <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                    <p className="mt-1 text-sm text-red-700">
                       {selectedLog.errorMessage}
                     </p>
                   </div>

@@ -5,7 +5,7 @@ import { WebhooksPageContent } from "./webhooks-page-content";
 import { CardSkeleton } from "@/components/shared/skeletons";
 
 export const metadata = {
-  title: "Webhooks | ReviewHub",
+  title: "Webhooks | RepWell",
   description: "Manage webhook integrations and view webhook logs",
 };
 

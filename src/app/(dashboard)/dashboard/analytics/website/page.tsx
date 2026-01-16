@@ -9,7 +9,7 @@ const WebsiteAnalyticsDashboard = dynamic(
 );
 
 export const metadata: Metadata = {
-  title: "Website Analytics | ReviewHub",
+  title: "Website Analytics | RepWell",
   description: "Track website performance and SEO metrics",
 };
 

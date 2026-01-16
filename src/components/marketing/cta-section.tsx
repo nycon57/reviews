@@ -31,10 +31,10 @@ interface CTASectionProps {
 }
 
 const variantStyles = {
-  default: "bg-brand-frost",
-  gradient: "bg-gradient-to-br from-brand-blue to-brand-iris text-white",
-  dark: "bg-brand-navy text-white",
-  subtle: "bg-brand-ice",
+  default: "bg-repwell-sage-100",
+  gradient: "bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-300 text-white",
+  dark: "bg-repwell-teal-500 text-white",
+  subtle: "bg-repwell-sage-100",
 };
 
 export function CTASection({
@@ -65,7 +65,7 @@ export function CTASection({
             variants={blobFloat}
             className={cn(
               "absolute -top-20 -right-20 h-64 w-64 rounded-full blur-3xl",
-              isDark ? "bg-white/10" : "bg-brand-blue/10"
+              isDark ? "bg-white/10" : "bg-repwell-teal-300/10"
             )}
           />
           <motion.div
@@ -74,7 +74,7 @@ export function CTASection({
             variants={blobFloat}
             className={cn(
               "absolute -bottom-20 -left-20 h-48 w-48 rounded-full blur-3xl",
-              isDark ? "bg-white/5" : "bg-brand-iris/10"
+              isDark ? "bg-white/5" : "bg-repwell-teal-300/10"
             )}
           />
         </>
@@ -91,7 +91,7 @@ export function CTASection({
           variants={fadeInUp}
           className={cn(
             "text-heading-xl md:text-display-sm max-w-3xl mx-auto",
-            isDark ? "text-white" : "text-brand-navy"
+            isDark ? "text-white" : "text-repwell-teal-500"
           )}
         >
           {title}
@@ -102,7 +102,7 @@ export function CTASection({
             variants={fadeInUp}
             className={cn(
               "mt-4 text-body-lg max-w-2xl mx-auto",
-              isDark ? "text-white/80" : "text-brand-slate"
+              isDark ? "text-white/80" : "text-repwell-teal-400"
             )}
           >
             {description}
@@ -115,11 +115,11 @@ export function CTASection({
         >
           <Link href={primaryCta.href}>
             <Button
-              size="brand-lg"
-              variant={isDark ? "secondary" : "brand"}
+              size="lg"
+              variant={isDark ? "secondary" : "default"}
               className={cn(
                 "group",
-                isDark && "bg-white text-brand-navy hover:bg-white/90"
+                isDark && "bg-white text-repwell-teal-500 hover:bg-white/90"
               )}
             >
               {primaryCta.label}
@@ -129,8 +129,8 @@ export function CTASection({
           {secondaryCta && (
             <Link href={secondaryCta.href}>
               <Button
-                size="brand-lg"
-                variant={isDark ? "ghost" : "brand-outline"}
+                size="lg"
+                variant={isDark ? "ghost" : "outline"}
                 className={cn(
                   isDark && "text-white border-white/30 hover:bg-white/10 hover:border-white/50"
                 )}

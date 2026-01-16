@@ -51,7 +51,7 @@ const timeline = [
     year: "2023",
     title: "The Beginning",
     description:
-      "ReviewHub was founded with a simple mission: help mortgage professionals build trust through authentic customer feedback.",
+      "RepWell was founded with a simple mission: help mortgage professionals build trust through authentic customer feedback.",
   },
   {
     year: "2024",
@@ -141,7 +141,7 @@ export function AboutPageClient() {
               variants={fadeInUp}
               className="mt-4 text-lg text-muted-foreground"
             >
-              ReviewHub changes that. We've built a comprehensive platform that
+              RepWell changes that. We've built a comprehensive platform that
               automates review collection, surfaces actionable insights through
               AI, and helps you showcase the great work you do—all while saving
               you hours every week.
@@ -302,7 +302,7 @@ export function AboutPageClient() {
             variants={fadeInUp}
             className="mx-auto mb-8 max-w-xl text-muted-foreground"
           >
-            Start your free trial today and see how ReviewHub can transform your
+            Start your free trial today and see how RepWell can transform your
             customer experience management.
           </motion.p>
           <motion.div variants={fadeInUp} className="flex justify-center gap-4">

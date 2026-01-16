@@ -27,6 +27,8 @@ import {
   Clock,
   Zap,
   AlertTriangle,
+  Building2,
+  Info,
 } from "lucide-react";
 
 export function WebhookDocumentation() {
@@ -52,7 +54,7 @@ export function WebhookDocumentation() {
         <CardHeader>
           <CardTitle>Webhook Integration Guide</CardTitle>
           <CardDescription>
-            Learn how to integrate your LOS, CRM, or other systems with ReviewHub
+            Learn how to integrate your LOS, CRM, or other systems with RepWell
             webhooks to automatically trigger survey sends
           </CardDescription>
         </CardHeader>
@@ -148,10 +150,11 @@ export function WebhookDocumentation() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="loan.closed" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="loan.closed">loan.closed</TabsTrigger>
               <TabsTrigger value="contact.created">contact.created</TabsTrigger>
               <TabsTrigger value="survey.trigger">survey.trigger</TabsTrigger>
+              <TabsTrigger value="encompass.milestone">encompass.milestone</TabsTrigger>
             </TabsList>
 
             <TabsContent value="loan.closed" className="space-y-4 mt-4">
@@ -281,7 +284,203 @@ export function WebhookDocumentation() {
                 </p>
               </div>
             </TabsContent>
+
+            <TabsContent value="encompass.milestone" className="space-y-4 mt-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="border-blue-300 text-blue-700">
+                  <Building2 className="mr-1 h-3 w-3" />
+                  Encompass
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Trigger surveys based on Encompass loan milestones
+                </span>
+              </div>
+              <CodeBlock
+                title="Payload Example"
+                code={JSON.stringify(
+                  {
+                    event_type: "encompass.milestone",
+                    milestone: "Funded",
+                    loan_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                    loan_officer_email: "john.doe@company.com",
+                    borrower_name: "Jane Smith",
+                    borrower_email: "jane.smith@email.com",
+                    borrower_phone: "+15551234567",
+                    loan_amount: 350000,
+                    property_address: "123 Main St, Anytown, CA 90210",
+                    loan_number: "2024-001234",
+                    milestone_date: "2024-01-15T10:30:00Z",
+                    metadata: {
+                      loan_type: "Conventional",
+                      branch: "West Region",
+                    },
+                  },
+                  null,
+                  2
+                )}
+                onCopy={() =>
+                  copyToClipboard("encompass.milestone payload", "Payload4")
+                }
+                isCopied={copiedItem === "Payload4"}
+              />
+              <div className="text-sm space-y-2">
+                <p>
+                  <strong>Delay:</strong> Configured per milestone in the Encompass tab
+                </p>
+                <p>
+                  <strong>Required fields:</strong> milestone, loan_id,
+                  loan_officer_email, borrower_name, borrower_email
+                </p>
+                <p>
+                  <strong>Optional fields:</strong> borrower_phone, loan_amount,
+                  property_address, loan_number, milestone_date, metadata
+                </p>
+              </div>
+            </TabsContent>
           </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Encompass Integration Guide */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-lg">Encompass Integration Guide</CardTitle>
+          </div>
+          <CardDescription>
+            Step-by-step instructions to connect Encompass with RepWell
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Prerequisites */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Prerequisites</h4>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+              <li>Encompass admin access to configure webhook notifications</li>
+              <li>RepWell webhook API key (create in the Configurations tab)</li>
+              <li>Milestone mappings configured (in the Encompass tab)</li>
+            </ul>
+          </div>
+
+          {/* Step 1 */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Step 1: Get Your RepWell API Key</h4>
+            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+              <li>Go to the <strong>Configurations</strong> tab above</li>
+              <li>Create a new webhook configuration (or use an existing one)</li>
+              <li>Copy your API key - you&apos;ll need this for Encompass</li>
+            </ol>
+          </div>
+
+          {/* Step 2 */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Step 2: Configure Milestone Mappings</h4>
+            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+              <li>Go to the <strong>Encompass</strong> tab above</li>
+              <li>Enable the milestones you want to trigger surveys (e.g., &quot;Funded&quot;)</li>
+              <li>Configure the delay (how long after the milestone to send the survey)</li>
+              <li>Optionally assign specific survey templates to each milestone</li>
+            </ol>
+          </div>
+
+          {/* Step 3 */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Step 3: Configure Encompass Webhook</h4>
+            <p className="text-sm text-muted-foreground">
+              You&apos;ll need to configure an outbound webhook in Encompass to send milestone
+              events to RepWell. This can be done via:
+            </p>
+            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside ml-4">
+              <li><strong>Encompass Business Rules</strong> - Trigger webhooks on milestone changes</li>
+              <li><strong>Custom Integration Middleware</strong> - Transform Encompass events to RepWell format</li>
+              <li><strong>Zapier/Make</strong> - Connect Encompass to RepWell via automation platform</li>
+            </ul>
+          </div>
+
+          {/* Webhook Configuration */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Webhook Configuration Details</h4>
+            <div className="rounded bg-muted p-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Endpoint URL:</span>
+                <code className="text-xs">{webhookEndpoint}</code>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Method:</span>
+                <code className="text-xs">POST</code>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Content-Type:</span>
+                <code className="text-xs">application/json</code>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Auth Header:</span>
+                <code className="text-xs">x-api-key: YOUR_API_KEY</code>
+              </div>
+            </div>
+          </div>
+
+          {/* Field Mapping */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Required Field Mapping</h4>
+            <p className="text-sm text-muted-foreground">
+              Map these Encompass fields to the RepWell webhook payload:
+            </p>
+            <div className="border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left p-2 font-medium">RepWell Field</th>
+                    <th className="text-left p-2 font-medium">Encompass Field (Example)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr>
+                    <td className="p-2"><code>milestone</code></td>
+                    <td className="p-2 text-muted-foreground">Milestone Name (e.g., &quot;Funded&quot;)</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2"><code>loan_id</code></td>
+                    <td className="p-2 text-muted-foreground">Loan GUID / Loan Number</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2"><code>loan_officer_email</code></td>
+                    <td className="p-2 text-muted-foreground">Loan Officer Email Address</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2"><code>borrower_name</code></td>
+                    <td className="p-2 text-muted-foreground">Borrower First + Last Name</td>
+                  </tr>
+                  <tr>
+                    <td className="p-2"><code>borrower_email</code></td>
+                    <td className="p-2 text-muted-foreground">Borrower Email Address</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Testing */}
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm">Step 4: Test Your Integration</h4>
+            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
+              <li>Go to the <strong>Test Webhooks</strong> tab</li>
+              <li>Select your webhook configuration</li>
+              <li>Choose &quot;encompass.milestone&quot; as the event type (coming soon)</li>
+              <li>Run a live test to verify the connection</li>
+              <li>Check the <strong>Logs</strong> tab to see webhook activity</li>
+            </ol>
+          </div>
+
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
+            <div className="text-sm text-blue-800">
+              <strong>Need help?</strong> Contact your Encompass administrator or IT team
+              to set up the webhook configuration. They may need to create a custom
+              business rule or use middleware to format the payload correctly.
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -294,9 +493,9 @@ export function WebhookDocumentation() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
             <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-            <p className="text-sm text-amber-800 dark:text-amber-200">
+            <p className="text-sm text-amber-800">
               While signature verification is optional, we strongly recommend it
               for production integrations to prevent unauthorized requests.
             </p>

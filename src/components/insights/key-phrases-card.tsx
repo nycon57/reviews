@@ -10,9 +10,9 @@ interface KeyPhrasesCardProps {
 }
 
 const sentimentColors = {
-  positive: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  neutral: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
-  negative: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+  positive: "bg-green-100 text-green-800",
+  neutral: "bg-gray-100 text-gray-800",
+  negative: "bg-red-100 text-red-800",
 };
 
 export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
@@ -70,7 +70,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
           {/* Positive phrases */}
           {positiveData.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-green-700 dark:text-green-400">
+              <h4 className="text-sm font-medium text-green-700">
                 Positive Mentions
               </h4>
               <ul className="space-y-1">
@@ -82,7 +82,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
                     <span className="truncate text-muted-foreground">
                       &quot;{phrase.phrase}&quot;
                     </span>
-                    <span className="ml-2 text-xs text-green-600 dark:text-green-400">
+                    <span className="ml-2 text-xs text-green-600">
                       {phrase.count}×
                     </span>
                   </li>
@@ -94,7 +94,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
           {/* Negative phrases */}
           {negativeData.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-red-700 dark:text-red-400">
+              <h4 className="text-sm font-medium text-red-700">
                 Areas of Concern
               </h4>
               <ul className="space-y-1">
@@ -106,7 +106,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
                     <span className="truncate text-muted-foreground">
                       &quot;{phrase.phrase}&quot;
                     </span>
-                    <span className="ml-2 text-xs text-red-600 dark:text-red-400">
+                    <span className="ml-2 text-xs text-red-600">
                       {phrase.count}×
                     </span>
                   </li>

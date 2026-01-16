@@ -467,7 +467,7 @@ export function OrganizationProfileContent({
       <footer className="border-t bg-card py-6 mt-8">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <p className="text-center text-sm text-muted-foreground">
-            Powered by ReviewHub - Customer Experience Management
+            Powered by RepWell - Customer Experience Management
           </p>
         </div>
       </footer>

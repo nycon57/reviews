@@ -24,7 +24,7 @@ import { EXSurveyLaunchButton } from "@/components/ex-surveys";
 import { EXResultsChart } from "@/components/ex-surveys";
 
 export const metadata = {
-  title: "Survey Details | Employee Experience | ReviewHub",
+  title: "Survey Details | Employee Experience | RepWell",
   description: "View survey details and results",
 };
 

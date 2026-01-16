@@ -520,7 +520,7 @@ export async function runPageSEOAudit(
     try {
       const response = await fetch(pageUrl, {
         headers: {
-          "User-Agent": "ReviewHub SEO Auditor/1.0",
+          "User-Agent": "RepWell SEO Auditor/1.0",
         },
       });
       if (!response.ok) {

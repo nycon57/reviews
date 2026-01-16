@@ -20,3 +20,18 @@ export {
   PageLoadingAnimated,
   ContentLoading,
 } from "./loading-states";
+
+// New components for Calendly-inspired homepage
+export { BrowserMockup } from "./browser-mockup";
+export { SecurityBadges } from "./security-badges";
+export { FloatingAvatarsHero } from "./floating-avatars-hero";
+export { TabNavigationSection } from "./tab-navigation-section";
+export { FeatureShowcase } from "./feature-showcase";
+export { IntegrationsGrid } from "./integrations-grid";
+export { VideoSection } from "./video-section";
+export { StatsSectionDark } from "./stats-section-dark";
+
+// Existing components used in homepage
+export { TrustLogosBar } from "./trust-logos-bar";
+export { TestimonialCard } from "./testimonial-card";
+export { CTASection } from "./cta-section";

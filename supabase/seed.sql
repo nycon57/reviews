@@ -1,4 +1,4 @@
--- ReviewHub Seed Data for Development
+-- RepWell Seed Data for Development
 -- This script creates sample data for testing and development
 -- Run with: npm run db:reset (or via Supabase CLI)
 

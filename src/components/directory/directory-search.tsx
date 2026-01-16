@@ -20,11 +20,11 @@ import {
   Star,
   SlidersHorizontal,
   X,
-  Grid3X3,
-  Map,
   Users,
   ChevronLeft,
   ChevronRight,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
@@ -53,7 +53,7 @@ export function DirectorySearch({
   // State
   const [results, setResults] = useState<DirectoryLoanOfficer[]>(initialResults);
   const [totalCount, setTotalCount] = useState(initialCount);
-  const [view, setView] = useState<"grid" | "map">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Form state
   const [query, setQuery] = useState(searchParams.get("q") || "");
@@ -173,7 +173,10 @@ export function DirectorySearch({
 
   return (
     <div className="space-y-6">
-      {/* Search Header */}
+      {/* Map View - Always visible at top */}
+      <DirectoryMapView loanOfficers={results} />
+
+      {/* Search & Filters */}
       <Card>
         <CardContent className="p-4 sm:p-6">
           <form onSubmit={handleSearch} className="space-y-4">
@@ -201,12 +204,15 @@ export function DirectorySearch({
                     className="pl-10"
                   />
                 </div>
-                <Select value={state} onValueChange={(v) => handleFilterChange("state", v)}>
+                <Select
+                  value={state || "all"}
+                  onValueChange={(v) => handleFilterChange("state", v === "all" ? "" : v)}
+                >
                   <SelectTrigger className="w-32 sm:w-40">
                     <SelectValue placeholder="State" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All States</SelectItem>
+                    <SelectItem value="all">All States</SelectItem>
                     {availableStates.map((s) => (
                       <SelectItem key={s.value} value={s.value}>
                         {s.label}
@@ -227,15 +233,15 @@ export function DirectorySearch({
             <div className="flex flex-wrap items-center gap-3">
               {/* Rating Filter */}
               <Select
-                value={minRating}
-                onValueChange={(v) => handleFilterChange("minRating", v)}
+                value={minRating || "any"}
+                onValueChange={(v) => handleFilterChange("minRating", v === "any" ? "" : v)}
               >
                 <SelectTrigger className="w-36">
                   <Star className="mr-2 h-4 w-4 text-yellow-400" />
                   <SelectValue placeholder="Any Rating" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Rating</SelectItem>
+                  <SelectItem value="any">Any Rating</SelectItem>
                   <SelectItem value="4.5">4.5+ Stars</SelectItem>
                   <SelectItem value="4">4+ Stars</SelectItem>
                   <SelectItem value="3.5">3.5+ Stars</SelectItem>
@@ -258,26 +264,6 @@ export function DirectorySearch({
                   <SelectItem value="name">Name (A-Z)</SelectItem>
                 </SelectContent>
               </Select>
-
-              {/* View Toggle */}
-              <div className="ml-auto flex rounded-md border bg-muted p-1">
-                <Button
-                  variant={view === "grid" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-8 px-3"
-                  onClick={() => setView("grid")}
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={view === "map" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="h-8 px-3"
-                  onClick={() => setView("map")}
-                >
-                  <Map className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
 
             {/* Active Filters */}
@@ -340,7 +326,7 @@ export function DirectorySearch({
         </CardContent>
       </Card>
 
-      {/* Results Count */}
+      {/* Results Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-muted-foreground" />
@@ -355,62 +341,108 @@ export function DirectorySearch({
             )}
           </span>
         </div>
-        {totalPages > 1 && (
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {totalPages > 1 && (
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+          )}
+          {/* View Toggle */}
+          <div className="flex rounded-lg border border-border bg-muted/30 p-0.5">
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`
+                inline-flex items-center justify-center rounded-md px-2.5 py-1.5
+                text-sm font-medium transition-all duration-200
+                ${viewMode === "grid"
+                  ? "bg-white text-repwell-teal-500 shadow-sm"
+                  : "text-repwell-teal-400 hover:text-repwell-teal-500"
+                }
+              `}
+              aria-label="Grid view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`
+                inline-flex items-center justify-center rounded-md px-2.5 py-1.5
+                text-sm font-medium transition-all duration-200
+                ${viewMode === "list"
+                  ? "bg-white text-repwell-teal-500 shadow-sm"
+                  : "text-repwell-teal-400 hover:text-repwell-teal-500"
+                }
+              `}
+              aria-label="List view"
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Results */}
       {isPending ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className={
+          viewMode === "grid"
+            ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            : "flex flex-col gap-4"
+        }>
+          {Array.from({ length: viewMode === "grid" ? 6 : 4 }).map((_, i) => (
             <Card key={i}>
-              <CardContent className="p-5">
+              <CardContent className={viewMode === "list" ? "p-4 sm:p-5" : "p-5"}>
                 <div className="flex items-start gap-4">
-                  <Skeleton className="h-16 w-16 rounded-full" />
+                  <Skeleton className={viewMode === "list" ? "h-14 w-14 rounded-full" : "h-16 w-16 rounded-full"} />
                   <div className="flex-1 space-y-2">
                     <Skeleton className="h-5 w-32" />
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-3 w-20" />
                   </div>
+                  {viewMode === "list" && (
+                    <Skeleton className="h-9 w-24 hidden sm:block" />
+                  )}
                 </div>
-                <Skeleton className="mt-4 h-4 w-40" />
-                <Skeleton className="mt-3 h-12 w-full" />
+                {viewMode === "grid" && (
+                  <>
+                    <Skeleton className="mt-4 h-4 w-40" />
+                    <Skeleton className="mt-3 h-12 w-full" />
+                  </>
+                )}
               </CardContent>
             </Card>
           ))}
         </div>
-      ) : view === "grid" ? (
-        results.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map((lo) => (
-              <DirectoryCard key={lo.id} loanOfficer={lo} />
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <Users className="h-16 w-16 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-medium">No loan officers found</h3>
-              <p className="mt-2 text-sm text-muted-foreground text-center max-w-md">
-                Try adjusting your search criteria or clearing some filters to see more results.
-              </p>
-              {hasActiveFilters && (
-                <Button variant="outline" className="mt-4" onClick={clearFilters}>
-                  Clear all filters
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        )
+      ) : results.length > 0 ? (
+        <div className={
+          viewMode === "grid"
+            ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            : "flex flex-col gap-4"
+        }>
+          {results.map((lo) => (
+            <DirectoryCard key={lo.id} loanOfficer={lo} variant={viewMode} />
+          ))}
+        </div>
       ) : (
-        <DirectoryMapView loanOfficers={results} />
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Users className="h-16 w-16 text-muted-foreground/50" />
+            <h3 className="mt-4 text-lg font-medium">No loan officers found</h3>
+            <p className="mt-2 text-sm text-muted-foreground text-center max-w-md">
+              Try adjusting your search criteria or clearing some filters to see more results.
+            </p>
+            {hasActiveFilters && (
+              <Button variant="outline" className="mt-4" onClick={clearFilters}>
+                Clear all filters
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Pagination */}
-      {!isPending && totalPages > 1 && view === "grid" && (
+      {!isPending && totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-4">
           <Button
             variant="outline"

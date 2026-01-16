@@ -141,28 +141,28 @@ export function CampaignsDashboard({ userRole: _userRole }: CampaignsDashboardPr
         return <Badge variant="outline">Draft</Badge>;
       case "scheduled":
         return (
-          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-400">
+          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
             <Clock className="mr-1 h-3 w-3" />
             Scheduled
           </Badge>
         );
       case "active":
         return (
-          <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+          <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
             <Play className="mr-1 h-3 w-3" />
             Active
           </Badge>
         );
       case "paused":
         return (
-          <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-400">
+          <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">
             <Pause className="mr-1 h-3 w-3" />
             Paused
           </Badge>
         );
       case "completed":
         return (
-          <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
+          <Badge variant="outline" className="border-gray-200 bg-gray-50 text-gray-700">
             <CheckCircle2 className="mr-1 h-3 w-3" />
             Completed
           </Badge>
@@ -209,8 +209,8 @@ export function CampaignsDashboard({ userRole: _userRole }: CampaignsDashboardPr
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
-                <Play className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                <Play className="h-5 w-5 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{activeCampaigns}</p>
@@ -223,8 +223,8 @@ export function CampaignsDashboard({ userRole: _userRole }: CampaignsDashboardPr
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Send className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                <Send className="h-5 w-5 text-blue-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{totalSent.toLocaleString()}</p>
@@ -237,8 +237,8 @@ export function CampaignsDashboard({ userRole: _userRole }: CampaignsDashboardPr
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                <Eye className="h-5 w-5 text-purple-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{avgOpenRate}%</p>
@@ -251,8 +251,8 @@ export function CampaignsDashboard({ userRole: _userRole }: CampaignsDashboardPr
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-                <BarChart3 className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
+                <BarChart3 className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{avgResponseRate}%</p>

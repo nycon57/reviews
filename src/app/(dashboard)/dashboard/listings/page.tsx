@@ -10,7 +10,7 @@ import { getAccuracyScoreColor, getAccuracyScoreLabel, getFullAddress } from '@/
 import { ListingAlertsPanel } from '@/components/listings/listing-alerts-panel';
 
 export const metadata = {
-  title: 'Business Listings | ReviewHub',
+  title: 'Business Listings | RepWell',
   description: 'Manage your business listings across online directories',
 };
 

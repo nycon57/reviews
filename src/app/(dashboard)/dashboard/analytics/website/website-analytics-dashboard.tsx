@@ -102,7 +102,7 @@ function StatCard({ title, value, subtitle, icon, trend }: StatCardProps) {
               <p className="text-xs text-muted-foreground">{subtitle}</p>
             )}
           </div>
-          <div className="rounded-lg bg-brand-frost p-2">
+          <div className="rounded-lg bg-repwell-sage-100 p-2">
             {icon}
           </div>
         </div>
@@ -337,7 +337,7 @@ function SEOIssuesList({ issues }: { issues: WebsiteSEOOverview["topIssues"] }) 
             </div>
             <p className="text-xs text-muted-foreground mt-1">{issue.description}</p>
             {issue.howToFix && (
-              <p className="text-xs text-brand-blue mt-1">{issue.howToFix}</p>
+              <p className="text-xs text-repwell-teal-300 mt-1">{issue.howToFix}</p>
             )}
           </div>
         </div>
@@ -354,9 +354,9 @@ function SEORecommendationsList({ recommendations }: { recommendations: WebsiteS
   return (
     <div className="space-y-2">
       {recommendations.slice(0, 5).map((rec) => (
-        <div key={rec.id} className="flex items-start gap-3 p-3 rounded-lg border border-brand-blue/20 bg-brand-frost/30">
-          <div className="rounded-full bg-brand-blue/10 p-1">
-            <TrendingUp className="h-4 w-4 text-brand-blue" />
+        <div key={rec.id} className="flex items-start gap-3 p-3 rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/30">
+          <div className="rounded-full bg-repwell-teal-300/10 p-1">
+            <TrendingUp className="h-4 w-4 text-repwell-teal-300" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
@@ -536,7 +536,7 @@ export function WebsiteAnalyticsDashboard() {
             <StatCard
               title="Page Views"
               value={formatNumber(analyticsData.totalPageviews)}
-              icon={<Eye className="h-5 w-5 text-brand-blue" />}
+              icon={<Eye className="h-5 w-5 text-repwell-teal-300" />}
               trend={{
                 value: analyticsData.periodComparison.pageviewsChange,
                 isPositive: analyticsData.periodComparison.pageviewsChange > 0,
@@ -545,7 +545,7 @@ export function WebsiteAnalyticsDashboard() {
             <StatCard
               title="Unique Visitors"
               value={formatNumber(analyticsData.totalUniqueVisitors)}
-              icon={<Users className="h-5 w-5 text-brand-blue" />}
+              icon={<Users className="h-5 w-5 text-repwell-teal-300" />}
               trend={{
                 value: analyticsData.periodComparison.visitorsChange,
                 isPositive: analyticsData.periodComparison.visitorsChange > 0,
@@ -554,7 +554,7 @@ export function WebsiteAnalyticsDashboard() {
             <StatCard
               title="Sessions"
               value={formatNumber(analyticsData.totalSessions)}
-              icon={<MousePointerClick className="h-5 w-5 text-brand-blue" />}
+              icon={<MousePointerClick className="h-5 w-5 text-repwell-teal-300" />}
               trend={{
                 value: analyticsData.periodComparison.sessionsChange,
                 isPositive: analyticsData.periodComparison.sessionsChange > 0,
@@ -564,7 +564,7 @@ export function WebsiteAnalyticsDashboard() {
               title="Avg. Session Duration"
               value={formatDuration(analyticsData.avgSessionDuration)}
               subtitle={`${formatPercent(analyticsData.avgBounceRate)} bounce rate`}
-              icon={<Clock className="h-5 w-5 text-brand-blue" />}
+              icon={<Clock className="h-5 w-5 text-repwell-teal-300" />}
             />
           </div>
 
@@ -720,7 +720,7 @@ export function WebsiteAnalyticsDashboard() {
                             href={audit.pageUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-brand-blue"
+                            className="text-muted-foreground hover:text-repwell-teal-300"
                           >
                             <ExternalLink className="h-3 w-3" />
                           </a>

@@ -168,8 +168,8 @@ export function TrendsDashboard() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
-                  <Star className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100">
+                  <Star className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Avg Rating</p>
@@ -187,8 +187,8 @@ export function TrendsDashboard() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                  <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
+                  <BarChart3 className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">NPS Score</p>
@@ -204,8 +204,8 @@ export function TrendsDashboard() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
-                  <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100">
+                  <Users className="h-5 w-5 text-green-600" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Team Avg</p>
@@ -223,8 +223,8 @@ export function TrendsDashboard() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                  <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100">
+                  <MessageSquare className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Reviews</p>

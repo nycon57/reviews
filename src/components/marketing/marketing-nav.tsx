@@ -2,9 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { fadeIn } from "@/lib/motion";
@@ -49,7 +49,7 @@ export function MarketingNav() {
       animate="visible"
       variants={fadeIn}
       className={cn(
-        "sticky top-0 z-50 w-full border-b border-brand-silver/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 transition-all duration-200",
+        "sticky top-0 z-50 w-full border-b border-border/50 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/80 transition-all duration-200",
         isScrolled && "shadow-elevation-2"
       )}
     >
@@ -57,12 +57,16 @@ export function MarketingNav() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
+          className="flex items-center transition-opacity hover:opacity-80"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-blue">
-            <Star className="h-5 w-5 text-white" fill="currentColor" />
-          </div>
-          <span className="text-xl font-bold text-brand-navy">ReviewHub</span>
+          <Image
+            src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+            alt="RepWell"
+            width={140}
+            height={32}
+            className="h-8 w-auto"
+            priority
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -76,11 +80,11 @@ export function MarketingNav() {
               href={link.href}
               className={cn(
                 "relative px-4 py-2 text-body-sm font-medium transition-colors rounded-lg",
-                "hover:text-brand-blue hover:bg-brand-frost/50",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/20",
+                "hover:text-repwell-teal-300 hover:bg-repwell-sage-100/50",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/20",
                 isActive(link.href)
-                  ? "text-brand-blue"
-                  : "text-brand-navy"
+                  ? "text-repwell-teal-300"
+                  : "text-repwell-teal-500"
               )}
               aria-current={isActive(link.href) ? "page" : undefined}
             >
@@ -88,7 +92,7 @@ export function MarketingNav() {
               {isActive(link.href) && (
                 <motion.div
                   layoutId="nav-indicator"
-                  className="absolute bottom-0 left-2 right-2 h-0.5 bg-brand-blue rounded-full"
+                  className="absolute bottom-0 left-2 right-2 h-0.5 bg-repwell-teal-300 rounded-full"
                   transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
                 />
               )}
@@ -99,12 +103,12 @@ export function MarketingNav() {
         {/* Auth Buttons */}
         <div className="hidden items-center gap-3 md:flex">
           <Link href="/login">
-            <Button variant="brand-ghost" size="sm" className="font-medium">
+            <Button variant="ghost" size="sm" className="font-medium">
               Sign In
             </Button>
           </Link>
           <Link href="/signup">
-            <Button variant="brand" size="sm">
+            <Button variant="default" size="sm">
               Get Started
             </Button>
           </Link>

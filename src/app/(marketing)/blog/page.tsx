@@ -9,11 +9,11 @@ import { HeroSection } from "@/components/marketing/hero-section";
 import { BlogArchiveClient } from "./blog-archive-client";
 
 export const metadata: Metadata = {
-  title: "Blog | ReviewHub",
+  title: "Blog | RepWell",
   description:
     "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals. Tips, best practices, and industry news.",
   openGraph: {
-    title: "ReviewHub Blog",
+    title: "RepWell Blog",
     description:
       "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.",
     type: "website",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ReviewHub Blog",
+    title: "RepWell Blog",
     description:
       "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.",
   },
@@ -51,7 +51,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   return (
     <>
       <HeroSection
-        title="ReviewHub Blog"
+        title="RepWell Blog"
         description="Insights on customer experience, review management, and AI-powered analytics for mortgage professionals."
         cta={[]}
         compact

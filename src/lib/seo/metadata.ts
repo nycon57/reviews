@@ -70,7 +70,7 @@ export function generateLOProfileMetadata(
       description,
       url: profileUrl,
       type: "profile",
-      siteName: organization?.name || "ReviewHub",
+      siteName: organization?.name || "RepWell",
       locale: "en_US",
     },
     twitter: {
@@ -113,7 +113,7 @@ export function generateLOListingMetadata(
   organization: MetadataOrganization | null,
   baseUrl: string
 ): Metadata {
-  const siteName = organization?.name || "ReviewHub";
+  const siteName = organization?.name || "RepWell";
   const title = `Our Loan Officers - ${siteName}`;
   const description = `Meet our team of experienced loan officers. Read reviews and ratings to find the right mortgage professional for your needs.`;
 
@@ -213,7 +213,7 @@ export function generateBranchProfileMetadata(
   organization: MetadataOrganization | null,
   baseUrl: string
 ): Metadata {
-  const siteName = organization?.name || "ReviewHub";
+  const siteName = organization?.name || "RepWell";
 
   // Parse address for location context
   const address = branch.address as { city?: string; state?: string } | null;

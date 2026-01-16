@@ -140,7 +140,7 @@ function generateDirectorySchema(loanOfficers: DirectoryLoanOfficer[], baseUrl: 
     isPartOf: {
       "@type": "WebSite",
       "@id": baseUrl,
-      name: "ReviewHub",
+      name: "RepWell",
       url: baseUrl,
     },
     mainEntity: itemListSchema,
@@ -207,68 +207,59 @@ export default async function DirectoryPage(props: PageProps) {
       {schemas.map((schema, index) => (
         <StructuredData key={index} data={schema} />
       ))}
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <div className="bg-gradient-to-b from-background to-muted/30">
         {/* Hero Section */}
-      <div className="border-b bg-card">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              Find a Loan Officer
-            </h1>
-            <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Connect with trusted mortgage professionals in your area. Search by location,
-              read reviews, and find the perfect loan officer for your home financing journey.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Directory Content */}
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <Suspense fallback={<DirectorySkeleton />}>
-          <DirectoryContent searchParams={props.searchParams} />
-        </Suspense>
-      </div>
-
-      {/* SEO Content Section */}
-      <div className="border-t bg-muted/30">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid gap-8 md:grid-cols-3">
-            <div>
-              <h2 className="text-lg font-semibold mb-3">Why Use Our Directory?</h2>
-              <p className="text-sm text-muted-foreground">
-                Our loan officer directory makes it easy to find and compare mortgage professionals.
-                Read real customer reviews, see ratings, and contact loan officers directly.
-              </p>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold mb-3">What to Look For</h2>
-              <p className="text-sm text-muted-foreground">
-                Consider loan officers with high ratings, experience in your loan type
-                (FHA, VA, Conventional, Jumbo), and positive customer feedback about
-                communication and closing times.
-              </p>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold mb-3">Getting Started</h2>
-              <p className="text-sm text-muted-foreground">
-                Search by your city or state, filter by rating, and browse profiles.
-                Once you find a loan officer you like, call or email them directly to
-                start your home financing process.
+        <div className="border-b bg-card">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+                Find a Loan Officer
+              </h1>
+              <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+                Connect with trusted mortgage professionals in your area. Search by location,
+                read reviews, and find the perfect loan officer for your home financing journey.
               </p>
             </div>
           </div>
         </div>
-      </div>
 
-        {/* Footer */}
-        <footer className="border-t bg-card py-6">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <p className="text-center text-sm text-muted-foreground">
-              Powered by ReviewHub - Customer Experience Management
-            </p>
+        {/* Directory Content */}
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <Suspense fallback={<DirectorySkeleton />}>
+            <DirectoryContent searchParams={props.searchParams} />
+          </Suspense>
+        </div>
+
+        {/* SEO Content Section */}
+        <div className="border-t bg-muted/30">
+          <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+            <div className="grid gap-8 md:grid-cols-3">
+              <div>
+                <h2 className="text-lg font-semibold mb-3">Why Use Our Directory?</h2>
+                <p className="text-sm text-muted-foreground">
+                  Our loan officer directory makes it easy to find and compare mortgage professionals.
+                  Read real customer reviews, see ratings, and contact loan officers directly.
+                </p>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold mb-3">What to Look For</h2>
+                <p className="text-sm text-muted-foreground">
+                  Consider loan officers with high ratings, experience in your loan type
+                  (FHA, VA, Conventional, Jumbo), and positive customer feedback about
+                  communication and closing times.
+                </p>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold mb-3">Getting Started</h2>
+                <p className="text-sm text-muted-foreground">
+                  Search by your city or state, filter by rating, and browse profiles.
+                  Once you find a loan officer you like, call or email them directly to
+                  start your home financing process.
+                </p>
+              </div>
+            </div>
           </div>
-        </footer>
+        </div>
       </div>
     </>
   );

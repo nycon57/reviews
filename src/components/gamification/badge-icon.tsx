@@ -47,24 +47,24 @@ const iconMap: Record<string, LucideIcon> = {
 
 const tierColors: Record<BadgeTier, { bg: string; border: string; icon: string }> = {
   bronze: {
-    bg: "bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/40 dark:to-amber-800/30",
+    bg: "bg-gradient-to-br from-amber-100 to-amber-200",
     border: "border-amber-400/50",
-    icon: "text-amber-700 dark:text-amber-400",
+    icon: "text-amber-700",
   },
   silver: {
-    bg: "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800/50 dark:to-gray-700/40",
+    bg: "bg-gradient-to-br from-gray-100 to-gray-200",
     border: "border-gray-400/50",
-    icon: "text-gray-600 dark:text-gray-300",
+    icon: "text-gray-600",
   },
   gold: {
-    bg: "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/40 dark:to-yellow-800/30",
+    bg: "bg-gradient-to-br from-yellow-100 to-yellow-200",
     border: "border-yellow-400/50",
-    icon: "text-yellow-600 dark:text-yellow-400",
+    icon: "text-yellow-600",
   },
   platinum: {
-    bg: "bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-900/40 dark:to-blue-900/30",
+    bg: "bg-gradient-to-br from-purple-100 to-blue-100",
     border: "border-purple-400/50",
-    icon: "text-purple-600 dark:text-purple-400",
+    icon: "text-purple-600",
   },
 };
 

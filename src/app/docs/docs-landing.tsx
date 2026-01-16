@@ -45,7 +45,7 @@ const quickStartLinks = [
   {
     title: "Contact Support",
     description: "Get help from our team",
-    href: "mailto:support@reviewhub.com",
+    href: "mailto:support@repwell.com",
     icon: MessageCircle,
   },
 ];
@@ -61,15 +61,15 @@ export function DocsLanding() {
         className="text-center"
       >
         <motion.div variants={fadeInUp}>
-          <Badge variant="brand-blue" className="mb-4">
+          <Badge variant="default" className="mb-4">
             Documentation
           </Badge>
         </motion.div>
-        <motion.h1 variants={fadeInUp} className="text-display-md text-brand-navy mb-4">
-          ReviewHub Documentation
+        <motion.h1 variants={fadeInUp} className="text-display-md text-repwell-teal-500 mb-4">
+          RepWell Documentation
         </motion.h1>
-        <motion.p variants={fadeInUp} className="text-body-lg text-brand-slate max-w-2xl mx-auto">
-          Everything you need to know about using ReviewHub. From getting started
+        <motion.p variants={fadeInUp} className="text-body-lg text-repwell-teal-400 max-w-2xl mx-auto">
+          Everything you need to know about using RepWell. From getting started
           to advanced integrations, find guides and tutorials for all features.
         </motion.p>
       </motion.section>
@@ -81,7 +81,7 @@ export function DocsLanding() {
         viewport={viewportOnce}
         variants={staggerContainer}
       >
-        <motion.h2 variants={fadeInUp} className="text-heading-lg text-brand-navy mb-6">
+        <motion.h2 variants={fadeInUp} className="text-heading-lg text-repwell-teal-500 mb-6">
           Quick Links
         </motion.h2>
         <div className="grid gap-4 sm:grid-cols-3">
@@ -92,12 +92,12 @@ export function DocsLanding() {
                   <Card className="h-full cursor-pointer">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-blue/10">
-                          <link.icon className="h-5 w-5 text-brand-blue" />
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                          <link.icon className="h-5 w-5 text-repwell-teal-300" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-brand-navy">
+                            <h3 className="font-semibold text-repwell-teal-500">
                               {link.title}
                             </h3>
                             {link.badge && (
@@ -106,7 +106,7 @@ export function DocsLanding() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-body-sm text-brand-slate">
+                          <p className="text-body-sm text-repwell-teal-400">
                             {link.description}
                           </p>
                         </div>
@@ -127,7 +127,7 @@ export function DocsLanding() {
         viewport={viewportOnce}
         variants={staggerContainer}
       >
-        <motion.h2 variants={fadeInUp} className="text-heading-lg text-brand-navy mb-6">
+        <motion.h2 variants={fadeInUp} className="text-heading-lg text-repwell-teal-500 mb-6">
           Browse by Topic
         </motion.h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -141,10 +141,10 @@ export function DocsLanding() {
                   <motion.div whileHover={cardHover}>
                     <Card className="h-full cursor-pointer group">
                       <CardHeader>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-frost mb-3">
-                          <Icon className="h-6 w-6 text-brand-blue" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-sage-100 mb-3">
+                          <Icon className="h-6 w-6 text-repwell-teal-300" />
                         </div>
-                        <CardTitle className="group-hover:text-brand-blue transition-colors">
+                        <CardTitle className="group-hover:text-repwell-teal-300 transition-colors">
                           {section.title}
                         </CardTitle>
                         <CardDescription>{section.description}</CardDescription>
@@ -154,14 +154,14 @@ export function DocsLanding() {
                           {section.articles.slice(0, 3).map((article) => (
                             <li
                               key={article.id}
-                              className="flex items-center gap-2 text-body-sm text-brand-slate"
+                              className="flex items-center gap-2 text-body-sm text-repwell-teal-400"
                             >
-                              <ArrowRight className="h-3 w-3 text-brand-silver" />
+                              <ArrowRight className="h-3 w-3 text-border" />
                               {article.title}
                             </li>
                           ))}
                           {section.articles.length > 3 && (
-                            <li className="text-body-sm text-brand-blue font-medium mt-2">
+                            <li className="text-body-sm text-repwell-teal-300 font-medium mt-2">
                               +{section.articles.length - 3} more articles
                             </li>
                           )}
@@ -182,7 +182,7 @@ export function DocsLanding() {
         whileInView="visible"
         viewport={viewportOnce}
         variants={fadeInUp}
-        className="rounded-2xl bg-gradient-to-br from-brand-blue to-brand-navy p-8 text-center text-white"
+        className="rounded-2xl bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 p-8 text-center text-white"
       >
         <h2 className="text-heading-lg mb-3">Can't find what you're looking for?</h2>
         <p className="text-body-md opacity-90 mb-6 max-w-lg mx-auto">
@@ -191,8 +191,8 @@ export function DocsLanding() {
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <a
-            href="mailto:support@reviewhub.com"
-            className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-body-sm font-medium text-brand-navy transition-colors hover:bg-brand-snow"
+            href="mailto:support@repwell.com"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-body-sm font-medium text-repwell-teal-500 transition-colors hover:bg-background"
           >
             <MessageCircle className="h-4 w-4" />
             Contact Support

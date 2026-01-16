@@ -70,18 +70,18 @@ export function DocsSidebar({ className, onNavigate }: DocsSidebarProps) {
               onClick={() => toggleSection(section.id)}
               className={cn(
                 "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body-sm font-medium transition-colors",
-                "hover:bg-brand-frost/50",
+                "hover:bg-repwell-sage-100/50",
                 sectionActive
-                  ? "text-brand-blue bg-brand-frost/30"
-                  : "text-brand-navy"
+                  ? "text-repwell-teal-300 bg-repwell-sage-100/30"
+                  : "text-repwell-teal-500"
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
               <span className="flex-1 text-left">{section.title}</span>
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 shrink-0 text-brand-slate" />
+                <ChevronDown className="h-4 w-4 shrink-0 text-repwell-teal-400" />
               ) : (
-                <ChevronRight className="h-4 w-4 shrink-0 text-brand-slate" />
+                <ChevronRight className="h-4 w-4 shrink-0 text-repwell-teal-400" />
               )}
             </button>
 
@@ -94,7 +94,7 @@ export function DocsSidebar({ className, onNavigate }: DocsSidebarProps) {
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className="overflow-hidden"
                 >
-                  <div className="ml-4 space-y-1 border-l border-brand-silver/50 pl-3 py-1">
+                  <div className="ml-4 space-y-1 border-l border-border/50 pl-3 py-1">
                     {section.articles.map((article) => {
                       const href = `/docs/${section.slug}/${article.slug}`;
                       const active = isActive(href);
@@ -107,8 +107,8 @@ export function DocsSidebar({ className, onNavigate }: DocsSidebarProps) {
                           className={cn(
                             "block rounded-md px-3 py-1.5 text-body-sm transition-colors",
                             active
-                              ? "text-brand-blue font-medium bg-brand-frost/40"
-                              : "text-brand-slate hover:text-brand-navy hover:bg-brand-frost/30"
+                              ? "text-repwell-teal-300 font-medium bg-repwell-sage-100/40"
+                              : "text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100/30"
                           )}
                         >
                           {article.title}

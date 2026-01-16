@@ -7,7 +7,7 @@ import { Users } from "lucide-react";
 import { TeamManagement } from "./team-management";
 
 export const metadata = {
-  title: "Team Management | ReviewHub",
+  title: "Team Management | RepWell",
   description: "Manage your team members and their roles",
 };
 

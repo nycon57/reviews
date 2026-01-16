@@ -20,7 +20,7 @@ import {
 } from "@/lib/dashboard";
 
 export const metadata = {
-  title: "Manager Dashboard | ReviewHub",
+  title: "Manager Dashboard | RepWell",
   description: "Team performance overview and analytics",
 };
 

@@ -437,8 +437,8 @@ export function WebhookTester({ webhookConfigs }: WebhookTesterProps) {
             )}
 
             {testResult.error && (
-              <div className="rounded bg-red-50 dark:bg-red-900/20 p-3">
-                <p className="text-sm text-red-600 dark:text-red-400">
+              <div className="rounded bg-red-50 p-3">
+                <p className="text-sm text-red-600">
                   {testResult.error}
                 </p>
               </div>

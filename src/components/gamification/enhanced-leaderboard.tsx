@@ -100,11 +100,11 @@ export function EnhancedLeaderboard({
   const getRankBackground = (rank: number) => {
     switch (rank) {
       case 1:
-        return "bg-gradient-to-r from-yellow-50 to-yellow-100/50 dark:from-yellow-950/30 dark:to-yellow-900/10 border-l-4 border-l-yellow-400";
+        return "bg-gradient-to-r from-yellow-50 to-yellow-100/50 border-l-4 border-l-yellow-400";
       case 2:
-        return "bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-gray-900/30 dark:to-gray-800/10 border-l-4 border-l-gray-400";
+        return "bg-gradient-to-r from-gray-50 to-gray-100/50 border-l-4 border-l-gray-400";
       case 3:
-        return "bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/10 border-l-4 border-l-amber-600";
+        return "bg-gradient-to-r from-amber-50 to-amber-100/50 border-l-4 border-l-amber-600";
       default:
         return "border-l-4 border-l-transparent";
     }

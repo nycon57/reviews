@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,9 +136,14 @@ export function MobileNav({ className }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent side="left" className="w-72 p-0">
         <SheetHeader className="border-b px-4 py-3">
-          <SheetTitle className="flex items-center gap-2">
-            <Star className="h-6 w-6 text-primary" />
-            <span>ReviewHub</span>
+          <SheetTitle className="flex items-center">
+            <Image
+              src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+              alt="RepWell"
+              width={120}
+              height={28}
+              className="h-7 w-auto"
+            />
           </SheetTitle>
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-4rem)]">

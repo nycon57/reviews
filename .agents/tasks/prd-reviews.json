@@ -1565,7 +1565,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "pending",
+      "status": "open",
       "gates": [
         "OpenAPI spec validates",
         "Playground executes requests correctly"
@@ -1630,14 +1630,14 @@
         "Subscription upgrade/downgrade with prorated billing calculations",
         "Seat-based pricing for Professional tier with add/remove member billing",
         "Failed payment retry logic with dunning email sequence via Resend integration",
-        "Subscription status real-time sync: Stripe webhook \u2192 Supabase \u2192 UI refresh",
+        "Subscription status real-time sync: Stripe webhook → Supabase → UI refresh",
         "Usage metering preparation for future per-survey or per-review pricing models",
         "Billing history with downloadable PDF invoices",
         "Tax calculation integration (Stripe Tax or manual tax_rates)"
       ],
       "priority": "P0",
       "estimate": "XL",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Stripe test mode checkout completes successfully",
         "Webhook signature verification works with test events",
@@ -1705,10 +1705,10 @@
           "payment_methods (id, org_id, stripe_payment_method_id, type, card_brand, card_last4, is_default)"
         ],
         "auth_flow_integration": {
-          "signup": "Create Stripe customer \u2192 Store stripe_customer_id \u2192 Redirect to pricing \u2192 Checkout \u2192 Webhook confirms \u2192 Allow dashboard",
-          "login": "Fetch subscription status \u2192 Check active/trialing/past_due \u2192 Show appropriate UI/banners \u2192 Block if canceled",
-          "onboarding": "Middleware checks subscription_status \u2192 Redirect to billing if none \u2192 Complete onboarding after active",
-          "offboarding": "User clicks cancel \u2192 Confirm dialog \u2192 Call Stripe cancel \u2192 Webhook updates status \u2192 Show confirmation"
+          "signup": "Create Stripe customer → Store stripe_customer_id → Redirect to pricing → Checkout → Webhook confirms → Allow dashboard",
+          "login": "Fetch subscription status → Check active/trialing/past_due → Show appropriate UI/banners → Block if canceled",
+          "onboarding": "Middleware checks subscription_status → Redirect to billing if none → Complete onboarding after active",
+          "offboarding": "User clicks cancel → Confirm dialog → Call Stripe cancel → Webhook updates status → Show confirmation"
         },
         "file_structure": [
           "src/lib/stripe/client.ts - Stripe SDK initialization",
@@ -1739,14 +1739,14 @@
           "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
         ]
       },
-      "updatedAt": "2026-01-16T06:23:47.035739+00:00",
+      "updatedAt": "2026-01-16T06:28:07.760599+00:00",
       "startedAt": "2026-01-16T06:23:47.035418+00:00",
-      "completedAt": null
+      "completedAt": "2026-01-16T06:28:07.760702+00:00"
     },
     {
       "id": "S056",
       "title": "Stripe Payment & Subscription System",
-      "status": "in_progress",
+      "status": "done",
       "estimate": "XL",
       "priority": "P0",
       "epic": "E14",

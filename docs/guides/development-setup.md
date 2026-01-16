@@ -48,7 +48,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 # Resend (Email)
 RESEND_API_KEY=re_xxxxxxxxxxxxx
 EMAIL_FROM_ADDRESS=reviews@yourdomain.com
-EMAIL_FROM_NAME=ReviewHub
+EMAIL_FROM_NAME=RepWell
 
 # OpenAI (AI Features)
 OPENAI_API_KEY=sk-xxxxxxxxxxxxx
@@ -59,7 +59,7 @@ GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxx
 
 # App Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_APP_NAME=ReviewHub
+NEXT_PUBLIC_APP_NAME=RepWell
 ```
 
 ### 4. Supabase Setup

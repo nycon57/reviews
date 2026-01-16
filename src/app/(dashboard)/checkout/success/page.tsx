@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { CheckoutSuccessClient } from "./checkout-success-client";
 
 export const metadata: Metadata = {
-  title: "Payment Successful | ReviewHub",
-  description: "Your payment was successful. Welcome to ReviewHub!",
+  title: "Payment Successful | RepWell",
+  description: "Your payment was successful. Welcome to RepWell!",
 };
 
 export default function CheckoutSuccessPage() {

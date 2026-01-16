@@ -6,7 +6,7 @@ import { TrendingUp } from "lucide-react";
 import { TrendsDashboard } from "./trends-dashboard";
 
 export const metadata = {
-  title: "Analytics Trends | ReviewHub",
+  title: "Analytics Trends | RepWell",
   description: "Track performance trends over time",
 };
 

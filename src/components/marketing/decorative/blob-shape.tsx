@@ -20,11 +20,11 @@ interface BlobShapeProps {
 }
 
 const variantStyles = {
-  blue: "bg-brand-blue/20",
-  frost: "bg-brand-frost",
-  iris: "bg-brand-iris/20",
-  amber: "bg-brand-amber/20",
-  gradient: "bg-gradient-to-br from-brand-blue/15 via-brand-iris/10 to-brand-frost",
+  blue: "bg-repwell-teal-300/20",
+  frost: "bg-repwell-sage-100",
+  iris: "bg-repwell-teal-300/20",
+  amber: "bg-warning/20",
+  gradient: "bg-gradient-to-br from-repwell-teal-300/15 via-repwell-teal-300/10 to-repwell-sage-100",
 };
 
 const blurStyles = {

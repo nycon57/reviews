@@ -58,7 +58,7 @@ function CTASection() {
           variants={fadeInUp}
           className="mx-auto mb-8 max-w-xl text-muted-foreground"
         >
-          Join thousands of mortgage professionals using ReviewHub to collect
+          Join thousands of mortgage professionals using RepWell to collect
           more reviews and build stronger client relationships.
         </motion.p>
         <motion.div variants={fadeInUp}>

@@ -6,7 +6,7 @@ import { Mail } from "lucide-react";
 import { CampaignsDashboard } from "./campaigns-dashboard";
 
 export const metadata = {
-  title: "Email Campaigns | ReviewHub",
+  title: "Email Campaigns | RepWell",
   description: "Manage and create email campaigns for survey distribution",
 };
 

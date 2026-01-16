@@ -112,7 +112,7 @@ const CATEGORIES = [
 const QUICK_LINKS = [
   {
     title: "Getting Started Guide",
-    description: "Learn the basics of ReviewHub",
+    description: "Learn the basics of RepWell",
     icon: Book,
     href: "#",
     badge: "New",
@@ -136,7 +136,7 @@ const SUPPORT_OPTIONS = [
     title: "Email Support",
     description: "Get help via email within 24 hours",
     icon: Mail,
-    action: "support@reviewhub.com",
+    action: "support@repwell.com",
     actionLabel: "Send Email",
   },
   {
@@ -150,7 +150,7 @@ const SUPPORT_OPTIONS = [
     title: "Security",
     description: "Report security concerns",
     icon: Shield,
-    action: "security@reviewhub.com",
+    action: "security@repwell.com",
     actionLabel: "Report Issue",
   },
 ];
@@ -319,7 +319,7 @@ export function HelpCenter() {
       <div className="text-center text-sm text-muted-foreground py-4">
         <p>
           Can't find what you're looking for?{" "}
-          <a href="mailto:support@reviewhub.com" className="text-primary hover:underline">
+          <a href="mailto:support@repwell.com" className="text-primary hover:underline">
             Contact support
           </a>{" "}
           and we'll help you out.

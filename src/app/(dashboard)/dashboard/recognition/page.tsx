@@ -20,7 +20,7 @@ import {
 } from "@/components/recognition";
 
 export const metadata = {
-  title: "Recognition & Feedback | ReviewHub",
+  title: "Recognition & Feedback | RepWell",
   description: "Employee recognition and continuous feedback",
 };
 

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    const organizationName = (userData?.organizations as { name: string } | null)?.name || "ReviewHub";
+    const organizationName = (userData?.organizations as { name: string } | null)?.name || "RepWell";
 
     const body = await request.json();
     const { templateId, dateRange, filters, format } = body;

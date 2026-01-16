@@ -20,13 +20,13 @@ export function TermsPageClient() {
             whileInView="visible"
             viewport={viewportOnce}
             variants={staggerContainer}
-            className="prose prose-neutral mx-auto max-w-3xl dark:prose-invert"
+            className="prose prose-neutral mx-auto max-w-3xl"
           >
             <motion.div variants={fadeInUp}>
               <h2>Agreement to Terms</h2>
               <p>
                 These Terms of Service ("Terms") govern your access to and use of
-                ReviewHub's platform, website, and services (collectively, the
+                RepWell's platform, website, and services (collectively, the
                 "Service"). By accessing or using the Service, you agree to be
                 bound by these Terms. If you do not agree, please do not use the
                 Service.
@@ -34,7 +34,7 @@ export function TermsPageClient() {
 
               <h2>Description of Service</h2>
               <p>
-                ReviewHub provides a customer experience management platform that
+                RepWell provides a customer experience management platform that
                 enables businesses to collect, manage, and analyze customer
                 reviews and feedback. The Service includes features for survey
                 creation, automated distribution, analytics, team management, and
@@ -146,7 +146,7 @@ export function TermsPageClient() {
               <h2>Intellectual Property</h2>
               <p>
                 The Service, including its software, design, features, and content
-                (excluding User Content), is owned by ReviewHub and protected by
+                (excluding User Content), is owned by RepWell and protected by
                 intellectual property laws. You may not copy, modify, distribute,
                 or create derivative works based on the Service without our
                 written permission.
@@ -171,7 +171,7 @@ export function TermsPageClient() {
 
               <h2>Limitation of Liability</h2>
               <p>
-                TO THE MAXIMUM EXTENT PERMITTED BY LAW, REVIEWHUB AND ITS
+                TO THE MAXIMUM EXTENT PERMITTED BY LAW, repwell AND ITS
                 OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR
                 ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE
                 DAMAGES, OR ANY LOSS OF PROFITS, DATA, OR GOODWILL, ARISING OUT OF
@@ -185,7 +185,7 @@ export function TermsPageClient() {
 
               <h2>Indemnification</h2>
               <p>
-                You agree to indemnify, defend, and hold harmless ReviewHub and
+                You agree to indemnify, defend, and hold harmless RepWell and
                 its affiliates from any claims, liabilities, damages, losses, and
                 expenses arising from your use of the Service, your User Content,
                 or your violation of these Terms.
@@ -228,7 +228,7 @@ export function TermsPageClient() {
               <h3>Entire Agreement</h3>
               <p>
                 These Terms, together with our Privacy Policy, constitute the
-                entire agreement between you and ReviewHub regarding the Service.
+                entire agreement between you and RepWell regarding the Service.
               </p>
               <h3>Severability</h3>
               <p>
@@ -248,9 +248,9 @@ export function TermsPageClient() {
               <ul>
                 <li>
                   Email:{" "}
-                  <a href="mailto:legal@reviewhub.com">legal@reviewhub.com</a>
+                  <a href="mailto:legal@repwell.com">legal@repwell.com</a>
                 </li>
-                <li>Address: ReviewHub, Austin, TX</li>
+                <li>Address: RepWell, Austin, TX</li>
               </ul>
             </motion.div>
           </motion.div>

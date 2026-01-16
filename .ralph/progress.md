@@ -3371,3 +3371,74 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Salesforce API uses SOQL (Salesforce Object Query Language) for data access
   - OAuth state should include timestamp for security expiry validation
 ---
+
+## [2026-01-16 00:55] - S056: Stripe Payment & Subscription System
+Thread: 
+Run: 20260116-003917-66583 (iteration 2)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260116-003917-66583-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260116-003917-66583-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5e640b3 feat(S056): Implement Stripe payment and subscription system
+- Post-commit status: clean
+- Verification:
+  - Command: npm run lint -> PASS (warnings only, no errors)
+  - Command: npm run build -> PASS
+  - Command: npm run type-check -> PASS
+- Files changed:
+  - src/lib/stripe/client.ts (client-side Stripe instance)
+  - src/lib/stripe/server.ts (server-side Stripe instance)
+  - src/lib/stripe/actions.ts (server actions for billing)
+  - src/lib/stripe/sync.ts (Stripe to Supabase sync)
+  - src/lib/stripe/types.ts (TypeScript types and pricing tiers)
+  - src/lib/stripe/index.ts (module exports)
+  - src/app/api/webhooks/stripe/route.ts (webhook handler)
+  - src/app/(dashboard)/checkout/success/page.tsx (checkout success)
+  - src/app/(dashboard)/checkout/success/checkout-success-client.tsx
+  - src/app/(dashboard)/checkout/cancel/page.tsx (checkout cancel)
+  - src/components/subscription/subscription-banner.tsx (status alerts)
+  - src/components/subscription/index.ts
+  - src/app/(marketing)/pricing/pricing-client.tsx (checkout flow)
+  - src/components/marketing/pricing-card.tsx (onSelect, isLoading props)
+  - src/components/organization/organization-billing.tsx (full billing UI)
+  - src/middleware.ts (subscription tier checking)
+  - supabase/migrations/20240101000020_stripe_billing.sql (billing tables)
+  - src/types/database.types.ts (updated)
+  - package.json (stripe dependency)
+- Summary:
+  - Iteration 1 created full implementation but didn't commit
+  - Iteration 2 verified build/lint pass and committed all changes
+  - Comprehensive Stripe billing system implemented
+- What was implemented:
+  - Stripe client/server libraries with singleton pattern
+  - Server actions: createCheckoutSession, createPortalSession, cancelSubscription,
+    resumeSubscription, updateSubscription, getBillingOverview, checkSubscriptionAccess
+  - Webhook handler for 12 Stripe event types
+  - Database tables: subscriptions, subscription_items, invoices,
+    payment_methods, billing_events, usage_records
+  - RLS policies for admin-only billing access
+  - Checkout success/cancel pages with proper UX
+  - SubscriptionBanner component for trial/past_due/canceled notifications
+  - Pricing page with direct checkout for authenticated users
+  - Organization billing page with payment methods, invoices, usage, cancel/resume
+  - Middleware subscription tier gating for premium features
+- Security review: PASS
+  - Webhook signature verification with STRIPE_WEBHOOK_SECRET
+  - Admin client used for webhook updates (bypasses RLS correctly)
+  - RLS policies restrict billing data to organization admins
+  - Portal session validates authenticated user
+- Performance review: PASS
+  - Stripe instances use singleton pattern for efficiency
+  - Database queries have appropriate indexes
+  - Invoice listing limited to 10 records with pagination support
+- Regression review: PASS
+  - Middleware changes only add new checks, don't modify existing
+  - Pricing page preserves link-based nav for free/enterprise
+  - Organization billing extends existing component structure
+- **Learnings for future iterations:**
+  - Stripe API version should be explicitly set for stability (2025-12-15.clover used)
+  - Webhook handler returns 200 even on error to prevent Stripe retries (errors are logged)
+  - Supabase trigger can auto-sync subscription status to organization table
+  - Price IDs should be in environment variables, not hardcoded
+  - Type guards needed for Stripe subscription properties that vary by API version
+---

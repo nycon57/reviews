@@ -4002,3 +4002,61 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Email template stories benefit from 3-pass approach: implementation -> security review -> verification
   - Video testimonial emails follow same patterns as survey emails for consistency
 ---
+
+## [2026-01-17] - S060: Public Video Testimonial Portal - Core
+Thread:
+Run: 20260117-163446-68507 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 43b43c9 [Pass 1/3] feat(S060): Add public video testimonial portal with customer info form
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no (skill not available in environment)
+  - /code-review: no (scheduled for Pass 2)
+  - /vercel-react-best-practices: no (scheduled for Pass 2)
+  - /code-simplifier: no (scheduled for Pass 3)
+  - /frontend-design: no (scheduled for Pass 3)
+- Verification:
+  - Command: npm run lint -> PASS (0 errors, 23 pre-existing warnings)
+  - Command: npm run build -> PASS (compiled successfully)
+- Files changed:
+  - src/app/(public)/video-testimonial/[token]/page.tsx (new - server component)
+  - src/app/(public)/video-testimonial/[token]/video-testimonial-form.tsx (new - client component)
+  - src/app/(public)/video-testimonial/[token]/video-testimonial-error.tsx (new - error states)
+  - src/lib/video-testimonials/public-actions.ts (new - public server actions)
+  - src/lib/video-testimonials/index.ts (updated - export public actions)
+- What was implemented:
+  - **Public Route:** /video-testimonial/[token] accessible without authentication
+  - **Token Validation:** getVideoTestimonialByToken validates token, expiration, status
+  - **Status Updates:** Sets opened_at timestamp when request is first accessed
+  - **LO Display:** Shows loan officer photo, name, title, organization name
+  - **Organization Branding:** Supports logo and primary color customization
+  - **Customer Info Form:**
+    - Display name field (pre-populated from request)
+    - Relationship dropdown (Home Buyer, Refinancer, First-Time Buyer, etc.)
+  - **Consent Checkboxes (all required):**
+    - Video Recording Consent
+    - Usage Rights Consent
+    - AI Text Generation Consent
+  - **Optional Marketing Consent:** Separate checkbox for marketing communications
+  - **Form States:**
+    - Loading state with spinner during submission
+    - Error state with retry button
+    - Success state indicating ready for video recording
+  - **Error States:**
+    - Expired request (Clock icon, amber styling)
+    - Already submitted (CheckCircle, green styling)
+    - Cancelled request (Ban icon, muted styling)
+    - Not found (FileX icon, muted styling)
+    - Generic error (AlertCircle, destructive styling)
+  - **Mobile-Responsive Design:** Mobile-first layout with proper spacing
+  - **Prompt Text Display:** Shows custom prompt text if provided
+- **Learnings for future iterations:**
+  - Mirrored survey pattern from src/app/survey/[token]/ for consistency
+  - Server component fetches data, client component handles form
+  - Public actions use admin client to bypass RLS
+  - Status transitions: pending -> sent -> opened -> recording -> submitted
+---

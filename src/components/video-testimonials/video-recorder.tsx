@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -77,31 +77,20 @@ export function VideoRecorder({
     }
   }, [autoRequestPermissions, status, requestPermissions]);
 
-  // Calculate progress percentage
-  const progressPercent = useMemo(() => {
-    return Math.min((elapsedTime / maxDuration) * 100, 100);
-  }, [elapsedTime, maxDuration]);
-
-  // Calculate remaining time
-  const remainingTime = useMemo(() => {
-    return Math.max(maxDuration - elapsedTime, 0);
-  }, [maxDuration, elapsedTime]);
-
-  // Whether we're in the final 30 seconds
+  // Calculate progress and remaining time
+  const progressPercent = Math.min((elapsedTime / maxDuration) * 100, 100);
+  const remainingTime = Math.max(maxDuration - elapsedTime, 0);
   const isWarningTime = remainingTime <= 30000 && remainingTime > 0;
 
   // Custom button style based on organization color
-  const buttonStyle = useMemo(
-    () => (primaryColor ? { backgroundColor: primaryColor } : undefined),
-    [primaryColor]
-  );
+  const buttonStyle = primaryColor ? { backgroundColor: primaryColor } : undefined;
 
   // Handle confirm recording
-  const handleConfirm = useCallback(() => {
+  function handleConfirm(): void {
     if (recordedBlob) {
       onRecordingComplete?.(recordedBlob);
     }
-  }, [recordedBlob, onRecordingComplete]);
+  }
 
   // Status message for ARIA
   const statusMessage = useMemo(() => {

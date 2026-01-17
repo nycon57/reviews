@@ -112,14 +112,11 @@ export function useMediaRecorder(
   const streamRef = useRef<MediaStream | null>(null);
   const previewUrlRef = useRef<string | null>(null);
 
-  // Sync refs with state for cleanup access
+  // Sync refs with state for cleanup access (combined into single effect)
   useEffect(() => {
     streamRef.current = stream;
-  }, [stream]);
-
-  useEffect(() => {
     previewUrlRef.current = previewUrl;
-  }, [previewUrl]);
+  }, [stream, previewUrl]);
 
   // Cleanup function - uses refs to avoid setState during unmount
   const cleanup = useCallback(() => {

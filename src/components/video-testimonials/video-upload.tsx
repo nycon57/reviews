@@ -75,7 +75,7 @@ function formatDuration(seconds: number): string {
 
 export function VideoUpload({
   onVideoSelect,
-  onUploadComplete: _onUploadComplete, // Reserved for future use when upload handling is controlled externally
+  onUploadComplete: _onUploadComplete,
   onDiscard,
   onCancelUpload,
   maxFileSize = DEFAULT_MAX_FILE_SIZE,
@@ -85,6 +85,9 @@ export function VideoUpload({
   className,
   primaryColor,
 }: VideoUploadProps) {
+  // Silence unused variable warning - onUploadComplete reserved for future external upload handling
+  void _onUploadComplete;
+
   // State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -98,32 +101,23 @@ export function VideoUpload({
   const videoRef = useRef<HTMLVideoElement>(null);
   const validationAbortRef = useRef<boolean>(false);
 
-  // Cleanup previewUrl on unmount to prevent memory leaks
+  // Cleanup on unmount: revoke preview URL and mark validation as aborted
   useEffect(() => {
     const currentPreviewUrl = previewUrl;
     return () => {
       if (currentPreviewUrl) {
         URL.revokeObjectURL(currentPreviewUrl);
       }
-    };
-  }, [previewUrl]);
-
-  // Mark validation as aborted when component unmounts
-  useEffect(() => {
-    return () => {
       validationAbortRef.current = true;
     };
-  }, []);
+  }, [previewUrl]);
 
   // Use external progress/uploading state if provided, otherwise internal
   const isUploading = externalIsUploading ?? status === "uploading";
   const uploadProgress = externalProgress ?? 0;
 
   // Custom button style based on organization color
-  const buttonStyle = useMemo(
-    () => (primaryColor ? { backgroundColor: primaryColor } : undefined),
-    [primaryColor]
-  );
+  const buttonStyle = primaryColor ? { backgroundColor: primaryColor } : undefined;
 
   // Validate video file
   const validateVideo = useCallback(
@@ -310,15 +304,10 @@ export function VideoUpload({
     }
   }, [isVideoPlaying]);
 
-  // Handle cancel upload
-  const handleCancelUpload = useCallback(() => {
-    onCancelUpload?.();
-  }, [onCancelUpload]);
-
-  // Handle video end
-  const handleVideoEnd = useCallback(() => {
+  // Handle video end - inline callback for simplicity
+  function handleVideoEnd(): void {
     setIsVideoPlaying(false);
-  }, []);
+  }
 
   // Status message for ARIA
   const statusMessage = useMemo(() => {
@@ -588,7 +577,7 @@ export function VideoUpload({
                   <Button
                     variant="outline"
                     size="lg"
-                    onClick={handleCancelUpload}
+                    onClick={onCancelUpload}
                     className="min-h-[48px] gap-2"
                     aria-label="Cancel upload"
                   >

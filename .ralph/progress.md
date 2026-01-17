@@ -3794,3 +3794,38 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Database function schedule_video_testimonial_reminders handles reminder scheduling
   - VideoTestimonialRequestStatus enum must be cast when filtering by status
 ---
+
+## [2026-01-17 16:25] - S058: Video Testimonial Request Creation & Queueing
+Thread:
+Run: 20260117-151318-48004 (iteration 9)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-9.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-9.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6c8c495 [Pass 2/3] fix(S058): Security fix for loan_officer role data leakage
+- Post-commit status: clean (for S058 files)
+- Skills invoked:
+  - /feature-dev: no (review pass)
+  - /code-review: yes (identified security vulnerability)
+  - /vercel-react-best-practices: no (server actions only)
+  - /code-simplifier: no (Pass 2)
+  - /frontend-design: no (no UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 23 pre-existing warnings)
+- Files changed:
+  - src/lib/video-testimonials/actions.ts (security fix)
+- What was implemented:
+  - **Code Review completed via /code-review skill**
+  - **Security Bug Found & Fixed in getVideoTestimonialRequests:**
+    - If a user has role "loan_officer" but no corresponding record in loan_officers table
+    - They could previously see ALL video testimonial requests in the organization
+    - Fixed by returning empty results when no loan officer record found
+    - Prevents unauthorized data access for orphaned/misconfigured user accounts
+- **Acceptance Criteria Status:** All criteria from Pass 1 remain met
+- **Learnings for future iterations:**
+  - Role-based filtering must handle edge case of orphaned users (role set but no related record)
+  - Always check what happens when lookup fails, not just when it succeeds
+  - Security review should check authorization bypass scenarios
+---

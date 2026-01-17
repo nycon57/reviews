@@ -357,13 +357,21 @@ export function isTranscriptionSuitableForReview(transcription: string): {
   const uniqueWords = new Set(words);
   if (uniqueWords.size < words.length * 0.4) {
     issues.push("high repetition");
-    quality = quality === "excellent" ? "good" : quality === "good" ? "fair" : "poor";
+    if (quality === "excellent") {
+      quality = "good";
+    } else if (quality === "good") {
+      quality = "fair";
+    } else {
+      quality = "poor";
+    }
   }
 
   // Check for common transcription artifacts
   if (/\[inaudible\]|\[unclear\]|\[\?\]/i.test(cleaned)) {
     issues.push("unclear sections");
-    quality = quality === "excellent" ? "good" : quality;
+    if (quality === "excellent") {
+      quality = "good";
+    }
   }
 
   return {

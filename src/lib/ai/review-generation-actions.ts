@@ -412,7 +412,6 @@ export async function getReviewGenerationStatus(responseId: string): Promise<{
 
 /**
  * Log review generation for organization tracking
- * This is a best-effort operation - failures are logged but don't affect the main operation.
  */
 async function logReviewGeneration(
   organizationId: string,
@@ -421,14 +420,8 @@ async function logReviewGeneration(
   wordCount: number,
   attempts: number
 ): Promise<void> {
-  try {
-    // Log for tracking purposes
-    console.log(
-      `[Review Generation] org=${organizationId} response=${responseId} ` +
-        `confidence=${confidence.toFixed(2)} words=${wordCount} attempts=${attempts}`
-    );
-  } catch (error) {
-    // Logging is non-critical - just log the error
-    console.error("Failed to log review generation:", error);
-  }
+  console.log(
+    `[Review Generation] org=${organizationId} response=${responseId} ` +
+      `confidence=${confidence.toFixed(2)} words=${wordCount} attempts=${attempts}`
+  );
 }

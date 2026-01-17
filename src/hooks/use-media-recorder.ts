@@ -107,8 +107,21 @@ export function useMediaRecorder(
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const pausedTimeRef = useRef<number>(0);
+  const unmountedRef = useRef<boolean>(false);
+  // Refs to track resources for cleanup without triggering setState
+  const streamRef = useRef<MediaStream | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
 
-  // Cleanup function
+  // Sync refs with state for cleanup access
+  useEffect(() => {
+    streamRef.current = stream;
+  }, [stream]);
+
+  useEffect(() => {
+    previewUrlRef.current = previewUrl;
+  }, [previewUrl]);
+
+  // Cleanup function - uses refs to avoid setState during unmount
   const cleanup = useCallback(() => {
     // Stop timer
     if (timerRef.current) {
@@ -122,25 +135,26 @@ export function useMediaRecorder(
     }
     mediaRecorderRef.current = null;
 
-    // Stop all tracks in stream
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
+    // Stop all tracks in stream (use ref to avoid setState during unmount)
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     }
 
-    // Revoke object URL
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
+    // Revoke object URL (use ref to avoid setState during unmount)
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
     }
 
     // Clear chunks
     chunksRef.current = [];
-  }, [stream, previewUrl]);
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      unmountedRef.current = true;
       cleanup();
     };
   }, [cleanup]);
@@ -253,6 +267,9 @@ export function useMediaRecorder(
       };
 
       mediaRecorder.onstop = () => {
+        // Prevent state updates after unmount to avoid React warnings
+        if (unmountedRef.current) return;
+
         const blob = new Blob(chunksRef.current, { type: mimeType });
         setRecordedBlob(blob);
         const url = URL.createObjectURL(blob);
@@ -262,6 +279,14 @@ export function useMediaRecorder(
       };
 
       mediaRecorder.onerror = () => {
+        // Clear timer to prevent resource leak
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        // Prevent state updates after unmount
+        if (unmountedRef.current) return;
+
         setError("Recording error occurred. Please try again.");
         setStatus("error");
       };
@@ -275,7 +300,12 @@ export function useMediaRecorder(
 
       // Start timer
       timerRef.current = setInterval(() => {
-        const elapsed = Date.now() - startTimeRef.current - pausedTimeRef.current;
+        // Skip elapsed time updates while paused
+        if (mediaRecorderRef.current?.state === "paused") {
+          return;
+        }
+
+        const elapsed = Date.now() - startTimeRef.current;
         setElapsedTime(elapsed);
         onTimeUpdate?.(elapsed);
 
@@ -320,8 +350,10 @@ export function useMediaRecorder(
   // Resume recording
   const resumeRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "paused") {
+      // Shift start time forward by pause duration to keep elapsed time correct
       const pauseDuration = Date.now() - pausedTimeRef.current;
       startTimeRef.current += pauseDuration;
+      pausedTimeRef.current = 0; // Reset pause timestamp
       mediaRecorderRef.current.resume();
       setStatus("recording");
     }
@@ -334,6 +366,12 @@ export function useMediaRecorder(
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+
+    // Stop MediaRecorder to prevent onstop from firing with stale state
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    mediaRecorderRef.current = null;
 
     // Clear recorded data
     if (previewUrl) {

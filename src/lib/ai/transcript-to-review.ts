@@ -143,7 +143,7 @@ function parseAIResponse(response: string): GeneratedReviewResult {
   }
 
   const text = parsed.text.trim();
-  const wordCount = text.split(/\s+/).length;
+  const wordCount = text ? text.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
 
   // Extract key points, ensuring they're strings
   const keyPoints: string[] = Array.isArray(parsed.keyPoints)
@@ -188,7 +188,7 @@ function generateFallbackReview(context: TranscriptContext): GeneratedReviewResu
     text: cleaned,
     keyPoints,
     confidence: 0.3, // Low confidence for fallback
-    wordCount: cleaned.split(/\s+/).length,
+    wordCount: cleaned ? cleaned.split(/\s+/).filter((w: string) => w.length > 0).length : 0,
     generationAttempt: 0, // 0 indicates fallback
   };
 }
@@ -301,7 +301,7 @@ export async function generateReviewFromTranscript(
       console.error(`Review generation attempt ${attempt} failed:`, lastError.message);
 
       // Delay before retry with exponential backoff
-      if (attempt < AI_CONFIG.maxRetries) {
+      if (attempt < MAX_GENERATION_ATTEMPTS) {
         await new Promise((resolve) => setTimeout(resolve, AI_CONFIG.retryDelayMs * attempt));
       }
     }
@@ -326,7 +326,7 @@ export function isTranscriptionSuitableForReview(transcription: string): {
   estimatedQuality: "excellent" | "good" | "fair" | "poor";
 } {
   const cleaned = transcription.trim();
-  const wordCount = cleaned.split(/\s+/).length;
+  const wordCount = cleaned ? cleaned.split(/\s+/).filter((w: string) => w.length > 0).length : 0;
 
   if (cleaned.length < MIN_TRANSCRIPTION_LENGTH) {
     return {

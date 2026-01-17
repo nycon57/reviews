@@ -150,6 +150,7 @@ export async function generateReviewFromTestimonial(
     }
 
     // Atomically claim the job - only update if status is still pending or null
+    // Note: "failed" status must use retryReviewGeneration() for explicit retry
     const { data: claimResult, error: claimError } = await supabase
       .from("video_testimonial_responses")
       .update({
@@ -157,7 +158,7 @@ export async function generateReviewFromTestimonial(
         updated_at: new Date().toISOString(),
       })
       .eq("id", responseId)
-      .or("ai_generation_status.is.null,ai_generation_status.eq.pending,ai_generation_status.eq.failed")
+      .or("ai_generation_status.is.null,ai_generation_status.eq.pending")
       .select("id")
       .single();
 
@@ -195,7 +196,7 @@ export async function generateReviewFromTestimonial(
           ? `[${genError.code || "ERROR"}] ${genError.message}`
           : String(error);
 
-      await supabase
+      const { error: failedUpdateError } = await supabase
         .from("video_testimonial_responses")
         .update({
           ai_generation_status: "failed",
@@ -203,6 +204,11 @@ export async function generateReviewFromTestimonial(
           updated_at: new Date().toISOString(),
         })
         .eq("id", responseId);
+
+      if (failedUpdateError) {
+        console.error("Failed to update status to failed:", failedUpdateError);
+        // Status may be stuck in "processing" - log this critical issue
+      }
 
       revalidatePath("/dashboard/video-testimonials");
       return { success: false, error: errorMessage };
@@ -222,6 +228,16 @@ export async function generateReviewFromTestimonial(
 
     if (updateError) {
       console.error("Failed to store generated review:", updateError);
+      // Mark as failed so user can retry - don't leave stuck in "processing"
+      await supabase
+        .from("video_testimonial_responses")
+        .update({
+          ai_generation_status: "failed",
+          ai_generation_error: `Generated successfully but failed to store: ${updateError.message}`,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", responseId);
+      revalidatePath("/dashboard/video-testimonials");
       return { success: false, error: "Failed to store generated review" };
     }
 

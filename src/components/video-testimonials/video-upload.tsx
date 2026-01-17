@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo } from "react";
+import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { useDropzone, type FileRejection } from "react-dropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,17 +19,15 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** Accepted video MIME types */
+/** Accepted video MIME types (per acceptance criteria: MP4, WebM, MOV) */
 const ACCEPTED_VIDEO_TYPES = {
   "video/mp4": [".mp4"],
   "video/webm": [".webm"],
   "video/quicktime": [".mov"],
-  "video/x-msvideo": [".avi"],
-  "video/x-matroska": [".mkv"],
 };
 
-/** Default max file size: 500MB */
-const DEFAULT_MAX_FILE_SIZE = 500 * 1024 * 1024;
+/** Default max file size: 100MB */
+const DEFAULT_MAX_FILE_SIZE = 100 * 1024 * 1024;
 
 /** Default max duration: 2 minutes (120 seconds) */
 const DEFAULT_MAX_DURATION = 120;
@@ -43,7 +41,9 @@ export interface VideoUploadProps {
   onUploadComplete?: (blob: Blob) => void;
   /** Callback when user discards the selected video */
   onDiscard?: () => void;
-  /** Maximum file size in bytes (default: 500MB) */
+  /** Callback when user cancels an in-progress upload */
+  onCancelUpload?: () => void;
+  /** Maximum file size in bytes (default: 100MB) */
   maxFileSize?: number;
   /** Maximum video duration in seconds (default: 120s = 2 minutes) */
   maxDuration?: number;
@@ -77,6 +77,7 @@ export function VideoUpload({
   onVideoSelect,
   onUploadComplete: _onUploadComplete, // Reserved for future use when upload handling is controlled externally
   onDiscard,
+  onCancelUpload,
   maxFileSize = DEFAULT_MAX_FILE_SIZE,
   maxDuration = DEFAULT_MAX_DURATION,
   uploadProgress: externalProgress,
@@ -95,6 +96,24 @@ export function VideoUpload({
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
+  const validationAbortRef = useRef<boolean>(false);
+
+  // Cleanup previewUrl on unmount to prevent memory leaks
+  useEffect(() => {
+    const currentPreviewUrl = previewUrl;
+    return () => {
+      if (currentPreviewUrl) {
+        URL.revokeObjectURL(currentPreviewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Mark validation as aborted when component unmounts
+  useEffect(() => {
+    return () => {
+      validationAbortRef.current = true;
+    };
+  }, []);
 
   // Use external progress/uploading state if provided, otherwise internal
   const isUploading = externalIsUploading ?? status === "uploading";
@@ -108,7 +127,7 @@ export function VideoUpload({
 
   // Validate video file
   const validateVideo = useCallback(
-    async (file: File): Promise<{ valid: boolean; error?: string }> => {
+    async (file: File): Promise<{ valid: boolean; error?: string; duration?: number }> => {
       // Check file size
       if (file.size > maxFileSize) {
         return {
@@ -122,7 +141,7 @@ export function VideoUpload({
       if (!isValidType) {
         return {
           valid: false,
-          error: "Invalid file type. Please upload MP4, WebM, MOV, AVI, or MKV files.",
+          error: "Invalid file type. Please upload MP4, WebM, or MOV files.",
         };
       }
 
@@ -130,28 +149,49 @@ export function VideoUpload({
       return new Promise((resolve) => {
         const video = document.createElement("video");
         video.preload = "metadata";
+        const objectUrl = URL.createObjectURL(file);
+        let resolved = false;
+
+        const cleanup = () => {
+          if (!resolved) {
+            resolved = true;
+            URL.revokeObjectURL(objectUrl);
+          }
+        };
+
+        // Timeout after 30 seconds to prevent hanging
+        const timeout = setTimeout(() => {
+          cleanup();
+          resolve({
+            valid: false,
+            error: "Video validation timed out. Please try a different file.",
+          });
+        }, 30000);
 
         video.onloadedmetadata = () => {
-          window.URL.revokeObjectURL(video.src);
-          if (video.duration > maxDuration) {
+          clearTimeout(timeout);
+          const duration = video.duration;
+          cleanup();
+          if (duration > maxDuration) {
             resolve({
               valid: false,
               error: `Video is too long. Maximum duration is ${formatDuration(maxDuration)}.`,
             });
           } else {
-            resolve({ valid: true });
+            resolve({ valid: true, duration });
           }
         };
 
         video.onerror = () => {
-          window.URL.revokeObjectURL(video.src);
+          clearTimeout(timeout);
+          cleanup();
           resolve({
             valid: false,
             error: "Unable to read video file. The file may be corrupted.",
           });
         };
 
-        video.src = URL.createObjectURL(file);
+        video.src = objectUrl;
       });
     },
     [maxFileSize, maxDuration]
@@ -166,8 +206,14 @@ export function VideoUpload({
       setError(null);
       setValidationInProgress(true);
 
-      // Validate the video
+      // Validate the video (also returns duration to avoid duplicate URL creation)
       const validation = await validateVideo(file);
+
+      // Check if component unmounted during validation (race condition protection)
+      if (validationAbortRef.current) {
+        return;
+      }
+
       setValidationInProgress(false);
 
       if (!validation.valid) {
@@ -181,20 +227,12 @@ export function VideoUpload({
         URL.revokeObjectURL(previewUrl);
       }
 
-      // Create preview URL and get duration
+      // Create preview URL (duration already obtained from validation)
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
       setSelectedFile(file);
       setStatus("selected");
-
-      // Get video duration for display
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.onloadedmetadata = () => {
-        setVideoDuration(video.duration);
-        URL.revokeObjectURL(video.src);
-      };
-      video.src = URL.createObjectURL(file);
+      setVideoDuration(validation.duration ?? null);
     },
     [validateVideo, previewUrl]
   );
@@ -211,7 +249,7 @@ export function VideoUpload({
       if (errorCode === "file-too-large") {
         errorMessage = `File is too large. Maximum size is ${formatFileSize(maxFileSize)}.`;
       } else if (errorCode === "file-invalid-type") {
-        errorMessage = "Invalid file type. Please upload MP4, WebM, MOV, AVI, or MKV files.";
+        errorMessage = "Invalid file type. Please upload MP4, WebM, or MOV files.";
       }
 
       setError(errorMessage);
@@ -260,11 +298,22 @@ export function VideoUpload({
 
     if (isVideoPlaying) {
       videoRef.current.pause();
+      setIsVideoPlaying(false);
     } else {
-      videoRef.current.play();
+      // Handle play() promise rejection (can fail if user hasn't interacted with page)
+      videoRef.current.play().then(() => {
+        setIsVideoPlaying(true);
+      }).catch(() => {
+        // Playback failed - browser may have blocked autoplay
+        setIsVideoPlaying(false);
+      });
     }
-    setIsVideoPlaying(!isVideoPlaying);
   }, [isVideoPlaying]);
+
+  // Handle cancel upload
+  const handleCancelUpload = useCallback(() => {
+    onCancelUpload?.();
+  }, [onCancelUpload]);
 
   // Handle video end
   const handleVideoEnd = useCallback(() => {
@@ -370,7 +419,7 @@ export function VideoUpload({
                       </Button>
                       <div className="mt-4 text-center">
                         <p className="font-sans text-xs text-muted-foreground">
-                          MP4, WebM, MOV, AVI, MKV • Max {formatFileSize(maxFileSize)} • Max{" "}
+                          MP4, WebM, MOV • Max {formatFileSize(maxFileSize)} • Max{" "}
                           {formatDuration(maxDuration)}
                         </p>
                       </div>
@@ -403,6 +452,10 @@ export function VideoUpload({
                 className="h-full w-full object-contain"
                 playsInline
                 onEnded={handleVideoEnd}
+                onError={() => {
+                  setError("Failed to load video preview. Please try a different file.");
+                  setStatus("error");
+                }}
               />
 
               {/* Play/Pause overlay */}
@@ -443,6 +496,9 @@ export function VideoUpload({
                 src={previewUrl}
                 className="h-full w-full object-contain opacity-50"
                 playsInline
+                onError={() => {
+                  // Silently ignore preview errors during upload - upload may still succeed
+                }}
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50">
                 <Loader2 className="mb-4 h-12 w-12 animate-spin text-white" />
@@ -523,15 +579,31 @@ export function VideoUpload({
 
           {/* Uploading State */}
           {isUploading && (
-            <p className="text-center font-sans text-sm text-muted-foreground">
-              Please wait while your video is being uploaded...
-            </p>
+            <div className="space-y-4">
+              <p className="text-center font-sans text-sm text-muted-foreground">
+                Please wait while your video is being uploaded...
+              </p>
+              {onCancelUpload && (
+                <div className="flex justify-center">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleCancelUpload}
+                    className="min-h-[48px] gap-2"
+                    aria-label="Cancel upload"
+                  >
+                    <X className="h-5 w-5" />
+                    Cancel Upload
+                  </Button>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Error State - Already shown in main area */}
           {status === "error" && (
             <p className="text-center font-sans text-xs text-muted-foreground">
-              <strong>Supported formats:</strong> MP4, WebM, MOV, AVI, MKV
+              <strong>Supported formats:</strong> MP4, WebM, MOV
               <br />
               <strong>Max size:</strong> {formatFileSize(maxFileSize)} • <strong>Max duration:</strong>{" "}
               {formatDuration(maxDuration)}

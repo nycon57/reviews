@@ -1519,6 +1519,11 @@ export type Database = {
           slack_negative_review: boolean | null
           slack_new_review: boolean | null
           slack_webhook_url: string | null
+          teams_digest: boolean | null
+          teams_enabled: boolean | null
+          teams_negative_review: boolean | null
+          teams_new_review: boolean | null
+          teams_webhook_url: string | null
           updated_at: string | null
           user_id: string
         }
@@ -1556,6 +1561,11 @@ export type Database = {
           slack_negative_review?: boolean | null
           slack_new_review?: boolean | null
           slack_webhook_url?: string | null
+          teams_digest?: boolean | null
+          teams_enabled?: boolean | null
+          teams_negative_review?: boolean | null
+          teams_new_review?: boolean | null
+          teams_webhook_url?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -1593,6 +1603,11 @@ export type Database = {
           slack_negative_review?: boolean | null
           slack_new_review?: boolean | null
           slack_webhook_url?: string | null
+          teams_digest?: boolean | null
+          teams_enabled?: boolean | null
+          teams_negative_review?: boolean | null
+          teams_new_review?: boolean | null
+          teams_webhook_url?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -3167,6 +3182,70 @@ export type Database = {
           },
         ]
       }
+      teams_webhook_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          organization_id: string | null
+          payload: Json
+          response_body: string | null
+          response_status: number | null
+          success: boolean | null
+          user_id: string
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          organization_id?: string | null
+          payload: Json
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean | null
+          user_id: string
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          organization_id?: string | null
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean | null
+          user_id?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_webhook_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_webhook_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_webhook_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testimonial_graphics: {
         Row: {
           accent_color: string | null
@@ -3476,6 +3555,327 @@ export type Database = {
           },
         ]
       }
+      video_testimonial_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          max_retries: number | null
+          organization_id: string
+          priority: number | null
+          processed_at: string | null
+          request_id: string
+          retry_count: number | null
+          scheduled_at: string
+          status: string | null
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number | null
+          organization_id: string
+          priority?: number | null
+          processed_at?: string | null
+          request_id: string
+          retry_count?: number | null
+          scheduled_at: string
+          status?: string | null
+          type: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number | null
+          organization_id?: string
+          priority?: number | null
+          processed_at?: string | null
+          request_id?: string
+          retry_count?: number | null
+          scheduled_at?: string
+          status?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_testimonial_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_queue_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "video_testimonial_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_testimonial_requests: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone: string | null
+          expires_at: string | null
+          id: string
+          last_reminder_at: string | null
+          loan_officer_id: string
+          max_duration_seconds: number | null
+          opened_at: string | null
+          organization_id: string
+          prompt_text: string | null
+          reminder_count: number | null
+          sent_at: string | null
+          source: string | null
+          source_metadata: Json | null
+          status: Database["public"]["Enums"]["video_testimonial_request_status"]
+          submitted_at: string | null
+          token: string
+          transaction_date: string | null
+          transaction_id: string | null
+          transaction_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_email: string
+          customer_name: string
+          customer_phone?: string | null
+          expires_at?: string | null
+          id?: string
+          last_reminder_at?: string | null
+          loan_officer_id: string
+          max_duration_seconds?: number | null
+          opened_at?: string | null
+          organization_id: string
+          prompt_text?: string | null
+          reminder_count?: number | null
+          sent_at?: string | null
+          source?: string | null
+          source_metadata?: Json | null
+          status?: Database["public"]["Enums"]["video_testimonial_request_status"]
+          submitted_at?: string | null
+          token?: string
+          transaction_date?: string | null
+          transaction_id?: string | null
+          transaction_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string | null
+          expires_at?: string | null
+          id?: string
+          last_reminder_at?: string | null
+          loan_officer_id?: string
+          max_duration_seconds?: number | null
+          opened_at?: string | null
+          organization_id?: string
+          prompt_text?: string | null
+          reminder_count?: number | null
+          sent_at?: string | null
+          source?: string | null
+          source_metadata?: Json | null
+          status?: Database["public"]["Enums"]["video_testimonial_request_status"]
+          submitted_at?: string | null
+          token?: string
+          transaction_date?: string | null
+          transaction_id?: string | null
+          transaction_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_testimonial_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_requests_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_testimonial_responses: {
+        Row: {
+          ai_generated_text: string | null
+          ai_generation_completed_at: string | null
+          ai_generation_error: string | null
+          ai_generation_status: string | null
+          approval_status: Database["public"]["Enums"]["video_testimonial_approval_status"]
+          approved_at: string | null
+          approved_by: string | null
+          browser: string | null
+          consent_given: boolean
+          consent_ip_address: unknown
+          consent_timestamp: string | null
+          created_at: string
+          device_type: string | null
+          duration_seconds: number | null
+          file_size_bytes: number | null
+          height: number | null
+          id: string
+          ip_address: unknown
+          key_phrases: string[] | null
+          loan_officer_id: string
+          marketing_consent: boolean | null
+          mime_type: string
+          organization_id: string
+          published_at: string | null
+          published_platforms: string[] | null
+          rejection_reason: string | null
+          request_id: string
+          sentiment_label: string | null
+          sentiment_score: number | null
+          submitted_at: string
+          thumbnail_url: string | null
+          transcription: string | null
+          transcription_completed_at: string | null
+          transcription_error: string | null
+          transcription_status: string | null
+          updated_at: string
+          user_agent: string | null
+          video_path: string
+          video_url: string
+          width: number | null
+        }
+        Insert: {
+          ai_generated_text?: string | null
+          ai_generation_completed_at?: string | null
+          ai_generation_error?: string | null
+          ai_generation_status?: string | null
+          approval_status?: Database["public"]["Enums"]["video_testimonial_approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
+          browser?: string | null
+          consent_given?: boolean
+          consent_ip_address?: unknown
+          consent_timestamp?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          ip_address?: unknown
+          key_phrases?: string[] | null
+          loan_officer_id: string
+          marketing_consent?: boolean | null
+          mime_type: string
+          organization_id: string
+          published_at?: string | null
+          published_platforms?: string[] | null
+          rejection_reason?: string | null
+          request_id: string
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          submitted_at?: string
+          thumbnail_url?: string | null
+          transcription?: string | null
+          transcription_completed_at?: string | null
+          transcription_error?: string | null
+          transcription_status?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          video_path: string
+          video_url: string
+          width?: number | null
+        }
+        Update: {
+          ai_generated_text?: string | null
+          ai_generation_completed_at?: string | null
+          ai_generation_error?: string | null
+          ai_generation_status?: string | null
+          approval_status?: Database["public"]["Enums"]["video_testimonial_approval_status"]
+          approved_at?: string | null
+          approved_by?: string | null
+          browser?: string | null
+          consent_given?: boolean
+          consent_ip_address?: unknown
+          consent_timestamp?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          height?: number | null
+          id?: string
+          ip_address?: unknown
+          key_phrases?: string[] | null
+          loan_officer_id?: string
+          marketing_consent?: boolean | null
+          mime_type?: string
+          organization_id?: string
+          published_at?: string | null
+          published_platforms?: string[] | null
+          rejection_reason?: string | null
+          request_id?: string
+          sentiment_label?: string | null
+          sentiment_score?: number | null
+          submitted_at?: string
+          thumbnail_url?: string | null
+          transcription?: string | null
+          transcription_completed_at?: string | null
+          transcription_error?: string | null
+          transcription_status?: string | null
+          updated_at?: string
+          user_agent?: string | null
+          video_path?: string
+          video_url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_testimonial_responses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "video_testimonial_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_configs: {
         Row: {
           allowed_ips: string[] | null
@@ -3656,6 +4056,16 @@ export type Database = {
           type: string
         }[]
       }
+      get_pending_video_testimonial_items: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          organization_id: string
+          request_id: string
+          scheduled_at: string
+          type: string
+        }[]
+      }
       get_user_organization_id: { Args: never; Returns: string }
       increment_api_key_request_count: {
         Args: { p_api_key_id: string }
@@ -3665,12 +4075,25 @@ export type Database = {
         Args: { config_id: string }
         Returns: undefined
       }
+      mark_video_testimonial_submitted: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       schedule_survey_reminders: {
         Args: {
           p_organization_id: string
           p_send_3day?: boolean
           p_send_7day?: boolean
           p_survey_id: string
+        }
+        Returns: undefined
+      }
+      schedule_video_testimonial_reminders: {
+        Args: {
+          p_organization_id: string
+          p_request_id: string
+          p_send_3day?: boolean
+          p_send_7day?: boolean
         }
         Returns: undefined
       }
@@ -3692,6 +4115,19 @@ export type Database = {
     Enums: {
       testimonial_format: "short" | "medium" | "long" | "social" | "headline"
       testimonial_status: "draft" | "approved" | "rejected" | "published"
+      video_testimonial_approval_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "published"
+      video_testimonial_request_status:
+        | "pending"
+        | "sent"
+        | "opened"
+        | "recording"
+        | "submitted"
+        | "expired"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3821,7 +4257,21 @@ export const Constants = {
     Enums: {
       testimonial_format: ["short", "medium", "long", "social", "headline"],
       testimonial_status: ["draft", "approved", "rejected", "published"],
+      video_testimonial_approval_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "published",
+      ],
+      video_testimonial_request_status: [
+        "pending",
+        "sent",
+        "opened",
+        "recording",
+        "submitted",
+        "expired",
+        "cancelled",
+      ],
     },
   },
 } as const
-

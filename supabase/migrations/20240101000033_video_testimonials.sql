@@ -184,6 +184,10 @@ CREATE TABLE video_testimonial_queue (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Unique constraint to prevent duplicate reminders per request/type
+CREATE UNIQUE INDEX idx_video_testimonial_queue_request_type
+  ON video_testimonial_queue(request_id, type);
+
 -- Indexes for video_testimonial_queue
 CREATE INDEX idx_video_testimonial_queue_organization ON video_testimonial_queue(organization_id);
 CREATE INDEX idx_video_testimonial_queue_request ON video_testimonial_queue(request_id);
@@ -327,11 +331,9 @@ CREATE POLICY "loan_officers_create_video_requests" ON video_testimonial_request
     )
   );
 
--- Allow public token lookup (for submission form)
-CREATE POLICY "public_lookup_video_request_by_token" ON video_testimonial_requests
-  FOR SELECT USING (
-    token IS NOT NULL AND status NOT IN ('expired', 'cancelled')
-  );
+-- NOTE: Public token lookup is handled via the lookup_video_testimonial_request()
+-- SECURITY DEFINER function to prevent enumeration of all requests.
+-- Direct public SELECT is NOT allowed on this table.
 
 -- =====================
 -- VIDEO TESTIMONIAL RESPONSES POLICIES
@@ -357,9 +359,16 @@ CREATE POLICY "managers_manage_video_responses" ON video_testimonial_responses
     organization_id = get_user_organization_id() AND user_has_role(ARRAY['admin', 'manager'])
   );
 
--- Allow public submission (via token validation on server)
+-- Allow public submission only for valid, non-expired requests
+-- Additional validation (token matching) must be done server-side
 CREATE POLICY "public_submit_video_responses" ON video_testimonial_responses
-  FOR INSERT WITH CHECK (true);
+  FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM video_testimonial_requests r
+      WHERE r.id = request_id
+        AND r.status NOT IN ('expired', 'cancelled', 'submitted')
+    )
+  );
 
 -- =====================
 -- VIDEO TESTIMONIAL QUEUE POLICIES
@@ -397,6 +406,60 @@ CREATE TRIGGER update_video_testimonial_responses_updated_at
 -- HELPER FUNCTIONS
 -- ===========================================
 
+-- Secure function to lookup video testimonial request by token
+-- Prevents enumeration of all requests by requiring exact token match
+CREATE OR REPLACE FUNCTION lookup_video_testimonial_request(
+  p_token TEXT
+)
+RETURNS TABLE (
+  id UUID,
+  organization_id UUID,
+  loan_officer_id UUID,
+  customer_name TEXT,
+  max_duration_seconds INTEGER,
+  prompt_text TEXT,
+  status video_testimonial_request_status
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    r.id,
+    r.organization_id,
+    r.loan_officer_id,
+    r.customer_name,
+    r.max_duration_seconds,
+    r.prompt_text,
+    r.status
+  FROM video_testimonial_requests r
+  WHERE r.token = p_token
+    AND r.status NOT IN ('expired', 'cancelled', 'submitted')
+  LIMIT 1;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
+
+-- Function to mark a video testimonial request as opened (for tracking)
+CREATE OR REPLACE FUNCTION mark_video_testimonial_opened(
+  p_token TEXT
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+  v_updated BOOLEAN;
+BEGIN
+  UPDATE video_testimonial_requests
+  SET
+    status = CASE WHEN status = 'sent' THEN 'opened' ELSE status END,
+    opened_at = COALESCE(opened_at, NOW()),
+    updated_at = NOW()
+  WHERE token = p_token
+    AND status NOT IN ('expired', 'cancelled', 'submitted');
+
+  GET DIAGNOSTICS v_updated = ROW_COUNT;
+  RETURN v_updated > 0;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public;
+
 -- Function to schedule video testimonial reminders
 CREATE OR REPLACE FUNCTION schedule_video_testimonial_reminders(
   p_request_id UUID,
@@ -432,7 +495,7 @@ BEGIN
       v_sent_at + INTERVAL '3 days',
       -1  -- Lower priority than initial sends
     )
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT (request_id, type) DO NOTHING;
   END IF;
 
   -- Schedule 7-day reminder
@@ -450,7 +513,7 @@ BEGIN
       v_sent_at + INTERVAL '7 days',
       -2  -- Even lower priority
     )
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT (request_id, type) DO NOTHING;
   END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER
@@ -524,3 +587,9 @@ COMMENT ON COLUMN video_testimonial_responses.video_url IS 'Signed URL to video 
 COMMENT ON COLUMN video_testimonial_responses.video_path IS 'Storage path for video file deletion';
 COMMENT ON COLUMN video_testimonial_responses.transcription IS 'AI-generated transcription via Whisper';
 COMMENT ON COLUMN video_testimonial_responses.ai_generated_text IS 'AI-generated text testimonial via Gemini';
+
+COMMENT ON FUNCTION lookup_video_testimonial_request(TEXT) IS 'Secure public lookup of video testimonial request by token - prevents enumeration';
+COMMENT ON FUNCTION mark_video_testimonial_opened(TEXT) IS 'Mark a video testimonial request as opened when customer views the form';
+COMMENT ON FUNCTION schedule_video_testimonial_reminders(UUID, UUID, BOOLEAN, BOOLEAN) IS 'Schedule 3-day and 7-day reminders for video testimonial request';
+COMMENT ON FUNCTION get_pending_video_testimonial_items(INTEGER) IS 'Get pending video testimonial queue items ready for processing';
+COMMENT ON FUNCTION mark_video_testimonial_submitted(UUID) IS 'Mark video testimonial request as submitted and cancel pending reminders';

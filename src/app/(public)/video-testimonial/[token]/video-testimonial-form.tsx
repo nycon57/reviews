@@ -51,12 +51,9 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   // Refs for focus management
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // Branding - memoize style to prevent unnecessary re-renders
-  const primaryColor = organization.primaryColor;
-  const logoUrl = organization.logoUrl;
   const buttonStyle = useMemo(
-    () => (primaryColor ? { backgroundColor: primaryColor } : undefined),
-    [primaryColor]
+    () => (organization.primaryColor ? { backgroundColor: organization.primaryColor } : undefined),
+    [organization.primaryColor]
   );
 
   // Focus first input when returning from error state
@@ -192,10 +189,10 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
               </p>
             </div>
 
-            {logoUrl && (
+            {organization.logoUrl && (
               <div className="mt-8 flex justify-center opacity-60">
                 <img
-                  src={logoUrl}
+                  src={organization.logoUrl}
                   alt={organization.name}
                   className="h-8 max-w-[150px] object-contain"
                 />
@@ -212,11 +209,10 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     <FormContainer statusMessage={statusMessage}>
       <Card className="mx-auto max-w-lg shadow-lg">
         <CardHeader className="space-y-4 pb-4">
-          {/* Logo */}
-          {logoUrl && (
+          {organization.logoUrl && (
             <div className="flex justify-center">
               <img
-                src={logoUrl}
+                src={organization.logoUrl}
                 alt={organization.name}
                 className="h-12 max-w-[200px] object-contain"
               />

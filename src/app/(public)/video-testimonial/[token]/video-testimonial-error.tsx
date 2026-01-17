@@ -72,9 +72,7 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
           </div>
           <h1 className="font-sans text-2xl font-semibold text-repwell-teal-500">{title}</h1>
           <p className="mt-3 font-sans text-repwell-teal-400">{message}</p>
-          {helpText && (
-            <p className="mt-4 font-sans text-sm text-muted-foreground">{helpText}</p>
-          )}
+          <p className="mt-4 font-sans text-sm text-muted-foreground">{helpText}</p>
         </CardContent>
       </Card>
     </div>

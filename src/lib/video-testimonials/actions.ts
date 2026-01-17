@@ -565,6 +565,16 @@ export async function getVideoTestimonialRequests(params?: {
 
       if (loData) {
         query = query.eq("loan_officer_id", loData.id);
+      } else {
+        // Security: If no loan officer record found, return empty results
+        // to prevent unauthorized access to organization data
+        return {
+          success: true,
+          data: {
+            requests: [],
+            total: 0,
+          },
+        };
       }
     }
 

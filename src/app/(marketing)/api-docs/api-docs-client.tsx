@@ -430,7 +430,7 @@ function CodeBlock({
 }
 
 // Endpoint card component with memoized code samples
-function EndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
+const EndpointCard = React.memo(function EndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedLanguage, setSelectedLanguage] = React.useState<CodeLanguage>("curl");
 
@@ -536,7 +536,7 @@ function EndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
       </CollapsibleContent>
     </Collapsible>
   );
-}
+});
 
 // API Playground component
 function ApiPlayground() {

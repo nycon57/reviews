@@ -3715,3 +3715,82 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Pass 3 may find no changes needed if Pass 1 & 2 were thorough
   - SECURITY DEFINER functions are the proper way to expose limited data publicly
 ---
+
+## [2026-01-17 16:15] - S058: Video Testimonial Request Creation & Queueing
+Thread:
+Run: 20260117-151318-48004 (iteration 8)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-8.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-8.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 00f82a8 [Pass 1/3] feat(S058): Add video testimonial request creation & queueing
+- Post-commit status: clean (for S058 files)
+- Skills invoked:
+  - /feature-dev: no (followed existing distribution/actions.ts patterns)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (server actions only, no React components)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (no UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 23 pre-existing warnings)
+- Files changed:
+  - src/lib/video-testimonials/actions.ts (new)
+  - src/lib/video-testimonials/index.ts (new)
+- What was implemented:
+  - **createVideoTestimonialRequest server action**
+    - Full Zod schema validation for all input fields
+    - Auto-generated token via database default (encode(gen_random_bytes(16), 'hex'))
+    - Organization subscription/access check
+    - Loan officer organization verification
+    - Duplicate request prevention (checks for existing pending/sent/opened/recording)
+    - Creates request in video_testimonial_requests table
+    - Queues initial email in video_testimonial_queue (priority 10 for immediate, 1 for scheduled)
+    - Schedules 3-day and 7-day reminders via schedule_video_testimonial_reminders() RPC
+    - Creates audit log entry for compliance tracking
+    - Returns shareable request URL
+  - **createBulkVideoTestimonialRequests**
+    - Validates array of 1-100 requests
+    - Processes each individually for partial failure handling
+    - Returns detailed success/failure results per request
+    - Creates bulk audit log entry
+  - **getVideoTestimonialRequests**
+    - Paginated list with filtering (status, loan_officer_id, search)
+    - Role-based filtering (loan officers see own, managers/admins see all)
+    - Returns request URL for each request
+  - **getVideoTestimonialRequest**
+    - Single request lookup by ID with org verification
+  - **cancelVideoTestimonialRequest**
+    - Permission check (managers/admins only)
+    - Status validation (can't cancel submitted/cancelled/expired)
+    - Updates request status to cancelled
+    - Cancels pending queue items
+    - Creates audit log entry
+  - **resendVideoTestimonialRequest**
+    - Permission check (managers/admins only)
+    - Expiration validation
+    - Creates new queue entry for immediate send
+    - Increments reminder_count
+    - Creates audit log entry
+  - **getVideoTestimonialQueue**
+    - Paginated queue monitoring for managers/admins
+    - Includes customer name, email, loan officer name
+  - **getLoanOfficersForVideoRequests**
+    - Returns active loan officers for request form dropdown
+- **Acceptance Criteria Status:**
+  - ✅ createVideoTestimonialRequest server action with Zod validation
+  - ✅ Auto-generate unique token for public portal access
+  - ✅ Queue initial email and schedule 3-day, 7-day reminders
+  - ✅ Support single and bulk request creation
+  - ✅ Validate customer email and required fields
+  - ✅ Check organization subscription allows video testimonials
+  - ✅ Record request in video_testimonial_requests table
+  - ✅ Return request URL for immediate sharing option
+  - ✅ Audit log entry for compliance tracking
+- **Learnings for future iterations:**
+  - organization_audit_logs table not in generated types - requires any cast
+  - Follow existing distribution/actions.ts patterns for survey-like features
+  - Database function schedule_video_testimonial_reminders handles reminder scheduling
+  - VideoTestimonialRequestStatus enum must be cast when filtering by status
+---

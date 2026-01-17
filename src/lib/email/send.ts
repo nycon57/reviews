@@ -8,12 +8,14 @@ import type {
   SurveyInvitationEmailData,
   SurveyReminderEmailData,
   NewReviewNotificationEmailData,
+  ReviewResponseToReviewerEmailData,
 } from "./types";
 import {
   getSurveyInvitationEmail,
   getSurveyReminder3DayEmail,
   getSurveyReminder7DayEmail,
   getNewReviewNotificationEmail,
+  getReviewResponseToReviewerEmail,
 } from "./templates";
 
 // Check if email is unsubscribed
@@ -347,5 +349,87 @@ export async function updateEmailTrackingStatus(
 
   if (error) {
     console.error("Failed to update email tracking status:", error);
+  }
+}
+
+// Send review response notification email to the reviewer
+export async function sendReviewResponseEmail(
+  data: ReviewResponseToReviewerEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress(data.organizationName);
+  const { subject, html } = getReviewResponseToReviewerEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "review_response_to_reviewer" },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.customerName,
+        fromEmail: emailConfig.defaultFromEmail,
+        fromName: data.organizationName,
+        subject,
+        templateName: "review_response_to_reviewer",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
+      subject,
+      templateName: "review_response_to_reviewer",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
+      subject,
+      templateName: "review_response_to_reviewer",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
   }
 }

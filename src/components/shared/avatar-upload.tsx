@@ -3,7 +3,7 @@
 /* eslint-disable no-undef */
 // FileReader and Image are browser globals available in client components
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop";
@@ -43,6 +43,13 @@ export function AvatarUpload({
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  // Sync with prop when it changes (e.g., when form loads with existing avatar)
+  useEffect(() => {
+    if (currentAvatarUrl !== undefined) {
+      setAvatarUrl(currentAvatarUrl || null);
+    }
+  }, [currentAvatarUrl]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;

@@ -87,6 +87,7 @@ const config = {
   			},
   			// RepWell Design System Colors (hex values - source of truth)
   			'repwell-sage': {
+				'50': '#f0f4ef',
   				'100': '#cad2c5',
   				'200': '#84a98c',
   				'300': '#6b9b76',

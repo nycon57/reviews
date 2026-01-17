@@ -958,3 +958,40 @@ function getPreviousPeriodKey(period: LeaderboardPeriod): string {
       return "all_time";
   }
 }
+
+/**
+ * Check and award badges for a loan officer
+ * This calls the database function that evaluates badge criteria and awards badges
+ */
+export async function checkAndAwardBadges(
+  loanOfficerId?: string
+): Promise<ActionResult<{ awarded: string[] }>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const targetLoId = loanOfficerId || context.loanOfficerId;
+  if (!targetLoId) {
+    return { success: false, error: "No loan officer specified" };
+  }
+
+  const supabase = await createClient();
+
+  // Call the database function to check and award badges
+  const { data, error } = await supabase.rpc("check_badges_for_loan_officer", {
+    p_loan_officer_id: targetLoId,
+  });
+
+  if (error) {
+    console.error("Error checking badges:", error);
+    return { success: false, error: "Failed to check badges" };
+  }
+
+  // Extract newly awarded badges
+  const awarded = ((data || []) as Array<{ badge_name: string; newly_earned: boolean }>)
+    .filter((b) => b.newly_earned)
+    .map((b) => b.badge_name);
+
+  return { success: true, data: { awarded } };
+}

@@ -5,7 +5,7 @@
  * Fetches and manages website analytics and SEO audit data
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
   WebsiteAnalyticsOverview,
@@ -94,7 +94,8 @@ export async function getWebsiteAnalytics(
       return { success: false, error: "Unauthorized - Manager or admin access required" };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for website_analytics table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
     const { start, end } = getDateRange(period);
 
     // Fetch analytics data for the period
@@ -307,7 +308,8 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
       return { success: false, error: "Unauthorized - Manager or admin access required" };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for website_seo_audits table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     // Fetch the latest audit for each page
     const { data: audits, error } = await supabase
@@ -549,7 +551,8 @@ export async function getPageSEOAudit(
       return { success: false, error: "Unauthorized" };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for website_seo_audits table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { data: audit, error } = await supabase
       .from("website_seo_audits")
@@ -668,7 +671,8 @@ export async function recordAnalytics(data: {
       return { success: false, error: "Unauthorized" };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for website_analytics table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
     const today = new Date().toISOString().split("T")[0];
 
     // Check if record exists for today + page

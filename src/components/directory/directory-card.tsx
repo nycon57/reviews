@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Star,
   MapPin,
@@ -136,20 +137,30 @@ export function DirectoryCard({ loanOfficer, variant = "grid" }: DirectoryCardPr
             {/* Actions */}
             <div className="flex items-center gap-2 sm:shrink-0">
               {loanOfficer.phone && (
-                <Button variant="outline" size="sm" asChild className="h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3">
-                  <a href={`tel:${loanOfficer.phone}`} title="Call">
-                    <Phone className="h-4 w-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">Call</span>
-                  </a>
-                </Button>
+                <a
+                  href={`tel:${loanOfficer.phone}`}
+                  title="Call"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3"
+                  )}
+                >
+                  <Phone className="h-4 w-4 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Call</span>
+                </a>
               )}
               {loanOfficer.email && (
-                <Button variant="outline" size="sm" asChild className="h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3">
-                  <a href={`mailto:${loanOfficer.email}`} title="Email">
-                    <Mail className="h-4 w-4 sm:mr-1.5" />
-                    <span className="hidden sm:inline">Email</span>
-                  </a>
-                </Button>
+                <a
+                  href={`mailto:${loanOfficer.email}`}
+                  title="Email"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "sm" }),
+                    "h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3"
+                  )}
+                >
+                  <Mail className="h-4 w-4 sm:mr-1.5" />
+                  <span className="hidden sm:inline">Email</span>
+                </a>
               )}
               <Button variant="default" size="sm" asChild className="h-9 flex-1 sm:flex-none">
                 <Link href={`/lo/${loanOfficer.id}`}>
@@ -241,20 +252,28 @@ export function DirectoryCard({ loanOfficer, variant = "grid" }: DirectoryCardPr
         {/* Contact Actions */}
         <div className="mt-4 flex flex-wrap gap-2">
           {loanOfficer.phone && (
-            <Button variant="outline" size="sm" asChild className="h-8">
-              <a href={`tel:${loanOfficer.phone}`}>
-                <Phone className="mr-1.5 h-3.5 w-3.5" />
-                Call
-              </a>
-            </Button>
+            <a
+              href={`tel:${loanOfficer.phone}`}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "h-8"
+              )}
+            >
+              <Phone className="mr-1.5 h-3.5 w-3.5" />
+              Call
+            </a>
           )}
           {loanOfficer.email && (
-            <Button variant="outline" size="sm" asChild className="h-8">
-              <a href={`mailto:${loanOfficer.email}`}>
-                <Mail className="mr-1.5 h-3.5 w-3.5" />
-                Email
-              </a>
-            </Button>
+            <a
+              href={`mailto:${loanOfficer.email}`}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "h-8"
+              )}
+            >
+              <Mail className="mr-1.5 h-3.5 w-3.5" />
+              Email
+            </a>
           )}
           <Button variant="default" size="sm" asChild className="h-8 ml-auto">
             <Link href={`/lo/${loanOfficer.id}`}>

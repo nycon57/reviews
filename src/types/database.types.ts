@@ -14,10 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_key_usage_logs: {
+        Row: {
+          api_key_id: string
+          created_at: string | null
+          endpoint: string
+          error_message: string | null
+          id: string
+          ip_address: unknown
+          method: string
+          organization_id: string
+          request_body_size: number | null
+          request_id: string | null
+          response_body_size: number | null
+          response_time_ms: number | null
+          status_code: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string | null
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown
+          method: string
+          organization_id: string
+          request_body_size?: number | null
+          request_id?: string | null
+          response_body_size?: number | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string | null
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: unknown
+          method?: string
+          organization_id?: string
+          request_body_size?: number | null
+          request_id?: string | null
+          response_body_size?: number | null
+          response_time_ms?: number | null
+          status_code?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_usage_logs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_key_usage_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           created_at: string | null
           created_by: string | null
+          description: string | null
+          environment: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
@@ -28,10 +96,16 @@ export type Database = {
           organization_id: string
           permissions: string[] | null
           rate_limit: number | null
+          request_count: number | null
+          rotated_at: string | null
+          rotated_from: string | null
+          scopes: string[] | null
         }
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
+          environment?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -42,10 +116,16 @@ export type Database = {
           organization_id: string
           permissions?: string[] | null
           rate_limit?: number | null
+          request_count?: number | null
+          rotated_at?: string | null
+          rotated_from?: string | null
+          scopes?: string[] | null
         }
         Update: {
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
+          environment?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
@@ -56,6 +136,10 @@ export type Database = {
           organization_id?: string
           permissions?: string[] | null
           rate_limit?: number | null
+          request_count?: number | null
+          rotated_at?: string | null
+          rotated_from?: string | null
+          scopes?: string[] | null
         }
         Relationships: [
           {
@@ -67,6 +151,107 @@ export type Database = {
           },
           {
             foreignKeyName: "api_keys_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_keys_rotated_from_fkey"
+            columns: ["rotated_from"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_rate_limit_windows: {
+        Row: {
+          api_key_id: string
+          created_at: string | null
+          id: string
+          request_count: number | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string | null
+          id?: string
+          request_count?: number | null
+          window_end: string
+          window_start: string
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string | null
+          id?: string
+          request_count?: number | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_rate_limit_windows_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      badges: {
+        Row: {
+          category: string
+          created_at: string | null
+          criteria: Json
+          description: string
+          display_order: number | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          name: string
+          organization_id: string | null
+          slug: string
+          tier: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          criteria?: Json
+          description: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name: string
+          organization_id?: string | null
+          slug: string
+          tier?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          criteria?: Json
+          description?: string
+          display_order?: number | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          name?: string
+          organization_id?: string | null
+          slug?: string
+          tier?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "badges_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -521,6 +706,53 @@ export type Database = {
           },
         ]
       }
+      gamification_settings: {
+        Row: {
+          badge_notification_enabled: boolean | null
+          created_at: string | null
+          custom_settings: Json | null
+          id: string
+          is_enabled: boolean | null
+          leaderboard_refresh_interval: string | null
+          organization_id: string
+          public_leaderboard: boolean | null
+          show_badges_on_profile: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          badge_notification_enabled?: boolean | null
+          created_at?: string | null
+          custom_settings?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          leaderboard_refresh_interval?: string | null
+          organization_id: string
+          public_leaderboard?: boolean | null
+          show_badges_on_profile?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          badge_notification_enabled?: boolean | null
+          created_at?: string | null
+          custom_settings?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          leaderboard_refresh_interval?: string | null
+          organization_id?: string
+          public_leaderboard?: boolean | null
+          show_badges_on_profile?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamification_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_connections: {
         Row: {
           access_token: string
@@ -735,6 +967,66 @@ export type Database = {
           },
           {
             foreignKeyName: "google_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leaderboard_snapshots: {
+        Row: {
+          average_rating: number | null
+          created_at: string | null
+          id: string
+          loan_officer_id: string
+          nps_score: number | null
+          organization_id: string
+          period_key: string
+          period_type: string
+          rank: number
+          reputation_score: number
+          snapshot_date: string
+          total_reviews: number
+        }
+        Insert: {
+          average_rating?: number | null
+          created_at?: string | null
+          id?: string
+          loan_officer_id: string
+          nps_score?: number | null
+          organization_id: string
+          period_key: string
+          period_type: string
+          rank: number
+          reputation_score?: number
+          snapshot_date?: string
+          total_reviews?: number
+        }
+        Update: {
+          average_rating?: number | null
+          created_at?: string | null
+          id?: string
+          loan_officer_id?: string
+          nps_score?: number | null
+          organization_id?: string
+          period_key?: string
+          period_type?: string
+          rank?: number
+          reputation_score?: number
+          snapshot_date?: string
+          total_reviews?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaderboard_snapshots_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leaderboard_snapshots_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1147,15 +1439,308 @@ export type Database = {
           },
         ]
       }
+      notification_digest_queue: {
+        Row: {
+          created_at: string | null
+          digest_type: string
+          id: string
+          notification_id: string
+          processed_at: string | null
+          scheduled_for: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          digest_type: string
+          id?: string
+          notification_id: string
+          processed_at?: string | null
+          scheduled_for: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          digest_type?: string
+          id?: string
+          notification_id?: string
+          processed_at?: string | null
+          scheduled_for?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_digest_queue_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: true
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_digest_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          digest_day_of_week: number | null
+          digest_enabled: boolean | null
+          digest_frequency: string | null
+          digest_hour: number | null
+          digest_timezone: string | null
+          email_badge_earned: boolean | null
+          email_enabled: boolean | null
+          email_mention: boolean | null
+          email_negative_review: boolean | null
+          email_new_review: boolean | null
+          email_response_posted: boolean | null
+          email_review_approved: boolean | null
+          id: string
+          in_app_badge_earned: boolean | null
+          in_app_enabled: boolean | null
+          in_app_mention: boolean | null
+          in_app_negative_review: boolean | null
+          in_app_new_review: boolean | null
+          in_app_response_posted: boolean | null
+          in_app_review_approved: boolean | null
+          instant_alert_enabled: boolean | null
+          instant_alert_threshold: number | null
+          last_digest_sent_at: string | null
+          quiet_hours_enabled: boolean | null
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          slack_channel: string | null
+          slack_digest: boolean | null
+          slack_enabled: boolean | null
+          slack_negative_review: boolean | null
+          slack_new_review: boolean | null
+          slack_webhook_url: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          digest_day_of_week?: number | null
+          digest_enabled?: boolean | null
+          digest_frequency?: string | null
+          digest_hour?: number | null
+          digest_timezone?: string | null
+          email_badge_earned?: boolean | null
+          email_enabled?: boolean | null
+          email_mention?: boolean | null
+          email_negative_review?: boolean | null
+          email_new_review?: boolean | null
+          email_response_posted?: boolean | null
+          email_review_approved?: boolean | null
+          id?: string
+          in_app_badge_earned?: boolean | null
+          in_app_enabled?: boolean | null
+          in_app_mention?: boolean | null
+          in_app_negative_review?: boolean | null
+          in_app_new_review?: boolean | null
+          in_app_response_posted?: boolean | null
+          in_app_review_approved?: boolean | null
+          instant_alert_enabled?: boolean | null
+          instant_alert_threshold?: number | null
+          last_digest_sent_at?: string | null
+          quiet_hours_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          slack_channel?: string | null
+          slack_digest?: boolean | null
+          slack_enabled?: boolean | null
+          slack_negative_review?: boolean | null
+          slack_new_review?: boolean | null
+          slack_webhook_url?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          digest_day_of_week?: number | null
+          digest_enabled?: boolean | null
+          digest_frequency?: string | null
+          digest_hour?: number | null
+          digest_timezone?: string | null
+          email_badge_earned?: boolean | null
+          email_enabled?: boolean | null
+          email_mention?: boolean | null
+          email_negative_review?: boolean | null
+          email_new_review?: boolean | null
+          email_response_posted?: boolean | null
+          email_review_approved?: boolean | null
+          id?: string
+          in_app_badge_earned?: boolean | null
+          in_app_enabled?: boolean | null
+          in_app_mention?: boolean | null
+          in_app_negative_review?: boolean | null
+          in_app_new_review?: boolean | null
+          in_app_response_posted?: boolean | null
+          in_app_review_approved?: boolean | null
+          instant_alert_enabled?: boolean | null
+          instant_alert_threshold?: number | null
+          last_digest_sent_at?: string | null
+          quiet_hours_enabled?: boolean | null
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          slack_channel?: string | null
+          slack_digest?: boolean | null
+          slack_enabled?: boolean | null
+          slack_negative_review?: boolean | null
+          slack_new_review?: boolean | null
+          slack_webhook_url?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          action_url: string | null
+          archived_at: string | null
+          created_at: string | null
+          id: string
+          is_archived: boolean | null
+          is_read: boolean | null
+          loan_officer_id: string | null
+          message: string
+          metadata: Json | null
+          organization_id: string | null
+          priority: number | null
+          read_at: string | null
+          review_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          archived_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          loan_officer_id?: string | null
+          message: string
+          metadata?: Json | null
+          organization_id?: string | null
+          priority?: number | null
+          read_at?: string | null
+          review_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          archived_at?: string | null
+          created_at?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_read?: boolean | null
+          loan_officer_id?: string | null
+          message?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          priority?: number | null
+          read_at?: string | null
+          review_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_steps: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          data: Json | null
+          id: string
+          organization_id: string
+          step_name: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          organization_id: string
+          step_name: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          organization_id?: string
+          step_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_steps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           account_type: string | null
+          billing_email: string | null
           created_at: string | null
           domain: string | null
           id: string
           logo_url: string | null
           name: string
+          onboarding_completed_at: string | null
+          onboarding_status: string | null
           primary_color: string | null
+          selected_billing_cycle: string | null
+          selected_plan: string | null
           settings: Json | null
           slug: string
           stripe_customer_id: string | null
@@ -1169,12 +1754,17 @@ export type Database = {
         }
         Insert: {
           account_type?: string | null
+          billing_email?: string | null
           created_at?: string | null
           domain?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          onboarding_completed_at?: string | null
+          onboarding_status?: string | null
           primary_color?: string | null
+          selected_billing_cycle?: string | null
+          selected_plan?: string | null
           settings?: Json | null
           slug: string
           stripe_customer_id?: string | null
@@ -1188,12 +1778,17 @@ export type Database = {
         }
         Update: {
           account_type?: string | null
+          billing_email?: string | null
           created_at?: string | null
           domain?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          onboarding_completed_at?: string | null
+          onboarding_status?: string | null
           primary_color?: string | null
+          selected_billing_cycle?: string | null
+          selected_plan?: string | null
           settings?: Json | null
           slug?: string
           stripe_customer_id?: string | null
@@ -1395,11 +1990,197 @@ export type Database = {
           },
         ]
       }
+      reputation_history: {
+        Row: {
+          breakdown: Json | null
+          change_amount: number
+          change_reason: string | null
+          id: string
+          loan_officer_id: string
+          new_score: number
+          previous_score: number
+          recorded_at: string | null
+        }
+        Insert: {
+          breakdown?: Json | null
+          change_amount: number
+          change_reason?: string | null
+          id?: string
+          loan_officer_id: string
+          new_score: number
+          previous_score: number
+          recorded_at?: string | null
+        }
+        Update: {
+          breakdown?: Json | null
+          change_amount?: number
+          change_reason?: string | null
+          id?: string
+          loan_officer_id?: string
+          new_score?: number
+          previous_score?: number
+          recorded_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reputation_history_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      response_analytics: {
+        Row: {
+          created_at: string | null
+          id: string
+          loan_officer_id: string
+          organization_id: string
+          platform: string
+          posted_successfully: boolean | null
+          response_time_hours: number | null
+          review_id: string
+          sentiment_before: number | null
+          template_used: string | null
+          was_ai_suggested: boolean | null
+          was_edited_from_template: boolean | null
+          word_count: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          loan_officer_id: string
+          organization_id: string
+          platform: string
+          posted_successfully?: boolean | null
+          response_time_hours?: number | null
+          review_id: string
+          sentiment_before?: number | null
+          template_used?: string | null
+          was_ai_suggested?: boolean | null
+          was_edited_from_template?: boolean | null
+          word_count?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          loan_officer_id?: string
+          organization_id?: string
+          platform?: string
+          posted_successfully?: boolean | null
+          response_time_hours?: number | null
+          review_id?: string
+          sentiment_before?: number | null
+          template_used?: string | null
+          was_ai_suggested?: boolean | null
+          was_edited_from_template?: boolean | null
+          word_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_analytics_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_analytics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_analytics_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_analytics_template_used_fkey"
+            columns: ["template_used"]
+            isOneToOne: false
+            referencedRelation: "response_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      response_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          organization_id: string
+          tone: string | null
+          updated_at: string | null
+          usage_count: number | null
+          variables: string[] | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          organization_id: string
+          tone?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          organization_id?: string
+          tone?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          variables?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "response_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
+          ai_suggested_response: string | null
           approved_at: string | null
           approved_by: string | null
           created_at: string | null
+          customer_email: string | null
           customer_location: string | null
           customer_name: string | null
           featured: boolean | null
@@ -1411,9 +2192,18 @@ export type Database = {
           published_at: string | null
           rating: number
           rejection_reason: string | null
+          response_approved_at: string | null
+          response_approved_by: string | null
           response_at: string | null
           response_by: string | null
+          response_post_error: string | null
+          response_posted_at: string | null
+          response_rejected_at: string | null
+          response_rejected_by: string | null
+          response_rejection_reason: string | null
+          response_status: string | null
           response_synced_at: string | null
+          response_template_id: string | null
           response_text: string | null
           review_date: string
           sentiment_label: string | null
@@ -1430,9 +2220,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          ai_suggested_response?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string | null
+          customer_email?: string | null
           customer_location?: string | null
           customer_name?: string | null
           featured?: boolean | null
@@ -1444,9 +2236,18 @@ export type Database = {
           published_at?: string | null
           rating: number
           rejection_reason?: string | null
+          response_approved_at?: string | null
+          response_approved_by?: string | null
           response_at?: string | null
           response_by?: string | null
+          response_post_error?: string | null
+          response_posted_at?: string | null
+          response_rejected_at?: string | null
+          response_rejected_by?: string | null
+          response_rejection_reason?: string | null
+          response_status?: string | null
           response_synced_at?: string | null
+          response_template_id?: string | null
           response_text?: string | null
           review_date: string
           sentiment_label?: string | null
@@ -1463,9 +2264,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          ai_suggested_response?: string | null
           approved_at?: string | null
           approved_by?: string | null
           created_at?: string | null
+          customer_email?: string | null
           customer_location?: string | null
           customer_name?: string | null
           featured?: boolean | null
@@ -1477,9 +2280,18 @@ export type Database = {
           published_at?: string | null
           rating?: number
           rejection_reason?: string | null
+          response_approved_at?: string | null
+          response_approved_by?: string | null
           response_at?: string | null
           response_by?: string | null
+          response_post_error?: string | null
+          response_posted_at?: string | null
+          response_rejected_at?: string | null
+          response_rejected_by?: string | null
+          response_rejection_reason?: string | null
+          response_status?: string | null
           response_synced_at?: string | null
+          response_template_id?: string | null
           response_text?: string | null
           review_date?: string
           sentiment_label?: string | null
@@ -1518,8 +2330,22 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reviews_response_approved_by_fkey"
+            columns: ["response_approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reviews_response_by_fkey"
             columns: ["response_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_response_rejected_by_fkey"
+            columns: ["response_rejected_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1529,6 +2355,392 @@ export type Database = {
             columns: ["survey_response_id"]
             isOneToOne: false
             referencedRelation: "survey_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salesforce_connections: {
+        Row: {
+          access_token: string
+          accounts_synced: number | null
+          auto_create_surveys: boolean | null
+          contacts_synced: number | null
+          created_at: string | null
+          field_mappings: Json | null
+          id: string
+          instance_url: string
+          is_active: boolean | null
+          last_sync_at: string | null
+          metadata: Json | null
+          opportunities_synced: number | null
+          opportunity_stage_trigger: string | null
+          organization_id: string
+          refresh_token: string
+          salesforce_org_id: string
+          salesforce_user_id: string
+          salesforce_username: string | null
+          scopes: string[] | null
+          sync_accounts: boolean | null
+          sync_contacts: boolean | null
+          sync_error: string | null
+          sync_opportunities: boolean | null
+          sync_status: string | null
+          token_expires_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_token: string
+          accounts_synced?: number | null
+          auto_create_surveys?: boolean | null
+          contacts_synced?: number | null
+          created_at?: string | null
+          field_mappings?: Json | null
+          id?: string
+          instance_url: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          opportunities_synced?: number | null
+          opportunity_stage_trigger?: string | null
+          organization_id: string
+          refresh_token: string
+          salesforce_org_id: string
+          salesforce_user_id: string
+          salesforce_username?: string | null
+          scopes?: string[] | null
+          sync_accounts?: boolean | null
+          sync_contacts?: boolean | null
+          sync_error?: string | null
+          sync_opportunities?: boolean | null
+          sync_status?: string | null
+          token_expires_at: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_token?: string
+          accounts_synced?: number | null
+          auto_create_surveys?: boolean | null
+          contacts_synced?: number | null
+          created_at?: string | null
+          field_mappings?: Json | null
+          id?: string
+          instance_url?: string
+          is_active?: boolean | null
+          last_sync_at?: string | null
+          metadata?: Json | null
+          opportunities_synced?: number | null
+          opportunity_stage_trigger?: string | null
+          organization_id?: string
+          refresh_token?: string
+          salesforce_org_id?: string
+          salesforce_user_id?: string
+          salesforce_username?: string | null
+          scopes?: string[] | null
+          sync_accounts?: boolean | null
+          sync_contacts?: boolean | null
+          sync_error?: string | null
+          sync_opportunities?: boolean | null
+          sync_status?: string | null
+          token_expires_at?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salesforce_contact_mappings: {
+        Row: {
+          connection_id: string
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          last_synced_at: string | null
+          loan_officer_id: string | null
+          organization_id: string
+          salesforce_account_id: string | null
+          salesforce_contact_id: string
+          salesforce_data: Json | null
+          sync_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          last_synced_at?: string | null
+          loan_officer_id?: string | null
+          organization_id: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id: string
+          salesforce_data?: Json | null
+          sync_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          last_synced_at?: string | null
+          loan_officer_id?: string | null
+          organization_id?: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id?: string
+          salesforce_data?: Json | null
+          sync_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_contact_mappings_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_contact_mappings_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_contact_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salesforce_opportunity_mappings: {
+        Row: {
+          close_date: string | null
+          connection_id: string
+          created_at: string | null
+          id: string
+          last_synced_at: string | null
+          opportunity_amount: number | null
+          opportunity_name: string | null
+          opportunity_stage: string | null
+          organization_id: string
+          salesforce_account_id: string | null
+          salesforce_contact_id: string | null
+          salesforce_data: Json | null
+          salesforce_opportunity_id: string
+          survey_id: string | null
+          survey_triggered_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          close_date?: string | null
+          connection_id: string
+          created_at?: string | null
+          id?: string
+          last_synced_at?: string | null
+          opportunity_amount?: number | null
+          opportunity_name?: string | null
+          opportunity_stage?: string | null
+          organization_id: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id?: string | null
+          salesforce_data?: Json | null
+          salesforce_opportunity_id: string
+          survey_id?: string | null
+          survey_triggered_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          close_date?: string | null
+          connection_id?: string
+          created_at?: string | null
+          id?: string
+          last_synced_at?: string | null
+          opportunity_amount?: number | null
+          opportunity_name?: string | null
+          opportunity_stage?: string | null
+          organization_id?: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id?: string | null
+          salesforce_data?: Json | null
+          salesforce_opportunity_id?: string
+          survey_id?: string | null
+          survey_triggered_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_opportunity_mappings_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_opportunity_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_opportunity_mappings_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salesforce_review_data: {
+        Row: {
+          connection_id: string
+          created_at: string | null
+          id: string
+          organization_id: string
+          review_id: string
+          salesforce_account_id: string | null
+          salesforce_contact_id: string | null
+          salesforce_record_id: string | null
+          sync_error: string | null
+          synced_at: string | null
+          synced_to_salesforce: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          review_id: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id?: string | null
+          salesforce_record_id?: string | null
+          sync_error?: string | null
+          synced_at?: string | null
+          synced_to_salesforce?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          review_id?: string
+          salesforce_account_id?: string | null
+          salesforce_contact_id?: string | null
+          salesforce_record_id?: string | null
+          sync_error?: string | null
+          synced_at?: string | null
+          synced_to_salesforce?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_review_data_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_review_data_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_review_data_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      salesforce_sync_logs: {
+        Row: {
+          completed_at: string | null
+          connection_id: string
+          duration_ms: number | null
+          errors: string[] | null
+          id: string
+          metadata: Json | null
+          object_type: string | null
+          organization_id: string
+          records_created: number | null
+          records_failed: number | null
+          records_fetched: number | null
+          records_updated: number | null
+          started_at: string | null
+          status: string | null
+          sync_direction: string | null
+          sync_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          connection_id: string
+          duration_ms?: number | null
+          errors?: string[] | null
+          id?: string
+          metadata?: Json | null
+          object_type?: string | null
+          organization_id: string
+          records_created?: number | null
+          records_failed?: number | null
+          records_fetched?: number | null
+          records_updated?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_direction?: string | null
+          sync_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          connection_id?: string
+          duration_ms?: number | null
+          errors?: string[] | null
+          id?: string
+          metadata?: Json | null
+          object_type?: string | null
+          organization_id?: string
+          records_created?: number | null
+          records_failed?: number | null
+          records_fetched?: number | null
+          records_updated?: number | null
+          started_at?: string | null
+          status?: string | null
+          sync_direction?: string | null
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salesforce_sync_logs_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "salesforce_connections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "salesforce_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -1608,6 +2820,70 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      slack_webhook_logs: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          organization_id: string | null
+          payload: Json
+          response_body: string | null
+          response_status: number | null
+          success: boolean | null
+          user_id: string
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          organization_id?: string | null
+          payload: Json
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean | null
+          user_id: string
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          organization_id?: string | null
+          payload?: Json
+          response_body?: string | null
+          response_status?: number | null
+          success?: boolean | null
+          user_id?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slack_webhook_logs_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "slack_webhook_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "slack_webhook_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -2102,6 +3378,51 @@ export type Database = {
           },
         ]
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          created_at: string | null
+          earned_at: string | null
+          id: string
+          loan_officer_id: string
+          notified_at: string | null
+          progress: Json | null
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          loan_officer_id: string
+          notified_at?: string | null
+          progress?: Json | null
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string | null
+          earned_at?: string | null
+          id?: string
+          loan_officer_id?: string
+          notified_at?: string | null
+          progress?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null
@@ -2158,6 +3479,7 @@ export type Database = {
       webhook_configs: {
         Row: {
           allowed_ips: string[] | null
+          api_key_id: string | null
           created_at: string | null
           default_template_id: string | null
           id: string
@@ -2174,6 +3496,7 @@ export type Database = {
         }
         Insert: {
           allowed_ips?: string[] | null
+          api_key_id?: string | null
           created_at?: string | null
           default_template_id?: string | null
           id?: string
@@ -2190,6 +3513,7 @@ export type Database = {
         }
         Update: {
           allowed_ips?: string[] | null
+          api_key_id?: string | null
           created_at?: string | null
           default_template_id?: string | null
           id?: string
@@ -2205,6 +3529,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "webhook_configs_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "webhook_configs_default_template_id_fkey"
             columns: ["default_template_id"]
@@ -2293,10 +3624,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_api_rate_limit: {
+        Args: { p_api_key_id: string; p_rate_limit?: number }
+        Returns: {
+          current_count: number
+          is_allowed: boolean
+          limit_count: number
+          reset_at: string
+        }[]
+      }
+      check_badges_for_loan_officer: {
+        Args: { p_loan_officer_id: string }
+        Returns: {
+          badge_name: string
+          badge_slug: string
+          newly_earned: boolean
+        }[]
+      }
       check_rate_limit: {
         Args: { p_organization_id: string }
         Returns: boolean
       }
+      cleanup_old_rate_limit_windows: { Args: never; Returns: number }
       get_pending_distribution_items: {
         Args: { p_limit?: number }
         Returns: {
@@ -2308,6 +3657,10 @@ export type Database = {
         }[]
       }
       get_user_organization_id: { Args: never; Returns: string }
+      increment_api_key_request_count: {
+        Args: { p_api_key_id: string }
+        Returns: undefined
+      }
       increment_webhook_trigger_count: {
         Args: { config_id: string }
         Returns: undefined
@@ -2324,6 +3677,17 @@ export type Database = {
       user_has_manager_access: { Args: { user_id: string }; Returns: boolean }
       user_has_role: { Args: { required_roles: string[] }; Returns: boolean }
       user_is_enterprise_admin: { Args: { user_id: string }; Returns: boolean }
+      validate_api_key: {
+        Args: { p_key_hash: string; p_required_scopes?: string[] }
+        Returns: {
+          api_key_id: string
+          error_message: string
+          is_valid: boolean
+          organization_id: string
+          rate_limit: number
+          scopes: string[]
+        }[]
+      }
     }
     Enums: {
       testimonial_format: "short" | "medium" | "long" | "social" | "headline"
@@ -2335,7 +3699,7 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+export type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
@@ -2460,3 +3824,4 @@ export const Constants = {
     },
   },
 } as const
+

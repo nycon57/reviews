@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient, createUntypedServerClient } from '@/lib/supabase/server';
+import { createUntypedAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import {
   exchangeCodeForTokens,
@@ -75,7 +75,7 @@ async function getValidAccessToken(connectionId: string): Promise<{
   pageAccessToken?: string;
   platform: SocialPlatform;
 } | null> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   const { data: connection, error } = await adminClient
     .from('social_connections')
@@ -170,7 +170,7 @@ export async function handleSocialOAuthCallback(
     // Get user info
     const userInfo = await getUserInfo(platform, tokens.accessToken);
 
-    const adminClient = createAdminClient();
+    const adminClient = createUntypedAdminClient();
 
     // Check if connection already exists
     const { data: existing } = await adminClient
@@ -322,7 +322,7 @@ export async function selectSocialPage(
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   const { error } = await adminClient
     .from('social_connections')
@@ -349,7 +349,8 @@ export async function getSocialConnections(): Promise<ActionResult<SocialConnect
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for social_connections table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const { data, error } = await supabase
     .from('social_connections')
@@ -396,7 +397,8 @@ export async function disconnectSocial(connectionId: string): Promise<ActionResu
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for social_connections table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const { error } = await supabase
     .from('social_connections')
@@ -423,7 +425,8 @@ export async function updateAutoPublishSettings(
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for social_connections table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const { error } = await supabase
     .from('social_connections')
@@ -451,7 +454,8 @@ export async function getSocialPostTemplates(
     return { success: false, error: 'Unauthorized' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for social_post_templates table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   let query = supabase
     .from('social_post_templates')
@@ -502,7 +506,8 @@ export async function generatePostPreview(
     return { success: false, error: 'Unauthorized' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for social_post_templates table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   // Get review with loan officer info
   const { data: review, error: reviewError } = await supabase
@@ -579,7 +584,7 @@ export async function createSocialPost(params: {
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Get connection
   const { data: connection, error: connError } = await adminClient
@@ -670,7 +675,7 @@ export async function publishSocialPost(postId: string): Promise<ActionResult> {
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Get post
   const { data: post, error: postError } = await adminClient
@@ -809,7 +814,8 @@ export async function getSocialPosts(params?: {
     return { success: false, error: 'Unauthorized' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for social_posts table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   let query = supabase
     .from('social_posts')
@@ -871,7 +877,8 @@ export async function deleteSocialPost(postId: string): Promise<ActionResult> {
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for social_posts table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const { error } = await supabase
     .from('social_posts')
@@ -898,7 +905,7 @@ export async function bulkQueueReviewsForPublishing(
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Verify connection
   const { data: connection, error: connError } = await adminClient

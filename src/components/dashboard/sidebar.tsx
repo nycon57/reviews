@@ -31,7 +31,6 @@ import {
   Sparkles,
   Quote,
   Building,
-  MapPin,
   Award,
   ClipboardList,
   Zap,
@@ -81,12 +80,6 @@ const mainNavItems: NavItem[] = [
     href: "/dashboard/surveys",
     icon: <FileText className="h-4 w-4" />,
     permission: PERMISSIONS.VIEW_SURVEYS,
-  },
-  {
-    title: "Listings",
-    href: "/dashboard/listings",
-    icon: <MapPin className="h-4 w-4" />,
-    permission: PERMISSIONS.VIEW_LISTINGS,
   },
 ];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +66,7 @@ import {
 } from "@/lib/reviews/actions";
 import {
   getAggregatedReviews,
+  getAggregatedReviewById,
   bulkArchiveReviews,
   bulkToggleFeatured,
   exportReviews,
@@ -86,6 +87,8 @@ interface ReviewQueueProps {
     total: number;
   };
   initialAggregatedStats?: ReviewAggregationStats;
+  initialReviewId?: string;
+  hasAiAccess?: boolean;
 }
 
 export function ReviewQueue({
@@ -94,6 +97,8 @@ export function ReviewQueue({
   loanOfficers,
   initialStats,
   initialAggregatedStats,
+  initialReviewId,
+  hasAiAccess = true,
 }: ReviewQueueProps) {
   const [reviews, setReviews] = useState<(Review | AggregatedReview)[]>(initialReviews);
   const [total, setTotal] = useState(initialTotal);
@@ -128,6 +133,31 @@ export function ReviewQueue({
   // Detail modal (for non-pending reviews)
   const [selectedReview, setSelectedReview] = useState<AggregatedReview | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  // Handle initialReviewId - auto-open detail modal for specified review
+  useEffect(() => {
+    if (!initialReviewId) return;
+
+    const openInitialReview = async () => {
+      // First, try to find the review in the current list
+      const reviewInList = reviews.find((r) => r.id === initialReviewId);
+      if (reviewInList) {
+        setSelectedReview(reviewInList as AggregatedReview);
+        setDetailModalOpen(true);
+        return;
+      }
+
+      // If not found in list, fetch it directly
+      const result = await getAggregatedReviewById(initialReviewId);
+      if (result.success && result.data) {
+        setSelectedReview(result.data);
+        setDetailModalOpen(true);
+      }
+    };
+
+    openInitialReview();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialReviewId]);
 
   // Mode detection - pending status = moderation mode
   const isPendingMode = statusFilter === "pending";
@@ -1253,6 +1283,7 @@ export function ReviewQueue({
             if (!open) setSelectedReview(null);
           }}
           onUpdate={refreshReviews}
+          hasAiAccess={hasAiAccess}
         />
       )}
     </div>

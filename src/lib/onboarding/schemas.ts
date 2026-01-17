@@ -33,6 +33,7 @@ export const setupProfileSchema = z.object({
   primaryColor: z.string().optional(),
   website: z.string().url().optional().or(z.literal("")),
   phone: z.string().optional(),
+  companyEmail: z.string().email().optional().or(z.literal("")),
 });
 
 export type SetupProfileInput = z.infer<typeof setupProfileSchema>;

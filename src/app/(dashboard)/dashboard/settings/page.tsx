@@ -1,80 +1,43 @@
-import { Suspense } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { GoogleIntegrationCard } from "@/components/google/google-integration-card";
-import { SocialIntegrationCard } from "@/components/social";
-import { SalesforceIntegrationCard } from "@/components/salesforce";
-import { NotificationPreferencesCard } from "@/components/notifications";
-import { ProfileCompletionCard } from "@/components/gamification";
+import { Suspense } from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SettingsTabs } from './components';
+import { getUserProfile } from '@/lib/auth/profile-actions';
 
 export const metadata = {
-  title: "Settings | RepWell",
-  description: "Manage your account settings and preferences",
+  title: 'Settings | RepWell',
+  description: 'Manage your account settings and preferences',
 };
 
-function GoogleCardSkeleton() {
+function SettingsPageSkeleton() {
   return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-72" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-24 w-full" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function SocialCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-36" />
-        <Skeleton className="h-4 w-80" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-20 w-full" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function SalesforceCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-36" />
-        <Skeleton className="h-4 w-80" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-32 w-full" />
-      </CardContent>
-    </Card>
-  );
-}
-
-function NotificationCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-72" />
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="space-y-4">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-10 w-full" />
-          </div>
+    <div className="flex-1 space-y-6">
+      <div>
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-4 w-64 mt-2" />
+      </div>
+      <div className="flex gap-4 border-b border-border pb-2">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-10 w-24" />
         ))}
-      </CardContent>
-    </Card>
+      </div>
+      <div className="space-y-4">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    </div>
+  );
+}
+
+async function SettingsContent() {
+  const profile = await getUserProfile();
+
+  return (
+    <SettingsTabs
+      initialTab="profile"
+      userEmail={profile?.email}
+      userName={profile?.full_name ?? undefined}
+      userAvatarUrl={profile?.avatar_url}
+    />
   );
 }
 
@@ -89,62 +52,10 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {/* Settings sections */}
-      <div className="grid gap-6">
-        {/* Profile Completion Score */}
-        <ProfileCompletionCard
-          showSections={true}
-          showMilestones={true}
-          showTips={true}
-        />
-
-        {/* Google Integration */}
-        <Suspense fallback={<GoogleCardSkeleton />}>
-          <GoogleIntegrationCard />
-        </Suspense>
-
-        {/* Social Media Integration */}
-        <Suspense fallback={<SocialCardSkeleton />}>
-          <SocialIntegrationCard />
-        </Suspense>
-
-        {/* Salesforce CRM Integration */}
-        <Suspense fallback={<SalesforceCardSkeleton />}>
-          <SalesforceIntegrationCard />
-        </Suspense>
-
-        {/* Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>
-              Your personal information and contact details
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" placeholder="John" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" placeholder="Doe" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="john@example.com" />
-            </div>
-            <Button>Save Changes</Button>
-          </CardContent>
-        </Card>
-
-        {/* Notifications */}
-        <Suspense fallback={<NotificationCardSkeleton />}>
-          <NotificationPreferencesCard />
-        </Suspense>
-      </div>
+      {/* Settings content with tabs */}
+      <Suspense fallback={<SettingsPageSkeleton />}>
+        <SettingsContent />
+      </Suspense>
     </div>
   );
 }

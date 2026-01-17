@@ -37,7 +37,7 @@ export default function RootLayout({
           />
         )}
       </head>
-      <body className={sourceSans.className}>
+      <body className={sourceSans.className} suppressHydrationWarning>
         <MotionProvider>
           <ThemeProvider
             attribute="class"

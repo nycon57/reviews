@@ -49,3 +49,39 @@ export const getUser = cache(async (): Promise<User | null> => {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 });
+
+/**
+ * Create an untyped Supabase server client.
+ * Use this when you need to access tables that may not exist in the database types.
+ * Warning: This bypasses type checking, so use with caution.
+ */
+export async function createUntypedServerClient() {
+  const cookieStore = await cookies();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return createServerClient<any>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {
+            // The `set` method was called from a Server Component.
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch {
+            // The `delete` method was called from a Server Component.
+          }
+        },
+      },
+    }
+  );
+}

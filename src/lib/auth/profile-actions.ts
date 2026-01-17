@@ -170,6 +170,15 @@ export async function uploadAvatar(
     return { success: false, error: "Failed to update profile. Please try again." };
   }
 
+  // Also sync to loan_officers.photo_url if user has a linked loan officer record
+  await supabase
+    .from("loan_officers")
+    .update({
+      photo_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("user_id", user.id);
+
   // Delete old avatar if it exists and is from our storage
   const { data: profile } = await supabase
     .from("users")

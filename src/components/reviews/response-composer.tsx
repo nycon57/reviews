@@ -26,7 +26,9 @@ import {
   Clock,
   Loader2,
   RefreshCw,
+  Lock,
 } from "lucide-react";
+import Link from "next/link";
 import {
   getResponseTemplates,
   saveDraftResponse,
@@ -45,6 +47,7 @@ interface ResponseComposerProps {
   onCancel?: () => void;
   requireApproval?: boolean;
   isManager?: boolean;
+  hasAiAccess?: boolean;
 }
 
 export function ResponseComposer({
@@ -53,6 +56,7 @@ export function ResponseComposer({
   onCancel,
   requireApproval = false,
   isManager = false,
+  hasAiAccess = true,
 }: ResponseComposerProps) {
   const [isPending, startTransition] = useTransition();
   const [responseText, setResponseText] = useState("");
@@ -286,41 +290,61 @@ export function ResponseComposer({
       </div>
 
       {/* AI Suggestion */}
-      <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-purple-600" />
-            <span className="text-sm font-medium text-purple-900">AI Response Suggestion</span>
+      {hasAiAccess ? (
+        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-900">AI Response Suggestion</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Generate a response based on the review content
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Generate a response based on the review content
-          </p>
+          <Select value={aiTone} onValueChange={(v) => setAiTone(v as typeof aiTone)}>
+            <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="professional">Professional</SelectItem>
+              <SelectItem value="friendly">Friendly</SelectItem>
+              <SelectItem value="empathetic">Empathetic</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleGenerateAI}
+            disabled={isGeneratingAI}
+            className="h-8"
+          >
+            {isGeneratingAI ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            <span className="ml-1.5">Generate</span>
+          </Button>
         </div>
-        <Select value={aiTone} onValueChange={(v) => setAiTone(v as typeof aiTone)}>
-          <SelectTrigger className="w-[120px] h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="professional">Professional</SelectItem>
-            <SelectItem value="friendly">Friendly</SelectItem>
-            <SelectItem value="empathetic">Empathetic</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleGenerateAI}
-          disabled={isGeneratingAI}
-          className="h-8"
-        >
-          {isGeneratingAI ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4" />
-          )}
-          <span className="ml-1.5">Generate</span>
-        </Button>
-      </div>
+      ) : (
+        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <Lock className="h-4 w-4 text-gray-400" />
+              <span className="text-sm font-medium text-gray-600">AI Response Suggestion</span>
+              <Badge variant="outline" className="text-xs">Pro</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Upgrade to Professional or Enterprise to unlock AI-powered response generation
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild className="h-8 shrink-0">
+            <Link href="/dashboard/settings?tab=billing">
+              Upgrade
+            </Link>
+          </Button>
+        </div>
+      )}
 
       {/* Response Editor */}
       <div className="space-y-2">

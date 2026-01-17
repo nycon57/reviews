@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createUntypedServerClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/reviews/types";
 import {
   PROFILE_SECTIONS,
@@ -18,7 +18,7 @@ import {
 
 // Get user context - parallelized queries for better performance
 async function getUserContext() {
-  const supabase = await createClient();
+  const supabase = await createUntypedServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -75,7 +75,7 @@ export async function getProfileCompletionScore(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createClient();
+  const supabase = await createUntypedServerClient();
 
   // Get loan officer profile data
   const { data: loData, error: loError } = await supabase
@@ -106,15 +106,21 @@ export async function getProfileCompletionScore(
     return { success: false, error: "Loan officer not found" };
   }
 
-  // Check for social connections
-  const { data: socialConnections } = await supabase
-    .from("social_connections")
-    .select("id")
-    .eq("organization_id", loData.organization_id)
-    .eq("is_active", true)
-    .limit(1);
-
-  const hasSocialConnection = (socialConnections?.length || 0) > 0;
+  // Check for social connections (table may not exist yet)
+  // Using type assertion since social_connections may not be in types
+  let hasSocialConnection = false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: socialConnections } = await (supabase as any)
+      .from("social_connections")
+      .select("id")
+      .eq("organization_id", loData.organization_id)
+      .eq("is_active", true)
+      .limit(1);
+    hasSocialConnection = (socialConnections?.length || 0) > 0;
+  } catch {
+    // Table may not exist, default to false
+  }
 
   // Check for testimonials
   const { data: testimonials } = await supabase
@@ -126,15 +132,20 @@ export async function getProfileCompletionScore(
 
   const hasTestimonials = (testimonials?.length || 0) > 0;
 
-  // Check for social posts
-  const { data: socialPosts } = await supabase
-    .from("social_posts")
-    .select("id")
-    .eq("organization_id", loData.organization_id)
-    .eq("status", "published")
-    .limit(1);
-
-  const hasPublishedPosts = (socialPosts?.length || 0) > 0;
+  // Check for social posts (table may not exist yet)
+  let hasPublishedPosts = false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: socialPosts } = await (supabase as any)
+      .from("social_posts")
+      .select("id")
+      .eq("organization_id", loData.organization_id)
+      .eq("status", "published")
+      .limit(1);
+    hasPublishedPosts = (socialPosts?.length || 0) > 0;
+  } catch {
+    // Table may not exist, default to false
+  }
 
   // Get survey response rate
   const { data: surveys } = await supabase
@@ -303,7 +314,7 @@ export async function getProfileCompletionScore(
 
 // Helper to get simple profile score for ranking
 async function getSimpleProfileScore(loanOfficerId: string): Promise<number> {
-  const supabase = await createClient();
+  const supabase = await createUntypedServerClient();
 
   const { data: loData } = await supabase
     .from("loan_officers")
@@ -387,7 +398,7 @@ export async function getProfileCompletionLeaderboard(
     return { success: false, error: "Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = await createUntypedServerClient();
 
   // Get all active loan officers
   const { data: loanOfficers, error } = await supabase

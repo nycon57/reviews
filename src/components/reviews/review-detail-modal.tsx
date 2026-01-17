@@ -40,6 +40,7 @@ interface ReviewDetailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: () => void;
+  hasAiAccess?: boolean;
 }
 
 export function ReviewDetailModal({
@@ -47,6 +48,7 @@ export function ReviewDetailModal({
   open,
   onOpenChange,
   onUpdate,
+  hasAiAccess = true,
 }: ReviewDetailModalProps) {
   const [isPending, startTransition] = useTransition();
   const [showResponseForm, setShowResponseForm] = useState(false);
@@ -308,6 +310,7 @@ export function ReviewDetailModal({
                   }}
                   onCancel={() => setShowResponseForm(false)}
                   isManager={true}
+                  hasAiAccess={hasAiAccess}
                 />
               </div>
             </>

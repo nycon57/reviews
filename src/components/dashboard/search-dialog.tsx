@@ -18,7 +18,6 @@ import {
   LayoutDashboard,
   TrendingUp,
   Bell,
-  Building2,
   Users,
   HelpCircle,
 } from "lucide-react";
@@ -80,14 +79,6 @@ const quickLinks: SearchResult[] = [
     description: "Review request campaigns",
     href: "/dashboard/campaigns",
     icon: Send,
-    category: "Pages",
-  },
-  {
-    id: "listings",
-    title: "Listings",
-    description: "Manage business listings",
-    href: "/dashboard/listings",
-    icon: Building2,
     category: "Pages",
   },
   {

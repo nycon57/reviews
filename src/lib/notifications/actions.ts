@@ -10,6 +10,56 @@ import type {
 } from "./types";
 import { revalidatePath } from "next/cache";
 
+// ============================================================================
+// Webhook URL Validation (SSRF Protection)
+// ============================================================================
+
+/**
+ * Validates that a Slack webhook URL is legitimate.
+ * Prevents SSRF attacks by ensuring the URL points to Slack's webhook service.
+ */
+function isValidSlackWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Must be HTTPS
+    if (parsed.protocol !== "https:") return false;
+    // Must be Slack's webhook domain
+    if (parsed.hostname !== "hooks.slack.com") return false;
+    // Must have the services path
+    if (!parsed.pathname.startsWith("/services/")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Validates that a Teams webhook URL is legitimate.
+ * Prevents SSRF attacks by ensuring the URL points to Microsoft's webhook service.
+ */
+function isValidTeamsWebhookUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // Must be HTTPS
+    if (parsed.protocol !== "https:") return false;
+    // Must be one of Microsoft's webhook domains
+    const validDomains = [
+      "webhook.office.com",
+      "outlook.office.com",
+      "outlook.office365.com",
+    ];
+    const isValidDomain = validDomains.some(
+      (domain) => parsed.hostname === domain || parsed.hostname.endsWith(`.${domain}`)
+    );
+    if (!isValidDomain) return false;
+    // Must have webhookb2 in the path (Teams incoming webhook pattern)
+    if (!parsed.pathname.includes("/webhookb2/") && !parsed.pathname.includes("/IncomingWebhook/")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Get notifications for the current user
 export async function getNotifications(options: {
   limit?: number;
@@ -281,6 +331,11 @@ export async function sendSlackNotification(
     return { success: false, error: "Slack not configured" };
   }
 
+  // Validate webhook URL to prevent SSRF attacks (defense-in-depth)
+  if (!isValidSlackWebhookUrl(prefs.slack_webhook_url)) {
+    return { success: false, error: "Invalid Slack webhook URL configured" };
+  }
+
   // Check if this notification type should be sent to Slack
   const shouldSend =
     (notification.type === "new_review" && prefs.slack_new_review) ||
@@ -379,6 +434,14 @@ export async function sendSlackNotification(
 export async function testSlackWebhook(
   webhookUrl: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Validate webhook URL to prevent SSRF attacks
+  if (!isValidSlackWebhookUrl(webhookUrl)) {
+    return {
+      success: false,
+      error: "Invalid Slack webhook URL. Must be a valid hooks.slack.com URL.",
+    };
+  }
+
   const testPayload = {
     text: "This is a test message from RepWell",
     attachments: [
@@ -532,4 +595,226 @@ function getDigestCutoffTime(): string {
   const now = new Date();
   now.setHours(now.getHours() - 1); // Allow 1 hour buffer
   return now.toISOString();
+}
+
+// Send MS Teams notification using Adaptive Cards
+export async function sendTeamsNotification(
+  userId: string,
+  notification: Notification
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createUntypedAdminClient();
+
+  // Get user's Teams preferences
+  const { data: prefs } = await supabase
+    .from("notification_preferences")
+    .select("teams_enabled, teams_webhook_url, teams_new_review, teams_negative_review")
+    .eq("user_id", userId)
+    .single();
+
+  if (!prefs?.teams_enabled || !prefs.teams_webhook_url) {
+    return { success: false, error: "Teams not configured" };
+  }
+
+  // Validate webhook URL to prevent SSRF attacks (defense-in-depth)
+  if (!isValidTeamsWebhookUrl(prefs.teams_webhook_url)) {
+    return { success: false, error: "Invalid Teams webhook URL configured" };
+  }
+
+  // Check if this notification type should be sent to Teams
+  const shouldSend =
+    (notification.type === "new_review" && prefs.teams_new_review) ||
+    (notification.type === "negative_review" && prefs.teams_negative_review);
+
+  if (!shouldSend) {
+    return { success: false, error: "Notification type not enabled for Teams" };
+  }
+
+  // Build Adaptive Card message
+  const rating = (notification.metadata as Record<string, unknown>)?.rating as number | undefined;
+  const customerName = (notification.metadata as Record<string, unknown>)?.customer_name as string | undefined;
+
+  // Color based on notification type and rating
+  const color =
+    notification.type === "negative_review" ? "Attention" : rating && rating >= 4 ? "Good" : "Warning";
+
+  const payload = {
+    type: "message",
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        contentUrl: null,
+        content: {
+          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+          type: "AdaptiveCard",
+          version: "1.5",
+          body: [
+            {
+              type: "TextBlock",
+              text: notification.title,
+              size: "Medium",
+              weight: "Bolder",
+              color,
+            },
+            {
+              type: "TextBlock",
+              text: notification.message,
+              wrap: true,
+            },
+            ...(rating || customerName
+              ? [
+                  {
+                    type: "FactSet",
+                    facts: [
+                      ...(rating
+                        ? [
+                            {
+                              title: "Rating",
+                              value: "⭐".repeat(rating) + "☆".repeat(5 - rating),
+                            },
+                          ]
+                        : []),
+                      ...(customerName
+                        ? [
+                            {
+                              title: "Customer",
+                              value: customerName,
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                ]
+              : []),
+            {
+              type: "TextBlock",
+              text: "RepWell",
+              size: "Small",
+              isSubtle: true,
+            },
+          ],
+          ...(notification.action_url
+            ? {
+                actions: [
+                  {
+                    type: "Action.OpenUrl",
+                    title: "View Review",
+                    url: `${process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com"}${notification.action_url}`,
+                  },
+                ],
+              }
+            : {}),
+        },
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch(prefs.teams_webhook_url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const responseBody = await response.text();
+
+    // Log the webhook call
+    await supabase.from("teams_webhook_logs").insert({
+      user_id: userId,
+      organization_id: notification.organization_id,
+      notification_id: notification.id,
+      webhook_url: prefs.teams_webhook_url,
+      payload,
+      response_status: response.status,
+      response_body: responseBody,
+      success: response.ok,
+      error_message: response.ok ? null : responseBody,
+    });
+
+    if (!response.ok) {
+      return { success: false, error: `Teams webhook failed: ${responseBody}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+
+    // Log the error
+    await supabase.from("teams_webhook_logs").insert({
+      user_id: userId,
+      organization_id: notification.organization_id,
+      notification_id: notification.id,
+      webhook_url: prefs.teams_webhook_url,
+      payload,
+      success: false,
+      error_message: errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Test MS Teams webhook with Adaptive Card
+export async function testTeamsWebhook(
+  webhookUrl: string
+): Promise<{ success: boolean; error?: string }> {
+  // Validate webhook URL to prevent SSRF attacks
+  if (!isValidTeamsWebhookUrl(webhookUrl)) {
+    return {
+      success: false,
+      error: "Invalid Teams webhook URL. Must be a valid Microsoft webhook.office.com URL.",
+    };
+  }
+
+  const testPayload = {
+    type: "message",
+    attachments: [
+      {
+        contentType: "application/vnd.microsoft.card.adaptive",
+        contentUrl: null,
+        content: {
+          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
+          type: "AdaptiveCard",
+          version: "1.5",
+          body: [
+            {
+              type: "TextBlock",
+              text: "Webhook Test Successful",
+              size: "Medium",
+              weight: "Bolder",
+              color: "Good",
+            },
+            {
+              type: "TextBlock",
+              text: "Your Microsoft Teams integration is configured correctly.",
+              wrap: true,
+            },
+            {
+              type: "TextBlock",
+              text: "RepWell",
+              size: "Small",
+              isSubtle: true,
+            },
+          ],
+        },
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(testPayload),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      return { success: false, error: `Teams returned: ${body}` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: errorMessage };
+  }
 }

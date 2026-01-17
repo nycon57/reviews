@@ -8,6 +8,7 @@ import type {
   ScheduledReportEmailData,
   NegativeReviewAlertEmailData,
   NotificationDigestEmailData,
+  ReviewResponseToReviewerEmailData,
 } from "./types";
 import { emailConfig } from "./client";
 
@@ -709,6 +710,84 @@ export function getNotificationDigestEmail(
         <p style="margin: 24px 0 0 0; font-size: 12px; color: #71717a; text-align: center;">
           You're receiving this digest based on your notification preferences.
           <a href="${data.dashboardUrl}/settings" style="color: #6366f1;">Manage preferences</a>
+        </p>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Review response to reviewer email template (sent to customer when LO responds)
+export function getReviewResponseToReviewerEmail(
+  data: ReviewResponseToReviewerEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `${data.loanOfficerName} responded to your review`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const originalReviewSection = data.originalReviewText
+    ? `
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase;">
+            Your Review
+          </p>
+          <div style="text-align: center; margin-bottom: 12px;">
+            ${generateStarRating(data.rating)}
+          </div>
+          <p style="margin: 0; font-size: 14px; color: #52525b; font-style: italic;">
+            "${data.originalReviewText}"
+          </p>
+        </div>
+      `
+    : `
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase;">
+            Your Review
+          </p>
+          <div style="text-align: center;">
+            ${generateStarRating(data.rating)}
+            <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
+              ${data.rating}-star rating
+            </p>
+          </div>
+        </div>
+      `;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #fafafa; border-bottom: 1px solid #e4e4e7;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">${data.organizationName}</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Thank You for Your Feedback!
+        </h1>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Hi ${data.customerName}, ${data.loanOfficerName} has responded to your review.
+        </p>
+
+        ${originalReviewSection}
+
+        <div style="background-color: #dcfce7; border-radius: 8px; padding: 20px; margin: 24px 0; border-left: 4px solid #16a34a;">
+          <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #166534; text-transform: uppercase;">
+            Response from ${data.loanOfficerName}
+          </p>
+          <p style="margin: 0; font-size: 16px; color: #052e16; white-space: pre-wrap;">
+            ${data.responseText}
+          </p>
+        </div>
+
+        <p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+          We appreciate you taking the time to share your experience with us.
         </p>
       </td>
     </tr>

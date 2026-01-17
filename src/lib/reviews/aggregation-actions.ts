@@ -66,6 +66,7 @@ function mapRowToAggregatedReview(
     title: row.title as string | null,
     text: row.text as string | null,
     customerName: row.customer_name as string | null,
+    customerEmail: row.customer_email as string | null,
     customerLocation: row.customer_location as string | null,
     status: row.status as AggregatedReview["status"],
     approvedAt: row.approved_at as string | null,
@@ -144,6 +145,7 @@ export async function getAggregatedReviews(
       title,
       text,
       customer_name,
+      customer_email,
       customer_location,
       sentiment_score,
       sentiment_label,
@@ -238,7 +240,7 @@ export async function getAggregatedReviews(
 
   if (error) {
     console.error("Error fetching aggregated reviews:", error);
-    return { success: false, error: "Failed to fetch reviews" };
+    return { success: false, error: error.message || "Failed to fetch reviews" };
   }
 
   const reviews: AggregatedReview[] = (data || []).map((row) => {
@@ -290,6 +292,7 @@ export async function getAggregatedReviewById(
       title,
       text,
       customer_name,
+      customer_email,
       customer_location,
       sentiment_score,
       sentiment_label,

@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { getStripe } from "./server";
 import {
   createCheckoutSessionSchema,
@@ -87,7 +87,7 @@ export async function getOrCreateStripeCustomer(): Promise<{
     });
 
     // Update organization with Stripe customer ID
-    const adminClient = createAdminClient();
+    const adminClient = createUntypedAdminClient();
     await adminClient
       .from("organizations")
       .update({ stripe_customer_id: customer.id })
@@ -192,7 +192,8 @@ export async function cancelSubscription(
   subscriptionId: string,
   cancelImmediately: boolean = false
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
+  // Use untyped client for subscriptions table (not in generated types)
+  const supabase = await createUntypedServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -244,7 +245,8 @@ export async function cancelSubscription(
 export async function resumeSubscription(
   subscriptionId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
+  // Use untyped client for subscriptions table (not in generated types)
+  const supabase = await createUntypedServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -292,7 +294,8 @@ export async function updateSubscription(
 
   const { subscriptionId, priceId, quantity, cancelAtPeriodEnd } = validated.data;
 
-  const supabase = await createClient();
+  // Use untyped client for subscriptions table (not in generated types)
+  const supabase = await createUntypedServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -377,7 +380,8 @@ export async function getBillingOverview(): Promise<{
   data?: BillingOverview;
   error?: string;
 }> {
-  const supabase = await createClient();
+  // Use untyped client for subscriptions table (not in generated types)
+  const supabase = await createUntypedServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

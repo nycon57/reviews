@@ -244,9 +244,14 @@ export async function createOnboardingCheckout(): Promise<{
     return { success: false, error: "Enterprise plan requires contacting sales" };
   }
 
+  // Normalize plan ID (map basic→starter, pro→professional for compatibility)
+  const normalizedPlan = selectedPlan === "basic" ? "starter"
+    : selectedPlan === "pro" ? "professional"
+    : selectedPlan;
+
   // Get price ID based on plan and billing cycle
   const billingCycle = (selectedBillingCycle || "month") as BillingCycle;
-  const tier = PRICING_TIERS.find(t => t.id === selectedPlan);
+  const tier = PRICING_TIERS.find(t => t.id === normalizedPlan);
 
   if (!tier) {
     return { success: false, error: "Invalid plan selected" };
@@ -421,7 +426,7 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
   }
 
   const adminClient = createAdminClient();
-  const { organizationName, industry, companySize, address, logoUrl, primaryColor, website, phone } = validated.data;
+  const { organizationName, industry, companySize, address, logoUrl, primaryColor, website, phone, companyEmail } = validated.data;
 
   // Update organization
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -430,7 +435,7 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
     .update({
       name: organizationName,
       logo_url: logoUrl || null,
-      primary_color: primaryColor || "#3B82F6",
+      primary_color: primaryColor || "#52796f",
       domain: website || null,
       onboarding_status: "profile_complete",
       settings: {
@@ -438,6 +443,7 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
         companySize,
         address,
         phone,
+        companyEmail,
       },
     })
     .eq("id", userData.organization_id);
@@ -517,4 +523,105 @@ export async function completeOnboarding(): Promise<ActionResult> {
  */
 export async function skipPayment(): Promise<ActionResult> {
   return { success: false, error: "Payment required for all plans" };
+}
+
+/**
+ * Upload organization logo during onboarding
+ */
+export async function uploadLogo(
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  // Get user's organization
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userError || !userData?.organization_id) {
+    return { success: false, error: "Organization not found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can upload logos" };
+  }
+
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  // Validate file type
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+  if (!allowedTypes.includes(file.type)) {
+    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, SVG, or WebP image." };
+  }
+
+  // Validate file size (5MB max)
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: "File too large. Maximum size is 5MB." };
+  }
+
+  // Generate unique filename
+  const fileExt = file.name.split(".").pop() || "png";
+  const fileName = `${userData.organization_id}/logo-${Date.now()}.${fileExt}`;
+
+  // Upload to Supabase Storage
+  const { error: uploadError } = await supabase.storage
+    .from("logos")
+    .upload(fileName, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error("Upload error:", uploadError);
+    return { success: false, error: "Failed to upload image. Please try again." };
+  }
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from("logos")
+    .getPublicUrl(fileName);
+
+  // Update organization's logo_url in database
+  const adminClient = createAdminClient();
+  const { error: dbError } = await adminClient
+    .from("organizations")
+    .update({
+      logo_url: publicUrl,
+    })
+    .eq("id", userData.organization_id);
+
+  if (dbError) {
+    console.error("Database update error:", dbError);
+    // Try to delete the uploaded file if database update fails
+    await supabase.storage.from("logos").remove([fileName]);
+    return { success: false, error: "Failed to update profile. Please try again." };
+  }
+
+  // Delete old logo if it exists and is from our storage
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("logo_url")
+    .eq("id", userData.organization_id)
+    .single();
+
+  if (orgData?.logo_url && orgData.logo_url.includes("/logos/")) {
+    const oldPath = orgData.logo_url.split("/logos/").pop();
+    if (oldPath && oldPath !== fileName) {
+      await supabase.storage.from("logos").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/onboarding");
+
+  return { success: true, url: publicUrl };
 }

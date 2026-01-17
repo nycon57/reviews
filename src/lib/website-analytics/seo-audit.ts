@@ -5,7 +5,7 @@
  * Performs technical SEO audits on pages
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/reviews/types";
 import type { SEOAuditResult, SEOIssue, SEORecommendation } from "./types";
 import type { Json } from "@/types/database.types";
@@ -549,7 +549,8 @@ export async function runPageSEOAudit(
     const scores = calculateScores({ metaTags, headers, images, content, structuredData, mobileFriendliness });
 
     // Get previous audit for comparison
-    const supabase = await createClient();
+    // Use untyped client for website_seo_audits table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
     const { data: previousAudit } = await supabase
       .from("website_seo_audits")
       .select("seo_score")

@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
-import { selectPlan } from "@/lib/onboarding/actions";
+import { selectPlan, createOnboardingCheckout } from "@/lib/onboarding/actions";
 import type { SelectPlanInput } from "@/lib/onboarding/schemas";
 import { staggerContainer, fadeInUp } from "@/lib/motion";
 
@@ -103,19 +103,33 @@ export function PlanSelectionClient() {
     setLoadingPlan(planId);
 
     try {
+      // Step 1: Save plan selection
       const input: SelectPlanInput = {
         plan: planId,
         billingCycle: isYearly ? "year" : "month",
       };
 
-      const result = await selectPlan(input);
+      const selectResult = await selectPlan(input);
 
-      if (result.success && result.redirectTo) {
-        router.push(result.redirectTo);
+      if (!selectResult.success) {
+        toast({
+          title: "Error",
+          description: selectResult.error || "Failed to select plan",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Step 2: Create Stripe checkout session and redirect directly
+      const checkoutResult = await createOnboardingCheckout();
+
+      if (checkoutResult.success && checkoutResult.url) {
+        // Redirect directly to Stripe checkout
+        window.location.href = checkoutResult.url;
       } else {
         toast({
           title: "Error",
-          description: result.error || "Failed to select plan",
+          description: checkoutResult.error || "Failed to create checkout session",
           variant: "destructive",
         });
       }

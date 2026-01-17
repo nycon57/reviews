@@ -84,7 +84,7 @@ function NoLocationData({ loanOfficers }: { loanOfficers: DirectoryLoanOfficer[]
       <div className="relative h-48 md:h-56 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-100/20 to-repwell-teal-300/10">
         {/* Subtle decorative pattern */}
         <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
           style={{
             backgroundImage: `radial-gradient(circle, #52796f 1px, transparent 1px)`,
             backgroundSize: '20px 20px',

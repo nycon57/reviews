@@ -9,6 +9,7 @@ export interface Review {
   title: string | null;
   text: string | null;
   customerName: string | null;
+  customerEmail: string | null;
   status: "pending" | "approved" | "rejected" | "archived";
   approvedAt: string | null;
   approvedBy: string | null;

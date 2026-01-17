@@ -23,7 +23,6 @@ export {
 
 // New components for Calendly-inspired homepage
 export { BrowserMockup } from "./browser-mockup";
-export { SecurityBadges } from "./security-badges";
 export { FloatingAvatarsHero } from "./floating-avatars-hero";
 export { TabNavigationSection } from "./tab-navigation-section";
 export { FeatureShowcase } from "./feature-showcase";
@@ -34,4 +33,5 @@ export { StatsSectionDark } from "./stats-section-dark";
 // Existing components used in homepage
 export { TrustLogosBar } from "./trust-logos-bar";
 export { TestimonialCard } from "./testimonial-card";
+export { TestimonialCarousel } from "./testimonial-carousel";
 export { CTASection } from "./cta-section";

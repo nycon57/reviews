@@ -9,7 +9,8 @@ export type EmailTemplate =
   | "review_rejected"
   | "scheduled_report"
   | "negative_review_alert"
-  | "notification_digest";
+  | "notification_digest"
+  | "review_response_to_reviewer";
 
 // Base email data
 export interface BaseEmailData {
@@ -122,6 +123,16 @@ export interface NotificationDigestEmailData extends BaseEmailData {
     negativeReviews: number;
   };
   dashboardUrl: string;
+}
+
+// Review response to reviewer email data (sent to customer when LO responds)
+export interface ReviewResponseToReviewerEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  organizationName: string;
+  originalReviewText: string | null;
+  responseText: string;
+  rating: number;
 }
 
 // Email send result

@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createClient, createUntypedServerClient } from '@/lib/supabase/server';
+import { createUntypedAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import {
   exchangeCodeForTokens,
@@ -68,7 +68,7 @@ async function getValidAccessToken(connectionId: string): Promise<{
   accessToken: string;
   instanceUrl: string;
 } | null> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   const { data: connection, error } = await adminClient
     .from('salesforce_connections')
@@ -158,7 +158,7 @@ export async function handleSalesforceOAuthCallback(
     // Get user info
     const userInfo = await getUserInfo(tokens.accessToken, tokens.instanceUrl);
 
-    const adminClient = createAdminClient();
+    const adminClient = createUntypedAdminClient();
 
     // Check if a connection already exists for this Salesforce org
     const { data: existingConnection } = await adminClient
@@ -227,7 +227,8 @@ export async function getSalesforceConnection(): Promise<ActionResult<Salesforce
     return { success: false, error: 'Unauthorized' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for salesforce_connections table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const { data, error } = await supabase
     .from('salesforce_connections')
@@ -281,7 +282,8 @@ export async function disconnectSalesforce(connectionId: string): Promise<Action
     return { success: false, error: 'Unauthorized - Admin role required' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for salesforce_connections table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const { error } = await supabase
     .from('salesforce_connections')
@@ -314,7 +316,8 @@ export async function updateSalesforceSettings(
     return { success: false, error: 'Unauthorized - Admin role required' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for salesforce_connections table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const updateData: Record<string, unknown> = {};
   if (settings.syncContacts !== undefined)
@@ -380,7 +383,7 @@ export async function syncSalesforceData(
     return { success: false, error: 'Unauthorized - Admin role required' };
   }
 
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Get connection
   const { data: connection, error: connError } = await adminClient
@@ -691,7 +694,7 @@ export async function syncSalesforceData(
 
 // Helper function to trigger survey for opportunity
 async function triggerSurveyForOpportunity(
-  adminClient: ReturnType<typeof createAdminClient>,
+  adminClient: ReturnType<typeof createUntypedAdminClient>,
   organizationId: string,
   connectionId: string,
   mappingId: string,
@@ -813,7 +816,7 @@ export async function syncReviewToSalesforce(
     return { success: false, error: 'Unauthorized' };
   }
 
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Get review details
   const { data: review, error: reviewError } = await adminClient
@@ -942,7 +945,8 @@ export async function getSalesforceSyncLogs(
     return { success: false, error: 'Unauthorized' };
   }
 
-  const supabase = await createClient();
+  // Use untyped client for salesforce_sync_logs table (not in generated types)
+  const supabase = await createUntypedServerClient();
 
   const { data, error } = await supabase
     .from('salesforce_sync_logs')

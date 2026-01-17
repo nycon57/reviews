@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import type Stripe from "stripe";
 import type { Json } from "@/types/database.types";
 
@@ -35,7 +35,7 @@ function unixToIso(timestamp: number | null | undefined): string | null {
 export async function syncSubscription(
   subscription: Stripe.Subscription
 ): Promise<void> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
   const sub = subscription as SubscriptionWithPeriods;
 
   // Get organization ID from customer metadata
@@ -95,7 +95,7 @@ export async function syncSubscription(
 export async function syncSubscriptionItems(
   subscription: Stripe.Subscription
 ): Promise<void> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Get local subscription ID
   const { data: localSub } = await adminClient
@@ -134,7 +134,7 @@ export async function syncSubscriptionItems(
  * Sync invoice data from Stripe to Supabase
  */
 export async function syncInvoice(invoice: Stripe.Invoice): Promise<void> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
   const inv = invoice as InvoiceWithSubscription;
 
   // Get organization ID from customer
@@ -217,7 +217,7 @@ export async function syncPaymentMethod(
   customerId: string,
   isDefault: boolean = false
 ): Promise<void> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Get organization ID from customer
   const { data: org } = await adminClient
@@ -265,7 +265,7 @@ export async function syncPaymentMethod(
 export async function removePaymentMethod(
   paymentMethodId: string
 ): Promise<void> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   await adminClient
     .from("payment_methods")
@@ -281,7 +281,7 @@ export async function logBillingEvent(
   organizationId?: string,
   error?: string
 ): Promise<void> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   await adminClient.from("billing_events").insert({
     organization_id: organizationId || null,
@@ -300,7 +300,7 @@ export async function logBillingEvent(
  * Update customer data from Stripe
  */
 export async function syncCustomer(customer: Stripe.Customer): Promise<void> {
-  const adminClient = createAdminClient();
+  const adminClient = createUntypedAdminClient();
 
   // Get organization
   const { data: org } = await adminClient

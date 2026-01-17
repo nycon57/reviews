@@ -82,9 +82,10 @@ export default async function ProfileSetupPage() {
     companySize: (org?.settings?.companySize as string) || "",
     address: (org?.settings?.address as Record<string, string>) || {},
     logoUrl: org?.logo_url || "",
-    primaryColor: org?.primary_color || "#3B82F6",
+    primaryColor: org?.primary_color || "#52796f",
     website: org?.domain || "",
     phone: (org?.settings?.phone as string) || "",
+    companyEmail: (org?.settings?.companyEmail as string) || "",
   };
 
   return (

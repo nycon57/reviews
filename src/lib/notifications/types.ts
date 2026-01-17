@@ -76,6 +76,13 @@ export interface NotificationPreferences {
   slack_negative_review: boolean;
   slack_digest: boolean;
 
+  // MS Teams integration
+  teams_enabled: boolean;
+  teams_webhook_url: string | null;
+  teams_new_review: boolean;
+  teams_negative_review: boolean;
+  teams_digest: boolean;
+
   // Quiet hours
   quiet_hours_enabled: boolean;
   quiet_hours_start: string | null;
@@ -183,6 +190,53 @@ export interface SlackWebhookLog {
   created_at: string;
 }
 
+export interface TeamsWebhookLog {
+  id: string;
+  user_id: string;
+  organization_id: string | null;
+  notification_id: string | null;
+  webhook_url: string;
+  payload: Record<string, unknown>;
+  response_status: number | null;
+  response_body: string | null;
+  success: boolean;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface TeamsAdaptiveCardElement {
+  type: string;
+  text?: string;
+  size?: string;
+  weight?: string;
+  wrap?: boolean;
+  color?: string;
+  spacing?: string;
+  isSubtle?: boolean;
+  facts?: Array<{ title: string; value: string }>;
+  items?: TeamsAdaptiveCardElement[];
+  style?: string;
+}
+
+export interface TeamsAdaptiveCard {
+  type: "message";
+  attachments: Array<{
+    contentType: "application/vnd.microsoft.card.adaptive";
+    contentUrl?: null;
+    content: {
+      $schema: string;
+      type: "AdaptiveCard";
+      version: string;
+      body: TeamsAdaptiveCardElement[];
+      actions?: Array<{
+        type: "Action.OpenUrl";
+        title: string;
+        url: string;
+      }>;
+    };
+  }>;
+}
+
 // Default notification preferences for new users
 export const DEFAULT_NOTIFICATION_PREFERENCES: Omit<
   NotificationPreferences,
@@ -220,6 +274,12 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: Omit<
   slack_new_review: true,
   slack_negative_review: true,
   slack_digest: false,
+
+  teams_enabled: false,
+  teams_webhook_url: null,
+  teams_new_review: true,
+  teams_negative_review: true,
+  teams_digest: false,
 
   quiet_hours_enabled: false,
   quiet_hours_start: null,

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Building2, Palette, MapPin, ChevronLeft } from "lucide-react";
+import { Building2, Palette, MapPin, ChevronLeft, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,9 +22,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { setupProfile } from "@/lib/onboarding/actions";
+import { setupProfile, uploadLogo } from "@/lib/onboarding/actions";
 import type { SetupProfileInput } from "@/lib/onboarding/schemas";
 import { fadeInUp, staggerContainer } from "@/lib/motion";
+import { LogoUpload } from "@/components/shared/logo-upload";
 
 interface ProfileSetupClientProps {
   initialData: {
@@ -36,6 +37,7 @@ interface ProfileSetupClientProps {
     primaryColor: string;
     website: string;
     phone: string;
+    companyEmail: string;
   };
 }
 
@@ -69,10 +71,27 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
     state: initialData.address?.state || "",
     zip: initialData.address?.zip || "",
     logoUrl: initialData.logoUrl,
-    primaryColor: initialData.primaryColor,
+    primaryColor: initialData.primaryColor || "#52796f",
     website: initialData.website,
     phone: initialData.phone,
+    companyEmail: initialData.companyEmail,
   });
+
+  // Handle logo upload
+  const handleLogoUpload = async (file: File) => {
+    const formDataObj = new FormData();
+    formDataObj.append("file", file);
+    const result = await uploadLogo(formDataObj);
+    if (result.success && result.url) {
+      setFormData((prev) => ({ ...prev, logoUrl: result.url! }));
+    }
+    return result;
+  };
+
+  // Handle color extracted from logo
+  const handleColorExtracted = (color: string) => {
+    setFormData((prev) => ({ ...prev, primaryColor: color }));
+  };
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -97,6 +116,7 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
         primaryColor: formData.primaryColor || undefined,
         website: formData.website || undefined,
         phone: formData.phone || undefined,
+        companyEmail: formData.companyEmail || undefined,
       };
 
       const result = await setupProfile(input);
@@ -224,6 +244,24 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                   />
                 </div>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="companyEmail">Company Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="companyEmail"
+                    type="email"
+                    value={formData.companyEmail}
+                    onChange={(e) => handleChange("companyEmail", e.target.value)}
+                    placeholder="contact@yourcompany.com"
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Used for notifications and integrations with business directories
+                </p>
+              </div>
             </CardContent>
           </Card>
         </motion.div>
@@ -294,40 +332,48 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
               </CardTitle>
               <CardDescription>Customize your surveys and public pages</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="logoUrl">Logo URL</Label>
-                  <Input
-                    id="logoUrl"
-                    type="url"
-                    value={formData.logoUrl}
-                    onChange={(e) => handleChange("logoUrl", e.target.value)}
-                    placeholder="https://example.com/logo.png"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    You can upload your logo later in settings
-                  </p>
-                </div>
+            <CardContent className="space-y-6">
+              {/* Logo Upload */}
+              <div className="space-y-2">
+                <Label>Company Logo</Label>
+                <LogoUpload
+                  currentLogoUrl={formData.logoUrl || null}
+                  onUpload={handleLogoUpload}
+                  onColorExtracted={handleColorExtracted}
+                  disabled={isLoading}
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="primaryColor">Primary Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="primaryColor"
-                      type="color"
-                      value={formData.primaryColor}
-                      onChange={(e) => handleChange("primaryColor", e.target.value)}
-                      className="w-12 h-10 p-1 cursor-pointer"
-                    />
-                    <Input
-                      value={formData.primaryColor}
-                      onChange={(e) => handleChange("primaryColor", e.target.value)}
-                      placeholder="#3B82F6"
-                      className="flex-1"
-                    />
-                  </div>
+              {/* Primary Color - now shows auto-detected or manual */}
+              <div className="space-y-2">
+                <Label htmlFor="primaryColor">
+                  Brand Color
+                  {formData.logoUrl && (
+                    <span className="ml-2 text-xs font-normal text-repwell-sage-200">
+                      Auto-detected from logo
+                    </span>
+                  )}
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="primaryColor"
+                    type="color"
+                    value={formData.primaryColor}
+                    onChange={(e) => handleChange("primaryColor", e.target.value)}
+                    className="w-12 h-10 p-1 cursor-pointer"
+                  />
+                  <Input
+                    value={formData.primaryColor}
+                    onChange={(e) => handleChange("primaryColor", e.target.value)}
+                    placeholder="#52796f"
+                    className="flex-1 font-mono text-sm"
+                  />
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {formData.logoUrl
+                    ? "Adjust if the auto-detected color doesn't match your brand"
+                    : "Upload a logo to auto-detect your brand color, or choose manually"}
+                </p>
               </div>
             </CardContent>
           </Card>

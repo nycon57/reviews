@@ -8,6 +8,8 @@ import {
   getAggregatedReviews,
   getReviewAggregationStats,
 } from "@/lib/reviews/aggregation-actions";
+import { getCurrentOrganization } from "@/lib/organization/actions";
+import { TIER_FEATURES } from "@/lib/organization/types";
 
 // Dynamic import for heavy ReviewQueue component (1,260 lines)
 const ReviewQueue = dynamic(
@@ -36,13 +38,21 @@ export const metadata = {
   description: "View and manage all customer reviews",
 };
 
-export default async function ReviewsPage() {
+export default async function ReviewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ id?: string }>;
+}) {
+  const params = await searchParams;
+  const initialReviewId = params?.id;
+
   // Fetch initial data server-side
-  const [reviewsResult, statsResult, aggregatedStatsResult, loanOfficersResult] = await Promise.all([
+  const [reviewsResult, statsResult, aggregatedStatsResult, loanOfficersResult, orgResult] = await Promise.all([
     getAggregatedReviews({ page: 1, limit: 20 }),
     getReviewStats(),
     getReviewAggregationStats(),
     getLoanOfficersForFilter(),
+    getCurrentOrganization(),
   ]);
 
   const initialReviews = reviewsResult.success ? reviewsResult.data?.reviews ?? [] : [];
@@ -56,6 +66,10 @@ export default async function ReviewsPage() {
   const loanOfficers = loanOfficersResult.success
     ? loanOfficersResult.data ?? []
     : [];
+
+  // Determine AI access based on subscription tier
+  const subscriptionTier = orgResult.organization?.subscription_tier ?? "free";
+  const hasAiAccess = TIER_FEATURES[subscriptionTier]?.ai_insights ?? false;
 
   return (
     <div className="flex-1 space-y-6">
@@ -76,6 +90,8 @@ export default async function ReviewsPage() {
         loanOfficers={loanOfficers}
         initialStats={initialStats}
         initialAggregatedStats={initialAggregatedStats}
+        initialReviewId={initialReviewId}
+        hasAiAccess={hasAiAccess}
       />
     </div>
   );

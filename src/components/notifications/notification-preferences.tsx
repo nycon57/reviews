@@ -1,11 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,23 +12,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   Bell,
   Mail,
-  MessageSquare,
   Clock,
   AlertTriangle,
-  Loader2,
 } from "lucide-react";
 import type { NotificationPreferences, DigestFrequency } from "@/lib/notifications/types";
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notifications/types";
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
-  testSlackWebhook,
 } from "@/lib/notifications/actions";
 
 const TIMEZONES = [
@@ -63,7 +57,6 @@ export function NotificationPreferencesCard() {
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
-  const [testingSlack, setTestingSlack] = React.useState(false);
   const [preferences, setPreferences] = React.useState<
     Partial<NotificationPreferences> | null
   >(null);
@@ -97,26 +90,6 @@ export function NotificationPreferencesCard() {
       });
     }
     setSaving(false);
-  };
-
-  const handleTestSlack = async () => {
-    if (!preferences?.slack_webhook_url) return;
-
-    setTestingSlack(true);
-    const result = await testSlackWebhook(preferences.slack_webhook_url);
-    if (result.success) {
-      toast({
-        title: "Test successful",
-        description: "A test message was sent to your Slack channel.",
-      });
-    } else {
-      toast({
-        title: "Test failed",
-        description: result.error || "Failed to send test message",
-        variant: "destructive",
-      });
-    }
-    setTestingSlack(false);
   };
 
   if (loading) {
@@ -459,120 +432,6 @@ export function NotificationPreferencesCard() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-            </div>
-          )}
-        </section>
-
-        <Separator />
-
-        {/* Slack Integration */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              <h4 className="text-sm font-medium">Slack Integration</h4>
-              <Badge variant="outline" className="text-xs">
-                Optional
-              </Badge>
-            </div>
-            <Switch
-              checked={preferences?.slack_enabled ?? false}
-              onCheckedChange={(checked) =>
-                handleSave({ slack_enabled: checked })
-              }
-              disabled={saving}
-            />
-          </div>
-
-          {preferences?.slack_enabled && (
-            <div className="space-y-4 rounded-lg border p-4">
-              <div className="space-y-2">
-                <Label htmlFor="slack_webhook_url">Webhook URL</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="slack_webhook_url"
-                    type="url"
-                    placeholder="https://hooks.slack.com/services/..."
-                    value={preferences?.slack_webhook_url ?? ""}
-                    onChange={(e) =>
-                      setPreferences((prev) =>
-                        prev ? { ...prev, slack_webhook_url: e.target.value } : null
-                      )
-                    }
-                    onBlur={(e) => {
-                      if (e.target.value !== preferences?.slack_webhook_url) {
-                        handleSave({ slack_webhook_url: e.target.value || null });
-                      }
-                    }}
-                    disabled={saving}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={handleTestSlack}
-                    disabled={!preferences?.slack_webhook_url || testingSlack}
-                  >
-                    {testingSlack ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Test"
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Create an incoming webhook in your Slack workspace settings
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="slack_channel">Channel (optional)</Label>
-                <Input
-                  id="slack_channel"
-                  placeholder="#reviews"
-                  value={preferences?.slack_channel ?? ""}
-                  onChange={(e) =>
-                    setPreferences((prev) =>
-                      prev ? { ...prev, slack_channel: e.target.value } : null
-                    )
-                  }
-                  onBlur={(e) => {
-                    if (e.target.value !== preferences?.slack_channel) {
-                      handleSave({ slack_channel: e.target.value || null });
-                    }
-                  }}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="grid gap-3">
-                <NotificationToggle
-                  label="New reviews"
-                  description="Post to Slack for new reviews"
-                  checked={preferences?.slack_new_review ?? true}
-                  onCheckedChange={(checked) =>
-                    handleSave({ slack_new_review: checked })
-                  }
-                  disabled={saving}
-                />
-                <NotificationToggle
-                  label="Negative reviews"
-                  description="Post to Slack for low ratings"
-                  checked={preferences?.slack_negative_review ?? true}
-                  onCheckedChange={(checked) =>
-                    handleSave({ slack_negative_review: checked })
-                  }
-                  disabled={saving}
-                  important
-                />
-                <NotificationToggle
-                  label="Digest summary"
-                  description="Post daily/weekly digest to Slack"
-                  checked={preferences?.slack_digest ?? false}
-                  onCheckedChange={(checked) =>
-                    handleSave({ slack_digest: checked })
-                  }
-                  disabled={saving}
-                />
               </div>
             </div>
           )}

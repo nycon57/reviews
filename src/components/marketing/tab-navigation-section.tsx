@@ -17,6 +17,8 @@ interface TabItem {
   /** Screenshot image URL or placeholder */
   imageSrc: string;
   imageAlt: string;
+  /** Reverse the column order (image left, text right) */
+  reversed?: boolean;
 }
 
 interface TabNavigationSectionProps {
@@ -63,6 +65,7 @@ const defaultTabs: TabItem[] = [
     ],
     imageSrc: "/images/screenshots/branch-dashboard.png",
     imageAlt: "Branch manager dashboard with team analytics",
+    reversed: true,
   },
   {
     id: "marketing",
@@ -93,6 +96,7 @@ const defaultTabs: TabItem[] = [
     ],
     imageSrc: "/images/screenshots/compliance-dashboard.png",
     imageAlt: "Compliance dashboard with audit tools",
+    reversed: true,
   },
 ];
 
@@ -199,7 +203,10 @@ export function TabNavigationSection({
             initial="initial"
             animate="animate"
             exit="exit"
-            className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center"
+            className={cn(
+              "grid lg:grid-cols-2 gap-8 lg:gap-12 items-center",
+              activeTabData.reversed && "lg:[&>*:first-child]:order-2 lg:[&>*:last-child]:order-1"
+            )}
           >
             {/* Text content */}
             <div>

@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createUntypedServerClient } from '@/lib/supabase/server';
 import { createChatCompletion, isAIEnabled } from '@/lib/ai/client';
 import type {
   ActionResult,
@@ -1077,7 +1077,8 @@ export async function getCompetitors(): Promise<ActionResult<Competitor[]>> {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_competitors table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { data, error } = await supabase
       .from('geo_competitors')
@@ -1121,7 +1122,8 @@ export async function addCompetitor(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_competitors table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { data, error } = await supabase
       .from('geo_competitors')
@@ -1167,7 +1169,8 @@ export async function removeCompetitor(competitorId: string): Promise<ActionResu
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_competitors table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { error } = await supabase
       .from('geo_competitors')
@@ -1207,7 +1210,8 @@ export async function compareWithCompetitor(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_competitors table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     // Get competitor
     const { data: competitorData, error: compError } = await supabase
@@ -1331,7 +1335,8 @@ export async function saveFAQ(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_faqs table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { data, error } = await supabase
       .from('geo_faqs')
@@ -1375,7 +1380,8 @@ export async function getSavedFAQs(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_faqs table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { data, error } = await supabase
       .from('geo_faqs')
@@ -1436,7 +1442,8 @@ export async function updateFAQ(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_faqs table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const updateData: Record<string, unknown> = {};
     if (updates.question !== undefined) updateData.question = updates.question;
@@ -1473,7 +1480,8 @@ export async function deleteFAQ(faqId: string): Promise<ActionResult> {
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_faqs table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { error } = await supabase
       .from('geo_faqs')
@@ -1511,7 +1519,8 @@ export async function recordPerformanceSnapshot(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_performance_history table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     // Get current visibility score
     const scoreResult = await calculateVisibilityScore(entityType, entityId);
@@ -1583,7 +1592,8 @@ export async function getPerformanceHistory(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    // Use untyped client for geo_performance_history table (not in generated types yet)
+    const supabase = await createUntypedServerClient();
 
     const { data, error } = await supabase
       .from('geo_performance_history')

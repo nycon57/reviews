@@ -9,6 +9,7 @@ import {
   type ResponseTone,
   type ReviewContext,
 } from "@/lib/ai/response-suggestions";
+import { sendReviewResponseEmail } from "@/lib/email/send";
 
 // Response template types
 export interface ResponseTemplate {
@@ -368,7 +369,12 @@ export async function postResponse(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: review, error: fetchError } = await (supabase as any)
     .from("reviews")
-    .select("id, source, source_review_id, loan_officer_id, customer_name, sentiment_score, review_date")
+    .select(`
+      id, source, source_review_id, loan_officer_id, customer_name, customer_email,
+      sentiment_score, review_date, text,
+      loan_officers!inner(full_name),
+      organizations!inner(name)
+    `)
     .eq("id", reviewId)
     .eq("organization_id", context.organizationId)
     .single();
@@ -443,6 +449,28 @@ export async function postResponse(
         sent_by: context.userId,
       });
     }
+  }
+
+  // Send email notification to reviewer (only for internal reviews with customer email)
+  if (review.source === "internal" && review.customer_email) {
+    const loanOfficer = review.loan_officers as unknown as { full_name: string };
+    const organization = review.organizations as unknown as { name: string };
+
+    await sendReviewResponseEmail({
+      toEmail: review.customer_email,
+      toName: review.customer_name || undefined,
+      customerName: review.customer_name || "Valued Customer",
+      loanOfficerName: loanOfficer.full_name,
+      organizationName: organization.name,
+      originalReviewText: review.text || null,
+      responseText: responseText,
+      rating: review.rating || 5,
+      organizationId: context.organizationId,
+      loanOfficerId: review.loan_officer_id,
+    }).catch((err) => {
+      // Log error but don't fail the response posting
+      console.error("Failed to send review response email:", err);
+    });
   }
 
   revalidatePath("/dashboard/all-reviews");
@@ -546,7 +574,12 @@ export async function approveResponse(reviewId: string): Promise<ActionResult> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: review, error: fetchError } = await (supabase as any)
     .from("reviews")
-    .select("response_text, loan_officer_id, source, source_review_id, review_date, sentiment_score, response_template_id")
+    .select(`
+      response_text, loan_officer_id, source, source_review_id, review_date,
+      sentiment_score, response_template_id, customer_name, customer_email, text,
+      loan_officers!inner(full_name),
+      organizations!inner(name)
+    `)
     .eq("id", reviewId)
     .eq("organization_id", context.organizationId)
     .eq("response_status", "pending_approval")
@@ -615,6 +648,28 @@ export async function approveResponse(reviewId: string): Promise<ActionResult> {
         sent_by: context.userId,
       });
     }
+  }
+
+  // Send email notification to reviewer (only for internal reviews with customer email)
+  if (review.source === "internal" && review.customer_email) {
+    const loanOfficer = review.loan_officers as unknown as { full_name: string };
+    const organization = review.organizations as unknown as { name: string };
+
+    await sendReviewResponseEmail({
+      toEmail: review.customer_email,
+      toName: review.customer_name || undefined,
+      customerName: review.customer_name || "Valued Customer",
+      loanOfficerName: loanOfficer.full_name,
+      organizationName: organization.name,
+      originalReviewText: review.text || null,
+      responseText: review.response_text,
+      rating: review.rating || 5,
+      organizationId: context.organizationId,
+      loanOfficerId: review.loan_officer_id,
+    }).catch((err) => {
+      // Log error but don't fail the response approval
+      console.error("Failed to send review response email:", err);
+    });
   }
 
   revalidatePath("/dashboard/all-reviews");

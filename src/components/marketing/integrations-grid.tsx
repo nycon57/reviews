@@ -2,43 +2,53 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { fadeInUp, staggerContainer, cardHover, viewportOnce } from "@/lib/motion";
+import AutoScroll from "embla-carousel-auto-scroll";
+import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 import { cn } from "@/lib/utils";
+import {
+  SiGoogle,
+  SiSalesforce,
+  SiHubspot,
+  SiZapier,
+  SiSlack,
+  SiFacebook,
+} from "@icons-pack/react-simple-icons";
 
+// Integration data type
 interface Integration {
   id: string;
   name: string;
-  description: string;
-  /** Logo component or image URL */
+  category: string;
   logo: React.ReactNode;
-  /** Category for grouping */
-  category?: "los" | "crm" | "reviews" | "marketing" | "automation";
 }
 
-interface IntegrationsGridProps {
-  /** Section badge */
-  badge?: string;
-  /** Section heading */
-  heading?: string;
-  /** Section subheading */
-  subheading?: string;
-  /** Custom integrations (uses defaults if not provided) */
-  integrations?: Integration[];
-  /** Additional className */
-  className?: string;
-}
-
-// SVG logos for integrations (simplified brand representations)
-const EncompassLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-    <rect width="40" height="40" rx="8" fill="#0066CC" />
-    <path d="M10 20h20M20 10v20" stroke="white" strokeWidth="3" strokeLinecap="round" />
+// Custom SVG logos for integrations without simple-icons
+const ZillowLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={cn("w-10 h-10", className)}>
+    <rect width="40" height="40" rx="8" fill="#006AFF" />
+    <text x="20" y="26" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">
+      Z
+    </text>
   </svg>
 );
 
-const ByteLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
+const EncompassLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={cn("w-10 h-10", className)}>
+    <rect width="40" height="40" rx="8" fill="#0066CC" />
+    <text x="20" y="26" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold">
+      ICE
+    </text>
+  </svg>
+);
+
+const ByteLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={cn("w-10 h-10", className)}>
     <rect width="40" height="40" rx="8" fill="#00A86B" />
     <text x="20" y="26" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">
       B
@@ -46,65 +56,8 @@ const ByteLogo = () => (
   </svg>
 );
 
-const SalesforceLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-    <rect width="40" height="40" rx="8" fill="#00A1E0" />
-    <circle cx="20" cy="18" r="8" fill="white" />
-    <path d="M14 26c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="white" strokeWidth="2" />
-  </svg>
-);
-
-const GoogleLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-    <rect width="40" height="40" rx="8" fill="#FFFFFF" className="stroke-gray-200" strokeWidth="1" />
-    <path
-      d="M29.6 20.2c0-.7-.1-1.4-.2-2H20v3.8h5.4c-.2 1.2-1 2.3-2 3v2.5h3.2c1.9-1.8 3-4.3 3-7.3z"
-      fill="#4285F4"
-    />
-    <path
-      d="M20 30c2.7 0 5-0.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1h-3.3v2.6C12.5 27.6 16 30 20 30z"
-      fill="#34A853"
-    />
-    <path
-      d="M14.4 22c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2v-2.6h-3.3C10.4 16.6 10 18.3 10 20s.4 3.4 1.1 4.9l3.3-2.9z"
-      fill="#FBBC05"
-    />
-    <path
-      d="M20 13.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9C24.9 10.9 22.7 10 20 10c-4 0-7.5 2.4-9 5.8l3.3 2.6c.8-2.3 3-4.5 5.7-4.5z"
-      fill="#EA4335"
-    />
-  </svg>
-);
-
-const ZillowLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-    <rect width="40" height="40" rx="8" fill="#006AFF" />
-    <text x="20" y="26" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">
-      Z
-    </text>
-  </svg>
-);
-
-const ZapierLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-    <rect width="40" height="40" rx="8" fill="#FF4A00" />
-    <path
-      d="M20 12l-8 8 8 8 8-8-8-8zm0 4l4 4-4 4-4-4 4-4z"
-      fill="white"
-    />
-  </svg>
-);
-
-const HubSpotLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
-    <rect width="40" height="40" rx="8" fill="#FF7A59" />
-    <circle cx="20" cy="20" r="6" stroke="white" strokeWidth="2" fill="none" />
-    <circle cx="20" cy="20" r="2" fill="white" />
-  </svg>
-);
-
-const TotalExpertLogo = () => (
-  <svg viewBox="0 0 40 40" fill="none" className="w-10 h-10">
+const TotalExpertLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={cn("w-10 h-10", className)}>
     <rect width="40" height="40" rx="8" fill="#1E3A5F" />
     <text x="20" y="26" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold">
       TE
@@ -112,98 +65,67 @@ const TotalExpertLogo = () => (
   </svg>
 );
 
-// Default integrations for RepWell
-const defaultIntegrations: Integration[] = [
-  {
-    id: "encompass",
-    name: "Encompass",
-    description: "Sync loan data and automate survey triggers",
-    logo: <EncompassLogo />,
-    category: "los",
-  },
-  {
-    id: "byte",
-    name: "Byte Software",
-    description: "BytePro integration for loan lifecycle events",
-    logo: <ByteLogo />,
-    category: "los",
-  },
-  {
-    id: "salesforce",
-    name: "Salesforce",
-    description: "CRM sync for contacts and campaign tracking",
-    logo: <SalesforceLogo />,
-    category: "crm",
-  },
-  {
-    id: "google",
-    name: "Google Business",
-    description: "Publish reviews directly to Google",
-    logo: <GoogleLogo />,
-    category: "reviews",
-  },
-  {
-    id: "zillow",
-    name: "Zillow",
-    description: "Syndicate reviews to Zillow profiles",
-    logo: <ZillowLogo />,
-    category: "reviews",
-  },
-  {
-    id: "zapier",
-    name: "Zapier",
-    description: "Connect to 5000+ apps with automation",
-    logo: <ZapierLogo />,
-    category: "automation",
-  },
-  {
-    id: "hubspot",
-    name: "HubSpot",
-    description: "Marketing automation and lead nurturing",
-    logo: <HubSpotLogo />,
-    category: "marketing",
-  },
-  {
-    id: "totalexpert",
-    name: "Total Expert",
-    description: "Mortgage marketing platform sync",
-    logo: <TotalExpertLogo />,
-    category: "marketing",
-  },
+const MicrosoftLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={cn("w-10 h-10", className)}>
+    <rect x="4" y="4" width="15" height="15" fill="#F25022" />
+    <rect x="21" y="4" width="15" height="15" fill="#7FBA00" />
+    <rect x="4" y="21" width="15" height="15" fill="#00A4EF" />
+    <rect x="21" y="21" width="15" height="15" fill="#FFB900" />
+  </svg>
+);
+
+const LinkedInLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 40 40" fill="none" className={cn("w-10 h-10", className)}>
+    <rect width="40" height="40" rx="8" fill="#0A66C2" />
+    <path
+      d="M13 16h-3v11h3V16zm-1.5-5a1.75 1.75 0 110 3.5 1.75 1.75 0 010-3.5zM30 27h-3v-5.5c0-1.4-.5-2.4-1.8-2.4-1 0-1.6.7-1.9 1.3-.1.2-.1.5-.1.8V27h-3s.04-9 0-10h3v1.4c.4-.6 1.1-1.5 2.7-1.5 2 0 3.5 1.3 3.5 4.1V27h-.4z"
+      fill="white"
+    />
+  </svg>
+);
+
+// All integrations
+const integrations: Integration[] = [
+  { id: "google", name: "Google", category: "Reviews", logo: <SiGoogle className="w-10 h-10" color="#4285F4" /> },
+  { id: "salesforce", name: "Salesforce", category: "CRM", logo: <SiSalesforce className="w-10 h-10" color="#00A1E0" /> },
+  { id: "slack", name: "Slack", category: "Communication", logo: <SiSlack className="w-10 h-10" color="#4A154B" /> },
+  { id: "zillow", name: "Zillow", category: "Reviews", logo: <ZillowLogo /> },
+  { id: "hubspot", name: "HubSpot", category: "Marketing", logo: <SiHubspot className="w-10 h-10" color="#FF7A59" /> },
+  { id: "zapier", name: "Zapier", category: "Automation", logo: <SiZapier className="w-10 h-10" color="#FF4A00" /> },
+  { id: "linkedin", name: "LinkedIn", category: "Social", logo: <LinkedInLogo /> },
+  { id: "encompass", name: "Encompass", category: "LOS", logo: <EncompassLogo /> },
+  { id: "facebook", name: "Facebook", category: "Social", logo: <SiFacebook className="w-10 h-10" color="#1877F2" /> },
+  { id: "microsoft", name: "Microsoft", category: "Productivity", logo: <MicrosoftLogo /> },
+  { id: "byte", name: "Byte Software", category: "LOS", logo: <ByteLogo /> },
+  { id: "totalexpert", name: "Total Expert", category: "Marketing", logo: <TotalExpertLogo /> },
 ];
 
 // Integration card component
 function IntegrationCard({ integration }: { integration: Integration }) {
   return (
-    <motion.div
-      variants={fadeInUp}
-      whileHover={cardHover}
-      className="group relative bg-white rounded-xl border border-repwell-sage-100 p-6 transition-all duration-200 hover:border-repwell-teal-300/50 hover:shadow-lg"
-    >
-      {/* Logo */}
-      <div className="mb-4">{integration.logo}</div>
-
-      {/* Name */}
-      <h3 className="font-sans text-lg font-semibold text-repwell-teal-500 mb-2 group-hover:text-repwell-teal-400 transition-colors">
+    <div className="flex flex-col rounded-xl border border-repwell-sage-100 bg-white p-4 md:p-5">
+      {integration.logo}
+      <h3 className="mt-4 mb-1 font-semibold text-repwell-teal-500 md:text-lg">
         {integration.name}
       </h3>
-
-      {/* Description */}
-      <p className="font-sans text-sm text-repwell-teal-400 leading-relaxed">
-        {integration.description}
+      <p className="text-sm text-repwell-teal-400">
+        {integration.category}
       </p>
-
-      {/* Subtle hover indicator */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-    </motion.div>
+    </div>
   );
+}
+
+interface IntegrationsGridProps {
+  badge?: string;
+  heading?: string;
+  subheading?: string;
+  className?: string;
 }
 
 export function IntegrationsGrid({
   badge = "Integrations",
   heading = "Connect Your Existing Tools",
   subheading = "RepWell integrates seamlessly with the platforms your team already uses.",
-  integrations = defaultIntegrations,
   className,
 }: IntegrationsGridProps) {
   return (
@@ -212,57 +134,122 @@ export function IntegrationsGrid({
       whileInView="visible"
       viewport={viewportOnce}
       variants={staggerContainer}
-      className={cn("py-16 md:py-24 lg:py-32 bg-white", className)}
+      className={cn("py-16 md:py-24 lg:py-32 bg-repwell-sage-50", className)}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
-        <div className="text-center mb-12 md:mb-16">
-          {badge && (
-            <motion.div variants={fadeInUp} className="mb-4">
+        <div className="grid items-center gap-12 lg:gap-20 lg:grid-cols-2">
+          {/* Left column - Text content */}
+          <motion.div
+            variants={fadeInUp}
+            className="flex flex-col items-center gap-5 text-center lg:items-start lg:text-left"
+          >
+            {badge && (
               <Badge
                 variant="outline"
                 className="px-4 py-1.5 text-sm border-repwell-teal-300/50 text-repwell-teal-400"
               >
                 {badge}
               </Badge>
-            </motion.div>
-          )}
+            )}
 
-          {heading && (
-            <motion.h2
-              variants={fadeInUp}
-              className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-repwell-teal-500 mb-4"
-            >
-              {heading}
-            </motion.h2>
-          )}
+            {heading && (
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-repwell-teal-500">
+                {heading}
+              </h2>
+            )}
 
-          {subheading && (
-            <motion.p
-              variants={fadeInUp}
-              className="font-sans text-lg text-repwell-teal-400 max-w-2xl mx-auto"
+            {subheading && (
+              <p className="font-sans text-lg text-repwell-teal-400 max-w-lg">
+                {subheading}
+              </p>
+            )}
+
+            <p className="font-sans text-sm text-repwell-teal-400">
+              Plus webhooks, API access, and custom integrations available
+            </p>
+          </motion.div>
+
+          {/* Right column - Scrolling carousels */}
+          <motion.div variants={fadeInUp} className="grid gap-4 md:gap-6 lg:grid-cols-2">
+            {/* Mobile: Single carousel with all items */}
+            <Carousel
+              opts={{
+                loop: true,
+                align: "start",
+              }}
+              plugins={[
+                AutoScroll({
+                  speed: 0.7,
+                  stopOnMouseEnter: true,
+                }),
+              ]}
+              orientation="vertical"
+              className="pointer-events-none relative lg:hidden"
             >
-              {subheading}
-            </motion.p>
-          )}
+              <CarouselContent className="max-h-[500px]">
+                {integrations.map((integration) => (
+                  <CarouselItem key={integration.id}>
+                    <IntegrationCard integration={integration} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-repwell-sage-50 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-repwell-sage-50 to-transparent" />
+            </Carousel>
+
+            {/* Desktop: First column (first half of integrations) */}
+            <Carousel
+              opts={{
+                loop: true,
+                align: "start",
+              }}
+              plugins={[
+                AutoScroll({
+                  speed: 0.7,
+                  stopOnMouseEnter: true,
+                }),
+              ]}
+              orientation="vertical"
+              className="pointer-events-none relative hidden lg:block"
+            >
+              <CarouselContent className="max-h-[500px]">
+                {integrations.slice(0, integrations.length / 2).map((integration) => (
+                  <CarouselItem key={integration.id}>
+                    <IntegrationCard integration={integration} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-repwell-sage-50 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-48 bg-gradient-to-t from-repwell-sage-50 to-transparent" />
+            </Carousel>
+
+            {/* Desktop: Second column (second half of integrations) - offset with mt-12 */}
+            <Carousel
+              opts={{
+                loop: true,
+                align: "start",
+              }}
+              plugins={[
+                AutoScroll({
+                  speed: 0.7,
+                  stopOnMouseEnter: true,
+                }),
+              ]}
+              orientation="vertical"
+              className="pointer-events-none relative hidden lg:block lg:mt-12"
+            >
+              <CarouselContent className="max-h-[500px]">
+                {integrations.slice(integrations.length / 2).map((integration) => (
+                  <CarouselItem key={integration.id}>
+                    <IntegrationCard integration={integration} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-24 bg-gradient-to-b from-repwell-sage-50 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-24 bg-gradient-to-t from-repwell-sage-50 to-transparent" />
+            </Carousel>
+          </motion.div>
         </div>
-
-        {/* Integration cards grid */}
-        <motion.div
-          variants={staggerContainer}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
-        >
-          {integrations.map((integration) => (
-            <IntegrationCard key={integration.id} integration={integration} />
-          ))}
-        </motion.div>
-
-        {/* "And more" indicator */}
-        <motion.div variants={fadeInUp} className="text-center mt-10">
-          <p className="font-sans text-sm text-repwell-teal-400">
-            Plus webhooks, API access, and custom integrations available
-          </p>
-        </motion.div>
       </div>
     </motion.section>
   );

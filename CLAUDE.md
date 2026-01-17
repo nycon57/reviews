@@ -33,7 +33,7 @@ RepWell is a customer experience & review management platform for mortgage/finan
 - Testimonial management & social publishing
 - Team leaderboards & gamification
 - AI-powered sentiment analysis & insights
-- Business listing optimization (Google Business Profile, Apple Business Connect)
+- Business listing optimization (Google Business Profile)
 
 ## Design System (MANDATORY)
 

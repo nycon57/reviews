@@ -85,8 +85,7 @@ export function VideoUpload({
   className,
   primaryColor,
 }: VideoUploadProps) {
-  // Silence unused variable warning - onUploadComplete reserved for future external upload handling
-  void _onUploadComplete;
+  // _onUploadComplete is reserved for future external upload handling (underscore prefix silences unused warning)
 
   // State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);

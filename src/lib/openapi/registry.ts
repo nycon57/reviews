@@ -721,6 +721,55 @@ registry.registerPath({
 });
 
 // ============================================================================
+// Webhook Event Schemas
+// ============================================================================
+
+const WebhookEventSchema = z
+  .object({
+    event: z.string().openapi({ example: 'survey.completed' }),
+    timestamp: z.string().datetime().openapi({ example: '2024-01-15T10:30:00Z' }),
+    data: z.record(z.unknown()),
+  })
+  .openapi('WebhookEvent');
+
+registry.register('WebhookEvent', WebhookEventSchema);
+
+// Webhook event types documentation
+const webhookEventTypes = [
+  {
+    event: 'survey.created',
+    description: 'Triggered when a new survey is created',
+  },
+  {
+    event: 'survey.sent',
+    description: 'Triggered when a survey email is sent to a customer',
+  },
+  {
+    event: 'survey.completed',
+    description: 'Triggered when a customer completes a survey',
+  },
+  {
+    event: 'survey.expired',
+    description: 'Triggered when a survey expires without completion',
+  },
+  {
+    event: 'review.received',
+    description: 'Triggered when a new review is received from any platform',
+  },
+  {
+    event: 'review.responded',
+    description: 'Triggered when a response is posted to a review',
+  },
+  {
+    event: 'review.flagged',
+    description: 'Triggered when a review is flagged for attention',
+  },
+];
+
+// Export webhook event types for documentation
+export { webhookEventTypes };
+
+// ============================================================================
 // Generator
 // ============================================================================
 

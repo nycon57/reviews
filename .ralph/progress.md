@@ -3916,3 +3916,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
     - Email tracking tags for Resend webhooks (opens, clicks)
     - Organization logo and loan officer photo support
 ---
+
+## [2026-01-17] - S059: Video Testimonial Email Templates
+Thread:
+Run: 20260117-161252-7281 (iteration 3)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-161252-7281-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-161252-7281-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5f7818d [Pass 2/3] fix(S059): Add security hardening to video testimonial emails
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (launched code-reviewer agents)
+  - /vercel-react-best-practices: no (not applicable - email templates, not React)
+  - /code-simplifier: no (scheduled for Pass 3)
+  - /frontend-design: no (not applicable)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 23 pre-existing warnings)
+- Files changed:
+  - src/lib/email/templates.ts (added security helper functions, hardened all 6 video testimonial templates)
+- What was implemented:
+  - **Security Review & Fixes:**
+    - Added `escapeHtml()` function to prevent XSS attacks on user-provided data
+    - Added `sanitizeUrl()` function to prevent javascript:/data: URI injection
+    - Added `sanitizeSubject()` function to prevent email header injection (CRLF)
+    - Applied escaping to all user-provided fields: customerName, organizationName, loanOfficerName, promptText, submittedAt, approvedAt, managerName
+    - Applied URL sanitization to all href/src attributes: requestUrl, dashboardUrl, approvalQueueUrl, organizationLogoUrl, loanOfficerPhotoUrl
+    - Applied subject sanitization to all email subject lines
+  - **UX Improvement:**
+    - Added testimonialId to dashboard URLs for direct navigation to specific testimonials
+    - getVideoTestimonialReceivedEmail: /testimonials/{id}
+    - getVideoTestimonialApprovedEmail: /testimonials/{id}
+    - getVideoTestimonialPendingApprovalEmail: ?testimonialId={id}
+- **Learnings for future iterations:**
+  - Email templates with user-provided content must always escape HTML entities
+  - URLs from external sources must be validated against allowlist of protocols
+  - Email subject lines can be vectors for header injection attacks
+  - Direct links with IDs improve UX vs generic dashboard landing
+---

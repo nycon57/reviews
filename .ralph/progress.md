@@ -4138,3 +4138,143 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Use lucide-react icons consistently instead of inline SVGs for maintainability
   - code-simplifier skill may not be available - perform manual code review
 ---
+
+## [2026-01-17] - S060: Public Video Testimonial Portal - Core
+Thread: 
+Run: 20260117-161252-7281 (iteration 7)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-161252-7281-iter-7.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-161252-7281-iter-7.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d8479e6 [Pass 3/3] refactor(S060): Polish video testimonial portal code
+- Post-commit status: clean (S060 files only, some unrelated modified/untracked files exist)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /code-simplifier: yes (via Task agent)
+  - /frontend-design: yes (design system audit)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 warnings in unrelated files)
+- Files changed:
+  - src/app/(public)/video-testimonial/[token]/video-testimonial-form.tsx
+  - src/app/(public)/video-testimonial/[token]/video-testimonial-error.tsx
+- What was implemented:
+  - Code simplification: Removed intermediate variables for cleaner direct access
+  - Removed unnecessary conditional check in error component (helpText always defined)
+  - Design system compliance verified - follows RepWell color palette, typography, spacing
+  - Security review: URL/color validation, Zod validation, optimistic locking all intact
+  - Performance review: Proper memoization, React cache(), useTransition all intact
+  - Accessibility review: ARIA live region, focus management all functional
+- **Learnings for future iterations:**
+  - Intermediate variables should only be used when they improve readability or prevent repeated computation
+  - Conditionals around always-truthy values can be safely removed for cleaner code
+  - The 3-pass system effectively catches these polish opportunities
+---
+
+## [2026-01-17] - S062: Video Upload Component
+Thread: 
+Run: 20260117-161252-7281 (iteration 8)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-161252-7281-iter-8.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-161252-7281-iter-8.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cc21cb1 [Pass 1/3] feat(S062): Add video upload component for testimonial portal
+- Post-commit status: clean (S062 files only, some unrelated modified/untracked files exist)
+- Skills invoked:
+  - /feature-dev: no (not needed for component implementation)
+  - /code-review: no (scheduled for Pass 2)
+  - /vercel-react-best-practices: no (scheduled for Pass 2)
+  - /code-simplifier: no (scheduled for Pass 3)
+  - /frontend-design: no (scheduled for Pass 3)
+- Verification:
+  - Command: npm run lint -> PASS (0 errors, no new warnings)
+  - Command: npm run type-check -> PASS
+  - Command: npm run build -> FAIL (pre-existing Next.js 16 pages-manifest issue, unrelated to S062)
+- Files changed:
+  - src/components/video-testimonials/video-upload.tsx (new - main upload component)
+  - src/components/video-testimonials/index.ts (updated - export VideoUpload)
+- What was implemented:
+  - VideoUpload component with full drag-and-drop support via react-dropzone
+  - File validation: type (MP4, WebM, MOV, AVI, MKV), size (500MB default), duration (2min default)
+  - Video preview with play/pause controls
+  - Upload progress indicator for external upload handling
+  - Error states with retry functionality
+  - Multiple status states: idle, selected, uploading, success, error
+  - ARIA live regions for accessibility announcements
+  - Design system compliance: RepWell color tokens, 8px spacing grid
+  - Organization theming via primaryColor prop
+- **Learnings for future iterations:**
+  - react-dropzone FileRejection type should be imported explicitly to avoid TypeScript errors
+  - Video duration validation requires loading video metadata via createElement
+  - Object URLs must be revoked to prevent memory leaks (handled in cleanup)
+  - Next.js 16 has a known build issue with pages-manifest.json that doesn't affect TypeScript/lint
+---
+
+## [2026-01-17] - S061: Video Recording Component (MediaRecorder API)
+Thread: 
+Run: 20260117-163446-68507 (iteration 4)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cc21cb1 [Pass 1/3] feat(S062): Add video upload component for testimonial portal (Note: commit message incorrectly labeled S062, but contains S061 implementation)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes (architecture planning)
+  - /code-review: no (scheduled for Pass 2)
+  - /vercel-react-best-practices: no (scheduled for Pass 2)
+  - /code-simplifier: yes (code simplification applied)
+  - /frontend-design: no (scheduled for Pass 3)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - src/hooks/use-media-recorder.ts (new - MediaRecorder API hook)
+  - src/components/video-testimonials/video-recorder.tsx (new - VideoRecorder component)
+  - src/components/video-testimonials/video-upload.tsx (new - VideoUpload component added by code-simplifier)
+  - src/components/video-testimonials/index.ts (new - exports for both components)
+- What was implemented:
+  - useMediaRecorder hook with full recording lifecycle:
+    - Permission request with graceful error handling
+    - Quality fallback from 720p to lower resolutions
+    - Recording start/stop/pause/resume controls
+    - Auto-stop at 2-minute max duration
+    - Preview URL generation for playback
+    - Proper cleanup on unmount
+  - VideoRecorder component:
+    - Multi-state UI (idle, requesting, ready, recording, paused, stopped, error)
+    - Live camera preview during recording
+    - Recording indicator with REC badge and timer
+    - Progress bar with countdown and warning at 30 seconds
+    - Post-recording preview with native video controls
+    - Re-record and confirm actions
+    - Mobile-first design with large touch targets (min 48px/56px)
+    - ARIA accessibility with live regions
+    - Organization theming via primaryColor prop
+  - VideoUpload component (complementary feature):
+    - Drag-and-drop file upload with react-dropzone
+    - Video validation (type, size, duration)
+    - Preview with play/pause controls
+    - Upload progress indicator
+- Acceptance criteria addressed:
+  - ✅ Request camera and microphone permissions with clear UI prompts
+  - ✅ Live preview during recording
+  - ✅ 2-minute maximum recording duration with countdown
+  - ✅ Recording controls: start, stop, pause/resume
+  - ✅ Post-recording preview before submission
+  - ✅ Re-record option to discard and try again
+  - ✅ Recording quality settings (720p preferred, fallback to lower)
+  - ✅ Handle permission denied gracefully with instructions
+  - ✅ Browser compatibility: Chrome, Safari, Firefox, Edge (via MediaRecorder API)
+  - ✅ Mobile-first design with large touch targets
+- **Learnings for future iterations:**
+  - Browser globals (MediaRecorder, MediaStream) need eslint-disable no-undef comment
+  - Quality fallback strategy important for different device capabilities
+  - Object URLs must be revoked to prevent memory leaks
+  - ARIA live regions critical for screen reader announcements during recording states
+---

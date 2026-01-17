@@ -4621,3 +4621,38 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Follow atomic claim pattern from transcription-actions.ts for concurrent safety
   - Gemini API configured with JSON response format via responseMimeType
 ---
+
+## [2026-01-17 18:30] - S064: AI Text Review Generation (Gemini)
+Thread: 
+Run: 20260117-163446-68507 (iteration 16)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-16.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-16.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d20fbca [Pass 2/3] fix(S064): Add security and quality improvements to review generation
+- Post-commit status: clean (other unrelated files remain modified)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via feature-dev:code-reviewer agents)
+  - /vercel-react-best-practices: no (backend-only story)
+  - /code-simplifier: no (Pass 2)
+  - /frontend-design: no (backend-only story)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - src/lib/ai/transcript-to-review.ts
+  - src/lib/ai/review-generation-actions.ts
+- What was implemented:
+  - Fixed word count bug: empty strings now return 0 instead of 1 (3 locations)
+  - Fixed retry configuration: uses MAX_GENERATION_ATTEMPTS consistently instead of AI_CONFIG.maxRetries
+  - Fixed stuck processing status: records now marked as "failed" if final DB update fails after successful generation
+  - Fixed atomic claim logic: removed "failed" state from main function (must use retryReviewGeneration explicitly)
+  - Added error handling for failed status update in generation error catch block
+- **Learnings for future iterations:**
+  - JavaScript string.split(/\s+/) returns [""] for empty strings, not [] - always filter empty elements
+  - Use consistent constants within a function - don't mix local constants with global config
+  - Always check for errors after database updates, especially when transitioning out of "processing" status
+  - Separate retry functionality from main function to prevent accidental re-processing
+---

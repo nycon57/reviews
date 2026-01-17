@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { submitCustomerInfoAndConsent } from "@/lib/video-testimonials/public-actions";
 import type { PublicVideoTestimonialRequest, RelationshipType } from "@/lib/video-testimonials/types";
-import { Loader2, Video, Shield, FileText, Sparkles, CheckCircle2 } from "lucide-react";
+import { Loader2, Video, Shield, FileText, Sparkles, CheckCircle2, XCircle } from "lucide-react";
 
 interface VideoTestimonialFormProps {
   request: PublicVideoTestimonialRequest;
@@ -52,7 +52,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   // Branding - memoize style to prevent unnecessary re-renders
-  const primaryColor = organization.primaryColor || undefined;
+  const primaryColor = organization.primaryColor;
   const logoUrl = organization.logoUrl;
   const buttonStyle = useMemo(
     () => (primaryColor ? { backgroundColor: primaryColor } : undefined),
@@ -146,21 +146,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
         <Card className="mx-auto max-w-lg shadow-lg">
           <CardContent className="py-12 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <svg
-                className="h-8 w-8"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-label="Error"
-                role="img"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <XCircle className="h-10 w-10" aria-label="Error" />
             </div>
             <h2 className="font-sans text-2xl font-semibold text-repwell-teal-500">
               Something went wrong

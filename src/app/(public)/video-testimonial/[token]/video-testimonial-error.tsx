@@ -62,7 +62,7 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
   const { icon: Icon, title, iconColor, bgColor, helpText } = getErrorDetails();
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-8 bg-background-subtle">
+    <div className="flex min-h-screen items-center justify-center bg-[#f8faf8] px-4 py-8">
       <Card className="mx-auto max-w-md shadow-lg">
         <CardContent className="py-12 text-center">
           <div

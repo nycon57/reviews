@@ -4060,3 +4060,48 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Public actions use admin client to bypass RLS
   - Status transitions: pending -> sent -> opened -> recording -> submitted
 ---
+
+## [2026-01-17] - S060: Public Video Testimonial Portal - Core
+Thread:
+Run: 20260117-163446-68507 (iteration 2)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 388a3d1 [Pass 2/3] fix(S060): Add security hardening and accessibility improvements
+- Post-commit status: clean (S060 files only, some unrelated untracked files exist)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes - reviewed Pass 1 changes for bugs and security issues
+  - /vercel-react-best-practices: yes - verified React patterns
+  - /code-simplifier: no (scheduled for Pass 3)
+  - /frontend-design: no (scheduled for Pass 3)
+- Verification:
+  - Command: npm run lint -> PASS (0 errors, 25 pre-existing warnings)
+  - Command: npm run build -> PASS (compiled successfully)
+  - Command: npm run type-check -> PASS
+- Files changed:
+  - src/app/(public)/video-testimonial/[token]/video-testimonial-error.tsx (updated - design system colors)
+  - src/app/(public)/video-testimonial/[token]/video-testimonial-form.tsx (updated - accessibility improvements)
+  - src/lib/video-testimonials/public-actions.ts (updated - security hardening)
+  - src/lib/video-testimonials/types.ts (new - shared types for "use server" compliance)
+  - src/lib/video-testimonials/index.ts (updated - proper type exports)
+- Issues found and fixed in Pass 2:
+  - **Accessibility:** Added proper <form> element with onSubmit for keyboard accessibility
+  - **Accessibility:** Added aria-required and aria-label attributes
+  - **Bug:** Fixed silent failure on opened_at update - now logs errors
+  - **Design System:** Updated success state colors from green to sage
+  - **Design System:** Updated expired state colors to use warning color #d4a574
+  - **Type Safety:** Added RelationshipType export for proper type checking
+  - **Build Fix:** Moved types to separate file to fix "use server" export restriction
+  - **Security:** Added URL protocol validation (http/https only)
+  - **Security:** Added hex color format validation to prevent CSS injection
+  - **Race Condition:** Added optimistic locking to prevent concurrent submission issues
+  - **Performance:** Added React cache() wrapper for request deduplication
+- **Learnings for future iterations:**
+  - "use server" files can only export async functions, not constants or types
+  - Shared types/constants must be in separate non-server file
+  - Design system colors should be used consistently (sage for success, accent-warning for expired)
+  - Form accessibility requires proper <form> element for Enter key submission
+---

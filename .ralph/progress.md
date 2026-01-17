@@ -4687,3 +4687,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - console.log doesn't throw exceptions, so try-catch around it is unnecessary
   - Code simplification pass is important for maintainability
 ---
+
+## [2026-01-17 19:05] - S065: Customer Text Approval Flow
+Thread: 
+Run: 20260117-163446-68507 (iteration 18)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-18.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-18.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6807209 [Pass 1/3] feat(S065): Customer text approval flow
+- Post-commit status: clean (S065 files committed; other unrelated files remain modified)
+- Skills invoked:
+  - /feature-dev: no (followed existing video testimonial patterns)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (Pass 1)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (Pass 1)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - supabase/migrations/20240101000034_video_testimonial_text_approval.sql (new - migration)
+  - src/lib/video-testimonials/approval-actions.ts (new - server actions)
+  - src/components/video-testimonials/text-approval-step.tsx (new - component)
+  - src/app/(public)/video-testimonial/[token]/review/page.tsx (new - page)
+- What was implemented:
+  - Database migration adding customer_approved_text, customer_rating, text_approval_status, text_approved_at, google_review_redirect_shown/clicked, text_edit_count, final_consent_given/timestamp
+  - Public server actions: getTextApprovalData(), submitApprovedText(), regenerateReviewText()
+  - TextApprovalStep component with inline editing, character count, preview mode, star rating
+  - Google Review redirect for 4-5 star ratings (using google_place_id)
+  - Final consent confirmation before submission
+  - Success state with thank you message
+  - Proper error handling and ARIA live regions for accessibility
+- **Learnings for future iterations:**
+  - loan_officers table has google_place_id not google_business_profile_url; construct review URL manually
+  - New columns need type casts in queries until DB types are regenerated after migration
+  - Use `as never` cast for column names not in types yet
+  - Video testimonial flow: request → consent → video → transcription → AI text → text approval
+---

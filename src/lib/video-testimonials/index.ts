@@ -22,9 +22,14 @@ export {
   // Public Actions
   getVideoTestimonialByToken,
   submitCustomerInfoAndConsent,
-  // Public Types
+} from "./public-actions";
+
+// Export shared types and constants from types.ts
+export {
   type PublicVideoTestimonialRequest,
   type CustomerInfoInput,
   type ConsentInput,
+  type RelationshipType,
   type SubmitCustomerInfoInput,
-} from "./public-actions";
+  VALID_RELATIONSHIPS,
+} from "./types";

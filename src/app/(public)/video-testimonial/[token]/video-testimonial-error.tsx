@@ -14,8 +14,8 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
       return {
         icon: Clock,
         title: "Request Expired",
-        iconColor: "text-amber-500",
-        bgColor: "bg-amber-100",
+        iconColor: "text-[#d4a574]",
+        bgColor: "bg-[#d4a574]/10",
         helpText: "Please contact the sender if you need a new link.",
       };
     }
@@ -24,8 +24,8 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
       return {
         icon: CheckCircle,
         title: "Already Submitted",
-        iconColor: "text-green-500",
-        bgColor: "bg-green-100",
+        iconColor: "text-repwell-sage-200",
+        bgColor: "bg-repwell-sage-200/20",
         helpText: "Thank you! Your video testimonial has already been recorded.",
       };
     }

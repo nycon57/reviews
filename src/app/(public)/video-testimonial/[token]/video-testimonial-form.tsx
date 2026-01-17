@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useRef, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { submitCustomerInfoAndConsent } from "@/lib/video-testimonials/public-actions";
-import type { PublicVideoTestimonialRequest } from "@/lib/video-testimonials/public-actions";
+import type { PublicVideoTestimonialRequest, RelationshipType } from "@/lib/video-testimonials/types";
 import { Loader2, Video, Shield, FileText, Sparkles, CheckCircle2 } from "lucide-react";
 
 interface VideoTestimonialFormProps {
@@ -37,7 +37,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
 
   // Form state
   const [displayName, setDisplayName] = useState(request.customerName || "");
-  const [relationship, setRelationship] = useState("");
+  const [relationship, setRelationship] = useState<RelationshipType | "">("");
   const [videoRecordingConsent, setVideoRecordingConsent] = useState(false);
   const [usageRightsConsent, setUsageRightsConsent] = useState(false);
   const [aiTextGenerationConsent, setAiTextGenerationConsent] = useState(false);
@@ -48,9 +48,25 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Branding
+  // Refs for focus management
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // Branding - memoize style to prevent unnecessary re-renders
   const primaryColor = organization.primaryColor || undefined;
   const logoUrl = organization.logoUrl;
+  const buttonStyle = useMemo(
+    () => (primaryColor ? { backgroundColor: primaryColor } : undefined),
+    [primaryColor]
+  );
+
+  // Focus first input when returning from error state
+  useEffect(() => {
+    if (formState === "form" && nameInputRef.current) {
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(() => nameInputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [formState]);
 
   // Validation
   const isFormValid =
@@ -60,18 +76,20 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     usageRightsConsent &&
     aiTextGenerationConsent;
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!isFormValid) return;
 
     setFormState("submitting");
     setSubmitError(null);
 
     startTransition(async () => {
+      // Safe to cast since isFormValid ensures relationship is not empty
       const result = await submitCustomerInfoAndConsent({
         token: request.token,
         customerInfo: {
           displayName: displayName.trim(),
-          relationship,
+          relationship: relationship as RelationshipType,
         },
         consents: {
           videoRecordingConsent,
@@ -90,10 +108,24 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     });
   };
 
+  // Compute status message for ARIA live region
+  const statusMessage = useMemo(() => {
+    switch (formState) {
+      case "submitting":
+        return "Saving your information. Please wait.";
+      case "success":
+        return "Your information has been saved successfully. You are now ready to record your video testimonial.";
+      case "error":
+        return `Error: ${submitError}`;
+      default:
+        return "";
+    }
+  }, [formState, submitError]);
+
   // Submitting state
   if (formState === "submitting") {
     return (
-      <FormContainer>
+      <FormContainer statusMessage={statusMessage}>
         <Card className="mx-auto max-w-lg shadow-lg">
           <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-repwell-teal-300" />
@@ -110,11 +142,18 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   // Error state
   if (formState === "error") {
     return (
-      <FormContainer>
+      <FormContainer statusMessage={statusMessage}>
         <Card className="mx-auto max-w-lg shadow-lg">
           <CardContent className="py-12 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="h-8 w-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-label="Error"
+                role="img"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -133,7 +172,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
                 setFormState("form");
                 setSubmitError(null);
               }}
-              style={primaryColor ? { backgroundColor: primaryColor } : undefined}
+              style={buttonStyle}
             >
               Try Again
             </Button>
@@ -146,10 +185,10 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   // Success state - ready for video recording
   if (formState === "success") {
     return (
-      <FormContainer>
+      <FormContainer statusMessage={statusMessage}>
         <Card className="mx-auto max-w-lg shadow-lg">
           <CardContent className="py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-repwell-sage-200/20 text-repwell-sage-200">
               <CheckCircle2 className="h-10 w-10" />
             </div>
             <h2 className="font-sans text-2xl font-semibold text-repwell-teal-500">
@@ -184,7 +223,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
 
   // Main form
   return (
-    <FormContainer>
+    <FormContainer statusMessage={statusMessage}>
       <Card className="mx-auto max-w-lg shadow-lg">
         <CardHeader className="space-y-4 pb-4">
           {/* Logo */}
@@ -238,169 +277,176 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
           )}
         </CardHeader>
 
-        <CardContent className="space-y-6">
-          {/* Customer Info Section */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="displayName" className="font-sans text-sm font-medium">
-                Your Name <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="displayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="How would you like to be identified?"
-                className="font-sans"
-              />
-              <p className="font-sans text-xs text-muted-foreground">
-                This name will appear with your testimonial
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="relationship" className="font-sans text-sm font-medium">
-                Your Relationship <span className="text-destructive">*</span>
-              </Label>
-              <Select value={relationship} onValueChange={setRelationship}>
-                <SelectTrigger id="relationship" className="font-sans">
-                  <SelectValue placeholder="How did you work together?" />
-                </SelectTrigger>
-                <SelectContent>
-                  {RELATIONSHIP_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value} className="font-sans">
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Consent Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-repwell-teal-500">
-              <Shield className="h-4 w-4" />
-              <span className="font-sans">Required Consents</span>
-            </div>
-
-            <div className="space-y-4 rounded-lg border p-4">
-              {/* Video Recording Consent */}
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="videoRecordingConsent"
-                  checked={videoRecordingConsent}
-                  onCheckedChange={(checked) => setVideoRecordingConsent(checked === true)}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <Label
-                    htmlFor="videoRecordingConsent"
-                    className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
-                  >
-                    <Video className="h-4 w-4 text-repwell-teal-300" />
-                    Video Recording Consent <span className="text-destructive">*</span>
-                  </Label>
-                  <p className="font-sans text-xs text-muted-foreground">
-                    I consent to being video recorded for testimonial purposes
-                  </p>
-                </div>
-              </div>
-
-              {/* Usage Rights Consent */}
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="usageRightsConsent"
-                  checked={usageRightsConsent}
-                  onCheckedChange={(checked) => setUsageRightsConsent(checked === true)}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <Label
-                    htmlFor="usageRightsConsent"
-                    className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
-                  >
-                    <FileText className="h-4 w-4 text-repwell-teal-300" />
-                    Usage Rights <span className="text-destructive">*</span>
-                  </Label>
-                  <p className="font-sans text-xs text-muted-foreground">
-                    I grant permission to use my video testimonial on the company website, social
-                    media, and marketing materials
-                  </p>
-                </div>
-              </div>
-
-              {/* AI Text Generation Consent */}
-              <div className="flex items-start gap-3">
-                <Checkbox
-                  id="aiTextGenerationConsent"
-                  checked={aiTextGenerationConsent}
-                  onCheckedChange={(checked) => setAiTextGenerationConsent(checked === true)}
-                  className="mt-0.5"
-                />
-                <div className="flex-1">
-                  <Label
-                    htmlFor="aiTextGenerationConsent"
-                    className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
-                  >
-                    <Sparkles className="h-4 w-4 text-repwell-teal-300" />
-                    AI Text Generation <span className="text-destructive">*</span>
-                  </Label>
-                  <p className="font-sans text-xs text-muted-foreground">
-                    I consent to AI-generated written testimonials being created from my video for
-                    additional marketing use
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Optional Marketing Consent */}
-            <div className="flex items-start gap-3 px-1">
-              <Checkbox
-                id="marketingConsent"
-                checked={marketingConsent}
-                onCheckedChange={(checked) => setMarketingConsent(checked === true)}
-                className="mt-0.5"
-              />
-              <div className="flex-1">
-                <Label
-                  htmlFor="marketingConsent"
-                  className="cursor-pointer font-sans text-sm font-medium"
-                >
-                  Marketing Communications (Optional)
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Customer Info Section */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="displayName" className="font-sans text-sm font-medium">
+                  Your Name <span className="text-destructive">*</span>
                 </Label>
+                <Input
+                  ref={nameInputRef}
+                  id="displayName"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="How would you like to be identified?"
+                  className="font-sans"
+                  required
+                />
                 <p className="font-sans text-xs text-muted-foreground">
-                  I&apos;d like to receive occasional updates and promotional materials
+                  This name will appear with your testimonial
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="relationship" className="font-sans text-sm font-medium">
+                  Your Relationship <span className="text-destructive">*</span>
+                </Label>
+                <Select value={relationship} onValueChange={(v) => setRelationship(v as RelationshipType)} required>
+                  <SelectTrigger id="relationship" className="font-sans">
+                    <SelectValue placeholder="How did you work together?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RELATIONSHIP_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="font-sans">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
-          {/* Submit Button */}
-          <Button
-            onClick={handleSubmit}
-            disabled={!isFormValid || isPending}
-            className="w-full gap-2"
-            style={primaryColor ? { backgroundColor: primaryColor } : undefined}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Video className="h-4 w-4" />
-                Continue to Video Recording
-              </>
+            {/* Consent Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-repwell-teal-500">
+                <Shield className="h-4 w-4" />
+                <span className="font-sans">Required Consents</span>
+              </div>
+
+              <div className="space-y-4 rounded-lg border p-4">
+                {/* Video Recording Consent */}
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="videoRecordingConsent"
+                    checked={videoRecordingConsent}
+                    onCheckedChange={(checked) => setVideoRecordingConsent(checked === true)}
+                    className="mt-0.5"
+                    aria-required="true"
+                  />
+                  <div className="flex-1">
+                    <Label
+                      htmlFor="videoRecordingConsent"
+                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
+                    >
+                      <Video className="h-4 w-4 text-repwell-teal-300" />
+                      Video Recording Consent <span className="text-destructive">*</span>
+                    </Label>
+                    <p className="font-sans text-xs text-muted-foreground">
+                      I consent to being video recorded for testimonial purposes
+                    </p>
+                  </div>
+                </div>
+
+                {/* Usage Rights Consent */}
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="usageRightsConsent"
+                    checked={usageRightsConsent}
+                    onCheckedChange={(checked) => setUsageRightsConsent(checked === true)}
+                    className="mt-0.5"
+                    aria-required="true"
+                  />
+                  <div className="flex-1">
+                    <Label
+                      htmlFor="usageRightsConsent"
+                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
+                    >
+                      <FileText className="h-4 w-4 text-repwell-teal-300" />
+                      Usage Rights <span className="text-destructive">*</span>
+                    </Label>
+                    <p className="font-sans text-xs text-muted-foreground">
+                      I grant permission to use my video testimonial on the company website, social
+                      media, and marketing materials
+                    </p>
+                  </div>
+                </div>
+
+                {/* AI Text Generation Consent */}
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="aiTextGenerationConsent"
+                    checked={aiTextGenerationConsent}
+                    onCheckedChange={(checked) => setAiTextGenerationConsent(checked === true)}
+                    className="mt-0.5"
+                    aria-required="true"
+                  />
+                  <div className="flex-1">
+                    <Label
+                      htmlFor="aiTextGenerationConsent"
+                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
+                    >
+                      <Sparkles className="h-4 w-4 text-repwell-teal-300" />
+                      AI Text Generation <span className="text-destructive">*</span>
+                    </Label>
+                    <p className="font-sans text-xs text-muted-foreground">
+                      I consent to AI-generated written testimonials being created from my video for
+                      additional marketing use
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Optional Marketing Consent */}
+              <div className="flex items-start gap-3 px-1">
+                <Checkbox
+                  id="marketingConsent"
+                  checked={marketingConsent}
+                  onCheckedChange={(checked) => setMarketingConsent(checked === true)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <Label
+                    htmlFor="marketingConsent"
+                    className="cursor-pointer font-sans text-sm font-medium"
+                  >
+                    Marketing Communications (Optional)
+                  </Label>
+                  <p className="font-sans text-xs text-muted-foreground">
+                    I&apos;d like to receive occasional updates and promotional materials
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={!isFormValid || isPending}
+              className="w-full gap-2"
+              style={buttonStyle}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Video className="h-4 w-4" />
+                  Continue to Video Recording
+                </>
+              )}
+            </Button>
+
+            {/* Form validation hint */}
+            {!isFormValid && (
+              <p className="text-center font-sans text-xs text-muted-foreground">
+                Please complete all required fields and consent checkboxes to continue
+              </p>
             )}
-          </Button>
-
-          {/* Form validation hint */}
-          {!isFormValid && (
-            <p className="text-center font-sans text-xs text-muted-foreground">
-              Please complete all required fields and consent checkboxes to continue
-            </p>
-          )}
+          </form>
         </CardContent>
       </Card>
 
@@ -412,10 +458,20 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   );
 }
 
-// Container component with consistent styling
-function FormContainer({ children }: { children: React.ReactNode }) {
+// Container component with consistent styling and ARIA live region
+function FormContainer({
+  children,
+  statusMessage,
+}: {
+  children: React.ReactNode;
+  statusMessage?: string;
+}) {
   return (
     <div className="min-h-screen bg-[#f8faf8] px-4 py-8 sm:py-12">
+      {/* ARIA live region for screen reader announcements */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {statusMessage}
+      </div>
       <div className="mx-auto max-w-lg">{children}</div>
     </div>
   );

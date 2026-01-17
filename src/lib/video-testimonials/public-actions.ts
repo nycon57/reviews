@@ -2,52 +2,44 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
+import { cache } from "react";
 import type { Json } from "@/types/database.types";
+import {
+  VALID_RELATIONSHIPS,
+  type ActionResult,
+  type PublicVideoTestimonialRequest,
+  type SubmitCustomerInfoInput,
+} from "./types";
 
 // ============================================================================
-// Types
+// Security Validation Helpers
 // ============================================================================
 
-export interface ActionResult<T = void> {
-  success: boolean;
-  data?: T;
-  error?: string;
+/**
+ * Validate URL is safe for rendering (only http/https protocols)
+ * Prevents javascript: and data: URL injection
+ */
+function validateSafeUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return url;
+    }
+    return null; // Invalid protocol
+  } catch {
+    return null; // Malformed URL
+  }
 }
 
-export interface PublicVideoTestimonialRequest {
-  id: string;
-  token: string;
-  status: string;
-  maxDurationSeconds: number;
-  promptText: string | null;
-  expiresAt: string | null;
-  submittedAt: string | null;
-  customerName: string;
-  customerEmail: string;
-  loanOfficer: {
-    id: string;
-    fullName: string;
-    photoUrl: string | null;
-    title: string | null;
-  };
-  organization: {
-    id: string;
-    name: string;
-    logoUrl: string | null;
-    primaryColor: string | null;
-  };
-}
-
-export interface CustomerInfoInput {
-  displayName: string;
-  relationship: string;
-}
-
-export interface ConsentInput {
-  videoRecordingConsent: boolean;
-  usageRightsConsent: boolean;
-  aiTextGenerationConsent: boolean;
-  marketingConsent?: boolean;
+/**
+ * Validate hex color format to prevent CSS injection
+ * Only accepts formats: #RGB, #RRGGBB, #RRGGBBAA
+ */
+function validateHexColor(color: string | null): string | null {
+  if (!color) return null;
+  const hexPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
+  return hexPattern.test(color) ? color : null;
 }
 
 // ============================================================================
@@ -59,10 +51,9 @@ const customerInfoSchema = z.object({
     .string()
     .min(1, "Name is required")
     .max(100, "Name must be less than 100 characters"),
-  relationship: z
-    .string()
-    .min(1, "Relationship is required")
-    .max(200, "Relationship must be less than 200 characters"),
+  relationship: z.enum(VALID_RELATIONSHIPS, {
+    errorMap: () => ({ message: "Please select a valid relationship type" }),
+  }),
 });
 
 const consentSchema = z.object({
@@ -84,8 +75,6 @@ const submitCustomerInfoSchema = z.object({
   consents: consentSchema,
 });
 
-export type SubmitCustomerInfoInput = z.infer<typeof submitCustomerInfoSchema>;
-
 // ============================================================================
 // Public Server Actions
 // ============================================================================
@@ -93,8 +82,9 @@ export type SubmitCustomerInfoInput = z.infer<typeof submitCustomerInfoSchema>;
 /**
  * Get video testimonial request by token (no auth required)
  * Used for the public video testimonial capture page
+ * Cached with React cache() to deduplicate requests within a single render pass
  */
-export async function getVideoTestimonialByToken(
+export const getVideoTestimonialByToken = cache(async function getVideoTestimonialByTokenImpl(
   token: string
 ): Promise<ActionResult<PublicVideoTestimonialRequest>> {
   try {
@@ -162,7 +152,7 @@ export async function getVideoTestimonialByToken(
 
     // Update opened_at if not already set
     if (!request.opened_at) {
-      await supabase
+      const { error: openedError } = await supabase
         .from("video_testimonial_requests")
         .update({
           opened_at: new Date().toISOString(),
@@ -170,6 +160,11 @@ export async function getVideoTestimonialByToken(
           updated_at: new Date().toISOString(),
         })
         .eq("id", request.id);
+
+      if (openedError) {
+        console.error("Error updating opened_at timestamp:", openedError);
+        // Non-blocking error - continue serving the request
+      }
     }
 
     const loanOfficer = request.loan_officers as unknown as {
@@ -187,6 +182,7 @@ export async function getVideoTestimonialByToken(
     };
 
     // Transform to PublicVideoTestimonialRequest format
+    // Apply security validation to URLs and colors to prevent XSS/CSS injection
     const publicRequest: PublicVideoTestimonialRequest = {
       id: request.id,
       token: request.token,
@@ -200,14 +196,14 @@ export async function getVideoTestimonialByToken(
       loanOfficer: {
         id: loanOfficer.id,
         fullName: loanOfficer.full_name,
-        photoUrl: loanOfficer.photo_url,
+        photoUrl: validateSafeUrl(loanOfficer.photo_url),
         title: loanOfficer.title,
       },
       organization: {
         id: organization.id,
         name: organization.name,
-        logoUrl: organization.logo_url,
-        primaryColor: organization.primary_color,
+        logoUrl: validateSafeUrl(organization.logo_url),
+        primaryColor: validateHexColor(organization.primary_color),
       },
     };
 
@@ -216,11 +212,12 @@ export async function getVideoTestimonialByToken(
     console.error("Error fetching video testimonial by token:", error);
     return { success: false, error: "Failed to load video testimonial request" };
   }
-}
+});
 
 /**
  * Submit customer info and consent for video testimonial
  * Updates the request status to 'recording' to indicate ready for video capture
+ * Uses optimistic locking to prevent race conditions
  */
 export async function submitCustomerInfoAndConsent(
   input: SubmitCustomerInfoInput
@@ -268,7 +265,8 @@ export async function submitCustomerInfoAndConsent(
     }
 
     // Update request with customer info and consent, and change status to recording
-    const { error: updateError } = await supabase
+    // Use optimistic locking: only update if status hasn't changed to submitted/cancelled
+    const { data: updatedData, error: updateError } = await supabase
       .from("video_testimonial_requests")
       .update({
         status: "recording",
@@ -283,11 +281,18 @@ export async function submitCustomerInfoAndConsent(
         } as Json,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", request.id);
+      .eq("id", request.id)
+      .not("status", "in", '("submitted","cancelled")') // Optimistic lock
+      .select("id")
+      .single();
 
-    if (updateError) {
+    if (updateError || !updatedData) {
+      // Race condition detected - status was changed by another request
       console.error("Error updating video testimonial request:", updateError);
-      return { success: false, error: "Failed to save your information" };
+      return {
+        success: false,
+        error: "Unable to save your information. The request may have been updated.",
+      };
     }
 
     return {

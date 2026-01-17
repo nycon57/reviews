@@ -360,14 +360,29 @@ const methodColors: Record<string, string> = {
   DELETE: "bg-red-500/10 text-red-600 border-red-200",
 };
 
-// Copy button component
+// Pre-compute unique tags from static endpoint data (performance optimization)
+const endpointTags = [...new Set(apiEndpoints.map((e) => e.tag))];
+
+// Copy button component with proper error handling and cleanup
 function CopyButton({ text, className }: { text: string; className?: string }) {
   const [copied, setCopied] = React.useState(false);
 
+  // Clean up timeout on unmount to prevent memory leaks
+  React.useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch (error) {
+      // Fallback for non-secure contexts or permission denied
+      console.error("Failed to copy to clipboard:", error);
+    }
   };
 
   return (
@@ -378,6 +393,7 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
         className
       )}
       title="Copy to clipboard"
+      aria-label={copied ? "Copied to clipboard" : "Copy to clipboard"}
     >
       {copied ? (
         <Check className="w-4 h-4 text-emerald-500" />
@@ -413,17 +429,21 @@ function CodeBlock({
   );
 }
 
-// Endpoint card component
+// Endpoint card component with memoized code samples
 function EndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [selectedLanguage, setSelectedLanguage] = React.useState<CodeLanguage>("curl");
 
-  const codeSamples = generateCodeSamples({
-    method: endpoint.method,
-    path: endpoint.path,
-    queryParams: exampleQueryParams[`${endpoint.method} ${endpoint.path}`],
-    body: endpoint.requestBody?.example as Record<string, unknown>,
-  });
+  // Only generate code samples when the endpoint is expanded (performance optimization)
+  const codeSamples = React.useMemo(() => {
+    if (!isOpen) return null;
+    return generateCodeSamples({
+      method: endpoint.method,
+      path: endpoint.path,
+      queryParams: exampleQueryParams[`${endpoint.method} ${endpoint.path}`],
+      body: endpoint.requestBody?.example as Record<string, unknown>,
+    });
+  }, [isOpen, endpoint.method, endpoint.path, endpoint.requestBody?.example]);
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -491,25 +511,27 @@ function EndpointCard({ endpoint }: { endpoint: ApiEndpoint }) {
           )}
 
           {/* Code Samples */}
-          <div>
-            <h4 className="font-semibold text-repwell-teal-500 mb-2">Code Samples</h4>
-            <Tabs value={selectedLanguage} onValueChange={(v) => setSelectedLanguage(v as CodeLanguage)}>
-              <TabsList className="mb-2">
-                <TabsTrigger value="curl">cURL</TabsTrigger>
-                <TabsTrigger value="javascript">JavaScript</TabsTrigger>
-                <TabsTrigger value="python">Python</TabsTrigger>
-              </TabsList>
-              <TabsContent value="curl">
-                <CodeBlock code={codeSamples.curl}  />
-              </TabsContent>
-              <TabsContent value="javascript">
-                <CodeBlock code={codeSamples.javascript}  />
-              </TabsContent>
-              <TabsContent value="python">
-                <CodeBlock code={codeSamples.python}  />
-              </TabsContent>
-            </Tabs>
-          </div>
+          {codeSamples && (
+            <div>
+              <h4 className="font-semibold text-repwell-teal-500 mb-2">Code Samples</h4>
+              <Tabs value={selectedLanguage} onValueChange={(v) => setSelectedLanguage(v as CodeLanguage)}>
+                <TabsList className="mb-2">
+                  <TabsTrigger value="curl">cURL</TabsTrigger>
+                  <TabsTrigger value="javascript">JavaScript</TabsTrigger>
+                  <TabsTrigger value="python">Python</TabsTrigger>
+                </TabsList>
+                <TabsContent value="curl">
+                  <CodeBlock code={codeSamples.curl} />
+                </TabsContent>
+                <TabsContent value="javascript">
+                  <CodeBlock code={codeSamples.javascript} />
+                </TabsContent>
+                <TabsContent value="python">
+                  <CodeBlock code={codeSamples.python} />
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
         </div>
       </CollapsibleContent>
     </Collapsible>
@@ -532,6 +554,24 @@ function ApiPlayground() {
       setResponse(JSON.stringify({ error: "Please enter your API key" }, null, 2));
       setStatusCode(400);
       return;
+    }
+
+    // Validate path to prevent SSRF - only allow /api/v1/* endpoints
+    if (!path.startsWith("/api/v1/")) {
+      setResponse(JSON.stringify({ error: "Invalid endpoint path. Must start with /api/v1/" }, null, 2));
+      setStatusCode(400);
+      return;
+    }
+
+    // Validate JSON body if provided
+    if (method !== "GET" && requestBody) {
+      try {
+        JSON.parse(requestBody);
+      } catch {
+        setResponse(JSON.stringify({ error: "Invalid JSON in request body" }, null, 2));
+        setStatusCode(400);
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -667,8 +707,6 @@ function ApiPlayground() {
 export function ApiDocsClient() {
   const [activeSection, setActiveSection] = React.useState("overview");
   const [activeTag, setActiveTag] = React.useState<string | null>(null);
-
-  const tags = [...new Set(apiEndpoints.map((e) => e.tag))];
 
   const handleNavClick = (sectionId: string) => {
     setActiveSection(sectionId);
@@ -956,7 +994,7 @@ export function ApiDocsClient() {
                 >
                   All
                 </Button>
-                {tags.map((tag) => (
+                {endpointTags.map((tag) => (
                   <Button
                     key={tag}
                     variant={activeTag === tag ? "default" : "outline"}
@@ -969,7 +1007,7 @@ export function ApiDocsClient() {
               </div>
 
               {/* Endpoints by tag */}
-              {(activeTag ? [activeTag] : tags).map((tag) => (
+              {(activeTag ? [activeTag] : endpointTags).map((tag) => (
                 <div key={tag} className="mb-8">
                   <h3 className="text-lg font-semibold text-repwell-teal-500 mb-3">{tag}</h3>
                   <div className="border border-border rounded-lg divide-y divide-border">

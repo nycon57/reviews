@@ -843,17 +843,27 @@ export async function resendVideoTestimonialRequest(
 
     const adminSupabase = createAdminClient();
 
-    // Create new queue entry for immediate resend
+    // Create new queue entry for immediate resend using upsert
+    // Use 'initial' type since the CHECK constraint only allows: 'initial', 'reminder_3day', 'reminder_7day'
+    // Use upsert to handle the unique constraint on (request_id, type)
     const { data: queueItem, error: queueError } = await adminSupabase
       .from("video_testimonial_queue")
-      .insert({
-        organization_id: userData.organization_id,
-        request_id: requestId,
-        type: `reminder_manual_${(request.reminder_count || 0) + 1}`,
-        scheduled_at: new Date().toISOString(),
-        priority: 10,
-        status: "pending",
-      })
+      .upsert(
+        {
+          organization_id: userData.organization_id,
+          request_id: requestId,
+          type: "initial",
+          scheduled_at: new Date().toISOString(),
+          priority: 10,
+          status: "pending",
+          retry_count: 0,
+          error_message: null,
+        },
+        {
+          onConflict: "request_id,type",
+          ignoreDuplicates: false,
+        }
+      )
       .select("id")
       .single();
 

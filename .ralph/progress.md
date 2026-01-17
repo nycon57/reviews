@@ -4314,3 +4314,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Object URLs must be revoked to prevent memory leaks
   - ARIA live regions critical for screen reader announcements during recording states
 ---
+
+## [2026-01-17] - S061: Video Recording Component (MediaRecorder API)
+Thread: 
+Run: 20260117-163446-68507 (iteration 8)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-8.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-8.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f5747fa [Pass 2/3] fix(S061): Address code review issues in video upload component
+- Post-commit status: clean (only unrelated files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (code reviewer agent)
+  - /vercel-react-best-practices: yes
+  - /code-simplifier: no (scheduled for Pass 3)
+  - /frontend-design: no (scheduled for Pass 3)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - src/hooks/use-media-recorder.ts (fixed memory leaks and race conditions)
+- What was implemented:
+  - Code review identified 4 issues (3 critical, 1 important):
+    1. Memory leak: cleanup function called setState during unmount
+    2. Race condition: MediaRecorder onstop updated state after unmount
+    3. Logic bug: resetRecording didn't stop active MediaRecorder
+    4. Resource leak: Timer not cleared in error handler
+  - Fixed all issues:
+    - Added unmountedRef to prevent state updates after unmount
+    - Created streamRef and previewUrlRef for cleanup without setState
+    - Added sync effects to keep refs in sync with state
+    - Updated cleanup to use refs instead of state
+    - Added unmountedRef check in onstop and onerror handlers
+    - Added timer clear in onerror handler
+    - Added MediaRecorder stop in resetRecording
+  - Verified React best practices compliance (useMemo, useCallback patterns)
+  - Verified design system compliance (colors, typography, accessibility)
+- **Learnings for future iterations:**
+  - MediaRecorder cleanup requires careful handling - onstop fires async after stop()
+  - Use refs for cleanup to avoid setState warnings during unmount
+  - Timer intervals must be cleared in all error/cleanup paths
+  - Always check for unmount before updating state in async callbacks
+---

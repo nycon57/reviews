@@ -4450,3 +4450,98 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The 3-pass system is effective: Pass 1 implements, Pass 2 reviews/fixes, Pass 3 polishes
   - Video upload components require careful memory management for object URLs
 ---
+
+## [2026-01-17 16:40] - S063: AI Video Transcription Service (OpenAI Whisper)
+Thread: 
+Run: 20260117-163446-68507 (iteration 11)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-11.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-11.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 28dee32 [Pass 1/3] feat(S063): Implement AI Video Transcription Service (OpenAI Whisper)
+- Post-commit status: clean (S063 files committed; unrelated files remain)
+- Skills invoked:
+  - /feature-dev: no (straightforward implementation)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (server-side code)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (backend service)
+- Verification:
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+  - Command: npm run build -> PASS
+- Files changed:
+  - package.json (added openai dependency)
+  - package-lock.json (updated)
+  - src/lib/ai/openai-client.ts (new - OpenAI/Whisper client config)
+  - src/lib/ai/video-transcription.ts (new - transcription service)
+  - src/lib/ai/transcription-actions.ts (new - server actions)
+  - src/lib/ai/index.ts (updated - exports)
+  - src/app/api/v1/testimonials/transcribe/route.ts (new - REST API)
+- What was implemented:
+  - OpenAI client for Whisper API with cost tracking ($0.006/min)
+  - Video transcription service with retry logic and error handling
+  - Server actions for triggering transcription after video upload
+  - REST API endpoint for external access (POST trigger, GET status)
+  - Auto-detect language support
+  - Database status updates (pending/processing/completed/failed)
+- Acceptance Criteria Status:
+  - ✓ OpenAI client configured for Whisper API
+  - ✓ Send audio to Whisper API with whisper-1 model
+  - ✓ Handle long audio (file size check, chunking noted for future)
+  - ✓ Store transcription in video_testimonial_responses table
+  - ✓ Error handling for transcription failures
+  - ✓ Retry logic for API timeouts (exponential backoff)
+  - ✓ Cost tracking for API usage
+  - ✓ Support multiple languages (auto-detect)
+  - ✓ Processing can be triggered via API endpoint
+  - Note: Audio extraction handled by Whisper API directly (accepts video files)
+- **Learnings for future iterations:**
+  - OpenAI Whisper accepts video files directly, no ffmpeg needed
+  - Whisper has 25MB limit; chunking needed for longer videos
+  - Cost tracking via separate logging (ai_usage_logs table may not exist yet)
+---
+
+## [2026-01-17 18:15] - S063: AI Video Transcription Service (OpenAI Whisper)
+Thread:
+Run: 20260117-163446-68507 (iteration 13)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-13.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-13.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: fb4d716 [Pass 2/3] fix(S063): Add security and quality improvements to transcription service
+- Post-commit status: clean (S063 files committed; unrelated files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes
+  - /vercel-react-best-practices: no
+  - /code-simplifier: no (skill not available)
+  - /frontend-design: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 warnings - all pre-existing)
+- Files changed:
+  - src/lib/ai/transcription-actions.ts
+- What was implemented:
+  - Code review identified 6 high-confidence issues from Pass 1
+  - Fixed missing user authentication in server actions
+  - Added Zod validation for responseId parameter
+  - Added revalidatePath("/dashboard/video-testimonials") after mutations
+  - Fixed race condition with atomic claim pattern (compare-and-swap)
+  - Added processing status check to prevent duplicate transcriptions
+  - Removed unsafe type casting in logTranscriptionCost
+  - Added organization ownership verification
+- Issues Fixed:
+  1. Missing Authentication (95% confidence) - Added getAuthenticatedUser() pattern
+  2. Missing Zod Validation (95% confidence) - Added responseIdSchema
+  3. Missing revalidatePath (95% confidence) - Added after all mutations
+  4. Concurrent Transcription Vulnerability (90% confidence) - Atomic claim pattern
+  5. Race Condition in Retry (85% confidence) - Atomic reset pattern
+  6. Unsafe Type Casting (82% confidence) - Replaced with safe logging
+- **Learnings for future iterations:**
+  - Server actions must always authenticate user before using admin client
+  - Use atomic compare-and-swap patterns for job claiming to prevent race conditions
+  - Check both "completed" and "processing" status to prevent concurrent processing
+  - Follow established patterns in testimonial-actions.ts for server action structure
+---

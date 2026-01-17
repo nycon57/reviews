@@ -4214,6 +4214,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Next.js 16 has a known build issue with pages-manifest.json that doesn't affect TypeScript/lint
 ---
 
+## [2026-01-17] - S062: Video Upload Component (Pass 2)
+Thread:
+Run: (manual session)
+Pass: 2/3 - Quality Review
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4b6982f [Pass 2/3] fix(S062): Address code review issues in video upload component
+- Post-commit status: clean (S062 files only)
+- Skills invoked:
+  - /code-review: yes (ran full review, found 9 issues with confidence ≥80%)
+  - /vercel-react-best-practices: yes (applied rules from all 8 categories)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - src/components/video-testimonials/video-upload.tsx (updated - 105 insertions, 33 deletions)
+- Issues fixed from code review:
+  1. Memory leak: Added useEffect cleanup for previewUrl on unmount
+  2. Memory leak: Fixed duplicate URL creation in onDrop (now reuses validation URL)
+  3. Memory leak: Added 30s timeout cleanup for validateVideo temp video elements
+  4. Race condition: Added validationAbortRef to track component unmount during async validation
+  5. Missing feature: Added onCancelUpload prop and cancel button during upload (per acceptance criteria)
+  6. Wrong default: Fixed DEFAULT_MAX_FILE_SIZE from 500MB to 100MB (per acceptance criteria)
+  7. Error handling: Added .catch() for video.play() promise rejection
+  8. Error handling: Added onError handlers to both preview and uploading video elements
+  9. Wrong formats: Removed AVI/MKV from ACCEPTED_VIDEO_TYPES (spec: MP4, WebM, MOV only)
+- Vercel React best practices applied:
+  - Rule 5.5: Improved state update handling in togglePlayback (promise-based)
+  - Rule 7.4: Avoided duplicate function calls by reusing validation duration
+  - Cleanup patterns: Proper effect cleanup for all object URLs
+- **Learnings for future iterations:**
+  - Always return computed values from validation functions to avoid duplicate work
+  - Object URL memory leaks can accumulate quickly with video previews - always cleanup
+  - The 2-pass quality review system effectively catches production-ready issues
+---
+
 ## [2026-01-17] - S061: Video Recording Component (MediaRecorder API)
 Thread: 
 Run: 20260117-163446-68507 (iteration 4)

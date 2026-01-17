@@ -145,3 +145,20 @@ export {
   getTranscriptionStatus,
   type TranscriptionActionResult,
 } from "./transcription-actions";
+
+// Transcript to Review Generation
+export {
+  generateReviewFromTranscript,
+  isTranscriptionSuitableForReview,
+  type GeneratedReviewResult,
+  type TranscriptContext,
+  type ReviewGenerationError,
+} from "./transcript-to-review";
+
+// Review Generation Actions
+export {
+  generateReviewFromTestimonial,
+  retryReviewGeneration,
+  getReviewGenerationStatus,
+  type ReviewGenerationActionResult,
+} from "./review-generation-actions";

@@ -3,28 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { fadeIn } from "@/lib/motion";
 import { MobileMenu } from "./mobile-menu";
-
-interface NavLink {
-  label: string;
-  href: string;
-}
-
-const navLinks: NavLink[] = [
-  { label: "Features", href: "/features" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Find a Pro", href: "/directory" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-];
+import { MegaMenu } from "./mega-menu";
 
 export function MarketingNav() {
-  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = React.useState(false);
 
   React.useEffect(() => {
@@ -35,13 +21,6 @@ export function MarketingNav() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  const isActive = (href: string) => {
-    if (href === "/") {
-      return pathname === "/";
-    }
-    return pathname.startsWith(href);
-  };
 
   return (
     <motion.header
@@ -69,39 +48,16 @@ export function MarketingNav() {
           />
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation - Mega Menu */}
         <nav
-          className="hidden items-center gap-1 md:flex"
+          className="hidden items-center lg:flex"
           aria-label="Main navigation"
         >
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "relative px-4 py-2 text-body-sm font-medium transition-colors rounded-lg",
-                "hover:text-repwell-teal-300 hover:bg-repwell-sage-100/50",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/20",
-                isActive(link.href)
-                  ? "text-repwell-teal-300"
-                  : "text-repwell-teal-500"
-              )}
-              aria-current={isActive(link.href) ? "page" : undefined}
-            >
-              {link.label}
-              {isActive(link.href) && (
-                <motion.div
-                  layoutId="nav-indicator"
-                  className="absolute bottom-0 left-2 right-2 h-0.5 bg-repwell-teal-300 rounded-full"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                />
-              )}
-            </Link>
-          ))}
+          <MegaMenu />
         </nav>
 
         {/* Auth Buttons */}
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <Link href="/login">
             <Button variant="ghost" size="sm" className="font-medium">
               Sign In
@@ -115,7 +71,7 @@ export function MarketingNav() {
         </div>
 
         {/* Mobile Menu */}
-        <MobileMenu className="md:hidden" />
+        <MobileMenu className="lg:hidden" />
       </div>
     </motion.header>
   );

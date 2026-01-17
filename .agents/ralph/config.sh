@@ -3,6 +3,16 @@
 # Uncomment and edit as needed.
 
 PRD_PATH=".agents/tasks/prd-reviews.json"
+
+# Design system path (required for UI stories)
+DESIGN_SYSTEM_PATH="docs/design/REPWELL_DESIGN_SYSTEM"
+
+# Minimum passes per story before allowing completion
+MIN_PASSES_PER_STORY=3
+
+# Agent command - use stdin piping (no {prompt} placeholder)
+AGENT_CMD="claude -p --dangerously-skip-permissions"
+
 # PROGRESS_PATH=".ralph/progress.md"
 # GUARDRAILS_PATH=".ralph/guardrails.md"
 # ERRORS_LOG_PATH=".ralph/errors.log"

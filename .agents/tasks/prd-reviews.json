@@ -88,6 +88,11 @@
       "id": "E14",
       "name": "Billing & Subscriptions",
       "description": "Stripe-powered billing, subscription management, invoicing, and payment processing for individual and enterprise tiers"
+    },
+    {
+      "id": "E15",
+      "name": "Video Testimonials",
+      "description": "Comprehensive video testimonial capture system with browser recording, file upload, AI transcription via OpenAI Whisper, AI-generated text reviews via Gemini, customer approval workflow, and full dashboard integration"
     }
   ],
   "stories": [
@@ -1565,14 +1570,17 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "OpenAPI spec validates",
         "Playground executes requests correctly"
       ],
       "dependencies": [
         "S027"
-      ]
+      ],
+      "startedAt": "2026-01-17T20:31:28.228167+00:00",
+      "completedAt": "2026-01-17T20:35:23.826586+00:00",
+      "updatedAt": "2026-01-17T20:35:23.826462+00:00"
     },
     {
       "id": "S055",
@@ -1630,7 +1638,7 @@
         "Subscription upgrade/downgrade with prorated billing calculations",
         "Seat-based pricing for Professional tier with add/remove member billing",
         "Failed payment retry logic with dunning email sequence via Resend integration",
-        "Subscription status real-time sync: Stripe webhook → Supabase → UI refresh",
+        "Subscription status real-time sync: Stripe webhook \u2192 Supabase \u2192 UI refresh",
         "Usage metering preparation for future per-survey or per-review pricing models",
         "Billing history with downloadable PDF invoices",
         "Tax calculation integration (Stripe Tax or manual tax_rates)"
@@ -1705,10 +1713,10 @@
           "payment_methods (id, org_id, stripe_payment_method_id, type, card_brand, card_last4, is_default)"
         ],
         "auth_flow_integration": {
-          "signup": "Create Stripe customer → Store stripe_customer_id → Redirect to pricing → Checkout → Webhook confirms → Allow dashboard",
-          "login": "Fetch subscription status → Check active/trialing/past_due → Show appropriate UI/banners → Block if canceled",
-          "onboarding": "Middleware checks subscription_status → Redirect to billing if none → Complete onboarding after active",
-          "offboarding": "User clicks cancel → Confirm dialog → Call Stripe cancel → Webhook updates status → Show confirmation"
+          "signup": "Create Stripe customer \u2192 Store stripe_customer_id \u2192 Redirect to pricing \u2192 Checkout \u2192 Webhook confirms \u2192 Allow dashboard",
+          "login": "Fetch subscription status \u2192 Check active/trialing/past_due \u2192 Show appropriate UI/banners \u2192 Block if canceled",
+          "onboarding": "Middleware checks subscription_status \u2192 Redirect to billing if none \u2192 Complete onboarding after active",
+          "offboarding": "User clicks cancel \u2192 Confirm dialog \u2192 Call Stripe cancel \u2192 Webhook updates status \u2192 Show confirmation"
         },
         "file_structure": [
           "src/lib/stripe/client.ts - Stripe SDK initialization",
@@ -1770,6 +1778,612 @@
       "startedAt": "2026-01-16T05:39:18.034715+00:00",
       "completedAt": null,
       "updatedAt": "2026-01-16T05:39:18.034873+00:00"
+    },
+    {
+      "id": "S057",
+      "epic": "E15",
+      "title": "Video Testimonial Database Schema & Storage",
+      "description": "Create database schema for video testimonial system including requests, responses, and distribution queue tables. Set up Supabase storage bucket for video files with 100MB limit and appropriate MIME type restrictions.",
+      "acceptance_criteria": [
+        "video_testimonial_requests table with token, customer info, LO reference, status, timestamps",
+        "video_testimonial_responses table with video URL, transcription, AI-generated text, consent flags, approval status",
+        "video_testimonial_queue table for scheduled reminders (3-day, 7-day)",
+        "Storage bucket 'video-testimonials' with 100MB file limit",
+        "Allowed MIME types: video/mp4, video/webm, video/quicktime",
+        "RLS policies for organization-scoped access",
+        "Token generation using encode(gen_random_bytes(16), 'hex')",
+        "Foreign keys to users, organizations, loan_officers tables",
+        "Indexes on token, status, organization_id for query performance",
+        "Database types generated via npm run db:types"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "done",
+      "gates": [
+        "Migration runs successfully on Supabase",
+        "RLS policies enforce organization isolation",
+        "Storage bucket accepts video uploads up to 100MB"
+      ],
+      "dependencies": [
+        "S002"
+      ],
+      "implementation_notes": {
+        "tables": [
+          "video_testimonial_requests (id, organization_id, loan_officer_id, customer_email, customer_name, customer_phone, relationship_type, token, status, sent_at, opened_at, completed_at, expires_at, created_at, updated_at)",
+          "video_testimonial_responses (id, request_id, video_url, video_duration_seconds, transcription_text, ai_generated_review, customer_approved_text, consent_video_recording, consent_usage_rights, consent_text_generation, approval_status, approved_by, approved_at, rejection_reason, published_to_google, google_review_url, created_at, updated_at)",
+          "video_testimonial_queue (id, request_id, scheduled_for, reminder_type, status, sent_at, error_message, created_at)"
+        ],
+        "storage_policy": "Authenticated users can upload to org folder, public read for approved videos",
+        "file_path": "supabase/migrations/20260117000001_video_testimonials.sql"
+      },
+      "startedAt": "2026-01-17T20:51:50.549249+00:00",
+      "completedAt": "2026-01-17T20:55:29.910088+00:00",
+      "updatedAt": "2026-01-17T20:55:29.909966+00:00"
+    },
+    {
+      "id": "S058",
+      "epic": "E15",
+      "title": "Video Testimonial Request Creation & Queueing",
+      "description": "Build server actions for creating video testimonial requests, similar to survey distribution pattern. Implement request creation with automatic queue entry for reminder emails.",
+      "acceptance_criteria": [
+        "createVideoTestimonialRequest server action with Zod validation",
+        "Auto-generate unique token for public portal access",
+        "Queue initial email and schedule 3-day, 7-day reminders",
+        "Support single and bulk request creation",
+        "Validate customer email and required fields",
+        "Check organization subscription allows video testimonials",
+        "Record request in video_testimonial_requests table",
+        "Return request URL for immediate sharing option",
+        "Audit log entry for compliance tracking"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "done",
+      "gates": [
+        "Request creation saves to database with valid token",
+        "Queue entries created for initial + reminder emails",
+        "Bulk creation handles 50+ requests without timeout"
+      ],
+      "dependencies": [
+        "S057",
+        "S008"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/lib/video-testimonials/actions.ts - Server actions",
+          "src/lib/video-testimonials/schemas.ts - Zod validation schemas",
+          "src/lib/video-testimonials/types.ts - TypeScript interfaces"
+        ],
+        "reuse_patterns": "Mirror survey distribution createSurveyAndQueue pattern from src/lib/distribution/actions.ts"
+      },
+      "startedAt": "2026-01-17T21:12:52.898879+00:00",
+      "completedAt": "2026-01-17T21:17:18.876538+00:00",
+      "updatedAt": "2026-01-17T21:17:18.876438+00:00"
+    },
+    {
+      "id": "S059",
+      "epic": "E15",
+      "title": "Video Testimonial Email Templates",
+      "description": "Create email templates for video testimonial workflow using Resend: initial request, 3-day reminder, 7-day reminder, and completion notifications.",
+      "acceptance_criteria": [
+        "video_testimonial_invitation email template with LO photo, org branding",
+        "video_testimonial_reminder_3day template with urgency messaging",
+        "video_testimonial_reminder_7day template with final reminder",
+        "video_testimonial_received notification to LO",
+        "video_testimonial_approved notification to LO",
+        "video_testimonial_pending_approval notification to manager",
+        "All templates responsive for mobile email clients",
+        "Unsubscribe link handling",
+        "Email tracking (opens, clicks) via Resend webhooks",
+        "TypeScript interfaces for template data in email/types.ts"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "in_progress",
+      "gates": [
+        "Templates render correctly in major email clients",
+        "Links contain valid tokens",
+        "Tracking events recorded in database"
+      ],
+      "dependencies": [
+        "S007",
+        "S057"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/lib/email/templates/video-testimonial-invitation.tsx",
+          "src/lib/email/templates/video-testimonial-reminder.tsx",
+          "src/lib/email/templates/video-testimonial-received.tsx",
+          "src/lib/email/templates/video-testimonial-approved.tsx"
+        ],
+        "extend_types": "Add new template types to EmailTemplate union in src/lib/email/types.ts"
+      },
+      "startedAt": "2026-01-17T21:27:04.220435+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-17T21:27:04.220556+00:00"
+    },
+    {
+      "id": "S060",
+      "epic": "E15",
+      "title": "Public Video Testimonial Portal - Core",
+      "description": "Build the public-facing video testimonial capture page at /video-testimonial/[token] with customer info collection, consent checkboxes, and portal layout.",
+      "acceptance_criteria": [
+        "Public route at /video-testimonial/[token]",
+        "Token validation with expiration checking",
+        "Display LO info (name, photo, title) and organization branding",
+        "Customer info form (name, relationship to LO)",
+        "Explicit consent checkboxes: video recording, usage rights, AI text generation",
+        "All 3 consents required before proceeding to video capture",
+        "Mobile-responsive design (primary use case)",
+        "Loading states and error handling",
+        "Already-completed state for repeat visits",
+        "Token-expired state with appropriate messaging"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Portal accessible without authentication",
+        "Consent checkboxes block video capture until checked",
+        "Works on iOS Safari and Android Chrome"
+      ],
+      "dependencies": [
+        "S057",
+        "S006"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/app/(public)/video-testimonial/[token]/page.tsx - Server component",
+          "src/app/(public)/video-testimonial/[token]/video-testimonial-form.tsx - Client component",
+          "src/lib/video-testimonials/public-actions.ts - Public server actions"
+        ],
+        "reuse_patterns": "Mirror public survey form pattern from src/app/survey/[token]/"
+      }
+    },
+    {
+      "id": "S061",
+      "epic": "E15",
+      "title": "Video Recording Component (MediaRecorder API)",
+      "description": "Build browser-based video recording component using MediaRecorder API with 2-minute limit, preview, and re-record capabilities.",
+      "acceptance_criteria": [
+        "Request camera and microphone permissions with clear UI prompts",
+        "Live preview during recording",
+        "2-minute maximum recording duration with countdown",
+        "Recording controls: start, stop, pause/resume",
+        "Post-recording preview before submission",
+        "Re-record option to discard and try again",
+        "Recording quality settings (720p preferred, fallback to lower)",
+        "Handle permission denied gracefully with instructions",
+        "Browser compatibility: Chrome, Safari, Firefox, Edge",
+        "Mobile-first design with large touch targets"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Recording works on iOS Safari and Android Chrome",
+        "Video file under 100MB for 2-minute recording",
+        "Graceful fallback when camera unavailable"
+      ],
+      "dependencies": [
+        "S060"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/components/video-testimonials/video-recorder.tsx",
+          "src/hooks/use-media-recorder.ts"
+        ],
+        "technical_notes": "Use MediaRecorder with webm preferred, fallback to mp4. Chunk recording to avoid memory issues. Use getUserMedia with constraints for resolution."
+      }
+    },
+    {
+      "id": "S062",
+      "epic": "E15",
+      "title": "Video Upload Component",
+      "description": "Build video file upload component as alternative to browser recording with drag-and-drop, file validation, and upload progress.",
+      "acceptance_criteria": [
+        "Drag-and-drop upload zone",
+        "Click to browse file selector",
+        "Accept video/mp4, video/webm, video/quicktime",
+        "File size validation (max 100MB)",
+        "Video duration validation (max 2 minutes)",
+        "Upload progress indicator",
+        "Cancel upload capability",
+        "Video preview after upload",
+        "Error handling for invalid files",
+        "Mobile file picker support"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Upload completes to Supabase storage",
+        "Progress updates in real-time",
+        "Invalid files rejected with clear error messages"
+      ],
+      "dependencies": [
+        "S060"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/components/video-testimonials/video-uploader.tsx",
+          "src/lib/video-testimonials/upload-actions.ts"
+        ],
+        "technical_notes": "Use Supabase storage client for chunked upload. Validate duration client-side using video element loadedmetadata event."
+      }
+    },
+    {
+      "id": "S063",
+      "epic": "E15",
+      "title": "AI Video Transcription Service (OpenAI Whisper)",
+      "description": "Implement video transcription using OpenAI Whisper API. Extract audio from video, send to Whisper, store transcription result.",
+      "acceptance_criteria": [
+        "OpenAI client configured for Whisper API",
+        "Extract audio from video using ffmpeg (server-side)",
+        "Send audio to Whisper API with appropriate model (whisper-1)",
+        "Handle long audio with chunking if needed",
+        "Store transcription in video_testimonial_responses table",
+        "Error handling for transcription failures",
+        "Retry logic for API timeouts",
+        "Cost tracking for API usage",
+        "Support multiple languages (auto-detect)",
+        "Processing triggered immediately after video upload"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Transcription accuracy acceptable for clear speech",
+        "Processing completes within 60 seconds for 2-min video",
+        "API costs logged per organization"
+      ],
+      "dependencies": [
+        "S057",
+        "S019"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/lib/ai/openai-client.ts - OpenAI SDK configuration",
+          "src/lib/ai/video-transcription.ts - Transcription service",
+          "src/app/api/v1/testimonials/transcribe/route.ts - API endpoint"
+        ],
+        "technical_notes": "Use ffmpeg via @ffmpeg/ffmpeg for audio extraction. Consider edge function for heavy processing. Store audio temporarily, delete after transcription."
+      }
+    },
+    {
+      "id": "S064",
+      "epic": "E15",
+      "title": "AI Text Review Generation (Gemini)",
+      "description": "Generate polished customer review text from video transcription using Google Gemini AI, following existing AI patterns.",
+      "acceptance_criteria": [
+        "Use existing Gemini AI integration pattern",
+        "Prompt engineering for professional review generation",
+        "Generate 2-3 paragraph review from transcription",
+        "Preserve customer's key points and sentiment",
+        "Professional tone while maintaining authenticity",
+        "Handle short or unclear transcriptions gracefully",
+        "Store generated text in ai_generated_review field",
+        "Multiple generation attempts with best selection",
+        "Token usage tracking for cost management"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Generated reviews are coherent and professional",
+        "Reviews accurately reflect transcription content",
+        "Generation completes within 10 seconds"
+      ],
+      "dependencies": [
+        "S063",
+        "S019"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/lib/ai/transcript-to-review.ts",
+          "src/lib/ai/prompts/review-generation.ts"
+        ],
+        "prompt_guidelines": "Include instructions for: maintaining customer voice, highlighting specific experiences, professional formatting, appropriate length (150-300 words)"
+      }
+    },
+    {
+      "id": "S065",
+      "epic": "E15",
+      "title": "Customer Text Approval Flow",
+      "description": "Build customer-facing flow to preview, edit, and approve AI-generated review text before submission. Include option to submit to Google Reviews.",
+      "acceptance_criteria": [
+        "Display AI-generated review for customer review",
+        "Inline editing capability for customer modifications",
+        "Character count with recommended limits",
+        "Preview of final review appearance",
+        "Approve button to confirm text",
+        "Option to regenerate AI text if unsatisfied",
+        "Google review redirect option for high ratings (4-5 stars)",
+        "Rating selection if not captured earlier",
+        "Final consent confirmation before submission",
+        "Success state with thank you message"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Customer can edit and approve text",
+        "Google redirect works for eligible reviews",
+        "Approved text stored in customer_approved_text field"
+      ],
+      "dependencies": [
+        "S064",
+        "S060"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/components/video-testimonials/text-approval-step.tsx",
+          "src/lib/video-testimonials/approval-actions.ts"
+        ],
+        "flow": "Video uploaded \u2192 Processing \u2192 Transcription \u2192 AI text \u2192 Customer edits \u2192 Approval \u2192 Optional Google redirect \u2192 Thank you"
+      }
+    },
+    {
+      "id": "S066",
+      "epic": "E15",
+      "title": "Video Testimonial Request Management Dashboard",
+      "description": "Build dashboard page for managing video testimonial requests: create new requests, view request status, resend invitations, and track completion rates.",
+      "acceptance_criteria": [
+        "Dashboard page at /dashboard/video-testimonials/requests",
+        "Request creation form (single and bulk)",
+        "Request list with status, customer name, LO, sent date",
+        "Status filtering (pending, sent, opened, completed, expired)",
+        "Search by customer name or email",
+        "Resend invitation action",
+        "Cancel request action",
+        "Export requests to CSV",
+        "Pagination for large request lists",
+        "Role-based access (admins see all, LOs see their own)"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Request creation works end-to-end",
+        "Status updates reflect real-time changes",
+        "Role-based filtering enforced"
+      ],
+      "dependencies": [
+        "S058",
+        "S010"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/app/(dashboard)/dashboard/video-testimonials/requests/page.tsx",
+          "src/components/video-testimonials/request-list.tsx",
+          "src/components/video-testimonials/create-request-form.tsx"
+        ]
+      }
+    },
+    {
+      "id": "S067",
+      "epic": "E15",
+      "title": "Video Library & Playback Dashboard",
+      "description": "Build dashboard for viewing submitted video testimonials with video playback, transcription display, and metadata.",
+      "acceptance_criteria": [
+        "Dashboard page at /dashboard/video-testimonials/library",
+        "Grid view of video thumbnails with status badges",
+        "Video player modal with playback controls",
+        "Display transcription alongside video",
+        "Display AI-generated and customer-approved text",
+        "Filter by LO, status, date range, rating",
+        "Sort by date, rating, LO name",
+        "Download video option for approved testimonials",
+        "Video metadata (duration, file size, upload date)",
+        "Bulk selection for approval actions"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Videos play smoothly in dashboard",
+        "Thumbnails generate correctly",
+        "Filtering and sorting work accurately"
+      ],
+      "dependencies": [
+        "S057",
+        "S016"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/app/(dashboard)/dashboard/video-testimonials/library/page.tsx",
+          "src/components/video-testimonials/video-library-grid.tsx",
+          "src/components/video-testimonials/video-player-modal.tsx"
+        ],
+        "technical_notes": "Generate video thumbnails server-side or use video poster attribute. Consider lazy loading for large libraries."
+      }
+    },
+    {
+      "id": "S068",
+      "epic": "E15",
+      "title": "Video Testimonial Approval Workflow",
+      "description": "Implement approval workflow for video testimonials similar to review approval. Managers can approve, reject, or request changes before publishing.",
+      "acceptance_criteria": [
+        "Approval queue at /dashboard/video-testimonials/approval",
+        "Video preview with transcription and AI text",
+        "Approve action to publish testimonial",
+        "Reject action with required reason",
+        "Request changes action with notes to LO",
+        "Auto-approval rules (optional, based on rating threshold)",
+        "Notification to LO on approval/rejection",
+        "Audit trail for compliance",
+        "Bulk approval for multiple videos",
+        "Manager can edit AI-generated text before approval"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Approval workflow functions end-to-end",
+        "Only approved videos visible publicly",
+        "Notifications sent on status change"
+      ],
+      "dependencies": [
+        "S067",
+        "S009"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/app/(dashboard)/dashboard/video-testimonials/approval/page.tsx",
+          "src/components/video-testimonials/approval-queue.tsx",
+          "src/lib/video-testimonials/approval-actions.ts"
+        ],
+        "reuse_patterns": "Mirror review approval workflow from src/lib/reviews/approval-actions.ts"
+      }
+    },
+    {
+      "id": "S069",
+      "epic": "E15",
+      "title": "Video Testimonial Analytics Dashboard",
+      "description": "Build analytics dashboard for video testimonial funnel: requests sent, opened, completed, approved, published. Include conversion rates and trends.",
+      "acceptance_criteria": [
+        "Analytics page at /dashboard/video-testimonials/analytics",
+        "Funnel visualization: Sent \u2192 Opened \u2192 Completed \u2192 Approved \u2192 Published",
+        "Conversion rates at each funnel stage",
+        "Trend charts over time (daily, weekly, monthly)",
+        "Top performing LOs by completion rate",
+        "Average video duration statistics",
+        "AI text approval rate (auto vs edited)",
+        "Google review conversion tracking",
+        "Date range filtering",
+        "Export analytics to CSV/PDF"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Funnel metrics calculate correctly",
+        "Charts render performantly with large datasets",
+        "Export includes all visible data"
+      ],
+      "dependencies": [
+        "S067",
+        "S012"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/app/(dashboard)/dashboard/video-testimonials/analytics/page.tsx",
+          "src/components/video-testimonials/analytics-funnel.tsx",
+          "src/lib/video-testimonials/analytics-queries.ts"
+        ],
+        "reuse_patterns": "Leverage existing analytics engine from S012"
+      }
+    },
+    {
+      "id": "S070",
+      "epic": "E15",
+      "title": "Video Testimonial Distribution Queue & Reminders",
+      "description": "Implement background job system for video testimonial email distribution with automatic reminders at 3-day and 7-day intervals.",
+      "acceptance_criteria": [
+        "Cron job or scheduled function for queue processing",
+        "Process pending email sends from queue",
+        "Schedule 3-day reminder for unopened requests",
+        "Schedule 7-day final reminder for still-unopened requests",
+        "Track email delivery status via Resend webhooks",
+        "Update request status on email events",
+        "Rate limiting to avoid email provider throttling",
+        "Error handling and retry logic",
+        "Admin visibility into queue status",
+        "Ability to pause/resume queue processing"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Initial emails send within 5 minutes of request creation",
+        "Reminders send at correct intervals",
+        "Failed sends retry appropriately"
+      ],
+      "dependencies": [
+        "S058",
+        "S059",
+        "S008"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/app/api/cron/video-testimonial-queue/route.ts",
+          "src/lib/video-testimonials/queue-processor.ts"
+        ],
+        "reuse_patterns": "Mirror survey distribution queue from src/app/api/cron/process-survey-queue/"
+      }
+    },
+    {
+      "id": "S071",
+      "epic": "E15",
+      "title": "Video Testimonial Social Publishing",
+      "description": "Enable publishing approved video testimonials to social media platforms and embedding on websites.",
+      "acceptance_criteria": [
+        "Publish to connected social platforms (Facebook, LinkedIn, Twitter)",
+        "Generate social-friendly video clips (optional trim)",
+        "Social post templates with customizable text",
+        "Embed code generation for websites",
+        "Public video testimonial page at /testimonials/video/[id]",
+        "SEO metadata and Open Graph tags",
+        "Video schema.org structured data",
+        "Share link generation",
+        "Track social engagement metrics"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Social posts publish successfully",
+        "Embed codes work on external sites",
+        "Public pages have proper SEO"
+      ],
+      "dependencies": [
+        "S068",
+        "S039"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/lib/video-testimonials/social-publish.ts",
+          "src/app/(public)/testimonials/video/[id]/page.tsx",
+          "src/components/video-testimonials/social-share-modal.tsx"
+        ],
+        "reuse_patterns": "Leverage existing social publishing from S039"
+      }
+    },
+    {
+      "id": "S072",
+      "epic": "E15",
+      "title": "Video Testimonial Mobile Dashboard",
+      "description": "Add video testimonial management capabilities to mobile app: send requests, view submissions, approve videos.",
+      "acceptance_criteria": [
+        "Video testimonial tab in mobile navigation",
+        "Request creation form optimized for mobile",
+        "Video playback in mobile app",
+        "Push notifications for new video submissions",
+        "Quick approve/reject actions",
+        "View transcription and AI text",
+        "Share approved videos via mobile share sheet",
+        "Offline support for viewing cached content"
+      ],
+      "priority": "P3",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Video playback smooth on mobile devices",
+        "Push notifications deliver reliably",
+        "Mobile UX matches iOS/Android conventions"
+      ],
+      "dependencies": [
+        "S067",
+        "S023",
+        "S024"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "mobile/src/screens/video-testimonials/",
+          "mobile/src/components/video-testimonials/"
+        ],
+        "reuse_patterns": "Mirror mobile dashboard patterns from S024"
+      }
     }
   ],
   "phases": [
@@ -2008,6 +2622,46 @@
           "S056": "stripe plugin (Create Stripe products/prices), feature-dev:code-architect (Payment architecture), /frontend-design (Pricing/billing UI)"
         },
         "notes": "Critical revenue infrastructure. Test thoroughly in Stripe test mode. Security review mandatory for webhook handlers."
+      }
+    },
+    {
+      "id": "Phase10",
+      "name": "Video Testimonials",
+      "description": "Video testimonial capture system with browser recording, file upload, AI transcription (OpenAI Whisper), AI text generation (Gemini), customer approval flow, and full dashboard integration",
+      "stories": [
+        "S057",
+        "S058",
+        "S059",
+        "S060",
+        "S061",
+        "S062",
+        "S063",
+        "S064",
+        "S065",
+        "S066",
+        "S067",
+        "S068",
+        "S069",
+        "S070",
+        "S071",
+        "S072"
+      ],
+      "target_completion": "Phase 10 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/frontend-design",
+          "/code-review"
+        ],
+        "recommended_for": {
+          "S057": "Supabase plugin (apply_migration for schema)",
+          "S060": "/frontend-design (Public portal needs polished mobile-first UI)",
+          "S061": "feature-dev:code-architect (MediaRecorder complexity)",
+          "S063": "feature-dev:code-architect (Whisper integration architecture)",
+          "S066": "/frontend-design (Dashboard request management UI)",
+          "S067": "/frontend-design (Video library grid layout)"
+        },
+        "notes": "Video feature is highly visible to customers. Prioritize mobile UX, fast AI processing, and intuitive approval flow. Security review required for public portal and AI integrations."
       }
     }
   ],

@@ -48,9 +48,9 @@ const FEATURE_TABS: FeatureTab[] = [
     title: "Automated Review Collection",
     tabName: "Reviews",
     summary:
-      "Perfectly-timed surveys sent when loans close, with smart reminders that maximize response rates without annoying clients.",
+      "Perfectly-timed surveys sent when transactions complete, with smart reminders that maximize response rates without annoying clients.",
     bulletPoints: [
-      "Trigger surveys at optimal moments post-closing",
+      "Trigger surveys at optimal moments post-service",
       "Smart follow-up sequences that boost responses",
       "Customizable templates for your brand voice",
     ],
@@ -79,7 +79,7 @@ const FEATURE_TABS: FeatureTab[] = [
     bulletPoints: [
       "Live NPS tracking across all branches",
       "Automated weekly and monthly reports",
-      "Compare performance across loan officers",
+      "Compare performance across team members",
     ],
     layoutVariant: "floating",
     images: [
@@ -250,20 +250,20 @@ function FeatureImages({ images, variant }: ImagesProps) {
   ];
 
   switch (variant) {
-    // Single full-bleed image on the right - fixed dimensions
+    // Single full-bleed image on the right - fills container
     case "single":
       return (
         <motion.div
           variants={imageVariants}
-          className="relative flex items-center justify-center h-full py-8 lg:py-0"
+          className="relative h-full min-h-[400px] lg:min-h-[620px] xl:min-h-[700px]"
         >
-          <div className="relative w-full max-w-[600px] lg:max-w-none lg:w-[500px] xl:w-[560px] aspect-[3/4] overflow-hidden rounded-2xl lg:rounded-l-2xl lg:rounded-r-none shadow-2xl">
+          <div className="absolute inset-0 overflow-hidden rounded-2xl lg:rounded-l-2xl lg:rounded-r-none shadow-2xl">
             <Image
               src={images[0].src}
               alt={images[0].alt}
               fill
               className="object-cover"
-              sizes="(max-width: 1024px) 600px, 560px"
+              sizes="(max-width: 1024px) 100vw, 50vw"
               priority
             />
           </div>

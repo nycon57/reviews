@@ -4,7 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import * as LucideIcons from "lucide-react";
+import { Menu, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,22 +17,80 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-
-interface NavLink {
-  label: string;
-  href: string;
-}
-
-const navLinks: NavLink[] = [
-  { label: "Features", href: "/features" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Find a Pro", href: "/directory" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-];
+import {
+  featureNavItems,
+  solutionNavItems,
+  industryNavItems,
+} from "@/config/navigation";
 
 interface MobileMenuProps {
   className?: string;
+}
+
+// Dynamic icon component
+function DynamicIcon({
+  name,
+  className,
+}: {
+  name: string;
+  className?: string;
+}) {
+  const IconComponent = (
+    LucideIcons as unknown as Record<
+      string,
+      React.ComponentType<{ className?: string }>
+    >
+  )[name];
+  if (!IconComponent) return null;
+  return <IconComponent className={className} />;
+}
+
+// Accordion item component
+function MobileAccordion({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = React.useState(defaultOpen);
+
+  return (
+    <div className="border-b border-border/50">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "flex w-full items-center justify-between px-3 py-3 text-sm font-medium transition-colors",
+          "hover:bg-accent/50",
+          isOpen ? "text-foreground" : "text-muted-foreground"
+        )}
+        aria-expanded={isOpen}
+      >
+        {title}
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pb-3 pl-3">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 export function MobileMenu({ className }: MobileMenuProps) {
@@ -48,6 +108,12 @@ export function MobileMenu({ className }: MobileMenuProps) {
     setOpen(false);
   };
 
+  const linkStyles = cn(
+    "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+    "hover:bg-accent hover:text-accent-foreground",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+  );
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -60,7 +126,7 @@ export function MobileMenu({ className }: MobileMenuProps) {
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-72 p-0">
+      <SheetContent side="right" className="w-80 overflow-y-auto p-0">
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle className="flex items-center">
             <Image
@@ -72,33 +138,140 @@ export function MobileMenu({ className }: MobileMenuProps) {
             />
           </SheetTitle>
         </SheetHeader>
-        <nav
-          className="flex flex-col gap-1 p-4"
-          aria-label="Mobile navigation"
-        >
-          {navLinks.map((link) => (
+
+        <nav className="flex flex-col" aria-label="Mobile navigation">
+          {/* Features Accordion */}
+          <MobileAccordion title="Features">
+            <div className="flex flex-col gap-1">
+              {featureNavItems.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={item.href}
+                  onClick={handleNavClick}
+                  className={cn(
+                    linkStyles,
+                    isActive(item.href) && "bg-accent text-accent-foreground"
+                  )}
+                >
+                  <DynamicIcon
+                    name={item.icon}
+                    className="h-4 w-4 text-primary"
+                  />
+                  <span>{item.title}</span>
+                </Link>
+              ))}
+              <Separator className="my-2" />
+              <Link
+                href="/features"
+                onClick={handleNavClick}
+                className={cn(linkStyles, "text-primary font-medium")}
+              >
+                View All Features
+              </Link>
+            </div>
+          </MobileAccordion>
+
+          {/* Solutions Accordion */}
+          <MobileAccordion title="Solutions">
+            <div className="flex flex-col gap-1">
+              {solutionNavItems.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={item.href}
+                  onClick={handleNavClick}
+                  className={cn(
+                    linkStyles,
+                    isActive(item.href) && "bg-accent text-accent-foreground"
+                  )}
+                >
+                  <DynamicIcon
+                    name={item.icon}
+                    className="h-4 w-4 text-primary"
+                  />
+                  <span>{item.title}</span>
+                </Link>
+              ))}
+              <Separator className="my-2" />
+              <Link
+                href="/contact?demo=true"
+                onClick={handleNavClick}
+                className={cn(linkStyles, "text-primary font-medium")}
+              >
+                Book a Demo
+              </Link>
+            </div>
+          </MobileAccordion>
+
+          {/* Industries Accordion */}
+          <MobileAccordion title="Industries">
+            <div className="grid grid-cols-2 gap-1">
+              {industryNavItems.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={item.href}
+                  onClick={handleNavClick}
+                  className={cn(
+                    linkStyles,
+                    "text-xs",
+                    isActive(item.href) && "bg-accent text-accent-foreground"
+                  )}
+                >
+                  <DynamicIcon
+                    name={item.icon}
+                    className="h-3.5 w-3.5 text-primary"
+                  />
+                  <span>{item.title}</span>
+                </Link>
+              ))}
+            </div>
+          </MobileAccordion>
+
+          {/* Direct Links */}
+          <div className="flex flex-col gap-1 border-b border-border/50 p-3">
             <Link
-              key={link.href}
-              href={link.href}
+              href="/pricing"
               onClick={handleNavClick}
               className={cn(
-                "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                "hover:bg-accent hover:text-accent-foreground",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                isActive(link.href)
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground"
+                linkStyles,
+                isActive("/pricing") && "bg-accent text-accent-foreground"
               )}
-              aria-current={isActive(link.href) ? "page" : undefined}
             >
-              {link.label}
+              Pricing
             </Link>
-          ))}
-
-          <Separator className="my-3" />
+            <Link
+              href="/about"
+              onClick={handleNavClick}
+              className={cn(
+                linkStyles,
+                isActive("/about") && "bg-accent text-accent-foreground"
+              )}
+            >
+              About
+            </Link>
+            <Link
+              href="/blog"
+              onClick={handleNavClick}
+              className={cn(
+                linkStyles,
+                isActive("/blog") && "bg-accent text-accent-foreground"
+              )}
+            >
+              Blog
+            </Link>
+            <Link
+              href="/contact"
+              onClick={handleNavClick}
+              className={cn(
+                linkStyles,
+                isActive("/contact") && "bg-accent text-accent-foreground"
+              )}
+            >
+              Contact
+            </Link>
+          </div>
 
           {/* Auth Links */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 p-4">
             <Link href="/login" onClick={handleNavClick}>
               <Button variant="outline" className="w-full">
                 Sign In

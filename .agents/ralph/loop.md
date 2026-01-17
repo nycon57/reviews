@@ -3,17 +3,30 @@
 ## Context
 You are an autonomous coding agent working on ReviewHub, an internal Customer Experience & Review Management Platform. Your goal is to complete one story per iteration following the PRD specification.
 
+## Multi-Pass Architecture
+
+Ralph uses a **3-pass minimum** per story for iterative quality improvement:
+
+| Pass | Focus | Key Skills | Commit Prefix |
+|------|-------|------------|---------------|
+| 1 | Implementation | `/feature-dev`, design system | `[Pass 1/3]` |
+| 2 | Quality Review | `/code-review`, `/vercel-react-best-practices` | `[Pass 2/3]` |
+| 3 | Polish & Finalize | `/code-simplifier`, `/frontend-design`, browser test | `[Pass 3/3]` |
+
+**Important**: Stories do NOT emit `<promise>COMPLETE</promise>` until Pass 3 verification passes.
+
 ## Your Task This Iteration
 
 1. **Read the PRD**: Study `.agents/tasks/prd-reviews.json` to understand the full project scope
 2. **Check Progress**: Review `.ralph/progress.md` to see what's been completed
-3. **Select Story**: Choose the next `open` story that has all dependencies completed
-4. **Determine Phase & Load Plugins**: Based on the story's phase, load the appropriate plugins (see Plugin Strategy below)
-5. **Implement**: Complete the story following acceptance criteria
-6. **Test**: Run gate checks (`npm run build && npm run lint`)
-7. **Simplify**: After implementation, run `/code-simplifier` to ensure code quality
-8. **Commit**: Commit your changes with a descriptive message
-9. **Update Status**: Mark the story as `done` in progress tracking
+3. **Determine Pass**: Count prior entries for current story (0=Pass 1, 1=Pass 2, 2+=Pass 3)
+4. **Select Story**: Choose the next `open` story that has all dependencies completed
+5. **Determine Phase & Load Plugins**: Based on the story's phase, load the appropriate plugins (see Plugin Strategy below)
+6. **Implement/Review/Polish**: Complete pass-specific tasks
+7. **Test**: Run gate checks (`npm run build && npm run lint`)
+8. **Run Required Skills**: Based on pass number (see PROMPT_build.md)
+9. **Commit**: Commit with pass prefix (e.g., `[Pass 1/3] feat: ...`)
+10. **Update Status**: Mark story `done` ONLY after Pass 3 completes
 
 ## Plugin Strategy by Phase
 
@@ -63,6 +76,27 @@ You are an autonomous coding agent working on ReviewHub, an internal Customer Ex
 - S023 (Expo Setup) establishes mobile patterns; use `feature-dev:code-architect`
 - For S027 (Public API), design for extensibility and versioning from the start
 - S029 (Embeddable Widget) must be lightweight; target < 50KB bundle size
+
+### Phase 10: Video Testimonials Epic (E15) - Stories S050-S059
+**Focus**: Video recording, processing, and testimonial management
+**Required Plugins** (ALL stories):
+- `/feature-dev` - ALWAYS run at start for architecture planning
+- `/vercel-react-best-practices` - ALWAYS run for React component optimization
+- `/frontend-design` - For video player UI, recording interface, gallery components
+- `/code-review` - Run during Pass 2 for quality assurance
+- `/code-simplifier` - Run during Pass 3 for clean, maintainable code
+
+**Mandatory Requirements**:
+- **Design System**: Read `docs/design/REPWELL_DESIGN_SYSTEM` BEFORE any UI work
+- **React Patterns**: All components must follow Vercel React best practices
+- **3-Pass Minimum**: No story completes until Pass 3 verification passes
+
+**Technical Guidelines**:
+- Use native MediaRecorder API for video capture
+- Implement proper loading/processing states for video uploads
+- Ensure mobile-first responsive design for recording UI
+- Apply accessibility standards for video controls (WCAG 2.1 AA)
+- Use ShadCN components as foundation, style per design system
 
 ## Implementation Guidelines
 

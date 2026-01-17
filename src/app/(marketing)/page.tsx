@@ -16,15 +16,14 @@ export default function HomePage() {
     <div className="bg-background">
       {/* Section 1: Floating Avatars Hero */}
       <FloatingAvatarsHero
-        badge="Trusted by 500+ mortgage professionals"
+        badge="Trusted by 500+ service professionals"
         title={
-          <>
-            Build Your Reputation,
-            <br />
-            <span className="text-repwell-teal-300">One Review at a Time</span>
-          </>
+          <span className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl block">
+            <span className="text-repwell-teal-400 block">Reputation</span>
+            <span className="text-repwell-sage-200 block">Done Well</span>
+          </span>
         }
-        description="Collect reviews, track satisfaction metrics, and gain AI-powered insights to deliver exceptional customer experiences. Built for mortgage professionals."
+        description="Collect reviews, track satisfaction metrics, and gain AI-powered insights to deliver exceptional customer experiences. Built for client-facing professionals."
         cta={[
           { label: "Start Free Trial", href: "/signup", variant: "default" },
           { label: "Watch Demo", href: "/demo", variant: "outline" },
@@ -59,7 +58,7 @@ export default function HomePage() {
       <VideoSection
         badge="Product Demo"
         heading="See RepWell in Action"
-        subheading="Watch how leading mortgage companies use RepWell to transform their review collection and reputation management."
+        subheading="Watch how leading service companies use RepWell to transform their review collection and reputation management."
         ctaText="Schedule a Live Demo"
         ctaHref="/demo"
       />
@@ -77,8 +76,8 @@ export default function HomePage() {
 
       {/* Section 9: Testimonial Carousel */}
       <TestimonialCarousel
-        badge="Trusted by 500+ mortgage professionals"
-        heading="Trusted by Mortgage Professionals"
+        badge="Trusted by 500+ service professionals"
+        heading="Trusted by Industry Leaders"
         subheading="See what our customers have to say about RepWell."
       />
 

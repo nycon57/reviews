@@ -17,6 +17,43 @@ import type {
 } from "./types";
 import { emailConfig } from "./client";
 
+// ============================================================================
+// Security Helper Functions
+// ============================================================================
+
+// HTML escape function to prevent XSS attacks
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// URL validation function to prevent javascript: and data: URI injection
+function sanitizeUrl(url: string): string {
+  const allowedProtocols = ["http:", "https:", "mailto:"];
+  try {
+    const parsed = new URL(url);
+    if (!allowedProtocols.includes(parsed.protocol)) {
+      return "#"; // Return safe fallback
+    }
+    return url;
+  } catch {
+    return "#"; // Invalid URL, return safe fallback
+  }
+}
+
+// Subject line sanitization to prevent email header injection
+function sanitizeSubject(subject: string): string {
+  return subject.replace(/[\r\n]/g, "");
+}
+
+// ============================================================================
+// Display Helper Functions
+// ============================================================================
+
 // Helper to generate star rating HTML
 function generateStarRating(rating: number): string {
   const fullStars = Math.floor(rating);
@@ -824,32 +861,53 @@ export function getVideoTestimonialInvitationEmail(
   subject: string;
   html: string;
 } {
-  const subject = `${data.organizationName} - Share a video testimonial with ${data.loanOfficerName}`;
+  // Escape user-provided data to prevent XSS
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeTransactionType = data.transactionType
+    ? escapeHtml(data.transactionType)
+    : null;
+  const safePromptText = data.promptText ? escapeHtml(data.promptText) : null;
 
-  const logoSection = data.organizationLogoUrl
-    ? `<img src="${data.organizationLogoUrl}" alt="${data.organizationName}" style="max-height: 48px; max-width: 200px;">`
-    : `<span style="font-size: 24px; font-weight: bold; color: #18181b;">${data.organizationName}</span>`;
+  // Sanitize subject to prevent header injection
+  const subject = sanitizeSubject(
+    `${data.organizationName} - Share a video testimonial with ${data.loanOfficerName}`
+  );
 
-  const photoSection = data.loanOfficerPhotoUrl
-    ? `<img src="${data.loanOfficerPhotoUrl}" alt="${data.loanOfficerName}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">`
-    : `<div style="width: 80px; height: 80px; border-radius: 50%; background-color: #e4e4e7; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; color: #71717a;">${data.loanOfficerName.charAt(0)}</div>`;
+  // Sanitize URLs to prevent javascript: URI injection
+  const safeLogoUrl = data.organizationLogoUrl
+    ? sanitizeUrl(data.organizationLogoUrl)
+    : null;
+  const safePhotoUrl = data.loanOfficerPhotoUrl
+    ? sanitizeUrl(data.loanOfficerPhotoUrl)
+    : null;
+  const safeRequestUrl = sanitizeUrl(data.requestUrl);
 
-  const transactionText = data.transactionType
-    ? `for your recent ${data.transactionType}`
+  const logoSection = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="${safeOrgName}" style="max-height: 48px; max-width: 200px;">`
+    : `<span style="font-size: 24px; font-weight: bold; color: #18181b;">${safeOrgName}</span>`;
+
+  const photoSection = safePhotoUrl
+    ? `<img src="${safePhotoUrl}" alt="${safeLOName}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">`
+    : `<div style="width: 80px; height: 80px; border-radius: 50%; background-color: #e4e4e7; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; color: #71717a;">${escapeHtml(data.loanOfficerName.charAt(0))}</div>`;
+
+  const transactionText = safeTransactionType
+    ? `for your recent ${safeTransactionType}`
     : "for your recent transaction";
 
   const durationText = data.maxDurationSeconds
     ? `(up to ${formatDuration(data.maxDurationSeconds)})`
     : "(up to 2 minutes)";
 
-  const promptSection = data.promptText
+  const promptSection = safePromptText
     ? `
         <div style="background-color: #f4f4f5; border-radius: 8px; padding: 16px; margin: 24px 0;">
           <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase;">
             Suggested Topic
           </p>
           <p style="margin: 0; font-size: 14px; color: #52525b;">
-            ${data.promptText}
+            ${safePromptText}
           </p>
         </div>
       `
@@ -869,10 +927,10 @@ export function getVideoTestimonialInvitationEmail(
           ${photoSection}
         </div>
         <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          Hi ${data.customerName},
+          Hi ${safeCustomerName},
         </h1>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          Thank you ${transactionText} with ${data.loanOfficerName}. We'd love for you to share a short video testimonial about your experience!
+          Thank you ${transactionText} with ${safeLOName}. We'd love for you to share a short video testimonial about your experience!
         </p>
 
         <div style="background-color: #eff6ff; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
@@ -885,7 +943,7 @@ export function getVideoTestimonialInvitationEmail(
         ${promptSection}
 
         <div style="text-align: center; margin-top: 32px;">
-          <a href="${data.requestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+          <a href="${safeRequestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             Record Video Testimonial
           </a>
         </div>
@@ -909,23 +967,34 @@ export function getVideoTestimonialReminder3DayEmail(
   subject: string;
   html: string;
 } {
-  const subject = `Reminder: Share a video testimonial with ${data.loanOfficerName}`;
+  // Escape user-provided data to prevent XSS
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+
+  // Sanitize subject to prevent header injection
+  const subject = sanitizeSubject(
+    `Reminder: Share a video testimonial with ${data.loanOfficerName}`
+  );
+
+  // Sanitize URL to prevent javascript: URI injection
+  const safeRequestUrl = sanitizeUrl(data.requestUrl);
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
   const content = `
     <tr>
       <td style="padding: 32px; text-align: center; background-color: #fafafa; border-bottom: 1px solid #e4e4e7;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">${data.organizationName}</span>
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">${safeOrgName}</span>
       </td>
     </tr>
     <tr>
       <td style="padding: 40px 32px;">
         <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          Hi ${data.customerName},
+          Hi ${safeCustomerName},
         </h1>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          We noticed you haven't had a chance to share your video testimonial about your experience with ${data.loanOfficerName} yet.
+          We noticed you haven't had a chance to share your video testimonial about your experience with ${safeLOName} yet.
         </p>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
           Your story matters! A quick video testimonial takes less than 2 minutes and helps others make informed decisions.
@@ -938,7 +1007,7 @@ export function getVideoTestimonialReminder3DayEmail(
         </div>
 
         <div style="text-align: center; margin-top: 32px;">
-          <a href="${data.requestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+          <a href="${safeRequestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             Record Your Video
           </a>
         </div>
@@ -959,14 +1028,23 @@ export function getVideoTestimonialReminder7DayEmail(
   subject: string;
   html: string;
 } {
-  const subject = `Final reminder: Share your video testimonial`;
+  // Escape user-provided data to prevent XSS
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+
+  // Sanitize subject to prevent header injection
+  const subject = sanitizeSubject(`Final reminder: Share your video testimonial`);
+
+  // Sanitize URL to prevent javascript: URI injection
+  const safeRequestUrl = sanitizeUrl(data.requestUrl);
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
   const content = `
     <tr>
       <td style="padding: 32px; text-align: center; background-color: #fef2f2; border-bottom: 1px solid #fecaca;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">${data.organizationName}</span>
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">${safeOrgName}</span>
       </td>
     </tr>
     <tr>
@@ -977,10 +1055,10 @@ export function getVideoTestimonialReminder7DayEmail(
           </span>
         </div>
         <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          Hi ${data.customerName},
+          Hi ${safeCustomerName},
         </h1>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          This is your last chance to share a video testimonial about your experience with ${data.loanOfficerName}.
+          This is your last chance to share a video testimonial about your experience with ${safeLOName}.
         </p>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
           We value your feedback and would really appreciate hearing from you before this invitation expires.
@@ -994,7 +1072,7 @@ export function getVideoTestimonialReminder7DayEmail(
         </div>
 
         <div style="text-align: center; margin-top: 32px;">
-          <a href="${data.requestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+          <a href="${safeRequestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             Record Video Now
           </a>
         </div>
@@ -1015,7 +1093,20 @@ export function getVideoTestimonialReceivedEmail(
   subject: string;
   html: string;
 } {
-  const subject = `New video testimonial from ${data.customerName}`;
+  // Escape user-provided data to prevent XSS
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeSubmittedAt = escapeHtml(data.submittedAt);
+
+  // Sanitize subject to prevent header injection
+  const subject = sanitizeSubject(
+    `New video testimonial from ${data.customerName}`
+  );
+
+  // Sanitize URL and include testimonialId for direct navigation
+  const safeDashboardUrl = sanitizeUrl(
+    `${data.dashboardUrl}/testimonials/${data.testimonialId}`
+  );
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
@@ -1037,15 +1128,15 @@ export function getVideoTestimonialReceivedEmail(
           </span>
         </div>
         <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          Great News, ${data.loanOfficerName}!
+          Great News, ${safeLOName}!
         </h1>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          ${data.customerName} has submitted a video testimonial about their experience with you.
+          ${safeCustomerName} has submitted a video testimonial about their experience with you.
         </p>
 
         <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
           <p style="margin: 0 0 8px 0; font-size: 14px; color: #71717a;">
-            Submitted on ${data.submittedAt}
+            Submitted on ${safeSubmittedAt}
           </p>
           ${durationText ? `<p style="margin: 0; font-size: 14px; color: #71717a;">${durationText}</p>` : ""}
         </div>
@@ -1055,7 +1146,7 @@ export function getVideoTestimonialReceivedEmail(
         </p>
 
         <div style="text-align: center;">
-          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+          <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             View in Dashboard
           </a>
         </div>
@@ -1076,7 +1167,20 @@ export function getVideoTestimonialApprovedEmail(
   subject: string;
   html: string;
 } {
-  const subject = `Your video testimonial from ${data.customerName} is approved!`;
+  // Escape user-provided data to prevent XSS
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeApprovedAt = escapeHtml(data.approvedAt);
+
+  // Sanitize subject to prevent header injection
+  const subject = sanitizeSubject(
+    `Your video testimonial from ${data.customerName} is approved!`
+  );
+
+  // Sanitize URL and include testimonialId for direct navigation
+  const safeDashboardUrl = sanitizeUrl(
+    `${data.dashboardUrl}/testimonials/${data.testimonialId}`
+  );
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
@@ -1094,15 +1198,15 @@ export function getVideoTestimonialApprovedEmail(
           </span>
         </div>
         <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          Great News, ${data.loanOfficerName}!
+          Great News, ${safeLOName}!
         </h1>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          The video testimonial from ${data.customerName} has been approved and is now available in your library.
+          The video testimonial from ${safeCustomerName} has been approved and is now available in your library.
         </p>
 
         <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
           <p style="margin: 0; font-size: 14px; color: #71717a;">
-            Approved on ${data.approvedAt}
+            Approved on ${safeApprovedAt}
           </p>
         </div>
 
@@ -1111,7 +1215,7 @@ export function getVideoTestimonialApprovedEmail(
         </p>
 
         <div style="text-align: center;">
-          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #16a34a; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+          <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #16a34a; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             View & Share
           </a>
         </div>
@@ -1132,7 +1236,21 @@ export function getVideoTestimonialPendingApprovalEmail(
   subject: string;
   html: string;
 } {
-  const subject = `Video Testimonial Pending Approval: ${data.customerName}`;
+  // Escape user-provided data to prevent XSS
+  const safeManagerName = escapeHtml(data.managerName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeSubmittedAt = escapeHtml(data.submittedAt);
+
+  // Sanitize subject to prevent header injection
+  const subject = sanitizeSubject(
+    `Video Testimonial Pending Approval: ${data.customerName}`
+  );
+
+  // Sanitize URL and include testimonialId for direct navigation
+  const safeApprovalUrl = sanitizeUrl(
+    `${data.approvalQueueUrl}?testimonialId=${data.testimonialId}`
+  );
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
@@ -1155,7 +1273,7 @@ export function getVideoTestimonialPendingApprovalEmail(
           New Video Testimonial Awaiting Approval
         </h1>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          Hi ${data.managerName}, a new video testimonial for ${data.loanOfficerName} requires your review and approval.
+          Hi ${safeManagerName}, a new video testimonial for ${safeLOName} requires your review and approval.
         </p>
 
         <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
@@ -1163,19 +1281,19 @@ export function getVideoTestimonialPendingApprovalEmail(
             <tr>
               <td style="padding: 8px 0;">
                 <span style="font-size: 14px; color: #71717a;">Customer:</span>
-                <span style="font-size: 14px; color: #18181b; font-weight: 600; float: right;">${data.customerName}</span>
+                <span style="font-size: 14px; color: #18181b; font-weight: 600; float: right;">${safeCustomerName}</span>
               </td>
             </tr>
             <tr>
               <td style="padding: 8px 0; border-top: 1px solid #e4e4e7;">
                 <span style="font-size: 14px; color: #71717a;">Loan Officer:</span>
-                <span style="font-size: 14px; color: #18181b; font-weight: 600; float: right;">${data.loanOfficerName}</span>
+                <span style="font-size: 14px; color: #18181b; font-weight: 600; float: right;">${safeLOName}</span>
               </td>
             </tr>
             <tr>
               <td style="padding: 8px 0; border-top: 1px solid #e4e4e7;">
                 <span style="font-size: 14px; color: #71717a;">Submitted:</span>
-                <span style="font-size: 14px; color: #18181b; float: right;">${data.submittedAt}</span>
+                <span style="font-size: 14px; color: #18181b; float: right;">${safeSubmittedAt}</span>
               </td>
             </tr>
             ${
@@ -1192,7 +1310,7 @@ export function getVideoTestimonialPendingApprovalEmail(
         </div>
 
         <div style="text-align: center;">
-          <a href="${data.approvalQueueUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+          <a href="${safeApprovalUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
             Review &amp; Approve
           </a>
         </div>

@@ -1,11 +1,7 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import { Rss } from "lucide-react";
-import Link from "next/link";
 import { getAllPosts, getFeaturedPosts } from "@/lib/blog";
 import { BlogCategory } from "@/types/blog";
-import { Button } from "@/components/ui/button";
-import { HeroSection } from "@/components/marketing/hero-section";
 import { BlogArchiveClient } from "./blog-archive-client";
 
 export const metadata: Metadata = {
@@ -49,52 +45,46 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     : allPosts;
 
   return (
-    <>
-      <HeroSection
-        title="RepWell Blog"
-        description="Insights on customer experience, review management, and AI-powered analytics for mortgage professionals."
-        cta={[]}
-        compact
+    <Suspense fallback={<BlogArchiveSkeleton />}>
+      <BlogArchiveClient
+        posts={filteredPosts}
+        featuredPosts={featuredPosts}
+        currentCategory={params.category || null}
       />
-
-      <div className="container mx-auto px-4 py-12">
-        {/* RSS Feed Link */}
-        <div className="flex justify-end mb-6">
-          <Link href="/blog/rss.xml" target="_blank">
-            <Button variant="outline" size="sm" className="gap-2">
-              <Rss className="h-4 w-4" />
-              RSS Feed
-            </Button>
-          </Link>
-        </div>
-
-        <Suspense fallback={<BlogArchiveSkeleton />}>
-          <BlogArchiveClient
-            posts={filteredPosts}
-            featuredPosts={featuredPosts}
-            currentCategory={params.category || null}
-          />
-        </Suspense>
-      </div>
-    </>
+    </Suspense>
   );
 }
 
 function BlogArchiveSkeleton() {
   return (
-    <div className="space-y-8">
-      <div className="flex gap-2 overflow-hidden">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className="h-9 w-24 animate-pulse rounded-md bg-muted"
-          />
-        ))}
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-64 animate-pulse rounded-lg bg-muted" />
-        ))}
+    <div className="py-16 md:py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Hero skeleton */}
+        <div className="text-center max-w-3xl mx-auto mb-12">
+          <div className="h-6 w-24 animate-pulse rounded-full bg-repwell-sage-100 mx-auto mb-4" />
+          <div className="h-12 w-2/3 animate-pulse rounded-lg bg-repwell-sage-100 mx-auto mb-4" />
+          <div className="h-6 w-full animate-pulse rounded-lg bg-repwell-sage-100 mx-auto" />
+        </div>
+
+        {/* Category filter skeleton */}
+        <div className="flex gap-2 justify-center mb-12">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-9 w-24 animate-pulse rounded-full bg-repwell-sage-100"
+            />
+          ))}
+        </div>
+
+        {/* Posts grid skeleton */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-80 animate-pulse rounded-2xl bg-repwell-sage-100"
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

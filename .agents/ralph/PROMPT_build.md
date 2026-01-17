@@ -2,6 +2,44 @@
 
 You are an autonomous coding agent. Your task is to complete the work for exactly one story and record the outcome.
 
+## Multi-Pass Requirement (3 passes minimum)
+
+Ralph runs multiple passes per story for iterative quality improvement. Track your pass count.
+
+### Pass Tracking
+Before each run, check {{PROGRESS_PATH}} for entries on this story ({{STORY_ID}}):
+- 0 prior entries → This is Pass 1 (Implementation)
+- 1 prior entry → This is Pass 2 (Quality Review)
+- 2+ prior entries → This is Pass 3+ (Polish & Finalize)
+
+### Pass-Specific Tasks
+
+**Pass 1 - Implementation:**
+- Read `docs/design/REPWELL_DESIGN_SYSTEM` for design standards
+- Load `/feature-dev` for architecture planning
+- Implement core functionality per acceptance criteria
+- Run `npm run build && npm run lint`
+- Commit with message prefix: `[Pass 1/3]`
+- DO NOT output `<promise>COMPLETE</promise>`
+- End the run normally
+
+**Pass 2 - Quality Review:**
+- Run `/code-review` on all changes from Pass 1
+- Run `/vercel-react-best-practices` on React code
+- Fix identified issues (bugs, security, logic errors)
+- Verify design system compliance
+- Commit with message prefix: `[Pass 2/3]`
+- DO NOT output `<promise>COMPLETE</promise>`
+- End the run normally
+
+**Pass 3 - Polish & Finalize:**
+- Run `/code-simplifier` on all story code
+- Run `/frontend-design` audit (for UI stories)
+- Browser verification for any UI changes
+- Final verification of ALL acceptance criteria
+- Commit with message prefix: `[Pass 3/3]`
+- ONLY output `<promise>COMPLETE</promise>` if ALL criteria pass
+
 ## Paths
 - PRD: {{PRD_PATH}}
 - AGENTS (optional): {{AGENTS_PATH}}
@@ -63,9 +101,69 @@ Before implementing, determine which phase the story belongs to and load the app
 - Run `/frontend-design` for all mobile UI stories (S023-S025)
 - Use `/feature-dev` for API/integration stories (S027-S030)
 
+### Phase 10 (E15) - Video Testimonials Epic
+**Focus**: Video recording, processing, and testimonial management
+**Stories**: S050-S059 (approximately)
+
+**Required Plugins (ALL stories):**
+- `/feature-dev` - ALWAYS run at start for architecture planning
+- `/vercel-react-best-practices` - ALWAYS run for React component optimization
+- `/frontend-design` - For video player UI, recording interface, gallery components
+- `/code-review` - Run during Pass 2 for quality assurance
+- `/code-simplifier` - Run during Pass 3 for clean, maintainable code
+
+**Mandatory Requirements:**
+- **Design System**: Read `docs/design/REPWELL_DESIGN_SYSTEM` BEFORE any UI work
+- **React Patterns**: All components must follow Vercel React best practices
+- **3-Pass Minimum**: No story completes until Pass 3 verification passes
+
+**Technical Guidelines:**
+- Use native MediaRecorder API for video capture
+- Implement proper loading/processing states for video uploads
+- Ensure mobile-first responsive design for recording UI
+- Apply accessibility standards for video controls (WCAG 2.1 AA)
+- Use ShadCN components as foundation, style per design system
+
 ### After Every Story
 - Run `/code-simplifier` to ensure clean, maintainable code
 - For complex stories, consider running `/code-review` before committing
+
+## RepWell Design System (MANDATORY)
+
+**CRITICAL:** You MUST read and follow `docs/design/REPWELL_DESIGN_SYSTEM` for ALL UI work.
+
+Before any UI implementation:
+1. Read the full design system document
+2. Follow all specifications exactly (colors, typography, spacing, components, motion)
+3. Never deviate from the design system without documented justification
+4. Match the polish level of Stripe Dashboard or Linear
+
+**Key Design Principles:**
+- Clean, spacious layouts with clear hierarchy
+- Consistent 8px spacing grid
+- Strategic use of accent colors (not rainbow)
+- Polished micro-interactions and hover states
+- Proper loading/empty/error states
+- Accessibility WCAG 2.1 AA compliance
+
+## React Best Practices (MANDATORY)
+
+**CRITICAL:** Run `/vercel-react-best-practices` on ALL React components.
+
+**Required Patterns:**
+- Use Server Components by default, Client Components only when needed
+- Implement proper Suspense boundaries for loading states
+- Minimize client-side JavaScript bundle size
+- Use `useCallback` and `useMemo` for expensive operations
+- Avoid prop drilling - use context or composition
+- Implement proper error boundaries
+
+**Performance Checklist:**
+- [ ] No unnecessary re-renders (React DevTools profiling)
+- [ ] Images optimized with `next/image`
+- [ ] Dynamic imports for heavy components
+- [ ] Proper data fetching (Server Components or React Query)
+- [ ] No memory leaks in useEffect cleanups
 
 ## Your Task (Do this in order)
 1. Read {{GUARDRAILS_PATH}} before any code changes.
@@ -98,12 +196,19 @@ Before implementing, determine which phase the story belongs to and load the app
 ## [Date/Time] - {{STORY_ID}}: {{STORY_TITLE}}
 Thread: [codex exec session id if available, otherwise leave blank]
 Run: {{RUN_ID}} (iteration {{ITERATION}})
+Pass: [1/3, 2/3, or 3/3] - [Implementation/Quality Review/Polish & Finalize]
 Run log: {{RUN_LOG_PATH}}
 Run summary: {{RUN_META_PATH}}
 - Guardrails reviewed: yes
 - No-commit run: {{NO_COMMIT}}
 - Commit: <hash> <subject> (or `none` + reason)
 - Post-commit status: `clean` or list remaining files
+- Skills invoked:
+  - /feature-dev: [yes/no]
+  - /code-review: [yes/no]
+  - /vercel-react-best-practices: [yes/no]
+  - /code-simplifier: [yes/no]
+  - /frontend-design: [yes/no]
 - Verification:
   - Command: <exact command> -> PASS/FAIL
   - Command: <exact command> -> PASS/FAIL

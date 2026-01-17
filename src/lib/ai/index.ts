@@ -118,3 +118,30 @@ export {
   getBestTestimonialCandidates,
   getTestimonialTemplates,
 } from "./testimonial-actions";
+
+// OpenAI Client (for Whisper transcription)
+export {
+  getOpenAIClient,
+  isWhisperEnabled,
+  calculateTranscriptionCost,
+  WHISPER_CONFIG,
+} from "./openai-client";
+
+// Video Transcription
+export {
+  transcribeVideo,
+  transcribeVideoWithRetry,
+  formatTranscriptionError,
+  isRetryableError,
+  type TranscriptionResult,
+  type TranscriptionError,
+  type TranscribeOptions,
+} from "./video-transcription";
+
+// Transcription Actions
+export {
+  transcribeVideoTestimonial,
+  retryTranscription,
+  getTranscriptionStatus,
+  type TranscriptionActionResult,
+} from "./transcription-actions";

@@ -3617,3 +3617,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Used existing survey_distribution_queue pattern as reference for queue table design
   - Used existing storage_buckets migration pattern for video bucket setup
 ---
+
+## [2026-01-17 15:50] - S057: Video Testimonial Database Schema & Storage
+Thread:
+Run: 20260117-151318-48004 (iteration 6)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-6.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-6.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9d56a95 [Pass 2/3] fix(S057): Security fixes for video testimonial schema
+- Post-commit status: clean (for S057 files)
+- Skills invoked:
+  - /feature-dev: no (database-only story)
+  - /code-review: yes (manual code review of migration)
+  - /vercel-react-best-practices: no (no React code)
+  - /code-simplifier: no (Pass 2)
+  - /frontend-design: no (no UI)
+- Verification:
+  - Command: npm run build -> PASS (with committed code)
+  - Command: npm run lint -> PASS (0 errors, 23 pre-existing warnings)
+- Files changed:
+  - supabase/migrations/20240101000033_video_testimonials.sql
+- What was implemented:
+  - **Security Fix 1 (CRITICAL):** Removed dangerous `public_lookup_video_request_by_token` RLS policy
+    - Original policy allowed ANY anonymous user to enumerate ALL video_testimonial_requests
+    - This would have leaked customer PII (name, email, phone, transaction info)
+    - Replaced with SECURITY DEFINER function `lookup_video_testimonial_request(token)`
+    - Function requires exact token match, preventing enumeration attacks
+  - **Security Fix 2:** Added validation to `public_submit_video_responses` policy
+    - Now validates that request_id references a valid, non-expired request
+    - Prevents submission to arbitrary/invalid request IDs
+  - **Security Fix 3:** Added `mark_video_testimonial_opened(token)` function
+    - Safe way to track when customer opens the form
+    - Uses token validation, not direct table access
+  - **Logic Fix:** Added unique constraint `(request_id, type)` on video_testimonial_queue
+    - Ensures ON CONFLICT DO NOTHING works correctly
+    - Prevents duplicate reminders for same request/type
+    - Updated ON CONFLICT clauses to reference specific constraint
+- **Learnings for future iterations:**
+  - RLS policies with broad SELECT USING conditions can expose all matching rows
+  - Use SECURITY DEFINER functions for public lookups requiring specific parameters
+  - Always review RLS policies for potential enumeration attacks
+  - Pre-existing build errors in untracked files don't affect committed code builds
+---

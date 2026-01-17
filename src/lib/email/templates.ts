@@ -9,6 +9,11 @@ import type {
   NegativeReviewAlertEmailData,
   NotificationDigestEmailData,
   ReviewResponseToReviewerEmailData,
+  VideoTestimonialInvitationEmailData,
+  VideoTestimonialReminderEmailData,
+  VideoTestimonialReceivedEmailData,
+  VideoTestimonialApprovedEmailData,
+  VideoTestimonialPendingApprovalEmailData,
 } from "./types";
 import { emailConfig } from "./client";
 
@@ -789,6 +794,408 @@ export function getReviewResponseToReviewerEmail(
         <p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
           We appreciate you taking the time to share your experience with us.
         </p>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// ============================================================================
+// Video Testimonial Email Templates
+// ============================================================================
+
+// Helper to format duration
+function formatDuration(seconds?: number): string {
+  if (!seconds) return "";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins === 0) return `${secs}s`;
+  return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+}
+
+// Video testimonial invitation email template (sent to customer)
+export function getVideoTestimonialInvitationEmail(
+  data: VideoTestimonialInvitationEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `${data.organizationName} - Share a video testimonial with ${data.loanOfficerName}`;
+
+  const logoSection = data.organizationLogoUrl
+    ? `<img src="${data.organizationLogoUrl}" alt="${data.organizationName}" style="max-height: 48px; max-width: 200px;">`
+    : `<span style="font-size: 24px; font-weight: bold; color: #18181b;">${data.organizationName}</span>`;
+
+  const photoSection = data.loanOfficerPhotoUrl
+    ? `<img src="${data.loanOfficerPhotoUrl}" alt="${data.loanOfficerName}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;">`
+    : `<div style="width: 80px; height: 80px; border-radius: 50%; background-color: #e4e4e7; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; color: #71717a;">${data.loanOfficerName.charAt(0)}</div>`;
+
+  const transactionText = data.transactionType
+    ? `for your recent ${data.transactionType}`
+    : "for your recent transaction";
+
+  const durationText = data.maxDurationSeconds
+    ? `(up to ${formatDuration(data.maxDurationSeconds)})`
+    : "(up to 2 minutes)";
+
+  const promptSection = data.promptText
+    ? `
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 16px; margin: 24px 0;">
+          <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: 600; color: #71717a; text-transform: uppercase;">
+            Suggested Topic
+          </p>
+          <p style="margin: 0; font-size: 14px; color: #52525b;">
+            ${data.promptText}
+          </p>
+        </div>
+      `
+    : "";
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #fafafa; border-bottom: 1px solid #e4e4e7;">
+        ${logoSection}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          ${photoSection}
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Hi ${data.customerName},
+        </h1>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Thank you ${transactionText} with ${data.loanOfficerName}. We'd love for you to share a short video testimonial about your experience!
+        </p>
+
+        <div style="background-color: #eff6ff; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
+          <p style="margin: 0; font-size: 14px; color: #1e40af;">
+            <strong>Recording a video is easy:</strong><br>
+            Just click the button below and record from your phone or computer ${durationText}
+          </p>
+        </div>
+
+        ${promptSection}
+
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${data.requestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            Record Video Testimonial
+          </a>
+        </div>
+        <p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
+          Your testimonial helps others make informed decisions and means a lot to us.
+        </p>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Video testimonial 3-day reminder email template
+export function getVideoTestimonialReminder3DayEmail(
+  data: VideoTestimonialReminderEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Reminder: Share a video testimonial with ${data.loanOfficerName}`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #fafafa; border-bottom: 1px solid #e4e4e7;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">${data.organizationName}</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Hi ${data.customerName},
+        </h1>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          We noticed you haven't had a chance to share your video testimonial about your experience with ${data.loanOfficerName} yet.
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Your story matters! A quick video testimonial takes less than 2 minutes and helps others make informed decisions.
+        </p>
+
+        <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
+          <p style="margin: 0; font-size: 14px; color: #92400e;">
+            <strong>Don't miss out!</strong> This invitation will expire soon.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${data.requestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            Record Your Video
+          </a>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Video testimonial 7-day (final) reminder email template
+export function getVideoTestimonialReminder7DayEmail(
+  data: VideoTestimonialReminderEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Final reminder: Share your video testimonial`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #fef2f2; border-bottom: 1px solid #fecaca;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">${data.organizationName}</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="display: inline-block; background-color: #fef2f2; color: #991b1b; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
+            Final Reminder
+          </span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Hi ${data.customerName},
+        </h1>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          This is your last chance to share a video testimonial about your experience with ${data.loanOfficerName}.
+        </p>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          We value your feedback and would really appreciate hearing from you before this invitation expires.
+        </p>
+
+        <div style="background-color: #fee2e2; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
+          <p style="margin: 0; font-size: 14px; color: #991b1b;">
+            <strong>This invitation expires soon!</strong><br>
+            Please record your video testimonial today.
+          </p>
+        </div>
+
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${data.requestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            Record Video Now
+          </a>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Video testimonial received notification email template (sent to LO)
+export function getVideoTestimonialReceivedEmail(
+  data: VideoTestimonialReceivedEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `New video testimonial from ${data.customerName}`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const durationText = data.durationSeconds
+    ? `Duration: ${formatDuration(data.durationSeconds)}`
+    : "";
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #eff6ff; border-bottom: 1px solid #bfdbfe;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="display: inline-block; background-color: #dbeafe; color: #1d4ed8; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
+            New Video Testimonial
+          </span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Great News, ${data.loanOfficerName}!
+        </h1>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          ${data.customerName} has submitted a video testimonial about their experience with you.
+        </p>
+
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
+          <p style="margin: 0 0 8px 0; font-size: 14px; color: #71717a;">
+            Submitted on ${data.submittedAt}
+          </p>
+          ${durationText ? `<p style="margin: 0; font-size: 14px; color: #71717a;">${durationText}</p>` : ""}
+        </div>
+
+        <p style="margin: 0 0 32px 0; font-size: 16px; color: #52525b; text-align: center;">
+          The video is now pending review. You'll be notified once it's approved and ready to share.
+        </p>
+
+        <div style="text-align: center;">
+          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            View in Dashboard
+          </a>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Video testimonial approved notification email template (sent to LO)
+export function getVideoTestimonialApprovedEmail(
+  data: VideoTestimonialApprovedEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Your video testimonial from ${data.customerName} is approved!`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #dcfce7; border-bottom: 1px solid #86efac;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <span style="display: inline-block; background-color: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
+            Approved
+          </span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          Great News, ${data.loanOfficerName}!
+        </h1>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          The video testimonial from ${data.customerName} has been approved and is now available in your library.
+        </p>
+
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0; text-align: center;">
+          <p style="margin: 0; font-size: 14px; color: #71717a;">
+            Approved on ${data.approvedAt}
+          </p>
+        </div>
+
+        <p style="margin: 0 0 32px 0; font-size: 16px; color: #52525b; text-align: center;">
+          You can now share this video testimonial on your profile, social media, and marketing materials.
+        </p>
+
+        <div style="text-align: center;">
+          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #16a34a; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            View & Share
+          </a>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// Video testimonial pending approval notification email template (sent to manager)
+export function getVideoTestimonialPendingApprovalEmail(
+  data: VideoTestimonialPendingApprovalEmailData
+): {
+  subject: string;
+  html: string;
+} {
+  const subject = `Video Testimonial Pending Approval: ${data.customerName}`;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const durationText = data.durationSeconds
+    ? `Duration: ${formatDuration(data.durationSeconds)}`
+    : "";
+
+  const content = `
+    <tr>
+      <td style="padding: 32px; text-align: center; background-color: #fef3c7; border-bottom: 1px solid #fcd34d;">
+        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 40px 32px;">
+        <div style="background-color: #fef3c7; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
+          <span style="font-size: 14px; font-weight: 600; color: #92400e;">Action Required</span>
+        </div>
+        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
+          New Video Testimonial Awaiting Approval
+        </h1>
+        <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
+          Hi ${data.managerName}, a new video testimonial for ${data.loanOfficerName} requires your review and approval.
+        </p>
+
+        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding: 8px 0;">
+                <span style="font-size: 14px; color: #71717a;">Customer:</span>
+                <span style="font-size: 14px; color: #18181b; font-weight: 600; float: right;">${data.customerName}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; border-top: 1px solid #e4e4e7;">
+                <span style="font-size: 14px; color: #71717a;">Loan Officer:</span>
+                <span style="font-size: 14px; color: #18181b; font-weight: 600; float: right;">${data.loanOfficerName}</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; border-top: 1px solid #e4e4e7;">
+                <span style="font-size: 14px; color: #71717a;">Submitted:</span>
+                <span style="font-size: 14px; color: #18181b; float: right;">${data.submittedAt}</span>
+              </td>
+            </tr>
+            ${
+              durationText
+                ? `<tr>
+              <td style="padding: 8px 0; border-top: 1px solid #e4e4e7;">
+                <span style="font-size: 14px; color: #71717a;">Duration:</span>
+                <span style="font-size: 14px; color: #18181b; float: right;">${formatDuration(data.durationSeconds)}</span>
+              </td>
+            </tr>`
+                : ""
+            }
+          </table>
+        </div>
+
+        <div style="text-align: center;">
+          <a href="${data.approvalQueueUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+            Review &amp; Approve
+          </a>
+        </div>
       </td>
     </tr>
   `;

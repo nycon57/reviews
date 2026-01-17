@@ -10,7 +10,13 @@ export type EmailTemplate =
   | "scheduled_report"
   | "negative_review_alert"
   | "notification_digest"
-  | "review_response_to_reviewer";
+  | "review_response_to_reviewer"
+  | "video_testimonial_invitation"
+  | "video_testimonial_reminder_3day"
+  | "video_testimonial_reminder_7day"
+  | "video_testimonial_received"
+  | "video_testimonial_approved"
+  | "video_testimonial_pending_approval";
 
 // Base email data
 export interface BaseEmailData {
@@ -133,6 +139,60 @@ export interface ReviewResponseToReviewerEmailData extends BaseEmailData {
   originalReviewText: string | null;
   responseText: string;
   rating: number;
+}
+
+// Video testimonial invitation email data (sent to customer)
+export interface VideoTestimonialInvitationEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  requestUrl: string;
+  transactionType?: string;
+  maxDurationSeconds?: number;
+  promptText?: string;
+  requestId?: string;
+}
+
+// Video testimonial reminder email data (3-day and 7-day)
+export interface VideoTestimonialReminderEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  organizationName: string;
+  requestUrl: string;
+  reminderNumber: 1 | 2;
+  requestId?: string;
+}
+
+// Video testimonial received notification email data (sent to LO)
+export interface VideoTestimonialReceivedEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  submittedAt: string;
+  durationSeconds?: number;
+  dashboardUrl: string;
+  testimonialId: string;
+}
+
+// Video testimonial approved notification email data (sent to LO)
+export interface VideoTestimonialApprovedEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  approvedAt: string;
+  dashboardUrl: string;
+  testimonialId: string;
+}
+
+// Video testimonial pending approval notification email data (sent to manager)
+export interface VideoTestimonialPendingApprovalEmailData extends BaseEmailData {
+  managerName: string;
+  loanOfficerName: string;
+  customerName: string;
+  submittedAt: string;
+  durationSeconds?: number;
+  approvalQueueUrl: string;
+  testimonialId: string;
 }
 
 // Email send result

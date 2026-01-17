@@ -17,3 +17,14 @@ export {
   type CreateVideoTestimonialRequestInput,
   type BulkCreateInput,
 } from "./actions";
+
+export {
+  // Public Actions
+  getVideoTestimonialByToken,
+  submitCustomerInfoAndConsent,
+  // Public Types
+  type PublicVideoTestimonialRequest,
+  type CustomerInfoInput,
+  type ConsentInput,
+  type SubmitCustomerInfoInput,
+} from "./public-actions";

@@ -1879,7 +1879,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Templates render correctly in major email clients",
         "Links contain valid tokens",
@@ -1898,9 +1898,9 @@
         ],
         "extend_types": "Add new template types to EmailTemplate union in src/lib/email/types.ts"
       },
-      "startedAt": "2026-01-17T21:27:04.220435+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-17T21:27:04.220556+00:00"
+      "startedAt": "2026-01-17T21:36:09.902588+00:00",
+      "completedAt": "2026-01-17T21:39:24.545812+00:00",
+      "updatedAt": "2026-01-17T21:39:24.545707+00:00"
     },
     {
       "id": "S060",
@@ -1921,7 +1921,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Portal accessible without authentication",
         "Consent checkboxes block video capture until checked",
@@ -1938,7 +1938,10 @@
           "src/lib/video-testimonials/public-actions.ts - Public server actions"
         ],
         "reuse_patterns": "Mirror public survey form pattern from src/app/survey/[token]/"
-      }
+      },
+      "startedAt": "2026-01-17T21:39:26.609439+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-17T21:39:26.609591+00:00"
     },
     {
       "id": "S061",

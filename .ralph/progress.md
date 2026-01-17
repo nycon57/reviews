@@ -3552,3 +3552,68 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - code-simplifier skill is not available; use manual code review
   - All 3 passes completed successfully for this story
 ---
+
+## [2026-01-17 15:45] - S057: Video Testimonial Database Schema & Storage
+Thread: 
+Run: 20260117-151318-48004 (iteration 4)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-151318-48004-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e423eee [Pass 1/3] feat(S057): Add video testimonial database schema & storage
+- Post-commit status: clean (for S057 files)
+- Skills invoked:
+  - /feature-dev: no (database-only story)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (no React code)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (no UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (22 warnings, 0 errors - pre-existing)
+  - Supabase migration apply -> SUCCESS
+- Files changed:
+  - supabase/migrations/20240101000033_video_testimonials.sql (new)
+  - src/types/database.types.ts (regenerated)
+- What was implemented:
+  - Created video_testimonial_requests table with:
+    - UUID primary key, organization_id, loan_officer_id, created_by
+    - Secure token generation using encode(gen_random_bytes(16), 'hex')
+    - Customer info (name, email, phone)
+    - Transaction context (id, type, date)
+    - Status tracking with video_testimonial_request_status ENUM
+    - Timestamps and reminder tracking
+  - Created video_testimonial_responses table with:
+    - Request reference, video storage (URL, path, thumbnail)
+    - Video metadata (duration, size, mime type, dimensions)
+    - AI transcription fields (Whisper) with status tracking
+    - AI-generated text fields (Gemini) with status tracking
+    - Consent and legal fields (consent_given, timestamp, IP, marketing)
+    - Approval workflow with video_testimonial_approval_status ENUM
+    - Publishing tracking and submission metadata
+  - Created video_testimonial_queue table with:
+    - Queue types: initial, reminder_3day, reminder_7day
+    - Scheduling, status, priority, retry logic
+  - Created 'video-testimonials' storage bucket:
+    - 100MB file size limit
+    - Allowed MIME types: video/mp4, video/webm, video/quicktime
+    - Not public (access via signed URLs)
+  - Storage policies for org-scoped access + public upload
+  - RLS policies:
+    - Loan officers can view/create their own requests
+    - Managers/admins can manage all in org
+    - Public token lookup for submission form
+    - Public submission for responses (server-validated)
+  - Helper functions:
+    - schedule_video_testimonial_reminders()
+    - get_pending_video_testimonial_items()
+    - mark_video_testimonial_submitted()
+  - Indexes on token, status, organization_id, loan_officer_id, customer_email
+  - Generated TypeScript types via npm run db:types
+- **Learnings for future iterations:**
+  - Supabase CLI output can be included in type generation; redirect stderr separately
+  - DatabaseWithoutInternals type needs explicit export after regeneration
+  - Used existing survey_distribution_queue pattern as reference for queue table design
+  - Used existing storage_buckets migration pattern for video bucket setup
+---

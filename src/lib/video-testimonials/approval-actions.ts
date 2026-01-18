@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ActionResult } from "./types";
 import { generateReviewFromTranscript, type GeneratedReviewResult } from "@/lib/ai/transcript-to-review";
@@ -263,20 +264,8 @@ export async function submitApprovedText(
       return { success: false, error: "This request has expired" };
     }
 
-    // Check if already approved using raw query
-    // The text_approval_status column is added by migration 34
-    const { data: statusCheck } = await supabase
-      .from("video_testimonial_responses")
-      .select("id")
-      .eq("id", responseId)
-      .eq("text_approval_status" as never, "approved")
-      .maybeSingle();
-
-    if (statusCheck) {
-      return { success: false, error: "Review has already been submitted" };
-    }
-
-    // Update response with approved text
+    // Update response with approved text using conditional update to prevent race conditions
+    // Only update if text_approval_status is still 'pending' - this prevents double submission
     // Cast to unknown to allow new column names that aren't in types yet
     const updateData = {
       customer_approved_text: approvedText.trim(),
@@ -291,15 +280,28 @@ export async function submitApprovedText(
       updated_at: new Date().toISOString(),
     } as Record<string, unknown>;
 
-    const { error: updateError } = await supabase
+    // Use conditional update with text_approval_status = 'pending' to prevent TOCTOU race condition
+    // If another request already approved, this will update 0 rows
+    const { data: updateResult, error: updateError } = await supabase
       .from("video_testimonial_responses")
       .update(updateData)
-      .eq("id", responseId);
+      .eq("id", responseId)
+      .eq("text_approval_status" as never, "pending")
+      .select("id")
+      .maybeSingle();
 
     if (updateError) {
       console.error("Error updating response:", updateError);
       return { success: false, error: "Failed to submit your review" };
     }
+
+    // If no row was updated, it means the status was not 'pending' (already approved)
+    if (!updateResult) {
+      return { success: false, error: "Review has already been submitted" };
+    }
+
+    // Revalidate the approval page cache
+    revalidatePath(`/video-testimonial/${token}/review`);
 
     return {
       success: true,
@@ -339,6 +341,7 @@ export async function regenerateReviewText(
         video_testimonial_requests!inner(
           token,
           status,
+          expires_at,
           customer_name,
           loan_officers(full_name),
           organizations(name)
@@ -354,6 +357,7 @@ export async function regenerateReviewText(
     const request = response.video_testimonial_requests as unknown as {
       token: string;
       status: string;
+      expires_at: string | null;
       customer_name: string;
       loan_officers: { full_name: string } | null;
       organizations: { name: string } | null;
@@ -362,6 +366,11 @@ export async function regenerateReviewText(
     // Verify token matches
     if (request.token !== token) {
       return { success: false, error: "Invalid request token" };
+    }
+
+    // Check request hasn't expired
+    if (request.expires_at && new Date(request.expires_at) < new Date()) {
+      return { success: false, error: "This request has expired" };
     }
 
     // Check if already approved using raw query (column added by migration 34)
@@ -396,18 +405,27 @@ export async function regenerateReviewText(
     }
 
     // Update the response with new generated text
-    const { error: updateError } = await supabase
+    // Use conditional update to prevent race condition - only update if still pending
+    const { data: updateResult, error: updateError } = await supabase
       .from("video_testimonial_responses")
       .update({
         ai_generated_text: result.text,
         ai_generation_completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq("id", responseId);
+      .eq("id", responseId)
+      .eq("text_approval_status" as never, "pending")
+      .select("id")
+      .maybeSingle();
 
     if (updateError) {
       console.error("Error updating regenerated text:", updateError);
       return { success: false, error: "Failed to save regenerated review" };
+    }
+
+    // If no row was updated, the review was approved while regenerating
+    if (!updateResult) {
+      return { success: false, error: "Cannot regenerate - review has already been submitted" };
     }
 
     return {

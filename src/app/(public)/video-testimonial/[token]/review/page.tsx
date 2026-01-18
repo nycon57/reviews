@@ -17,6 +17,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return {
       title: "Review Your Testimonial",
       description: "Review and approve your testimonial text.",
+      robots: {
+        index: false,
+        follow: false,
+      },
     };
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,10 +54,11 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
   const [editCount, setEditCount] = useState(0);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [regenerateError, setRegenerateError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Refs
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const hasEditedRef = useRef(false);
 
   // Computed values
   const charCount = reviewText.length;
@@ -90,45 +91,48 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
     }
   }, [stepState]);
 
-  // Handle text changes
+  // Handle text changes - uses ref to avoid recreation on every keystroke
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       const newText = e.target.value;
-      if (newText !== reviewText && !hasEdited) {
+      if (!hasEditedRef.current && newText !== data.aiGeneratedText) {
+        hasEditedRef.current = true;
         setEditCount((prev) => prev + 1);
       }
       setReviewText(newText);
     },
-    [reviewText, hasEdited]
+    [data.aiGeneratedText]
   );
 
-  // Handle regenerate
-  const handleRegenerate = useCallback(() => {
+  // Handle regenerate - async handler without startTransition
+  const handleRegenerate = useCallback(async () => {
     setIsRegenerating(true);
     setRegenerateError(null);
 
-    startTransition(async () => {
+    try {
       const result = await regenerateReviewText(token, data.responseId);
 
       if (result.success && result.data) {
         setReviewText(result.data.generatedText);
         setEditCount(0);
+        hasEditedRef.current = false;
       } else {
         setRegenerateError(result.error || "Failed to regenerate review");
       }
-
+    } finally {
       setIsRegenerating(false);
-    });
+    }
   }, [token, data.responseId]);
 
-  // Handle submit
-  const handleSubmit = useCallback(() => {
-    if (!isFormValid) return;
+  // Handle submit - async handler without startTransition
+  const handleSubmit = useCallback(async () => {
+    if (!isFormValid || isSubmitting) return;
 
     setStepState("submitting");
     setSubmitError(null);
+    setIsSubmitting(true);
 
-    startTransition(async () => {
+    try {
       const result = await submitApprovedText({
         token,
         responseId: data.responseId,
@@ -145,9 +149,12 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
         setSubmitError(result.error || "Failed to submit your review");
         setStepState("error");
       }
-    });
+    } finally {
+      setIsSubmitting(false);
+    }
   }, [
     isFormValid,
+    isSubmitting,
     token,
     data.responseId,
     reviewText,
@@ -341,11 +348,14 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
             <div className="space-y-2">
               <Textarea
                 ref={textareaRef}
+                id="reviewText"
                 value={reviewText}
                 onChange={handleTextChange}
                 className="min-h-[200px] resize-none font-sans text-sm leading-relaxed"
                 placeholder="Your review text..."
                 maxLength={CHAR_LIMITS.max}
+                aria-label="Edit your review text"
+                aria-describedby="charCount"
               />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -353,7 +363,7 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
                     variant="ghost"
                     size="sm"
                     onClick={handleRegenerate}
-                    disabled={isRegenerating || isPending}
+                    disabled={isRegenerating || isSubmitting}
                     className="gap-1.5 text-muted-foreground hover:text-repwell-teal-500"
                   >
                     {isRegenerating ? (
@@ -368,7 +378,7 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
                   )}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs ${charCountColor}`}>
+                  <span id="charCount" className={`text-xs ${charCountColor}`}>
                     {charCount}/{CHAR_LIMITS.max}
                   </span>
                   {charCount < CHAR_LIMITS.min && (
@@ -396,15 +406,17 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
           )}
 
           {/* Rating selection */}
-          <div className="space-y-3">
-            <Label className="font-sans text-sm font-medium">
+          <div className="space-y-3" role="group" aria-labelledby="rating-label" aria-required="true">
+            <Label id="rating-label" className="font-sans text-sm font-medium">
               Rate Your Experience <span className="text-destructive">*</span>
             </Label>
-            <div className="flex items-center justify-center gap-1">
+            <div className="flex items-center justify-center gap-1" role="radiogroup" aria-label="Star rating">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button
                   key={star}
                   type="button"
+                  role="radio"
+                  aria-checked={star === rating}
                   className="p-1 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2"
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
@@ -508,11 +520,11 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={!isFormValid || isPending}
+            disabled={!isFormValid || isSubmitting}
             className="w-full gap-2"
             style={buttonStyle}
           >
-            {isPending ? (
+            {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Submitting...

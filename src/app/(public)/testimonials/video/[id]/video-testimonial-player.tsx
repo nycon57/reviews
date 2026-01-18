@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,6 +33,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useVideoPlayer } from "@/hooks/use-video-player";
+import { formatDuration, formatRelationship, escapeHtml } from "@/lib/video-testimonials/types";
 import type { PublicVideoTestimonial } from "@/lib/video-testimonials/public-actions";
 import { trackVideoShare, type SharePlatform } from "@/lib/video-testimonials/public-actions";
 
@@ -42,134 +44,34 @@ interface VideoTestimonialPlayerProps {
   embedUrl: string;
 }
 
-// Format duration from seconds to MM:SS
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
-// Format relationship type for display
-function formatRelationship(relationship: string | null): string {
-  if (!relationship) return "";
-  const labels: Record<string, string> = {
-    home_buyer: "Home Buyer",
-    refinancer: "Refinancer",
-    first_time_buyer: "First-Time Home Buyer",
-    investor: "Investor",
-    business_owner: "Business Owner",
-    other: "Client",
-  };
-  return labels[relationship] || relationship;
-}
-
-// Escape HTML entities to prevent XSS in embed code
-function escapeHtml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 export function VideoTestimonialPlayer({
   video,
   pageUrl,
   embedUrl,
 }: VideoTestimonialPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const handlePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        videoRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch((error) => {
-            console.error("Video play failed:", error);
-            setIsPlaying(false);
-          });
-      }
-    }
-  };
-
-  const handleMuteToggle = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleFullscreen = () => {
-    if (videoRef.current) {
-      if (videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen();
-      }
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-    }
-  };
-
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (videoRef.current && video.durationSeconds) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const percent = (e.clientX - rect.left) / rect.width;
-      videoRef.current.currentTime = percent * video.durationSeconds;
-    }
-  };
-
-  const handleSliderKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!videoRef.current || !video.durationSeconds) return;
-
-    const seekAmount = 5; // seconds
-    let newTime = videoRef.current.currentTime;
-
-    switch (e.key) {
-      case "ArrowRight":
-      case "ArrowUp":
-        newTime = Math.min(newTime + seekAmount, video.durationSeconds);
-        break;
-      case "ArrowLeft":
-      case "ArrowDown":
-        newTime = Math.max(newTime - seekAmount, 0);
-        break;
-      case "Home":
-        newTime = 0;
-        break;
-      case "End":
-        newTime = video.durationSeconds;
-        break;
-      default:
-        return;
-    }
-
-    e.preventDefault();
-    videoRef.current.currentTime = newTime;
-  };
+  const {
+    videoRef,
+    isPlaying,
+    isMuted,
+    currentTime,
+    progress,
+    togglePlay,
+    toggleMute,
+    enterFullscreen,
+    handleTimeUpdate,
+    handleSeek,
+    handleSliderKeyDown,
+    setIsPlaying,
+  } = useVideoPlayer({ durationSeconds: video.durationSeconds });
 
   const copyToClipboard = async (text: string, field: string) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 2000);
-
-      // Track share event
       const platform: SharePlatform = field === "embed" ? "embed" : "link";
       trackVideoShare(video.id, platform).catch(console.error);
     } catch (err) {
@@ -178,11 +80,9 @@ export function VideoTestimonialPlayer({
   };
 
   const handleSocialShare = (platform: SharePlatform) => {
-    // Track share event (non-blocking)
     trackVideoShare(video.id, platform).catch(console.error);
   };
 
-  // Generate embed code with XSS-safe title attribute
   const embedCode = `<iframe
   src="${embedUrl}"
   width="560"
@@ -193,7 +93,6 @@ export function VideoTestimonialPlayer({
   title="Video Testimonial from ${escapeHtml(video.customer.displayName)}"
 ></iframe>`;
 
-  // Social share URLs
   const encodedUrl = encodeURIComponent(pageUrl);
   const encodedTitle = encodeURIComponent(
     `Watch ${video.customer.displayName}'s testimonial about their experience with ${video.loanOfficer.fullName}`
@@ -203,11 +102,6 @@ export function VideoTestimonialPlayer({
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
     twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
   };
-
-  const progress =
-    video.durationSeconds && video.durationSeconds > 0
-      ? (currentTime / video.durationSeconds) * 100
-      : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-repwell-sage-100 via-white to-repwell-teal-50">
@@ -278,7 +172,7 @@ export function VideoTestimonialPlayer({
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  onClick={handlePlayPause}
+                  onClick={togglePlay}
                   className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
                   aria-label="Play video"
                 >
@@ -312,30 +206,21 @@ export function VideoTestimonialPlayer({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={handlePlayPause}
+                    onClick={togglePlay}
                     className="text-white hover:text-repwell-teal-300 transition-colors"
                     aria-label={isPlaying ? "Pause" : "Play"}
                   >
-                    {isPlaying ? (
-                      <Pause className="w-6 h-6" />
-                    ) : (
-                      <Play className="w-6 h-6" />
-                    )}
+                    {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
                   </button>
                   <button
-                    onClick={handleMuteToggle}
+                    onClick={toggleMute}
                     className="text-white hover:text-repwell-teal-300 transition-colors"
                     aria-label={isMuted ? "Unmute" : "Mute"}
                   >
-                    {isMuted ? (
-                      <VolumeX className="w-5 h-5" />
-                    ) : (
-                      <Volume2 className="w-5 h-5" />
-                    )}
+                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                   </button>
                   <span className="text-white text-sm font-mono">
-                    {formatDuration(Math.floor(currentTime))} /{" "}
-                    {formatDuration(video.durationSeconds)}
+                    {formatDuration(Math.floor(currentTime))} / {formatDuration(video.durationSeconds)}
                   </span>
                 </div>
 
@@ -348,7 +233,7 @@ export function VideoTestimonialPlayer({
                     <Share2 className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={handleFullscreen}
+                    onClick={enterFullscreen}
                     className="text-white hover:text-repwell-teal-300 transition-colors"
                     aria-label="Enter fullscreen"
                   >
@@ -429,9 +314,7 @@ export function VideoTestimonialPlayer({
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-gray-900">
-                    {video.loanOfficer.fullName}
-                  </p>
+                  <p className="font-medium text-gray-900">{video.loanOfficer.fullName}</p>
                   {video.loanOfficer.title && (
                     <p className="text-sm text-gray-500">{video.loanOfficer.title}</p>
                   )}
@@ -481,114 +364,156 @@ export function VideoTestimonialPlayer({
             {/* Social Sharing */}
             <TabsContent value="social" className="mt-4">
               <div className="grid grid-cols-3 gap-3">
-                <a
+                <SocialButton
                   href={socialLinks.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  icon={<Facebook className="w-8 h-8 text-blue-600" />}
+                  label="Facebook"
+                  hoverClass="hover:bg-blue-50 hover:border-blue-200"
                   onClick={() => handleSocialShare("facebook")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-colors"
-                >
-                  <Facebook className="w-8 h-8 text-blue-600" />
-                  <span className="text-sm font-medium">Facebook</span>
-                </a>
-                <a
+                />
+                <SocialButton
                   href={socialLinks.linkedin}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  icon={<Linkedin className="w-8 h-8 text-blue-700" />}
+                  label="LinkedIn"
+                  hoverClass="hover:bg-blue-50 hover:border-blue-200"
                   onClick={() => handleSocialShare("linkedin")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-colors"
-                >
-                  <Linkedin className="w-8 h-8 text-blue-700" />
-                  <span className="text-sm font-medium">LinkedIn</span>
-                </a>
-                <a
+                />
+                <SocialButton
                   href={socialLinks.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  icon={<Twitter className="w-8 h-8 text-gray-900" />}
+                  label="X"
+                  hoverClass="hover:bg-gray-50 hover:border-gray-300"
                   onClick={() => handleSocialShare("twitter")}
-                  className="flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-                >
-                  <Twitter className="w-8 h-8 text-gray-900" />
-                  <span className="text-sm font-medium">X</span>
-                </a>
+                />
               </div>
             </TabsContent>
 
             {/* Direct Link */}
             <TabsContent value="link" className="mt-4">
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={pageUrl}
-                    readOnly
-                    className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg font-mono"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(pageUrl, "link")}
-                    className="gap-2"
-                  >
-                    {copiedField === "link" ? (
-                      <>
-                        <Check className="w-4 h-4 text-green-500" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500">
-                  Share this link to let others watch this video testimonial.
-                </p>
-              </div>
+              <CopyField
+                value={pageUrl}
+                field="link"
+                copiedField={copiedField}
+                onCopy={copyToClipboard}
+                description="Share this link to let others watch this video testimonial."
+              />
             </TabsContent>
 
             {/* Embed Code */}
             <TabsContent value="embed" className="mt-4">
-              <div className="space-y-3">
-                <div className="relative">
-                  <textarea
-                    value={embedCode}
-                    readOnly
-                    rows={6}
-                    className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg font-mono resize-none"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyToClipboard(embedCode, "embed")}
-                    className={cn(
-                      "absolute top-2 right-2 gap-2",
-                      copiedField === "embed" && "text-green-600 border-green-200"
-                    )}
-                  >
-                    {copiedField === "embed" ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
-                <p className="text-sm text-gray-500">
-                  Paste this code into your website to embed the video testimonial.
-                </p>
-              </div>
+              <CopyField
+                value={embedCode}
+                field="embed"
+                copiedField={copiedField}
+                onCopy={copyToClipboard}
+                description="Paste this code into your website to embed the video testimonial."
+                multiline
+              />
             </TabsContent>
           </Tabs>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+// Helper components for the share dialog
+function SocialButton({
+  href,
+  icon,
+  label,
+  hoverClass,
+  onClick,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  hoverClass: string;
+  onClick: () => void;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center gap-2 p-4 rounded-lg border border-gray-200 transition-colors",
+        hoverClass
+      )}
+    >
+      {icon}
+      <span className="text-sm font-medium">{label}</span>
+    </a>
+  );
+}
+
+function CopyField({
+  value,
+  field,
+  copiedField,
+  onCopy,
+  description,
+  multiline,
+}: {
+  value: string;
+  field: string;
+  copiedField: string | null;
+  onCopy: (text: string, field: string) => void;
+  description: string;
+  multiline?: boolean;
+}) {
+  const isCopied = copiedField === field;
+
+  return (
+    <div className="space-y-3">
+      <div className={multiline ? "relative" : "flex gap-2"}>
+        {multiline ? (
+          <>
+            <textarea
+              value={value}
+              readOnly
+              rows={6}
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg font-mono resize-none"
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onCopy(value, field)}
+              className={cn(
+                "absolute top-2 right-2 gap-2",
+                isCopied && "text-green-600 border-green-200"
+              )}
+            >
+              {isCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {isCopied ? "Copied" : "Copy"}
+            </Button>
+          </>
+        ) : (
+          <>
+            <input
+              type="text"
+              value={value}
+              readOnly
+              className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg font-mono"
+            />
+            <Button variant="outline" size="sm" onClick={() => onCopy(value, field)} className="gap-2">
+              {isCopied ? (
+                <>
+                  <Check className="w-4 h-4 text-green-500" />
+                  Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4" />
+                  Copy
+                </>
+              )}
+            </Button>
+          </>
+        )}
+      </div>
+      <p className="text-sm text-gray-500">{description}</p>
     </div>
   );
 }

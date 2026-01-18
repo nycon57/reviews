@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Play, Pause, Volume2, VolumeX, Maximize, ExternalLink, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useVideoPlayer } from "@/hooks/use-video-player";
+import { formatDuration } from "@/lib/video-testimonials/types";
 
 interface EmbedVideoPlayerProps {
   videoUrl: string;
@@ -15,13 +17,6 @@ interface EmbedVideoPlayerProps {
   pageUrl: string;
 }
 
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "0:00";
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
-
 export function EmbedVideoPlayer({
   videoUrl,
   thumbnailUrl,
@@ -31,93 +26,24 @@ export function EmbedVideoPlayer({
   organizationLogoUrl,
   pageUrl,
 }: EmbedVideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [showControls, setShowControls] = useState(true);
 
-  const handlePlayPause = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        videoRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch((error) => {
-            console.error("Video play failed:", error);
-            setIsPlaying(false);
-          });
-      }
-    }
-  };
+  const {
+    videoRef,
+    isPlaying,
+    isMuted,
+    currentTime,
+    progress,
+    togglePlay,
+    toggleMute,
+    enterFullscreen,
+    handleTimeUpdate,
+    handleSeek,
+    handleSliderKeyDown,
+    setIsPlaying,
+  } = useVideoPlayer({ durationSeconds });
 
-  const handleMuteToggle = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const handleFullscreen = () => {
-    if (videoRef.current) {
-      if (videoRef.current.requestFullscreen) {
-        videoRef.current.requestFullscreen();
-      }
-    }
-  };
-
-  const handleTimeUpdate = () => {
-    if (videoRef.current) {
-      setCurrentTime(videoRef.current.currentTime);
-    }
-  };
-
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (videoRef.current && durationSeconds) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const percent = (e.clientX - rect.left) / rect.width;
-      videoRef.current.currentTime = percent * durationSeconds;
-    }
-  };
-
-  const handleSliderKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!videoRef.current || !durationSeconds) return;
-
-    const seekAmount = 5; // seconds
-    let newTime = videoRef.current.currentTime;
-
-    switch (e.key) {
-      case "ArrowRight":
-      case "ArrowUp":
-        newTime = Math.min(newTime + seekAmount, durationSeconds);
-        break;
-      case "ArrowLeft":
-      case "ArrowDown":
-        newTime = Math.max(newTime - seekAmount, 0);
-        break;
-      case "Home":
-        newTime = 0;
-        break;
-      case "End":
-        newTime = durationSeconds;
-        break;
-      default:
-        return;
-    }
-
-    e.preventDefault();
-    videoRef.current.currentTime = newTime;
-  };
-
-  const progress =
-    durationSeconds && durationSeconds > 0
-      ? (currentTime / durationSeconds) * 100
-      : 0;
+  const controlsVisible = showControls || !isPlaying;
 
   return (
     <div
@@ -125,7 +51,6 @@ export function EmbedVideoPlayer({
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => isPlaying && setShowControls(false)}
     >
-      {/* Video Element */}
       <video
         ref={videoRef}
         src={videoUrl}
@@ -138,10 +63,10 @@ export function EmbedVideoPlayer({
         playsInline
       />
 
-      {/* Play Overlay (shown when paused) */}
+      {/* Play Overlay */}
       {!isPlaying && (
         <button
-          onClick={handlePlayPause}
+          onClick={togglePlay}
           className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer transition-colors hover:bg-black/50"
           aria-label="Play video"
         >
@@ -155,7 +80,7 @@ export function EmbedVideoPlayer({
       <div
         className={cn(
           "absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/70 to-transparent transition-opacity duration-300",
-          showControls || !isPlaying ? "opacity-100" : "opacity-0"
+          controlsVisible ? "opacity-100" : "opacity-0"
         )}
       >
         <div className="flex items-center gap-2">
@@ -182,7 +107,7 @@ export function EmbedVideoPlayer({
       <div
         className={cn(
           "absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent transition-opacity duration-300",
-          showControls || !isPlaying ? "opacity-100" : "opacity-0"
+          controlsVisible ? "opacity-100" : "opacity-0"
         )}
       >
         {/* Progress Bar */}
@@ -206,26 +131,18 @@ export function EmbedVideoPlayer({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePlayPause}
+              onClick={togglePlay}
               className="text-white hover:text-white/80 transition-colors p-1"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? (
-                <Pause className="w-5 h-5" />
-              ) : (
-                <Play className="w-5 h-5" />
-              )}
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
             <button
-              onClick={handleMuteToggle}
+              onClick={toggleMute}
               className="text-white hover:text-white/80 transition-colors p-1"
               aria-label={isMuted ? "Unmute" : "Mute"}
             >
-              {isMuted ? (
-                <VolumeX className="w-4 h-4" />
-              ) : (
-                <Volume2 className="w-4 h-4" />
-              )}
+              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
             <span className="text-white text-xs font-mono">
               {formatDuration(Math.floor(currentTime))} / {formatDuration(durationSeconds)}
@@ -243,7 +160,7 @@ export function EmbedVideoPlayer({
               <ExternalLink className="w-4 h-4" />
             </a>
             <button
-              onClick={handleFullscreen}
+              onClick={enterFullscreen}
               className="text-white hover:text-white/80 transition-colors p-1"
               aria-label="Enter fullscreen"
             >

@@ -3,7 +3,7 @@
 import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import type { ActionResult } from "./types";
+import { formatDuration, formatRelationship, type ActionResult } from "./types";
 
 // ============================================================================
 // Types
@@ -44,7 +44,7 @@ export interface VideoSocialPost {
 }
 
 // ============================================================================
-// Template Placeholders for Video Testimonials
+// Constants
 // ============================================================================
 
 export const VIDEO_TEMPLATE_PLACEHOLDERS = {
@@ -60,43 +60,72 @@ export const VIDEO_TEMPLATE_PLACEHOLDERS = {
   "{{duration}}": "Video duration (e.g., 1:30)",
 } as const;
 
-// Platform Character Limits
 const PLATFORM_LIMITS: Record<string, number> = {
   twitter: 280,
   facebook: 63206,
   linkedin: 3000,
 };
 
-// Default hashtags by platform
 const DEFAULT_HASHTAGS: Record<string, string[]> = {
   facebook: ["#CustomerTestimonial", "#MortgageSuccess", "#HappyHomeowner"],
   linkedin: ["#CustomerSuccess", "#Mortgage", "#Testimonial", "#RealEstate"],
   twitter: ["#Testimonial", "#Mortgage", "#CustomerReview"],
 };
 
-// Format relationship type for display
-function formatRelationship(relationship: string | null): string {
-  if (!relationship) return "Customer";
-  const labels: Record<string, string> = {
-    home_buyer: "Home Buyer",
-    refinancer: "Refinancer",
-    first_time_buyer: "First-Time Home Buyer",
-    investor: "Real Estate Investor",
-    business_owner: "Business Owner",
-    other: "Customer",
-  };
-  return labels[relationship] || "Customer";
-}
+const DEFAULT_TEMPLATES: VideoSocialTemplate[] = [
+  {
+    id: "video-facebook-default",
+    platform: "facebook",
+    name: "Facebook Video Story",
+    description: "Share customer video testimonial on Facebook",
+    templateText: `Hear directly from our valued customer, {{customer_name}}!
 
-// Format duration from seconds to M:SS
-function formatDuration(seconds: number | null): string {
-  if (!seconds) return "";
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-}
+"{{video_excerpt}}"
 
-// Fill template placeholders
+{{customer_name}} worked with {{loan_officer_name}} to achieve their homeownership dreams. Watch their full story:
+
+{{video_link}}
+
+{{hashtags}}`,
+    isDefault: true,
+    isSystem: true,
+  },
+  {
+    id: "video-linkedin-default",
+    platform: "linkedin",
+    name: "LinkedIn Professional",
+    description: "Professional video testimonial for LinkedIn",
+    templateText: `We're honored to share this testimonial from {{customer_name}}, a recent {{customer_relationship}}.
+
+"{{video_excerpt}}"
+
+Thank you, {{customer_name}}, for trusting {{loan_officer_name}} and the {{organization_name}} team with your mortgage journey.
+
+Watch the full video testimonial: {{video_link}}
+
+{{hashtags}}`,
+    isDefault: true,
+    isSystem: true,
+  },
+  {
+    id: "video-twitter-default",
+    platform: "twitter",
+    name: "Twitter/X Brief",
+    description: "Concise video testimonial for Twitter/X",
+    templateText: `"{{video_excerpt}}" - {{customer_name}}
+
+Watch their story: {{video_link}}
+
+{{hashtags}}`,
+    isDefault: true,
+    isSystem: true,
+  },
+];
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
 function fillVideoTemplatePlaceholders(
   template: string,
   data: {
@@ -111,58 +140,31 @@ function fillVideoTemplatePlaceholders(
     platform: string;
   }
 ): string {
-  let result = template;
-
-  result = result.replace(/\{\{customer_name\}\}/g, data.customerName);
-  result = result.replace(
-    /\{\{customer_relationship\}\}/g,
-    formatRelationship(data.customerRelationship)
-  );
-  result = result.replace(/\{\{loan_officer_name\}\}/g, data.loanOfficerName);
-  result = result.replace(
-    /\{\{loan_officer_title\}\}/g,
-    data.loanOfficerTitle || "Loan Officer"
-  );
-  result = result.replace(/\{\{organization_name\}\}/g, data.organizationName);
-
-  if (data.videoQuote) {
-    result = result.replace(/\{\{video_quote\}\}/g, data.videoQuote);
-    // Create excerpt (first 100 chars)
-    const excerpt =
-      data.videoQuote.length > 100
-        ? data.videoQuote.substring(0, 97) + "..."
-        : data.videoQuote;
-    result = result.replace(/\{\{video_excerpt\}\}/g, excerpt);
-  } else {
-    result = result.replace(/\{\{video_quote\}\}/g, "");
-    result = result.replace(/\{\{video_excerpt\}\}/g, "");
-  }
-
-  result = result.replace(/\{\{video_link\}\}/g, data.videoLink);
-  result = result.replace(
-    /\{\{duration\}\}/g,
-    formatDuration(data.durationSeconds)
-  );
+  const excerpt = data.videoQuote
+    ? data.videoQuote.length > 100
+      ? data.videoQuote.substring(0, 97) + "..."
+      : data.videoQuote
+    : "";
 
   const hashtags = DEFAULT_HASHTAGS[data.platform] || [];
-  result = result.replace(/\{\{hashtags\}\}/g, hashtags.join(" "));
 
-  return result.trim();
+  return template
+    .replace(/\{\{customer_name\}\}/g, data.customerName)
+    .replace(/\{\{customer_relationship\}\}/g, formatRelationship(data.customerRelationship))
+    .replace(/\{\{loan_officer_name\}\}/g, data.loanOfficerName)
+    .replace(/\{\{loan_officer_title\}\}/g, data.loanOfficerTitle || "Loan Officer")
+    .replace(/\{\{organization_name\}\}/g, data.organizationName)
+    .replace(/\{\{video_quote\}\}/g, data.videoQuote || "")
+    .replace(/\{\{video_excerpt\}\}/g, excerpt)
+    .replace(/\{\{video_link\}\}/g, data.videoLink)
+    .replace(/\{\{duration\}\}/g, formatDuration(data.durationSeconds))
+    .replace(/\{\{hashtags\}\}/g, hashtags.join(" "))
+    .trim();
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-async function requireManagerRole(): Promise<{
-  userId: string;
-  organizationId: string;
-} | null> {
+async function requireManagerRole(): Promise<{ userId: string; organizationId: string } | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data: userData } = await supabase
@@ -171,87 +173,22 @@ async function requireManagerRole(): Promise<{
     .eq("id", user.id)
     .single();
 
-  if (!userData || !userData.organization_id) return null;
-  if (!["admin", "manager"].includes(userData.role)) return null;
-
-  return {
-    userId: userData.id,
-    organizationId: userData.organization_id,
-  };
+  if (!userData?.organization_id || !["admin", "manager"].includes(userData.role)) return null;
+  return { userId: userData.id, organizationId: userData.organization_id };
 }
 
 // ============================================================================
 // Server Actions
 // ============================================================================
 
-/**
- * Get default video testimonial templates for each platform
- */
-export async function getVideoSocialTemplates(): Promise<
-  ActionResult<VideoSocialTemplate[]>
-> {
+export async function getVideoSocialTemplates(): Promise<ActionResult<VideoSocialTemplate[]>> {
   const context = await requireManagerRole();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
-
-  // Default system templates for video testimonials
-  const defaultTemplates: VideoSocialTemplate[] = [
-    {
-      id: "video-facebook-default",
-      platform: "facebook",
-      name: "Facebook Video Story",
-      description: "Share customer video testimonial on Facebook",
-      templateText: `Hear directly from our valued customer, {{customer_name}}!
-
-"{{video_excerpt}}"
-
-{{customer_name}} worked with {{loan_officer_name}} to achieve their homeownership dreams. Watch their full story:
-
-{{video_link}}
-
-{{hashtags}}`,
-      isDefault: true,
-      isSystem: true,
-    },
-    {
-      id: "video-linkedin-default",
-      platform: "linkedin",
-      name: "LinkedIn Professional",
-      description: "Professional video testimonial for LinkedIn",
-      templateText: `We're honored to share this testimonial from {{customer_name}}, a recent {{customer_relationship}}.
-
-"{{video_excerpt}}"
-
-Thank you, {{customer_name}}, for trusting {{loan_officer_name}} and the {{organization_name}} team with your mortgage journey.
-
-Watch the full video testimonial: {{video_link}}
-
-{{hashtags}}`,
-      isDefault: true,
-      isSystem: true,
-    },
-    {
-      id: "video-twitter-default",
-      platform: "twitter",
-      name: "Twitter/X Brief",
-      description: "Concise video testimonial for Twitter/X",
-      templateText: `"{{video_excerpt}}" - {{customer_name}}
-
-Watch their story: {{video_link}}
-
-{{hashtags}}`,
-      isDefault: true,
-      isSystem: true,
-    },
-  ];
-
-  return { success: true, data: defaultTemplates };
+  return { success: true, data: DEFAULT_TEMPLATES };
 }
 
-/**
- * Generate a preview of a social post for a video testimonial
- */
 export async function generateVideoPostPreview(
   videoResponseId: string,
   platform: "facebook" | "linkedin" | "twitter",
@@ -263,31 +200,14 @@ export async function generateVideoPostPreview(
   }
 
   const supabase = await createClient();
-
-  // Get video response with related data
   const { data: video, error: videoError } = await supabase
     .from("video_testimonial_responses")
-    .select(
-      `
-      id,
-      video_url,
-      thumbnail_url,
-      duration_seconds,
-      ai_generated_text,
-      approval_status,
-      video_testimonial_requests!inner (
-        customer_name,
-        source_metadata
-      ),
-      loan_officers!inner (
-        full_name,
-        title
-      ),
-      organizations!inner (
-        name
-      )
-    `
-    )
+    .select(`
+      id, video_url, thumbnail_url, duration_seconds, ai_generated_text, approval_status,
+      video_testimonial_requests!inner (customer_name, source_metadata),
+      loan_officers!inner (full_name, title),
+      organizations!inner (name)
+    `)
     .eq("id", videoResponseId)
     .eq("organization_id", context.organizationId)
     .single();
@@ -296,52 +216,32 @@ export async function generateVideoPostPreview(
     return { success: false, error: "Video testimonial not found" };
   }
 
-  // Only allow publishing approved or published videos
   if (!["approved", "published"].includes(video.approval_status)) {
-    return {
-      success: false,
-      error: "Video must be approved before publishing to social media",
-    };
+    return { success: false, error: "Video must be approved before publishing to social media" };
   }
 
-  const request = video.video_testimonial_requests as unknown as {
-    customer_name: string;
-    source_metadata: {
-      customer_display_name?: string;
-      customer_relationship?: string;
-    } | null;
-  };
+  type RequestData = { customer_name: string; source_metadata: { customer_display_name?: string; customer_relationship?: string } | null };
+  type LOData = { full_name: string; title: string | null };
+  type OrgData = { name: string };
 
-  const loanOfficer = video.loan_officers as unknown as {
-    full_name: string;
-    title: string | null;
-  };
-
-  const organization = video.organizations as unknown as { name: string };
+  const request = video.video_testimonial_requests as unknown as RequestData;
+  const loanOfficer = video.loan_officers as unknown as LOData;
+  const organization = video.organizations as unknown as OrgData;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
   const pageUrl = `${baseUrl}/testimonials/video/${videoResponseId}`;
 
   let content: string;
-
   if (customContent) {
     content = customContent;
   } else {
-    // Get default template for platform
-    const templatesResult = await getVideoSocialTemplates();
-    const template = templatesResult.data?.find(
-      (t) => t.platform === platform && t.isDefault
-    );
-
+    const template = DEFAULT_TEMPLATES.find((t) => t.platform === platform && t.isDefault);
     if (!template) {
       return { success: false, error: "No template found for platform" };
     }
-
     content = fillVideoTemplatePlaceholders(template.templateText, {
-      customerName:
-        request.source_metadata?.customer_display_name || request.customer_name,
-      customerRelationship:
-        request.source_metadata?.customer_relationship || null,
+      customerName: request.source_metadata?.customer_display_name || request.customer_name,
+      customerRelationship: request.source_metadata?.customer_relationship || null,
       loanOfficerName: loanOfficer.full_name,
       loanOfficerTitle: loanOfficer.title,
       organizationName: organization.name,
@@ -366,9 +266,6 @@ export async function generateVideoPostPreview(
   };
 }
 
-/**
- * Create and optionally publish a social post for a video testimonial
- */
 export async function createVideoSocialPost(params: {
   videoResponseId: string;
   connectionId: string;
@@ -398,22 +295,16 @@ export async function createVideoSocialPost(params: {
   }
 
   if (!["approved", "published"].includes(video.approval_status)) {
-    return {
-      success: false,
-      error: "Video must be approved before publishing",
-    };
+    return { success: false, error: "Video must be approved before publishing" };
   }
 
   // Check character limit
   const maxLength = PLATFORM_LIMITS[params.platform] || 3000;
   if (params.content.length > maxLength) {
-    return {
-      success: false,
-      error: `Content exceeds ${params.platform} character limit of ${maxLength}`,
-    };
+    return { success: false, error: `Content exceeds ${params.platform} character limit of ${maxLength}` };
   }
 
-  // Verify social connection (using untyped client - table not in generated types)
+  // Verify social connection
   const { data: connection, error: connError } = await untypedAdmin
     .from("social_connections")
     .select("id, platform, is_active")
@@ -424,26 +315,17 @@ export async function createVideoSocialPost(params: {
   if (connError || !connection) {
     return { success: false, error: "Social connection not found" };
   }
-
   if (!connection.is_active) {
     return { success: false, error: "Social connection is not active" };
   }
-
   if (connection.platform !== params.platform) {
     return { success: false, error: "Platform mismatch with connection" };
   }
 
-  // Determine initial status
-  const status = params.publishImmediately
-    ? "publishing"
-    : params.scheduledFor
-      ? "scheduled"
-      : "draft";
-
+  const status = params.publishImmediately ? "publishing" : params.scheduledFor ? "scheduled" : "draft";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
   const pageUrl = `${baseUrl}/testimonials/video/${params.videoResponseId}`;
 
-  // Create social post record (using untyped client - table not in generated types)
   const { data: post, error: insertError } = await untypedAdmin
     .from("social_posts")
     .insert({
@@ -466,21 +348,13 @@ export async function createVideoSocialPost(params: {
     return { success: false, error: "Failed to create social post" };
   }
 
-  // If publishing immediately, trigger the publish
   if (params.publishImmediately) {
-    // Import and call publishSocialPost from the existing social actions
     const { publishSocialPost } = await import("@/lib/social/actions");
     const publishResult = await publishSocialPost(post.id);
-
     if (!publishResult.success) {
-      return {
-        success: false,
-        error: publishResult.error || "Failed to publish",
-      };
+      return { success: false, error: publishResult.error || "Failed to publish" };
     }
   }
-
-  // Note: published_platforms tracking can be added via migration when needed
 
   revalidatePath("/dashboard/video-testimonials/library");
   revalidatePath("/dashboard/social");
@@ -503,9 +377,6 @@ export async function createVideoSocialPost(params: {
   };
 }
 
-/**
- * Get social posts for a specific video testimonial
- */
 export async function getVideoSocialPosts(
   videoResponseId: string
 ): Promise<ActionResult<VideoSocialPost[]>> {
@@ -514,9 +385,7 @@ export async function getVideoSocialPosts(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  // Use untyped client - social_posts table not in generated types
   const supabase = await createUntypedServerClient();
-
   const { data, error } = await supabase
     .from("social_posts")
     .select("*")
@@ -545,28 +414,21 @@ export async function getVideoSocialPosts(
   return { success: true, data: posts };
 }
 
-/**
- * Get connected social platforms for organization
- */
 export async function getConnectedPlatforms(): Promise<
-  ActionResult<
-    Array<{
-      id: string;
-      platform: "facebook" | "linkedin" | "twitter" | "instagram";
-      displayName: string;
-      pageName: string | null;
-      isActive: boolean;
-    }>
-  >
+  ActionResult<Array<{
+    id: string;
+    platform: "facebook" | "linkedin" | "twitter" | "instagram";
+    displayName: string;
+    pageName: string | null;
+    isActive: boolean;
+  }>>
 > {
   const context = await requireManagerRole();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  // Use untyped client - social_connections table not in generated types
   const supabase = await createUntypedServerClient();
-
   const { data, error } = await supabase
     .from("social_connections")
     .select("id, platform, platform_display_name, page_name, is_active")

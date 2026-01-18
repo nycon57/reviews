@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, memo } from "react";
 import {
   Send,
   Eye,
@@ -93,7 +93,7 @@ type TrendPeriod = "daily" | "weekly" | "monthly";
 // Funnel Stage Card Component
 // ============================================================================
 
-function FunnelStageCard({
+const FunnelStageCard = memo(function FunnelStageCard({
   label,
   value,
   icon: Icon,
@@ -125,8 +125,8 @@ function FunnelStageCard({
               <p className="text-xs text-muted-foreground">{description}</p>
             )}
           </div>
-          <div className={cn("rounded-full p-2.5", color)}>
-            <Icon className="h-5 w-5 text-white" />
+          <div className={cn("rounded-full p-2.5", color)} aria-hidden="true">
+            <Icon className="h-5 w-5 text-white" aria-hidden="true" />
           </div>
         </div>
         {conversionRate !== undefined && (
@@ -140,11 +140,17 @@ function FunnelStageCard({
         {percentChange !== null && (
           <div className="mt-2 flex items-center gap-1 text-xs">
             {percentChange >= 0 ? (
-              <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+              <>
+                <TrendingUp className="h-3.5 w-3.5 text-repwell-sage-200" aria-hidden="true" />
+                <span className="sr-only">Increased by</span>
+              </>
             ) : (
-              <TrendingDown className="h-3.5 w-3.5 text-red-600" />
+              <>
+                <TrendingDown className="h-3.5 w-3.5 text-red-600" aria-hidden="true" />
+                <span className="sr-only">Decreased by</span>
+              </>
             )}
-            <span className={percentChange >= 0 ? "text-green-600" : "text-red-600"}>
+            <span className={percentChange >= 0 ? "text-repwell-sage-200" : "text-red-600"}>
               {percentChange > 0 ? "+" : ""}{percentChange}%
             </span>
             <span className="text-muted-foreground">vs previous period</span>
@@ -153,20 +159,20 @@ function FunnelStageCard({
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Funnel Visualization Component
 // ============================================================================
 
-function FunnelVisualization({ metrics }: { metrics: VideoTestimonialFunnelMetrics }) {
-  const stages = [
+const FunnelVisualization = memo(function FunnelVisualization({ metrics }: { metrics: VideoTestimonialFunnelMetrics }) {
+  const stages = useMemo(() => [
     { label: "Sent", value: metrics.sent, color: "bg-repwell-teal-300" },
     { label: "Opened", value: metrics.opened, color: "bg-repwell-sage-200" },
     { label: "Completed", value: metrics.completed, color: "bg-primary" },
-    { label: "Approved", value: metrics.approved, color: "bg-green-600" },
-    { label: "Published", value: metrics.published, color: "bg-violet-600" },
-  ];
+    { label: "Approved", value: metrics.approved, color: "bg-repwell-sage-200" },
+    { label: "Published", value: metrics.published, color: "bg-repwell-teal-400" },
+  ], [metrics.sent, metrics.opened, metrics.completed, metrics.approved, metrics.published]);
 
   const maxValue = Math.max(...stages.map(s => s.value), 1);
 
@@ -179,7 +185,7 @@ function FunnelVisualization({ metrics }: { metrics: VideoTestimonialFunnelMetri
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-4" role="list" aria-label="Video testimonial funnel stages">
           {stages.map((stage, index) => {
             const percentage = maxValue > 0 ? (stage.value / maxValue) * 100 : 0;
             const nextStage = stages[index + 1];
@@ -188,7 +194,7 @@ function FunnelVisualization({ metrics }: { metrics: VideoTestimonialFunnelMetri
               : null;
 
             return (
-              <div key={stage.label} className="space-y-2">
+              <div key={stage.label} className="space-y-2" role="listitem">
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium">{stage.label}</span>
                   <span className="font-mono text-muted-foreground">
@@ -196,15 +202,20 @@ function FunnelVisualization({ metrics }: { metrics: VideoTestimonialFunnelMetri
                   </span>
                 </div>
                 <div className="relative">
-                  <Progress value={percentage} className="h-8" />
+                  <Progress
+                    value={percentage}
+                    className="h-8"
+                    aria-label={`${stage.label} progress: ${stage.value} of ${maxValue}`}
+                  />
                   <div
                     className={cn("absolute inset-y-0 left-0 rounded-full", stage.color)}
                     style={{ width: `${percentage}%` }}
+                    aria-hidden="true"
                   />
                 </div>
                 {conversionToNext !== null && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <ArrowRight className="h-3 w-3" />
+                    <ArrowRight className="h-3 w-3" aria-hidden="true" />
                     <span>{conversionToNext}% convert to {nextStage.label}</span>
                   </div>
                 )}
@@ -216,12 +227,12 @@ function FunnelVisualization({ metrics }: { metrics: VideoTestimonialFunnelMetri
         {/* Additional metrics */}
         <div className="mt-6 grid grid-cols-2 gap-4 border-t pt-4">
           <div className="flex items-center gap-2 text-sm">
-            <XCircle className="h-4 w-4 text-red-500" />
+            <XCircle className="h-4 w-4 text-red-500" aria-hidden="true" />
             <span className="text-muted-foreground">Expired:</span>
             <span className="font-medium">{metrics.expiredCount}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
             <span className="text-muted-foreground">Cancelled:</span>
             <span className="font-medium">{metrics.cancelledCount}</span>
           </div>
@@ -229,14 +240,14 @@ function FunnelVisualization({ metrics }: { metrics: VideoTestimonialFunnelMetri
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Conversion Rate Cards Component
 // ============================================================================
 
-function ConversionRateCards({ metrics }: { metrics: VideoTestimonialFunnelMetrics }) {
-  const rates = [
+const ConversionRateCards = memo(function ConversionRateCards({ metrics }: { metrics: VideoTestimonialFunnelMetrics }) {
+  const rates = useMemo(() => [
     {
       label: "Sent to Opened",
       value: metrics.sentToOpenedRate,
@@ -261,14 +272,14 @@ function ConversionRateCards({ metrics }: { metrics: VideoTestimonialFunnelMetri
       description: "Publication rate",
       target: 90,
     },
-  ];
+  ], [metrics.sentToOpenedRate, metrics.openedToCompletedRate, metrics.completedToApprovedRate, metrics.approvedToPublishedRate]);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" role="list" aria-label="Conversion rates">
       {rates.map((rate) => {
         const isAboveTarget = rate.value >= rate.target;
         return (
-          <Card key={rate.label}>
+          <Card key={rate.label} role="listitem">
             <CardContent className="pt-6">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">
@@ -277,11 +288,11 @@ function ConversionRateCards({ metrics }: { metrics: VideoTestimonialFunnelMetri
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold">{rate.value}%</span>
                   {isAboveTarget ? (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    <Badge variant="secondary" className="bg-repwell-sage-200/20 text-repwell-sage-200 border border-repwell-sage-200/30">
                       On track
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border border-amber-200">
                       Below target
                     </Badge>
                   )}
@@ -289,7 +300,8 @@ function ConversionRateCards({ metrics }: { metrics: VideoTestimonialFunnelMetri
                 <p className="text-xs text-muted-foreground">{rate.description}</p>
                 <Progress
                   value={Math.min(rate.value, 100)}
-                  className={cn("h-2", isAboveTarget ? "bg-green-100" : "bg-yellow-100")}
+                  className={cn("h-2", isAboveTarget ? "[&>div]:bg-repwell-sage-200" : "[&>div]:bg-amber-500")}
+                  aria-label={`${rate.label}: ${rate.value}% of ${rate.target}% target`}
                 />
                 <p className="text-xs text-muted-foreground">
                   Target: {rate.target}%
@@ -301,13 +313,13 @@ function ConversionRateCards({ metrics }: { metrics: VideoTestimonialFunnelMetri
       })}
     </div>
   );
-}
+});
 
 // ============================================================================
 // Time Metrics Cards Component
 // ============================================================================
 
-function TimeMetricsCards({ metrics }: { metrics: VideoTestimonialFunnelMetrics }) {
+const TimeMetricsCards = memo(function TimeMetricsCards({ metrics }: { metrics: VideoTestimonialFunnelMetrics }) {
   const formatTime = (hours: number | null) => {
     if (hours === null) return "N/A";
     if (hours < 1) return "< 1 hour";
@@ -316,7 +328,7 @@ function TimeMetricsCards({ metrics }: { metrics: VideoTestimonialFunnelMetrics 
     return `${days} day${days !== 1 ? "s" : ""}`;
   };
 
-  const timeMetrics = [
+  const timeMetrics = useMemo(() => [
     {
       label: "Avg. Time to Open",
       value: metrics.averageTimeToOpen,
@@ -335,25 +347,26 @@ function TimeMetricsCards({ metrics }: { metrics: VideoTestimonialFunnelMetrics 
       icon: ThumbsUp,
       description: "From submission to approval",
     },
-  ];
+  ], [metrics.averageTimeToOpen, metrics.averageTimeToComplete, metrics.averageApprovalTime]);
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="h-5 w-5" />
+          <Clock className="h-5 w-5" aria-hidden="true" />
           Processing Times
         </CardTitle>
         <CardDescription>Average time between funnel stages</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-3" role="list" aria-label="Processing time metrics">
           {timeMetrics.map((metric) => (
             <div
               key={metric.label}
               className="flex items-start gap-3 rounded-lg border p-4"
+              role="listitem"
             >
-              <metric.icon className="h-5 w-5 text-muted-foreground" />
+              <metric.icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
               <div className="space-y-1">
                 <p className="text-sm font-medium">{metric.label}</p>
                 <p className="text-2xl font-bold">{formatTime(metric.value)}</p>
@@ -365,34 +378,34 @@ function TimeMetricsCards({ metrics }: { metrics: VideoTestimonialFunnelMetrics 
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Trend Chart Component
 // ============================================================================
 
-function TrendChart({
+const TrendChart = memo(function TrendChart({
   data,
   period,
 }: {
   data: VideoTestimonialTrendDataPoint[];
   period: TrendPeriod;
 }) {
-  // Format data for chart
-  const chartData = data.map((d) => ({
+  // Format data for chart (memoized)
+  const chartData = useMemo(() => data.map((d) => ({
     ...d,
     date: format(
       new Date(d.date),
       period === "monthly" ? "MMM yyyy" : period === "weekly" ? "MMM d" : "MMM d"
     ),
-  }));
+  })), [data, period]);
 
   if (chartData.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+            <BarChart3 className="h-5 w-5" aria-hidden="true" />
             Funnel Trends
           </CardTitle>
           <CardDescription>Video testimonial activity over time</CardDescription>
@@ -413,13 +426,37 @@ function TrendChart({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
+          <BarChart3 className="h-5 w-5" aria-hidden="true" />
           Funnel Trends
         </CardTitle>
         <CardDescription>Video testimonial activity over time</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
+        {/* Accessible data table for screen readers */}
+        <div className="sr-only">
+          <table>
+            <caption>Video testimonial trends data</caption>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Sent</th>
+                <th>Completed</th>
+                <th>Published</th>
+              </tr>
+            </thead>
+            <tbody>
+              {chartData.map((point) => (
+                <tr key={point.date}>
+                  <td>{point.date}</td>
+                  <td>{point.sent}</td>
+                  <td>{point.completed}</td>
+                  <td>{point.published}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="h-[300px] w-full" aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
@@ -435,8 +472,8 @@ function TrendChart({
                   <stop offset="95%" stopColor="#84a98c" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradient-published" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#52796f" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#52796f" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -489,7 +526,7 @@ function TrendChart({
                 type="monotone"
                 dataKey="published"
                 name="Published"
-                stroke="#7c3aed"
+                stroke="#52796f"
                 strokeWidth={2}
                 fill="url(#gradient-published)"
                 connectNulls
@@ -500,19 +537,19 @@ function TrendChart({
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Loan Officer Leaderboard Component
 // ============================================================================
 
-function LoanOfficerLeaderboard({ stats }: { stats: LoanOfficerVideoStats[] }) {
+const LoanOfficerLeaderboard = memo(function LoanOfficerLeaderboard({ stats }: { stats: LoanOfficerVideoStats[] }) {
   if (stats.length === 0) {
     return (
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5" />
+            <Users className="h-5 w-5" aria-hidden="true" />
             Team Performance
           </CardTitle>
           <CardDescription>Video testimonial stats by loan officer</CardDescription>
@@ -533,13 +570,16 @@ function LoanOfficerLeaderboard({ stats }: { stats: LoanOfficerVideoStats[] }) {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
-          <Users className="h-5 w-5" />
+          <Users className="h-5 w-5" aria-hidden="true" />
           Team Performance
         </CardTitle>
         <CardDescription>Video testimonial stats by loan officer</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
+        <Table aria-label="Team performance statistics by loan officer">
+          <caption className="sr-only">
+            Video testimonial statistics by loan officer showing requests sent, opened, completed, published, and conversion rates
+          </caption>
           <TableHeader>
             <TableRow>
               <TableHead>Loan Officer</TableHead>
@@ -555,10 +595,11 @@ function LoanOfficerLeaderboard({ stats }: { stats: LoanOfficerVideoStats[] }) {
               <TableRow key={lo.loanOfficerId}>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium" aria-hidden="true">
                       {index + 1}
                     </span>
                     <span className="font-medium">{lo.loanOfficerName}</span>
+                    <span className="sr-only">, ranked {index + 1}</span>
                   </div>
                 </TableCell>
                 <TableCell className="text-center">{lo.sent}</TableCell>
@@ -577,7 +618,7 @@ function LoanOfficerLeaderboard({ stats }: { stats: LoanOfficerVideoStats[] }) {
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Main Dashboard Component
@@ -693,7 +734,7 @@ export function VideoTestimonialAnalyticsDashboard({
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" />
+          <BarChart3 className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
           <h3 className="mt-4 text-lg font-semibold">No analytics data</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Start sending video testimonial requests to see analytics
@@ -708,11 +749,11 @@ export function VideoTestimonialAnalyticsDashboard({
       {/* Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4" role="group" aria-label="Analytics filters">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px]" aria-label="Select date range">
                   <SelectValue placeholder="Date range" />
                 </SelectTrigger>
                 <SelectContent>
@@ -727,9 +768,9 @@ export function VideoTestimonialAnalyticsDashboard({
             </div>
 
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              <BarChart3 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Select value={trendPeriod} onValueChange={(v) => setTrendPeriod(v as TrendPeriod)}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-[130px]" aria-label="Select trend period">
                   <SelectValue placeholder="Period" />
                 </SelectTrigger>
                 <SelectContent>
@@ -742,12 +783,12 @@ export function VideoTestimonialAnalyticsDashboard({
 
             {canViewTeamStats && loanOfficers.length > 0 && (
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Select
                   value={selectedLoanOfficer}
                   onValueChange={setSelectedLoanOfficer}
                 >
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-[200px]" aria-label="Filter by loan officer">
                     <SelectValue placeholder="All loan officers" />
                   </SelectTrigger>
                   <SelectContent>
@@ -767,15 +808,16 @@ export function VideoTestimonialAnalyticsDashboard({
               size="icon"
               onClick={fetchData}
               disabled={isLoading}
+              aria-label="Refresh analytics data"
             >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} aria-hidden="true" />
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Summary Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5" role="list" aria-label="Funnel summary statistics">
         <FunnelStageCard
           label="Sent"
           value={metrics.sent}
@@ -801,14 +843,14 @@ export function VideoTestimonialAnalyticsDashboard({
           label="Approved"
           value={metrics.approved}
           icon={ThumbsUp}
-          color="bg-green-600"
+          color="bg-repwell-sage-200"
           conversionRate={metrics.completedToApprovedRate}
         />
         <FunnelStageCard
           label="Published"
           value={metrics.published}
           icon={Globe}
-          color="bg-violet-600"
+          color="bg-repwell-teal-400"
           conversionRate={metrics.approvedToPublishedRate}
         />
       </div>
@@ -835,7 +877,7 @@ export function VideoTestimonialAnalyticsDashboard({
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{metrics.rejected}</p>
+                <p className="text-2xl font-bold text-[#c47c7c]">{metrics.rejected}</p>
               </div>
             </div>
           </div>

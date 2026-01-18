@@ -1,7 +1,31 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
+
+// ============================================================================
+// Zod Schemas for Input Validation
+// ============================================================================
+
+const dateRangeSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  loanOfficerId: z.string().uuid().optional(),
+}).optional();
+
+const trendsParamsSchema = z.object({
+  period: z.enum(["daily", "weekly", "monthly"]).optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  loanOfficerId: z.string().uuid().optional(),
+}).optional();
+
+const loStatsParamsSchema = z.object({
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  limit: z.number().int().min(1).max(500).optional(),
+}).optional();
 
 // ============================================================================
 // Types
@@ -83,7 +107,9 @@ function calculateHoursDifference(
   if (!startDate || !endDate) return null;
   const start = new Date(startDate);
   const end = new Date(endDate);
-  return Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60));
+  const hours = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60));
+  // Filter out negative values (bad data)
+  return hours >= 0 ? hours : null;
 }
 
 // ============================================================================
@@ -100,6 +126,9 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
   loanOfficerId?: string;
 }): Promise<ActionResult<VideoTestimonialFunnelMetrics>> {
   try {
+    // Validate input with Zod
+    const validatedParams = dateRangeSchema.parse(params);
+
     const supabase = await createClient();
 
     const {
@@ -119,24 +148,8 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
       return { success: false, error: "Organization not found" };
     }
 
-    // Build base query for requests
-    let requestsQuery = supabase
-      .from("video_testimonial_requests")
-      .select("id, status, sent_at, opened_at, submitted_at, created_at")
-      .eq("organization_id", userData.organization_id);
-
-    // Apply date filters
-    if (params?.startDate) {
-      requestsQuery = requestsQuery.gte("created_at", params.startDate);
-    }
-    if (params?.endDate) {
-      requestsQuery = requestsQuery.lte("created_at", params.endDate);
-    }
-    if (params?.loanOfficerId) {
-      requestsQuery = requestsQuery.eq("loan_officer_id", params.loanOfficerId);
-    }
-
-    // Role-based filtering for loan officers
+    // Role-based filtering - query loan officer ID once
+    let loanOfficerIdFilter: string | undefined = validatedParams?.loanOfficerId;
     if (userData.role === "loan_officer") {
       const { data: loData } = await supabase
         .from("loan_officers")
@@ -145,13 +158,30 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
         .single();
 
       if (loData) {
-        requestsQuery = requestsQuery.eq("loan_officer_id", loData.id);
+        loanOfficerIdFilter = loData.id;
       } else {
         return {
           success: true,
           data: createEmptyMetrics(),
         };
       }
+    }
+
+    // Build base query for requests
+    let requestsQuery = supabase
+      .from("video_testimonial_requests")
+      .select("id, status, sent_at, opened_at, submitted_at, created_at")
+      .eq("organization_id", userData.organization_id);
+
+    // Apply date filters (use created_at for consistency)
+    if (validatedParams?.startDate) {
+      requestsQuery = requestsQuery.gte("created_at", validatedParams.startDate);
+    }
+    if (validatedParams?.endDate) {
+      requestsQuery = requestsQuery.lte("created_at", validatedParams.endDate);
+    }
+    if (loanOfficerIdFilter) {
+      requestsQuery = requestsQuery.eq("loan_officer_id", loanOfficerIdFilter);
     }
 
     const { data: requests, error: requestsError } = await requestsQuery;
@@ -161,33 +191,20 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
       return { success: false, error: "Failed to fetch request metrics" };
     }
 
-    // Build query for responses
+    // Build query for responses (filter by created_at for consistency with requests)
     let responsesQuery = supabase
       .from("video_testimonial_responses")
-      .select("id, approval_status, submitted_at, approved_at, published_at")
+      .select("id, approval_status, submitted_at, approved_at, published_at, request_id")
       .eq("organization_id", userData.organization_id);
 
-    if (params?.startDate) {
-      responsesQuery = responsesQuery.gte("submitted_at", params.startDate);
+    if (validatedParams?.startDate) {
+      responsesQuery = responsesQuery.gte("created_at", validatedParams.startDate);
     }
-    if (params?.endDate) {
-      responsesQuery = responsesQuery.lte("submitted_at", params.endDate);
+    if (validatedParams?.endDate) {
+      responsesQuery = responsesQuery.lte("created_at", validatedParams.endDate);
     }
-    if (params?.loanOfficerId) {
-      responsesQuery = responsesQuery.eq("loan_officer_id", params.loanOfficerId);
-    }
-
-    // Role-based filtering for loan officers
-    if (userData.role === "loan_officer") {
-      const { data: loData } = await supabase
-        .from("loan_officers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (loData) {
-        responsesQuery = responsesQuery.eq("loan_officer_id", loData.id);
-      }
+    if (loanOfficerIdFilter) {
+      responsesQuery = responsesQuery.eq("loan_officer_id", loanOfficerIdFilter);
     }
 
     const { data: responses, error: responsesError } = await responsesQuery;
@@ -287,6 +304,9 @@ export async function getVideoTestimonialTrends(params?: {
   loanOfficerId?: string;
 }): Promise<ActionResult<VideoTestimonialTrendDataPoint[]>> {
   try {
+    // Validate input with Zod
+    const validatedParams = trendsParamsSchema.parse(params);
+
     const supabase = await createClient();
 
     const {
@@ -307,10 +327,26 @@ export async function getVideoTestimonialTrends(params?: {
     }
 
     // Default to last 30 days if no dates provided
-    const endDate = params?.endDate || new Date().toISOString();
+    const endDate = validatedParams?.endDate || new Date().toISOString();
     const defaultStart = new Date();
     defaultStart.setDate(defaultStart.getDate() - 30);
-    const startDate = params?.startDate || defaultStart.toISOString();
+    const startDate = validatedParams?.startDate || defaultStart.toISOString();
+
+    // Role-based filtering - query loan officer ID once
+    let loanOfficerIdFilter: string | undefined = validatedParams?.loanOfficerId;
+    if (userData.role === "loan_officer") {
+      const { data: loData } = await supabase
+        .from("loan_officers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (loData) {
+        loanOfficerIdFilter = loData.id;
+      } else {
+        return { success: true, data: [] };
+      }
+    }
 
     // Fetch requests
     let requestsQuery = supabase
@@ -320,23 +356,8 @@ export async function getVideoTestimonialTrends(params?: {
       .gte("created_at", startDate)
       .lte("created_at", endDate);
 
-    if (params?.loanOfficerId) {
-      requestsQuery = requestsQuery.eq("loan_officer_id", params.loanOfficerId);
-    }
-
-    // Role-based filtering
-    if (userData.role === "loan_officer") {
-      const { data: loData } = await supabase
-        .from("loan_officers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (loData) {
-        requestsQuery = requestsQuery.eq("loan_officer_id", loData.id);
-      } else {
-        return { success: true, data: [] };
-      }
+    if (loanOfficerIdFilter) {
+      requestsQuery = requestsQuery.eq("loan_officer_id", loanOfficerIdFilter);
     }
 
     const { data: requests, error: requestsError } = await requestsQuery;
@@ -346,28 +367,16 @@ export async function getVideoTestimonialTrends(params?: {
       return { success: false, error: "Failed to fetch trend data" };
     }
 
-    // Fetch responses
+    // Fetch responses (use created_at for consistency with requests)
     let responsesQuery = supabase
       .from("video_testimonial_responses")
       .select("approval_status, submitted_at, approved_at, published_at")
       .eq("organization_id", userData.organization_id)
-      .gte("submitted_at", startDate)
-      .lte("submitted_at", endDate);
+      .gte("created_at", startDate)
+      .lte("created_at", endDate);
 
-    if (params?.loanOfficerId) {
-      responsesQuery = responsesQuery.eq("loan_officer_id", params.loanOfficerId);
-    }
-
-    if (userData.role === "loan_officer") {
-      const { data: loData } = await supabase
-        .from("loan_officers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (loData) {
-        responsesQuery = responsesQuery.eq("loan_officer_id", loData.id);
-      }
+    if (loanOfficerIdFilter) {
+      responsesQuery = responsesQuery.eq("loan_officer_id", loanOfficerIdFilter);
     }
 
     const { data: responses, error: responsesError } = await responsesQuery;
@@ -484,6 +493,9 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
   limit?: number;
 }): Promise<ActionResult<LoanOfficerVideoStats[]>> {
   try {
+    // Validate input with Zod
+    const validatedParams = loStatsParamsSchema.parse(params);
+
     const supabase = await createClient();
 
     const {
@@ -520,47 +532,77 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
       return { success: false, error: "Failed to fetch loan officers" };
     }
 
+    // Fetch ALL requests in bulk (fixes N+1 query issue)
+    let requestsQuery = supabase
+      .from("video_testimonial_requests")
+      .select("loan_officer_id, status, sent_at, opened_at, submitted_at")
+      .eq("organization_id", userData.organization_id);
+
+    if (validatedParams?.startDate) {
+      requestsQuery = requestsQuery.gte("created_at", validatedParams.startDate);
+    }
+    if (validatedParams?.endDate) {
+      requestsQuery = requestsQuery.lte("created_at", validatedParams.endDate);
+    }
+
+    const { data: allRequests, error: requestsError } = await requestsQuery;
+
+    if (requestsError) {
+      console.error("Error fetching requests:", requestsError);
+      return { success: false, error: "Failed to fetch request stats" };
+    }
+
+    // Fetch ALL responses in bulk (fixes N+1 query issue)
+    let responsesQuery = supabase
+      .from("video_testimonial_responses")
+      .select("loan_officer_id, approval_status")
+      .eq("organization_id", userData.organization_id);
+
+    if (validatedParams?.startDate) {
+      responsesQuery = responsesQuery.gte("created_at", validatedParams.startDate);
+    }
+    if (validatedParams?.endDate) {
+      responsesQuery = responsesQuery.lte("created_at", validatedParams.endDate);
+    }
+
+    const { data: allResponses, error: responsesError } = await responsesQuery;
+
+    if (responsesError) {
+      console.error("Error fetching responses:", responsesError);
+      return { success: false, error: "Failed to fetch response stats" };
+    }
+
+    // Group requests by loan officer
+    const requestsByLO = new Map<string, typeof allRequests>();
+    for (const req of allRequests || []) {
+      if (!req.loan_officer_id) continue;
+      const existing = requestsByLO.get(req.loan_officer_id) || [];
+      existing.push(req);
+      requestsByLO.set(req.loan_officer_id, existing);
+    }
+
+    // Group responses by loan officer
+    const responsesByLO = new Map<string, typeof allResponses>();
+    for (const res of allResponses || []) {
+      if (!res.loan_officer_id) continue;
+      const existing = responsesByLO.get(res.loan_officer_id) || [];
+      existing.push(res);
+      responsesByLO.set(res.loan_officer_id, existing);
+    }
+
+    // Calculate stats for each loan officer
+    const sentStatuses: VideoTestimonialRequestStatus[] = ["sent", "opened", "recording", "submitted"];
     const stats: LoanOfficerVideoStats[] = [];
 
     for (const lo of loanOfficers || []) {
-      // Fetch requests for this loan officer
-      let requestsQuery = supabase
-        .from("video_testimonial_requests")
-        .select("status, sent_at, opened_at, submitted_at")
-        .eq("organization_id", userData.organization_id)
-        .eq("loan_officer_id", lo.id);
+      const requests = requestsByLO.get(lo.id) || [];
+      const responses = responsesByLO.get(lo.id) || [];
 
-      if (params?.startDate) {
-        requestsQuery = requestsQuery.gte("created_at", params.startDate);
-      }
-      if (params?.endDate) {
-        requestsQuery = requestsQuery.lte("created_at", params.endDate);
-      }
-
-      const { data: requests } = await requestsQuery;
-
-      // Fetch responses for this loan officer
-      let responsesQuery = supabase
-        .from("video_testimonial_responses")
-        .select("approval_status")
-        .eq("organization_id", userData.organization_id)
-        .eq("loan_officer_id", lo.id);
-
-      if (params?.startDate) {
-        responsesQuery = responsesQuery.gte("submitted_at", params.startDate);
-      }
-      if (params?.endDate) {
-        responsesQuery = responsesQuery.lte("submitted_at", params.endDate);
-      }
-
-      const { data: responses } = await responsesQuery;
-
-      const sentStatuses: VideoTestimonialRequestStatus[] = ["sent", "opened", "recording", "submitted"];
-      const sent = requests?.filter(r => sentStatuses.includes(r.status as VideoTestimonialRequestStatus) || r.sent_at).length || 0;
-      const opened = requests?.filter(r => r.opened_at || ["opened", "recording", "submitted"].includes(r.status)).length || 0;
-      const completed = requests?.filter(r => r.status === "submitted").length || 0;
-      const approved = responses?.filter(r => r.approval_status === "approved" || r.approval_status === "published").length || 0;
-      const published = responses?.filter(r => r.approval_status === "published").length || 0;
+      const sent = requests.filter(r => sentStatuses.includes(r.status as VideoTestimonialRequestStatus) || r.sent_at).length;
+      const opened = requests.filter(r => r.opened_at || ["opened", "recording", "submitted"].includes(r.status)).length;
+      const completed = requests.filter(r => r.status === "submitted").length;
+      const approved = responses.filter(r => r.approval_status === "approved" || r.approval_status === "published").length;
+      const published = responses.filter(r => r.approval_status === "published").length;
 
       stats.push({
         loanOfficerId: lo.id,
@@ -578,7 +620,7 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
     stats.sort((a, b) => b.completed - a.completed);
 
     // Apply limit if specified
-    const limit = params?.limit || 50;
+    const limit = validatedParams?.limit || 50;
     const limitedStats = stats.slice(0, limit);
 
     return { success: true, data: limitedStats };

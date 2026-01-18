@@ -1066,3 +1066,601 @@ export async function getLoanOfficersForVideoRequests(): Promise<
     return { success: false, error: "Failed to fetch loan officers" };
   }
 }
+
+// ============================================================================
+// Video Response Types (for Video Library)
+// ============================================================================
+
+type VideoTestimonialApprovalStatus =
+  Database["public"]["Enums"]["video_testimonial_approval_status"];
+
+export interface VideoTestimonialResponse {
+  id: string;
+  requestId: string;
+  organizationId: string;
+  loanOfficerId: string;
+  videoUrl: string;
+  videoPath: string;
+  thumbnailUrl: string | null;
+  durationSeconds: number | null;
+  fileSizeBytes: number | null;
+  mimeType: string;
+  width: number | null;
+  height: number | null;
+  transcription: string | null;
+  transcriptionStatus: string | null;
+  aiGeneratedText: string | null;
+  aiGenerationStatus: string | null;
+  keyPhrases: string[] | null;
+  sentimentScore: number | null;
+  sentimentLabel: string | null;
+  approvalStatus: VideoTestimonialApprovalStatus;
+  approvedAt: string | null;
+  rejectionReason: string | null;
+  publishedAt: string | null;
+  publishedPlatforms: string[] | null;
+  submittedAt: string;
+  createdAt: string;
+  // Joined data
+  customerName: string;
+  customerEmail: string;
+  loanOfficerName: string;
+}
+
+export interface VideoLibraryStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  published: number;
+  averageDuration: number;
+  totalDuration: number;
+}
+
+// ============================================================================
+// Video Response Server Actions
+// ============================================================================
+
+/**
+ * Get video testimonial responses (submitted videos) with filtering and pagination
+ */
+export async function getVideoTestimonialResponses(params?: {
+  approvalStatus?: string;
+  loanOfficerId?: string;
+  transcriptionStatus?: string;
+  search?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<
+  ActionResult<{
+    responses: VideoTestimonialResponse[];
+    total: number;
+    stats: VideoLibraryStats;
+  }>
+> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const page = params?.page ?? 1;
+    const pageSize = params?.pageSize ?? 24;
+    const offset = (page - 1) * pageSize;
+
+    // Build query for responses
+    let query = supabase
+      .from("video_testimonial_responses")
+      .select(
+        `
+        id,
+        request_id,
+        organization_id,
+        loan_officer_id,
+        video_url,
+        video_path,
+        thumbnail_url,
+        duration_seconds,
+        file_size_bytes,
+        mime_type,
+        width,
+        height,
+        transcription,
+        transcription_status,
+        ai_generated_text,
+        ai_generation_status,
+        key_phrases,
+        sentiment_score,
+        sentiment_label,
+        approval_status,
+        approved_at,
+        rejection_reason,
+        published_at,
+        published_platforms,
+        submitted_at,
+        created_at,
+        video_testimonial_requests!inner (
+          customer_name,
+          customer_email
+        ),
+        loan_officers!inner (
+          full_name
+        )
+      `,
+        { count: "exact" }
+      )
+      .eq("organization_id", userData.organization_id)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    // Apply filters
+    if (params?.approvalStatus) {
+      query = query.eq(
+        "approval_status",
+        params.approvalStatus as VideoTestimonialApprovalStatus
+      );
+    }
+
+    if (params?.loanOfficerId) {
+      query = query.eq("loan_officer_id", params.loanOfficerId);
+    }
+
+    if (params?.transcriptionStatus) {
+      query = query.eq("transcription_status", params.transcriptionStatus);
+    }
+
+    // Role-based filtering: loan officers see only their own responses
+    if (userData.role === "loan_officer") {
+      const { data: loData } = await supabase
+        .from("loan_officers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (loData) {
+        query = query.eq("loan_officer_id", loData.id);
+      } else {
+        return {
+          success: true,
+          data: {
+            responses: [],
+            total: 0,
+            stats: {
+              total: 0,
+              pending: 0,
+              approved: 0,
+              rejected: 0,
+              published: 0,
+              averageDuration: 0,
+              totalDuration: 0,
+            },
+          },
+        };
+      }
+    }
+
+    const { data, count, error } = await query;
+
+    if (error) {
+      console.error("Error fetching video testimonial responses:", error);
+      return { success: false, error: error.message };
+    }
+
+    // Fetch stats separately
+    const { data: allResponses } = await supabase
+      .from("video_testimonial_responses")
+      .select("approval_status, duration_seconds")
+      .eq("organization_id", userData.organization_id);
+
+    const stats: VideoLibraryStats = {
+      total: allResponses?.length ?? 0,
+      pending: allResponses?.filter((r) => r.approval_status === "pending").length ?? 0,
+      approved: allResponses?.filter((r) => r.approval_status === "approved").length ?? 0,
+      rejected: allResponses?.filter((r) => r.approval_status === "rejected").length ?? 0,
+      published: allResponses?.filter((r) => r.approval_status === "published").length ?? 0,
+      totalDuration: allResponses?.reduce((sum, r) => sum + (r.duration_seconds || 0), 0) ?? 0,
+      averageDuration: 0,
+    };
+    stats.averageDuration =
+      stats.total > 0 ? Math.round(stats.totalDuration / stats.total) : 0;
+
+    const responses: VideoTestimonialResponse[] = (data || []).map((res) => {
+      const request = res.video_testimonial_requests as unknown as {
+        customer_name: string;
+        customer_email: string;
+      };
+      const loanOfficer = res.loan_officers as unknown as { full_name: string };
+
+      return {
+        id: res.id,
+        requestId: res.request_id,
+        organizationId: res.organization_id,
+        loanOfficerId: res.loan_officer_id,
+        videoUrl: res.video_url,
+        videoPath: res.video_path,
+        thumbnailUrl: res.thumbnail_url,
+        durationSeconds: res.duration_seconds,
+        fileSizeBytes: res.file_size_bytes,
+        mimeType: res.mime_type,
+        width: res.width,
+        height: res.height,
+        transcription: res.transcription,
+        transcriptionStatus: res.transcription_status,
+        aiGeneratedText: res.ai_generated_text,
+        aiGenerationStatus: res.ai_generation_status,
+        keyPhrases: res.key_phrases,
+        sentimentScore: res.sentiment_score,
+        sentimentLabel: res.sentiment_label,
+        approvalStatus: res.approval_status,
+        approvedAt: res.approved_at,
+        rejectionReason: res.rejection_reason,
+        publishedAt: res.published_at,
+        publishedPlatforms: res.published_platforms,
+        submittedAt: res.submitted_at,
+        createdAt: res.created_at,
+        customerName: request.customer_name,
+        customerEmail: request.customer_email,
+        loanOfficerName: loanOfficer.full_name,
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        responses,
+        total: count ?? 0,
+        stats,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching video testimonial responses:", error);
+    return { success: false, error: "Failed to fetch video responses" };
+  }
+}
+
+/**
+ * Get a single video testimonial response by ID
+ */
+export async function getVideoTestimonialResponse(
+  responseId: string
+): Promise<ActionResult<VideoTestimonialResponse>> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const { data: res, error } = await supabase
+      .from("video_testimonial_responses")
+      .select(
+        `
+        *,
+        video_testimonial_requests!inner (
+          customer_name,
+          customer_email
+        ),
+        loan_officers!inner (
+          full_name
+        )
+      `
+      )
+      .eq("id", responseId)
+      .eq("organization_id", userData.organization_id)
+      .single();
+
+    if (error || !res) {
+      return { success: false, error: "Video not found" };
+    }
+
+    const request = res.video_testimonial_requests as unknown as {
+      customer_name: string;
+      customer_email: string;
+    };
+    const loanOfficer = res.loan_officers as unknown as { full_name: string };
+
+    const response: VideoTestimonialResponse = {
+      id: res.id,
+      requestId: res.request_id,
+      organizationId: res.organization_id,
+      loanOfficerId: res.loan_officer_id,
+      videoUrl: res.video_url,
+      videoPath: res.video_path,
+      thumbnailUrl: res.thumbnail_url,
+      durationSeconds: res.duration_seconds,
+      fileSizeBytes: res.file_size_bytes,
+      mimeType: res.mime_type,
+      width: res.width,
+      height: res.height,
+      transcription: res.transcription,
+      transcriptionStatus: res.transcription_status,
+      aiGeneratedText: res.ai_generated_text,
+      aiGenerationStatus: res.ai_generation_status,
+      keyPhrases: res.key_phrases,
+      sentimentScore: res.sentiment_score,
+      sentimentLabel: res.sentiment_label,
+      approvalStatus: res.approval_status,
+      approvedAt: res.approved_at,
+      rejectionReason: res.rejection_reason,
+      publishedAt: res.published_at,
+      publishedPlatforms: res.published_platforms,
+      submittedAt: res.submitted_at,
+      createdAt: res.created_at,
+      customerName: request.customer_name,
+      customerEmail: request.customer_email,
+      loanOfficerName: loanOfficer.full_name,
+    };
+
+    return { success: true, data: response };
+  } catch (error) {
+    console.error("Error fetching video testimonial response:", error);
+    return { success: false, error: "Failed to fetch video" };
+  }
+}
+
+/**
+ * Update video testimonial response approval status
+ */
+export async function updateVideoApprovalStatus(
+  responseId: string,
+  action: "approve" | "reject" | "publish",
+  rejectionReason?: string
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only managers and admins can change approval status
+    if (!["admin", "manager"].includes(userData.role)) {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
+    // Verify the response belongs to the organization
+    const { data: existing, error: existingError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, approval_status")
+      .eq("id", responseId)
+      .eq("organization_id", userData.organization_id)
+      .single();
+
+    if (existingError || !existing) {
+      return { success: false, error: "Video not found" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    let newStatus: VideoTestimonialApprovalStatus;
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    switch (action) {
+      case "approve":
+        newStatus = "approved";
+        updateData.approval_status = newStatus;
+        updateData.approved_at = new Date().toISOString();
+        updateData.approved_by = user.id;
+        updateData.rejection_reason = null;
+        break;
+      case "reject":
+        newStatus = "rejected";
+        updateData.approval_status = newStatus;
+        updateData.rejection_reason = rejectionReason || null;
+        break;
+      case "publish":
+        if (existing.approval_status !== "approved") {
+          return { success: false, error: "Video must be approved before publishing" };
+        }
+        newStatus = "published";
+        updateData.approval_status = newStatus;
+        updateData.published_at = new Date().toISOString();
+        break;
+      default:
+        return { success: false, error: "Invalid action" };
+    }
+
+    const { error: updateError } = await adminSupabase
+      .from("video_testimonial_responses")
+      .update(updateData)
+      .eq("id", responseId);
+
+    if (updateError) {
+      console.error("Error updating video approval status:", updateError);
+      return { success: false, error: "Failed to update status" };
+    }
+
+    // Create audit log entry
+    await createAuditLogEntry(adminSupabase, {
+      organizationId: userData.organization_id,
+      userId: user.id,
+      action: `video_testimonial_${action}`,
+      resourceType: "video_testimonial_response",
+      resourceId: responseId,
+      metadata: {
+        previous_status: existing.approval_status,
+        new_status: newStatus,
+        rejection_reason: rejectionReason,
+      },
+    });
+
+    revalidatePath("/dashboard/video-testimonials/library");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating video approval status:", error);
+    return { success: false, error: "Failed to update status" };
+  }
+}
+
+/**
+ * Delete a video testimonial response
+ */
+export async function deleteVideoTestimonialResponse(
+  responseId: string
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only admins can delete videos
+    if (userData.role !== "admin") {
+      return { success: false, error: "Only admins can delete videos" };
+    }
+
+    // Get the response to get the video path
+    const { data: response, error: responseError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, video_path")
+      .eq("id", responseId)
+      .eq("organization_id", userData.organization_id)
+      .single();
+
+    if (responseError || !response) {
+      return { success: false, error: "Video not found" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // Delete from storage
+    if (response.video_path) {
+      await adminSupabase.storage
+        .from("video-testimonials")
+        .remove([response.video_path]);
+    }
+
+    // Delete the database record
+    const { error: deleteError } = await adminSupabase
+      .from("video_testimonial_responses")
+      .delete()
+      .eq("id", responseId);
+
+    if (deleteError) {
+      console.error("Error deleting video testimonial response:", deleteError);
+      return { success: false, error: "Failed to delete video" };
+    }
+
+    // Create audit log entry
+    await createAuditLogEntry(adminSupabase, {
+      organizationId: userData.organization_id,
+      userId: user.id,
+      action: "video_testimonial_deleted",
+      resourceType: "video_testimonial_response",
+      resourceId: responseId,
+      metadata: {},
+    });
+
+    revalidatePath("/dashboard/video-testimonials/library");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting video testimonial response:", error);
+    return { success: false, error: "Failed to delete video" };
+  }
+}
+
+/**
+ * Get signed URL for video playback
+ */
+export async function getVideoSignedUrl(
+  videoPath: string
+): Promise<ActionResult<{ signedUrl: string }>> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Verify the video belongs to the user's organization by checking the path
+    const pathParts = videoPath.split("/");
+    if (pathParts[0] !== userData.organization_id) {
+      return { success: false, error: "Access denied" };
+    }
+
+    const { data, error } = await supabase.storage
+      .from("video-testimonials")
+      .createSignedUrl(videoPath, 3600); // 1 hour expiry
+
+    if (error || !data) {
+      console.error("Error creating signed URL:", error);
+      return { success: false, error: "Failed to create video URL" };
+    }
+
+    return { success: true, data: { signedUrl: data.signedUrl } };
+  } catch (error) {
+    console.error("Error getting signed URL:", error);
+    return { success: false, error: "Failed to get video URL" };
+  }
+}

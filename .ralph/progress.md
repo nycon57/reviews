@@ -4726,3 +4726,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Use `as never` cast for column names not in types yet
   - Video testimonial flow: request → consent → video → transcription → AI text → text approval
 ---
+
+## [2026-01-17 19:02] - S065: Customer Text Approval Flow
+Thread: 
+Run: 20260117-163446-68507 (iteration 21)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-21.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-21.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9baf3f6 [Pass 2/3] quality(S065): Fix security, accessibility, and performance issues
+- Post-commit status: clean (S065 files committed; other unrelated files remain modified)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (parallel agent review of all S065 files)
+  - /vercel-react-best-practices: no (issues found via code-review)
+  - /code-simplifier: no (Pass 2)
+  - /frontend-design: no (Pass 2)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - src/lib/video-testimonials/approval-actions.ts (race condition fix, revalidatePath)
+  - src/components/video-testimonials/text-approval-step.tsx (useTransition fix, a11y, performance)
+  - supabase/migrations/20240101000034_video_testimonial_text_approval.sql (constraints, indexes)
+  - src/app/(public)/video-testimonial/[token]/review/page.tsx (robots meta tag fix)
+- What was implemented:
+  - Fixed TOCTOU race condition in regenerateReviewText with conditional update
+  - Added revalidatePath call after successful submitApprovedText
+  - Removed incorrect useTransition usage with async functions; use isSubmitting state
+  - Added aria-label to textarea, aria-describedby for character count
+  - Added ARIA roles to star rating (radiogroup, radio, aria-checked)
+  - Fixed handleTextChange performance by using ref instead of state dependency
+  - Added data integrity constraints (approved timestamp, consent timestamp, redirect shown)
+  - Added composite indexes for multi-tenant queries (org_id + status/rating)
+  - Added rollback documentation to migration
+  - Fixed robots meta tag for error case in review page
+- **Learnings for future iterations:**
+  - useTransition does NOT work with async functions - use manual loading states instead
+  - Always add conditional checks to prevent TOCTOU race conditions in update operations
+  - Star ratings need role="radiogroup" and aria-checked for proper screen reader support
+  - Composite indexes with organization_id first are critical for multi-tenant query performance
+  - Data integrity constraints enforce logical relationships between columns
+---

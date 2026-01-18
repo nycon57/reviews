@@ -64,6 +64,16 @@ function formatRelationship(relationship: string | null): string {
   return labels[relationship] || relationship;
 }
 
+// Escape HTML entities to prevent XSS in embed code
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function VideoTestimonialPlayer({
   video,
   pageUrl,
@@ -80,10 +90,18 @@ export function VideoTestimonialPlayer({
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
+        setIsPlaying(false);
       } else {
-        videoRef.current.play();
+        videoRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((error) => {
+            console.error("Video play failed:", error);
+            setIsPlaying(false);
+          });
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -116,6 +134,35 @@ export function VideoTestimonialPlayer({
     }
   };
 
+  const handleSliderKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!videoRef.current || !video.durationSeconds) return;
+
+    const seekAmount = 5; // seconds
+    let newTime = videoRef.current.currentTime;
+
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowUp":
+        newTime = Math.min(newTime + seekAmount, video.durationSeconds);
+        break;
+      case "ArrowLeft":
+      case "ArrowDown":
+        newTime = Math.max(newTime - seekAmount, 0);
+        break;
+      case "Home":
+        newTime = 0;
+        break;
+      case "End":
+        newTime = video.durationSeconds;
+        break;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    videoRef.current.currentTime = newTime;
+  };
+
   const copyToClipboard = async (text: string, field: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -135,7 +182,7 @@ export function VideoTestimonialPlayer({
     trackVideoShare(video.id, platform).catch(console.error);
   };
 
-  // Generate embed code
+  // Generate embed code with XSS-safe title attribute
   const embedCode = `<iframe
   src="${embedUrl}"
   width="560"
@@ -143,7 +190,7 @@ export function VideoTestimonialPlayer({
   frameborder="0"
   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
   allowfullscreen
-  title="Video Testimonial from ${video.customer.displayName}"
+  title="Video Testimonial from ${escapeHtml(video.customer.displayName)}"
 ></iframe>`;
 
   // Social share URLs
@@ -248,6 +295,7 @@ export function VideoTestimonialPlayer({
               <div
                 className="w-full h-1 bg-white/30 rounded-full mb-3 cursor-pointer"
                 onClick={handleSeek}
+                onKeyDown={handleSliderKeyDown}
                 role="slider"
                 aria-label="Video progress"
                 aria-valuemin={0}

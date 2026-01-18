@@ -41,10 +41,18 @@ export function EmbedVideoPlayer({
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
+        setIsPlaying(false);
       } else {
-        videoRef.current.play();
+        videoRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((error) => {
+            console.error("Video play failed:", error);
+            setIsPlaying(false);
+          });
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -75,6 +83,35 @@ export function EmbedVideoPlayer({
       const percent = (e.clientX - rect.left) / rect.width;
       videoRef.current.currentTime = percent * durationSeconds;
     }
+  };
+
+  const handleSliderKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!videoRef.current || !durationSeconds) return;
+
+    const seekAmount = 5; // seconds
+    let newTime = videoRef.current.currentTime;
+
+    switch (e.key) {
+      case "ArrowRight":
+      case "ArrowUp":
+        newTime = Math.min(newTime + seekAmount, durationSeconds);
+        break;
+      case "ArrowLeft":
+      case "ArrowDown":
+        newTime = Math.max(newTime - seekAmount, 0);
+        break;
+      case "Home":
+        newTime = 0;
+        break;
+      case "End":
+        newTime = durationSeconds;
+        break;
+      default:
+        return;
+    }
+
+    e.preventDefault();
+    videoRef.current.currentTime = newTime;
   };
 
   const progress =
@@ -152,6 +189,7 @@ export function EmbedVideoPlayer({
         <div
           className="w-full h-1 bg-white/30 rounded-full mb-2 cursor-pointer"
           onClick={handleSeek}
+          onKeyDown={handleSliderKeyDown}
           role="slider"
           aria-label="Video progress"
           aria-valuemin={0}

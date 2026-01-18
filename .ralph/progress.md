@@ -4915,3 +4915,48 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - eslint-disable comment needed for intentional effect dependency patterns
   - Video playback requires signed URLs from Supabase storage
 ---
+
+## 2026-01-17 - S067: Video Library & Playback Dashboard
+Thread:
+Run: 20260117-163446-68507 (iteration 26)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-26.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-26.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: `5819392` [Pass 2/3] quality(S067): Fix security, accessibility, and performance issues
+- Post-commit status: clean (only S067 files committed)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via feature-dev:code-reviewer agents)
+  - /vercel-react-best-practices: no (identified issues via code review)
+  - /code-simplifier: no (Pass 2)
+  - /frontend-design: no (Pass 2)
+- Verification:
+  - Command: `npm run build` -> PASS
+  - Command: `npm run lint` -> PASS (0 errors, only pre-existing warnings)
+- Files changed:
+  - src/lib/video-testimonials/actions.ts (security fixes)
+  - src/app/(dashboard)/dashboard/video-testimonials/library/library-dashboard.tsx (bug + accessibility fixes)
+- What was implemented:
+  **Security fixes:**
+  - Path traversal protection in getVideoSignedUrl (reject ../ and //)
+  - Database validation before creating signed URLs
+  - Role-based access control for loan officers in getVideoSignedUrl
+  - Role-based filtering in getVideoTestimonialResponse (single video fetch)
+  - Fixed stats data leakage - loan officers now see only their own video stats
+  **Bug fixes:**
+  - Search functionality now works (searchQuery passed to server action)
+  - Video playback pauses when modal closes (prevents resource leak)
+  - Rejection reason state clears when dialog closes (prevents stale data)
+  **Accessibility improvements:**
+  - aria-label on refresh button
+  - sr-only labels for search input and filter selects
+  - Proper id attributes for form controls (WCAG 4.1.2 compliance)
+- **Learnings for future iterations:**
+  - Code review caught 6 bugs including 3 critical security issues
+  - IDOR vulnerabilities can occur when single-item fetch functions don't apply same role-based filters as list functions
+  - Stats queries must apply same access control as main data queries
+  - Path validation must sanitize leading slashes and reject traversal sequences
+  - Search inputs need both id and sr-only labels for accessibility
+---

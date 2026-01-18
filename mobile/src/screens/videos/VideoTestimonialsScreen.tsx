@@ -146,16 +146,17 @@ export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
       if (showLoader) setLoading(true);
       setError(null);
 
-      // Check user role
-      const profile = await getUserProfile();
-      setCanApprove(profile?.role === 'admin' || profile?.role === 'manager');
-
-      // Fetch videos with filter
+      // Fetch profile and videos in parallel for better performance
       const params = activeFilter !== 'all'
         ? { approvalStatus: activeFilter }
         : undefined;
 
-      const result = await getVideoTestimonialResponses(params);
+      const [profile, result] = await Promise.all([
+        getUserProfile(),
+        getVideoTestimonialResponses(params),
+      ]);
+
+      setCanApprove(profile?.role === 'admin' || profile?.role === 'manager');
       setVideos(result.responses);
       setStats(result.stats);
     } catch (err) {

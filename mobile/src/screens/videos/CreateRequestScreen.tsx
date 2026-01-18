@@ -56,16 +56,18 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
       try {
         setLoading(true);
 
-        // Get user profile to check if loan officer
-        const profile = await getUserProfile();
+        // Fetch profile and loan officers in parallel for better performance
+        const [profile, officers] = await Promise.all([
+          getUserProfile(),
+          getLoanOfficers(),
+        ]);
 
-        // Get loan officers list
-        const officers = await getLoanOfficers();
         setLoanOfficers(officers);
 
         // If user is a loan officer, pre-select themselves
         if (profile?.role === 'loan_officer') {
-          const userOfficer = officers.find(lo => lo.id === profile.id);
+          // Match by user_id, not loan officer id
+          const userOfficer = officers.find(lo => lo.user_id === profile.id);
           if (userOfficer) {
             setSelectedLoanOfficer(userOfficer.id);
             setUserLoanOfficerId(userOfficer.id);

@@ -613,7 +613,7 @@ export async function getLoanOfficers(): Promise<LoanOfficer[]> {
 
   const { data, error } = await supabase
     .from('loan_officers')
-    .select('id, full_name, email')
+    .select('id, full_name, email, user_id')
     .eq('organization_id', userData.organization_id)
     .eq('is_active', true)
     .order('full_name', { ascending: true });
@@ -627,6 +627,7 @@ export async function getLoanOfficers(): Promise<LoanOfficer[]> {
     id: lo.id,
     full_name: lo.full_name,
     email: lo.email,
+    user_id: lo.user_id,
   }));
 }
 

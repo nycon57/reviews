@@ -163,6 +163,7 @@ export interface LoanOfficer {
   id: string;
   full_name: string;
   email: string;
+  user_id?: string | null;
 }
 
 export interface CreateVideoRequestInput {

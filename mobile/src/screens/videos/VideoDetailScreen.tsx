@@ -51,17 +51,21 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [showRejectInput, setShowRejectInput] = useState(false);
+  const [showChangesInput, setShowChangesInput] = useState(false);
+  const [changesNotes, setChangesNotes] = useState('');
 
   const fetchVideo = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Check user role
-      const profile = await getUserProfile();
+      // Fetch profile and video details in parallel for better performance
+      const [profile, videoData] = await Promise.all([
+        getUserProfile(),
+        getVideoTestimonialResponse(videoId),
+      ]);
+
       setCanApprove(profile?.role === 'admin' || profile?.role === 'manager');
 
-      // Fetch video details
-      const videoData = await getVideoTestimonialResponse(videoId);
       if (!videoData) {
         Alert.alert('Error', 'Video not found');
         navigation.goBack();
@@ -69,7 +73,7 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
       }
       setVideo(videoData);
 
-      // Get signed URL for playback
+      // Get signed URL for playback (depends on videoData)
       if (videoData.video_path) {
         const url = await getVideoSignedUrl(videoData.video_path);
         setSignedUrl(url);
@@ -162,33 +166,32 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
   const handleRequestChanges = useCallback(async () => {
     if (!video) return;
 
-    Alert.prompt(
-      'Request Changes',
-      'What changes would you like the loan officer to address?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Submit',
-          onPress: async (notes: string | undefined) => {
-            if (!notes?.trim()) return;
-            try {
-              setActionLoading(true);
-              await updateVideoApprovalStatus(video.id, 'request_changes', {
-                managerNotes: notes,
-              });
-              Alert.alert('Success', 'Changes requested');
-              fetchVideo();
-            } catch (err) {
-              Alert.alert('Error', 'Failed to request changes');
-            } finally {
-              setActionLoading(false);
-            }
-          },
-        },
-      ],
-      'plain-text'
-    );
-  }, [video, fetchVideo]);
+    // Show input field for changes notes (cross-platform approach)
+    if (!showChangesInput) {
+      setShowChangesInput(true);
+      return;
+    }
+
+    if (!changesNotes.trim()) {
+      Alert.alert('Required', 'Please describe what changes are needed');
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      await updateVideoApprovalStatus(video.id, 'request_changes', {
+        managerNotes: changesNotes,
+      });
+      Alert.alert('Success', 'Changes requested');
+      setShowChangesInput(false);
+      setChangesNotes('');
+      fetchVideo();
+    } catch (err) {
+      Alert.alert('Error', 'Failed to request changes');
+    } finally {
+      setActionLoading(false);
+    }
+  }, [video, showChangesInput, changesNotes, fetchVideo]);
 
   const handleShare = useCallback(async () => {
     if (!video || !signedUrl) return;
@@ -444,6 +447,19 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
                   placeholder="Reason for rejection..."
                   value={rejectReason}
                   onChangeText={setRejectReason}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+            )}
+
+            {showChangesInput && (
+              <View style={styles.rejectInputContainer}>
+                <TextInput
+                  style={[styles.rejectInput, { borderColor: colors.border }]}
+                  placeholder="What changes are needed..."
+                  value={changesNotes}
+                  onChangeText={setChangesNotes}
                   multiline
                   numberOfLines={3}
                 />

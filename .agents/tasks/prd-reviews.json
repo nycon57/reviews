@@ -2363,7 +2363,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Social posts publish successfully",
         "Embed codes work on external sites",
@@ -2382,8 +2382,8 @@
         "reuse_patterns": "Leverage existing social publishing from S039"
       },
       "startedAt": "2026-01-18T02:52:37.700606+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-18T02:52:37.700714+00:00"
+      "completedAt": "2026-01-18T02:55:33.454562+00:00",
+      "updatedAt": "2026-01-18T02:55:33.454459+00:00"
     },
     {
       "id": "S072",
@@ -2402,7 +2402,7 @@
       ],
       "priority": "P3",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Video playback smooth on mobile devices",
         "Push notifications deliver reliably",
@@ -2419,7 +2419,10 @@
           "mobile/src/components/video-testimonials/"
         ],
         "reuse_patterns": "Mirror mobile dashboard patterns from S024"
-      }
+      },
+      "startedAt": "2026-01-18T03:09:02.490442+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-18T03:09:02.490570+00:00"
     }
   ],
   "phases": [

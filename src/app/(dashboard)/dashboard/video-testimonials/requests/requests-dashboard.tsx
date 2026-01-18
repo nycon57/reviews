@@ -102,9 +102,6 @@ interface Props {
   userRole: "admin" | "manager" | "loan_officer";
 }
 
-// Status values for video testimonial requests
-type _RequestStatus = "pending" | "sent" | "opened" | "submitted" | "expired" | "cancelled";
-
 // ============================================================================
 // Status Badge Component
 // ============================================================================
@@ -164,7 +161,7 @@ function StatsCards({ requests }: { requests: VideoTestimonialRequest[] }) {
           <CardDescription>In Progress</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-2xl font-bold text-primary">
             {stats.pending + stats.sent}
           </div>
         </CardContent>
@@ -174,7 +171,7 @@ function StatsCards({ requests }: { requests: VideoTestimonialRequest[] }) {
           <CardDescription>Completed</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
+          <div className="text-2xl font-bold text-repwell-sage-200">{stats.completed}</div>
         </CardContent>
       </Card>
       <Card>

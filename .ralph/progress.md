@@ -5599,3 +5599,38 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - API service: getVideoTestimonialResponses, getVideoTestimonialResponse, createVideoTestimonialRequest, updateVideoApprovalStatus, getVideoSignedUrl
   - Role-based filtering: Loan officers see only their videos, managers/admins see all
 ---
+
+### S072 Pass 2/3 - Quality Review
+**Date**: 2026-01-17
+**Story**: Video Testimonial Mobile Dashboard
+**Run**: 20260117-163446-68507 (iteration 42)
+
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: eb417e0 [Pass 2/3] fix(S072): Quality review fixes for video testimonial mobile dashboard
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes
+  - /vercel-react-best-practices: yes
+  - /code-simplifier: no
+  - /frontend-design: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 warnings in unrelated files)
+  - Command: cd mobile && npm run type-check -> PASS
+- Files modified:
+  - mobile/src/lib/video-testimonials.ts (added user_id to getLoanOfficers)
+  - mobile/src/screens/videos/VideoDetailScreen.tsx (fixed Alert.prompt iOS-only, parallel fetch)
+  - mobile/src/screens/videos/VideoTestimonialsScreen.tsx (parallel fetch)
+  - mobile/src/screens/videos/CreateRequestScreen.tsx (parallel fetch, fixed user matching)
+  - mobile/src/types/index.ts (added user_id to LoanOfficer)
+- **Issues found and fixed:**
+  1. **Alert.prompt iOS-only bug**: Replaced with cross-platform TextInput approach for "Request Changes" flow
+  2. **Loan officer pre-selection bug**: Fixed matching logic to use user_id instead of id
+  3. **Sequential fetches**: Parallelized profile and data fetches using Promise.all()
+- **Learnings for future iterations:**
+  - Alert.prompt is iOS-only in React Native - always use cross-platform alternatives
+  - When matching entities across tables, verify the correct foreign key is used
+  - Profile fetches are independent and can be parallelized with other data
+---

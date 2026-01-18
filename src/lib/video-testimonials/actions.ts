@@ -2317,35 +2317,18 @@ export async function getVideoTestimonialQueueStatus(): Promise<
       .select("status")
       .eq("organization_id", userData.organization_id);
 
-    const stats = {
-      total: 0,
-      pending: 0,
-      processing: 0,
-      sent: 0,
-      failed: 0,
-      cancelled: 0,
-    };
-
-    (queueData || []).forEach((item) => {
-      stats.total++;
-      switch (item.status) {
-        case "pending":
-          stats.pending++;
-          break;
-        case "processing":
-          stats.processing++;
-          break;
-        case "sent":
-          stats.sent++;
-          break;
-        case "failed":
-          stats.failed++;
-          break;
-        case "cancelled":
-          stats.cancelled++;
-          break;
-      }
-    });
+    const stats = (queueData || []).reduce(
+      (acc, item) => {
+        acc.total++;
+        if (item.status === "pending") acc.pending++;
+        else if (item.status === "processing") acc.processing++;
+        else if (item.status === "sent") acc.sent++;
+        else if (item.status === "failed") acc.failed++;
+        else if (item.status === "cancelled") acc.cancelled++;
+        return acc;
+      },
+      { total: 0, pending: 0, processing: 0, sent: 0, failed: 0, cancelled: 0 }
+    );
 
     return {
       success: true,
@@ -2361,10 +2344,11 @@ export async function getVideoTestimonialQueueStatus(): Promise<
 }
 
 /**
- * Pause the video testimonial queue for the organization
- * - Prevents new emails from being sent until resumed
+ * Internal helper to set queue pause state
  */
-export async function pauseVideoTestimonialQueue(): Promise<ActionResult> {
+async function setQueuePauseState(paused: boolean): Promise<ActionResult> {
+  const action = paused ? "pause" : "resume";
+
   try {
     const supabase = await createClient();
 
@@ -2385,21 +2369,19 @@ export async function pauseVideoTestimonialQueue(): Promise<ActionResult> {
       return { success: false, error: "Organization not found" };
     }
 
-    // Only admins can pause the queue
     if (userData.role !== "admin") {
-      return { success: false, error: "Only admins can pause the queue" };
+      return { success: false, error: `Only admins can ${action} the queue` };
     }
 
     const adminSupabase = createAdminClient();
 
-    // Set pause state
     const { error: upsertError } = await adminSupabase
       .from("organization_settings")
       .upsert(
         {
           organization_id: userData.organization_id,
           key: "video_testimonial_queue_paused",
-          value: "true",
+          value: paused ? "true" : "false",
           updated_at: new Date().toISOString(),
         },
         {
@@ -2408,15 +2390,14 @@ export async function pauseVideoTestimonialQueue(): Promise<ActionResult> {
       );
 
     if (upsertError) {
-      console.error("Error pausing queue:", upsertError);
-      return { success: false, error: "Failed to pause queue" };
+      console.error(`Error ${action}ing queue:`, upsertError);
+      return { success: false, error: `Failed to ${action} queue` };
     }
 
-    // Create audit log entry
     await createAuditLogEntry(adminSupabase, {
       organizationId: userData.organization_id,
       userId: user.id,
-      action: "video_testimonial_queue_paused",
+      action: paused ? "video_testimonial_queue_paused" : "video_testimonial_queue_resumed",
       resourceType: "organization_settings",
       resourceId: userData.organization_id,
       metadata: {},
@@ -2426,9 +2407,17 @@ export async function pauseVideoTestimonialQueue(): Promise<ActionResult> {
 
     return { success: true };
   } catch (error) {
-    console.error("Error pausing queue:", error);
-    return { success: false, error: "Failed to pause queue" };
+    console.error(`Error ${action}ing queue:`, error);
+    return { success: false, error: `Failed to ${action} queue` };
   }
+}
+
+/**
+ * Pause the video testimonial queue for the organization
+ * - Prevents new emails from being sent until resumed
+ */
+export async function pauseVideoTestimonialQueue(): Promise<ActionResult> {
+  return setQueuePauseState(true);
 }
 
 /**
@@ -2436,70 +2425,7 @@ export async function pauseVideoTestimonialQueue(): Promise<ActionResult> {
  * - Allows pending emails to be processed again
  */
 export async function resumeVideoTestimonialQueue(): Promise<ActionResult> {
-  try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id, role")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
-      return { success: false, error: "Organization not found" };
-    }
-
-    // Only admins can resume the queue
-    if (userData.role !== "admin") {
-      return { success: false, error: "Only admins can resume the queue" };
-    }
-
-    const adminSupabase = createAdminClient();
-
-    // Set resume state
-    const { error: upsertError } = await adminSupabase
-      .from("organization_settings")
-      .upsert(
-        {
-          organization_id: userData.organization_id,
-          key: "video_testimonial_queue_paused",
-          value: "false",
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "organization_id,key",
-        }
-      );
-
-    if (upsertError) {
-      console.error("Error resuming queue:", upsertError);
-      return { success: false, error: "Failed to resume queue" };
-    }
-
-    // Create audit log entry
-    await createAuditLogEntry(adminSupabase, {
-      organizationId: userData.organization_id,
-      userId: user.id,
-      action: "video_testimonial_queue_resumed",
-      resourceType: "organization_settings",
-      resourceId: userData.organization_id,
-      metadata: {},
-    });
-
-    revalidatePath("/dashboard/video-testimonials");
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error resuming queue:", error);
-    return { success: false, error: "Failed to resume queue" };
-  }
+  return setQueuePauseState(false);
 }
 
 /**

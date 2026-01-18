@@ -73,6 +73,21 @@ export interface QueueStats {
 }
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const VIDEO_TESTIMONIAL_EMAIL_TEMPLATES = [
+  "video_testimonial_invitation",
+  "video_testimonial_reminder_3day",
+  "video_testimonial_reminder_7day",
+] as const;
+
+const RATE_LIMITS = {
+  maxPerHour: 50,
+  maxPerDay: 500,
+} as const;
+
+// ============================================================================
 // Rate Limiting
 // ============================================================================
 
@@ -89,11 +104,7 @@ export async function checkVideoTestimonialRateLimit(
     .from("email_logs")
     .select("*", { count: "exact", head: true })
     .eq("organization_id", organizationId)
-    .in("template_name", [
-      "video_testimonial_invitation",
-      "video_testimonial_reminder_3day",
-      "video_testimonial_reminder_7day",
-    ])
+    .in("template_name", VIDEO_TESTIMONIAL_EMAIL_TEMPLATES)
     .gte("sent_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
 
   if (hourlyError) {
@@ -109,11 +120,7 @@ export async function checkVideoTestimonialRateLimit(
     .from("email_logs")
     .select("*", { count: "exact", head: true })
     .eq("organization_id", organizationId)
-    .in("template_name", [
-      "video_testimonial_invitation",
-      "video_testimonial_reminder_3day",
-      "video_testimonial_reminder_7day",
-    ])
+    .in("template_name", VIDEO_TESTIMONIAL_EMAIL_TEMPLATES)
     .gte("sent_at", today.toISOString());
 
   if (dailyError) {
@@ -121,21 +128,17 @@ export async function checkVideoTestimonialRateLimit(
     return { allowed: false, reason: "Failed to check rate limits" };
   }
 
-  // Default limits (can be customized per organization later)
-  const maxPerHour = 50;
-  const maxPerDay = 500;
-
-  if ((hourlyCount ?? 0) >= maxPerHour) {
+  if ((hourlyCount ?? 0) >= RATE_LIMITS.maxPerHour) {
     return {
       allowed: false,
-      reason: `Hourly limit reached (${hourlyCount}/${maxPerHour})`,
+      reason: `Hourly limit reached (${hourlyCount}/${RATE_LIMITS.maxPerHour})`,
     };
   }
 
-  if ((dailyCount ?? 0) >= maxPerDay) {
+  if ((dailyCount ?? 0) >= RATE_LIMITS.maxPerDay) {
     return {
       allowed: false,
-      reason: `Daily limit reached (${dailyCount}/${maxPerDay})`,
+      reason: `Daily limit reached (${dailyCount}/${RATE_LIMITS.maxPerDay})`,
     };
   }
 
@@ -196,6 +199,24 @@ export async function setQueuePaused(
 // ============================================================================
 // Queue Item Processing
 // ============================================================================
+
+/**
+ * Helper to cancel a queue item with a given reason
+ */
+async function cancelQueueItem(
+  itemId: string,
+  errorMessage: string
+): Promise<void> {
+  const supabase = createAdminClient();
+  await supabase
+    .from("video_testimonial_queue")
+    .update({
+      status: "cancelled",
+      error_message: errorMessage,
+      processed_at: new Date().toISOString(),
+    })
+    .eq("id", itemId);
+}
 
 /**
  * Get video testimonial request details for sending
@@ -345,68 +366,34 @@ export async function processVideoTestimonialQueueItem(
 
   // Check if request is already completed, cancelled, or expired
   if (request.submitted_at || request.status === "submitted") {
-    await supabase
-      .from("video_testimonial_queue")
-      .update({
-        status: "cancelled",
-        error_message: "Video already submitted",
-        processed_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-
+    await cancelQueueItem(item.id, "Video already submitted");
     // Cancel other pending queue items for this request
     await supabase
       .from("video_testimonial_queue")
       .update({ status: "cancelled" })
       .eq("request_id", item.request_id)
       .eq("status", "pending");
-
     return { success: true };
   }
 
   if (request.status === "cancelled") {
-    await supabase
-      .from("video_testimonial_queue")
-      .update({
-        status: "cancelled",
-        error_message: "Request was cancelled",
-        processed_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-
+    await cancelQueueItem(item.id, "Request was cancelled");
     return { success: true };
   }
 
   if (request.expires_at && new Date(request.expires_at) < new Date()) {
-    await supabase
-      .from("video_testimonial_queue")
-      .update({
-        status: "cancelled",
-        error_message: "Request expired",
-        processed_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-
+    await cancelQueueItem(item.id, "Request expired");
     // Update request status to expired
     await supabase
       .from("video_testimonial_requests")
       .update({ status: "expired" })
       .eq("id", item.request_id);
-
     return { success: true };
   }
 
   // For reminders, check if request has already been opened (no need to remind)
   if (item.type !== "initial" && request.opened_at) {
-    await supabase
-      .from("video_testimonial_queue")
-      .update({
-        status: "cancelled",
-        error_message: "Customer already opened the request",
-        processed_at: new Date().toISOString(),
-      })
-      .eq("id", item.id);
-
+    await cancelQueueItem(item.id, "Customer already opened the request");
     return { success: true };
   }
 
@@ -636,49 +623,32 @@ export async function getVideoTestimonialQueueStats(
     };
   }
 
-  const stats: QueueStats = {
-    total: data.length,
-    pending: 0,
-    processing: 0,
-    sent: 0,
-    failed: 0,
-    cancelled: 0,
-    byType: { initial: 0, reminder_3day: 0, reminder_7day: 0 },
-  };
+  return data.reduce<QueueStats>(
+    (stats, item) => {
+      // Count by status
+      if (item.status === "pending") stats.pending++;
+      else if (item.status === "processing") stats.processing++;
+      else if (item.status === "sent") stats.sent++;
+      else if (item.status === "failed") stats.failed++;
+      else if (item.status === "cancelled") stats.cancelled++;
 
-  for (const item of data) {
-    switch (item.status) {
-      case "pending":
-        stats.pending++;
-        break;
-      case "processing":
-        stats.processing++;
-        break;
-      case "sent":
-        stats.sent++;
-        break;
-      case "failed":
-        stats.failed++;
-        break;
-      case "cancelled":
-        stats.cancelled++;
-        break;
+      // Count by type
+      if (item.type === "initial") stats.byType.initial++;
+      else if (item.type === "reminder_3day") stats.byType.reminder_3day++;
+      else if (item.type === "reminder_7day") stats.byType.reminder_7day++;
+
+      return stats;
+    },
+    {
+      total: data.length,
+      pending: 0,
+      processing: 0,
+      sent: 0,
+      failed: 0,
+      cancelled: 0,
+      byType: { initial: 0, reminder_3day: 0, reminder_7day: 0 },
     }
-
-    switch (item.type) {
-      case "initial":
-        stats.byType.initial++;
-        break;
-      case "reminder_3day":
-        stats.byType.reminder_3day++;
-        break;
-      case "reminder_7day":
-        stats.byType.reminder_7day++;
-        break;
-    }
-  }
-
-  return stats;
+  );
 }
 
 /**

@@ -8,6 +8,11 @@ export {
   resendVideoTestimonialRequest,
   getVideoTestimonialQueue,
   getLoanOfficersForVideoRequests,
+  // Queue Management Actions
+  getVideoTestimonialQueueStatus,
+  pauseVideoTestimonialQueue,
+  resumeVideoTestimonialQueue,
+  retryFailedVideoTestimonialQueueItems,
   // Types
   type ActionResult,
   type VideoTestimonialRequest,
@@ -16,7 +21,25 @@ export {
   type VideoTestimonialQueueItem,
   type CreateVideoTestimonialRequestInput,
   type BulkCreateInput,
+  type QueueStatus,
 } from "./actions";
+
+export {
+  // Queue Service Functions
+  processVideoTestimonialQueue,
+  processVideoTestimonialQueueItem,
+  getPendingVideoTestimonialQueueItems,
+  getVideoTestimonialQueueStats,
+  cancelPendingVideoTestimonialQueueItems,
+  checkVideoTestimonialRateLimit,
+  isQueuePaused,
+  setQueuePaused,
+  // Types
+  type VideoTestimonialQueueItem as QueueServiceQueueItem,
+  type VideoTestimonialRequestWithDetails,
+  type QueueProcessingResult,
+  type QueueStats,
+} from "./queue-service";
 
 export {
   // Public Actions

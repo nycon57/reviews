@@ -2226,3 +2226,332 @@ export async function getVideosPendingApproval(params?: {
     return { success: false, error: "Failed to fetch pending videos" };
   }
 }
+
+// ============================================================================
+// Queue Management Server Actions
+// ============================================================================
+
+export interface QueueStatus {
+  isPaused: boolean;
+  stats: {
+    total: number;
+    pending: number;
+    processing: number;
+    sent: number;
+    failed: number;
+    cancelled: number;
+  };
+}
+
+/**
+ * Get video testimonial queue status for the organization
+ * - Returns pause state and queue statistics
+ */
+export async function getVideoTestimonialQueueStatus(): Promise<
+  ActionResult<QueueStatus>
+> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only managers and admins can view queue status
+    if (!["admin", "manager"].includes(userData.role)) {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // Check if queue is paused
+    const { data: settingData } = await adminSupabase
+      .from("organization_settings")
+      .select("value")
+      .eq("organization_id", userData.organization_id)
+      .eq("key", "video_testimonial_queue_paused")
+      .single();
+
+    const isPaused = settingData?.value === "true";
+
+    // Get queue statistics
+    const { data: queueData } = await adminSupabase
+      .from("video_testimonial_queue")
+      .select("status")
+      .eq("organization_id", userData.organization_id);
+
+    const stats = {
+      total: 0,
+      pending: 0,
+      processing: 0,
+      sent: 0,
+      failed: 0,
+      cancelled: 0,
+    };
+
+    (queueData || []).forEach((item) => {
+      stats.total++;
+      switch (item.status) {
+        case "pending":
+          stats.pending++;
+          break;
+        case "processing":
+          stats.processing++;
+          break;
+        case "sent":
+          stats.sent++;
+          break;
+        case "failed":
+          stats.failed++;
+          break;
+        case "cancelled":
+          stats.cancelled++;
+          break;
+      }
+    });
+
+    return {
+      success: true,
+      data: {
+        isPaused,
+        stats,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching queue status:", error);
+    return { success: false, error: "Failed to fetch queue status" };
+  }
+}
+
+/**
+ * Pause the video testimonial queue for the organization
+ * - Prevents new emails from being sent until resumed
+ */
+export async function pauseVideoTestimonialQueue(): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only admins can pause the queue
+    if (userData.role !== "admin") {
+      return { success: false, error: "Only admins can pause the queue" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // Set pause state
+    const { error: upsertError } = await adminSupabase
+      .from("organization_settings")
+      .upsert(
+        {
+          organization_id: userData.organization_id,
+          key: "video_testimonial_queue_paused",
+          value: "true",
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "organization_id,key",
+        }
+      );
+
+    if (upsertError) {
+      console.error("Error pausing queue:", upsertError);
+      return { success: false, error: "Failed to pause queue" };
+    }
+
+    // Create audit log entry
+    await createAuditLogEntry(adminSupabase, {
+      organizationId: userData.organization_id,
+      userId: user.id,
+      action: "video_testimonial_queue_paused",
+      resourceType: "organization_settings",
+      resourceId: userData.organization_id,
+      metadata: {},
+    });
+
+    revalidatePath("/dashboard/video-testimonials");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error pausing queue:", error);
+    return { success: false, error: "Failed to pause queue" };
+  }
+}
+
+/**
+ * Resume the video testimonial queue for the organization
+ * - Allows pending emails to be processed again
+ */
+export async function resumeVideoTestimonialQueue(): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only admins can resume the queue
+    if (userData.role !== "admin") {
+      return { success: false, error: "Only admins can resume the queue" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // Set resume state
+    const { error: upsertError } = await adminSupabase
+      .from("organization_settings")
+      .upsert(
+        {
+          organization_id: userData.organization_id,
+          key: "video_testimonial_queue_paused",
+          value: "false",
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "organization_id,key",
+        }
+      );
+
+    if (upsertError) {
+      console.error("Error resuming queue:", upsertError);
+      return { success: false, error: "Failed to resume queue" };
+    }
+
+    // Create audit log entry
+    await createAuditLogEntry(adminSupabase, {
+      organizationId: userData.organization_id,
+      userId: user.id,
+      action: "video_testimonial_queue_resumed",
+      resourceType: "organization_settings",
+      resourceId: userData.organization_id,
+      metadata: {},
+    });
+
+    revalidatePath("/dashboard/video-testimonials");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error resuming queue:", error);
+    return { success: false, error: "Failed to resume queue" };
+  }
+}
+
+/**
+ * Retry failed queue items for the organization
+ * - Resets failed items to pending for re-processing
+ */
+export async function retryFailedVideoTestimonialQueueItems(): Promise<
+  ActionResult<{ retried: number }>
+> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only admins can retry failed items
+    if (userData.role !== "admin") {
+      return { success: false, error: "Only admins can retry failed items" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    // Reset failed items to pending
+    const { data: retriedItems, error: updateError } = await adminSupabase
+      .from("video_testimonial_queue")
+      .update({
+        status: "pending",
+        retry_count: 0,
+        error_message: null,
+        scheduled_at: new Date().toISOString(),
+      })
+      .eq("organization_id", userData.organization_id)
+      .eq("status", "failed")
+      .select("id");
+
+    if (updateError) {
+      console.error("Error retrying failed items:", updateError);
+      return { success: false, error: "Failed to retry items" };
+    }
+
+    const retriedCount = retriedItems?.length ?? 0;
+
+    // Create audit log entry
+    await createAuditLogEntry(adminSupabase, {
+      organizationId: userData.organization_id,
+      userId: user.id,
+      action: "video_testimonial_queue_retry",
+      resourceType: "video_testimonial_queue",
+      resourceId: "bulk",
+      metadata: {
+        retried_count: retriedCount,
+      },
+    });
+
+    revalidatePath("/dashboard/video-testimonials");
+
+    return {
+      success: true,
+      data: { retried: retriedCount },
+    };
+  } catch (error) {
+    console.error("Error retrying failed items:", error);
+    return { success: false, error: "Failed to retry items" };
+  }
+}

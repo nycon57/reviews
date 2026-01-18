@@ -9,9 +9,9 @@ Ralph uses a **3-pass minimum** per story for iterative quality improvement:
 
 | Pass | Focus | Key Skills | Commit Prefix |
 |------|-------|------------|---------------|
-| 1 | Implementation | `/feature-dev`, design system | `[Pass 1/3]` |
-| 2 | Quality Review | `/code-review`, `/vercel-react-best-practices` | `[Pass 2/3]` |
-| 3 | Polish & Finalize | `/code-simplifier`, `/frontend-design`, browser test | `[Pass 3/3]` |
+| 1 | Implementation | `/feature-dev`, `/frontend-design`, `/vercel-react-best-practices`, `/web-design-guidelines`  | `[Pass 1/3]` |
+| 2 | Quality Review | `/code-review` | `[Pass 2/3]` |
+| 3 | Polish & Finalize | `/code-simplifier`, browser test | `[Pass 3/3]` |
 
 **Important**: Stories do NOT emit `<promise>COMPLETE</promise>` until Pass 3 verification passes.
 
@@ -44,8 +44,8 @@ Ralph uses a **3-pass minimum** per story for iterative quality improvement:
 ### Phase 2: Enhanced Features - Stories S009, S011, S013-S016, S026, S031
 **Focus**: Manager dashboards, Google integration, approval workflows, and analytics
 **Required Plugins**:
-- `/feature-dev` - For architecture planning, especially for integrations (S015 Google API)
-- `/frontend-design` - For dashboard UI components (S011 Manager Dashboard, S013 Gamification)
+- `/feature-dev` - For architecture planning, especially for integrations 
+- `/frontend-design` - For dashboard UI components
 - `/code-simplifier` - After implementation
 
 **Guidelines**:

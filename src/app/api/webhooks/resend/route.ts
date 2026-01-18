@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ResendWebhookPayload } from "@/lib/email/types";
 
+// Video testimonial template names
+const VIDEO_TESTIMONIAL_TEMPLATES = [
+  "video_testimonial_invitation",
+  "video_testimonial_reminder_3day",
+  "video_testimonial_reminder_7day",
+];
+
 // Resend webhook handler for email tracking events
 export async function POST(request: NextRequest) {
   try {
@@ -51,15 +58,22 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    // Update email log by resend message ID
-    const { error } = await supabase
+    // Update email log by resend message ID and get the template info
+    const { data: emailLog, error } = await supabase
       .from("email_logs")
       .update(updateData)
-      .eq("resend_message_id", data.email_id);
+      .eq("resend_message_id", data.email_id)
+      .select("template_name")
+      .single();
 
     if (error) {
       console.error("Failed to update email log:", error);
-      // Still return success to avoid Resend retries
+      // Still continue processing
+    }
+
+    // Handle video testimonial-specific status updates
+    if (emailLog?.template_name && VIDEO_TESTIMONIAL_TEMPLATES.includes(emailLog.template_name)) {
+      await handleVideoTestimonialEmailEvent(supabase, type, data);
     }
 
     // For bounced/complained emails, we might want to add to unsubscribe list
@@ -85,6 +99,120 @@ export async function POST(request: NextRequest) {
     console.error("Webhook processing error:", error);
     // Return 200 to prevent retries on parse errors
     return NextResponse.json({ error: "Processing error" }, { status: 200 });
+  }
+}
+
+/**
+ * Handle video testimonial email events
+ * Updates the video_testimonial_requests table based on email events
+ */
+async function handleVideoTestimonialEmailEvent(
+  supabase: ReturnType<typeof createAdminClient>,
+  eventType: string,
+  eventData: ResendWebhookPayload["data"]
+) {
+  // Try to extract request_id from tags
+  const requestId = eventData.tags?.request_id;
+
+  if (!requestId) {
+    // No request ID in tags, try to find by email
+    const toEmail = eventData.to?.[0];
+    if (!toEmail) return;
+
+    // Find the most recent pending request for this email
+    const { data: request } = await supabase
+      .from("video_testimonial_requests")
+      .select("id")
+      .eq("customer_email", toEmail.toLowerCase())
+      .in("status", ["pending", "sent"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!request) return;
+
+    await updateVideoTestimonialRequest(supabase, request.id, eventType);
+  } else {
+    await updateVideoTestimonialRequest(supabase, requestId, eventType);
+  }
+}
+
+/**
+ * Update video testimonial request based on email event
+ */
+async function updateVideoTestimonialRequest(
+  supabase: ReturnType<typeof createAdminClient>,
+  requestId: string,
+  eventType: string
+) {
+  const now = new Date().toISOString();
+
+  switch (eventType) {
+    case "email.delivered":
+      // Update delivered timestamp
+      await supabase
+        .from("video_testimonial_requests")
+        .update({ email_delivered_at: now })
+        .eq("id", requestId)
+        .is("email_delivered_at", null);
+      break;
+
+    case "email.opened":
+      // Update opened timestamp and status
+      await supabase
+        .from("video_testimonial_requests")
+        .update({
+          opened_at: now,
+          status: "opened",
+        })
+        .eq("id", requestId)
+        .is("opened_at", null);
+
+      // Cancel pending reminder queue items since customer opened the email
+      await supabase
+        .from("video_testimonial_queue")
+        .update({
+          status: "cancelled",
+          error_message: "Customer opened the email",
+          processed_at: now,
+        })
+        .eq("request_id", requestId)
+        .eq("status", "pending")
+        .in("type", ["reminder_3day", "reminder_7day"]);
+      break;
+
+    case "email.clicked":
+      // Update clicked timestamp
+      await supabase
+        .from("video_testimonial_requests")
+        .update({ clicked_at: now })
+        .eq("id", requestId)
+        .is("clicked_at", null);
+      break;
+
+    case "email.bounced":
+    case "email.complained":
+      // Mark request as failed due to bounced email
+      await supabase
+        .from("video_testimonial_requests")
+        .update({
+          status: "failed",
+          failure_reason: eventType === "email.bounced" ? "Email bounced" : "Email reported as spam",
+        })
+        .eq("id", requestId)
+        .in("status", ["pending", "sent"]);
+
+      // Cancel all pending queue items for this request
+      await supabase
+        .from("video_testimonial_queue")
+        .update({
+          status: "cancelled",
+          error_message: eventType === "email.bounced" ? "Email bounced" : "Email reported as spam",
+          processed_at: now,
+        })
+        .eq("request_id", requestId)
+        .eq("status", "pending");
+      break;
   }
 }
 

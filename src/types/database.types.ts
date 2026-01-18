@@ -1817,6 +1817,41 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          organization_id: string
+          updated_at: string
+          value: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          organization_id: string
+          updated_at?: string
+          value?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          organization_id?: string
+          updated_at?: string
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_exports: {
         Row: {
           created_at: string | null
@@ -3617,12 +3652,15 @@ export type Database = {
       }
       video_testimonial_requests: {
         Row: {
+          clicked_at: string | null
           created_at: string
           created_by: string | null
           customer_email: string
           customer_name: string
           customer_phone: string | null
+          email_delivered_at: string | null
           expires_at: string | null
+          failure_reason: string | null
           id: string
           last_reminder_at: string | null
           loan_officer_id: string
@@ -3643,12 +3681,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          clicked_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_email: string
           customer_name: string
           customer_phone?: string | null
+          email_delivered_at?: string | null
           expires_at?: string | null
+          failure_reason?: string | null
           id?: string
           last_reminder_at?: string | null
           loan_officer_id: string
@@ -3669,12 +3710,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          clicked_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_email?: string
           customer_name?: string
           customer_phone?: string | null
+          email_delivered_at?: string | null
           expires_at?: string | null
+          failure_reason?: string | null
           id?: string
           last_reminder_at?: string | null
           loan_officer_id?: string
@@ -4138,6 +4182,7 @@ export type Database = {
         | "submitted"
         | "expired"
         | "cancelled"
+        | "failed"
     }
     CompositeTypes: {
       [_ in never]: never

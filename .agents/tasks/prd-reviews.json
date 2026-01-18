@@ -1921,7 +1921,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Portal accessible without authentication",
         "Consent checkboxes block video capture until checked",
@@ -1939,9 +1939,9 @@
         ],
         "reuse_patterns": "Mirror public survey form pattern from src/app/survey/[token]/"
       },
-      "startedAt": "2026-01-17T21:39:26.609439+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-17T21:39:26.609591+00:00"
+      "startedAt": "2026-01-17T21:56:19.026131+00:00",
+      "completedAt": "2026-01-17T22:02:25.954779+00:00",
+      "updatedAt": "2026-01-17T22:02:25.954658+00:00"
     },
     {
       "id": "S061",
@@ -1962,7 +1962,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Recording works on iOS Safari and Android Chrome",
         "Video file under 100MB for 2-minute recording",
@@ -1977,7 +1977,10 @@
           "src/hooks/use-media-recorder.ts"
         ],
         "technical_notes": "Use MediaRecorder with webm preferred, fallback to mp4. Chunk recording to avoid memory issues. Use getUserMedia with constraints for resolution."
-      }
+      },
+      "startedAt": "2026-01-17T22:38:48.590252+00:00",
+      "completedAt": "2026-01-17T22:44:57.096551+00:00",
+      "updatedAt": "2026-01-17T22:44:57.096437+00:00"
     },
     {
       "id": "S062",
@@ -1998,7 +2001,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Upload completes to Supabase storage",
         "Progress updates in real-time",
@@ -2013,7 +2016,10 @@
           "src/lib/video-testimonials/upload-actions.ts"
         ],
         "technical_notes": "Use Supabase storage client for chunked upload. Validate duration client-side using video element loadedmetadata event."
-      }
+      },
+      "startedAt": "2026-01-17T22:44:59.155096+00:00",
+      "completedAt": "2026-01-17T22:49:08.337711+00:00",
+      "updatedAt": "2026-01-17T22:49:08.337587+00:00"
     },
     {
       "id": "S063",
@@ -2034,7 +2040,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Transcription accuracy acceptable for clear speech",
         "Processing completes within 60 seconds for 2-min video",
@@ -2051,7 +2057,10 @@
           "src/app/api/v1/testimonials/transcribe/route.ts - API endpoint"
         ],
         "technical_notes": "Use ffmpeg via @ffmpeg/ffmpeg for audio extraction. Consider edge function for heavy processing. Store audio temporarily, delete after transcription."
-      }
+      },
+      "startedAt": "2026-01-17T23:12:19.702137+00:00",
+      "completedAt": "2026-01-17T23:14:55.716694+00:00",
+      "updatedAt": "2026-01-17T23:14:55.716571+00:00"
     },
     {
       "id": "S064",
@@ -2071,7 +2080,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Generated reviews are coherent and professional",
         "Reviews accurately reflect transcription content",
@@ -2087,7 +2096,10 @@
           "src/lib/ai/prompts/review-generation.ts"
         ],
         "prompt_guidelines": "Include instructions for: maintaining customer voice, highlighting specific experiences, professional formatting, appropriate length (150-300 words)"
-      }
+      },
+      "startedAt": "2026-01-17T23:29:24.626794+00:00",
+      "completedAt": "2026-01-17T23:33:46.919767+00:00",
+      "updatedAt": "2026-01-17T23:33:46.919616+00:00"
     },
     {
       "id": "S065",
@@ -2108,7 +2120,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Customer can edit and approve text",
         "Google redirect works for eligible reviews",
@@ -2124,7 +2136,10 @@
           "src/lib/video-testimonials/approval-actions.ts"
         ],
         "flow": "Video uploaded \u2192 Processing \u2192 Transcription \u2192 AI text \u2192 Customer edits \u2192 Approval \u2192 Optional Google redirect \u2192 Thank you"
-      }
+      },
+      "startedAt": "2026-01-17T23:52:26.957571+00:00",
+      "completedAt": "2026-01-18T00:02:43.604692+00:00",
+      "updatedAt": "2026-01-18T00:02:43.604580+00:00"
     },
     {
       "id": "S066",
@@ -2145,7 +2160,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Request creation works end-to-end",
         "Status updates reflect real-time changes",
@@ -2161,7 +2176,10 @@
           "src/components/video-testimonials/request-list.tsx",
           "src/components/video-testimonials/create-request-form.tsx"
         ]
-      }
+      },
+      "startedAt": "2026-01-18T00:21:55.261687+00:00",
+      "completedAt": "2026-01-18T00:26:20.535247+00:00",
+      "updatedAt": "2026-01-18T00:26:20.535137+00:00"
     },
     {
       "id": "S067",
@@ -2182,7 +2200,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Videos play smoothly in dashboard",
         "Thumbnails generate correctly",
@@ -2199,7 +2217,10 @@
           "src/components/video-testimonials/video-player-modal.tsx"
         ],
         "technical_notes": "Generate video thumbnails server-side or use video poster attribute. Consider lazy loading for large libraries."
-      }
+      },
+      "startedAt": "2026-01-18T00:53:52.453923+00:00",
+      "completedAt": "2026-01-18T01:03:04.983336+00:00",
+      "updatedAt": "2026-01-18T01:03:04.983076+00:00"
     },
     {
       "id": "S068",
@@ -2220,7 +2241,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Approval workflow functions end-to-end",
         "Only approved videos visible publicly",
@@ -2237,7 +2258,10 @@
           "src/lib/video-testimonials/approval-actions.ts"
         ],
         "reuse_patterns": "Mirror review approval workflow from src/lib/reviews/approval-actions.ts"
-      }
+      },
+      "startedAt": "2026-01-18T01:25:39.511130+00:00",
+      "completedAt": "2026-01-18T01:28:54.316175+00:00",
+      "updatedAt": "2026-01-18T01:28:54.316061+00:00"
     },
     {
       "id": "S069",
@@ -2258,7 +2282,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Funnel metrics calculate correctly",
         "Charts render performantly with large datasets",
@@ -2275,7 +2299,10 @@
           "src/lib/video-testimonials/analytics-queries.ts"
         ],
         "reuse_patterns": "Leverage existing analytics engine from S012"
-      }
+      },
+      "startedAt": "2026-01-18T01:50:49.495113+00:00",
+      "completedAt": "2026-01-18T01:54:08.660302+00:00",
+      "updatedAt": "2026-01-18T01:54:08.660195+00:00"
     },
     {
       "id": "S070",
@@ -2296,7 +2323,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Initial emails send within 5 minutes of request creation",
         "Reminders send at correct intervals",
@@ -2313,7 +2340,10 @@
           "src/lib/video-testimonials/queue-processor.ts"
         ],
         "reuse_patterns": "Mirror survey distribution queue from src/app/api/cron/process-survey-queue/"
-      }
+      },
+      "startedAt": "2026-01-18T01:54:10.718446+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-18T01:54:10.718572+00:00"
     },
     {
       "id": "S071",

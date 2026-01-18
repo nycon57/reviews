@@ -31,10 +31,8 @@ function DynamicIcon({
 // Navigation link item for Features and Solutions
 function NavLinkItem({
   item,
-  type,
 }: {
   item: FeatureNavItem | SolutionNavItem;
-  type: "feature" | "solution";
 }) {
   return (
     <NavigationMenu.Link asChild>
@@ -83,12 +81,12 @@ function FeaturesDropdown() {
     <div className="grid gap-4 p-4 md:w-[600px] lg:w-[700px] lg:grid-cols-2">
       <div className="space-y-1">
         {featureNavItems.slice(0, 3).map((item) => (
-          <NavLinkItem key={item.slug} item={item} type="feature" />
+          <NavLinkItem key={item.slug} item={item}  />
         ))}
       </div>
       <div className="space-y-1">
         {featureNavItems.slice(3).map((item) => (
-          <NavLinkItem key={item.slug} item={item} type="feature" />
+          <NavLinkItem key={item.slug} item={item}  />
         ))}
       </div>
       {/* CTA row */}
@@ -113,7 +111,7 @@ function SolutionsDropdown() {
     <div className="grid gap-4 p-4 md:w-[500px] lg:w-[550px]">
       <div className="grid gap-1 lg:grid-cols-2">
         {solutionNavItems.map((item) => (
-          <NavLinkItem key={item.slug} item={item} type="solution" />
+          <NavLinkItem key={item.slug} item={item}  />
         ))}
       </div>
       {/* CTA row */}

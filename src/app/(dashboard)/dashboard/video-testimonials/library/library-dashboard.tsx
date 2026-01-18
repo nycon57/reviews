@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, memo } from "react";
 import {
   Search,
   RefreshCw,
@@ -291,10 +291,10 @@ function StatsCards({ stats }: { stats: VideoLibraryStats }) {
 }
 
 // ============================================================================
-// Video Card Component
+// Video Card Component (Memoized for performance)
 // ============================================================================
 
-function VideoCard({
+const VideoCard = memo(function VideoCard({
   video,
   onClick,
   canManage,
@@ -317,7 +317,7 @@ function VideoCard({
     <Card className="group overflow-hidden transition-shadow duration-300 hover:shadow-md">
       {/* Thumbnail / Video Preview */}
       <div
-        className="relative aspect-video cursor-pointer bg-muted"
+        className="relative aspect-video cursor-pointer bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         onClick={onClick}
         role="button"
         tabIndex={0}
@@ -434,7 +434,7 @@ function VideoCard({
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Video Detail Modal Component
@@ -1110,7 +1110,10 @@ export function VideoLibraryDashboard({
                 id="search-videos"
                 placeholder="Search by customer name..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1); // Reset pagination when search changes
+                }}
                 className="pl-9"
               />
             </div>

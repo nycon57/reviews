@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, memo } from "react";
 import {
   Search,
   RefreshCw,
@@ -216,10 +216,10 @@ function StatsCards({ stats }: { stats: { pending: number; changesRequested: num
 }
 
 // ============================================================================
-// Video Card Component
+// Video Card Component (Memoized for performance)
 // ============================================================================
 
-function VideoCard({
+const VideoCard = memo(function VideoCard({
   video,
   onClick,
   isSelected,
@@ -240,7 +240,7 @@ function VideoCard({
     >
       {/* Thumbnail / Video Preview */}
       <div
-        className="relative aspect-video cursor-pointer bg-muted"
+        className="relative aspect-video cursor-pointer bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
         onClick={onClick}
         role="button"
         tabIndex={0}
@@ -331,7 +331,7 @@ function VideoCard({
       </CardContent>
     </Card>
   );
-}
+});
 
 // ============================================================================
 // Approval Modal Component
@@ -664,7 +664,11 @@ function ApprovalModal({
 
                   {isEditingText ? (
                     <div className="space-y-2">
+                      <Label htmlFor="ai-text-editor" className="sr-only">
+                        Edit AI-Generated Review Text
+                      </Label>
                       <Textarea
+                        id="ai-text-editor"
                         value={editedAiText}
                         onChange={(e) => setEditedAiText(e.target.value)}
                         rows={6}
@@ -1170,7 +1174,10 @@ export function ApprovalDashboard({
                 id="search-videos"
                 placeholder="Search by customer name..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1); // Reset pagination when search changes
+                }}
                 className="pl-9"
               />
             </div>

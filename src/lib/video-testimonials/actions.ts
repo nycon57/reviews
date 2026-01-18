@@ -1489,6 +1489,21 @@ export async function updateVideoApprovalStatus(
   }
 ): Promise<ActionResult> {
   try {
+    // Input validation for text fields
+    const MAX_REASON_LENGTH = 2000;
+    const MAX_NOTES_LENGTH = 2000;
+    const MAX_AI_TEXT_LENGTH = 5000;
+
+    if (options?.reason && options.reason.length > MAX_REASON_LENGTH) {
+      return { success: false, error: `Rejection reason cannot exceed ${MAX_REASON_LENGTH} characters` };
+    }
+    if (options?.managerNotes && options.managerNotes.length > MAX_NOTES_LENGTH) {
+      return { success: false, error: `Manager notes cannot exceed ${MAX_NOTES_LENGTH} characters` };
+    }
+    if (options?.editedAiText && options.editedAiText.length > MAX_AI_TEXT_LENGTH) {
+      return { success: false, error: `AI text cannot exceed ${MAX_AI_TEXT_LENGTH} characters` };
+    }
+
     const supabase = await createClient();
 
     const {
@@ -1531,6 +1546,15 @@ export async function updateVideoApprovalStatus(
       return { success: false, error: "Video not found" };
     }
 
+    // State machine validation - define valid transitions
+    const validTransitions: Record<string, string[]> = {
+      pending: ["approved", "rejected", "changes_requested"],
+      changes_requested: ["approved", "rejected", "changes_requested"],
+      approved: ["published"],
+      rejected: [], // Terminal state
+      published: [], // Terminal state
+    };
+
     const adminSupabase = createAdminClient();
     const now = new Date().toISOString();
 
@@ -1542,6 +1566,13 @@ export async function updateVideoApprovalStatus(
     switch (action) {
       case "approve":
         newStatus = "approved";
+        // Validate state transition
+        if (!validTransitions[existing.approval_status]?.includes(newStatus)) {
+          if (existing.approval_status === "approved") {
+            return { success: true }; // Idempotent - already approved
+          }
+          return { success: false, error: `Cannot approve video with status "${existing.approval_status}"` };
+        }
         updateData.approval_status = newStatus;
         updateData.approved_at = now;
         updateData.approved_by = user.id;
@@ -1553,20 +1584,34 @@ export async function updateVideoApprovalStatus(
         break;
       case "reject":
         newStatus = "rejected";
+        // Validate state transition
+        if (!validTransitions[existing.approval_status]?.includes(newStatus)) {
+          if (existing.approval_status === "rejected") {
+            return { success: true }; // Idempotent - already rejected
+          }
+          return { success: false, error: `Cannot reject video with status "${existing.approval_status}"` };
+        }
         updateData.approval_status = newStatus;
         updateData.rejection_reason = options?.reason || null;
         updateData.manager_notes = options?.managerNotes || null;
         break;
       case "request_changes":
-        newStatus = "changes_requested" as VideoTestimonialApprovalStatus;
+        newStatus = "changes_requested";
+        // Validate state transition
+        if (!validTransitions[existing.approval_status]?.includes(newStatus)) {
+          return { success: false, error: `Cannot request changes for video with status "${existing.approval_status}"` };
+        }
         updateData.approval_status = newStatus;
         updateData.manager_notes = options?.managerNotes || options?.reason || null;
         updateData.changes_requested_at = now;
         updateData.changes_requested_by = user.id;
         break;
       case "publish":
+        if (existing.approval_status === "published") {
+          return { success: true }; // Idempotent - already published
+        }
         if (existing.approval_status !== "approved") {
-          return { success: false, error: "Video must be approved before publishing" };
+          return { success: false, error: `Cannot publish video with status "${existing.approval_status}". Video must be approved first.` };
         }
         newStatus = "published";
         updateData.approval_status = newStatus;
@@ -1826,6 +1871,12 @@ export async function updateVideoAIText(
   aiText: string
 ): Promise<ActionResult> {
   try {
+    // Input validation
+    const MAX_AI_TEXT_LENGTH = 5000;
+    if (aiText.length > MAX_AI_TEXT_LENGTH) {
+      return { success: false, error: `AI text cannot exceed ${MAX_AI_TEXT_LENGTH} characters` };
+    }
+
     const supabase = await createClient();
 
     const {

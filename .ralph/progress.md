@@ -4769,3 +4769,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Composite indexes with organization_id first are critical for multi-tenant query performance
   - Data integrity constraints enforce logical relationships between columns
 ---
+
+---
+
+## S066: Video Testimonial Request Management Dashboard
+
+### Pass 1/3 — Implementation
+
+**Date:** 2026-01-17
+**Agent:** Claude Opus 4.5
+
+#### Summary
+Created dashboard page for managing video testimonial requests with full CRUD operations, filtering, search, and export capabilities.
+
+#### Files Created
+- `src/app/(dashboard)/dashboard/video-testimonials/requests/page.tsx` - Server component page with auth and data fetching
+- `src/app/(dashboard)/dashboard/video-testimonials/requests/requests-dashboard.tsx` - Client dashboard component (~940 lines)
+
+#### Features Implemented
+- **Stats Cards**: Total requests, in-progress, completed, completion rate
+- **Request Table**: Customer info, status, sent/opened dates, reminders
+- **Status Filtering**: All, pending, sent, opened, completed, expired, cancelled
+- **Search**: By customer name or email
+- **Loan Officer Filter**: For admin/manager roles
+- **Pagination**: 25 items per page with navigation
+- **Create Dialog**: 
+  - Single request form (loan officer, customer info, custom prompt, duration)
+  - Bulk import via CSV format
+- **Actions**: Resend invitation, cancel request, copy link, export CSV
+- **Role-Based Access**: Admins/managers can manage; loan officers see their own
+
+#### Technical Notes
+- Uses existing server actions from `lib/video-testimonials/actions.ts`
+- Follows design system patterns from existing dashboard pages
+- Uses custom toast hook from `@/hooks/use-toast`
+- Implements useTransition for optimistic UI updates
+
+#### Build Status
+✅ `npm run build` — passed
+✅ `npm run lint` — passed (0 errors, 23 pre-existing warnings)

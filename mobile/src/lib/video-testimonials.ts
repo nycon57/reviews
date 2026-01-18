@@ -9,6 +9,91 @@ import type {
 } from '../types';
 
 /**
+ * Auth context for the current user
+ */
+interface AuthContext {
+  userId: string;
+  organizationId: string;
+  role: string;
+}
+
+/**
+ * Get authenticated user context (reusable helper)
+ */
+async function getAuthenticatedUserContext(): Promise<AuthContext> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  const { data: userData } = await supabase
+    .from('users')
+    .select('organization_id, role')
+    .eq('id', user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    throw new Error('Organization not found');
+  }
+
+  return {
+    userId: user.id,
+    organizationId: userData.organization_id,
+    role: userData.role,
+  };
+}
+
+/**
+ * Get loan officer ID for the current user (if applicable)
+ */
+async function getLoanOfficerIdForUser(userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('loan_officers')
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+  return data?.id ?? null;
+}
+
+/**
+ * Transform raw video response data to typed VideoTestimonialResponse
+ */
+function transformVideoResponse(
+  res: Record<string, unknown>,
+  request: { customer_name: string; customer_email: string },
+  loanOfficer: { full_name: string }
+): VideoTestimonialResponse {
+  return {
+    id: res.id as string,
+    request_id: res.request_id as string,
+    organization_id: res.organization_id as string,
+    loan_officer_id: res.loan_officer_id as string,
+    video_url: res.video_url as string | null,
+    video_path: res.video_path as string | null,
+    thumbnail_url: res.thumbnail_url as string | null,
+    duration_seconds: res.duration_seconds as number | null,
+    file_size_bytes: res.file_size_bytes as number | null,
+    transcription: res.transcription as string | null,
+    transcription_status: res.transcription_status as string | null,
+    ai_generated_text: res.ai_generated_text as string | null,
+    ai_generation_status: res.ai_generation_status as string | null,
+    key_phrases: res.key_phrases as string[] | null,
+    sentiment_score: res.sentiment_score as number | null,
+    sentiment_label: res.sentiment_label as string | null,
+    approval_status: res.approval_status as VideoTestimonialApprovalStatus,
+    approved_at: res.approved_at as string | null,
+    rejection_reason: res.rejection_reason as string | null,
+    manager_notes: res.manager_notes as string | null,
+    published_at: res.published_at as string | null,
+    submitted_at: res.submitted_at as string,
+    created_at: res.created_at as string,
+    customer_name: request.customer_name,
+    customer_email: request.customer_email,
+    loan_officer_name: loanOfficer.full_name,
+  };
+}
+
+/**
  * Format duration from seconds to MM:SS
  */
 export function formatDuration(seconds: number | null): string {
@@ -56,21 +141,7 @@ export async function getVideoTestimonialResponses(params?: {
   const pageSize = params?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
 
-  // Get user data for organization filtering
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    throw new Error('Organization not found');
-  }
+  const auth = await getAuthenticatedUserContext();
 
   // Build query
   let query = supabase
@@ -107,7 +178,7 @@ export async function getVideoTestimonialResponses(params?: {
         full_name
       )
     `, { count: 'exact' })
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', auth.organizationId)
     .order('created_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
@@ -121,15 +192,11 @@ export async function getVideoTestimonialResponses(params?: {
   }
 
   // Role-based filtering for loan officers
-  if (userData.role === 'loan_officer') {
-    const { data: loData } = await supabase
-      .from('loan_officers')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (loData) {
-      query = query.eq('loan_officer_id', loData.id);
+  let loanOfficerId: string | null = null;
+  if (auth.role === 'loan_officer') {
+    loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
+    if (loanOfficerId) {
+      query = query.eq('loan_officer_id', loanOfficerId);
     } else {
       return { responses: [], total: 0, stats: getEmptyStats() };
     }
@@ -142,46 +209,18 @@ export async function getVideoTestimonialResponses(params?: {
     throw error;
   }
 
-  // Transform data
+  // Transform data using helper
   const responses: VideoTestimonialResponse[] = (data || []).map((res) => {
     const request = res.video_testimonial_requests as unknown as {
       customer_name: string;
       customer_email: string;
     };
     const loanOfficer = res.loan_officers as unknown as { full_name: string };
-
-    return {
-      id: res.id,
-      request_id: res.request_id,
-      organization_id: res.organization_id,
-      loan_officer_id: res.loan_officer_id,
-      video_url: res.video_url,
-      video_path: res.video_path,
-      thumbnail_url: res.thumbnail_url,
-      duration_seconds: res.duration_seconds,
-      file_size_bytes: res.file_size_bytes,
-      transcription: res.transcription,
-      transcription_status: res.transcription_status,
-      ai_generated_text: res.ai_generated_text,
-      ai_generation_status: res.ai_generation_status,
-      key_phrases: res.key_phrases,
-      sentiment_score: res.sentiment_score,
-      sentiment_label: res.sentiment_label,
-      approval_status: res.approval_status as VideoTestimonialApprovalStatus,
-      approved_at: res.approved_at,
-      rejection_reason: res.rejection_reason,
-      manager_notes: res.manager_notes,
-      published_at: res.published_at,
-      submitted_at: res.submitted_at,
-      created_at: res.created_at,
-      customer_name: request.customer_name,
-      customer_email: request.customer_email,
-      loan_officer_name: loanOfficer.full_name,
-    };
+    return transformVideoResponse(res as unknown as Record<string, unknown>, request, loanOfficer);
   });
 
-  // Get stats
-  const stats = await getVideoStats(userData.organization_id, userData.role === 'loan_officer' ? user.id : undefined);
+  // Get stats (pass loan officer ID directly to avoid redundant lookup)
+  const stats = await getVideoStats(auth.organizationId, loanOfficerId);
 
   return {
     responses,
@@ -195,23 +234,15 @@ export async function getVideoTestimonialResponses(params?: {
  */
 async function getVideoStats(
   organizationId: string,
-  loanOfficerUserId?: string
+  loanOfficerId?: string | null
 ): Promise<VideoTestimonialStats> {
   let query = supabase
     .from('video_testimonial_responses')
     .select('approval_status, duration_seconds')
     .eq('organization_id', organizationId);
 
-  if (loanOfficerUserId) {
-    const { data: loData } = await supabase
-      .from('loan_officers')
-      .select('id')
-      .eq('user_id', loanOfficerUserId)
-      .single();
-
-    if (loData) {
-      query = query.eq('loan_officer_id', loData.id);
-    }
+  if (loanOfficerId) {
+    query = query.eq('loan_officer_id', loanOfficerId);
   }
 
   const { data } = await query;
@@ -251,20 +282,7 @@ function getEmptyStats(): VideoTestimonialStats {
 export async function getVideoTestimonialResponse(
   responseId: string
 ): Promise<VideoTestimonialResponse | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    throw new Error('Organization not found');
-  }
+  const auth = await getAuthenticatedUserContext();
 
   const { data, error } = await supabase
     .from('video_testimonial_responses')
@@ -279,7 +297,7 @@ export async function getVideoTestimonialResponse(
       )
     `)
     .eq('id', responseId)
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', auth.organizationId)
     .single();
 
   if (error || !data) {
@@ -292,34 +310,7 @@ export async function getVideoTestimonialResponse(
   };
   const loanOfficer = data.loan_officers as unknown as { full_name: string };
 
-  return {
-    id: data.id,
-    request_id: data.request_id,
-    organization_id: data.organization_id,
-    loan_officer_id: data.loan_officer_id,
-    video_url: data.video_url,
-    video_path: data.video_path,
-    thumbnail_url: data.thumbnail_url,
-    duration_seconds: data.duration_seconds,
-    file_size_bytes: data.file_size_bytes,
-    transcription: data.transcription,
-    transcription_status: data.transcription_status,
-    ai_generated_text: data.ai_generated_text,
-    ai_generation_status: data.ai_generation_status,
-    key_phrases: data.key_phrases,
-    sentiment_score: data.sentiment_score,
-    sentiment_label: data.sentiment_label,
-    approval_status: data.approval_status as VideoTestimonialApprovalStatus,
-    approved_at: data.approved_at,
-    rejection_reason: data.rejection_reason,
-    manager_notes: data.manager_notes,
-    published_at: data.published_at,
-    submitted_at: data.submitted_at,
-    created_at: data.created_at,
-    customer_name: request.customer_name,
-    customer_email: request.customer_email,
-    loan_officer_name: loanOfficer.full_name,
-  };
+  return transformVideoResponse(data as unknown as Record<string, unknown>, request, loanOfficer);
 }
 
 /**
@@ -338,20 +329,7 @@ export async function getVideoTestimonialRequests(params?: {
   const pageSize = params?.pageSize ?? 20;
   const offset = (page - 1) * pageSize;
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    throw new Error('Organization not found');
-  }
+  const auth = await getAuthenticatedUserContext();
 
   let query = supabase
     .from('video_testimonial_requests')
@@ -376,7 +354,7 @@ export async function getVideoTestimonialRequests(params?: {
         full_name
       )
     `, { count: 'exact' })
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', auth.organizationId)
     .order('created_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
@@ -389,15 +367,10 @@ export async function getVideoTestimonialRequests(params?: {
   }
 
   // Role-based filtering for loan officers
-  if (userData.role === 'loan_officer') {
-    const { data: loData } = await supabase
-      .from('loan_officers')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (loData) {
-      query = query.eq('loan_officer_id', loData.id);
+  if (auth.role === 'loan_officer') {
+    const loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
+    if (loanOfficerId) {
+      query = query.eq('loan_officer_id', loanOfficerId);
     } else {
       return { requests: [], total: 0 };
     }
@@ -442,20 +415,7 @@ export async function getVideoTestimonialRequests(params?: {
 export async function createVideoTestimonialRequest(
   input: CreateVideoRequestInput
 ): Promise<{ requestId: string; token: string }> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    throw new Error('Organization not found');
-  }
+  const auth = await getAuthenticatedUserContext();
 
   // Calculate expiration (14 days from now)
   const expiresAt = new Date();
@@ -464,9 +424,9 @@ export async function createVideoTestimonialRequest(
   const { data, error } = await supabase
     .from('video_testimonial_requests')
     .insert({
-      organization_id: userData.organization_id,
+      organization_id: auth.organizationId,
       loan_officer_id: input.loan_officer_id,
-      created_by: user.id,
+      created_by: auth.userId,
       customer_name: input.customer_name,
       customer_email: input.customer_email,
       customer_phone: input.customer_phone || null,
@@ -486,7 +446,7 @@ export async function createVideoTestimonialRequest(
 
   // Queue the initial email
   await supabase.from('video_testimonial_queue').insert({
-    organization_id: userData.organization_id,
+    organization_id: auth.organizationId,
     request_id: data.id,
     type: 'initial',
     scheduled_at: new Date().toISOString(),
@@ -508,22 +468,9 @@ export async function updateVideoApprovalStatus(
     managerNotes?: string;
   }
 ): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
+  const auth = await getAuthenticatedUserContext();
 
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id, role')
-    .eq('id', user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    throw new Error('Organization not found');
-  }
-
-  if (!['admin', 'manager'].includes(userData.role)) {
+  if (!['admin', 'manager'].includes(auth.role)) {
     throw new Error('Insufficient permissions');
   }
 
@@ -536,7 +483,7 @@ export async function updateVideoApprovalStatus(
     case 'approve':
       updateData.approval_status = 'approved';
       updateData.approved_at = now;
-      updateData.approved_by = user.id;
+      updateData.approved_by = auth.userId;
       updateData.rejection_reason = null;
       updateData.manager_notes = options?.managerNotes || null;
       break;
@@ -549,7 +496,7 @@ export async function updateVideoApprovalStatus(
       updateData.approval_status = 'changes_requested';
       updateData.manager_notes = options?.managerNotes || options?.reason || null;
       updateData.changes_requested_at = now;
-      updateData.changes_requested_by = user.id;
+      updateData.changes_requested_by = auth.userId;
       break;
   }
 
@@ -557,7 +504,7 @@ export async function updateVideoApprovalStatus(
     .from('video_testimonial_responses')
     .update(updateData)
     .eq('id', responseId)
-    .eq('organization_id', userData.organization_id);
+    .eq('organization_id', auth.organizationId);
 
   if (error) {
     console.error('Error updating approval status:', error);
@@ -569,10 +516,8 @@ export async function updateVideoApprovalStatus(
  * Get signed URL for video playback
  */
 export async function getVideoSignedUrl(videoPath: string): Promise<string> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
+  // Verify user is authenticated
+  await getAuthenticatedUserContext();
 
   // Sanitize path
   const sanitizedPath = videoPath.replace(/^\/+/, '');
@@ -596,25 +541,12 @@ export async function getVideoSignedUrl(videoPath: string): Promise<string> {
  * Get loan officers for request creation
  */
 export async function getLoanOfficers(): Promise<LoanOfficer[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-
-  const { data: userData } = await supabase
-    .from('users')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    throw new Error('Organization not found');
-  }
+  const auth = await getAuthenticatedUserContext();
 
   const { data, error } = await supabase
     .from('loan_officers')
     .select('id, full_name, email, user_id')
-    .eq('organization_id', userData.organization_id)
+    .eq('organization_id', auth.organizationId)
     .eq('is_active', true)
     .order('full_name', { ascending: true });
 

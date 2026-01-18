@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
+import { Video, ResizeMode } from 'expo-av';
 import {
   Text,
   Card,
@@ -40,13 +40,11 @@ type TabKey = 'video' | 'transcription' | 'details';
 export function VideoDetailScreen({ route, navigation }: { route: any; navigation: any }) {
   const { videoId } = route.params;
   const colors = Colors.light;
-  const videoRef = useRef<Video>(null);
 
   const [loading, setLoading] = useState(true);
   const [video, setVideo] = useState<VideoTestimonialResponse | null>(null);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('video');
-  const [isPlaying, setIsPlaying] = useState(false);
   const [canApprove, setCanApprove] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -89,25 +87,6 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
   useEffect(() => {
     fetchVideo();
   }, [fetchVideo]);
-
-  const handlePlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (status.isLoaded) {
-      setIsPlaying(status.isPlaying);
-    }
-  }, []);
-
-  const togglePlayPause = useCallback(async () => {
-    if (videoRef.current) {
-      const status = await videoRef.current.getStatusAsync();
-      if (status.isLoaded) {
-        if (status.isPlaying) {
-          await videoRef.current.pauseAsync();
-        } else {
-          await videoRef.current.playAsync();
-        }
-      }
-    }
-  }, []);
 
   const handleApprove = useCallback(async () => {
     if (!video) return;
@@ -254,16 +233,12 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
         {/* Video Player */}
         <View style={styles.videoContainer}>
           {signedUrl ? (
-            <TouchableOpacity activeOpacity={0.9} onPress={togglePlayPause}>
-              <Video
-                ref={videoRef}
-                source={{ uri: signedUrl }}
-                style={styles.video}
-                resizeMode={ResizeMode.CONTAIN}
-                useNativeControls
-                onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-              />
-            </TouchableOpacity>
+            <Video
+              source={{ uri: signedUrl }}
+              style={styles.video}
+              resizeMode={ResizeMode.CONTAIN}
+              useNativeControls
+            />
           ) : (
             <View style={[styles.video, styles.videoPlaceholder]}>
               <Ionicons name="videocam-off" size={48} color={colors.mutedForeground} />

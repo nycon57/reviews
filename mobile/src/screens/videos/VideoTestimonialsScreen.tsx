@@ -69,7 +69,7 @@ const VideoCard = React.memo(function VideoCard({ video, onPress, canApprove }: 
             </View>
           )}
           {video.transcription && (
-            <View style={[styles.ccBadge]}>
+            <View style={styles.ccBadge}>
               <Text variant="small" style={styles.ccText}>CC</Text>
             </View>
           )}
@@ -115,7 +115,6 @@ interface StatsCardProps {
 }
 
 function StatsCard({ label, value, color }: StatsCardProps) {
-  const colors = Colors.light;
   return (
     <View style={styles.statsCard}>
       <Text

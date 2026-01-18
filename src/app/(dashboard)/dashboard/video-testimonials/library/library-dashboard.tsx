@@ -99,6 +99,112 @@ interface Props {
 }
 
 // ============================================================================
+// Shared Utility Functions
+// ============================================================================
+
+function formatDuration(seconds: number | null): string {
+  if (!seconds) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function formatDurationVerbose(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatDateLong(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return "Unknown";
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MB`;
+}
+
+function TranscriptionContent({
+  status,
+  transcription,
+}: {
+  status: string | null;
+  transcription: string | null;
+}): React.ReactElement {
+  if (status === "completed" && transcription) {
+    return (
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">
+          {transcription}
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "processing") {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Transcription in progress...
+      </div>
+    );
+  }
+
+  if (status === "failed") {
+    return (
+      <div className="text-sm text-red-600">
+        Transcription failed: {transcription || "Unknown error"}
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-sm text-muted-foreground">
+      No transcription available
+    </div>
+  );
+}
+
+// ============================================================================
+// Sentiment Badge Component
+// ============================================================================
+
+function SentimentBadge({ label }: { label: string | null }) {
+  if (!label) return null;
+
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "text-xs",
+        // Use design system accent colors for sentiment
+        label === "positive" && "border-repwell-sage-200/50 text-repwell-sage-200",
+        label === "negative" && "border-[#c47c7c]/50 text-[#c47c7c]",
+        label === "neutral" && "border-[#7c9eb8]/50 text-[#7c9eb8]"
+      )}
+    >
+      {label}
+    </Badge>
+  );
+}
+
+// ============================================================================
 // Approval Status Badge Component
 // ============================================================================
 
@@ -132,12 +238,6 @@ function ApprovalStatusBadge({ status }: { status: string }) {
 // ============================================================================
 
 function StatsCards({ stats }: { stats: VideoLibraryStats }) {
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
-  };
-
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
       <Card>
@@ -182,7 +282,7 @@ function StatsCards({ stats }: { stats: VideoLibraryStats }) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {formatDuration(stats.averageDuration)}
+            {formatDurationVerbose(stats.averageDuration)}
           </div>
         </CardContent>
       </Card>
@@ -213,23 +313,8 @@ function VideoCard({
   onPublish: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
   return (
-    <Card className="group overflow-hidden transition-shadow hover:shadow-md">
+    <Card className="group overflow-hidden transition-shadow duration-300 hover:shadow-md">
       {/* Thumbnail / Video Preview */}
       <div
         className="relative aspect-video cursor-pointer bg-muted"
@@ -252,7 +337,7 @@ function VideoCard({
         )}
 
         {/* Play overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg">
             <Play className="h-6 w-6 text-repwell-teal-400 ml-1" />
           </div>
@@ -343,20 +428,7 @@ function VideoCard({
         {video.sentimentLabel && (
           <div className="mt-2 flex items-center gap-1.5 text-xs">
             <span className="text-muted-foreground">Sentiment:</span>
-            <Badge
-              variant="outline"
-              className={cn(
-                "text-xs",
-                video.sentimentLabel === "positive" &&
-                  "border-green-200 text-green-700",
-                video.sentimentLabel === "negative" &&
-                  "border-red-200 text-red-700",
-                video.sentimentLabel === "neutral" &&
-                  "border-gray-200 text-gray-700"
-              )}
-            >
-              {video.sentimentLabel}
-            </Badge>
+            <SentimentBadge label={video.sentimentLabel} />
           </div>
         )}
       </CardContent>
@@ -447,40 +519,16 @@ function VideoDetailModal({
 
   if (!video) return null;
 
-  const formatDuration = (seconds: number | null) => {
-    if (!seconds) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return "Unknown";
-    const mb = bytes / (1024 * 1024);
-    return `${mb.toFixed(1)} MB`;
-  };
-
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-[95vw] sm:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Film className="h-5 w-5" />
             {video.customerName}&apos;s Testimonial
           </DialogTitle>
           <DialogDescription>
-            For {video.loanOfficerName} - Submitted {formatDate(video.submittedAt)}
+            For {video.loanOfficerName} - Submitted {formatDateLong(video.submittedAt)}
           </DialogDescription>
         </DialogHeader>
 
@@ -543,7 +591,7 @@ function VideoDetailModal({
                           size="sm"
                           variant="outline"
                           onClick={() => onReject(video.id)}
-                          className="text-red-600 hover:bg-red-50"
+                          className="text-[#c47c7c] border-[#c47c7c]/50 hover:bg-[#c47c7c]/10"
                         >
                           <ThumbsDown className="mr-2 h-4 w-4" />
                           Reject
@@ -551,7 +599,7 @@ function VideoDetailModal({
                         <Button
                           size="sm"
                           onClick={() => onApprove(video.id)}
-                          className="bg-green-600 hover:bg-green-700"
+                          className="bg-repwell-sage-200 hover:bg-repwell-sage-200/80 text-white"
                         >
                           <ThumbsUp className="mr-2 h-4 w-4" />
                           Approve
@@ -578,27 +626,10 @@ function VideoDetailModal({
                   <h4 className="mb-2 font-semibold text-repwell-teal-500">
                     Transcription
                   </h4>
-                  {video.transcriptionStatus === "completed" &&
-                  video.transcription ? (
-                    <div className="rounded-lg border bg-muted/30 p-4">
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {video.transcription}
-                      </p>
-                    </div>
-                  ) : video.transcriptionStatus === "processing" ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Transcription in progress...
-                    </div>
-                  ) : video.transcriptionStatus === "failed" ? (
-                    <div className="text-sm text-red-600">
-                      Transcription failed: {video.transcription || "Unknown error"}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      No transcription available
-                    </div>
-                  )}
+                  <TranscriptionContent
+                    status={video.transcriptionStatus}
+                    transcription={video.transcription}
+                  />
                 </div>
 
                 {/* AI Generated Text */}
@@ -700,19 +731,7 @@ function VideoDetailModal({
                       <div>
                         <dt className="text-muted-foreground">Sentiment</dt>
                         <dd>
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              video.sentimentLabel === "positive" &&
-                                "border-green-200 text-green-700",
-                              video.sentimentLabel === "negative" &&
-                                "border-red-200 text-red-700",
-                              video.sentimentLabel === "neutral" &&
-                                "border-gray-200 text-gray-700"
-                            )}
-                          >
-                            {video.sentimentLabel}
-                          </Badge>
+                          <SentimentBadge label={video.sentimentLabel} />
                         </dd>
                       </div>
                     )}
@@ -737,18 +756,18 @@ function VideoDetailModal({
                 <dl className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <dt className="text-muted-foreground">Submitted</dt>
-                    <dd className="font-medium">{formatDate(video.submittedAt)}</dd>
+                    <dd className="font-medium">{formatDateLong(video.submittedAt)}</dd>
                   </div>
                   {video.approvedAt && (
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Approved</dt>
-                      <dd className="font-medium">{formatDate(video.approvedAt)}</dd>
+                      <dd className="font-medium">{formatDateLong(video.approvedAt)}</dd>
                     </div>
                   )}
                   {video.publishedAt && (
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Published</dt>
-                      <dd className="font-medium">{formatDate(video.publishedAt)}</dd>
+                      <dd className="font-medium">{formatDateLong(video.publishedAt)}</dd>
                     </div>
                   )}
                 </dl>

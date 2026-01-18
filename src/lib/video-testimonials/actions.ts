@@ -118,10 +118,9 @@ async function checkOrganizationVideoTestimonialAccess(
   supabase: Awaited<ReturnType<typeof createClient>>,
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string }> {
-  // Check organization subscription/settings for video testimonial access
   const { data: org, error } = await supabase
     .from("organizations")
-    .select("settings, subscription_tier")
+    .select("id")
     .eq("id", organizationId)
     .single();
 
@@ -129,11 +128,7 @@ async function checkOrganizationVideoTestimonialAccess(
     return { allowed: false, reason: "Organization not found" };
   }
 
-  // For now, allow all organizations - in production, check subscription tier
-  // const settings = org.settings as Record<string, unknown> | null;
-  // const hasVideoAccess = settings?.video_testimonials_enabled !== false;
-  // const tierAllowed = ["pro", "enterprise"].includes(org.subscription_tier || "");
-
+  // TODO: Add subscription tier check when implementing paid tiers
   return { allowed: true };
 }
 
@@ -1283,15 +1278,21 @@ export async function getVideoTestimonialResponses(params?: {
 
     const { data: allResponses } = await statsQuery;
 
-    const stats: VideoLibraryStats = {
-      total: allResponses?.length ?? 0,
-      pending: allResponses?.filter((r) => r.approval_status === "pending").length ?? 0,
-      approved: allResponses?.filter((r) => r.approval_status === "approved").length ?? 0,
-      rejected: allResponses?.filter((r) => r.approval_status === "rejected").length ?? 0,
-      published: allResponses?.filter((r) => r.approval_status === "published").length ?? 0,
-      totalDuration: allResponses?.reduce((sum, r) => sum + (r.duration_seconds || 0), 0) ?? 0,
-      averageDuration: 0,
-    };
+    // Calculate all stats in a single pass for efficiency
+    const stats = (allResponses || []).reduce<VideoLibraryStats>(
+      (acc, r) => {
+        acc.total++;
+        acc.totalDuration += r.duration_seconds || 0;
+        switch (r.approval_status) {
+          case "pending": acc.pending++; break;
+          case "approved": acc.approved++; break;
+          case "rejected": acc.rejected++; break;
+          case "published": acc.published++; break;
+        }
+        return acc;
+      },
+      { total: 0, pending: 0, approved: 0, rejected: 0, published: 0, totalDuration: 0, averageDuration: 0 }
+    );
     stats.averageDuration =
       stats.total > 0 ? Math.round(stats.totalDuration / stats.total) : 0;
 

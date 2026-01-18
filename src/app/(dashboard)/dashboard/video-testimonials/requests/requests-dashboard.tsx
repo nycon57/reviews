@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Plus,
   Search,
@@ -75,7 +75,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { EmptyState } from "@/components/shared/empty-state";
 import type { VideoTestimonialRequest } from "@/lib/video-testimonials/actions";
 import {
   getVideoTestimonialRequests,
@@ -103,7 +102,8 @@ interface Props {
   userRole: "admin" | "manager" | "loan_officer";
 }
 
-type RequestStatus = "pending" | "sent" | "opened" | "submitted" | "expired" | "cancelled";
+// Status values for video testimonial requests
+type _RequestStatus = "pending" | "sent" | "opened" | "submitted" | "expired" | "cancelled";
 
 // ============================================================================
 // Status Badge Component
@@ -204,7 +204,7 @@ function CreateRequestDialog({
   loanOfficers: LoanOfficer[];
   onSuccess: () => void;
 }) {
-  const [isPending, startTransition] = useTransition();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<"single" | "bulk">("single");
 
   // Single request form state
@@ -220,13 +220,14 @@ function CreateRequestDialog({
   // Bulk request form state
   const [bulkText, setBulkText] = useState("");
 
-  const handleSingleSubmit = () => {
+  const handleSingleSubmit = async () => {
     if (!singleForm.loanOfficerId || !singleForm.customerName || !singleForm.customerEmail) {
       toast({ title: "Error", description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
 
-    startTransition(async () => {
+    setIsSubmitting(true);
+    try {
       const input: CreateVideoTestimonialRequestInput = {
         loanOfficerId: singleForm.loanOfficerId,
         customerName: singleForm.customerName,
@@ -254,10 +255,12 @@ function CreateRequestDialog({
       } else {
         toast({ title: "Error", description: result.error || "Failed to create request", variant: "destructive" });
       }
-    });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleBulkSubmit = () => {
+  const handleBulkSubmit = async () => {
     const lines = bulkText
       .split("\n")
       .map((line) => line.trim())
@@ -304,7 +307,8 @@ function CreateRequestDialog({
       return;
     }
 
-    startTransition(async () => {
+    setIsSubmitting(true);
+    try {
       const result = await createBulkVideoTestimonialRequests({ requests });
 
       if (result.success && result.data) {
@@ -320,7 +324,9 @@ function CreateRequestDialog({
       } else {
         toast({ title: "Error", description: result.error || "Failed to create bulk requests", variant: "destructive" });
       }
-    });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -444,8 +450,8 @@ function CreateRequestDialog({
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSingleSubmit} disabled={isPending}>
-                {isPending ? (
+              <Button onClick={handleSingleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     Creating...
@@ -510,8 +516,8 @@ def456-uuid, Jane Doe, jane@example.com`}
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleBulkSubmit} disabled={isPending}>
-                {isPending ? (
+              <Button onClick={handleBulkSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
                     Creating...
@@ -543,12 +549,15 @@ export function VideoTestimonialRequestsDashboard({
 }: Props) {
   const [requests, setRequests] = useState<VideoTestimonialRequest[]>(initialRequests);
   const [total, setTotal] = useState(initialTotal);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loanOfficerFilter, setLoanOfficerFilter] = useState<string>("all");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -560,15 +569,19 @@ export function VideoTestimonialRequestsDashboard({
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [requestToCancel, setRequestToCancel] = useState<string | null>(null);
 
+  // Track if initial render to avoid duplicate fetch
+  const isInitialMount = useRef(true);
+
   const canManage = userRole === "admin" || userRole === "manager";
 
   // Fetch requests with current filters
-  const fetchRequests = useCallback(() => {
-    startTransition(async () => {
+  const fetchRequests = useCallback(async () => {
+    setIsLoading(true);
+    try {
       const result = await getVideoTestimonialRequests({
         status: statusFilter !== "all" ? statusFilter : undefined,
         loanOfficerId: loanOfficerFilter !== "all" ? loanOfficerFilter : undefined,
-        search: searchQuery || undefined,
+        search: debouncedSearch || undefined,
         page,
         pageSize,
       });
@@ -576,14 +589,32 @@ export function VideoTestimonialRequestsDashboard({
       if (result.success && result.data) {
         setRequests(result.data.requests);
         setTotal(result.data.total);
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to fetch requests",
+          variant: "destructive"
+        });
       }
-    });
-  }, [statusFilter, loanOfficerFilter, searchQuery, page]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [statusFilter, loanOfficerFilter, debouncedSearch, page]);
+
+  // Auto-fetch when filters or page changes (fixes race condition)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    fetchRequests();
+  }, [fetchRequests]);
 
   // Resend request
   const handleResend = useCallback(
-    (requestId: string) => {
-      startTransition(async () => {
+    async (requestId: string) => {
+      setIsResending(true);
+      try {
         const result = await resendVideoTestimonialRequest(requestId);
         if (result.success) {
           toast({ title: "Success", description: "Invitation resent successfully" });
@@ -591,16 +622,19 @@ export function VideoTestimonialRequestsDashboard({
         } else {
           toast({ title: "Error", description: result.error || "Failed to resend invitation", variant: "destructive" });
         }
-      });
+      } finally {
+        setIsResending(false);
+      }
     },
     [fetchRequests]
   );
 
   // Cancel request
-  const handleCancel = useCallback(() => {
+  const handleCancel = useCallback(async () => {
     if (!requestToCancel) return;
 
-    startTransition(async () => {
+    setIsCancelling(true);
+    try {
       const result = await cancelVideoTestimonialRequest(requestToCancel);
       if (result.success) {
         toast({ title: "Success", description: "Request cancelled successfully" });
@@ -610,8 +644,18 @@ export function VideoTestimonialRequestsDashboard({
       } else {
         toast({ title: "Error", description: result.error || "Failed to cancel request", variant: "destructive" });
       }
-    });
+    } finally {
+      setIsCancelling(false);
+    }
   }, [requestToCancel, fetchRequests]);
+
+  // Sanitize CSV cell to prevent formula injection
+  const sanitizeCSVCell = (cell: string): string => {
+    if (typeof cell === "string" && /^[=+\-@\t\r]/.test(cell)) {
+      return `'${cell}`;
+    }
+    return cell;
+  };
 
   // Export to CSV
   const handleExportCSV = useCallback(() => {
@@ -626,8 +670,8 @@ export function VideoTestimonialRequestsDashboard({
     ];
 
     const rows = requests.map((r) => [
-      r.customerName,
-      r.customerEmail,
+      sanitizeCSVCell(r.customerName),
+      sanitizeCSVCell(r.customerEmail),
       r.status,
       r.sentAt || "",
       r.openedAt || "",
@@ -637,7 +681,7 @@ export function VideoTestimonialRequestsDashboard({
 
     const csvContent = [
       headers.join(","),
-      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+      ...rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -702,7 +746,7 @@ export function VideoTestimonialRequestsDashboard({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     setPage(1);
-                    fetchRequests();
+                    setDebouncedSearch(searchQuery);
                   }
                 }}
                 className="pl-9"
@@ -752,34 +796,30 @@ export function VideoTestimonialRequestsDashboard({
             <Button
               variant="outline"
               size="icon"
-              onClick={() => {
-                setPage(1);
-                fetchRequests();
-              }}
-              disabled={isPending}
+              onClick={fetchRequests}
+              disabled={isLoading}
             >
-              <RefreshCw className={cn("h-4 w-4", isPending && "animate-spin")} />
+              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
           </div>
 
           {/* Table */}
           {requests.length === 0 ? (
-            <EmptyState
-              iconName="send"
-              title="No video testimonial requests"
-              description="Create your first video testimonial request to start collecting customer videos."
-              actions={
-                canManage
-                  ? [
-                      {
-                        label: "Create Request",
-                        iconName: "plus",
-                        href: "#",
-                      },
-                    ]
-                  : undefined
-              }
-            />
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                <Send className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold">No video testimonial requests</h3>
+              <p className="mt-1 text-sm text-muted-foreground text-center max-w-sm">
+                Create your first video testimonial request to start collecting customer videos.
+              </p>
+              {canManage && (
+                <Button onClick={() => setCreateDialogOpen(true)} className="mt-4">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create Request
+                </Button>
+              )}
+            </div>
           ) : (
             <div className="rounded-md border">
               <Table>
@@ -839,7 +879,7 @@ export function VideoTestimonialRequestsDashboard({
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
                                     onClick={() => handleResend(request.id)}
-                                    disabled={isPending}
+                                    disabled={isResending}
                                   >
                                     <Send className="mr-2 h-4 w-4" />
                                     Resend Invitation
@@ -877,11 +917,8 @@ export function VideoTestimonialRequestsDashboard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setPage((p) => Math.max(1, p - 1));
-                    fetchRequests();
-                  }}
-                  disabled={page === 1 || isPending}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1 || isLoading}
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
@@ -892,11 +929,8 @@ export function VideoTestimonialRequestsDashboard({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setPage((p) => Math.min(totalPages, p + 1));
-                    fetchRequests();
-                  }}
-                  disabled={page === totalPages || isPending}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages || isLoading}
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -926,12 +960,13 @@ export function VideoTestimonialRequestsDashboard({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Keep Request</AlertDialogCancel>
+            <AlertDialogCancel disabled={isCancelling}>Keep Request</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancel}
+              disabled={isCancelling}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Cancel Request
+              {isCancelling ? "Cancelling..." : "Cancel Request"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

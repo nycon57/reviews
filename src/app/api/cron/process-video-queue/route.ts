@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { processVideoTestimonialQueue } from "@/lib/video-testimonials/queue-service";
+
+// Zod schema for query parameters
+const cronParamsSchema = z.object({
+  batch_size: z.coerce
+    .number()
+    .int()
+    .min(1, "Batch size must be at least 1")
+    .max(100, "Batch size cannot exceed 100")
+    .default(50),
+});
 
 // Verify the request is from a valid cron job source
 function verifyCronSecret(request: NextRequest): boolean {
@@ -40,14 +51,27 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Get batch size from query params or use default
+    // Validate and parse query params with Zod (handles NaN, invalid values, defaults)
     const url = new URL(request.url);
-    const batchSize = parseInt(url.searchParams.get("batch_size") || "50", 10);
+    const parseResult = cronParamsSchema.safeParse({
+      batch_size: url.searchParams.get("batch_size") ?? undefined,
+    });
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: parseResult.error.errors[0]?.message || "Invalid parameters",
+          timestamp: new Date().toISOString(),
+        },
+        { status: 400 }
+      );
+    }
+
+    const { batch_size: batchSize } = parseResult.data;
 
     // Process the video testimonial queue
-    const result = await processVideoTestimonialQueue(
-      Math.min(Math.max(batchSize, 1), 100) // Clamp between 1 and 100
-    );
+    const result = await processVideoTestimonialQueue(batchSize);
 
     return NextResponse.json({
       success: true,

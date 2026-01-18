@@ -1,6 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { ResendWebhookPayload } from "@/lib/email/types";
+import { Webhook } from "svix";
+import { z } from "zod";
+import { emailConfig } from "@/lib/email/client";
+
+// Zod schema for Resend webhook payload validation
+const resendWebhookDataSchema = z.object({
+  email_id: z.string(),
+  from: z.string().optional(),
+  to: z.array(z.string()).optional(),
+  subject: z.string().optional(),
+  broadcast_id: z.string().optional(),
+  template_id: z.string().optional(),
+  tags: z.record(z.string()).optional(),
+  click: z.object({
+    ipAddress: z.string(),
+    link: z.string(),
+    timestamp: z.string(),
+    userAgent: z.string(),
+  }).optional(),
+});
+
+const resendWebhookSchema = z.object({
+  type: z.enum([
+    "email.sent",
+    "email.delivered",
+    "email.opened",
+    "email.clicked",
+    "email.bounced",
+    "email.complained",
+  ]),
+  created_at: z.string().optional(),
+  data: resendWebhookDataSchema,
+});
+
+type ResendWebhookPayload = z.infer<typeof resendWebhookSchema>;
 
 // Video testimonial template names
 const VIDEO_TESTIMONIAL_TEMPLATES = [
@@ -9,18 +43,75 @@ const VIDEO_TESTIMONIAL_TEMPLATES = [
   "video_testimonial_reminder_7day",
 ];
 
+/**
+ * Verify Resend webhook signature using Svix
+ * Resend uses Svix for webhook signatures
+ */
+async function verifyWebhookSignature(
+  request: NextRequest,
+  body: string
+): Promise<boolean> {
+  const webhookSecret = emailConfig.webhookSecret;
+
+  // In development without secret, allow unverified webhooks
+  if (!webhookSecret) {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Warning: Webhook signature verification skipped - no RESEND_WEBHOOK_SECRET configured");
+      return true;
+    }
+    console.error("RESEND_WEBHOOK_SECRET not configured");
+    return false;
+  }
+
+  const svixId = request.headers.get("svix-id");
+  const svixTimestamp = request.headers.get("svix-timestamp");
+  const svixSignature = request.headers.get("svix-signature");
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    console.error("Missing Svix headers for webhook verification");
+    return false;
+  }
+
+  try {
+    const wh = new Webhook(webhookSecret);
+    wh.verify(body, {
+      "svix-id": svixId,
+      "svix-timestamp": svixTimestamp,
+      "svix-signature": svixSignature,
+    });
+    return true;
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return false;
+  }
+}
+
 // Resend webhook handler for email tracking events
 export async function POST(request: NextRequest) {
   try {
-    const payload = (await request.json()) as ResendWebhookPayload;
+    // Get raw body for signature verification
+    const body = await request.text();
 
-    // Validate webhook payload
-    if (!payload.type || !payload.data?.email_id) {
+    // Verify webhook signature (CRITICAL: Prevents spoofed webhook attacks)
+    const isValid = await verifyWebhookSignature(request, body);
+    if (!isValid) {
+      return NextResponse.json(
+        { error: "Invalid webhook signature" },
+        { status: 401 }
+      );
+    }
+
+    // Parse and validate with Zod
+    const parseResult = resendWebhookSchema.safeParse(JSON.parse(body));
+    if (!parseResult.success) {
+      console.error("Invalid webhook payload:", parseResult.error.errors);
       return NextResponse.json(
         { error: "Invalid webhook payload" },
         { status: 400 }
       );
     }
+
+    const payload = parseResult.data;
 
     const { type, data } = payload;
     const supabase = createAdminClient();

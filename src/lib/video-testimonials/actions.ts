@@ -114,6 +114,24 @@ function getRequestUrl(token: string): string {
   return `${baseUrl}/video-testimonial/${token}`;
 }
 
+/**
+ * Sanitize search input to prevent PostgREST filter injection
+ * Escapes special characters that could be used to inject additional filter conditions
+ */
+function sanitizeSearchInput(input: string): string {
+  // Escape PostgREST special characters: % (wildcard), . (operator separator),
+  // , (filter separator), ( and ) (grouping), : (value separator)
+  // Also escape backslash to prevent escape sequence injection
+  return input
+    .replace(/\\/g, "\\\\")
+    .replace(/%/g, "\\%")
+    .replace(/\./g, "\\.")
+    .replace(/,/g, "\\,")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)")
+    .replace(/:/g, "\\:");
+}
+
 async function checkOrganizationVideoTestimonialAccess(
   supabase: Awaited<ReturnType<typeof createClient>>,
   organizationId: string
@@ -545,8 +563,10 @@ export async function getVideoTestimonialRequests(params?: {
     }
 
     if (params?.search) {
+      // Sanitize search input to prevent PostgREST filter injection
+      const sanitized = sanitizeSearchInput(params.search);
       query = query.or(
-        `customer_name.ilike.%${params.search}%,customer_email.ilike.%${params.search}%`
+        `customer_name.ilike.%${sanitized}%,customer_email.ilike.%${sanitized}%`
       );
     }
 
@@ -1226,9 +1246,11 @@ export async function getVideoTestimonialResponses(params?: {
 
     // Search filter by customer name (via joined video_testimonial_requests)
     if (params?.search) {
+      // Sanitize search input to prevent PostgREST filter injection
+      const sanitized = sanitizeSearchInput(params.search);
       query = query.ilike(
         "video_testimonial_requests.customer_name",
-        `%${params.search}%`
+        `%${sanitized}%`
       );
     }
 
@@ -2144,9 +2166,11 @@ export async function getVideosPendingApproval(params?: {
     }
 
     if (params?.search) {
+      // Sanitize search input to prevent PostgREST filter injection
+      const sanitized = sanitizeSearchInput(params.search);
       query = query.ilike(
         "video_testimonial_requests.customer_name",
-        `%${params.search}%`
+        `%${sanitized}%`
       );
     }
 

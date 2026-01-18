@@ -298,11 +298,20 @@ export async function processVideoTestimonialQueueItem(
     return { success: false, skipped: true, error: "Queue is paused" };
   }
 
-  // Mark item as processing
-  await supabase
+  // Atomically claim the item (compare-and-swap to prevent race conditions)
+  // Only update if status is still "pending" to avoid duplicate processing
+  const { data: claimedItem, error: claimError } = await supabase
     .from("video_testimonial_queue")
     .update({ status: "processing" })
-    .eq("id", item.id);
+    .eq("id", item.id)
+    .eq("status", "pending")
+    .select("id")
+    .single();
+
+  // If no row was returned, another worker already claimed this item
+  if (claimError || !claimedItem) {
+    return { success: false, skipped: true, error: "Item already being processed" };
+  }
 
   // Check rate limits
   const rateCheck = await checkVideoTestimonialRateLimit(item.organization_id);

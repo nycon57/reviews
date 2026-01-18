@@ -6,8 +6,19 @@ import { TableSkeleton } from "@/components/shared/skeletons";
 import {
   getVideoTestimonialResponses,
   getLoanOfficersForVideoRequests,
+  type VideoLibraryStats,
 } from "@/lib/video-testimonials/actions";
 import { VideoLibraryDashboard } from "./library-dashboard";
+
+const DEFAULT_STATS: VideoLibraryStats = {
+  total: 0,
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+  published: 0,
+  averageDuration: 0,
+  totalDuration: 0,
+};
 
 export const metadata = {
   title: "Video Library | RepWell",
@@ -55,24 +66,8 @@ async function LibraryContent({
     ? responsesResult.data?.total ?? 0
     : 0;
   const initialStats = responsesResult.success
-    ? responsesResult.data?.stats ?? {
-        total: 0,
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-        published: 0,
-        averageDuration: 0,
-        totalDuration: 0,
-      }
-    : {
-        total: 0,
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-        published: 0,
-        averageDuration: 0,
-        totalDuration: 0,
-      };
+    ? responsesResult.data?.stats ?? DEFAULT_STATS
+    : DEFAULT_STATS;
   const loanOfficers = loanOfficersResult.success
     ? loanOfficersResult.data ?? []
     : [];

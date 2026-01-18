@@ -5444,3 +5444,38 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Social tables (social_connections, social_posts) not in generated types - use untyped client
   - JSON-LD requires careful XSS escaping - Unicode escape sequences are standard approach
 ---
+
+### S071 Pass 2/3 - Quality Review
+**Date**: 2026-01-17
+**Story**: Video Testimonial Social Publishing
+**Run**: 20260117-163446-68507 (iteration 39)
+
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e253670 [Pass 2/3] quality(S071): Fix security, accessibility, and error handling issues
+- Post-commit status: clean
+- Skills invoked:
+  - /code-review: yes (identified 3 high-confidence issues ≥80)
+  - /vercel-react-best-practices: no (fixes were security/a11y focused)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 warnings in unrelated files)
+- Files changed:
+  - src/app/(public)/testimonials/video/[id]/video-testimonial-player.tsx
+  - src/app/(public)/embed/video/[id]/embed-video-player.tsx
+- **Code review issues fixed:**
+  1. **Critical XSS (95%)**: Customer displayName in embed code not HTML-escaped - Added escapeHtml() function
+  2. **A11y (90%)**: Progress slider not keyboard accessible - Added handleSliderKeyDown with arrow keys, Home, End
+  3. **Bug (85%)**: video.play() Promise unhandled - Added .then()/.catch() for autoplay policy compliance
+- **Security improvements:**
+  - escapeHtml() escapes &, <, >, ", ' characters to prevent attribute injection
+  - Protects third-party sites embedding video testimonials
+- **Accessibility improvements:**
+  - Keyboard users can now seek through videos using arrow keys (±5 seconds)
+  - Home/End keys jump to start/end of video
+  - WCAG 2.1 Level A compliance for keyboard accessibility
+- **Learnings for future iterations:**
+  - Always escape user content in embed code attributes
+  - video.play() returns Promise that rejects on autoplay policy violation
+  - Slider role requires onKeyDown handler for keyboard accessibility
+---

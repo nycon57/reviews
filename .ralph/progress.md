@@ -4998,3 +4998,86 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Use responsive max-width for modals (max-w-[95vw] sm:max-w-3xl lg:max-w-4xl)
   - Stats calculation can be optimized with single reduce pass instead of multiple filter calls
 ---
+
+## [2026-01-17] - S068: Video Testimonial Approval Workflow
+Thread: 
+Run: N/A (manual implementation)
+Pass: 1/3 - Implementation
+Run log: N/A
+Run summary: N/A
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: bd73e65 [Pass 1/3] feat(S068): Video Testimonial Approval Workflow
+- Post-commit status: clean (S068 files committed)
+- Skills invoked:
+  - /feature-dev: yes (explored codebase patterns)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (Pass 1)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: yes (followed design system for approval dashboard)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - supabase/migrations/20240101000035_video_approval_workflow.sql (new)
+  - src/app/(dashboard)/dashboard/video-testimonials/approval/page.tsx (new)
+  - src/app/(dashboard)/dashboard/video-testimonials/approval/approval-dashboard.tsx (new)
+  - src/lib/video-testimonials/actions.ts (extended)
+  - src/types/database.types.ts (extended)
+  - src/app/(dashboard)/dashboard/video-testimonials/library/library-dashboard.tsx (fixed function signature)
+- What was implemented:
+  - Database migration to add "changes_requested" status and manager_notes columns
+  - Extended VideoTestimonialResponse interface with managerNotes, changesRequestedAt, loanOfficerUserId
+  - New server actions: getVideosPendingApproval, updateVideoAIText, bulkUpdateVideoApprovalStatus
+  - Updated updateVideoApprovalStatus to support "request_changes" action with notifications
+  - Approval queue page at /dashboard/video-testimonials/approval (admin/manager only)
+  - Approval dashboard with stats cards (pending, changes_requested counts)
+  - Video grid with selection checkboxes for bulk operations
+  - Bulk action bar for approve/reject multiple videos
+  - Approval modal with video preview, transcription, AI text editing
+  - Action dialogs for approve/reject/request_changes with optional notes
+  - In-app notifications to loan officers on status changes
+  - Audit log entries for compliance tracking
+- **Learnings for future iterations:**
+  - When adding new enum values via migration, database.types.ts must be updated manually until migration is applied
+  - Function signature changes require updating all call sites (library-dashboard.tsx needed update)
+  - TypeScript Record<string, string> avoids index access issues with union types
+---
+
+## [2026-01-17] - S068: Video Testimonial Approval Workflow
+Thread:
+Run: 20260117-163446-68507 (iteration 31)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-31.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-31.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 11f252b [Pass 2/3] quality(S068): Fix security, accessibility, and performance issues
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (identified security, logic, performance, accessibility issues)
+  - /vercel-react-best-practices: yes (applied memoization and performance patterns)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 pre-existing warnings)
+- Files changed:
+  - src/lib/video-testimonials/actions.ts (security and validation fixes)
+  - src/app/(dashboard)/dashboard/video-testimonials/approval/approval-dashboard.tsx (accessibility and performance)
+  - src/app/(dashboard)/dashboard/video-testimonials/library/library-dashboard.tsx (accessibility and performance)
+- What was implemented:
+  - Security: Input validation for AI text (max 5000 chars), rejection reason and manager notes (max 2000 chars)
+  - Security: State machine validation to prevent invalid status transitions (e.g., can't reject a published video)
+  - Security: Made approval/reject/publish operations idempotent (returns success if already in target state)
+  - Accessibility: Added focus-visible styling on video thumbnail buttons (WCAG 2.1 AA compliance)
+  - Accessibility: Added form label for AI text editing textarea
+  - Performance: Memoized VideoCard component with React.memo to prevent unnecessary re-renders
+  - UX: Fixed search filter to reset pagination when search query changes
+- **Learnings for future iterations:**
+  - State machine validation is critical for approval workflows to prevent invalid transitions
+  - Idempotent operations prevent audit trail corruption when users click buttons multiple times
+  - React.memo should be applied to list item components that receive stable callbacks
+  - Search inputs should always reset pagination to avoid empty results pages
+---

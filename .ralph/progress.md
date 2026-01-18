@@ -5249,3 +5249,59 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - React.memo with useMemo for derived data prevents unnecessary re-renders
   - Design system colors should be used consistently (not raw CSS colors)
 ---
+
+## S070 - Video Testimonial Distribution Queue & Reminders
+**Pass 1/3 - Implementation**
+**Timestamp**: 2026-01-17
+**Story**: S070 - Video Testimonial Distribution Queue & Reminders
+**Run**: 20260117-163446-68507 (iteration 36)
+**Run log**: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-36.log
+**Run summary**: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260117-163446-68507-iter-36.md
+
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 0e31e4e [Pass 1/3] feat(S070): Video Testimonial Distribution Queue & Reminders
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no (followed existing distribution queue patterns)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (backend-only story)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (backend-only story)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 22 warnings in unrelated files)
+- Files changed:
+  - src/lib/video-testimonials/queue-service.ts (NEW)
+  - src/app/api/cron/process-video-queue/route.ts (NEW)
+  - supabase/migrations/20240101000036_organization_settings.sql (NEW)
+  - supabase/migrations/20240101000037_video_testimonial_email_tracking.sql (NEW)
+  - src/lib/video-testimonials/actions.ts (queue management actions)
+  - src/lib/video-testimonials/index.ts (exports)
+  - src/app/api/webhooks/resend/route.ts (video testimonial email tracking)
+  - src/types/database.types.ts (new columns and organization_settings table)
+- What was implemented:
+  - **Queue processing service** with rate limiting (50/hr, 500/day per org)
+  - **Cron API route** for background job processing
+  - **Organization settings table** for flexible key-value configuration
+  - **Queue pause/resume actions** (admin only)
+  - **Retry failed items action** with exponential backoff
+  - **Resend webhook enhancement** to track email delivery status
+  - **Cancel reminders** when customer opens email (via webhook)
+  - **'failed' status** added to video_testimonial_request_status enum
+- **Acceptance criteria status:**
+  - ✅ Cron job for queue processing
+  - ✅ Process pending email sends from queue
+  - ✅ Schedule 3-day and 7-day reminders (existing in schema)
+  - ✅ Track email delivery status via Resend webhooks
+  - ✅ Update request status on email events
+  - ✅ Rate limiting to avoid email provider throttling
+  - ✅ Error handling and retry logic (exponential backoff)
+  - ✅ Admin visibility into queue status (getVideoTestimonialQueueStatus)
+  - ✅ Ability to pause/resume queue processing
+- **Learnings for future iterations:**
+  - Followed existing distribution queue patterns from src/lib/distribution/service.ts
+  - Organization settings table provides flexible configuration without schema changes
+  - Exponential backoff (5min, 10min, 20min) for retries prevents email provider issues
+  - Canceling reminders on email open improves user experience
+---

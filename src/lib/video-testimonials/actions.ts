@@ -1223,7 +1223,16 @@ export async function getVideoTestimonialResponses(params?: {
       query = query.eq("transcription_status", params.transcriptionStatus);
     }
 
+    // Search filter by customer name (via joined video_testimonial_requests)
+    if (params?.search) {
+      query = query.ilike(
+        "video_testimonial_requests.customer_name",
+        `%${params.search}%`
+      );
+    }
+
     // Role-based filtering: loan officers see only their own responses
+    let loanOfficerIdForFilter: string | null = null;
     if (userData.role === "loan_officer") {
       const { data: loData } = await supabase
         .from("loan_officers")
@@ -1232,6 +1241,7 @@ export async function getVideoTestimonialResponses(params?: {
         .single();
 
       if (loData) {
+        loanOfficerIdForFilter = loData.id;
         query = query.eq("loan_officer_id", loData.id);
       } else {
         return {
@@ -1260,11 +1270,18 @@ export async function getVideoTestimonialResponses(params?: {
       return { success: false, error: error.message };
     }
 
-    // Fetch stats separately
-    const { data: allResponses } = await supabase
+    // Fetch stats with same filters as main query (respects role-based access)
+    let statsQuery = supabase
       .from("video_testimonial_responses")
       .select("approval_status, duration_seconds")
       .eq("organization_id", userData.organization_id);
+
+    // Apply loan officer filter to stats for loan officer users
+    if (loanOfficerIdForFilter) {
+      statsQuery = statsQuery.eq("loan_officer_id", loanOfficerIdForFilter);
+    }
+
+    const { data: allResponses } = await statsQuery;
 
     const stats: VideoLibraryStats = {
       total: allResponses?.length ?? 0,
@@ -1334,6 +1351,7 @@ export async function getVideoTestimonialResponses(params?: {
 
 /**
  * Get a single video testimonial response by ID
+ * - Enforces role-based access (loan officers can only access their own videos)
  */
 export async function getVideoTestimonialResponse(
   responseId: string
@@ -1350,7 +1368,7 @@ export async function getVideoTestimonialResponse(
 
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .select("organization_id")
+      .select("organization_id, role")
       .eq("id", user.id)
       .single();
 
@@ -1358,7 +1376,8 @@ export async function getVideoTestimonialResponse(
       return { success: false, error: "Organization not found" };
     }
 
-    const { data: res, error } = await supabase
+    // Build query with organization filter
+    let query = supabase
       .from("video_testimonial_responses")
       .select(
         `
@@ -1373,8 +1392,24 @@ export async function getVideoTestimonialResponse(
       `
       )
       .eq("id", responseId)
-      .eq("organization_id", userData.organization_id)
-      .single();
+      .eq("organization_id", userData.organization_id);
+
+    // Role-based access: loan officers can only access their own videos
+    if (userData.role === "loan_officer") {
+      const { data: loData } = await supabase
+        .from("loan_officers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!loData) {
+        return { success: false, error: "Loan officer profile not found" };
+      }
+
+      query = query.eq("loan_officer_id", loData.id);
+    }
+
+    const { data: res, error } = await query.single();
 
     if (error || !res) {
       return { success: false, error: "Video not found" };
@@ -1619,6 +1654,9 @@ export async function deleteVideoTestimonialResponse(
 
 /**
  * Get signed URL for video playback
+ * - Validates video exists in database and belongs to user's organization
+ * - Enforces role-based access (loan officers can only access their own videos)
+ * - Prevents path traversal attacks
  */
 export async function getVideoSignedUrl(
   videoPath: string
@@ -1635,7 +1673,7 @@ export async function getVideoSignedUrl(
 
     const { data: userData } = await supabase
       .from("users")
-      .select("organization_id")
+      .select("organization_id, role")
       .eq("id", user.id)
       .single();
 
@@ -1643,15 +1681,40 @@ export async function getVideoSignedUrl(
       return { success: false, error: "Organization not found" };
     }
 
-    // Verify the video belongs to the user's organization by checking the path
-    const pathParts = videoPath.split("/");
-    if (pathParts[0] !== userData.organization_id) {
-      return { success: false, error: "Access denied" };
+    // Sanitize path: remove leading slashes and reject path traversal
+    const sanitizedPath = videoPath.replace(/^\/+/, "");
+    if (sanitizedPath.includes("..") || sanitizedPath.includes("//")) {
+      return { success: false, error: "Invalid video path" };
+    }
+
+    // Verify the video exists in database and belongs to the organization
+    const { data: video, error: videoError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, video_path, loan_officer_id")
+      .eq("video_path", sanitizedPath)
+      .eq("organization_id", userData.organization_id)
+      .single();
+
+    if (videoError || !video) {
+      return { success: false, error: "Video not found" };
+    }
+
+    // Role-based access: loan officers can only access their own videos
+    if (userData.role === "loan_officer") {
+      const { data: loData } = await supabase
+        .from("loan_officers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!loData || video.loan_officer_id !== loData.id) {
+        return { success: false, error: "Access denied" };
+      }
     }
 
     const { data, error } = await supabase.storage
       .from("video-testimonials")
-      .createSignedUrl(videoPath, 3600); // 1 hour expiry
+      .createSignedUrl(sanitizedPath, 3600); // 1 hour expiry
 
     if (error || !data) {
       console.error("Error creating signed URL:", error);

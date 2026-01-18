@@ -420,6 +420,11 @@ function VideoDetailModal({
         loadVideoUrl(video.videoPath, video.id);
       }
       if (!newOpen) {
+        // Pause video if playing before closing
+        if (videoRef.current) {
+          videoRef.current.pause();
+          videoRef.current.currentTime = 0;
+        }
         // Reset state when closing
         setSignedUrl(null);
         setActiveTab("video");
@@ -783,8 +788,19 @@ function RejectDialog({
 }) {
   const [reason, setReason] = useState("");
 
+  // Clear reason when dialog closes
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!newOpen) {
+        setReason("");
+      }
+      onOpenChange(newOpen);
+    },
+    [onOpenChange]
+  );
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Reject Video Testimonial</DialogTitle>
@@ -807,7 +823,7 @@ function RejectDialog({
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => handleOpenChange(false)}
               disabled={isLoading}
             >
               Cancel
@@ -883,6 +899,7 @@ export function VideoLibraryDashboard({
       const result = await getVideoTestimonialResponses({
         approvalStatus: approvalFilter !== "all" ? approvalFilter : undefined,
         loanOfficerId: loanOfficerFilter !== "all" ? loanOfficerFilter : undefined,
+        search: searchQuery.trim() || undefined,
         page,
         pageSize,
       });
@@ -901,7 +918,7 @@ export function VideoLibraryDashboard({
     } finally {
       setIsLoading(false);
     }
-  }, [approvalFilter, loanOfficerFilter, page]);
+  }, [approvalFilter, loanOfficerFilter, searchQuery, page]);
 
   // Auto-fetch when filters or page changes
   useEffect(() => {
@@ -1066,58 +1083,73 @@ export function VideoLibraryDashboard({
           {/* Filters */}
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Label htmlFor="search-videos" className="sr-only">
+                Search videos by customer name
+              </Label>
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
+                id="search-videos"
                 placeholder="Search by customer name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
-            <Select
-              value={approvalFilter}
-              onValueChange={(value) => {
-                setApprovalFilter(value);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending Review</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-              </SelectContent>
-            </Select>
-            {canManage && (
+            <div>
+              <Label htmlFor="status-filter" className="sr-only">
+                Filter by approval status
+              </Label>
               <Select
-                value={loanOfficerFilter}
+                value={approvalFilter}
                 onValueChange={(value) => {
-                  setLoanOfficerFilter(value);
+                  setApprovalFilter(value);
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Loan Officers" />
+                <SelectTrigger id="status-filter" className="w-[160px]">
+                  <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Loan Officers</SelectItem>
-                  {loanOfficers.map((lo) => (
-                    <SelectItem key={lo.id} value={lo.id}>
-                      {lo.fullName}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending Review</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            {canManage && (
+              <div>
+                <Label htmlFor="loan-officer-filter" className="sr-only">
+                  Filter by loan officer
+                </Label>
+                <Select
+                  value={loanOfficerFilter}
+                  onValueChange={(value) => {
+                    setLoanOfficerFilter(value);
+                    setPage(1);
+                  }}
+                >
+                  <SelectTrigger id="loan-officer-filter" className="w-[180px]">
+                    <SelectValue placeholder="All Loan Officers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Loan Officers</SelectItem>
+                    {loanOfficers.map((lo) => (
+                      <SelectItem key={lo.id} value={lo.id}>
+                        {lo.fullName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
             <Button
               variant="outline"
               size="icon"
               onClick={fetchResponses}
               disabled={isLoading}
+              aria-label="Refresh video list"
             >
               <RefreshCw
                 className={cn("h-4 w-4", isLoading && "animate-spin")}

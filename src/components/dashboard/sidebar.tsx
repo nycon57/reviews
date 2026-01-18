@@ -38,6 +38,7 @@ import {
   Eye,
   Globe,
   Lock,
+  Video,
 } from "lucide-react";
 import { usePermissions } from "@/lib/permissions/context";
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
@@ -198,6 +199,25 @@ const navGroups: NavGroup[] = [
         href: "/dashboard/send",
         icon: <Send className="h-4 w-4" />,
         permission: PERMISSIONS.SEND_SURVEY,
+      },
+    ],
+  },
+  {
+    title: "Video Testimonials",
+    defaultOpen: false,
+    items: [
+      {
+        title: "Requests",
+        href: "/dashboard/video-testimonials",
+        icon: <Video className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_VIDEO_TESTIMONIALS,
+      },
+      {
+        title: "Analytics",
+        href: "/dashboard/video-testimonials/analytics",
+        icon: <BarChart3 className="h-4 w-4" />,
+        isNew: true,
+        permission: PERMISSIONS.VIEW_VIDEO_TESTIMONIALS,
       },
     ],
   },

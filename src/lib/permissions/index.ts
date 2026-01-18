@@ -56,6 +56,7 @@ export const PERMISSIONS = {
   VIEW_ANALYTICS: "view:analytics",
   VIEW_TRENDS: "view:trends",
   VIEW_TESTIMONIALS: "view:testimonials",
+  VIEW_VIDEO_TESTIMONIALS: "view:video_testimonials",
   SEND_SURVEY: "send:survey",
   VIEW_SETTINGS: "view:settings",
   VIEW_HELP: "view:help",
@@ -120,6 +121,7 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
     case PERMISSIONS.VIEW_ANALYTICS:
     case PERMISSIONS.VIEW_TRENDS:
     case PERMISSIONS.VIEW_TESTIMONIALS:
+    case PERMISSIONS.VIEW_VIDEO_TESTIMONIALS:
     case PERMISSIONS.SEND_SURVEY:
     case PERMISSIONS.VIEW_SETTINGS:
     case PERMISSIONS.VIEW_HELP:

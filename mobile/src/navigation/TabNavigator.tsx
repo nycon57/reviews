@@ -2,12 +2,21 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen, ReviewsScreen, SettingsScreen } from '../screens/main';
+import { VideoNavigator } from './VideoNavigator';
 import { Colors } from '../constants/colors';
 import type { MainTabParamList } from '../types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-type TabIconName = 'home' | 'home-outline' | 'star' | 'star-outline' | 'settings' | 'settings-outline';
+type TabIconName =
+  | 'home'
+  | 'home-outline'
+  | 'star'
+  | 'star-outline'
+  | 'videocam'
+  | 'videocam-outline'
+  | 'settings'
+  | 'settings-outline';
 
 export function TabNavigator() {
   const colors = Colors.light;
@@ -24,6 +33,9 @@ export function TabNavigator() {
               break;
             case 'Reviews':
               iconName = focused ? 'star' : 'star-outline';
+              break;
+            case 'Videos':
+              iconName = focused ? 'videocam' : 'videocam-outline';
               break;
             case 'Settings':
               iconName = focused ? 'settings' : 'settings-outline';
@@ -52,6 +64,11 @@ export function TabNavigator() {
         name="Reviews"
         component={ReviewsScreen}
         options={{ title: 'Reviews' }}
+      />
+      <Tab.Screen
+        name="Videos"
+        component={VideoNavigator}
+        options={{ title: 'Videos' }}
       />
       <Tab.Screen
         name="Settings"

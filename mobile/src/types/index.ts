@@ -76,5 +76,109 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: undefined;
   Reviews: undefined;
+  Videos: undefined;
   Settings: undefined;
+};
+
+/**
+ * Video testimonial types matching web app
+ */
+export type VideoTestimonialApprovalStatus =
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'changes_requested'
+  | 'published';
+
+export type VideoTestimonialRequestStatus =
+  | 'pending'
+  | 'sent'
+  | 'opened'
+  | 'recording'
+  | 'submitted'
+  | 'expired'
+  | 'cancelled';
+
+export interface VideoTestimonialRequest {
+  id: string;
+  token: string;
+  organization_id: string;
+  loan_officer_id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  max_duration_seconds: number;
+  prompt_text: string | null;
+  status: VideoTestimonialRequestStatus;
+  sent_at: string | null;
+  opened_at: string | null;
+  submitted_at: string | null;
+  expires_at: string | null;
+  reminder_count: number;
+  created_at: string;
+  // Joined data
+  loan_officer_name?: string;
+}
+
+export interface VideoTestimonialResponse {
+  id: string;
+  request_id: string;
+  organization_id: string;
+  loan_officer_id: string;
+  video_url: string;
+  video_path: string;
+  thumbnail_url: string | null;
+  duration_seconds: number | null;
+  file_size_bytes: number | null;
+  transcription: string | null;
+  transcription_status: string | null;
+  ai_generated_text: string | null;
+  ai_generation_status: string | null;
+  key_phrases: string[] | null;
+  sentiment_score: number | null;
+  sentiment_label: string | null;
+  approval_status: VideoTestimonialApprovalStatus;
+  approved_at: string | null;
+  rejection_reason: string | null;
+  manager_notes: string | null;
+  published_at: string | null;
+  submitted_at: string;
+  created_at: string;
+  // Joined data
+  customer_name: string;
+  customer_email: string;
+  loan_officer_name: string;
+}
+
+export interface VideoTestimonialStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  published: number;
+  averageDuration: number;
+}
+
+export interface LoanOfficer {
+  id: string;
+  full_name: string;
+  email: string;
+}
+
+export interface CreateVideoRequestInput {
+  loan_officer_id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone?: string;
+  max_duration_seconds?: number;
+  prompt_text?: string;
+}
+
+/**
+ * Video screens navigation types
+ */
+export type VideoStackParamList = {
+  VideoList: undefined;
+  VideoDetail: { videoId: string };
+  CreateRequest: undefined;
 };

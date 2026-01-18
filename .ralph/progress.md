@@ -5388,3 +5388,59 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - reduce() pattern is cleaner than forEach with mutable accumulator for stats counting
   - Consolidating similar functions (pause/resume) into parameterized helpers improves maintainability
 ---
+
+### S071 Pass 1/3 - Implementation
+**Date**: 2026-01-17
+**Story**: Video Testimonial Social Publishing
+**Run**: 20260117-163446-68507 (iteration 39)
+
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9c75399 [Pass 1/3] feat(S071): Implement video testimonial social publishing
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no (existing code patterns followed)
+  - /vercel-react-best-practices: yes (React components created)
+  - /frontend-design: yes (video player, share dialog UI)
+- Verification:
+  - Command: npm run build -> PASS (152 routes)
+  - Command: npm run lint -> PASS (0 errors, 22 warnings in unrelated files)
+- Files created:
+  - src/app/(public)/testimonials/video/[id]/page.tsx (public video page with SEO)
+  - src/app/(public)/testimonials/video/[id]/video-testimonial-player.tsx (client player with share)
+  - src/app/(public)/embed/video/[id]/page.tsx (embeddable video page)
+  - src/app/(public)/embed/video/[id]/embed-video-player.tsx (minimal embed player)
+  - src/app/(public)/embed/video/[id]/layout.tsx (minimal embed layout)
+  - src/components/seo/json-ld.tsx (XSS-safe structured data component)
+  - src/lib/video-testimonials/social-publishing-actions.ts (social post creation)
+- Files modified:
+  - src/lib/video-testimonials/public-actions.ts (added getPublicVideoTestimonial, getPublicVideoMetadata, trackVideoShare, trackVideoView, generateShareLink)
+- **Implementation details:**
+  - Public video page at /testimonials/video/[id] with full SEO metadata
+  - Open Graph tags for video sharing (og:video, og:type="video.other")
+  - Twitter cards with summary_large_image
+  - Schema.org VideoObject and Review structured data as JSON-LD
+  - JsonLd component uses Unicode escaping (\\u003c, \\u003e, \\u0026) for XSS safety
+  - Embeddable player at /embed/video/[id] with minimal layout (no nav/chrome)
+  - Share dialog with Facebook, LinkedIn, Twitter, email, copy link
+  - Embed code generation with customizable dimensions
+  - Social publishing actions for creating posts on connected platforms
+  - Uses untyped Supabase clients for social_connections/social_posts tables
+- **Technical decisions:**
+  - Simplified engagement tracking to console.log (missing DB columns for view_count, share_count)
+  - Used full video ID in URLs instead of short codes (share_code column doesn't exist)
+  - Framer Motion for dialog animations following RepWell design system
+  - Video player uses native HTML5 video with custom controls overlay
+- **Acceptance criteria status:**
+  - ✅ Public video testimonial page at /testimonials/video/[id]
+  - ✅ SEO metadata and Open Graph tags
+  - ✅ Video schema.org structured data
+  - ✅ Embed code generation for websites
+  - ✅ Social post templates with customizable text for Facebook/LinkedIn/Twitter
+  - ✅ Share link generation
+  - ⚠️ Track social engagement metrics (simplified to logging - DB columns missing)
+- **Learnings for future iterations:**
+  - Video testimonials table lacks analytics columns (view_count, share_count, share_code)
+  - Social tables (social_connections, social_posts) not in generated types - use untyped client
+  - JSON-LD requires careful XSS escaping - Unicode escape sequences are standard approach
+---

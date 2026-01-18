@@ -304,3 +304,354 @@ export async function submitCustomerInfoAndConsent(
     return { success: false, error: "Failed to submit your information" };
   }
 }
+
+// ============================================================================
+// Public Video Testimonial Display Types
+// ============================================================================
+
+export interface PublicVideoTestimonial {
+  id: string;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+  durationSeconds: number | null;
+  transcription: string | null;
+  aiGeneratedText: string | null;
+  keyPhrases: string[] | null;
+  sentimentLabel: string | null;
+  submittedAt: string;
+  publishedAt: string | null;
+  customer: {
+    displayName: string;
+    relationship: string | null;
+  };
+  loanOfficer: {
+    id: string;
+    fullName: string;
+    photoUrl: string | null;
+    title: string | null;
+  };
+  organization: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+    primaryColor: string | null;
+  };
+}
+
+// ============================================================================
+// Public Video Testimonial Display Actions
+// ============================================================================
+
+/**
+ * Get a published video testimonial by ID for public display
+ * Only returns videos that have been approved and published
+ * Cached with React cache() to deduplicate requests within a single render pass
+ */
+export const getPublicVideoTestimonial = cache(async function getPublicVideoTestimonialImpl(
+  videoId: string
+): Promise<ActionResult<PublicVideoTestimonial>> {
+  try {
+    if (!videoId) {
+      return { success: false, error: "Video ID is required" };
+    }
+
+    const supabase = createAdminClient();
+
+    // Fetch the video testimonial response with related data
+    // Only return published videos (approval_status = 'published')
+    const { data: video, error: videoError } = await supabase
+      .from("video_testimonial_responses")
+      .select(
+        `
+        id,
+        video_url,
+        video_path,
+        thumbnail_url,
+        duration_seconds,
+        transcription,
+        ai_generated_text,
+        key_phrases,
+        sentiment_label,
+        submitted_at,
+        published_at,
+        approval_status,
+        loan_officer_id,
+        organization_id,
+        video_testimonial_requests!inner (
+          customer_name,
+          source_metadata
+        ),
+        loan_officers!inner (
+          id,
+          full_name,
+          photo_url,
+          title
+        ),
+        organizations!inner (
+          id,
+          name,
+          logo_url,
+          primary_color
+        )
+      `
+      )
+      .eq("id", videoId)
+      .eq("approval_status", "published")
+      .single();
+
+    if (videoError || !video) {
+      return { success: false, error: "Video testimonial not found" };
+    }
+
+    const request = video.video_testimonial_requests as unknown as {
+      customer_name: string;
+      source_metadata: {
+        customer_display_name?: string;
+        customer_relationship?: string;
+      } | null;
+    };
+
+    const loanOfficer = video.loan_officers as unknown as {
+      id: string;
+      full_name: string;
+      photo_url: string | null;
+      title: string | null;
+    };
+
+    const organization = video.organizations as unknown as {
+      id: string;
+      name: string;
+      logo_url: string | null;
+      primary_color: string | null;
+    };
+
+    // Get signed URL for video playback (public access)
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+      .from("video-testimonials")
+      .createSignedUrl(video.video_path.replace(/^\/+/, ""), 86400); // 24 hour expiry for public page
+
+    if (signedUrlError || !signedUrlData) {
+      console.error("Error creating signed URL for public video:", signedUrlError);
+      return { success: false, error: "Failed to load video" };
+    }
+
+    // Build public response with security validation
+    const publicVideo: PublicVideoTestimonial = {
+      id: video.id,
+      videoUrl: signedUrlData.signedUrl,
+      thumbnailUrl: validateSafeUrl(video.thumbnail_url),
+      durationSeconds: video.duration_seconds,
+      transcription: video.transcription,
+      aiGeneratedText: video.ai_generated_text,
+      keyPhrases: video.key_phrases,
+      sentimentLabel: video.sentiment_label,
+      submittedAt: video.submitted_at,
+      publishedAt: video.published_at,
+      customer: {
+        displayName: request.source_metadata?.customer_display_name || request.customer_name,
+        relationship: request.source_metadata?.customer_relationship || null,
+      },
+      loanOfficer: {
+        id: loanOfficer.id,
+        fullName: loanOfficer.full_name,
+        photoUrl: validateSafeUrl(loanOfficer.photo_url),
+        title: loanOfficer.title,
+      },
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        logoUrl: validateSafeUrl(organization.logo_url),
+        primaryColor: validateHexColor(organization.primary_color),
+      },
+    };
+
+    // Track view (non-blocking)
+    trackVideoView(videoId).catch(console.error);
+
+    return { success: true, data: publicVideo };
+  } catch (error) {
+    console.error("Error fetching public video testimonial:", error);
+    return { success: false, error: "Failed to load video testimonial" };
+  }
+});
+
+/**
+ * Track a view of a public video testimonial
+ * Non-blocking - logs view events for analytics
+ * Note: In production, this would increment a view_count column or insert into an analytics table
+ */
+async function trackVideoView(videoId: string): Promise<void> {
+  // Log view event for analytics (can be enhanced with proper analytics table)
+  console.log(`Video view: ${videoId} at ${new Date().toISOString()}`);
+}
+
+/**
+ * Get public video testimonial metadata for SEO (lighter query)
+ * Returns only the data needed for generating metadata
+ */
+export const getPublicVideoMetadata = cache(async function getPublicVideoMetadataImpl(
+  videoId: string
+): Promise<ActionResult<{
+  title: string;
+  description: string;
+  customerName: string;
+  loanOfficerName: string;
+  organizationName: string;
+  thumbnailUrl: string | null;
+  durationSeconds: number | null;
+  publishedAt: string | null;
+}>> {
+  try {
+    if (!videoId) {
+      return { success: false, error: "Video ID is required" };
+    }
+
+    const supabase = createAdminClient();
+
+    const { data: video, error: videoError } = await supabase
+      .from("video_testimonial_responses")
+      .select(
+        `
+        id,
+        thumbnail_url,
+        duration_seconds,
+        ai_generated_text,
+        published_at,
+        approval_status,
+        video_testimonial_requests!inner (
+          customer_name,
+          source_metadata
+        ),
+        loan_officers!inner (
+          full_name
+        ),
+        organizations!inner (
+          name
+        )
+      `
+      )
+      .eq("id", videoId)
+      .eq("approval_status", "published")
+      .single();
+
+    if (videoError || !video) {
+      return { success: false, error: "Video testimonial not found" };
+    }
+
+    const request = video.video_testimonial_requests as unknown as {
+      customer_name: string;
+      source_metadata: {
+        customer_display_name?: string;
+      } | null;
+    };
+
+    const loanOfficer = video.loan_officers as unknown as { full_name: string };
+    const organization = video.organizations as unknown as { name: string };
+
+    const customerName = request.source_metadata?.customer_display_name || request.customer_name;
+    const description = video.ai_generated_text
+      ? video.ai_generated_text.substring(0, 155) + (video.ai_generated_text.length > 155 ? "..." : "")
+      : `Watch ${customerName}'s video testimonial about their experience with ${loanOfficer.full_name} at ${organization.name}.`;
+
+    return {
+      success: true,
+      data: {
+        title: `${customerName}'s Experience with ${loanOfficer.full_name}`,
+        description,
+        customerName,
+        loanOfficerName: loanOfficer.full_name,
+        organizationName: organization.name,
+        thumbnailUrl: validateSafeUrl(video.thumbnail_url),
+        durationSeconds: video.duration_seconds,
+        publishedAt: video.published_at,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching public video metadata:", error);
+    return { success: false, error: "Failed to load video metadata" };
+  }
+});
+
+// ============================================================================
+// Share Tracking
+// ============================================================================
+
+export type SharePlatform = "facebook" | "linkedin" | "twitter" | "link" | "embed";
+
+/**
+ * Track a share event for a video testimonial
+ * Non-blocking - called from client when user shares
+ */
+export async function trackVideoShare(
+  videoId: string,
+  platform: SharePlatform
+): Promise<ActionResult<void>> {
+  try {
+    if (!videoId) {
+      return { success: false, error: "Video ID is required" };
+    }
+
+    const supabase = createAdminClient();
+
+    // First verify video exists and is published
+    const { data: video, error: videoError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, approval_status")
+      .eq("id", videoId)
+      .eq("approval_status", "published")
+      .single();
+
+    if (videoError || !video) {
+      return { success: false, error: "Video not found" };
+    }
+
+    // Log share event for analytics (can be enhanced with proper analytics table)
+    console.log(`Video share: ${videoId} on ${platform} at ${new Date().toISOString()}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error tracking video share:", error);
+    return { success: false, error: "Failed to track share" };
+  }
+}
+
+/**
+ * Generate a share link for a video
+ * Returns the full public URL for the video testimonial
+ * Note: Short codes require a share_code column in the database
+ */
+export async function generateShareLink(
+  videoId: string
+): Promise<ActionResult<{ shareUrl: string }>> {
+  try {
+    if (!videoId) {
+      return { success: false, error: "Video ID is required" };
+    }
+
+    const supabase = createAdminClient();
+
+    // Verify video exists and is published
+    const { data: video, error: videoError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, approval_status")
+      .eq("id", videoId)
+      .eq("approval_status", "published")
+      .single();
+
+    if (videoError || !video) {
+      return { success: false, error: "Video not found or not published" };
+    }
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+
+    return {
+      success: true,
+      data: {
+        shareUrl: `${baseUrl}/testimonials/video/${videoId}`,
+      },
+    };
+  } catch (error) {
+    console.error("Error generating share link:", error);
+    return { success: false, error: "Failed to generate share link" };
+  }
+}

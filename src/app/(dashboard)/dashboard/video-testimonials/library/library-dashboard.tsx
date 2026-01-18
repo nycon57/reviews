@@ -996,7 +996,7 @@ export function VideoLibraryDashboard({
         const result = await updateVideoApprovalStatus(
           videoToReject,
           "reject",
-          reason
+          { reason }
         );
         if (result.success) {
           toast({ title: "Success", description: "Video rejected" });

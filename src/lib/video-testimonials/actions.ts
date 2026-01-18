@@ -1092,6 +1092,8 @@ export interface VideoTestimonialResponse {
   approvalStatus: VideoTestimonialApprovalStatus;
   approvedAt: string | null;
   rejectionReason: string | null;
+  managerNotes: string | null;
+  changesRequestedAt: string | null;
   publishedAt: string | null;
   publishedPlatforms: string[] | null;
   submittedAt: string;
@@ -1100,6 +1102,7 @@ export interface VideoTestimonialResponse {
   customerName: string;
   customerEmail: string;
   loanOfficerName: string;
+  loanOfficerUserId?: string;
 }
 
 export interface VideoLibraryStats {
@@ -1184,6 +1187,8 @@ export async function getVideoTestimonialResponses(params?: {
         approval_status,
         approved_at,
         rejection_reason,
+        manager_notes,
+        changes_requested_at,
         published_at,
         published_platforms,
         submitted_at,
@@ -1193,7 +1198,8 @@ export async function getVideoTestimonialResponses(params?: {
           customer_email
         ),
         loan_officers!inner (
-          full_name
+          full_name,
+          user_id
         )
       `,
         { count: "exact" }
@@ -1285,6 +1291,7 @@ export async function getVideoTestimonialResponses(params?: {
         acc.totalDuration += r.duration_seconds || 0;
         switch (r.approval_status) {
           case "pending": acc.pending++; break;
+          case "changes_requested": acc.pending++; break; // Count changes_requested as pending
           case "approved": acc.approved++; break;
           case "rejected": acc.rejected++; break;
           case "published": acc.published++; break;
@@ -1301,7 +1308,7 @@ export async function getVideoTestimonialResponses(params?: {
         customer_name: string;
         customer_email: string;
       };
-      const loanOfficer = res.loan_officers as unknown as { full_name: string };
+      const loanOfficer = res.loan_officers as unknown as { full_name: string; user_id: string };
 
       return {
         id: res.id,
@@ -1326,6 +1333,8 @@ export async function getVideoTestimonialResponses(params?: {
         approvalStatus: res.approval_status,
         approvedAt: res.approved_at,
         rejectionReason: res.rejection_reason,
+        managerNotes: res.manager_notes,
+        changesRequestedAt: res.changes_requested_at,
         publishedAt: res.published_at,
         publishedPlatforms: res.published_platforms,
         submittedAt: res.submitted_at,
@@ -1333,6 +1342,7 @@ export async function getVideoTestimonialResponses(params?: {
         customerName: request.customer_name,
         customerEmail: request.customer_email,
         loanOfficerName: loanOfficer.full_name,
+        loanOfficerUserId: loanOfficer.user_id,
       };
     });
 
@@ -1388,7 +1398,8 @@ export async function getVideoTestimonialResponse(
           customer_email
         ),
         loan_officers!inner (
-          full_name
+          full_name,
+          user_id
         )
       `
       )
@@ -1420,7 +1431,7 @@ export async function getVideoTestimonialResponse(
       customer_name: string;
       customer_email: string;
     };
-    const loanOfficer = res.loan_officers as unknown as { full_name: string };
+    const loanOfficer = res.loan_officers as unknown as { full_name: string; user_id: string };
 
     const response: VideoTestimonialResponse = {
       id: res.id,
@@ -1445,6 +1456,8 @@ export async function getVideoTestimonialResponse(
       approvalStatus: res.approval_status,
       approvedAt: res.approved_at,
       rejectionReason: res.rejection_reason,
+      managerNotes: res.manager_notes,
+      changesRequestedAt: res.changes_requested_at,
       publishedAt: res.published_at,
       publishedPlatforms: res.published_platforms,
       submittedAt: res.submitted_at,
@@ -1452,6 +1465,7 @@ export async function getVideoTestimonialResponse(
       customerName: request.customer_name,
       customerEmail: request.customer_email,
       loanOfficerName: loanOfficer.full_name,
+      loanOfficerUserId: loanOfficer.user_id,
     };
 
     return { success: true, data: response };
@@ -1463,11 +1477,16 @@ export async function getVideoTestimonialResponse(
 
 /**
  * Update video testimonial response approval status
+ * Supports approve, reject, request_changes, and publish actions
  */
 export async function updateVideoApprovalStatus(
   responseId: string,
-  action: "approve" | "reject" | "publish",
-  rejectionReason?: string
+  action: "approve" | "reject" | "request_changes" | "publish",
+  options?: {
+    reason?: string;
+    managerNotes?: string;
+    editedAiText?: string;
+  }
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient();
@@ -1481,7 +1500,7 @@ export async function updateVideoApprovalStatus(
 
     const { data: userData, error: userError } = await supabase
       .from("users")
-      .select("organization_id, role")
+      .select("organization_id, role, full_name")
       .eq("id", user.id)
       .single();
 
@@ -1494,10 +1513,16 @@ export async function updateVideoApprovalStatus(
       return { success: false, error: "Insufficient permissions" };
     }
 
-    // Verify the response belongs to the organization
+    // Verify the response belongs to the organization and get LO info
     const { data: existing, error: existingError } = await supabase
       .from("video_testimonial_responses")
-      .select("id, approval_status")
+      .select(`
+        id,
+        approval_status,
+        loan_officer_id,
+        loan_officers!inner(user_id, full_name),
+        video_testimonial_requests!inner(customer_name)
+      `)
       .eq("id", responseId)
       .eq("organization_id", userData.organization_id)
       .single();
@@ -1507,24 +1532,37 @@ export async function updateVideoApprovalStatus(
     }
 
     const adminSupabase = createAdminClient();
+    const now = new Date().toISOString();
 
     let newStatus: VideoTestimonialApprovalStatus;
     const updateData: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     };
 
     switch (action) {
       case "approve":
         newStatus = "approved";
         updateData.approval_status = newStatus;
-        updateData.approved_at = new Date().toISOString();
+        updateData.approved_at = now;
         updateData.approved_by = user.id;
         updateData.rejection_reason = null;
+        updateData.manager_notes = options?.managerNotes || null;
+        if (options?.editedAiText) {
+          updateData.ai_generated_text = options.editedAiText;
+        }
         break;
       case "reject":
         newStatus = "rejected";
         updateData.approval_status = newStatus;
-        updateData.rejection_reason = rejectionReason || null;
+        updateData.rejection_reason = options?.reason || null;
+        updateData.manager_notes = options?.managerNotes || null;
+        break;
+      case "request_changes":
+        newStatus = "changes_requested" as VideoTestimonialApprovalStatus;
+        updateData.approval_status = newStatus;
+        updateData.manager_notes = options?.managerNotes || options?.reason || null;
+        updateData.changes_requested_at = now;
+        updateData.changes_requested_by = user.id;
         break;
       case "publish":
         if (existing.approval_status !== "approved") {
@@ -1532,7 +1570,7 @@ export async function updateVideoApprovalStatus(
         }
         newStatus = "published";
         updateData.approval_status = newStatus;
-        updateData.published_at = new Date().toISOString();
+        updateData.published_at = now;
         break;
       default:
         return { success: false, error: "Invalid action" };
@@ -1558,11 +1596,56 @@ export async function updateVideoApprovalStatus(
       metadata: {
         previous_status: existing.approval_status,
         new_status: newStatus,
-        rejection_reason: rejectionReason,
+        reason: options?.reason,
+        manager_notes: options?.managerNotes,
+        ai_text_edited: !!options?.editedAiText,
       },
     });
 
+    // Send notification to loan officer for relevant actions
+    const loanOfficer = existing.loan_officers as unknown as { user_id: string; full_name: string };
+    const request = existing.video_testimonial_requests as unknown as { customer_name: string };
+
+    if (loanOfficer?.user_id && ["approve", "reject", "request_changes"].includes(action)) {
+      const notificationTitles: Record<string, string> = {
+        approve: "Video Testimonial Approved",
+        reject: "Video Testimonial Rejected",
+        request_changes: "Changes Requested for Video Testimonial",
+      };
+      const notificationTitle = notificationTitles[action];
+
+      const notificationMessages: Record<string, string> = {
+        approve: `Your video testimonial from ${request.customer_name} has been approved by ${userData.full_name || "a manager"}.`,
+        reject: `Your video testimonial from ${request.customer_name} has been rejected. ${options?.reason ? `Reason: ${options.reason}` : ""}`,
+        request_changes: `Changes have been requested for the video testimonial from ${request.customer_name}. ${options?.managerNotes ? `Notes: ${options.managerNotes}` : ""}`,
+      };
+      const notificationMessage = notificationMessages[action];
+
+      // Create in-app notification (don't block on failure)
+      try {
+        await (adminSupabase as unknown as { from: (table: string) => { insert: (data: Record<string, unknown>) => Promise<unknown> } })
+          .from("notifications")
+          .insert({
+            user_id: loanOfficer.user_id,
+            organization_id: userData.organization_id,
+            type: action === "approve" ? "review_approved" : action === "reject" ? "review_rejected" : "system",
+            title: notificationTitle,
+            message: notificationMessage,
+            action_url: `/dashboard/video-testimonials/library?id=${responseId}`,
+            metadata: {
+              video_response_id: responseId,
+              action,
+              manager_name: userData.full_name,
+              customer_name: request.customer_name,
+            },
+          });
+      } catch (notifError) {
+        console.error("Failed to create notification:", notifError);
+      }
+    }
+
     revalidatePath("/dashboard/video-testimonials/library");
+    revalidatePath("/dashboard/video-testimonials/approval");
 
     return { success: true };
   } catch (error) {
@@ -1726,5 +1809,369 @@ export async function getVideoSignedUrl(
   } catch (error) {
     console.error("Error getting signed URL:", error);
     return { success: false, error: "Failed to get video URL" };
+  }
+}
+
+// ============================================================================
+// Approval Workflow Server Actions
+// ============================================================================
+
+/**
+ * Update AI-generated text for a video testimonial (manager editing)
+ * - Validates permissions (admin/manager only)
+ * - Creates audit log entry
+ */
+export async function updateVideoAIText(
+  responseId: string,
+  aiText: string
+): Promise<ActionResult> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only managers and admins can edit AI text
+    if (!["admin", "manager"].includes(userData.role)) {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
+    // Verify the response belongs to the organization
+    const { data: existing, error: existingError } = await supabase
+      .from("video_testimonial_responses")
+      .select("id, ai_generated_text")
+      .eq("id", responseId)
+      .eq("organization_id", userData.organization_id)
+      .single();
+
+    if (existingError || !existing) {
+      return { success: false, error: "Video not found" };
+    }
+
+    const adminSupabase = createAdminClient();
+
+    const { error: updateError } = await adminSupabase
+      .from("video_testimonial_responses")
+      .update({
+        ai_generated_text: aiText,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", responseId);
+
+    if (updateError) {
+      console.error("Error updating AI text:", updateError);
+      return { success: false, error: "Failed to update AI text" };
+    }
+
+    // Create audit log entry
+    await createAuditLogEntry(adminSupabase, {
+      organizationId: userData.organization_id,
+      userId: user.id,
+      action: "video_testimonial_ai_text_edited",
+      resourceType: "video_testimonial_response",
+      resourceId: responseId,
+      metadata: {
+        previous_text_length: existing.ai_generated_text?.length || 0,
+        new_text_length: aiText.length,
+      },
+    });
+
+    revalidatePath("/dashboard/video-testimonials/library");
+    revalidatePath("/dashboard/video-testimonials/approval");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating AI text:", error);
+    return { success: false, error: "Failed to update AI text" };
+  }
+}
+
+/**
+ * Bulk update video testimonial approval statuses
+ * - Processes multiple videos with the same action
+ * - Returns detailed results for each video
+ */
+export async function bulkUpdateVideoApprovalStatus(
+  responseIds: string[],
+  action: "approve" | "reject" | "request_changes",
+  options?: {
+    reason?: string;
+    managerNotes?: string;
+  }
+): Promise<ActionResult<{
+  successful: string[];
+  failed: Array<{ id: string; error: string }>;
+}>> {
+  try {
+    if (responseIds.length === 0) {
+      return { success: false, error: "No videos selected" };
+    }
+
+    if (responseIds.length > 50) {
+      return { success: false, error: "Maximum 50 videos per bulk operation" };
+    }
+
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only managers and admins can bulk update
+    if (!["admin", "manager"].includes(userData.role)) {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
+    const results: { successful: string[]; failed: Array<{ id: string; error: string }> } = {
+      successful: [],
+      failed: [],
+    };
+
+    // Process each video
+    for (const responseId of responseIds) {
+      const result = await updateVideoApprovalStatus(responseId, action, options);
+      if (result.success) {
+        results.successful.push(responseId);
+      } else {
+        results.failed.push({ id: responseId, error: result.error || "Unknown error" });
+      }
+    }
+
+    // Create bulk audit log entry
+    const adminSupabase = createAdminClient();
+    await createAuditLogEntry(adminSupabase, {
+      organizationId: userData.organization_id,
+      userId: user.id,
+      action: `video_testimonial_bulk_${action}`,
+      resourceType: "video_testimonial_response",
+      resourceId: "bulk",
+      metadata: {
+        action,
+        total_requested: responseIds.length,
+        successful_count: results.successful.length,
+        failed_count: results.failed.length,
+        successful_ids: results.successful,
+        failed_ids: results.failed.map((f) => f.id),
+      },
+    });
+
+    return {
+      success: true,
+      data: results,
+    };
+  } catch (error) {
+    console.error("Error in bulk update:", error);
+    return { success: false, error: "Failed to process bulk update" };
+  }
+}
+
+/**
+ * Get videos pending approval (for approval queue)
+ * - Returns only pending and changes_requested videos
+ * - Optimized for approval workflow
+ */
+export async function getVideosPendingApproval(params?: {
+  page?: number;
+  pageSize?: number;
+  loanOfficerId?: string;
+  search?: string;
+}): Promise<
+  ActionResult<{
+    responses: VideoTestimonialResponse[];
+    total: number;
+    stats: { pending: number; changesRequested: number };
+  }>
+> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Only managers and admins can access approval queue
+    if (!["admin", "manager"].includes(userData.role)) {
+      return { success: false, error: "Insufficient permissions" };
+    }
+
+    const page = params?.page ?? 1;
+    const pageSize = params?.pageSize ?? 24;
+    const offset = (page - 1) * pageSize;
+
+    // Build query for pending/changes_requested responses
+    let query = supabase
+      .from("video_testimonial_responses")
+      .select(
+        `
+        id,
+        request_id,
+        organization_id,
+        loan_officer_id,
+        video_url,
+        video_path,
+        thumbnail_url,
+        duration_seconds,
+        file_size_bytes,
+        mime_type,
+        width,
+        height,
+        transcription,
+        transcription_status,
+        ai_generated_text,
+        ai_generation_status,
+        key_phrases,
+        sentiment_score,
+        sentiment_label,
+        approval_status,
+        approved_at,
+        rejection_reason,
+        manager_notes,
+        changes_requested_at,
+        published_at,
+        published_platforms,
+        submitted_at,
+        created_at,
+        video_testimonial_requests!inner (
+          customer_name,
+          customer_email
+        ),
+        loan_officers!inner (
+          full_name,
+          user_id
+        )
+      `,
+        { count: "exact" }
+      )
+      .eq("organization_id", userData.organization_id)
+      .in("approval_status", ["pending", "changes_requested"])
+      .order("submitted_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    // Apply filters
+    if (params?.loanOfficerId) {
+      query = query.eq("loan_officer_id", params.loanOfficerId);
+    }
+
+    if (params?.search) {
+      query = query.ilike(
+        "video_testimonial_requests.customer_name",
+        `%${params.search}%`
+      );
+    }
+
+    const { data, count, error } = await query;
+
+    if (error) {
+      console.error("Error fetching pending videos:", error);
+      return { success: false, error: error.message };
+    }
+
+    // Get stats
+    const { data: statsData } = await supabase
+      .from("video_testimonial_responses")
+      .select("approval_status")
+      .eq("organization_id", userData.organization_id)
+      .in("approval_status", ["pending", "changes_requested"]);
+
+    const stats = { pending: 0, changesRequested: 0 };
+    (statsData || []).forEach((r) => {
+      if (r.approval_status === "pending") stats.pending++;
+      if (r.approval_status === "changes_requested") stats.changesRequested++;
+    });
+
+    const responses: VideoTestimonialResponse[] = (data || []).map((res) => {
+      const request = res.video_testimonial_requests as unknown as {
+        customer_name: string;
+        customer_email: string;
+      };
+      const loanOfficer = res.loan_officers as unknown as { full_name: string; user_id: string };
+
+      return {
+        id: res.id,
+        requestId: res.request_id,
+        organizationId: res.organization_id,
+        loanOfficerId: res.loan_officer_id,
+        videoUrl: res.video_url,
+        videoPath: res.video_path,
+        thumbnailUrl: res.thumbnail_url,
+        durationSeconds: res.duration_seconds,
+        fileSizeBytes: res.file_size_bytes,
+        mimeType: res.mime_type,
+        width: res.width,
+        height: res.height,
+        transcription: res.transcription,
+        transcriptionStatus: res.transcription_status,
+        aiGeneratedText: res.ai_generated_text,
+        aiGenerationStatus: res.ai_generation_status,
+        keyPhrases: res.key_phrases,
+        sentimentScore: res.sentiment_score,
+        sentimentLabel: res.sentiment_label,
+        approvalStatus: res.approval_status,
+        approvedAt: res.approved_at,
+        rejectionReason: res.rejection_reason,
+        managerNotes: res.manager_notes,
+        changesRequestedAt: res.changes_requested_at,
+        publishedAt: res.published_at,
+        publishedPlatforms: res.published_platforms,
+        submittedAt: res.submitted_at,
+        createdAt: res.created_at,
+        customerName: request.customer_name,
+        customerEmail: request.customer_email,
+        loanOfficerName: loanOfficer.full_name,
+        loanOfficerUserId: loanOfficer.user_id,
+      };
+    });
+
+    return {
+      success: true,
+      data: {
+        responses,
+        total: count ?? 0,
+        stats,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching pending videos:", error);
+    return { success: false, error: "Failed to fetch pending videos" };
   }
 }

@@ -3728,6 +3728,8 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           browser: string | null
+          changes_requested_at: string | null
+          changes_requested_by: string | null
           consent_given: boolean
           consent_ip_address: unknown
           consent_timestamp: string | null
@@ -3740,6 +3742,7 @@ export type Database = {
           ip_address: unknown
           key_phrases: string[] | null
           loan_officer_id: string
+          manager_notes: string | null
           marketing_consent: boolean | null
           mime_type: string
           organization_id: string
@@ -3770,6 +3773,8 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           browser?: string | null
+          changes_requested_at?: string | null
+          changes_requested_by?: string | null
           consent_given?: boolean
           consent_ip_address?: unknown
           consent_timestamp?: string | null
@@ -3782,6 +3787,7 @@ export type Database = {
           ip_address?: unknown
           key_phrases?: string[] | null
           loan_officer_id: string
+          manager_notes?: string | null
           marketing_consent?: boolean | null
           mime_type: string
           organization_id: string
@@ -3812,6 +3818,8 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           browser?: string | null
+          changes_requested_at?: string | null
+          changes_requested_by?: string | null
           consent_given?: boolean
           consent_ip_address?: unknown
           consent_timestamp?: string | null
@@ -3824,6 +3832,7 @@ export type Database = {
           ip_address?: unknown
           key_phrases?: string[] | null
           loan_officer_id?: string
+          manager_notes?: string | null
           marketing_consent?: boolean | null
           mime_type?: string
           organization_id?: string
@@ -4117,6 +4126,7 @@ export type Database = {
       testimonial_status: "draft" | "approved" | "rejected" | "published"
       video_testimonial_approval_status:
         | "pending"
+        | "changes_requested"
         | "approved"
         | "rejected"
         | "published"
@@ -4259,6 +4269,7 @@ export const Constants = {
       testimonial_status: ["draft", "approved", "rejected", "published"],
       video_testimonial_approval_status: [
         "pending",
+        "changes_requested",
         "approved",
         "rejected",
         "published",

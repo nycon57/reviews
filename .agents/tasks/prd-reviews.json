@@ -2323,7 +2323,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Initial emails send within 5 minutes of request creation",
         "Reminders send at correct intervals",
@@ -2342,8 +2342,8 @@
         "reuse_patterns": "Mirror survey distribution queue from src/app/api/cron/process-survey-queue/"
       },
       "startedAt": "2026-01-18T02:14:35.177316+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-18T02:14:35.177431+00:00"
+      "completedAt": "2026-01-18T02:22:27.006545+00:00",
+      "updatedAt": "2026-01-18T02:22:27.006440+00:00"
     },
     {
       "id": "S071",
@@ -2363,7 +2363,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Social posts publish successfully",
         "Embed codes work on external sites",
@@ -2380,7 +2380,10 @@
           "src/components/video-testimonials/social-share-modal.tsx"
         ],
         "reuse_patterns": "Leverage existing social publishing from S039"
-      }
+      },
+      "startedAt": "2026-01-18T02:52:37.700606+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-18T02:52:37.700714+00:00"
     },
     {
       "id": "S072",

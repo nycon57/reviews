@@ -41,6 +41,13 @@ interface SettingsTabsProps {
   userEmail?: string;
   userName?: string;
   userAvatarUrl?: string | null;
+  userTitle?: string | null;
+  userBio?: string | null;
+  userPhone?: string | null;
+  userPersonalWebsiteUrl?: string | null;
+  userLinkedinUrl?: string | null;
+  userZillowProfileUrl?: string | null;
+  userTimezone?: string | null;
 }
 
 export function SettingsTabs({
@@ -48,6 +55,13 @@ export function SettingsTabs({
   userEmail,
   userName,
   userAvatarUrl,
+  userTitle,
+  userBio,
+  userPhone,
+  userPersonalWebsiteUrl,
+  userLinkedinUrl,
+  userZillowProfileUrl,
+  userTimezone,
 }: SettingsTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -98,6 +112,13 @@ export function SettingsTabs({
               userEmail={userEmail}
               userName={userName}
               userAvatarUrl={userAvatarUrl}
+              userTitle={userTitle}
+              userBio={userBio}
+              userPhone={userPhone}
+              userPersonalWebsiteUrl={userPersonalWebsiteUrl}
+              userLinkedinUrl={userLinkedinUrl}
+              userZillowProfileUrl={userZillowProfileUrl}
+              userTimezone={userTimezone}
             />
           </Suspense>
         </TabsContent>

@@ -18,13 +18,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { Camera, Upload, X, ZoomIn, Loader2 } from "lucide-react";
+import { Upload, X, ZoomIn, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
   fallbackInitials?: string;
   onUpload: (file: File) => Promise<{ success: boolean; url?: string; error?: string }>;
+  onRemove?: () => void;
+  label?: string;
   className?: string;
   disabled?: boolean;
 }
@@ -33,6 +35,8 @@ export function AvatarUpload({
   currentAvatarUrl,
   fallbackInitials = "?",
   onUpload,
+  onRemove,
+  label = "Profile Photo",
   className,
   disabled = false,
 }: AvatarUploadProps) {
@@ -155,42 +159,45 @@ export function AvatarUpload({
     setImageSrc(null);
   };
 
+  const handleRemove = () => {
+    setAvatarUrl(null);
+    onRemove?.();
+  };
+
+  const hasImage = !!avatarUrl;
+
   return (
     <>
-      <div className={cn("flex items-center gap-4", className)}>
-        {/* Avatar preview */}
-        <div className="relative group">
-          <Avatar className="h-20 w-20 border-2 border-border">
-            <AvatarImage src={avatarUrl || undefined} alt="Profile photo" />
-            <AvatarFallback className="text-lg bg-repwell-sage-100 text-repwell-teal-300 font-semibold">
-              {fallbackInitials}
-            </AvatarFallback>
-          </Avatar>
+      <div className={cn("space-y-2", className)}>
+        {/* Label */}
+        <label className="text-sm font-medium text-foreground">{label}</label>
 
-          {/* Overlay on hover */}
-          <div
-            {...getRootProps()}
-            className={cn(
-              "absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer",
-              isDragActive && "opacity-100 bg-repwell-teal-300/50",
-              (disabled || isUploading) && "cursor-not-allowed"
-            )}
-          >
-            <input {...getInputProps()} />
-            {isUploading ? (
-              <Loader2 className="h-6 w-6 text-white animate-spin" />
-            ) : (
-              <Camera className="h-6 w-6 text-white" />
+        {hasImage ? (
+          /* Photo with X button */
+          <div className="relative w-24 h-24">
+            <Avatar className="h-24 w-24 border-2 border-border">
+              <AvatarImage src={avatarUrl} alt={label} />
+              <AvatarFallback className="text-xl bg-repwell-sage-100 text-repwell-teal-300 font-semibold">
+                {fallbackInitials}
+              </AvatarFallback>
+            </Avatar>
+            {!disabled && (
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 transition-colors"
+                aria-label="Remove photo"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
-        </div>
-
-        {/* Upload area */}
-        <div className="flex-1">
+        ) : (
+          /* Drop zone */
           <div
             {...getRootProps()}
             className={cn(
-              "border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer transition-colors",
+              "border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer transition-colors",
               "hover:border-repwell-teal-300 hover:bg-repwell-sage-100/50",
               isDragActive && "border-repwell-teal-300 bg-repwell-sage-100",
               (disabled || isUploading) && "opacity-50 cursor-not-allowed"
@@ -198,7 +205,11 @@ export function AvatarUpload({
           >
             <input {...getInputProps()} />
             <div className="flex flex-col items-center gap-2">
-              <Upload className="h-6 w-6 text-repwell-teal-400" />
+              {isUploading ? (
+                <Loader2 className="h-8 w-8 text-repwell-teal-400 animate-spin" />
+              ) : (
+                <Upload className="h-8 w-8 text-repwell-teal-400" />
+              )}
               {isDragActive ? (
                 <p className="text-sm text-repwell-teal-300 font-medium">Drop image here...</p>
               ) : (
@@ -206,12 +217,12 @@ export function AvatarUpload({
                   <p className="text-sm text-repwell-teal-400">
                     <span className="font-medium text-repwell-teal-500">Click to upload</span> or drag and drop
                   </p>
-                  <p className="text-xs text-repwell-teal-400">PNG, JPG or WebP (max 5MB)</p>
+                  <p className="text-xs text-muted-foreground">PNG, JPG or WebP (max 5MB)</p>
                 </>
               )}
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Crop Dialog */}

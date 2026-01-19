@@ -1,8 +1,28 @@
 import { z } from "zod";
 
 export const updateProfileSchema = z.object({
+  // Basic info
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   avatarUrl: z.string().url().optional().or(z.literal("")),
+
+  // Professional details
+  title: z.string().max(100, "Title must be 100 characters or less").optional().or(z.literal("")),
+  bio: z.string().max(500, "Bio must be 500 characters or less").optional().or(z.literal("")),
+
+  // Contact info
+  phone: z.string()
+    .regex(/^[\d\s\-\+\(\)]*$/, "Please enter a valid phone number")
+    .max(20, "Phone number is too long")
+    .optional()
+    .or(z.literal("")),
+
+  // Social/online presence
+  personalWebsiteUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  linkedinUrl: z.string().url("Please enter a valid LinkedIn URL").optional().or(z.literal("")),
+  zillowProfileUrl: z.string().url("Please enter a valid Zillow URL").optional().or(z.literal("")),
+
+  // Preferences
+  timezone: z.string().optional().or(z.literal("")),
 });
 
 export const changePasswordSchema = z.object({

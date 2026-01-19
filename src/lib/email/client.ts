@@ -21,7 +21,7 @@ export function getResendClient(): Resend {
 export const emailConfig = {
   // Default from address - should be configured per organization
   defaultFromEmail:
-    process.env.RESEND_FROM_EMAIL || "noreply@repwell.com",
+    process.env.RESEND_FROM_EMAIL || "noreply@repwell.ai",
   defaultFromName: process.env.RESEND_FROM_NAME || "RepWell",
 
   // Base URL for links in emails

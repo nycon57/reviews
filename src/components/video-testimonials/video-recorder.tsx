@@ -6,6 +6,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Video,
   Mic,
   Circle,
@@ -24,8 +31,8 @@ import { useMediaRecorder, type RecorderStatus } from "@/hooks/use-media-recorde
 export interface VideoRecorderProps {
   /** Maximum recording duration in milliseconds (default: 120000 = 2 minutes) */
   maxDuration?: number;
-  /** Callback when recording is complete and user confirms */
-  onRecordingComplete?: (blob: Blob) => void;
+  /** Callback when recording is complete and user confirms - includes duration in ms */
+  onRecordingComplete?: (blob: Blob, durationMs: number) => void;
   /** Custom class name */
   className?: string;
   /** Whether to auto-request permissions on mount */
@@ -55,7 +62,7 @@ export function VideoRecorder({
     previewUrl,
     error,
     elapsedTime,
-    stream,
+    finalDuration,
     liveVideoRef,
     requestPermissions,
     startRecording,
@@ -63,6 +70,13 @@ export function VideoRecorder({
     pauseRecording,
     resumeRecording,
     resetRecording,
+    // Device selection
+    audioDevices,
+    videoDevices,
+    selectedAudioDeviceId,
+    selectedVideoDeviceId,
+    setAudioDevice,
+    setVideoDevice,
   } = useMediaRecorder({
     maxDuration,
     onRecordingComplete: undefined, // We handle this in the confirm action
@@ -77,6 +91,36 @@ export function VideoRecorder({
     }
   }, [autoRequestPermissions, status, requestPermissions]);
 
+  // Debug: Log video element events
+  // Depend on status since video element is conditionally rendered based on status
+  useEffect(() => {
+    const video = liveVideoRef.current;
+    if (!video) return;
+
+    const onLoadedMetadata = () => {
+      console.log("[VideoRecorder] Video element: loadedmetadata", {
+        videoWidth: video.videoWidth,
+        videoHeight: video.videoHeight,
+        readyState: video.readyState,
+      });
+    };
+    const onPlay = () => console.log("[VideoRecorder] Video element: play");
+    const onError = (e: Event) => console.log("[VideoRecorder] Video element: error", e);
+    const onCanPlay = () => console.log("[VideoRecorder] Video element: canplay");
+
+    video.addEventListener("loadedmetadata", onLoadedMetadata);
+    video.addEventListener("play", onPlay);
+    video.addEventListener("error", onError);
+    video.addEventListener("canplay", onCanPlay);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", onLoadedMetadata);
+      video.removeEventListener("play", onPlay);
+      video.removeEventListener("error", onError);
+      video.removeEventListener("canplay", onCanPlay);
+    };
+  }, [liveVideoRef, status]);
+
   // Calculate progress and remaining time
   const progressPercent = Math.min((elapsedTime / maxDuration) * 100, 100);
   const remainingTime = Math.max(maxDuration - elapsedTime, 0);
@@ -87,8 +131,8 @@ export function VideoRecorder({
 
   // Handle confirm recording
   function handleConfirm(): void {
-    if (recordedBlob) {
-      onRecordingComplete?.(recordedBlob);
+    if (recordedBlob && finalDuration !== null) {
+      onRecordingComplete?.(recordedBlob, finalDuration);
     }
   }
 
@@ -101,8 +145,14 @@ export function VideoRecorder({
         return "Camera ready. Press the record button to start recording.";
       case "recording":
         return `Recording in progress. ${formatTime(remainingTime)} remaining.`;
+      case "pausing":
+        return "Pausing recording...";
       case "paused":
         return "Recording paused. Press resume to continue.";
+      case "resuming":
+        return "Resuming recording...";
+      case "stopping":
+        return "Stopping recording...";
       case "stopped":
         return "Recording complete. Preview your video and choose to use it or re-record.";
       case "error":
@@ -194,8 +244,9 @@ export function VideoRecorder({
             </div>
           )}
 
-          {/* Live Preview - Ready/Recording/Paused states */}
-          {(status === "ready" || status === "recording" || status === "paused") && (
+          {/* Live Preview - Ready/Recording/Paused/Transition states */}
+          {(status === "ready" || status === "recording" || status === "paused" ||
+            status === "pausing" || status === "resuming" || status === "stopping") && (
             <>
               <video
                 ref={liveVideoRef}
@@ -206,24 +257,33 @@ export function VideoRecorder({
               />
 
               {/* Recording indicator */}
-              {(status === "recording" || status === "paused") && (
+              {(status === "recording" || status === "paused" ||
+                status === "pausing" || status === "resuming" || status === "stopping") && (
                 <div className="absolute left-4 top-4 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-sm">
-                  <Circle
-                    className={cn(
-                      "h-3 w-3 fill-current",
-                      status === "recording"
-                        ? "animate-pulse text-red-500"
-                        : "text-yellow-500"
-                    )}
-                  />
+                  {(status === "pausing" || status === "resuming" || status === "stopping") ? (
+                    <Loader2 className="h-3 w-3 animate-spin text-yellow-400" />
+                  ) : (
+                    <Circle
+                      className={cn(
+                        "h-3 w-3 fill-current",
+                        status === "recording"
+                          ? "animate-pulse text-red-500"
+                          : "text-yellow-500"
+                      )}
+                    />
+                  )}
                   <span className="font-mono text-sm font-medium text-white">
-                    {status === "paused" ? "PAUSED" : "REC"}
+                    {status === "pausing" ? "PAUSING..." :
+                     status === "resuming" ? "RESUMING..." :
+                     status === "stopping" ? "STOPPING..." :
+                     status === "paused" ? "PAUSED" : "REC"}
                   </span>
                 </div>
               )}
 
               {/* Timer display */}
-              {(status === "recording" || status === "paused") && (
+              {(status === "recording" || status === "paused" ||
+                status === "pausing" || status === "resuming" || status === "stopping") && (
                 <div className="absolute right-4 top-4 rounded-full bg-black/60 px-3 py-1.5 backdrop-blur-sm">
                   <span
                     className={cn(
@@ -236,20 +296,7 @@ export function VideoRecorder({
                 </div>
               )}
 
-              {/* Stream indicators */}
-              <div className="absolute bottom-4 left-4 flex gap-2">
-                {stream?.getVideoTracks()[0]?.enabled && (
-                  <div className="flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs text-white backdrop-blur-sm">
-                    <Video className="h-3 w-3" />
-                  </div>
-                )}
-                {stream?.getAudioTracks()[0]?.enabled && (
-                  <div className="flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-xs text-white backdrop-blur-sm">
-                    <Mic className="h-3 w-3" />
-                  </div>
-                )}
-              </div>
-            </>
+                          </>
           )}
 
           {/* Playback Preview - Stopped state */}
@@ -271,7 +318,8 @@ export function VideoRecorder({
         </div>
 
         {/* Progress Bar */}
-        {(status === "recording" || status === "paused") && (
+        {(status === "recording" || status === "paused" ||
+          status === "pausing" || status === "resuming" || status === "stopping") && (
           <div className="px-4 pt-4">
             <Progress
               value={progressPercent}
@@ -310,6 +358,50 @@ export function VideoRecorder({
                 <Circle className="h-5 w-5 fill-current" />
                 Start Recording
               </Button>
+
+              {/* Device selectors */}
+              {(videoDevices.length > 1 || audioDevices.length > 1) && (
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  {videoDevices.length > 1 && (
+                    <Select
+                      value={selectedVideoDeviceId || undefined}
+                      onValueChange={setVideoDevice}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <Camera className="mr-2 h-4 w-4" />
+                        <SelectValue placeholder="Camera" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {videoDevices.map((d) => (
+                          <SelectItem key={d.deviceId} value={d.deviceId}>
+                            {d.label || `Camera ${videoDevices.indexOf(d) + 1}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+
+                  {audioDevices.length > 1 && (
+                    <Select
+                      value={selectedAudioDeviceId || undefined}
+                      onValueChange={setAudioDevice}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <Mic className="mr-2 h-4 w-4" />
+                        <SelectValue placeholder="Microphone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {audioDevices.map((d) => (
+                          <SelectItem key={d.deviceId} value={d.deviceId}>
+                            {d.label || `Microphone ${audioDevices.indexOf(d) + 1}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              )}
+
               <p className="font-sans text-sm text-muted-foreground">
                 Maximum {Math.floor(maxDuration / 60000)} minutes
               </p>
@@ -364,6 +456,34 @@ export function VideoRecorder({
               >
                 <Square className="h-4 w-4 fill-current" />
                 Stop
+              </Button>
+            </div>
+          )}
+
+          {/* Transition States - Loading Indicators */}
+          {status === "pausing" && (
+            <div className="flex items-center justify-center">
+              <Button disabled size="lg" className="min-h-[56px] min-w-[160px] gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Pausing...
+              </Button>
+            </div>
+          )}
+
+          {status === "resuming" && (
+            <div className="flex items-center justify-center">
+              <Button disabled size="lg" className="min-h-[56px] min-w-[160px] gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Resuming...
+              </Button>
+            </div>
+          )}
+
+          {status === "stopping" && (
+            <div className="flex items-center justify-center">
+              <Button disabled size="lg" className="min-h-[56px] min-w-[160px] gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Stopping...
               </Button>
             </div>
           )}

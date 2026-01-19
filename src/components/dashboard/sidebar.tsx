@@ -27,7 +27,6 @@ import {
   Send,
   Mail,
   LayoutDashboard,
-  MessageSquare,
   Sparkles,
   Quote,
   Building,
@@ -38,7 +37,6 @@ import {
   Eye,
   Globe,
   Lock,
-  Video,
 } from "lucide-react";
 import { usePermissions } from "@/lib/permissions/context";
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
@@ -82,25 +80,24 @@ const mainNavItems: NavItem[] = [
     icon: <FileText className="h-4 w-4" />,
     permission: PERMISSIONS.VIEW_SURVEYS,
   },
+  {
+    title: "Requests",
+    href: "/dashboard/requests",
+    icon: <Send className="h-4 w-4" />,
+    permission: PERMISSIONS.SEND_SURVEY,
+  },
 ];
 
 const navGroups: NavGroup[] = [
   {
     title: "Management",
     defaultOpen: true,
-    // Only enterprise managers+ see this group (except Responses which is for everyone)
     items: [
       {
         title: "Manager Dashboard",
         href: "/dashboard/manager",
         icon: <LayoutDashboard className="h-4 w-4" />,
         permission: PERMISSIONS.VIEW_MANAGER_DASHBOARD,
-      },
-      {
-        title: "Responses",
-        href: "/dashboard/responses",
-        icon: <MessageSquare className="h-4 w-4" />,
-        permission: PERMISSIONS.VIEW_RESPONSES,
       },
       {
         title: "Team",
@@ -194,42 +191,42 @@ const navGroups: NavGroup[] = [
         icon: <Mail className="h-4 w-4" />,
         permission: PERMISSIONS.VIEW_CAMPAIGNS,
       },
-      {
-        title: "Send Survey",
-        href: "/dashboard/send",
-        icon: <Send className="h-4 w-4" />,
-        permission: PERMISSIONS.SEND_SURVEY,
-      },
     ],
   },
   {
-    title: "Video Testimonials",
+    title: "Administration",
     defaultOpen: false,
+    permission: PERMISSIONS.VIEW_ADMIN_ANALYTICS,
     items: [
       {
-        title: "Requests",
-        href: "/dashboard/video-testimonials",
-        icon: <Video className="h-4 w-4" />,
-        permission: PERMISSIONS.VIEW_VIDEO_TESTIMONIALS,
+        title: "Org Analytics",
+        href: "/dashboard/admin/analytics",
+        icon: <BarChart3 className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_ADMIN_ANALYTICS,
       },
       {
-        title: "Analytics",
-        href: "/dashboard/video-testimonials/analytics",
-        icon: <BarChart3 className="h-4 w-4" />,
-        isNew: true,
-        permission: PERMISSIONS.VIEW_VIDEO_TESTIMONIALS,
+        title: "Org Trends",
+        href: "/dashboard/admin/trends",
+        icon: <TrendingUp className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_ADMIN_ANALYTICS,
+      },
+      {
+        title: "Team Management",
+        href: "/dashboard/manager",
+        icon: <Users className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_ADMIN_ANALYTICS,
+      },
+      {
+        title: "Organization",
+        href: "/dashboard/organization",
+        icon: <Building className="h-4 w-4" />,
+        permission: PERMISSIONS.VIEW_ORGANIZATION,
       },
     ],
   },
 ];
 
 const bottomNavItems: NavItem[] = [
-  {
-    title: "Organization",
-    href: "/dashboard/organization",
-    icon: <Building className="h-4 w-4" />,
-    permission: PERMISSIONS.VIEW_ORGANIZATION,
-  },
   {
     title: "Settings",
     href: "/dashboard/settings",
@@ -272,8 +269,16 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange: _onCo
   };
 
   // Filter nav groups - only show groups that have at least one visible item
+  // Also check group-level permission if specified
   const filterGroups = (groups: NavGroup[]): NavGroup[] => {
     return groups
+      .filter((group) => {
+        // If group has a permission requirement, check it
+        if (group.permission && !hasPermission(group.permission)) {
+          return false;
+        }
+        return true;
+      })
       .map((group) => ({
         ...group,
         items: filterItems(group.items),
@@ -306,11 +311,11 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange: _onCo
                 className="flex h-8 w-8 items-center justify-center"
               >
                 <Image
-                  src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                  src="/branding/RepWell-Icon-Full-Color.png"
                   alt="RepWell"
                   width={32}
                   height={32}
-                  className="h-8 w-8 object-contain object-left"
+                  className="h-8 w-8 object-contain"
                 />
               </motion.div>
             ) : (

@@ -422,6 +422,96 @@ export async function getLowPerformers(): Promise<ActionResult<LoanOfficerCompar
   return { success: true, data: lowPerformers };
 }
 
+// Get team NPS trend data (aggregate monthly NPS scores)
+export async function getTeamNPSTrend(
+  months: number = 6
+): Promise<ActionResult<{ date: string; value: number }[]>> {
+  const context = await getManagerContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized - Manager access required" };
+  }
+
+  const supabase = await createClient();
+
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - months);
+
+  // Fetch all NPS responses for the organization
+  const { data: surveyResponses, error } = await supabase
+    .from("survey_responses")
+    .select(`
+      nps_score,
+      submitted_at,
+      surveys!inner (
+        organization_id
+      )
+    `)
+    .not("nps_score", "is", null)
+    .gte("submitted_at", startDate.toISOString());
+
+  if (error) {
+    console.error("Error fetching team NPS trend:", error);
+    return { success: false, error: "Failed to fetch team NPS trend" };
+  }
+
+  // Filter responses for this organization
+  const filteredResponses = surveyResponses?.filter((r) => {
+    const survey = r.surveys as unknown as { organization_id: string };
+    return survey.organization_id === context.organizationId;
+  }) || [];
+
+  // Group by month and calculate NPS
+  const monthlyData = new Map<
+    string,
+    { promoters: number; detractors: number; total: number }
+  >();
+
+  for (const response of filteredResponses) {
+    if (!response.submitted_at) continue;
+
+    const date = new Date(response.submitted_at);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+    if (!monthlyData.has(monthKey)) {
+      monthlyData.set(monthKey, { promoters: 0, detractors: 0, total: 0 });
+    }
+
+    const entry = monthlyData.get(monthKey)!;
+    entry.total += 1;
+
+    const npsScore = response.nps_score || 0;
+    if (npsScore >= 9) {
+      entry.promoters += 1;
+    } else if (npsScore <= 6) {
+      entry.detractors += 1;
+    }
+  }
+
+  // Convert to array and fill in missing months
+  const trendData: { date: string; value: number }[] = [];
+  const currentDate = new Date();
+
+  for (let i = months - 1; i >= 0; i--) {
+    const date = new Date(currentDate);
+    date.setMonth(date.getMonth() - i);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+
+    const entry = monthlyData.get(monthKey);
+    let nps = 0;
+    if (entry && entry.total > 0) {
+      nps = Math.round(((entry.promoters - entry.detractors) / entry.total) * 100);
+    }
+
+    trendData.push({
+      date: monthLabel,
+      value: nps,
+    });
+  }
+
+  return { success: true, data: trendData };
+}
+
 // Get team trend data (aggregate monthly averages)
 export async function getTeamRatingTrend(
   months: number = 6

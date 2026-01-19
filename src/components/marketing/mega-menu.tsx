@@ -78,7 +78,7 @@ function IndustryGridItem({ item }: { item: IndustryNavItem }) {
 // Features dropdown content
 function FeaturesDropdown() {
   return (
-    <div className="grid gap-4 p-4 md:w-[600px] lg:w-[700px] lg:grid-cols-2">
+    <div className="grid gap-4 p-4 w-[700px] grid-cols-2">
       <div className="space-y-1">
         {featureNavItems.slice(0, 3).map((item) => (
           <NavLinkItem key={item.slug} item={item}  />
@@ -108,8 +108,8 @@ function FeaturesDropdown() {
 // Solutions dropdown content
 function SolutionsDropdown() {
   return (
-    <div className="grid gap-4 p-4 md:w-[500px] lg:w-[550px]">
-      <div className="grid gap-1 lg:grid-cols-2">
+    <div className="grid gap-4 p-4 w-[600px]">
+      <div className="grid gap-1 grid-cols-2">
         {solutionNavItems.map((item) => (
           <NavLinkItem key={item.slug} item={item}  />
         ))}
@@ -133,7 +133,7 @@ function SolutionsDropdown() {
 // Industries dropdown content (4x2 grid)
 function IndustriesDropdown() {
   return (
-    <div className="p-4 md:w-[400px] lg:w-[450px]">
+    <div className="p-4 w-[450px]">
       <div className="mb-3 font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70">
         Industries We Serve
       </div>
@@ -211,30 +211,24 @@ export function MegaMenu() {
         {/* Features */}
         <NavigationMenu.Item>
           <NavTrigger>Features</NavTrigger>
-          <NavigationMenu.Content className="absolute left-0 top-full w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 md:w-auto">
-            <div className="rounded-xl border border-border bg-white shadow-lg">
-              <FeaturesDropdown />
-            </div>
+          <NavigationMenu.Content>
+            <FeaturesDropdown />
           </NavigationMenu.Content>
         </NavigationMenu.Item>
 
         {/* Solutions */}
         <NavigationMenu.Item>
           <NavTrigger>Solutions</NavTrigger>
-          <NavigationMenu.Content className="absolute left-0 top-full w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 md:w-auto">
-            <div className="rounded-xl border border-border bg-white shadow-lg">
-              <SolutionsDropdown />
-            </div>
+          <NavigationMenu.Content>
+            <SolutionsDropdown />
           </NavigationMenu.Content>
         </NavigationMenu.Item>
 
         {/* Industries */}
         <NavigationMenu.Item>
           <NavTrigger>Industries</NavTrigger>
-          <NavigationMenu.Content className="absolute left-0 top-full w-full data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 md:w-auto">
-            <div className="rounded-xl border border-border bg-white shadow-lg">
-              <IndustriesDropdown />
-            </div>
+          <NavigationMenu.Content>
+            <IndustriesDropdown />
           </NavigationMenu.Content>
         </NavigationMenu.Item>
 
@@ -243,14 +237,31 @@ export function MegaMenu() {
           <NavLink href="/pricing">Pricing</NavLink>
         </NavigationMenu.Item>
 
+        {/* Blog (direct link) */}
+        <NavigationMenu.Item>
+          <NavLink href="/blog">Blog</NavLink>
+        </NavigationMenu.Item>
+
         {/* About (direct link) */}
         <NavigationMenu.Item>
           <NavLink href="/about">About</NavLink>
         </NavigationMenu.Item>
       </NavigationMenu.List>
 
-      {/* Viewport for dropdown content */}
-      <NavigationMenu.Viewport className="absolute left-0 top-full flex justify-start origin-top-center overflow-hidden mt-2" />
+      {/* Viewport for dropdown content - animates as single unit */}
+      <div className="absolute left-0 top-full flex justify-start pt-2">
+        <NavigationMenu.Viewport
+          className={cn(
+            "origin-top rounded-xl border border-border bg-white shadow-lg",
+            // Tailwind animation utilities for intro/outro
+            "data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
+            "data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+            "data-[state=open]:slide-in-from-top-2 data-[state=closed]:slide-out-to-top-2",
+            "duration-200"
+          )}
+        />
+      </div>
     </NavigationMenu.Root>
   );
 }

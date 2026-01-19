@@ -11,6 +11,7 @@ import { OrganizationTeam } from "@/components/organization/organization-team";
 import { OrganizationBilling } from "@/components/organization/organization-billing";
 import { OrganizationOverview } from "@/components/organization/organization-overview";
 import { OrganizationSEO } from "@/components/organization/organization-seo";
+import { ResponseTemplatesTab } from "@/components/organization/response-templates-tab";
 
 export const metadata = {
   title: "Organization Settings | RepWell",
@@ -86,6 +87,7 @@ export default async function OrganizationPage() {
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="branding">Branding</TabsTrigger>
           <TabsTrigger value="team">Team</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="seo">SEO</TabsTrigger>
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
@@ -111,6 +113,12 @@ export default async function OrganizationPage() {
         <TabsContent value="team" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
             <OrganizationTeam />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="templates" className="space-y-6">
+          <Suspense fallback={<TabSkeleton />}>
+            <ResponseTemplatesTab />
           </Suspense>
         </TabsContent>
 

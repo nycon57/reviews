@@ -19,7 +19,17 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
     return { success: false, error: result.error.errors[0].message };
   }
 
-  const { fullName, avatarUrl } = result.data;
+  const {
+    fullName,
+    avatarUrl,
+    title,
+    bio,
+    phone,
+    personalWebsiteUrl,
+    linkedinUrl,
+    zillowProfileUrl,
+    timezone,
+  } = result.data;
 
   // Get current user
   const { data: { user } } = await supabase.auth.getUser();
@@ -36,12 +46,19 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
     return { success: false, error: authError.message };
   }
 
-  // Update user record in database
+  // Update user record in database with all profile fields
   const { error: dbError } = await supabase
     .from("users")
     .update({
       full_name: fullName,
       avatar_url: avatarUrl || null,
+      title: title || null,
+      bio: bio || null,
+      phone: phone || null,
+      personal_website_url: personalWebsiteUrl || null,
+      linkedin_url: linkedinUrl || null,
+      zillow_profile_url: zillowProfileUrl || null,
+      timezone: timezone || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
@@ -51,6 +68,7 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
   }
 
   revalidatePath("/profile");
+  revalidatePath("/dashboard/settings");
   return { success: true };
 }
 

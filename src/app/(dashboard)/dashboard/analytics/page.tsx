@@ -1,11 +1,102 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import {
+  getVideoTestimonialFunnelMetrics,
+  getVideoTestimonialTrends,
+  getVideoTestimonialStatsByLoanOfficer,
+} from "@/lib/video-testimonials/analytics-actions";
+import { getLoanOfficersForVideoRequests } from "@/lib/video-testimonials/actions";
+import { getResponseAnalytics } from "@/lib/reviews/response-actions";
+import { UnifiedAnalyticsDashboard } from "@/components/analytics";
 
 export const metadata = {
   title: "Analytics | RepWell",
   description: "Track your performance metrics and insights",
 };
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  // Get user role and organization info
+  const { data: userData } = await supabase
+    .from("users")
+    .select("role, organization_id")
+    .eq("id", user.id)
+    .single();
+
+  const userRole = (userData?.role || "loan_officer") as "admin" | "manager" | "loan_officer";
+  const organizationId = userData?.organization_id;
+
+  if (!organizationId) {
+    redirect("/login");
+  }
+
+  // Fetch review summary data
+  const { data: reviewsData, count: totalReviews } = await supabase
+    .from("reviews")
+    .select("rating", { count: "exact" })
+    .eq("organization_id", organizationId)
+    .eq("status", "approved");
+
+  // Calculate review metrics
+  const ratings = reviewsData?.map(r => r.rating).filter((r): r is number => r !== null) || [];
+  const averageRating = ratings.length > 0
+    ? ratings.reduce((a, b) => a + b, 0) / ratings.length
+    : 0;
+
+  // Calculate NPS (simplified - based on ratings where 9-10 = promoters, 7-8 = passive, 1-6 = detractors)
+  // Mapping 5-star scale: 5 = promoter, 4 = passive, 1-3 = detractor
+  const promoters = ratings.filter(r => r === 5).length;
+  const detractors = ratings.filter(r => r <= 3).length;
+  const npsScore = ratings.length > 0
+    ? Math.round(((promoters - detractors) / ratings.length) * 100)
+    : 0;
+
+  // Fetch all data in parallel
+  const [
+    videoMetricsResult,
+    videoTrendsResult,
+    loStatsResult,
+    loResult,
+    responseAnalyticsResult,
+  ] = await Promise.all([
+    getVideoTestimonialFunnelMetrics(),
+    getVideoTestimonialTrends({ period: "daily" }),
+    userRole !== "loan_officer"
+      ? getVideoTestimonialStatsByLoanOfficer()
+      : Promise.resolve({ success: true, data: [] }),
+    userRole !== "loan_officer"
+      ? getLoanOfficersForVideoRequests()
+      : Promise.resolve({ success: true, data: [] }),
+    getResponseAnalytics(),
+  ]);
+
+  const videoMetrics = videoMetricsResult.success && videoMetricsResult.data ? videoMetricsResult.data : null;
+  const videoTrends = videoTrendsResult.success && videoTrendsResult.data ? videoTrendsResult.data : [];
+  const loStats = loStatsResult.success && loStatsResult.data ? loStatsResult.data : [];
+  const loanOfficers = loResult.success && loResult.data ? loResult.data : [];
+  const responseAnalytics = responseAnalyticsResult.success && responseAnalyticsResult.data
+    ? responseAnalyticsResult.data
+    : null;
+
+  // Calculate response rate from response analytics if available
+  const responseRate = responseAnalytics?.responseRate || 0;
+
+  const reviewSummary = {
+    totalReviews: totalReviews || 0,
+    averageRating: Math.round(averageRating * 10) / 10,
+    responseRate: Math.round(responseRate * 10) / 10,
+    npsScore,
+  };
+
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
@@ -16,62 +107,15 @@ export default function AnalyticsPage() {
         </p>
       </div>
 
-      {/* Stats overview */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Total Reviews" value="142" subtitle="All time" />
-        <StatCard title="Average Rating" value="4.8" subtitle="Out of 5 stars" />
-        <StatCard title="Response Rate" value="68%" subtitle="Last 30 days" />
-        <StatCard title="NPS Score" value="72" subtitle="Excellent" />
-      </div>
-
-      {/* Charts */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Review Trends</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
-              <p className="text-sm text-muted-foreground">
-                Chart will be implemented in S012: Analytics Engine
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>NPS Over Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-64 items-center justify-center rounded-lg border border-dashed">
-              <p className="text-sm text-muted-foreground">
-                Chart will be implemented in S012: Analytics Engine
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <UnifiedAnalyticsDashboard
+        initialVideoMetrics={videoMetrics}
+        initialVideoTrends={videoTrends}
+        initialLoStats={loStats}
+        initialReviewSummary={reviewSummary}
+        initialResponseAnalytics={responseAnalytics}
+        loanOfficers={loanOfficers}
+        userRole={userRole}
+      />
     </div>
-  );
-}
-
-function StatCard({
-  title,
-  value,
-  subtitle,
-}: {
-  title: string;
-  value: string;
-  subtitle: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        <p className="mt-1 text-2xl font-bold">{value}</p>
-        <p className="text-xs text-muted-foreground">{subtitle}</p>
-      </CardContent>
-    </Card>
   );
 }

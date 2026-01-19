@@ -1,7 +1,7 @@
-// Video Transcription Service using OpenAI Whisper API
+// Video Transcription Service using Google Gemini
 
-import { getOpenAIClient, WHISPER_CONFIG, calculateTranscriptionCost } from "./openai-client";
-import type { Uploadable } from "openai/uploads";
+import { getGeminiClient } from "./client";
+import { AI_CONFIG } from "./types";
 
 export interface TranscriptionResult {
   text: string;
@@ -19,7 +19,6 @@ export interface TranscriptionError {
 export interface TranscribeOptions {
   language?: string; // ISO-639-1 code, or undefined for auto-detect
   prompt?: string; // Optional context to improve accuracy
-  responseFormat?: "json" | "text" | "srt" | "verbose_json" | "vtt";
 }
 
 /**
@@ -30,9 +29,9 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Download file from URL and return as File object for OpenAI API
+ * Download video from URL and return as base64
  */
-async function fetchVideoAsFile(videoUrl: string): Promise<File> {
+async function fetchVideoAsBase64(videoUrl: string): Promise<{ base64: string; mimeType: string }> {
   const response = await fetch(videoUrl);
 
   if (!response.ok) {
@@ -40,20 +39,17 @@ async function fetchVideoAsFile(videoUrl: string): Promise<File> {
   }
 
   const contentType = response.headers.get("content-type") || "video/webm";
-  const blob = await response.blob();
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
 
-  // Extract filename from URL or use default
-  const urlPath = new URL(videoUrl).pathname;
-  const filename = urlPath.split("/").pop() || "video.webm";
-
-  return new File([blob], filename, { type: contentType });
+  return { base64, mimeType: contentType.split(";")[0] };
 }
 
 /**
- * Transcribe a video/audio file using OpenAI Whisper API
+ * Transcribe a video/audio file using Google Gemini
  *
  * @param videoUrl URL of the video to transcribe (supports webm, mp4, mp3, etc.)
- * @param durationSeconds Duration of the video in seconds (for cost calculation)
+ * @param durationSeconds Duration of the video in seconds (for reference)
  * @param options Optional transcription settings
  * @returns Transcription result or throws error
  */
@@ -62,39 +58,70 @@ export async function transcribeVideo(
   durationSeconds: number | null,
   options: TranscribeOptions = {}
 ): Promise<TranscriptionResult> {
-  const client = getOpenAIClient();
+  const client = getGeminiClient();
 
-  // Download video file
-  const videoFile = await fetchVideoAsFile(videoUrl);
+  // Download video file as base64
+  const { base64, mimeType } = await fetchVideoAsBase64(videoUrl);
 
-  // Whisper API supports files up to 25MB directly
-  // For larger files, chunking would be needed (not implemented yet)
-  const fileSizeMB = videoFile.size / (1024 * 1024);
-  if (fileSizeMB > 25) {
+  // Check file size (Gemini has limits on inline data)
+  const fileSizeMB = (base64.length * 0.75) / (1024 * 1024); // base64 is ~33% larger
+  if (fileSizeMB > 20) {
     throw createTranscriptionError(
       "INVALID_INPUT",
-      `File size (${fileSizeMB.toFixed(1)}MB) exceeds 25MB limit. Chunking not yet implemented.`,
+      `File size (${fileSizeMB.toFixed(1)}MB) exceeds 20MB limit for inline data.`,
       false
     );
   }
 
-  const transcription = await client.audio.transcriptions.create({
-    file: videoFile as Uploadable,
-    model: WHISPER_CONFIG.model,
-    language: options.language, // undefined = auto-detect
-    prompt: options.prompt,
-    response_format: options.responseFormat || "verbose_json",
+  // Build transcription prompt
+  const contextPrompt = options.prompt ? `\nContext: ${options.prompt}` : "";
+  const languageHint = options.language ? `\nThe audio is in ${options.language}.` : "";
+
+  const systemPrompt = `You are a professional transcription service. Transcribe the audio from this video accurately and completely.${contextPrompt}${languageHint}
+
+Instructions:
+- Transcribe exactly what is said, word for word
+- Include filler words (um, uh, like) only if they significantly affect meaning
+- Use proper punctuation and capitalization
+- If multiple speakers, indicate speaker changes with line breaks
+- If audio is unclear, indicate with [inaudible]
+- Do not add commentary or summaries
+- Output ONLY the transcription text, nothing else`;
+
+  const response = await client.models.generateContent({
+    model: AI_CONFIG.model,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            inlineData: {
+              mimeType,
+              data: base64,
+            },
+          },
+          {
+            text: systemPrompt,
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      maxOutputTokens: 4096,
+      temperature: 0.1, // Low temperature for accurate transcription
+    },
   });
 
-  // Calculate cost based on duration
-  const duration = durationSeconds || (transcription as { duration?: number }).duration || 0;
-  const cost = calculateTranscriptionCost(duration);
+  const transcriptionText = response.text;
+  if (!transcriptionText) {
+    throw createTranscriptionError("API_ERROR", "Empty response from Gemini", true);
+  }
 
   return {
-    text: transcription.text,
-    language: (transcription as { language?: string }).language || null,
-    duration,
-    cost,
+    text: transcriptionText.trim(),
+    language: options.language || null,
+    duration: durationSeconds,
+    cost: 0, // Gemini pricing is different, tracked separately
   };
 }
 
@@ -108,11 +135,12 @@ export async function transcribeVideoWithRetry(
 ): Promise<TranscriptionResult> {
   let lastError: TranscriptionError | null = null;
 
-  for (let attempt = 1; attempt <= WHISPER_CONFIG.maxRetries; attempt++) {
+  for (let attempt = 1; attempt <= AI_CONFIG.maxRetries; attempt++) {
     try {
       return await transcribeVideo(videoUrl, durationSeconds, options);
     } catch (error) {
       lastError = parseTranscriptionError(error);
+      console.error(`Transcription attempt ${attempt} failed:`, lastError);
 
       // Don't retry non-retryable errors
       if (!lastError.retryable) {
@@ -120,8 +148,8 @@ export async function transcribeVideoWithRetry(
       }
 
       // Wait before retrying with exponential backoff
-      if (attempt < WHISPER_CONFIG.maxRetries) {
-        const delay = WHISPER_CONFIG.retryDelayMs * Math.pow(2, attempt - 1);
+      if (attempt < AI_CONFIG.maxRetries) {
+        const delay = AI_CONFIG.retryDelayMs * Math.pow(2, attempt - 1);
         await sleep(delay);
       }
     }
@@ -166,7 +194,8 @@ function parseTranscriptionError(error: unknown): TranscriptionError {
       message.includes("500") ||
       message.includes("502") ||
       message.includes("503") ||
-      message.includes("504")
+      message.includes("504") ||
+      message.includes("resource_exhausted")
     ) {
       return createTranscriptionError("API_ERROR", error.message, true);
     }
@@ -187,6 +216,11 @@ function parseTranscriptionError(error: unknown): TranscriptionError {
       message.includes("400")
     ) {
       return createTranscriptionError("INVALID_INPUT", error.message, false);
+    }
+
+    // Check for missing API key
+    if (message.includes("api_key") || message.includes("gemini_api_key")) {
+      return createTranscriptionError("API_ERROR", error.message, false);
     }
 
     // Default API error (retryable)

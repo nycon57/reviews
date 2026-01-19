@@ -146,6 +146,20 @@ export type Database = {
             foreignKeyName: "api_keys_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_keys_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "api_keys_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -906,6 +920,20 @@ export type Database = {
             foreignKeyName: "google_review_replies_sent_by_fkey"
             columns: ["sent_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "google_review_replies_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "google_review_replies_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -967,6 +995,50 @@ export type Database = {
           },
           {
             foreignKeyName: "google_sync_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          name: string
+          organization_id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name: string
+          organization_id: string
+          type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string
+          organization_id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1146,6 +1218,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listing_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "listing_alerts_resolved_by_fkey"
@@ -1335,6 +1421,20 @@ export type Database = {
             foreignKeyName: "loan_officers_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loan_officers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "loan_officers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1350,6 +1450,7 @@ export type Database = {
           period_end: string
           period_start: string
           period_type: string
+          user_id: string | null
         }
         Insert: {
           computed_at?: string | null
@@ -1360,6 +1461,7 @@ export type Database = {
           period_end: string
           period_start: string
           period_type: string
+          user_id?: string | null
         }
         Update: {
           computed_at?: string | null
@@ -1370,6 +1472,7 @@ export type Database = {
           period_end?: string
           period_start?: string
           period_type?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1384,6 +1487,27 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metrics_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "metrics_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "metrics_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1474,6 +1598,20 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "notifications"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_digest_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_digest_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notification_digest_queue_user_id_fkey"
@@ -1616,6 +1754,20 @@ export type Database = {
             foreignKeyName: "notification_preferences_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -1697,6 +1849,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "reviews"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "notifications_user_id_fkey"
@@ -1817,41 +1983,6 @@ export type Database = {
         }
         Relationships: []
       }
-      organization_settings: {
-        Row: {
-          created_at: string
-          id: string
-          key: string
-          organization_id: string
-          updated_at: string
-          value: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          key: string
-          organization_id: string
-          updated_at?: string
-          value?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          key?: string
-          organization_id?: string
-          updated_at?: string
-          value?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "organization_settings_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       report_exports: {
         Row: {
           created_at: string | null
@@ -1893,6 +2024,20 @@ export type Database = {
           template_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "report_exports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_exports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "report_exports_created_by_fkey"
             columns: ["created_by"]
@@ -1974,6 +2119,20 @@ export type Database = {
             foreignKeyName: "report_shares_shared_by_fkey"
             columns: ["shared_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_shares_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "report_shares_shared_by_fkey"
+            columns: ["shared_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2024,6 +2183,20 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "report_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "report_templates_created_by_fkey"
             columns: ["created_by"]
@@ -2212,6 +2385,20 @@ export type Database = {
             foreignKeyName: "response_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "response_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "response_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2268,6 +2455,7 @@ export type Database = {
           themes: string[] | null
           title: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           ai_suggested_response?: string | null
@@ -2312,6 +2500,7 @@ export type Database = {
           themes?: string[] | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           ai_suggested_response?: string | null
@@ -2356,8 +2545,23 @@ export type Database = {
           themes?: string[] | null
           title?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "reviews_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "reviews_approved_by_fkey"
             columns: ["approved_by"]
@@ -2383,6 +2587,20 @@ export type Database = {
             foreignKeyName: "reviews_response_approved_by_fkey"
             columns: ["response_approved_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_response_approved_by_fkey"
+            columns: ["response_approved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reviews_response_approved_by_fkey"
+            columns: ["response_approved_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2390,8 +2608,36 @@ export type Database = {
             foreignKeyName: "reviews_response_by_fkey"
             columns: ["response_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_response_by_fkey"
+            columns: ["response_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reviews_response_by_fkey"
+            columns: ["response_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_response_rejected_by_fkey"
+            columns: ["response_rejected_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_response_rejected_by_fkey"
+            columns: ["response_rejected_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "reviews_response_rejected_by_fkey"
@@ -2405,6 +2651,27 @@ export type Database = {
             columns: ["survey_response_id"]
             isOneToOne: false
             referencedRelation: "survey_responses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -2855,6 +3122,20 @@ export type Database = {
             foreignKeyName: "scheduled_reports_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "scheduled_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -2928,6 +3209,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "slack_webhook_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "slack_webhook_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "slack_webhook_logs_user_id_fkey"
@@ -3108,6 +3403,20 @@ export type Database = {
             foreignKeyName: "survey_templates_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "survey_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "survey_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -3144,6 +3453,7 @@ export type Database = {
           transaction_id: string | null
           transaction_type: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           completed_at?: string | null
@@ -3168,6 +3478,7 @@ export type Database = {
           transaction_id?: string | null
           transaction_type?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           completed_at?: string | null
@@ -3192,6 +3503,7 @@ export type Database = {
           transaction_id?: string | null
           transaction_type?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -3213,6 +3525,27 @@ export type Database = {
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "survey_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surveys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "surveys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "surveys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -3271,6 +3604,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_webhook_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_webhook_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
           },
           {
             foreignKeyName: "teams_webhook_logs_user_id_fkey"
@@ -3466,6 +3813,20 @@ export type Database = {
             foreignKeyName: "testimonials_approved_by_fkey"
             columns: ["approved_by"]
             isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonials_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "testimonials_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -3537,50 +3898,271 @@ export type Database = {
           },
         ]
       }
+      user_credentials: {
+        Row: {
+          created_at: string | null
+          credential_number: string
+          credential_type: string
+          expiry_date: string | null
+          id: string
+          is_public: boolean | null
+          is_verified: boolean | null
+          issued_date: string | null
+          issuing_authority: string | null
+          metadata: Json | null
+          organization_id: string
+          updated_at: string | null
+          user_id: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credential_number: string
+          credential_type: string
+          expiry_date?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_verified?: boolean | null
+          issued_date?: string | null
+          issuing_authority?: string | null
+          metadata?: Json | null
+          organization_id: string
+          updated_at?: string | null
+          user_id: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credential_number?: string
+          credential_type?: string
+          expiry_date?: string | null
+          id?: string
+          is_public?: boolean | null
+          is_verified?: boolean | null
+          issued_date?: string | null
+          issuing_authority?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          updated_at?: string | null
+          user_id?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_credentials_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_credentials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_credentials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_credentials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_groups: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_groups_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
+          address: Json | null
+          auto_request_reviews: boolean | null
           avatar_url: string | null
+          average_rating: number | null
+          bio: string | null
+          branch_id: string | null
           created_at: string | null
           email: string
           full_name: string | null
+          google_business_id: string | null
+          google_place_id: string | null
+          hire_date: string | null
           id: string
           is_active: boolean | null
           is_owner: boolean | null
           last_login_at: string | null
+          linkedin_url: string | null
+          manager_user_id: string | null
           notification_preferences: Json | null
+          nps_score: number | null
           organization_id: string | null
+          personal_website_url: string | null
+          phone: string | null
+          photo_url: string | null
+          receive_notifications: boolean | null
+          region: string | null
+          reputation_score: number | null
           role: string
+          timezone: string | null
+          title: string | null
+          total_reviews: number | null
           updated_at: string | null
+          zillow_profile_url: string | null
         }
         Insert: {
+          address?: Json | null
+          auto_request_reviews?: boolean | null
           avatar_url?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          branch_id?: string | null
           created_at?: string | null
           email: string
           full_name?: string | null
+          google_business_id?: string | null
+          google_place_id?: string | null
+          hire_date?: string | null
           id: string
           is_active?: boolean | null
           is_owner?: boolean | null
           last_login_at?: string | null
+          linkedin_url?: string | null
+          manager_user_id?: string | null
           notification_preferences?: Json | null
+          nps_score?: number | null
           organization_id?: string | null
+          personal_website_url?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          receive_notifications?: boolean | null
+          region?: string | null
+          reputation_score?: number | null
           role: string
+          timezone?: string | null
+          title?: string | null
+          total_reviews?: number | null
           updated_at?: string | null
+          zillow_profile_url?: string | null
         }
         Update: {
+          address?: Json | null
+          auto_request_reviews?: boolean | null
           avatar_url?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          branch_id?: string | null
           created_at?: string | null
           email?: string
           full_name?: string | null
+          google_business_id?: string | null
+          google_place_id?: string | null
+          hire_date?: string | null
           id?: string
           is_active?: boolean | null
           is_owner?: boolean | null
           last_login_at?: string | null
+          linkedin_url?: string | null
+          manager_user_id?: string | null
           notification_preferences?: Json | null
+          nps_score?: number | null
           organization_id?: string | null
+          personal_website_url?: string | null
+          phone?: string | null
+          photo_url?: string | null
+          receive_notifications?: boolean | null
+          region?: string | null
+          reputation_score?: number | null
           role?: string
+          timezone?: string | null
+          title?: string | null
+          total_reviews?: number | null
           updated_at?: string | null
+          zillow_profile_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "users_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "users_manager_user_id_fkey"
+            columns: ["manager_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "users_organization_id_fkey"
             columns: ["organization_id"]
@@ -3652,7 +4234,6 @@ export type Database = {
       }
       video_testimonial_requests: {
         Row: {
-          clicked_at: string | null
           created_at: string
           created_by: string | null
           customer_email: string
@@ -3660,7 +4241,6 @@ export type Database = {
           customer_phone: string | null
           email_delivered_at: string | null
           expires_at: string | null
-          failure_reason: string | null
           id: string
           last_reminder_at: string | null
           loan_officer_id: string
@@ -3681,7 +4261,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          clicked_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_email: string
@@ -3689,7 +4268,6 @@ export type Database = {
           customer_phone?: string | null
           email_delivered_at?: string | null
           expires_at?: string | null
-          failure_reason?: string | null
           id?: string
           last_reminder_at?: string | null
           loan_officer_id: string
@@ -3710,7 +4288,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          clicked_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_email?: string
@@ -3718,7 +4295,6 @@ export type Database = {
           customer_phone?: string | null
           email_delivered_at?: string | null
           expires_at?: string | null
-          failure_reason?: string | null
           id?: string
           last_reminder_at?: string | null
           loan_officer_id?: string
@@ -3739,6 +4315,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "video_testimonial_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_requests_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
           {
             foreignKeyName: "video_testimonial_requests_created_by_fkey"
             columns: ["created_by"]
@@ -3902,6 +4492,41 @@ export type Database = {
           {
             foreignKeyName: "video_testimonial_responses_approved_by_fkey"
             columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_changes_requested_by_fkey"
+            columns: ["changes_requested_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_changes_requested_by_fkey"
+            columns: ["changes_requested_by"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_changes_requested_by_fkey"
+            columns: ["changes_requested_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -4074,7 +4699,53 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      loan_officers_compat: {
+        Row: {
+          address: Json | null
+          auto_request_reviews: boolean | null
+          average_rating: number | null
+          bio: string | null
+          branch: string | null
+          branch_id: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          google_business_id: string | null
+          google_place_id: string | null
+          id: string | null
+          is_active: boolean | null
+          linkedin_url: string | null
+          nmls_id: string | null
+          nps_score: number | null
+          organization_id: string | null
+          phone: string | null
+          photo_url: string | null
+          receive_notifications: boolean | null
+          region: string | null
+          reputation_score: number | null
+          title: string | null
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string | null
+          zillow_profile_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       check_api_rate_limit: {
@@ -4182,7 +4853,6 @@ export type Database = {
         | "submitted"
         | "expired"
         | "cancelled"
-        | "failed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -4190,7 +4860,7 @@ export type Database = {
   }
 }
 
-export type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
@@ -4331,3 +5001,4 @@ export const Constants = {
     },
   },
 } as const
+

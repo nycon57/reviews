@@ -34,6 +34,8 @@ export {
   checkVideoTestimonialRateLimit,
   isQueuePaused,
   setQueuePaused,
+  // Immediate sending (for single/small batches)
+  sendInitialVideoTestimonialEmailImmediately,
   // Types
   type VideoTestimonialQueueItem as QueueServiceQueueItem,
   type VideoTestimonialRequestWithDetails,
@@ -55,4 +57,5 @@ export {
   type RelationshipType,
   type SubmitCustomerInfoInput,
   VALID_RELATIONSHIPS,
+  IMMEDIATE_SEND_THRESHOLD,
 } from "./types";

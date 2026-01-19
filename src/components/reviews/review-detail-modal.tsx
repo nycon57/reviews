@@ -309,7 +309,6 @@ export function ReviewDetailModal({
                     onUpdate?.();
                   }}
                   onCancel={() => setShowResponseForm(false)}
-                  isManager={true}
                   hasAiAccess={hasAiAccess}
                 />
               </div>

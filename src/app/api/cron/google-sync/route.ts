@@ -6,6 +6,9 @@ import {
   isTokenExpired,
   STAR_RATING_MAP,
 } from '@/lib/google';
+import type { Database } from '@/types/database.types';
+
+type ReviewInsert = Database['public']['Tables']['reviews']['Insert'];
 
 // Concurrency limit for parallel connection processing
 const CONCURRENCY_LIMIT = 5;
@@ -157,8 +160,8 @@ export async function GET(request: NextRequest) {
 
           // Prepare batch operations
           const updates: PromiseLike<unknown>[] = [];
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const inserts: Record<string, unknown>[] = [];
+
+          const inserts: ReviewInsert[] = [];
 
           for (const googleReview of response.reviews) {
             const rating = STAR_RATING_MAP[googleReview.starRating];
@@ -217,7 +220,7 @@ export async function GET(request: NextRequest) {
           // Execute batch operations in parallel
           await Promise.all([
             ...updates,
-            inserts.length > 0 ? adminClient.from('reviews').insert(inserts as any) : Promise.resolve(),
+            inserts.length > 0 ? adminClient.from('reviews').insert(inserts) : Promise.resolve(),
           ]);
 
           pageToken = response.nextPageToken;

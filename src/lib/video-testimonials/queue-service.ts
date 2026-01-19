@@ -1,5 +1,3 @@
-"use server";
-
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   sendVideoTestimonialInvitationEmail,
@@ -500,6 +498,111 @@ export async function processVideoTestimonialQueueItem(
         })
         .eq("id", item.id);
     }
+  }
+
+  return result;
+}
+
+// ============================================================================
+// Immediate Email Sending (for single/small batch requests)
+// ============================================================================
+
+/**
+ * Send initial video testimonial invitation email immediately (bypassing queue)
+ * Use for single requests or small batches (≤ IMMEDIATE_SEND_THRESHOLD)
+ *
+ * @param requestId - The video testimonial request ID
+ * @returns Result with success status and optional error
+ */
+export async function sendInitialVideoTestimonialEmailImmediately(
+  requestId: string
+): Promise<{ success: boolean; error?: string }> {
+  console.error("[VideoTestimonial] sendInitialVideoTestimonialEmailImmediately called", { requestId });
+
+  const supabase = createAdminClient();
+
+  // Get request details
+  const request = await getVideoTestimonialRequestForSending(requestId);
+  if (!request) {
+    console.error("[VideoTestimonial] Request not found", { requestId });
+    return { success: false, error: "Request not found" };
+  }
+
+  console.error("[VideoTestimonial] Request found", {
+    requestId,
+    customerEmail: request.customer_email,
+    customerName: request.customer_name,
+    status: request.status,
+    sent_at: request.sent_at,
+  });
+
+  // Check if already sent
+  if (request.sent_at || request.status === "sent") {
+    console.error("[VideoTestimonial] Already sent, skipping", { requestId });
+    return { success: true }; // Already sent, not an error
+  }
+
+  // Check if cancelled or expired
+  if (request.status === "cancelled") {
+    console.error("[VideoTestimonial] Request cancelled", { requestId });
+    return { success: false, error: "Request was cancelled" };
+  }
+
+  if (request.expires_at && new Date(request.expires_at) < new Date()) {
+    console.error("[VideoTestimonial] Request expired", { requestId });
+    await supabase
+      .from("video_testimonial_requests")
+      .update({ status: "expired" })
+      .eq("id", requestId);
+    return { success: false, error: "Request expired" };
+  }
+
+  const requestUrl = `${emailConfig.baseUrl}/video-testimonial/${request.token}`;
+
+  // Send the email
+  const emailData: VideoTestimonialInvitationEmailData = {
+    toEmail: request.customer_email,
+    customerName: request.customer_name,
+    loanOfficerName: request.loan_officer.full_name,
+    loanOfficerPhotoUrl: request.loan_officer.photo_url || undefined,
+    organizationName: request.organization.name,
+    organizationLogoUrl: request.organization.logo_url || undefined,
+    requestUrl,
+    maxDurationSeconds: request.max_duration_seconds,
+    promptText: request.prompt_text || undefined,
+    organizationId: request.organization.id,
+    loanOfficerId: request.loan_officer.id,
+    requestId: request.id,
+  };
+
+  console.error("[VideoTestimonial] Sending email", {
+    toEmail: emailData.toEmail,
+    customerName: emailData.customerName,
+    requestUrl: emailData.requestUrl,
+  });
+
+  const result = await sendVideoTestimonialInvitationEmail(emailData);
+
+  console.error("[VideoTestimonial] Email send result", {
+    requestId,
+    success: result.success,
+    error: result.error,
+  });
+
+  if (result.success) {
+    // Update request status to sent
+    const { error: updateError } = await supabase
+      .from("video_testimonial_requests")
+      .update({
+        status: "sent",
+        sent_at: new Date().toISOString(),
+      })
+      .eq("id", requestId);
+
+    console.error("[VideoTestimonial] Status updated to sent", {
+      requestId,
+      updateError: updateError?.message,
+    });
   }
 
   return result;

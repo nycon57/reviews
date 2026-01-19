@@ -1,4 +1,6 @@
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getReviewStats,
@@ -8,21 +10,32 @@ import {
   getAggregatedReviews,
   getReviewAggregationStats,
 } from "@/lib/reviews/aggregation-actions";
+import {
+  getVideoTestimonialResponses,
+  getLoanOfficersForVideoRequests,
+  type VideoLibraryStats,
+} from "@/lib/video-testimonials/actions";
 import { getCurrentOrganization } from "@/lib/organization/actions";
 import { TIER_FEATURES } from "@/lib/organization/types";
+import { createClient } from "@/lib/supabase/server";
 
-// Dynamic import for heavy ReviewQueue component (1,260 lines)
-const ReviewQueue = dynamic(
-  () => import("@/components/reviews/review-queue").then((mod) => mod.ReviewQueue),
+// Dynamic import for heavy UnifiedContentHub component
+const UnifiedContentHub = dynamic(
+  () => import("@/components/reviews/unified-content-hub").then((mod) => mod.UnifiedContentHub),
   {
     loading: () => (
-      <div className="space-y-4">
+      <div className="space-y-6">
+        {/* Stats skeleton */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24" />
           ))}
         </div>
+        {/* Tabs skeleton */}
+        <Skeleton className="h-10 w-80" />
+        {/* Filter skeleton */}
         <Skeleton className="h-12" />
+        {/* Content skeleton */}
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
@@ -35,37 +48,131 @@ const ReviewQueue = dynamic(
 
 export const metadata = {
   title: "Reviews | RepWell",
-  description: "View and manage all customer reviews",
+  description: "View and manage all customer reviews and video testimonials",
 };
+
+const DEFAULT_VIDEO_STATS: VideoLibraryStats = {
+  total: 0,
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+  published: 0,
+  averageDuration: 0,
+  totalDuration: 0,
+};
+
+const ALLOWED_ROLES = new Set(["admin", "manager", "loan_officer"] as const);
+type UserRole = "admin" | "manager" | "loan_officer";
+
+function isValidRole(role: unknown): role is UserRole {
+  return typeof role === "string" && ALLOWED_ROLES.has(role as UserRole);
+}
+
+async function getUserRole(): Promise<UserRole> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("role, organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    redirect("/dashboard");
+  }
+
+  if (!isValidRole(userData.role)) {
+    throw new Error(`Invalid user role: ${userData.role}`);
+  }
+
+  return userData.role;
+}
 
 export default async function ReviewsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string; tab?: string }>;
 }) {
   const params = await searchParams;
   const initialReviewId = params?.id;
 
-  // Fetch initial data server-side
-  const [reviewsResult, statsResult, aggregatedStatsResult, loanOfficersResult, orgResult] = await Promise.all([
+  // Get user role for permissions
+  const userRole = await getUserRole();
+
+  // Fetch all data in parallel
+  const [
+    reviewsResult,
+    reviewStatsResult,
+    aggregatedStatsResult,
+    reviewLoanOfficersResult,
+    videosResult,
+    videoLoanOfficersResult,
+    orgResult,
+  ] = await Promise.all([
     getAggregatedReviews({ page: 1, limit: 20 }),
     getReviewStats(),
     getReviewAggregationStats(),
     getLoanOfficersForFilter(),
+    getVideoTestimonialResponses({ page: 1, pageSize: 24 }),
+    getLoanOfficersForVideoRequests(),
     getCurrentOrganization(),
   ]);
 
+  // Process text reviews data
   const initialReviews = reviewsResult.success ? reviewsResult.data?.reviews ?? [] : [];
-  const initialTotal = reviewsResult.success ? reviewsResult.data?.total ?? 0 : 0;
-  const initialStats = statsResult.success
-    ? statsResult.data ?? { pending: 0, approved: 0, rejected: 0, total: 0 }
+  const initialReviewsTotal = reviewsResult.success ? reviewsResult.data?.total ?? 0 : 0;
+  const reviewStats = reviewStatsResult.success
+    ? reviewStatsResult.data ?? { pending: 0, approved: 0, rejected: 0, total: 0 }
     : { pending: 0, approved: 0, rejected: 0, total: 0 };
-  const initialAggregatedStats = aggregatedStatsResult.success
+  const aggregatedStats = aggregatedStatsResult.success
     ? aggregatedStatsResult.data ?? undefined
     : undefined;
-  const loanOfficers = loanOfficersResult.success
-    ? loanOfficersResult.data ?? []
+
+  // Process video testimonials data
+  const initialVideos = videosResult.success
+    ? videosResult.data?.responses ?? []
     : [];
+  const initialVideosTotal = videosResult.success
+    ? videosResult.data?.total ?? 0
+    : 0;
+  const videoStats = videosResult.success
+    ? videosResult.data?.stats ?? DEFAULT_VIDEO_STATS
+    : DEFAULT_VIDEO_STATS;
+
+  // Merge loan officers from both sources (dedupe by id)
+  const reviewLoanOfficers = reviewLoanOfficersResult.success
+    ? reviewLoanOfficersResult.data ?? []
+    : [];
+  const videoLoanOfficers = videoLoanOfficersResult.success
+    ? videoLoanOfficersResult.data ?? []
+    : [];
+
+  const loanOfficerMap = new Map<string, { id: string; fullName: string; email?: string }>();
+  // Add review loan officers (no email)
+  reviewLoanOfficers.forEach((lo) => {
+    if (!loanOfficerMap.has(lo.id)) {
+      loanOfficerMap.set(lo.id, {
+        id: lo.id,
+        fullName: lo.fullName,
+      });
+    }
+  });
+  // Add video loan officers (with email) - override if exists
+  videoLoanOfficers.forEach((lo) => {
+    loanOfficerMap.set(lo.id, {
+      id: lo.id,
+      fullName: lo.fullName,
+      email: lo.email,
+    });
+  });
+  const loanOfficers = Array.from(loanOfficerMap.values());
 
   // Determine AI access based on subscription tier
   const subscriptionTier = orgResult.organization?.subscription_tier ?? "free";
@@ -78,21 +185,44 @@ export default async function ReviewsPage({
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reviews</h1>
           <p className="text-muted-foreground">
-            Manage and approve customer reviews
+            Manage customer reviews and video testimonials
           </p>
         </div>
       </div>
 
-      {/* Review Queue Component */}
-      <ReviewQueue
-        initialReviews={initialReviews}
-        initialTotal={initialTotal}
-        loanOfficers={loanOfficers}
-        initialStats={initialStats}
-        initialAggregatedStats={initialAggregatedStats}
-        initialReviewId={initialReviewId}
-        hasAiAccess={hasAiAccess}
-      />
+      {/* Unified Content Hub */}
+      <Suspense
+        fallback={
+          <div className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-24" />
+              ))}
+            </div>
+            <Skeleton className="h-10 w-80" />
+            <Skeleton className="h-12" />
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-32" />
+              ))}
+            </div>
+          </div>
+        }
+      >
+        <UnifiedContentHub
+          initialReviews={initialReviews}
+          initialReviewsTotal={initialReviewsTotal}
+          reviewStats={reviewStats}
+          aggregatedStats={aggregatedStats}
+          initialVideos={initialVideos}
+          initialVideosTotal={initialVideosTotal}
+          videoStats={videoStats}
+          loanOfficers={loanOfficers}
+          userRole={userRole}
+          hasAiAccess={hasAiAccess}
+          initialReviewId={initialReviewId}
+        />
+      </Suspense>
     </div>
   );
 }

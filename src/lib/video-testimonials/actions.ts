@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 import type { Json, Database } from "@/types/database.types";
+import { sendInitialVideoTestimonialEmailImmediately } from "./queue-service";
+import { IMMEDIATE_SEND_THRESHOLD } from "./types";
 
 // Status type from database enum
 type VideoTestimonialRequestStatus =
@@ -48,7 +50,7 @@ export interface CreateVideoTestimonialRequestResult {
   requestId: string;
   token: string;
   requestUrl: string;
-  status: "created" | "queued" | "failed";
+  status: "created" | "queued" | "sent" | "failed";
   queueItemId?: string;
   message?: string;
 }
@@ -195,9 +197,13 @@ async function createAuditLogEntry(
 export async function createVideoTestimonialRequest(
   input: CreateVideoTestimonialRequestInput
 ): Promise<ActionResult<CreateVideoTestimonialRequestResult>> {
+  console.error("=== [VideoTestimonial] createVideoTestimonialRequest START ===");
+  console.error("[VideoTestimonial] Input:", JSON.stringify(input, null, 2));
+
   try {
     // Validate input
     const validated = createVideoTestimonialRequestSchema.safeParse(input);
+    console.error("[VideoTestimonial] Validation result:", validated.success);
     if (!validated.success) {
       return {
         success: false,
@@ -314,27 +320,60 @@ export async function createVideoTestimonialRequest(
       return { success: false, error: "Failed to create request" };
     }
 
-    // Add to queue for initial email
-    const { data: queueItem, error: queueError } = await supabase
-      .from("video_testimonial_queue")
-      .insert({
-        organization_id: userData.organization_id,
-        request_id: request.id,
-        type: "initial",
-        scheduled_at: scheduledAt.toISOString(),
-        priority: validated.data.sendImmediately ? 10 : 1,
-        status: "pending",
-      })
-      .select("id")
-      .single();
+    const adminSupabase = createAdminClient();
+    let emailStatus: "sent" | "queued" | "created" = "created";
+    let emailError: string | undefined;
 
-    if (queueError) {
-      console.error("Failed to queue video testimonial request:", queueError);
-      // Don't fail - request was created, queue can be retried
+    console.error("[VideoTestimonial] Request created, processing email", {
+      requestId: request.id,
+      sendImmediately: validated.data.sendImmediately,
+    });
+
+    // Send initial email immediately or queue based on sendImmediately flag
+    if (validated.data.sendImmediately) {
+      // Send immediately for better UX on single requests
+      console.error("[VideoTestimonial] Calling sendInitialVideoTestimonialEmailImmediately");
+      const sendResult = await sendInitialVideoTestimonialEmailImmediately(request.id);
+      console.error("[VideoTestimonial] Immediate send result", sendResult);
+      if (sendResult.success) {
+        emailStatus = "sent";
+      } else {
+        emailError = sendResult.error;
+        console.error("[VideoTestimonial] Immediate send failed, falling back to queue", { emailError });
+        // Fall back to queueing if immediate send fails
+        const { error: queueError } = await supabase
+          .from("video_testimonial_queue")
+          .insert({
+            organization_id: userData.organization_id,
+            request_id: request.id,
+            type: "initial",
+            scheduled_at: new Date().toISOString(),
+            priority: 10,
+            status: "pending",
+          });
+        if (!queueError) {
+          emailStatus = "queued";
+        }
+        console.error("[VideoTestimonial] Queue fallback result", { queueError: queueError?.message, emailStatus });
+      }
+    } else {
+      // Queue for scheduled delivery
+      const { error: queueError } = await supabase
+        .from("video_testimonial_queue")
+        .insert({
+          organization_id: userData.organization_id,
+          request_id: request.id,
+          type: "initial",
+          scheduled_at: scheduledAt.toISOString(),
+          priority: 1,
+          status: "pending",
+        });
+      if (!queueError) {
+        emailStatus = "queued";
+      }
     }
 
     // Schedule 3-day and 7-day reminders using database function
-    const adminSupabase = createAdminClient();
     await adminSupabase.rpc("schedule_video_testimonial_reminders", {
       p_request_id: request.id,
       p_organization_id: userData.organization_id,
@@ -356,6 +395,7 @@ export async function createVideoTestimonialRequest(
         loan_officer_name: loanOfficer.full_name,
         scheduled_at: scheduledAt.toISOString(),
         send_immediately: validated.data.sendImmediately,
+        email_status: emailStatus,
       },
     });
 
@@ -369,11 +409,14 @@ export async function createVideoTestimonialRequest(
         requestId: request.id,
         token: request.token,
         requestUrl,
-        status: queueItem ? "queued" : "created",
-        queueItemId: queueItem?.id,
-        message: validated.data.sendImmediately
-          ? "Request created and queued for immediate delivery"
-          : `Request scheduled for ${scheduledAt.toISOString()}`,
+        status: emailStatus,
+        message: emailStatus === "sent"
+          ? "Request created and email sent"
+          : emailStatus === "queued"
+          ? validated.data.sendImmediately
+            ? `Email queued (${emailError || "will retry"})`
+            : `Request scheduled for ${scheduledAt.toISOString()}`
+          : "Request created",
       },
     };
   } catch (error) {
@@ -386,6 +429,7 @@ export async function createVideoTestimonialRequest(
  * Create multiple video testimonial requests in bulk
  * - Validates all inputs
  * - Creates requests individually to handle partial failures
+ * - For batches > IMMEDIATE_SEND_THRESHOLD, queues emails instead of sending immediately
  * - Returns detailed results for each request
  */
 export async function createBulkVideoTestimonialRequests(
@@ -441,9 +485,17 @@ export async function createBulkVideoTestimonialRequests(
       totalFailed: 0,
     };
 
+    // Determine if we should use queueing (bulk > threshold avoids HTTP timeout)
+    const useBulkQueueing = validated.data.requests.length > IMMEDIATE_SEND_THRESHOLD;
+
     // Process each request individually
     for (const requestInput of validated.data.requests) {
-      const result = await createVideoTestimonialRequest(requestInput);
+      // For large batches, force queueing to avoid HTTP timeout
+      const inputWithQueueOverride = useBulkQueueing
+        ? { ...requestInput, sendImmediately: false }
+        : requestInput;
+
+      const result = await createVideoTestimonialRequest(inputWithQueueOverride);
 
       if (result.success && result.data) {
         results.successful.push(result.data);
@@ -638,6 +690,96 @@ export async function getVideoTestimonialRequests(params?: {
 }
 
 /**
+ * Get aggregate stats for video testimonial requests
+ */
+export interface VideoRequestStats {
+  total: number;
+  pending: number;
+  sent: number;
+  completed: number;
+  expired: number;
+}
+
+export async function getVideoTestimonialRequestStats(params?: {
+  loanOfficerId?: string;
+}): Promise<ActionResult<VideoRequestStats>> {
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Build base query for the organization
+    let query = supabase
+      .from("video_testimonial_requests")
+      .select("status", { count: "exact", head: false })
+      .eq("organization_id", userData.organization_id);
+
+    // Filter by loan officer if specified or if user is a loan officer
+    if (params?.loanOfficerId) {
+      query = query.eq("loan_officer_id", params.loanOfficerId);
+    } else if (userData.role === "loan_officer") {
+      query = query.eq("loan_officer_id", user.id);
+    }
+
+    const { data: requests, error } = await query;
+
+    if (error) {
+      console.error("Error fetching video request stats:", error);
+      return { success: false, error: "Failed to fetch stats" };
+    }
+
+    // Count by status
+    const stats: VideoRequestStats = {
+      total: requests?.length ?? 0,
+      pending: 0,
+      sent: 0,
+      completed: 0,
+      expired: 0,
+    };
+
+    for (const req of requests ?? []) {
+      switch (req.status) {
+        case "pending":
+          stats.pending++;
+          break;
+        case "sent":
+        case "opened":
+        case "recording":
+          stats.sent++;
+          break;
+        case "submitted":
+          stats.completed++;
+          break;
+        case "expired":
+        case "cancelled":
+          stats.expired++;
+          break;
+      }
+    }
+
+    return { success: true, data: stats };
+  } catch (error) {
+    console.error("Error fetching video testimonial request stats:", error);
+    return { success: false, error: "Failed to fetch stats" };
+  }
+}
+
+/**
  * Get a single video testimonial request by ID
  */
 export async function getVideoTestimonialRequest(
@@ -802,13 +944,16 @@ export async function cancelVideoTestimonialRequest(
 
 /**
  * Resend a video testimonial request invitation
- * - Creates new queue entry for immediate send
+ * - Sends email immediately for better UX
+ * - Falls back to queueing if immediate send fails
  * - Increments reminder count
  * - Creates audit log entry
  */
 export async function resendVideoTestimonialRequest(
   requestId: string
-): Promise<ActionResult<{ queueItemId: string }>> {
+): Promise<ActionResult<{ emailStatus: "sent" | "queued" }>> {
+  console.error("=== [VideoTestimonial] resendVideoTestimonialRequest START ===", { requestId });
+
   try {
     const supabase = await createClient();
 
@@ -846,6 +991,12 @@ export async function resendVideoTestimonialRequest(
       return { success: false, error: "Request not found" };
     }
 
+    console.error("[VideoTestimonial] Resend request found", {
+      requestId,
+      status: request.status,
+      customerEmail: request.customer_email,
+    });
+
     // Check if request can be resent
     if (["submitted", "cancelled"].includes(request.status)) {
       return { success: false, error: `Cannot resend request with status: ${request.status}` };
@@ -857,14 +1008,30 @@ export async function resendVideoTestimonialRequest(
     }
 
     const adminSupabase = createAdminClient();
+    let emailStatus: "sent" | "queued" = "queued";
 
-    // Create new queue entry for immediate resend using upsert
-    // Use 'initial' type since the CHECK constraint only allows: 'initial', 'reminder_3day', 'reminder_7day'
-    // Use upsert to handle the unique constraint on (request_id, type)
-    const { data: queueItem, error: queueError } = await adminSupabase
-      .from("video_testimonial_queue")
-      .upsert(
-        {
+    // Try to send immediately first
+    console.error("[VideoTestimonial] Attempting immediate send for resend");
+    const sendResult = await sendInitialVideoTestimonialEmailImmediately(requestId);
+    console.error("[VideoTestimonial] Resend immediate send result", sendResult);
+
+    if (sendResult.success) {
+      emailStatus = "sent";
+    } else {
+      // Fall back to queueing if immediate send fails
+      console.error("[VideoTestimonial] Immediate send failed, falling back to queue", { error: sendResult.error });
+
+      // Cancel any existing pending queue items for this request
+      await adminSupabase
+        .from("video_testimonial_queue")
+        .update({ status: "cancelled" })
+        .eq("request_id", requestId)
+        .eq("status", "pending");
+
+      // Create new queue entry
+      const { error: queueError } = await adminSupabase
+        .from("video_testimonial_queue")
+        .insert({
           organization_id: userData.organization_id,
           request_id: requestId,
           type: "initial",
@@ -873,18 +1040,12 @@ export async function resendVideoTestimonialRequest(
           status: "pending",
           retry_count: 0,
           error_message: null,
-        },
-        {
-          onConflict: "request_id,type",
-          ignoreDuplicates: false,
-        }
-      )
-      .select("id")
-      .single();
+        });
 
-    if (queueError) {
-      console.error("Failed to queue resend:", queueError);
-      return { success: false, error: "Failed to queue resend" };
+      if (queueError) {
+        console.error("Failed to queue resend:", queueError);
+        return { success: false, error: "Failed to queue resend" };
+      }
     }
 
     // Update reminder count
@@ -913,9 +1074,11 @@ export async function resendVideoTestimonialRequest(
 
     revalidatePath("/dashboard/video-testimonials");
 
+    console.error("[VideoTestimonial] Resend completed successfully", { emailStatus });
+
     return {
       success: true,
-      data: { queueItemId: queueItem.id },
+      data: { emailStatus },
     };
   } catch (error) {
     console.error("Error resending video testimonial request:", error);

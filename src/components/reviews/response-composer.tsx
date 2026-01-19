@@ -23,7 +23,6 @@ import {
   Send,
   Save,
   CheckCircle,
-  Clock,
   Loader2,
   RefreshCw,
   Lock,
@@ -32,7 +31,6 @@ import Link from "next/link";
 import {
   getResponseTemplates,
   saveDraftResponse,
-  submitResponseForApproval,
   postResponse,
   generateAISuggestion,
   trackResponseEdit,
@@ -45,8 +43,6 @@ interface ResponseComposerProps {
   review: AggregatedReview;
   onSuccess?: () => void;
   onCancel?: () => void;
-  requireApproval?: boolean;
-  isManager?: boolean;
   hasAiAccess?: boolean;
 }
 
@@ -54,8 +50,6 @@ export function ResponseComposer({
   review,
   onSuccess,
   onCancel,
-  requireApproval = false,
-  isManager = false,
   hasAiAccess = true,
 }: ResponseComposerProps) {
   const [isPending, startTransition] = useTransition();
@@ -150,29 +144,6 @@ export function ResponseComposer({
         onSuccess?.();
       } else {
         setError(result.error || "Failed to save draft");
-      }
-    });
-  };
-
-  const handleSubmitForApproval = () => {
-    if (!responseText.trim()) return;
-
-    startTransition(async () => {
-      setError(null);
-      const result = await submitResponseForApproval(
-        review.id,
-        responseText.trim(),
-        selectedTemplateId || undefined
-      );
-
-      if (result.success) {
-        setSuccess("Response submitted for approval");
-        setTimeout(() => {
-          setSuccess(null);
-          onSuccess?.();
-        }, 2000);
-      } else {
-        setError(result.error || "Failed to submit for approval");
       }
     });
   };
@@ -403,55 +374,31 @@ export function ResponseComposer({
             </Tooltip>
           </TooltipProvider>
 
-          {requireApproval && !isManager ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    onClick={handleSubmitForApproval}
-                    disabled={isPending || !responseText.trim()}
-                  >
-                    {isPending ? (
-                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                    ) : (
-                      <Clock className="h-4 w-4 mr-1.5" />
-                    )}
-                    Submit for Approval
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">Submit for manager approval before posting</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    onClick={handlePostResponse}
-                    disabled={isPending || !responseText.trim()}
-                  >
-                    {isPending ? (
-                      <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4 mr-1.5" />
-                    )}
-                    Post Response
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">
-                    {review.source === "google"
-                      ? "Post response to Google"
-                      : "Post response to this review"}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={handlePostResponse}
+                  disabled={isPending || !responseText.trim()}
+                >
+                  {isPending ? (
+                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4 mr-1.5" />
+                  )}
+                  Post Response
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs">
+                  {review.source === "google"
+                    ? "Post response to Google"
+                    : "Post response to this review"}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </div>

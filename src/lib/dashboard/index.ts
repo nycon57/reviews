@@ -23,6 +23,7 @@ export {
   getFilterOptions,
   getLeaderboard,
   getLowPerformers,
+  getTeamNPSTrend,
   getTeamRatingTrend,
 } from "./manager-actions";
 

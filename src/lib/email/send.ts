@@ -453,14 +453,25 @@ export async function sendReviewResponseEmail(
 export async function sendVideoTestimonialInvitationEmail(
   data: VideoTestimonialInvitationEmailData
 ): Promise<EmailSendResult> {
+  console.error("[Email] sendVideoTestimonialInvitationEmail called", {
+    requestId: data.requestId,
+  });
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
+    console.error("[Email] Email is unsubscribed", { requestId: data.requestId });
     return { success: false, error: "Email is unsubscribed" };
   }
 
   const resend = getResendClient();
   const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getVideoTestimonialInvitationEmail(data);
+
+  console.error("[Email] Sending via Resend", {
+    requestId: data.requestId,
+    subject,
+    htmlLength: html?.length,
+  });
 
   try {
     const response = await resend.emails.send({
@@ -479,7 +490,14 @@ export async function sendVideoTestimonialInvitationEmail(
       ],
     });
 
+    console.error("[Email] Resend response", {
+      hasError: !!response.error,
+      errorMessage: response.error?.message,
+      messageId: response.data?.id,
+    });
+
     if (response.error) {
+      console.error("[Email] Resend returned error", { error: response.error });
       await logEmail({
         toEmail: data.toEmail,
         toName: data.customerName,
@@ -496,6 +514,7 @@ export async function sendVideoTestimonialInvitationEmail(
       return { success: false, error: response.error.message };
     }
 
+    console.error("[Email] Email sent successfully", { messageId: response.data?.id });
     await logEmail({
       toEmail: data.toEmail,
       toName: data.customerName,
@@ -514,6 +533,7 @@ export async function sendVideoTestimonialInvitationEmail(
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
 
+    console.error("[Email] Exception sending email", { error: errorMessage });
     await logEmail({
       toEmail: data.toEmail,
       toName: data.customerName,

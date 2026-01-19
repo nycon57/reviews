@@ -37,6 +37,13 @@ async function SettingsContent() {
       userEmail={profile?.email}
       userName={profile?.full_name ?? undefined}
       userAvatarUrl={profile?.avatar_url}
+      userTitle={profile?.title}
+      userBio={profile?.bio}
+      userPhone={profile?.phone}
+      userPersonalWebsiteUrl={profile?.personal_website_url}
+      userLinkedinUrl={profile?.linkedin_url}
+      userZillowProfileUrl={profile?.zillow_profile_url}
+      userTimezone={profile?.timezone}
     />
   );
 }

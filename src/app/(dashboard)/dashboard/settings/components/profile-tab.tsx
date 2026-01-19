@@ -11,9 +11,27 @@ interface ProfileTabProps {
   userEmail?: string;
   userName?: string;
   userAvatarUrl?: string | null;
+  userTitle?: string | null;
+  userBio?: string | null;
+  userPhone?: string | null;
+  userPersonalWebsiteUrl?: string | null;
+  userLinkedinUrl?: string | null;
+  userZillowProfileUrl?: string | null;
+  userTimezone?: string | null;
 }
 
-export function ProfileTab({ userEmail, userName, userAvatarUrl }: ProfileTabProps) {
+export function ProfileTab({
+  userEmail,
+  userName,
+  userAvatarUrl,
+  userTitle,
+  userBio,
+  userPhone,
+  userPersonalWebsiteUrl,
+  userLinkedinUrl,
+  userZillowProfileUrl,
+  userTimezone,
+}: ProfileTabProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -33,6 +51,13 @@ export function ProfileTab({ userEmail, userName, userAvatarUrl }: ProfileTabPro
         initialName={userName}
         initialEmail={userEmail}
         initialAvatarUrl={userAvatarUrl}
+        initialTitle={userTitle}
+        initialBio={userBio}
+        initialPhone={userPhone}
+        initialPersonalWebsiteUrl={userPersonalWebsiteUrl}
+        initialLinkedinUrl={userLinkedinUrl}
+        initialZillowProfileUrl={userZillowProfileUrl}
+        initialTimezone={userTimezone}
       />
 
       {/* Change Password Form */}

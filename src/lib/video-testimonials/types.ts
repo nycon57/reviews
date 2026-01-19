@@ -51,6 +51,13 @@ export function validateHexColor(color: string | null): string | null {
 // Constants
 // ============================================================================
 
+/**
+ * Threshold for immediate vs queued email sending
+ * - ≤ threshold: Send immediately (better UX for single/small requests)
+ * - > threshold: Queue for cron processing (avoid HTTP timeout for bulk)
+ */
+export const IMMEDIATE_SEND_THRESHOLD = 10;
+
 /** Relationship type labels for display */
 export const RELATIONSHIP_LABELS: Record<string, string> = {
   home_buyer: "Home Buyer",
@@ -120,3 +127,47 @@ export interface SubmitCustomerInfoInput {
   customerInfo: CustomerInfoInput;
   consents: ConsentInput;
 }
+
+// ============================================================================
+// Video Upload & Submission Types
+// ============================================================================
+
+/** Result from creating a signed upload URL */
+export interface CreateUploadUrlResult {
+  uploadUrl: string;
+  storagePath: string;
+}
+
+/** Input for submitting a video testimonial after upload */
+export interface SubmitVideoInput {
+  token: string;
+  storagePath: string;
+  durationSeconds: number;
+  thumbnailPath?: string;
+}
+
+/** Result from creating signed upload URLs for video and thumbnail */
+export interface CreateUploadUrlsResult {
+  videoUploadUrl: string;
+  videoStoragePath: string;
+  thumbnailUploadUrl: string;
+  thumbnailStoragePath: string;
+}
+
+/** Result from video submission with AI processing */
+export interface VideoSubmissionResult {
+  success: boolean;
+  responseId?: string;
+  generatedReview?: string;
+  transcription?: string;
+  error?: string;
+}
+
+/** Processing status for video upload flow */
+export type ProcessingStatus =
+  | "pending"
+  | "uploading"
+  | "transcribing"
+  | "generating"
+  | "completed"
+  | "failed";

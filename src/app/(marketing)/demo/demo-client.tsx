@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Link from "next/link";
 import {
   PlayCircle,
   CheckCircle,
@@ -12,13 +13,22 @@ import {
   Users,
   BarChart3,
   Zap,
+  ArrowRight,
+  Sparkles,
+  Calendar,
+  MessageSquare,
 } from "lucide-react";
-import { HeroSection } from "@/components/marketing/hero-section";
-import { staggerContainer, fadeInUp, viewportOnce } from "@/lib/motion";
+import {
+  staggerContainer,
+  fadeInUp,
+  viewportOnce,
+  blobFloat,
+  blobFloatRotate,
+} from "@/lib/motion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -60,25 +70,34 @@ const teamSizes = [
 
 const demoFeatures = [
   {
-    icon: <Clock className="h-5 w-5" />,
+    icon: Clock,
     title: "30-Minute Session",
     description: "Quick, focused demos that respect your time",
   },
   {
-    icon: <Users className="h-5 w-5" />,
+    icon: Users,
     title: "Personalized Walkthrough",
     description: "We tailor the demo to your specific needs",
   },
   {
-    icon: <BarChart3 className="h-5 w-5" />,
+    icon: BarChart3,
     title: "Live Platform Access",
     description: "See real features with sample data",
   },
   {
-    icon: <Zap className="h-5 w-5" />,
+    icon: Zap,
     title: "Q&A Time",
     description: "Get all your questions answered",
   },
+];
+
+const demoHighlights = [
+  "Automated survey creation and distribution",
+  "Real-time analytics and NPS tracking",
+  "AI-powered sentiment analysis",
+  "Team management and leaderboards",
+  "Integration options (Google, Zapier, API)",
+  "Mobile app capabilities",
 ];
 
 export function DemoPageClient() {
@@ -118,57 +137,139 @@ export function DemoPageClient() {
 
   return (
     <>
-      <HeroSection
-        subtitle="Request a Demo"
-        title="See RepWell in Action"
-        description="Schedule a personalized demo with our team. We'll show you how RepWell can transform your customer experience management in just 30 minutes."
-      />
+      {/* Hero Section */}
+      <section className="relative py-20 md:py-28 lg:py-32 bg-gradient-to-b from-repwell-sage-100/50 to-white overflow-hidden">
+        {/* Decorative blobs */}
+        <motion.div
+          variants={blobFloat}
+          initial="initial"
+          animate="animate"
+          className="absolute top-20 -left-32 w-96 h-96 bg-repwell-teal-300/10 rounded-full blur-3xl"
+        />
+        <motion.div
+          variants={blobFloatRotate}
+          initial="initial"
+          animate="animate"
+          className="absolute -bottom-20 -right-32 w-[500px] h-[500px] bg-repwell-sage-200/30 rounded-full blur-3xl"
+        />
 
-      <section className="py-16 md:py-24">
-        <div className="container mx-auto px-4">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="text-center max-w-3xl mx-auto"
+          >
+            <motion.div variants={fadeInUp}>
+              <Badge
+                variant="outline"
+                className="border-repwell-teal-300/50 text-repwell-teal-400 mb-6"
+              >
+                <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
+                Request a Demo
+              </Badge>
+            </motion.div>
+
+            <motion.h1
+              variants={fadeInUp}
+              className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-repwell-teal-500 mb-6"
+            >
+              See RepWell{" "}
+              <span className="text-repwell-teal-300">in Action</span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg md:text-xl text-repwell-teal-400 mb-10"
+            >
+              Schedule a personalized demo with our team. We&apos;ll show you how
+              RepWell can transform your customer experience management in just
+              30 minutes.
+            </motion.p>
+
+            {/* Quick Stats */}
+            <motion.div
+              variants={fadeInUp}
+              className="flex flex-wrap items-center justify-center gap-8 text-sm text-repwell-teal-400"
+            >
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-repwell-teal-300" />
+                <span>30-minute session</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-repwell-teal-300" />
+                <span>Live demo environment</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-repwell-teal-300" />
+                <span>Q&A included</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Main Content Section */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={viewportOnce}
             variants={staggerContainer}
-            className="grid gap-12 lg:grid-cols-2"
+            className="grid gap-12 lg:grid-cols-2 lg:gap-16"
           >
             {/* Left Column - Info */}
-            <motion.div variants={fadeInUp}>
-              <h2 className="mb-6 text-2xl font-bold">What to Expect</h2>
-              <div className="mb-8 grid gap-4 sm:grid-cols-2">
-                {demoFeatures.map((feature) => (
-                  <div
-                    key={feature.title}
-                    className="flex items-start gap-3 rounded-lg border p-4"
-                  >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      {feature.icon}
-                    </div>
-                    <div>
-                      <p className="font-medium">{feature.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {feature.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            <motion.div variants={fadeInUp} className="lg:sticky lg:top-32 lg:self-start">
+              <h2 className="font-display text-2xl md:text-3xl font-bold text-repwell-teal-500 mb-8">
+                What to Expect
+              </h2>
+
+              {/* Feature Cards */}
+              <div className="grid gap-4 sm:grid-cols-2 mb-10">
+                {demoFeatures.map((feature) => {
+                  const Icon = feature.icon;
+                  return (
+                    <motion.div
+                      key={feature.title}
+                      variants={fadeInUp}
+                      whileHover={{ y: -4 }}
+                      transition={{ duration: 0.2 }}
+                      className="bg-white border border-repwell-sage-100 rounded-2xl p-5 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-repwell-sage-100">
+                          <Icon className="h-5 w-5 text-repwell-teal-400" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-repwell-teal-500">
+                            {feature.title}
+                          </p>
+                          <p className="text-sm text-repwell-teal-400 mt-0.5">
+                            {feature.description}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
 
-              <div className="rounded-lg bg-muted/50 p-6">
-                <h3 className="mb-4 font-semibold">In the Demo, You'll See:</h3>
+              {/* Demo Highlights */}
+              <div className="bg-repwell-sage-100/40 rounded-2xl p-6 lg:p-8">
+                <h3 className="font-semibold text-repwell-teal-500 mb-5 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-repwell-teal-300" />
+                  In the Demo, You&apos;ll See:
+                </h3>
                 <ul className="space-y-3">
-                  {[
-                    "Automated survey creation and distribution",
-                    "Real-time analytics and NPS tracking",
-                    "AI-powered sentiment analysis",
-                    "Team management and leaderboards",
-                    "Integration options (Google, Zapier, API)",
-                    "Mobile app capabilities",
-                  ].map((item) => (
+                  {demoHighlights.map((item) => (
                     <li key={item} className="flex items-start gap-3">
-                      <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                      <span className="text-sm">{item}</span>
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-repwell-sage-200/50 mt-0.5">
+                        <CheckCircle className="h-3 w-3 text-repwell-teal-400" />
+                      </div>
+                      <span className="text-sm text-repwell-teal-400">
+                        {item}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -177,180 +278,64 @@ export function DemoPageClient() {
 
             {/* Right Column - Form */}
             <motion.div variants={fadeInUp}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PlayCircle className="h-5 w-5 text-primary" />
-                    Request Your Demo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isSubmitted ? (
-                    <div className="flex flex-col items-center py-8 text-center">
-                      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-600">
-                        <CheckCircle className="h-8 w-8" />
-                      </div>
-                      <h3 className="mb-2 text-xl font-semibold">
-                        Demo Requested!
-                      </h3>
-                      <p className="mb-6 text-muted-foreground">
-                        Thank you for your interest. Our team will reach out
-                        within 24 hours to schedule your personalized demo.
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsSubmitted(false)}
-                      >
-                        Submit Another Request
-                      </Button>
+              <div className="bg-white border border-repwell-sage-100 rounded-3xl p-8 lg:p-10 shadow-sm">
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-repwell-teal-500">
+                    <PlayCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-xl font-bold text-repwell-teal-500">
+                      Request Your Demo
+                    </h3>
+                    <p className="text-sm text-repwell-teal-400">
+                      Fill out the form and we&apos;ll be in touch
+                    </p>
+                  </div>
+                </div>
+
+                {isSubmitted ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex flex-col items-center py-12 text-center"
+                  >
+                    <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-repwell-sage-100">
+                      <CheckCircle className="h-10 w-10 text-repwell-teal-400" />
                     </div>
-                  ) : (
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-6"
-                      >
-                        <div className="grid gap-6 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="firstName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>First Name *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="John" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="lastName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Last Name *</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="Doe" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
+                    <h3 className="font-display text-2xl font-bold text-repwell-teal-500 mb-3">
+                      Demo Requested!
+                    </h3>
+                    <p className="text-repwell-teal-400 mb-8 max-w-sm">
+                      Thank you for your interest. Our team will reach out within
+                      24 hours to schedule your personalized demo.
+                    </p>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsSubmitted(false)}
+                      className="border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100/50"
+                    >
+                      Submit Another Request
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-6"
+                    >
+                      <div className="grid gap-5 sm:grid-cols-2">
                         <FormField
                           control={form.control}
-                          name="email"
+                          name="firstName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Work Email *</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="email"
-                                  placeholder="john@company.com"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="grid gap-6 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="company"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Company *</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Acme Mortgage"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="jobTitle"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Job Title</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Branch Manager"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid gap-6 md:grid-cols-2">
-                          <FormField
-                            control={form.control}
-                            name="phone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Phone</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="tel"
-                                    placeholder="(555) 123-4567"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="teamSize"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Team Size</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select team size" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {teamSizes.map((size) => (
-                                      <SelectItem key={size} value={size}>
-                                        {size}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name="message"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>
-                                Anything specific you'd like to see?
+                              <FormLabel className="text-repwell-teal-500">
+                                First Name *
                               </FormLabel>
                               <FormControl>
-                                <Textarea
-                                  placeholder="Tell us about your goals or specific features you're interested in..."
-                                  className="min-h-[100px]"
+                                <Input
+                                  placeholder="John"
+                                  className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20"
                                   {...field}
                                 />
                               </FormControl>
@@ -358,40 +343,257 @@ export function DemoPageClient() {
                             </FormItem>
                           )}
                         />
-
-                        {error && (
-                          <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                            {error}
-                          </div>
-                        )}
-
-                        <Button
-                          type="submit"
-                          className="w-full"
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? (
-                            "Submitting..."
-                          ) : (
-                            <>
-                              <PlayCircle className="mr-2 h-4 w-4" />
-                              Request Demo
-                            </>
+                        <FormField
+                          control={form.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-repwell-teal-500">
+                                Last Name *
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Doe"
+                                  className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                        </Button>
+                        />
+                      </div>
 
-                        <p className="text-center text-xs text-muted-foreground">
-                          By submitting this form, you agree to our{" "}
-                          <a href="/privacy" className="underline">
-                            Privacy Policy
-                          </a>
-                          .
-                        </p>
-                      </form>
-                    </Form>
-                  )}
-                </CardContent>
-              </Card>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-repwell-teal-500">
+                              Work Email *
+                            </FormLabel>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="john@company.com"
+                                className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid gap-5 sm:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="company"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-repwell-teal-500">
+                                Company *
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Acme Mortgage"
+                                  className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="jobTitle"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-repwell-teal-500">
+                                Job Title
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Branch Manager"
+                                  className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid gap-5 sm:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-repwell-teal-500">
+                                Phone
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="tel"
+                                  placeholder="(555) 123-4567"
+                                  className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="teamSize"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-repwell-teal-500">
+                                Team Size
+                              </FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className="h-11 border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20">
+                                    <SelectValue placeholder="Select team size" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {teamSizes.map((size) => (
+                                    <SelectItem key={size} value={size}>
+                                      {size}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-repwell-teal-500">
+                              Anything specific you&apos;d like to see?
+                            </FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Tell us about your goals or specific features you're interested in..."
+                                className="min-h-[100px] border-repwell-sage-100 focus:border-repwell-teal-300 focus:ring-repwell-teal-300/20 resize-none"
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {error && (
+                        <div className="rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-600">
+                          {error}
+                        </div>
+                      )}
+
+                      <Button
+                        type="submit"
+                        className="w-full h-12 text-base font-medium bg-repwell-teal-500 hover:bg-repwell-teal-400"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? (
+                          <span className="flex items-center gap-2">
+                            <motion.span
+                              animate={{ rotate: 360 }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                ease: "linear",
+                              }}
+                              className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
+                            />
+                            Submitting...
+                          </span>
+                        ) : (
+                          <>
+                            <PlayCircle className="mr-2 h-5 w-5" />
+                            Request Demo
+                          </>
+                        )}
+                      </Button>
+
+                      <p className="text-center text-xs text-repwell-teal-400">
+                        By submitting this form, you agree to our{" "}
+                        <Link
+                          href="/privacy"
+                          className="text-repwell-teal-300 hover:underline"
+                        >
+                          Privacy Policy
+                        </Link>
+                        .
+                      </p>
+                    </form>
+                  </Form>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 md:py-24 bg-repwell-teal-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={staggerContainer}
+            className="text-center"
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="font-display text-3xl md:text-4xl font-bold text-white mb-4"
+            >
+              Prefer to Explore on Your Own?
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg text-repwell-sage-100 mb-8 max-w-xl mx-auto"
+            >
+              Start your free 14-day trial and experience RepWell firsthand. No
+              credit card required.
+            </motion.p>
+            <motion.div
+              variants={fadeInUp}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            >
+              <Link href="/signup">
+                <Button
+                  size="lg"
+                  className="bg-white text-repwell-teal-500 hover:bg-repwell-sage-100 h-12 px-8"
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-white hover:bg-white/10 h-12 px-8"
+                >
+                  View Pricing
+                </Button>
+              </Link>
             </motion.div>
           </motion.div>
         </div>

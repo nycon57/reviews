@@ -14,6 +14,20 @@ export type ReviewStatus = "pending" | "approved" | "rejected" | "archived";
 
 export type SentimentLabel = "positive" | "neutral" | "negative";
 
+export type CredentialType = "nmls" | "state_real_estate" | "insurance" | "cpa" | "series_7" | "other";
+
+export type GroupType = "team" | "region" | "segment" | "custom";
+
+export type GroupMemberRole = "member" | "lead";
+
+export interface UserAddress {
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+}
+
 export interface User {
   id: string;
   organizationId: string;
@@ -24,6 +38,83 @@ export interface User {
   isOwner: boolean;
   isActive: boolean;
   createdAt: string;
+
+  // Contact & Profile
+  phone: string | null;
+  title: string | null;
+  bio: string | null;
+  photoUrl: string | null;
+  personalWebsiteUrl: string | null;
+  linkedinUrl: string | null;
+  zillowProfileUrl: string | null;
+
+  // Location
+  branchId: string | null;
+  region: string | null;
+  address: UserAddress | null;
+
+  // Employment
+  managerUserId: string | null;
+  hireDate: string | null;
+
+  // Aggregated Metrics
+  averageRating: number;
+  totalReviews: number;
+  npsScore: number | null;
+  reputationScore: number;
+
+  // External Integrations
+  googleBusinessId: string | null;
+  googlePlaceId: string | null;
+
+  // Settings
+  receiveNotifications: boolean;
+  autoRequestReviews: boolean;
+  timezone: string | null;
+  notificationPreferences: Record<string, boolean> | null;
+  lastLoginAt: string | null;
+  updatedAt: string;
+}
+
+export interface UserCredential {
+  id: string;
+  userId: string;
+  organizationId: string;
+  credentialType: CredentialType | string;
+  credentialNumber: string;
+  issuingAuthority: string | null;
+  issuedDate: string | null;
+  expiryDate: string | null;
+  isVerified: boolean;
+  verifiedAt: string | null;
+  isPublic: boolean;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Group {
+  id: string;
+  organizationId: string;
+  name: string;
+  description: string | null;
+  type: GroupType;
+  isActive: boolean;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserGroup {
+  userId: string;
+  groupId: string;
+  role: GroupMemberRole;
+  createdAt: string;
+}
+
+export interface GroupWithMembers extends Group {
+  members: (User & { memberRole: GroupMemberRole })[];
+  memberCount: number;
 }
 
 export interface Organization {
@@ -116,7 +207,8 @@ export interface Survey {
   id: string;
   organizationId: string;
   templateId: string;
-  loanOfficerId: string;
+  userId: string | null;  // New: references users table
+  loanOfficerId: string;  // Deprecated: kept for migration compatibility
   customerName: string;
   customerEmail: string;
   customerPhone: string | null;
@@ -152,7 +244,8 @@ export interface SurveyResponse {
 export interface Review {
   id: string;
   organizationId: string;
-  loanOfficerId: string;
+  userId: string | null;  // New: references users table
+  loanOfficerId: string;  // Deprecated: kept for migration compatibility
   source: ReviewSource;
   sourceReviewId: string | null;
   sourceUrl: string | null;

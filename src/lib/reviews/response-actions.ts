@@ -175,7 +175,7 @@ export async function createResponseTemplate(
     return { success: false, error: "Failed to create template" };
   }
 
-  revalidatePath("/dashboard/responses");
+  revalidatePath("/dashboard/organization");
   return {
     success: true,
     data: {
@@ -230,7 +230,7 @@ export async function updateResponseTemplate(
     return { success: false, error: "Failed to update template" };
   }
 
-  revalidatePath("/dashboard/responses");
+  revalidatePath("/dashboard/organization");
   return { success: true };
 }
 
@@ -255,7 +255,7 @@ export async function deleteResponseTemplate(templateId: string): Promise<Action
     return { success: false, error: "Failed to delete template" };
   }
 
-  revalidatePath("/dashboard/responses");
+  revalidatePath("/dashboard/organization");
   return { success: true };
 }
 
@@ -295,44 +295,7 @@ export async function saveDraftResponse(
   }
 
   revalidatePath("/dashboard/all-reviews");
-  revalidatePath("/dashboard/responses");
-  return { success: true };
-}
-
-// Submit response for approval (if approval workflow is enabled)
-export async function submitResponseForApproval(
-  reviewId: string,
-  responseText: string,
-  templateId?: string
-): Promise<ActionResult> {
-  const context = await requireAuth();
-  if (!context) {
-    return { success: false, error: "Unauthorized" };
-  }
-
-  const supabase = await createClient();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
-    .from("reviews")
-    .update({
-      response_text: responseText,
-      response_status: "pending_approval",
-      response_by: context.userId,
-      response_at: new Date().toISOString(),
-      response_template_id: templateId || null,
-    })
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId);
-
-  if (error) {
-    console.error("Error submitting response for approval:", error);
-    return { success: false, error: "Failed to submit for approval" };
-  }
-
-  revalidatePath("/dashboard/all-reviews");
-  revalidatePath("/dashboard/responses");
-  revalidatePath("/dashboard/response-approvals");
+  revalidatePath("/dashboard/organization");
   return { success: true };
 }
 
@@ -474,243 +437,7 @@ export async function postResponse(
   }
 
   revalidatePath("/dashboard/all-reviews");
-  revalidatePath("/dashboard/responses");
-  return { success: true };
-}
-
-// ============================================
-// Response Approval Workflow (for Managers)
-// ============================================
-
-// Get responses pending approval
-export async function getPendingApprovals(): Promise<ActionResult<{
-  reviews: Array<{
-    id: string;
-    customerName: string | null;
-    text: string | null;
-    rating: number;
-    source: string;
-    reviewDate: string;
-    responseText: string;
-    responseBy: string | null;
-    responseAt: string | null;
-    loanOfficer: { id: string; fullName: string; photoUrl: string | null };
-  }>;
-  total: number;
-}>> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = await createClient();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error, count } = await (supabase as any)
-    .from("reviews")
-    .select(
-      `
-      id,
-      customer_name,
-      text,
-      rating,
-      source,
-      review_date,
-      response_text,
-      response_by,
-      response_at,
-      loan_officers!inner (
-        id,
-        full_name,
-        photo_url
-      )
-    `,
-      { count: "exact" }
-    )
-    .eq("organization_id", context.organizationId)
-    .eq("response_status", "pending_approval")
-    .order("response_at", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching pending approvals:", error);
-    return { success: false, error: "Failed to fetch pending approvals" };
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const reviews = (data || []).map((row: any) => {
-    const lo = row.loan_officers as unknown as { id: string; full_name: string; photo_url: string | null };
-    return {
-      id: row.id,
-      customerName: row.customer_name,
-      text: row.text,
-      rating: row.rating,
-      source: row.source,
-      reviewDate: row.review_date,
-      responseText: row.response_text!,
-      responseBy: row.response_by,
-      responseAt: row.response_at,
-      loanOfficer: {
-        id: lo.id,
-        fullName: lo.full_name,
-        photoUrl: lo.photo_url,
-      },
-    };
-  });
-
-  return { success: true, data: { reviews, total: count || 0 } };
-}
-
-// Approve a pending response
-export async function approveResponse(reviewId: string): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = await createClient();
-  const now = new Date().toISOString();
-
-  // Get the current response text
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: review, error: fetchError } = await (supabase as any)
-    .from("reviews")
-    .select(`
-      response_text, loan_officer_id, source, source_review_id, review_date,
-      sentiment_score, response_template_id, customer_name, customer_email, text,
-      loan_officers!inner(full_name),
-      organizations!inner(name)
-    `)
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .eq("response_status", "pending_approval")
-    .single();
-
-  if (fetchError || !review) {
-    return { success: false, error: "Pending response not found" };
-  }
-
-  // Update to approved and posted
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
-    .from("reviews")
-    .update({
-      response_status: "posted",
-      response_approved_at: now,
-      response_approved_by: context.userId,
-      response_posted_at: now,
-    })
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId);
-
-  if (error) {
-    console.error("Error approving response:", error);
-    return { success: false, error: "Failed to approve response" };
-  }
-
-  // Calculate response time
-  const reviewDate = new Date(review.review_date);
-  const responseDate = new Date(now);
-  const responseTimeHours = (responseDate.getTime() - reviewDate.getTime()) / (1000 * 60 * 60);
-
-  // Record analytics
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from("response_analytics").insert({
-    organization_id: context.organizationId,
-    review_id: reviewId,
-    loan_officer_id: review.loan_officer_id,
-    response_time_hours: Math.round(responseTimeHours * 100) / 100,
-    template_used: review.response_template_id,
-    was_ai_suggested: false,
-    was_edited_from_template: review.response_template_id ? true : false,
-    word_count: review.response_text?.split(/\s+/).length || 0,
-    sentiment_before: review.sentiment_score,
-    platform: review.source,
-    posted_successfully: true,
-  });
-
-  // Create Google reply record if applicable
-  if (review.source === "google") {
-    const { data: connection } = await supabase
-      .from("google_connections")
-      .select("id")
-      .eq("organization_id", context.organizationId)
-      .eq("is_active", true)
-      .limit(1)
-      .single();
-
-    if (connection) {
-      await supabase.from("google_review_replies").insert({
-        organization_id: context.organizationId,
-        review_id: reviewId,
-        connection_id: connection.id,
-        reply_text: review.response_text,
-        status: "pending",
-        sent_by: context.userId,
-      });
-    }
-  }
-
-  // Send email notification to reviewer (only for internal reviews with customer email)
-  if (review.source === "internal" && review.customer_email) {
-    const loanOfficer = review.loan_officers as unknown as { full_name: string };
-    const organization = review.organizations as unknown as { name: string };
-
-    await sendReviewResponseEmail({
-      toEmail: review.customer_email,
-      toName: review.customer_name || undefined,
-      customerName: review.customer_name || "Valued Customer",
-      loanOfficerName: loanOfficer.full_name,
-      organizationName: organization.name,
-      originalReviewText: review.text || null,
-      responseText: review.response_text,
-      rating: review.rating || 5,
-      organizationId: context.organizationId,
-      loanOfficerId: review.loan_officer_id,
-    }).catch((err) => {
-      // Log error but don't fail the response approval
-      console.error("Failed to send review response email:", err);
-    });
-  }
-
-  revalidatePath("/dashboard/all-reviews");
-  revalidatePath("/dashboard/responses");
-  revalidatePath("/dashboard/response-approvals");
-  return { success: true };
-}
-
-// Reject a pending response
-export async function rejectResponse(
-  reviewId: string,
-  reason: string
-): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = await createClient();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any)
-    .from("reviews")
-    .update({
-      response_status: "rejected",
-      response_rejected_at: new Date().toISOString(),
-      response_rejected_by: context.userId,
-      response_rejection_reason: reason,
-    })
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .eq("response_status", "pending_approval");
-
-  if (error) {
-    console.error("Error rejecting response:", error);
-    return { success: false, error: "Failed to reject response" };
-  }
-
-  revalidatePath("/dashboard/all-reviews");
-  revalidatePath("/dashboard/responses");
-  revalidatePath("/dashboard/response-approvals");
+  revalidatePath("/dashboard/organization");
   return { success: true };
 }
 
@@ -718,16 +445,61 @@ export async function rejectResponse(
 // Response Analytics
 // ============================================
 
+export interface ResponseAnalyticsParams {
+  startDate?: string;
+  endDate?: string;
+  loanOfficerId?: string;
+}
+
 export async function getResponseAnalytics(
-  startDate?: string,
+  startDateOrParams?: string | ResponseAnalyticsParams,
   endDate?: string
 ): Promise<ActionResult<ResponseAnalytics>> {
-  const context = await requireManagerRole();
+  // Support both old signature (startDate, endDate) and new params object
+  let params: ResponseAnalyticsParams = {};
+  if (typeof startDateOrParams === "object") {
+    params = startDateOrParams;
+  } else {
+    params = { startDate: startDateOrParams, endDate };
+  }
+
+  const context = await requireAuth();
   if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
+    return { success: false, error: "Unauthorized" };
   }
 
   const supabase = await createClient();
+
+  // Role-based filtering
+  let loanOfficerIdFilter: string | undefined = params.loanOfficerId;
+
+  // For loan officers, always filter to their own data
+  if (context.role === "loan_officer") {
+    const { data: loData } = await supabase
+      .from("loan_officers")
+      .select("id")
+      .eq("user_id", context.userId)
+      .single();
+
+    if (loData) {
+      loanOfficerIdFilter = loData.id;
+    } else {
+      // No loan officer record, return empty analytics
+      return {
+        success: true,
+        data: {
+          totalResponses: 0,
+          averageResponseTimeHours: 0,
+          responseRate: 0,
+          templateUsage: {},
+          aiSuggestionRate: 0,
+          approvalRate: 100,
+          platformBreakdown: {},
+          pendingApprovals: 0,
+        },
+      };
+    }
+  }
 
   // Get total reviews count
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -737,8 +509,9 @@ export async function getResponseAnalytics(
     .eq("organization_id", context.organizationId)
     .eq("status", "approved");
 
-  if (startDate) reviewsQuery = reviewsQuery.gte("review_date", startDate);
-  if (endDate) reviewsQuery = reviewsQuery.lte("review_date", endDate);
+  if (params.startDate) reviewsQuery = reviewsQuery.gte("review_date", params.startDate);
+  if (params.endDate) reviewsQuery = reviewsQuery.lte("review_date", params.endDate);
+  if (loanOfficerIdFilter) reviewsQuery = reviewsQuery.eq("loan_officer_id", loanOfficerIdFilter);
 
   const { data: reviews, count: totalReviews } = await reviewsQuery;
 
@@ -749,18 +522,23 @@ export async function getResponseAnalytics(
     .select("*")
     .eq("organization_id", context.organizationId);
 
-  if (startDate) analyticsQuery = analyticsQuery.gte("created_at", startDate);
-  if (endDate) analyticsQuery = analyticsQuery.lte("created_at", endDate);
+  if (params.startDate) analyticsQuery = analyticsQuery.gte("created_at", params.startDate);
+  if (params.endDate) analyticsQuery = analyticsQuery.lte("created_at", params.endDate);
+  if (loanOfficerIdFilter) analyticsQuery = analyticsQuery.eq("loan_officer_id", loanOfficerIdFilter);
 
   const { data: analytics } = await analyticsQuery;
 
   // Get pending approvals count
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count: pendingApprovals } = await (supabase as any)
+  let pendingQuery = (supabase as any)
     .from("reviews")
     .select("id", { count: "exact", head: true })
     .eq("organization_id", context.organizationId)
     .eq("response_status", "pending_approval");
+
+  if (loanOfficerIdFilter) pendingQuery = pendingQuery.eq("loan_officer_id", loanOfficerIdFilter);
+
+  const { count: pendingApprovals } = await pendingQuery;
 
   // Calculate metrics
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

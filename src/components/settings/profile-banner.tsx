@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { ChevronRight, Star, Target } from 'lucide-react';
+import { Star, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getProfileCompletionScore } from '@/lib/gamification/profile-completion-actions';
 import type { ProfileCompletionScore } from '@/lib/gamification/profile-completion-types';
@@ -122,13 +120,6 @@ export function ProfileBanner({ loanOfficerId, className }: ProfileBannerProps) 
             )}
           </div>
         </div>
-
-        <Button variant="outline" size="sm" asChild className="shrink-0">
-          <Link href="/dashboard/profile">
-            Complete Profile
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Link>
-        </Button>
       </div>
     </div>
   );

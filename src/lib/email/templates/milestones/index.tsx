@@ -11,9 +11,12 @@ import { render } from "@react-email/components";
 import { FirstReviewMilestoneEmail } from "./first-review-milestone";
 import { ReviewCountMilestoneEmail } from "./review-count-milestone";
 import { First5StarMilestoneEmail } from "./first-5star-milestone";
+import { RatingImprovementMilestoneEmail } from "./rating-improvement-milestone";
+import { NpsImprovementMilestoneEmail } from "./nps-improvement-milestone";
 import { LeaderboardMilestoneEmail } from "./leaderboard-milestone";
 import { BadgeEarnedMilestoneEmail } from "./badge-earned-milestone";
 import { StreakMilestoneEmail } from "./streak-milestone";
+import { ProfileCompletionMilestoneEmail } from "./profile-completion-milestone";
 import { VideoMilestoneEmail } from "./video-milestone";
 
 // Shared Components
@@ -24,9 +27,12 @@ export {
   FirstReviewMilestoneEmail,
   ReviewCountMilestoneEmail,
   First5StarMilestoneEmail,
+  RatingImprovementMilestoneEmail,
+  NpsImprovementMilestoneEmail,
   LeaderboardMilestoneEmail,
   BadgeEarnedMilestoneEmail,
   StreakMilestoneEmail,
+  ProfileCompletionMilestoneEmail,
   VideoMilestoneEmail,
   CelebrationHeader,
   SocialShareCta,
@@ -37,9 +43,12 @@ import type {
   FirstReviewMilestoneEmailData,
   ReviewCountMilestoneEmailData,
   First5StarMilestoneEmailData,
+  RatingImprovementMilestoneEmailData,
+  NpsImprovementMilestoneEmailData,
   LeaderboardMilestoneEmailData,
   BadgeEarnedMilestoneEmailData,
   StreakMilestoneEmailData,
+  ProfileCompletionMilestoneEmailData,
   VideoMilestoneEmailData,
 } from "../../types";
 
@@ -143,5 +152,39 @@ export async function renderVideoMilestoneEmail(
       ? `🎬 Your first video testimonial, ${data.firstName}!`
       : `🎬 ${data.firstName}, you've collected ${data.videoCount} video testimonials!`;
   const html = await render(<VideoMilestoneEmail data={data} />);
+  return { subject, html };
+}
+
+/**
+ * Render Rating Improvement Milestone email to HTML
+ */
+export async function renderRatingImprovementMilestoneEmail(
+  data: RatingImprovementMilestoneEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = `📈 ${data.firstName}, your rating improved to ${data.currentRating.toFixed(1)} stars!`;
+  const html = await render(<RatingImprovementMilestoneEmail data={data} />);
+  return { subject, html };
+}
+
+/**
+ * Render NPS Improvement Milestone email to HTML
+ */
+export async function renderNpsImprovementMilestoneEmail(
+  data: NpsImprovementMilestoneEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = `🚀 ${data.firstName}, your NPS improved by +${data.improvementAmount} points!`;
+  const html = await render(<NpsImprovementMilestoneEmail data={data} />);
+  return { subject, html };
+}
+
+/**
+ * Render Profile Completion Milestone email to HTML
+ */
+export async function renderProfileCompletionMilestoneEmail(
+  data: ProfileCompletionMilestoneEmailData
+): Promise<{ subject: string; html: string }> {
+  const emoji = data.completionPercent >= 100 ? "🏆" : data.completionPercent >= 75 ? "🌟" : "🎯";
+  const subject = `${emoji} ${data.firstName}, your profile is now ${data.completionPercent}% complete!`;
+  const html = await render(<ProfileCompletionMilestoneEmail data={data} />);
   return { subject, html };
 }

@@ -6801,3 +6801,55 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Types-only files should not have "use server" directive
 - Status: Pass 3/3 COMPLETE - All acceptance criteria verified
 ---
+
+## S082 · Pass 1/3 · 2026-01-21
+Thread:
+Run: context-continuation (session recovery)
+Pass: 1/3 - Implementation
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e2fb945 [Pass 1/3] feat(S082): Add weekly performance summary emails
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no (email infrastructure)
+  - /code-review: no (deferred to Pass 2)
+  - /vercel-react-best-practices: yes (React Email components)
+  - /code-simplifier: no (deferred to Pass 3)
+  - /frontend-design: no (email templates, not UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in S082 files)
+- Files created:
+  - src/lib/email/queries/index.ts (exports for metrics queries)
+  - src/lib/email/queries/weekly-lo-metrics.ts (LO weekly metrics: reviews, ratings, NPS, leaderboard)
+  - src/lib/email/queries/weekly-team-metrics.ts (team metrics: aggregates, top performers, alerts)
+  - src/lib/email/services/index.ts (exports for email services)
+  - src/lib/email/services/weekly-summary.ts (batch email sending, preferences handling)
+  - src/lib/email/templates/weekly-summary-lo.tsx (LO email template with React Email)
+  - src/lib/email/templates/weekly-summary-manager.tsx (Manager email template)
+  - src/app/api/cron/send-weekly-summaries/route.ts (cron endpoint)
+- Files modified:
+  - src/lib/email/types.ts (added WeeklySummary* types and preferences)
+  - src/lib/email/templates/index.tsx (added render functions and exports)
+- What was implemented:
+  - S082 acceptance criteria (partial - core implementation):
+    1. ✅ Weekly summary emails for loan officers
+    2. ✅ Weekly summary emails for managers
+    3. ✅ LO metrics: reviews this week, rating trends, response rate, leaderboard position, top review, NPS
+    4. ✅ Manager metrics: team aggregates, top performers, needs attention, pending approvals, alerts
+    5. ✅ Configurable send day/time in preferences (JSON column in users table)
+    6. ✅ Skip if no activity option
+    7. ✅ View Dashboard CTA
+    8. ✅ Unsubscribe option specific to weekly summary
+    9. ✅ Cron job endpoint at /api/cron/send-weekly-summaries
+- Architecture:
+  - Queries: Parallel fetches with week-over-week comparisons using date arithmetic
+  - Service: getUsersForWeeklySummary(), sendWeeklyLOSummaries(), sendWeeklyManagerSummaries()
+  - Templates: Follow S073 email design system, use existing components (StatsCard, MetricComparison, Leaderboard)
+  - Preferences: Stored in users.notification_preferences.weekly_summary JSON field
+- **Learnings for future iterations:**
+  - Import paths matter: templates/ directory vs templates.ts file resolved differently
+  - ReviewCard props: reviewerName/review not customerName/reviewText
+  - Week-over-week metrics need careful date handling with start/end boundaries
+- Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Quality Review)
+---

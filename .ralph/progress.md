@@ -7005,3 +7005,45 @@ Pass: 1/3 - Implementation
   - ✅ Personal from 'the team' vs automated feel
 - Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Code Review)
 ---
+
+## S083 · Pass 2/3 · 2026-01-21
+Thread:
+Run: 20260121-continuation (context resumed)
+Pass: 2/3 - Quality Review
+- Guardrails reviewed: yes (prior to context compaction)
+- No-commit run: false
+- Commit: 9a9d878 [Pass 2/3] fix(S083): Fix critical bugs in re-engagement sequence
+- Post-commit status: clean
+- Skills invoked:
+  - /code-review: yes (5 parallel review agents)
+  - /vercel-react-best-practices: no (no React components)
+- Issues found and fixed (confidence >= 80%):
+  1. [100%] CRITICAL: last_login_at never updated on login - broke sequence exit
+  2. [95%] CRITICAL: Race condition in queue processing - duplicate emails
+  3. [100%] SECURITY: Email header injection via sanitizeSubject
+  4. [100%] SECURITY: Incomplete HTML escaping (missing backtick)
+  5. [95%] SECURITY: URL sanitization returns non-normalized URL
+  6. [90%] SECURITY: Weak fallback authorization in production
+  7. [80%] SECURITY: Timing attack vulnerability on CRON_SECRET
+  8. [90%] BUG: 1-minute new user window too narrow for OAuth
+  9. [85%] BUG: Missing error handling for userData query
+  10. [95%] TYPE: Interface/implementation mismatch in steps_completed
+- Files modified:
+  - src/app/auth/callback/route.ts (login tracking + error handling)
+  - src/lib/email/reengagement-sequence-service.ts (optimistic locking + types)
+  - src/lib/email/reengagement-templates.ts (security hardening)
+  - src/app/api/cron/process-reengagement/route.ts (timing-safe auth)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 pre-existing warnings)
+- Key fixes:
+  - Added last_login_at update in auth callback (critical for sequence exit)
+  - Implemented optimistic locking to prevent race conditions
+  - Added timing-safe comparison for CRON_SECRET validation
+  - Made CRON_SECRET mandatory in production
+  - Escape backticks in HTML to prevent template literal injection
+  - Return normalized URL from sanitizeUrl
+  - Remove all control characters in sanitizeSubject
+  - Increased new user window from 1 to 5 minutes
+- Status: Pass 2/3 COMPLETE - Ready for Pass 3 (Polish & Verification)
+---

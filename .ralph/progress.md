@@ -6007,3 +6007,38 @@ Run: 20260121-continuation (Pass 1)
   - Review conditional skipping logic
   - Verify email template content and styling
 ---
+
+## [2026-01-21] - S075: Organization Onboarding Sequence - Pass 2/3
+Thread: N/A
+Run: 20260121-004232-375 (iteration 10)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-10.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-10.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 201c879 [Pass 2/3] fix(S075): Fix email timing and constraint bugs in org onboarding
+- Post-commit status: clean (only prd-reviews.json modified, which is handled by loop)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via feature-dev:code-reviewer agents)
+  - /vercel-react-best-practices: yes (as part of review)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (not a UI story)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 pre-existing warnings)
+- Files changed:
+  - src/lib/email/org-onboarding-service.ts
+  - src/lib/onboarding/actions.ts
+- What was implemented:
+  - Fixed 4 high-confidence bugs identified in code review:
+    1. Email timing calculation: Changed from relative delay (`new Date()`) to absolute delay from `sequence.started_at` to prevent timing drift when queue is delayed or multiple steps are skipped
+    2. Duplicate sequence check: Fixed query to use `user_id` instead of `organization_id` to match the database UNIQUE constraint on `(user_id, sequence_type)`
+    3. Logo deletion logic: Moved the fetch of old logo URL BEFORE the database update so old logos are properly cleaned up from storage
+    4. Documentation: Updated header comment to accurately describe exit condition as "first_survey_sent" not "all setup complete"
+- **Learnings for future iterations:**
+  - The timing calculation pattern should use absolute delays from sequence start, not relative delays from processing time
+  - Database constraint checks should match the actual UNIQUE constraint columns
+  - When updating a record and cleaning up old values, always fetch the old value BEFORE the update
+  - JSDoc comments should accurately reflect implementation behavior, especially for exit conditions
+---

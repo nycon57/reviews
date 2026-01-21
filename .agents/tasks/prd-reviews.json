@@ -2759,7 +2759,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Survey completion rate improves vs current templates",
         "Google review redirect achieves > 20% click-through",
@@ -2790,8 +2790,8 @@
         }
       },
       "startedAt": "2026-01-21T09:28:26.852184+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-21T09:28:26.852330+00:00"
+      "completedAt": "2026-01-21T09:32:23.340602+00:00",
+      "updatedAt": "2026-01-21T09:32:23.340499+00:00"
     },
     {
       "id": "S079",
@@ -2813,7 +2813,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Review response time decreases",
         "Approval workflow emails trigger correctly",
@@ -2841,7 +2841,10 @@
           "response_sent": "Your review response has been delivered",
           "published": "Your review is now live on Google"
         }
-      }
+      },
+      "startedAt": "2026-01-21T09:47:50.498957+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T09:47:50.499124+00:00"
     },
     {
       "id": "S080",

@@ -2639,7 +2639,7 @@ export function getReviewResponseReceivedEmail(
 
           <!-- CTA Button -->
           <div style="text-align: center; margin: 32px 0;">
-            <a href="${safeDashboardUrl}/reviews/${escapeHtml(data.reviewId)}" style="display: inline-block; padding: 16px 40px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
+            <a href="${safeDashboardUrl}/reviews/${encodeURIComponent(data.reviewId)}" style="display: inline-block; padding: 16px 40px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
               View Conversation
             </a>
           </div>
@@ -2818,7 +2818,7 @@ export function getNegativeReviewAlertEnhancedEmail(
 
           <!-- CTA Buttons -->
           <div style="text-align: center; margin: 32px 0;">
-            <a href="${safeDashboardUrl}/reviews/${escapeHtml(data.reviewId)}" style="display: inline-block; padding: 16px 40px; background-color: #c47c7c; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px; margin-right: 12px;">
+            <a href="${safeDashboardUrl}/reviews/${encodeURIComponent(data.reviewId)}" style="display: inline-block; padding: 16px 40px; background-color: #c47c7c; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px; margin-right: 12px;">
               Respond Now
             </a>
             <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 14px; border-radius: 8px;">

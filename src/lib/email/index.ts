@@ -216,3 +216,6 @@ export {
   renderVideoSharedEmail,
   renderVideoCustomerThankYouEmail,
 } from "./templates/index";
+
+// Email utility functions
+export { formatDuration } from "./utils";

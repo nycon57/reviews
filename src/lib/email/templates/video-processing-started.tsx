@@ -24,6 +24,7 @@ import {
   spacing,
 } from "../components";
 import type { VideoProcessingStartedEmailData } from "../types";
+import { formatDuration } from "../utils";
 
 interface VideoProcessingStartedEmailProps {
   data: VideoProcessingStartedEmailData;
@@ -82,7 +83,7 @@ export function VideoProcessingStartedEmail({
                   margin: "0 auto",
                 }}
               />
-              {/* Play button overlay indicator */}
+              {/* Video metadata (duration and submission date) */}
               <Section
                 style={{
                   marginTop: spacing[3],
@@ -146,18 +147,6 @@ export function VideoProcessingStartedEmail({
       <RepwellFooter email={toEmail} />
     </EmailLayout>
   );
-}
-
-/**
- * Format duration in seconds to human-readable format
- */
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes === 0) {
-    return `${remainingSeconds}s`;
-  }
-  return `${minutes}m ${remainingSeconds}s`;
 }
 
 export default VideoProcessingStartedEmail;

@@ -19,7 +19,6 @@ import {
   InfoCard,
   Spacer,
   Badge,
-  Divider,
   EmailButtonGroup,
   colors,
   typography,
@@ -27,6 +26,7 @@ import {
   layout,
 } from "../components";
 import type { VideoApprovedPublishedEmailData } from "../types";
+import { formatDuration } from "../utils";
 
 interface VideoApprovedEmailProps {
   data: VideoApprovedPublishedEmailData;
@@ -282,18 +282,6 @@ export function VideoApprovedEmail({ data }: VideoApprovedEmailProps) {
       <RepwellFooter email={toEmail} />
     </EmailLayout>
   );
-}
-
-/**
- * Format duration in seconds to human-readable format
- */
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes === 0) {
-    return `${remainingSeconds}s`;
-  }
-  return `${minutes}m ${remainingSeconds}s`;
 }
 
 export default VideoApprovedEmail;

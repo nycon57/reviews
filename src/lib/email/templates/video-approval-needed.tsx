@@ -16,15 +16,14 @@ import {
   EmailHeading,
   EmailParagraph,
   EmailCard,
-  SummaryCard,
   Spacer,
-  Badge,
   EmailButtonGroup,
   colors,
   typography,
   spacing,
 } from "../components";
 import type { VideoApprovalNeededEmailData } from "../types";
+import { formatDuration } from "../utils";
 
 interface VideoApprovalNeededEmailProps {
   data: VideoApprovalNeededEmailData;
@@ -46,7 +45,7 @@ export function VideoApprovalNeededEmail({
     toEmail,
   } = data;
 
-  const reviewUrl = `${approvalQueueUrl}?testimonialId=${testimonialId}`;
+  const reviewUrl = `${approvalQueueUrl}${approvalQueueUrl.includes('?') ? '&' : '?'}testimonialId=${encodeURIComponent(testimonialId)}`;
   const durationText = videoDurationSeconds
     ? formatDuration(videoDurationSeconds)
     : null;
@@ -144,25 +143,27 @@ export function VideoApprovalNeededEmail({
               </Text>
 
               <Section style={{ marginTop: spacing[3] }}>
+                {durationText && (
+                  <Row>
+                    <Column>
+                      <Text
+                        style={{
+                          margin: 0,
+                          fontFamily: typography.fontFamily.body,
+                          fontSize: typography.fontSize.xs,
+                          color: colors.text.muted,
+                        }}
+                      >
+                        <strong>Duration:</strong> {durationText}
+                      </Text>
+                    </Column>
+                  </Row>
+                )}
                 <Row>
                   <Column>
                     <Text
                       style={{
-                        margin: 0,
-                        fontFamily: typography.fontFamily.body,
-                        fontSize: typography.fontSize.xs,
-                        color: colors.text.muted,
-                      }}
-                    >
-                      <strong>Duration:</strong> {durationText || "N/A"}
-                    </Text>
-                  </Column>
-                </Row>
-                <Row>
-                  <Column>
-                    <Text
-                      style={{
-                        margin: `${spacing[1]} 0 0 0`,
+                        margin: durationText ? `${spacing[1]} 0 0 0` : 0,
                         fontFamily: typography.fontFamily.body,
                         fontSize: typography.fontSize.xs,
                         color: colors.text.muted,
@@ -232,18 +233,6 @@ export function VideoApprovalNeededEmail({
       <RepwellFooter email={toEmail} />
     </EmailLayout>
   );
-}
-
-/**
- * Format duration in seconds to human-readable format
- */
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  if (minutes === 0) {
-    return `${remainingSeconds}s`;
-  }
-  return `${minutes}m ${remainingSeconds}s`;
 }
 
 export default VideoApprovalNeededEmail;

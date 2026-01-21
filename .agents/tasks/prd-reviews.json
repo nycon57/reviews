@@ -2813,7 +2813,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Review response time decreases",
         "Approval workflow emails trigger correctly",
@@ -2842,9 +2842,9 @@
           "published": "Your review is now live on Google"
         }
       },
-      "startedAt": "2026-01-21T09:47:50.498957+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-21T09:47:50.499124+00:00"
+      "startedAt": "2026-01-21T09:58:37.023225+00:00",
+      "completedAt": "2026-01-21T10:02:15.655616+00:00",
+      "updatedAt": "2026-01-21T10:02:15.655512+00:00"
     },
     {
       "id": "S080",
@@ -2865,7 +2865,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Video testimonial completion rate improves",
         "Processing status reduces support inquiries",
@@ -2886,7 +2886,10 @@
           "src/lib/email/templates/video-customer-thank-you.tsx"
         ],
         "thumbnail_generation": "Use video poster frame or generate server-side"
-      }
+      },
+      "startedAt": "2026-01-21T10:40:47.354403+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T10:40:47.354506+00:00"
     },
     {
       "id": "S081",

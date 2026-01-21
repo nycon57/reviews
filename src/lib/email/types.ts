@@ -79,7 +79,10 @@ export type EmailTemplate =
   | "milestone_leaderboard"
   | "milestone_badge_earned"
   | "milestone_profile_completion"
-  | "milestone_video";
+  | "milestone_video"
+  // Weekly performance summary emails (S082)
+  | "weekly_summary_lo"
+  | "weekly_summary_manager";
 
 // Base email data
 export interface BaseEmailData {
@@ -1068,4 +1071,123 @@ export interface MilestoneEmailPreferences {
   badgeMilestones: boolean;
   profileMilestones: boolean;
   videoMilestones: boolean;
+}
+
+// =============================================================================
+// WEEKLY PERFORMANCE SUMMARY EMAIL DATA INTERFACES (S082)
+// =============================================================================
+
+// Base weekly summary email data (shared fields)
+export interface WeeklySummaryEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  unsubscribeUrl: string;
+  weekStartDate: string;
+  weekEndDate: string;
+}
+
+// Loan Officer Weekly Summary Email Data
+export interface WeeklySummaryLOEmailData extends WeeklySummaryEmailBaseData {
+  // Review metrics
+  reviewsThisWeek: number;
+  reviewsLastWeek: number;
+  reviewsTrend: "up" | "down" | "neutral";
+  reviewsTrendValue: string;
+
+  // Rating metrics
+  averageRatingThisWeek: number | null;
+  averageRatingLastWeek: number | null;
+  ratingTrend: "up" | "down" | "neutral";
+  ratingTrendValue: string;
+
+  // Response metrics
+  responseRate: number;
+  averageResponseTime: string;
+
+  // Pending actions
+  pendingReviewResponses: number;
+  pendingSurveys: number;
+
+  // Leaderboard position
+  leaderboardRank: number | null;
+  leaderboardRankChange: number | null;
+  totalLoanOfficers: number;
+
+  // Top review highlight
+  topReview?: {
+    customerName: string;
+    rating: number;
+    text: string;
+    reviewId: string;
+  };
+
+  // NPS score if available
+  npsScore: number | null;
+  npsTrend?: "up" | "down" | "neutral";
+
+  // Survey metrics
+  surveysCompleted: number;
+  surveyResponseRate: number;
+}
+
+// Manager Weekly Summary Email Data
+export interface WeeklySummaryManagerEmailData extends WeeklySummaryEmailBaseData {
+  // Team aggregate metrics
+  teamSize: number;
+  teamReviewsThisWeek: number;
+  teamReviewsLastWeek: number;
+  teamReviewsTrend: "up" | "down" | "neutral";
+  teamReviewsTrendValue: string;
+
+  // Team rating metrics
+  teamAverageRating: number | null;
+  teamAverageRatingLastWeek: number | null;
+  teamRatingTrend: "up" | "down" | "neutral";
+  teamRatingTrendValue: string;
+
+  // Team response metrics
+  teamResponseRate: number;
+  teamAverageResponseTime: string;
+
+  // Top performers (top 3)
+  topPerformers: Array<{
+    name: string;
+    photoUrl?: string;
+    reviewsCount: number;
+    averageRating: number;
+    rank: number;
+  }>;
+
+  // Bottom performers / needs attention (bottom 3)
+  needsAttention: Array<{
+    name: string;
+    photoUrl?: string;
+    reviewsCount: number;
+    averageRating: number | null;
+    daysWithoutActivity: number;
+  }>;
+
+  // Pending approvals
+  pendingApprovals: number;
+
+  // Alerts
+  alerts: Array<{
+    type: "low_rating" | "no_activity" | "high_pending" | "negative_review";
+    message: string;
+    loanOfficerName?: string;
+    actionUrl?: string;
+  }>;
+
+  // Team NPS
+  teamNpsScore: number | null;
+  teamNpsTrend?: "up" | "down" | "neutral";
+}
+
+// Weekly summary email preferences
+export interface WeeklySummaryEmailPreferences {
+  enabled: boolean;
+  sendDay: "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
+  sendHour: number; // 0-23 in user's local time
+  skipIfNoActivity: boolean;
 }

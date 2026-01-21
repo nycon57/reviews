@@ -1,13 +1,13 @@
 /**
- * Video Testimonial Email Templates (S080)
+ * Email Templates
  *
- * React Email templates for video testimonial lifecycle emails.
+ * React Email templates for various email types.
  * Uses S073 email design system components.
  */
 
 import { render } from "@react-email/components";
 
-// Template Components - import for use and re-export
+// Video Testimonial Templates (S080)
 import { VideoProcessingStartedEmail } from "./video-processing-started";
 import { VideoProcessingCompleteEmail } from "./video-processing-complete";
 import { VideoApprovalNeededEmail } from "./video-approval-needed";
@@ -15,13 +15,21 @@ import { VideoApprovedEmail } from "./video-approved";
 import { VideoSharedEmail } from "./video-shared";
 import { VideoCustomerThankYouEmail } from "./video-customer-thank-you";
 
+// Weekly Summary Templates (S082)
+import { WeeklySummaryLOEmail } from "./weekly-summary-lo";
+import { WeeklySummaryManagerEmail } from "./weekly-summary-manager";
+
 export {
+  // Video templates
   VideoProcessingStartedEmail,
   VideoProcessingCompleteEmail,
   VideoApprovalNeededEmail,
   VideoApprovedEmail,
   VideoSharedEmail,
   VideoCustomerThankYouEmail,
+  // Weekly summary templates
+  WeeklySummaryLOEmail,
+  WeeklySummaryManagerEmail,
 };
 
 // Types
@@ -32,6 +40,8 @@ import type {
   VideoApprovedPublishedEmailData,
   VideoSharedEmailData,
   VideoCustomerThankYouEmailData,
+  WeeklySummaryLOEmailData,
+  WeeklySummaryManagerEmailData,
 } from "../types";
 
 // =============================================================================
@@ -109,5 +119,31 @@ export async function renderVideoCustomerThankYouEmail(
 ): Promise<{ subject: string; html: string }> {
   const subject = `Thank you for sharing your experience, ${data.customerName}!`;
   const html = await render(<VideoCustomerThankYouEmail data={data} />);
+  return { subject, html };
+}
+
+// =============================================================================
+// WEEKLY SUMMARY EMAIL RENDERING FUNCTIONS (S082)
+// =============================================================================
+
+/**
+ * Render Weekly Summary LO email to HTML
+ */
+export async function renderWeeklySummaryLOEmail(
+  data: WeeklySummaryLOEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = `Your weekly performance summary: ${data.reviewsThisWeek} review${data.reviewsThisWeek !== 1 ? "s" : ""} this week`;
+  const html = await render(<WeeklySummaryLOEmail data={data} />);
+  return { subject, html };
+}
+
+/**
+ * Render Weekly Summary Manager email to HTML
+ */
+export async function renderWeeklySummaryManagerEmail(
+  data: WeeklySummaryManagerEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = `Team weekly summary: ${data.teamReviewsThisWeek} reviews from ${data.teamSize} team members`;
+  const html = await render(<WeeklySummaryManagerEmail data={data} />);
   return { subject, html };
 }

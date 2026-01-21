@@ -20,14 +20,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, getFromAddress, emailConfig } from "./client";
-import type {
-  EmailTemplate,
-  TeamInvite1InitialEmailData,
-  TeamInvite2ReminderEmailData,
-  TeamInvite3FinalReminderEmailData,
-  TeamInvite4WelcomeEmailData,
-  TeamInvite5ExpirationEmailData,
-} from "./types";
+import type { EmailTemplate, TeamInvite4WelcomeEmailData } from "./types";
 import {
   getTeamInvite1InitialEmail,
   getTeamInvite2ReminderEmail,
@@ -210,45 +203,31 @@ async function sendTeamInviteEmail(
     organizationId: invitation.organization_id,
   };
 
+  const reminderData = {
+    ...baseData,
+    expiresAt: invitation.expires_at,
+    daysUntilExpiration,
+  };
+
   let emailContent: { subject: string; html: string };
 
   switch (templateName) {
-    case "team_invite_1_initial": {
-      const data: TeamInvite1InitialEmailData = {
-        ...baseData,
-        expiresAt: invitation.expires_at,
-        daysUntilExpiration,
-      };
-      emailContent = getTeamInvite1InitialEmail(data);
+    case "team_invite_1_initial":
+      emailContent = getTeamInvite1InitialEmail(reminderData);
       break;
-    }
-    case "team_invite_2_reminder": {
-      const data: TeamInvite2ReminderEmailData = {
-        ...baseData,
-        expiresAt: invitation.expires_at,
-        daysUntilExpiration,
-      };
-      emailContent = getTeamInvite2ReminderEmail(data);
+    case "team_invite_2_reminder":
+      emailContent = getTeamInvite2ReminderEmail(reminderData);
       break;
-    }
-    case "team_invite_3_final_reminder": {
-      const data: TeamInvite3FinalReminderEmailData = {
-        ...baseData,
-        expiresAt: invitation.expires_at,
-        daysUntilExpiration,
-      };
-      emailContent = getTeamInvite3FinalReminderEmail(data);
+    case "team_invite_3_final_reminder":
+      emailContent = getTeamInvite3FinalReminderEmail(reminderData);
       break;
-    }
-    case "team_invite_5_expiration": {
-      const data: TeamInvite5ExpirationEmailData = {
+    case "team_invite_5_expiration":
+      emailContent = getTeamInvite5ExpirationEmail({
         ...baseData,
         expiredAt: invitation.expires_at,
         canRequestNewInvite: false,
-      };
-      emailContent = getTeamInvite5ExpirationEmail(data);
+      });
       break;
-    }
     default:
       return { success: false, error: `Unknown template: ${templateName}` };
   }

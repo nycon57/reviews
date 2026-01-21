@@ -243,6 +243,35 @@ function createUrgencyBanner(message: string, variant: "warning" | "error" = "wa
   `;
 }
 
+function createQuickStartItem(
+  icon: string,
+  title: string,
+  url: string,
+  description: string
+): string {
+  return `
+    <tr>
+      <td style="padding: 16px 0;">
+        <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
+          <tr>
+            <td style="vertical-align: top; padding-right: 16px; width: 48px;">
+              <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">${icon}</div>
+            </td>
+            <td style="vertical-align: top;">
+              <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
+                <a href="${sanitizeUrl(url)}" style="color: ${colors.text.primary}; text-decoration: none;">${escapeHtml(title)}</a>
+              </h3>
+              <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
+                ${escapeHtml(description)}
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+}
+
 function formatExpirationDate(dateString: string): string {
   const date = new Date(dateString);
   return date.toLocaleDateString("en-US", {
@@ -493,178 +522,73 @@ export function getTeamInvite4WelcomeEmail(
     `Welcome to ${data.organizationName}! Here's how to get started`
   );
 
-  // Role-specific quick start content
-  let quickStartContent = "";
+  // Build role-specific quick start items
+  function buildQuickStartContent(): string {
+    const items: string[] = [];
 
-  if (data.role === "loan_officer") {
-    quickStartContent = `
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#11088;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.reviewsUrl || data.dashboardUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Collect Reviews</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    Send survey requests to clients to collect reviews and testimonials.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#127942;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.leaderboardUrl || data.dashboardUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Check Leaderboards</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    See how you rank against your team and track your review performance.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#128100;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.profileUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Complete Your Profile</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    Add your photo and bio to personalize survey requests to clients.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    `;
-  } else if (data.role === "manager") {
-    quickStartContent = `
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#128200;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.teamAnalyticsUrl || data.dashboardUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Team Analytics</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    View team performance metrics, review trends, and NPS scores.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#128101;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.teamManagementUrl || data.dashboardUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Manage Your Team</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    Oversee loan officer accounts and manage review approvals.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#128100;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.profileUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Complete Your Profile</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    Set up your manager profile with photo and contact information.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    `;
-  } else {
-    // Admin or default
-    quickStartContent = `
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#128200;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.dashboardUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Explore Dashboard</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    Access all organization settings, team management, and analytics.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 16px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
-              <tr>
-                <td style="vertical-align: top; padding-right: 16px; width: 48px;">
-                  <div style="width: 40px; height: 40px; background-color: ${colors.primaryLight}; border-radius: 8px; text-align: center; line-height: 40px; font-size: 20px;">&#128100;</div>
-                </td>
-                <td style="vertical-align: top;">
-                  <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600; color: ${colors.text.primary};">
-                    <a href="${sanitizeUrl(data.profileUrl)}" style="color: ${colors.text.primary}; text-decoration: none;">Complete Your Profile</a>
-                  </h3>
-                  <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary};">
-                    Set up your admin profile with photo and contact information.
-                  </p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    `;
+    if (data.role === "loan_officer") {
+      items.push(
+        createQuickStartItem(
+          "&#11088;",
+          "Collect Reviews",
+          data.reviewsUrl || data.dashboardUrl,
+          "Send survey requests to clients to collect reviews and testimonials."
+        ),
+        createQuickStartItem(
+          "&#127942;",
+          "Check Leaderboards",
+          data.leaderboardUrl || data.dashboardUrl,
+          "See how you rank against your team and track your review performance."
+        ),
+        createQuickStartItem(
+          "&#128100;",
+          "Complete Your Profile",
+          data.profileUrl,
+          "Add your photo and bio to personalize survey requests to clients."
+        )
+      );
+    } else if (data.role === "manager") {
+      items.push(
+        createQuickStartItem(
+          "&#128200;",
+          "Team Analytics",
+          data.teamAnalyticsUrl || data.dashboardUrl,
+          "View team performance metrics, review trends, and NPS scores."
+        ),
+        createQuickStartItem(
+          "&#128101;",
+          "Manage Your Team",
+          data.teamManagementUrl || data.dashboardUrl,
+          "Oversee loan officer accounts and manage review approvals."
+        ),
+        createQuickStartItem(
+          "&#128100;",
+          "Complete Your Profile",
+          data.profileUrl,
+          "Set up your manager profile with photo and contact information."
+        )
+      );
+    } else {
+      items.push(
+        createQuickStartItem(
+          "&#128200;",
+          "Explore Dashboard",
+          data.dashboardUrl,
+          "Access all organization settings, team management, and analytics."
+        ),
+        createQuickStartItem(
+          "&#128100;",
+          "Complete Your Profile",
+          data.profileUrl,
+          "Set up your admin profile with photo and contact information."
+        )
+      );
+    }
+
+    return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation">${items.join("")}</table>`;
   }
+
+  const quickStartContent = buildQuickStartContent();
 
   const content = `
     <!-- Accent Bar -->

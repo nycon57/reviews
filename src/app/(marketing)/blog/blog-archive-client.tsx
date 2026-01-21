@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { Calendar, Clock, ArrowRight, Mail, Loader2 } from "lucide-react";
+import { Calendar, Clock, ArrowRight, Mail, Loader2, ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { BlogPostMeta, BlogCategory, BLOG_CATEGORIES } from "@/types/blog";
 import {
@@ -103,7 +103,9 @@ function BlogCardPremium({ post, index }: { post: BlogPostMeta; index: number })
               sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/20" />
+            <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-100 flex items-center justify-center">
+              <ImageIcon className="h-12 w-12 text-repwell-sage-300" />
+            </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
           <Badge

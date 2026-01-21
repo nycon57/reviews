@@ -93,6 +93,11 @@
       "id": "E15",
       "name": "Video Testimonials",
       "description": "Comprehensive video testimonial capture system with browser recording, file upload, AI transcription via OpenAI Whisper, AI-generated text reviews via Gemini, customer approval workflow, and full dashboard integration"
+    },
+    {
+      "id": "E16",
+      "name": "Product Email Sequencing",
+      "description": "Comprehensive product-triggered email sequences covering the entire user lifecycle: onboarding, engagement, retention, billing, milestones, re-engagement, and win-back. Includes email design system following Repwell brand guidelines, A/B testing, analytics, and preference management. All emails launched from the product (not CRM)."
     }
   ],
   "stories": [
@@ -1599,7 +1604,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "npm run build passes without errors",
         "All pages maintain visual consistency",
@@ -2423,6 +2428,1254 @@
       "startedAt": "2026-01-18T03:15:01.136058+00:00",
       "completedAt": "2026-01-18T03:23:29.257280+00:00",
       "updatedAt": "2026-01-18T03:23:29.257168+00:00"
+    },
+    {
+      "id": "S073",
+      "epic": "E16",
+      "title": "Email Design System Foundation",
+      "description": "Create a comprehensive email design system following Repwell brand guidelines. Build reusable React Email components for consistent, responsive, brand-aligned email templates across all sequences.",
+      "acceptance_criteria": [
+        "Email component library using React Email (@react-email/components)",
+        "Brand-aligned email header component with Repwell logo (sage/teal colors)",
+        "Email footer component with unsubscribe, preferences, social links",
+        "Typography system matching Repwell: Source Sans 3 for body, fallback to system fonts",
+        "Color palette: repwell-teal-300 (#52796f) primary, repwell-sage-200 (#84a98c) accent",
+        "Responsive email layout components (single column, two column, card grid)",
+        "Button components with primary/secondary/ghost variants",
+        "Card component for content blocks with colored top border pattern",
+        "Social proof/testimonial block component",
+        "Stats/metrics display component",
+        "CTA section component with headline and button",
+        "Divider and spacer utility components",
+        "Dark mode support with color scheme media query",
+        "Email preview tool at /admin/email-preview for testing",
+        "All templates tested in Litmus/Email on Acid for major clients (Gmail, Outlook, Apple Mail)",
+        "Mobile-responsive design (600px max-width, stackable columns)"
+      ],
+      "priority": "P0",
+      "estimate": "L",
+      "status": "in_progress",
+      "gates": [
+        "Components render correctly in Gmail, Outlook, Apple Mail, Yahoo",
+        "All emails pass accessibility checks (alt text, semantic structure)",
+        "npm run build passes with email components"
+      ],
+      "dependencies": [
+        "S007"
+      ],
+      "implementation_notes": {
+        "file_structure": [
+          "src/lib/email/components/email-header.tsx",
+          "src/lib/email/components/email-footer.tsx",
+          "src/lib/email/components/email-button.tsx",
+          "src/lib/email/components/email-card.tsx",
+          "src/lib/email/components/email-layout.tsx",
+          "src/lib/email/components/email-typography.tsx",
+          "src/lib/email/components/email-social-proof.tsx",
+          "src/lib/email/components/email-stats.tsx",
+          "src/lib/email/components/email-cta-section.tsx",
+          "src/lib/email/theme.ts - Color/typography tokens",
+          "src/app/(dashboard)/admin/email-preview/page.tsx"
+        ],
+        "design_system_reference": "docs/design/REPWELL_DESIGN_SYSTEM",
+        "brand_colors": {
+          "primary": "#52796f",
+          "primary_hover": "#354f52",
+          "accent": "#84a98c",
+          "background": "#ffffff",
+          "background_subtle": "#f8faf8",
+          "text_primary": "#2f3e46",
+          "text_secondary": "#52796f"
+        }
+      },
+      "startedAt": "2026-01-21T05:42:32.298400+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T05:42:32.300532+00:00"
+    },
+    {
+      "id": "S074",
+      "epic": "E16",
+      "title": "New User Welcome Sequence",
+      "description": "Build a 5-email welcome sequence for new users that drives activation and engagement. Triggered on signup, guides users through setup, first actions, and demonstrates value.",
+      "acceptance_criteria": [
+        "Email 1 (Immediate): Welcome + deliver access, set expectations for sequence",
+        "Email 2 (Day 1): Quick win - complete profile setup in 5 minutes",
+        "Email 3 (Day 3): Feature highlight - create first survey or request video testimonial",
+        "Email 4 (Day 5): Social proof - customer success story relevant to their role",
+        "Email 5 (Day 7): Core value - show key metrics they can unlock",
+        "Conditional branching: Skip emails for actions already completed",
+        "Exit sequence when user completes activation milestone (first survey sent)",
+        "All emails use design system components from S073",
+        "Personalization: First name, organization name, role-specific content",
+        "Track engagement: Opens, clicks, activation events",
+        "A/B test subject lines for Email 1 and Email 3",
+        "Database table: email_sequences for tracking user sequence progress",
+        "Queue processing via cron job (every 5 minutes)",
+        "Respect user email preferences and unsubscribe status"
+      ],
+      "priority": "P0",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Sequence triggers correctly on signup",
+        "Conditional logic skips completed actions",
+        "Activation rate improvement measurable"
+      ],
+      "dependencies": [
+        "S073",
+        "S003"
+      ],
+      "implementation_notes": {
+        "sequence_timing": {
+          "email_1": "Immediate (0 hours)",
+          "email_2": "24 hours",
+          "email_3": "72 hours",
+          "email_4": "120 hours",
+          "email_5": "168 hours"
+        },
+        "exit_conditions": [
+          "User sends first survey",
+          "User completes 5 actions in dashboard",
+          "User manually unsubscribes"
+        ],
+        "subject_lines": {
+          "email_1_a": "Welcome to Repwell \u2014 let's build your reputation",
+          "email_1_b": "You're in! Here's your first step",
+          "email_2": "5 minutes to a complete profile",
+          "email_3": "Ready to collect your first review?",
+          "email_4": "How Sarah increased her reviews by 340%",
+          "email_5": "Your reputation dashboard is waiting"
+        },
+        "file_structure": [
+          "src/lib/email/sequences/welcome/index.ts",
+          "src/lib/email/sequences/welcome/email-1-welcome.tsx",
+          "src/lib/email/sequences/welcome/email-2-quick-win.tsx",
+          "src/lib/email/sequences/welcome/email-3-feature.tsx",
+          "src/lib/email/sequences/welcome/email-4-social-proof.tsx",
+          "src/lib/email/sequences/welcome/email-5-value.tsx",
+          "src/lib/email/sequences/processor.ts",
+          "src/app/api/cron/process-email-sequences/route.ts",
+          "supabase/migrations/20260121_email_sequences.sql"
+        ]
+      }
+    },
+    {
+      "id": "S075",
+      "epic": "E16",
+      "title": "Organization Onboarding Sequence",
+      "description": "Specialized onboarding sequence for organization admins setting up their company account. Guides through branding, team invites, integrations, and billing setup.",
+      "acceptance_criteria": [
+        "Email 1 (Immediate): Org created confirmation + admin getting started guide",
+        "Email 2 (Day 1): Branding setup - upload logo, set colors, customize survey appearance",
+        "Email 3 (Day 2): Team setup - invite loan officers and managers",
+        "Email 4 (Day 4): Integration guide - connect Google Business Profile",
+        "Email 5 (Day 6): Billing setup reminder (if not completed)",
+        "Email 6 (Day 10): Advanced features - leaderboards, reports, automation",
+        "Conditional: Skip billing email if already subscribed",
+        "Conditional: Skip integration email if Google already connected",
+        "Track org setup completion percentage",
+        "Admin-specific content and CTAs",
+        "Include video tutorials inline or linked"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Org setup completion rate increases",
+        "Integration connection rate improves",
+        "All conditional logic works correctly"
+      ],
+      "dependencies": [
+        "S073",
+        "S031"
+      ],
+      "implementation_notes": {
+        "sequence_timing": {
+          "email_1": "Immediate",
+          "email_2": "24 hours",
+          "email_3": "48 hours",
+          "email_4": "96 hours",
+          "email_5": "144 hours",
+          "email_6": "240 hours"
+        },
+        "completion_checklist": [
+          "Logo uploaded",
+          "Brand colors set",
+          "At least 1 team member invited",
+          "Google Business connected",
+          "Billing method added",
+          "First survey template created"
+        ],
+        "file_structure": [
+          "src/lib/email/sequences/org-onboarding/index.ts",
+          "src/lib/email/sequences/org-onboarding/email-1-welcome-admin.tsx",
+          "src/lib/email/sequences/org-onboarding/email-2-branding.tsx",
+          "src/lib/email/sequences/org-onboarding/email-3-team.tsx",
+          "src/lib/email/sequences/org-onboarding/email-4-integrations.tsx",
+          "src/lib/email/sequences/org-onboarding/email-5-billing.tsx",
+          "src/lib/email/sequences/org-onboarding/email-6-advanced.tsx"
+        ]
+      }
+    },
+    {
+      "id": "S076",
+      "epic": "E16",
+      "title": "Team Member Invite Sequence",
+      "description": "Email sequence for invited team members. Includes invite, reminder, and onboarding emails tailored to their role (loan officer vs manager).",
+      "acceptance_criteria": [
+        "Invite Email (Immediate): You've been invited by [Admin Name] at [Org Name]",
+        "Reminder 1 (Day 2): Invitation reminder if not accepted",
+        "Reminder 2 (Day 5): Final reminder with urgency",
+        "Welcome Email (On Accept): Role-specific welcome and quick start",
+        "Personalized with inviter name and organization branding",
+        "Role-specific content: LO sees review features, Manager sees team analytics",
+        "Deep link to accept invitation and set password",
+        "Track invite \u2192 acceptance \u2192 activation funnel",
+        "Expire invites after 14 days with final notice email"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Invite acceptance rate tracked",
+        "Reminder emails reduce pending invites",
+        "Role-specific content renders correctly"
+      ],
+      "dependencies": [
+        "S073",
+        "S003"
+      ],
+      "implementation_notes": {
+        "sequence_timing": {
+          "invite": "Immediate",
+          "reminder_1": "48 hours if not accepted",
+          "reminder_2": "120 hours if not accepted",
+          "welcome": "Immediate on acceptance",
+          "expiry_notice": "336 hours (14 days) if not accepted"
+        },
+        "role_content": {
+          "loan_officer": [
+            "Your personal dashboard",
+            "Share reviews easily",
+            "Track your ratings"
+          ],
+          "manager": [
+            "Team performance overview",
+            "Approval workflows",
+            "Analytics and reports"
+          ]
+        },
+        "file_structure": [
+          "src/lib/email/sequences/team-invite/index.ts",
+          "src/lib/email/sequences/team-invite/invite-email.tsx",
+          "src/lib/email/sequences/team-invite/reminder-email.tsx",
+          "src/lib/email/sequences/team-invite/welcome-lo.tsx",
+          "src/lib/email/sequences/team-invite/welcome-manager.tsx",
+          "src/lib/email/sequences/team-invite/expiry-notice.tsx"
+        ]
+      }
+    },
+    {
+      "id": "S077",
+      "epic": "E16",
+      "title": "Role-Based Feature Onboarding Sequences",
+      "description": "Feature discovery sequences tailored to each role. Educate users about features relevant to their daily workflow over time.",
+      "acceptance_criteria": [
+        "Loan Officer Sequence (7 emails over 30 days):",
+        "- Email 1: Dashboard tour and key metrics",
+        "- Email 2: Sending survey requests manually",
+        "- Email 3: Sharing positive reviews",
+        "- Email 4: Responding to reviews",
+        "- Email 5: Video testimonial requests",
+        "- Email 6: Mobile app features",
+        "- Email 7: Google review management",
+        "Manager Sequence (6 emails over 30 days):",
+        "- Email 1: Team dashboard overview",
+        "- Email 2: Review approval workflow",
+        "- Email 3: Leaderboards and gamification",
+        "- Email 4: Reports and exports",
+        "- Email 5: Team performance coaching tips",
+        "- Email 6: Advanced analytics",
+        "Admin Sequence (5 emails over 30 days):",
+        "- Email 1: Settings and configuration",
+        "- Email 2: User management and permissions",
+        "- Email 3: Integration setup deep dive",
+        "- Email 4: Billing and subscription management",
+        "- Email 5: Compliance and audit features",
+        "Skip emails for features already used",
+        "Weekly pacing (1 email per week) to avoid fatigue"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Feature adoption rates improve",
+        "Users engage with highlighted features",
+        "Low unsubscribe rate (< 0.5%)"
+      ],
+      "dependencies": [
+        "S073",
+        "S074"
+      ],
+      "implementation_notes": {
+        "pacing": "Weekly emails, respect user activity level",
+        "skip_logic": "Check feature usage before sending",
+        "file_structure": [
+          "src/lib/email/sequences/feature-onboarding/loan-officer/",
+          "src/lib/email/sequences/feature-onboarding/manager/",
+          "src/lib/email/sequences/feature-onboarding/admin/"
+        ]
+      }
+    },
+    {
+      "id": "S078",
+      "epic": "E16",
+      "title": "Survey Lifecycle Email Enhancements",
+      "description": "Enhance existing survey emails with post-completion sequences, high-rating Google redirect flow, and improved templates using the new design system.",
+      "acceptance_criteria": [
+        "Refactor existing survey_invitation template using S073 components",
+        "Refactor survey_reminder_3day and survey_reminder_7day templates",
+        "NEW: Survey completion thank you email (immediate after submission)",
+        "NEW: High-rating follow-up (4-5 stars) - encourage Google review",
+        "NEW: Low-rating follow-up (1-2 stars) - empathy + internal escalation",
+        "NEW: Survey creator notification when response received",
+        "Personalization: Customer name, LO name and photo, org branding",
+        "Dynamic content based on survey type (NPS, CSAT, post-transaction)",
+        "Mobile-optimized survey invitation with large CTA button",
+        "A/B test subject lines: question vs statement format",
+        "Track survey email \u2192 completion funnel with attribution"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Survey completion rate improves vs current templates",
+        "Google review redirect achieves > 20% click-through",
+        "All templates use design system components"
+      ],
+      "dependencies": [
+        "S073",
+        "S006",
+        "S007"
+      ],
+      "implementation_notes": {
+        "refactor_existing": [
+          "src/lib/email/templates.ts - Update survey templates",
+          "src/lib/email/send.ts - Update send functions"
+        ],
+        "new_templates": [
+          "src/lib/email/templates/survey-thank-you.tsx",
+          "src/lib/email/templates/survey-high-rating-followup.tsx",
+          "src/lib/email/templates/survey-low-rating-followup.tsx",
+          "src/lib/email/templates/survey-response-notification.tsx"
+        ],
+        "subject_lines": {
+          "invitation_a": "[LO Name] would love your feedback",
+          "invitation_b": "How was your experience with [LO Name]?",
+          "thank_you": "Thank you for your feedback!",
+          "high_rating": "Would you share your experience on Google?",
+          "low_rating": "We hear you \u2014 here's what we're doing"
+        }
+      }
+    },
+    {
+      "id": "S079",
+      "epic": "E16",
+      "title": "Review Lifecycle Email Enhancements",
+      "description": "Comprehensive review lifecycle emails including approval notifications, response confirmations, and review milestones.",
+      "acceptance_criteria": [
+        "Refactor new_review_notification template using S073 components",
+        "NEW: Review pending approval (to manager) with quick approve CTA",
+        "NEW: Review approved notification (to LO) with share options",
+        "NEW: Review rejected notification (to LO) with reason",
+        "NEW: Review response sent confirmation (to customer)",
+        "NEW: Review published notification (when posted to Google)",
+        "NEW: Review response received (to LO when customer replies)",
+        "Negative review alert enhancement with AI-suggested response preview",
+        "Include review snippet, rating stars, and customer name in all emails",
+        "Deep links to specific review in dashboard",
+        "Quick action buttons: Approve, Reject, Respond (where applicable)"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Review response time decreases",
+        "Approval workflow emails trigger correctly",
+        "All notification preferences respected"
+      ],
+      "dependencies": [
+        "S073",
+        "S009",
+        "S017"
+      ],
+      "implementation_notes": {
+        "templates": [
+          "src/lib/email/templates/review-pending-approval.tsx",
+          "src/lib/email/templates/review-approved.tsx",
+          "src/lib/email/templates/review-rejected.tsx",
+          "src/lib/email/templates/review-response-to-customer.tsx",
+          "src/lib/email/templates/review-published.tsx",
+          "src/lib/email/templates/review-customer-reply.tsx"
+        ],
+        "quick_actions": "Use email-safe buttons that link to pre-authed dashboard URLs",
+        "subject_lines": {
+          "pending_approval": "Review needs your approval: [Rating] stars from [Customer]",
+          "approved": "Your review has been approved!",
+          "rejected": "Review update: Changes requested",
+          "response_sent": "Your review response has been delivered",
+          "published": "Your review is now live on Google"
+        }
+      }
+    },
+    {
+      "id": "S080",
+      "epic": "E16",
+      "title": "Video Testimonial Email Enhancements",
+      "description": "Enhance existing video testimonial emails and add new lifecycle emails for processing status, publication, and sharing.",
+      "acceptance_criteria": [
+        "Refactor all video testimonial templates using S073 components",
+        "NEW: Video processing started notification (to LO)",
+        "NEW: Video processing complete notification with transcription preview",
+        "NEW: Video approval needed (to manager) with video thumbnail",
+        "NEW: Video approved and published notification (to LO)",
+        "NEW: Video shared notification (when published to social)",
+        "NEW: Customer thank you email after video submission",
+        "Include video thumbnail in all relevant emails",
+        "Deep link to video in dashboard",
+        "Share buttons for approved videos"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Video testimonial completion rate improves",
+        "Processing status reduces support inquiries",
+        "All templates mobile-responsive"
+      ],
+      "dependencies": [
+        "S073",
+        "S059",
+        "S068"
+      ],
+      "implementation_notes": {
+        "templates": [
+          "src/lib/email/templates/video-processing-started.tsx",
+          "src/lib/email/templates/video-processing-complete.tsx",
+          "src/lib/email/templates/video-approval-needed.tsx",
+          "src/lib/email/templates/video-approved.tsx",
+          "src/lib/email/templates/video-shared.tsx",
+          "src/lib/email/templates/video-customer-thank-you.tsx"
+        ],
+        "thumbnail_generation": "Use video poster frame or generate server-side"
+      }
+    },
+    {
+      "id": "S081",
+      "epic": "E16",
+      "title": "Milestone & Achievement Email Notifications",
+      "description": "Celebratory emails for user achievements and milestones to drive engagement and motivation.",
+      "acceptance_criteria": [
+        "First review received celebration email",
+        "Review milestone emails: 10, 25, 50, 100, 250, 500 reviews",
+        "Rating milestone: First 5-star review, Average rating improvement",
+        "NPS milestone: Score improvements (e.g., +10 points)",
+        "Streak milestones: 7-day, 30-day, 90-day response streak",
+        "Leaderboard achievement: Entered top 10, Reached #1 position",
+        "Badge earned notification (ties to gamification system)",
+        "Profile completion milestone: 50%, 75%, 100% complete",
+        "Video testimonial milestones: First video, 5 videos, 10 videos",
+        "Celebratory design with confetti/celebration graphics",
+        "Social sharing prompts for major milestones",
+        "Compare to previous period or peers for context"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Milestones trigger correctly at thresholds",
+        "Celebration emails have high open rates (> 40%)",
+        "No duplicate milestone emails sent"
+      ],
+      "dependencies": [
+        "S073",
+        "S013"
+      ],
+      "implementation_notes": {
+        "milestone_tracking": {
+          "table": "user_milestones",
+          "fields": [
+            "user_id",
+            "milestone_type",
+            "milestone_value",
+            "achieved_at",
+            "email_sent_at"
+          ]
+        },
+        "templates": [
+          "src/lib/email/templates/milestone-first-review.tsx",
+          "src/lib/email/templates/milestone-review-count.tsx",
+          "src/lib/email/templates/milestone-rating.tsx",
+          "src/lib/email/templates/milestone-streak.tsx",
+          "src/lib/email/templates/milestone-leaderboard.tsx",
+          "src/lib/email/templates/milestone-badge.tsx",
+          "src/lib/email/templates/milestone-profile.tsx"
+        ],
+        "subject_lines": {
+          "first_review": "\ud83c\udf89 You got your first review!",
+          "review_count": "Milestone reached: [X] reviews!",
+          "leaderboard": "You're in the top 10!",
+          "streak": "30-day response streak \u2014 you're on fire!"
+        }
+      }
+    },
+    {
+      "id": "S082",
+      "epic": "E16",
+      "title": "Weekly Performance Summary Emails",
+      "description": "Automated weekly summary emails for loan officers and managers with key metrics, comparisons, and actionable insights.",
+      "acceptance_criteria": [
+        "LO Weekly Summary (Every Monday 8am local time):",
+        "- Reviews received this week vs last week",
+        "- Average rating trend",
+        "- Response rate and time",
+        "- Pending actions (reviews to respond, surveys pending)",
+        "- Leaderboard position change",
+        "- Top review highlight with share prompt",
+        "Manager Weekly Summary (Every Monday 8am local time):",
+        "- Team aggregate metrics",
+        "- Top and bottom performers",
+        "- Reviews pending approval count",
+        "- Team response rate",
+        "- Alerts for LOs needing attention",
+        "Configurable send day and time in preferences",
+        "Skip if no activity during the week",
+        "Include actionable CTA: View Dashboard",
+        "Unsubscribe option specific to weekly summary"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Summaries generate accurately",
+        "Timezone-aware scheduling works",
+        "Users can customize preferences"
+      ],
+      "dependencies": [
+        "S073",
+        "S012",
+        "S018"
+      ],
+      "implementation_notes": {
+        "scheduling": {
+          "cron": "Process weekly summaries Sunday night for Monday delivery",
+          "timezone": "Use user's timezone or org default"
+        },
+        "templates": [
+          "src/lib/email/templates/weekly-summary-lo.tsx",
+          "src/lib/email/templates/weekly-summary-manager.tsx"
+        ],
+        "data_queries": [
+          "src/lib/email/queries/weekly-lo-metrics.ts",
+          "src/lib/email/queries/weekly-team-metrics.ts"
+        ]
+      }
+    },
+    {
+      "id": "S083",
+      "epic": "E16",
+      "title": "Re-engagement Sequence (Inactive Users)",
+      "description": "Win-back sequence for users who have become inactive. Gentle re-engagement to bring them back to the platform.",
+      "acceptance_criteria": [
+        "Inactivity detection: No login for 7, 14, 30 days",
+        "Email 1 (Day 7): Soft check-in - 'We miss you' with value reminder",
+        "Email 2 (Day 14): Feature highlight - Show what's new since they left",
+        "Email 3 (Day 30): Last chance - Direct ask + incentive if applicable",
+        "Email 4 (Day 45): Final email - Ask if they want to stay subscribed",
+        "Track re-engagement: Login after email = success",
+        "Exit sequence on any login activity",
+        "Different messaging for paid vs free users",
+        "Include specific metrics they're missing: X reviews received while away",
+        "Personal from 'the team' vs automated feel"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Re-engagement rate > 10% for 7-day inactive",
+        "Low unsubscribe rate on sequence",
+        "Sequence respects manual unsubscribes"
+      ],
+      "dependencies": [
+        "S073",
+        "S003"
+      ],
+      "implementation_notes": {
+        "inactivity_tracking": {
+          "field": "users.last_active_at",
+          "update_on": [
+            "login",
+            "dashboard_view",
+            "action_taken"
+          ]
+        },
+        "sequence_timing": {
+          "email_1": "7 days inactive",
+          "email_2": "14 days inactive",
+          "email_3": "30 days inactive",
+          "email_4": "45 days inactive"
+        },
+        "templates": [
+          "src/lib/email/sequences/re-engagement/index.ts",
+          "src/lib/email/sequences/re-engagement/email-1-miss-you.tsx",
+          "src/lib/email/sequences/re-engagement/email-2-whats-new.tsx",
+          "src/lib/email/sequences/re-engagement/email-3-last-chance.tsx",
+          "src/lib/email/sequences/re-engagement/email-4-final.tsx"
+        ],
+        "subject_lines": {
+          "email_1": "Is everything okay, [Name]?",
+          "email_2": "Here's what's new at Repwell",
+          "email_3": "[X] reviews are waiting for you",
+          "email_4": "Should we stop emailing you?"
+        }
+      }
+    },
+    {
+      "id": "S084",
+      "epic": "E16",
+      "title": "Incomplete Profile & Setup Reminder Sequence",
+      "description": "Nudge users who haven't completed their profile or key setup steps to improve activation and engagement.",
+      "acceptance_criteria": [
+        "Profile Completion Reminders:",
+        "- Day 3: Missing photo reminder with easy upload link",
+        "- Day 7: Incomplete bio reminder with tips",
+        "- Day 14: Final profile reminder with impact stats",
+        "Setup Completion Reminders:",
+        "- No survey template created after 3 days",
+        "- No survey sent after 7 days",
+        "- No Google connected after 5 days (for admins)",
+        "- No team members invited after 7 days (for admins)",
+        "Show completion progress bar in email",
+        "Highlight benefits of completing (e.g., 2x more reviews with photo)",
+        "Deep link directly to incomplete section",
+        "Exit sequence when step completed"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Profile completion rate improves",
+        "Setup completion rate improves",
+        "Reminders don't feel nagging"
+      ],
+      "dependencies": [
+        "S073",
+        "S049"
+      ],
+      "implementation_notes": {
+        "templates": [
+          "src/lib/email/templates/reminder-profile-photo.tsx",
+          "src/lib/email/templates/reminder-profile-bio.tsx",
+          "src/lib/email/templates/reminder-survey-template.tsx",
+          "src/lib/email/templates/reminder-first-survey.tsx",
+          "src/lib/email/templates/reminder-google-connect.tsx",
+          "src/lib/email/templates/reminder-invite-team.tsx"
+        ],
+        "completion_checks": [
+          "has_profile_photo",
+          "has_bio",
+          "has_survey_template",
+          "has_sent_survey",
+          "has_google_connection",
+          "has_team_members"
+        ]
+      }
+    },
+    {
+      "id": "S085",
+      "epic": "E16",
+      "title": "Trial Ending Sequence",
+      "description": "Conversion-focused sequence for trial users approaching trial end. Drive upgrades while maintaining value-first messaging.",
+      "acceptance_criteria": [
+        "Email 1 (7 days before): Trial ending soon - what you've accomplished",
+        "Email 2 (3 days before): Feature comparison - what you'll lose vs keep",
+        "Email 3 (1 day before): Final reminder with easy upgrade CTA",
+        "Email 4 (Trial ended): Grace period notice (if applicable)",
+        "Email 5 (3 days after): Win-back offer (if applicable)",
+        "Personalize with actual usage stats: X reviews, Y surveys sent",
+        "Show ROI calculation if data available",
+        "Highlight features they used vs features they'll lose",
+        "Include pricing and upgrade path clearly",
+        "A/B test urgency messaging vs value messaging",
+        "Special offer capability for high-value prospects"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Trial-to-paid conversion rate improves",
+        "Sequence timing accurate to trial end date",
+        "Upgrade links track conversion source"
+      ],
+      "dependencies": [
+        "S073",
+        "S056"
+      ],
+      "implementation_notes": {
+        "sequence_timing": {
+          "email_1": "7 days before trial_ends_at",
+          "email_2": "3 days before trial_ends_at",
+          "email_3": "1 day before trial_ends_at",
+          "email_4": "Immediate on trial_ends_at",
+          "email_5": "3 days after trial_ends_at"
+        },
+        "templates": [
+          "src/lib/email/sequences/trial-ending/index.ts",
+          "src/lib/email/sequences/trial-ending/email-1-preview.tsx",
+          "src/lib/email/sequences/trial-ending/email-2-comparison.tsx",
+          "src/lib/email/sequences/trial-ending/email-3-final.tsx",
+          "src/lib/email/sequences/trial-ending/email-4-ended.tsx",
+          "src/lib/email/sequences/trial-ending/email-5-winback.tsx"
+        ],
+        "subject_lines": {
+          "email_1": "Your trial ends in 7 days \u2014 here's what you've built",
+          "email_2": "3 days left: What happens when your trial ends",
+          "email_3": "Last day: Don't lose your [X] reviews",
+          "email_4": "Your trial has ended",
+          "email_5": "We'd love to have you back \u2014 special offer inside"
+        }
+      }
+    },
+    {
+      "id": "S086",
+      "epic": "E16",
+      "title": "Failed Payment Recovery Sequence (Dunning)",
+      "description": "Payment recovery sequence when subscription payment fails. Recover revenue while maintaining good customer relationship.",
+      "acceptance_criteria": [
+        "Email 1 (Day 0): Friendly payment failed notice",
+        "Email 2 (Day 3): Reminder with easy update payment link",
+        "Email 3 (Day 7): Urgent notice - service may be interrupted",
+        "Email 4 (Day 10): Final warning before suspension",
+        "Email 5 (Day 14): Account suspended notice with recovery path",
+        "Clear update payment CTA linking to Stripe Customer Portal",
+        "Explain what happens at each stage",
+        "Avoid guilt - assume card expired or bank issue",
+        "Include common card decline reasons and solutions",
+        "Track recovery: successful payment after email",
+        "Integration with Stripe dunning webhooks"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Payment recovery rate > 60%",
+        "Emails trigger on payment_intent.payment_failed webhook",
+        "Account status updates correctly through sequence"
+      ],
+      "dependencies": [
+        "S073",
+        "S056"
+      ],
+      "implementation_notes": {
+        "stripe_integration": {
+          "trigger_webhook": "invoice.payment_failed",
+          "success_webhook": "invoice.paid",
+          "portal_link": "Create Stripe Customer Portal session for payment update"
+        },
+        "sequence_timing": {
+          "email_1": "Immediate on payment_failed",
+          "email_2": "3 days after",
+          "email_3": "7 days after",
+          "email_4": "10 days after",
+          "email_5": "14 days after"
+        },
+        "templates": [
+          "src/lib/email/sequences/dunning/index.ts",
+          "src/lib/email/sequences/dunning/email-1-notice.tsx",
+          "src/lib/email/sequences/dunning/email-2-reminder.tsx",
+          "src/lib/email/sequences/dunning/email-3-urgent.tsx",
+          "src/lib/email/sequences/dunning/email-4-final-warning.tsx",
+          "src/lib/email/sequences/dunning/email-5-suspended.tsx"
+        ],
+        "subject_lines": {
+          "email_1": "Action needed: Payment didn't go through",
+          "email_2": "Reminder: Please update your payment method",
+          "email_3": "Urgent: Your account may be interrupted",
+          "email_4": "Final notice: Update payment to avoid suspension",
+          "email_5": "Your account has been suspended"
+        }
+      }
+    },
+    {
+      "id": "S087",
+      "epic": "E16",
+      "title": "Subscription Lifecycle Emails",
+      "description": "Transactional emails for subscription events: upgrades, downgrades, renewals, and cancellations.",
+      "acceptance_criteria": [
+        "Upgrade confirmation email with new features highlighted",
+        "Downgrade confirmation with what changes",
+        "Renewal reminder (14 days before annual renewal)",
+        "Renewal success confirmation with receipt",
+        "Cancellation confirmation with offboarding checklist",
+        "Cancellation feedback request",
+        "Plan change effective date notice (for end-of-period changes)",
+        "Invoice available notification with PDF download",
+        "Price increase notice (30 days advance for annual)",
+        "Include receipt/invoice details where relevant",
+        "Clear next billing date and amount"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "All subscription events trigger correct emails",
+        "Invoice PDFs attach correctly",
+        "Cancellation flow captures feedback"
+      ],
+      "dependencies": [
+        "S073",
+        "S056"
+      ],
+      "implementation_notes": {
+        "stripe_webhooks": [
+          "customer.subscription.updated - Upgrade/downgrade",
+          "invoice.upcoming - Renewal reminder",
+          "invoice.paid - Renewal success",
+          "customer.subscription.deleted - Cancellation",
+          "invoice.finalized - Invoice available"
+        ],
+        "templates": [
+          "src/lib/email/templates/subscription-upgraded.tsx",
+          "src/lib/email/templates/subscription-downgraded.tsx",
+          "src/lib/email/templates/subscription-renewal-reminder.tsx",
+          "src/lib/email/templates/subscription-renewed.tsx",
+          "src/lib/email/templates/subscription-cancelled.tsx",
+          "src/lib/email/templates/subscription-feedback.tsx",
+          "src/lib/email/templates/invoice-available.tsx"
+        ]
+      }
+    },
+    {
+      "id": "S088",
+      "epic": "E16",
+      "title": "Product Update & Announcement Emails",
+      "description": "System for sending product updates, feature announcements, and maintenance notifications.",
+      "acceptance_criteria": [
+        "Feature announcement template with screenshot/GIF support",
+        "Product update digest template (monthly changelog)",
+        "Maintenance notification template with downtime window",
+        "Security update notification template",
+        "Segmented sending: All users, by role, by plan, by feature usage",
+        "Preview and test send capability for admins",
+        "Schedule send for specific date/time",
+        "Track engagement: Opens, clicks, feature adoption",
+        "Admin UI to compose and send announcements",
+        "Version history of sent announcements",
+        "Unsubscribe specific to product updates category"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Announcements send to correct segments",
+        "Admin UI functional and secure",
+        "Feature adoption trackable post-announcement"
+      ],
+      "dependencies": [
+        "S073"
+      ],
+      "implementation_notes": {
+        "admin_ui": {
+          "route": "/admin/announcements",
+          "features": [
+            "Compose",
+            "Preview",
+            "Test send",
+            "Schedule",
+            "Send",
+            "Analytics"
+          ]
+        },
+        "templates": [
+          "src/lib/email/templates/announcement-feature.tsx",
+          "src/lib/email/templates/announcement-update.tsx",
+          "src/lib/email/templates/announcement-maintenance.tsx",
+          "src/lib/email/templates/announcement-security.tsx"
+        ],
+        "database": {
+          "table": "announcements",
+          "fields": [
+            "id",
+            "title",
+            "content",
+            "template_type",
+            "segment",
+            "scheduled_for",
+            "sent_at",
+            "created_by"
+          ]
+        }
+      }
+    },
+    {
+      "id": "S089",
+      "epic": "E16",
+      "title": "Manager & Admin Alert Emails",
+      "description": "Real-time alert emails for managers and admins on important events requiring attention.",
+      "acceptance_criteria": [
+        "New negative review alert (configurable threshold: 1-2 stars)",
+        "Team member struggling alert (below threshold performance)",
+        "Compliance violation alert (flagged content)",
+        "Usage limit approaching alert (approaching plan limits)",
+        "New team member joined notification",
+        "Team member removed/left notification",
+        "Unusual activity alert (spike in negative reviews)",
+        "Integration disconnected alert (Google, etc.)",
+        "Configurable alert preferences per admin/manager",
+        "Digest option: Immediate vs daily summary",
+        "Deep links to relevant dashboard sections"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Alerts trigger in real-time (< 5 min delay)",
+        "Preferences respected",
+        "No alert fatigue (smart grouping)"
+      ],
+      "dependencies": [
+        "S073",
+        "S018"
+      ],
+      "implementation_notes": {
+        "templates": [
+          "src/lib/email/templates/alert-negative-review.tsx",
+          "src/lib/email/templates/alert-team-member-struggling.tsx",
+          "src/lib/email/templates/alert-compliance.tsx",
+          "src/lib/email/templates/alert-usage-limit.tsx",
+          "src/lib/email/templates/alert-team-joined.tsx",
+          "src/lib/email/templates/alert-team-left.tsx",
+          "src/lib/email/templates/alert-unusual-activity.tsx",
+          "src/lib/email/templates/alert-integration-disconnected.tsx"
+        ],
+        "smart_grouping": "Aggregate multiple alerts of same type within 1 hour"
+      }
+    },
+    {
+      "id": "S090",
+      "epic": "E16",
+      "title": "Email Preferences Center",
+      "description": "Build a comprehensive email preferences center allowing users to control all email communications.",
+      "acceptance_criteria": [
+        "Preferences page at /settings/email-preferences",
+        "Category-based controls:",
+        "- Transactional (required, cannot disable)",
+        "- Onboarding sequences (can disable)",
+        "- Weekly summaries (can disable or change frequency)",
+        "- Milestone celebrations (can disable)",
+        "- Product updates (can disable)",
+        "- Marketing/promotional (can disable)",
+        "Frequency controls: Immediate, daily digest, weekly digest, none",
+        "Quiet hours setting (no emails between X and Y time)",
+        "Timezone setting for email delivery",
+        "One-click unsubscribe from email footer",
+        "Unsubscribe landing page with preference options",
+        "Re-subscribe capability with category selection",
+        "Preview of email categories in preferences UI"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "All preferences respected across all email sends",
+        "One-click unsubscribe works from any email",
+        "Preferences sync across web and mobile"
+      ],
+      "dependencies": [
+        "S073"
+      ],
+      "implementation_notes": {
+        "database": {
+          "extend_table": "notification_preferences",
+          "new_fields": [
+            "email_onboarding_enabled",
+            "email_weekly_summary_enabled",
+            "email_milestones_enabled",
+            "email_product_updates_enabled",
+            "email_marketing_enabled",
+            "email_quiet_hours_start",
+            "email_quiet_hours_end",
+            "email_timezone"
+          ]
+        },
+        "ui_routes": [
+          "src/app/(dashboard)/settings/email-preferences/page.tsx",
+          "src/app/(public)/unsubscribe/[token]/page.tsx",
+          "src/app/(public)/email-preferences/[token]/page.tsx"
+        ],
+        "components": [
+          "src/components/settings/email-preferences-form.tsx"
+        ]
+      }
+    },
+    {
+      "id": "S091",
+      "epic": "E16",
+      "title": "Email Analytics & Tracking Dashboard",
+      "description": "Build analytics dashboard for monitoring email performance across all sequences and campaigns.",
+      "acceptance_criteria": [
+        "Dashboard at /admin/email-analytics (admin only)",
+        "Overview metrics: Total sent, delivered, opened, clicked, bounced",
+        "Delivery rate, open rate, click rate, bounce rate charts",
+        "Performance by email type/sequence",
+        "Performance by time period (daily, weekly, monthly)",
+        "Sequence funnel visualization",
+        "A/B test results comparison",
+        "Unsubscribe rate tracking by category",
+        "Bounce and complaint analysis",
+        "Export analytics to CSV",
+        "Individual email performance drill-down",
+        "Engagement trends over time",
+        "Benchmark comparisons (industry averages)"
+      ],
+      "priority": "P2",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "Metrics accurately reflect Resend webhook data",
+        "Dashboard loads within 3 seconds",
+        "Export generates correctly"
+      ],
+      "dependencies": [
+        "S073",
+        "S007"
+      ],
+      "implementation_notes": {
+        "data_sources": {
+          "primary": "email_logs table",
+          "webhooks": "Resend webhook events: sent, delivered, opened, clicked, bounced, complained"
+        },
+        "routes": [
+          "src/app/(dashboard)/admin/email-analytics/page.tsx"
+        ],
+        "components": [
+          "src/components/admin/email-analytics-overview.tsx",
+          "src/components/admin/email-analytics-charts.tsx",
+          "src/components/admin/email-sequence-funnel.tsx",
+          "src/components/admin/email-ab-test-results.tsx"
+        ],
+        "queries": [
+          "src/lib/email/analytics/queries.ts"
+        ]
+      }
+    },
+    {
+      "id": "S092",
+      "epic": "E16",
+      "title": "Email A/B Testing System",
+      "description": "Build A/B testing capabilities for email subject lines, content, and send times.",
+      "acceptance_criteria": [
+        "Create A/B test with 2-4 variants",
+        "Test types: Subject line, preview text, content, send time",
+        "Traffic split configuration (50/50, 80/20, etc.)",
+        "Statistical significance calculation",
+        "Auto-winner selection based on metric (open rate, click rate)",
+        "Test duration configuration",
+        "Results visualization with confidence intervals",
+        "Apply winner to future sends",
+        "A/B test history and learnings",
+        "Integration with sequence emails and campaigns",
+        "Admin UI for test creation and monitoring"
+      ],
+      "priority": "P3",
+      "estimate": "L",
+      "status": "open",
+      "gates": [
+        "A/B split distributes correctly",
+        "Statistical significance calculation accurate",
+        "Winner selection works automatically"
+      ],
+      "dependencies": [
+        "S091"
+      ],
+      "implementation_notes": {
+        "database": {
+          "tables": [
+            "email_ab_tests (id, name, email_type, test_type, variants, traffic_split, metric, status, winner_variant, started_at, ended_at)",
+            "email_ab_test_results (id, test_id, variant, sent_count, open_count, click_count, created_at)"
+          ]
+        },
+        "statistical_calculation": "Use two-proportion z-test for significance",
+        "routes": [
+          "src/app/(dashboard)/admin/email-ab-tests/page.tsx",
+          "src/app/(dashboard)/admin/email-ab-tests/[id]/page.tsx"
+        ]
+      }
+    },
+    {
+      "id": "S093",
+      "epic": "E16",
+      "title": "Abandoned Action Recovery Emails",
+      "description": "Recover users who started but didn't complete key actions in the platform.",
+      "acceptance_criteria": [
+        "Abandoned survey creation (started template, didn't finish)",
+        "Abandoned survey send (selected contacts, didn't send)",
+        "Abandoned video testimonial request (started form, didn't submit)",
+        "Abandoned billing upgrade (visited pricing, didn't complete)",
+        "Abandoned profile completion (started editing, left incomplete)",
+        "Abandoned integration setup (started OAuth, didn't complete)",
+        "Detection: Track action starts and completions",
+        "Timing: Send 1 hour after abandonment, then 24 hours",
+        "Content: Remind what they were doing, offer help",
+        "Deep link back to exact step they abandoned",
+        "Exclude if action completed elsewhere"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Abandonment detection accurate",
+        "Recovery emails increase completion rates",
+        "No false positives (user completed elsewhere)"
+      ],
+      "dependencies": [
+        "S073"
+      ],
+      "implementation_notes": {
+        "tracking": {
+          "events": [
+            "survey_create_started",
+            "survey_send_started",
+            "video_request_started",
+            "upgrade_started",
+            "profile_edit_started",
+            "integration_started"
+          ],
+          "completion_events": [
+            "survey_created",
+            "survey_sent",
+            "video_request_sent",
+            "upgrade_completed",
+            "profile_updated",
+            "integration_connected"
+          ]
+        },
+        "templates": [
+          "src/lib/email/templates/abandoned-survey-creation.tsx",
+          "src/lib/email/templates/abandoned-survey-send.tsx",
+          "src/lib/email/templates/abandoned-video-request.tsx",
+          "src/lib/email/templates/abandoned-upgrade.tsx",
+          "src/lib/email/templates/abandoned-profile.tsx",
+          "src/lib/email/templates/abandoned-integration.tsx"
+        ],
+        "sequence_timing": {
+          "email_1": "1 hour after abandonment",
+          "email_2": "24 hours after abandonment"
+        }
+      }
+    },
+    {
+      "id": "S094",
+      "epic": "E16",
+      "title": "Referral Program Emails",
+      "description": "Email sequence supporting the referral program: invite, reminder, and reward notifications.",
+      "acceptance_criteria": [
+        "Referral invite email (sent by referrer to friends)",
+        "Referrer notification when friend signs up",
+        "Referrer notification when friend converts to paid",
+        "Reward earned notification (referral credit/discount)",
+        "Referral program reminder (for inactive referrers)",
+        "Referral leaderboard update (top referrers)",
+        "Personalized referral link in all emails",
+        "Social sharing prompts with pre-filled messages",
+        "Track referral email \u2192 signup \u2192 conversion funnel",
+        "Customizable referral messaging per organization"
+      ],
+      "priority": "P3",
+      "estimate": "M",
+      "status": "open",
+      "gates": [
+        "Referral tracking accurate",
+        "Reward notifications trigger correctly",
+        "Referral links attribute correctly"
+      ],
+      "dependencies": [
+        "S073"
+      ],
+      "implementation_notes": {
+        "templates": [
+          "src/lib/email/templates/referral-invite.tsx",
+          "src/lib/email/templates/referral-friend-signed-up.tsx",
+          "src/lib/email/templates/referral-friend-converted.tsx",
+          "src/lib/email/templates/referral-reward-earned.tsx",
+          "src/lib/email/templates/referral-reminder.tsx",
+          "src/lib/email/templates/referral-leaderboard.tsx"
+        ],
+        "referral_tracking": "Integrate with referral system (if exists) or create basic tracking"
+      }
+    },
+    {
+      "id": "S095",
+      "epic": "E16",
+      "title": "Email Sequence Orchestration Engine",
+      "description": "Build the core engine that orchestrates all email sequences: scheduling, conditional logic, exit conditions, and queue management.",
+      "acceptance_criteria": [
+        "Sequence definition schema (JSON-based or database)",
+        "Sequence entry triggers (event-based, time-based)",
+        "Step execution with delay support (hours, days)",
+        "Conditional branching based on user actions",
+        "Exit conditions (action completed, unsubscribe, timeout)",
+        "Sequence pause/resume per user",
+        "Multiple concurrent sequences per user (with priority)",
+        "Sequence conflict resolution (don't overlap onboarding + re-engagement)",
+        "Retry logic for failed sends",
+        "Sequence analytics: Entry, completion, drop-off at each step",
+        "Admin UI to view user's active sequences",
+        "Manual sequence intervention (skip step, end sequence)",
+        "Cron job for sequence processing (every 5 minutes)"
+      ],
+      "priority": "P0",
+      "estimate": "XL",
+      "status": "open",
+      "gates": [
+        "Sequences execute reliably at scale",
+        "Conditional logic works correctly",
+        "No duplicate emails sent",
+        "Performance: Process 10k users in < 5 minutes"
+      ],
+      "dependencies": [
+        "S007"
+      ],
+      "implementation_notes": {
+        "database": {
+          "tables": [
+            "email_sequences (id, name, trigger_event, steps_json, active, created_at)",
+            "user_email_sequences (id, user_id, sequence_id, current_step, status, entered_at, completed_at, exited_at, exit_reason)",
+            "user_email_sequence_history (id, user_sequence_id, step_id, email_type, sent_at, opened_at, clicked_at)"
+          ]
+        },
+        "sequence_schema": {
+          "steps": [
+            {
+              "id": "step_1",
+              "delay_hours": 0,
+              "email_template": "welcome-1",
+              "conditions": [],
+              "exit_if": [
+                "profile_completed"
+              ]
+            }
+          ]
+        },
+        "file_structure": [
+          "src/lib/email/sequences/engine/orchestrator.ts",
+          "src/lib/email/sequences/engine/scheduler.ts",
+          "src/lib/email/sequences/engine/conditions.ts",
+          "src/lib/email/sequences/engine/executor.ts",
+          "src/app/api/cron/process-email-sequences/route.ts",
+          "supabase/migrations/20260121_email_sequences.sql"
+        ]
+      }
     }
   ],
   "phases": [
@@ -2701,6 +3954,57 @@
           "S067": "/frontend-design (Video library grid layout)"
         },
         "notes": "Video feature is highly visible to customers. Prioritize mobile UX, fast AI processing, and intuitive approval flow. Security review required for public portal and AI integrations."
+      }
+    },
+    {
+      "id": "Phase11",
+      "name": "Product Email Sequencing",
+      "description": "Comprehensive email lifecycle system: onboarding sequences, engagement triggers, retention emails, billing communications, milestone celebrations, re-engagement campaigns, and win-back flows. All product-triggered (not CRM).",
+      "stories": [
+        "S073",
+        "S074",
+        "S075",
+        "S076",
+        "S077",
+        "S078",
+        "S079",
+        "S080",
+        "S081",
+        "S082",
+        "S083",
+        "S084",
+        "S085",
+        "S086",
+        "S087",
+        "S088",
+        "S089",
+        "S090",
+        "S091",
+        "S092",
+        "S093",
+        "S094",
+        "S095"
+      ],
+      "target_completion": "Phase 11 Complete",
+      "plugins": {
+        "required": [
+          "/feature-dev",
+          "/frontend-design",
+          "/email-sequence",
+          "/copywriting"
+        ],
+        "recommended_for": {
+          "S073": "/frontend-design (Email design system must match Repwell brand)",
+          "S074": "/email-sequence (Welcome sequence is highest-impact onboarding touchpoint)",
+          "S078": "/copywriting (Survey emails need high open/click rates)",
+          "S081": "/frontend-design (Milestone emails need celebratory visual design)",
+          "S086": "/email-sequence (Dunning sequence critical for revenue recovery)",
+          "S090": "/frontend-design (Preferences center UI must be intuitive)",
+          "S091": "/frontend-design (Analytics dashboard needs data visualization)",
+          "S092": "feature-dev:code-architect (A/B testing engine requires careful architecture)",
+          "S095": "feature-dev:code-architect (Orchestration engine is foundational infrastructure)"
+        },
+        "notes": "Email sequences directly impact revenue (onboarding\u2192activation, dunning\u2192recovery, win-back\u2192reactivation). Prioritize mobile-friendly responsive emails. All copy must follow Repwell brand voice. A/B test aggressively. Track opens, clicks, conversions. Respect unsubscribe preferences. Build orchestration engine (S095) early as foundation for all sequences."
       }
     }
   ],

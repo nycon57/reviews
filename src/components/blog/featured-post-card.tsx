@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Calendar, Clock, ArrowRight } from "lucide-react";
+import { Calendar, Clock, ArrowRight, ImageIcon } from "lucide-react";
 import { format } from "date-fns";
 import { BlogPostMeta } from "@/types/blog";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +52,9 @@ export function FeaturedPostCard({
               sizes={isLarge ? "(max-width: 768px) 100vw, 60vw" : "(max-width: 768px) 100vw, 40vw"}
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/20" />
+            <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-100 flex items-center justify-center">
+              <ImageIcon className="h-12 w-12 text-repwell-sage-300" />
+            </div>
           )}
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />

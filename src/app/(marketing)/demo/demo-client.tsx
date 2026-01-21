@@ -589,7 +589,7 @@ export function DemoPageClient() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/30 text-white hover:bg-white/10 h-12 px-8"
+                  className="border-white text-white hover:bg-white hover:text-repwell-teal-500 h-12 px-8"
                 >
                   View Pricing
                 </Button>

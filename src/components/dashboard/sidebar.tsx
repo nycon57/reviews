@@ -86,6 +86,24 @@ const mainNavItems: NavItem[] = [
     icon: <Send className="h-4 w-4" />,
     permission: PERMISSIONS.SEND_SURVEY,
   },
+  {
+    title: "Analytics",
+    href: "/dashboard/analytics",
+    icon: <BarChart3 className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_ANALYTICS,
+  },
+  {
+    title: "Trends",
+    href: "/dashboard/analytics/trends",
+    icon: <TrendingUp className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_TRENDS,
+  },
+  {
+    title: "Testimonials",
+    href: "/dashboard/testimonials",
+    icon: <Quote className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_TESTIMONIALS,
+  },
 ];
 
 const navGroups: NavGroup[] = [
@@ -128,21 +146,9 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    title: "Analytics",
+    title: "Advanced Analytics",
     defaultOpen: false,
     items: [
-      {
-        title: "Overview",
-        href: "/dashboard/analytics",
-        icon: <BarChart3 className="h-4 w-4" />,
-        permission: PERMISSIONS.VIEW_ANALYTICS,
-      },
-      {
-        title: "Trends",
-        href: "/dashboard/analytics/trends",
-        icon: <TrendingUp className="h-4 w-4" />,
-        permission: PERMISSIONS.VIEW_TRENDS,
-      },
       {
         title: "Website Analytics",
         href: "/dashboard/analytics/website",
@@ -172,12 +178,6 @@ const navGroups: NavGroup[] = [
         isNew: true,
         permission: PERMISSIONS.VIEW_GEO_VISIBILITY,
         requiresPro: true,
-      },
-      {
-        title: "Testimonials",
-        href: "/dashboard/testimonials",
-        icon: <Quote className="h-4 w-4" />,
-        permission: PERMISSIONS.VIEW_TESTIMONIALS,
       },
     ],
   },

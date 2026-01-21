@@ -88,6 +88,7 @@ Instructions:
 - Do not add commentary or summaries
 - Output ONLY the transcription text, nothing else`;
 
+  // Note: Using type assertion due to SDK type mismatch - generationConfig is a valid parameter
   const response = await client.models.generateContent({
     model: AI_CONFIG.model,
     contents: [
@@ -106,11 +107,11 @@ Instructions:
         ],
       },
     ],
-    generationConfig: {
+    config: {
       maxOutputTokens: 4096,
       temperature: 0.1, // Low temperature for accurate transcription
     },
-  });
+  } as Parameters<typeof client.models.generateContent>[0]);
 
   const transcriptionText = response.text;
   if (!transcriptionText) {

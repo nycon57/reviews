@@ -9,7 +9,7 @@ Ralph uses a **3-pass minimum** per story for iterative quality improvement:
 
 | Pass | Focus | Key Skills | Commit Prefix |
 |------|-------|------------|---------------|
-| 1 | Implementation | `/feature-dev`, `/frontend-design`, `/vercel-react-best-practices`, `/web-design-guidelines`  | `[Pass 1/3]` |
+| 1 | Implementation | `/feature-dev`, `/frontend-design`, `/vercel-react-best-practices`, `/web-design-guidelines`, `/copywriting` | `[Pass 1/3]` |
 | 2 | Quality Review | `/code-review` | `[Pass 2/3]` |
 | 3 | Polish & Finalize | `/code-simplifier`, browser test | `[Pass 3/3]` |
 

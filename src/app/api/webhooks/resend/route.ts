@@ -274,9 +274,10 @@ async function updateVideoTestimonialRequest(
 
     case "email.clicked":
       // Update clicked timestamp
+      // Note: clicked_at column exists in DB, types may need regeneration
       await supabase
         .from("video_testimonial_requests")
-        .update({ clicked_at: now })
+        .update({ clicked_at: now } as Record<string, unknown>)
         .eq("id", requestId)
         .is("clicked_at", null);
       break;
@@ -284,12 +285,13 @@ async function updateVideoTestimonialRequest(
     case "email.bounced":
     case "email.complained":
       // Mark request as failed due to bounced email
+      // Note: failed status and failure_reason exist in DB, types may need regeneration
       await supabase
         .from("video_testimonial_requests")
         .update({
           status: "failed",
           failure_reason: eventType === "email.bounced" ? "Email bounced" : "Email reported as spam",
-        })
+        } as Record<string, unknown>)
         .eq("id", requestId)
         .in("status", ["pending", "sent"]);
 

@@ -82,7 +82,12 @@ export type EmailTemplate =
   | "milestone_video"
   // Weekly performance summary emails (S082)
   | "weekly_summary_lo"
-  | "weekly_summary_manager";
+  | "weekly_summary_manager"
+  // Re-engagement sequence emails (S083)
+  | "reengagement_1_miss_you"
+  | "reengagement_2_whats_new"
+  | "reengagement_3_last_chance"
+  | "reengagement_4_final";
 
 // Base email data
 export interface BaseEmailData {
@@ -1190,4 +1195,75 @@ export interface WeeklySummaryEmailPreferences {
   sendDay: "sunday" | "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday";
   sendHour: number; // 0-23 in user's local time
   skipIfNoActivity: boolean;
+}
+
+// =============================================================================
+// RE-ENGAGEMENT SEQUENCE EMAIL DATA INTERFACES (S083)
+// =============================================================================
+
+// Base re-engagement email data (shared across all re-engagement emails)
+export interface ReengagementEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  sequenceId: string;
+  unsubscribeUrl: string;
+  isPaidUser: boolean;
+  daysInactive: number;
+}
+
+// Email 1: "We Miss You" (Day 7 inactive)
+export interface Reengagement1MissYouEmailData extends ReengagementEmailBaseData {
+  lastActiveDate: string;
+  valueReminder: string; // e.g., "Your reviews dashboard"
+  quickActionUrl: string;
+}
+
+// Email 2: "What's New" (Day 14 inactive)
+export interface Reengagement2WhatsNewEmailData extends ReengagementEmailBaseData {
+  lastActiveDate: string;
+  newFeatures: Array<{
+    title: string;
+    description: string;
+    icon: string;
+  }>;
+  missedReviewsCount: number;
+  viewUpdatesUrl: string;
+}
+
+// Email 3: "Last Chance" (Day 30 inactive)
+export interface Reengagement3LastChanceEmailData extends ReengagementEmailBaseData {
+  lastActiveDate: string;
+  missedReviewsCount: number;
+  missedMetrics?: {
+    totalReviews?: number;
+    averageRating?: number;
+    pendingResponses?: number;
+  };
+  incentiveMessage?: string; // For paid users: "Your premium features are waiting"
+  urgencyMessage: string;
+}
+
+// Email 4: "Final Email" (Day 45 inactive)
+export interface Reengagement4FinalEmailData extends ReengagementEmailBaseData {
+  lastActiveDate: string;
+  missedReviewsCount: number;
+  staySubscribedUrl: string;
+  unsubscribeUrl: string;
+  feedbackUrl?: string;
+}
+
+// Re-engagement sequence status (for tracking user state)
+export interface ReengagementSequenceStatus {
+  is_inactive: boolean;
+  days_since_last_active: number;
+  last_active_at: string | null;
+  has_returned_since_sequence_start: boolean;
+}
+
+// Re-engagement email preferences
+export interface ReengagementEmailPreferences {
+  enabled: boolean;
+  // Allow users to opt out of re-engagement emails specifically
+  optedOut: boolean;
 }

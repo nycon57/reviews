@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { startWelcomeSequence } from "@/lib/email/welcome-sequence-service";
+import { exitReengagementSequencesOnLogin } from "@/lib/email/reengagement-sequence-service";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -41,6 +42,11 @@ export async function GET(request: NextRequest) {
             if (isNewUser) {
               startWelcomeSequence(user.id).catch((err) => {
                 console.error("Failed to start welcome sequence:", err);
+              });
+            } else {
+              // Exit any active re-engagement sequences for returning users (async, don't wait)
+              exitReengagementSequencesOnLogin(user.id).catch((err) => {
+                console.error("Failed to exit re-engagement sequences:", err);
               });
             }
           }

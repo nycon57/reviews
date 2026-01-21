@@ -2995,7 +2995,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Summaries generate accurately",
         "Timezone-aware scheduling works",
@@ -3019,7 +3019,10 @@
           "src/lib/email/queries/weekly-lo-metrics.ts",
           "src/lib/email/queries/weekly-team-metrics.ts"
         ]
-      }
+      },
+      "updatedAt": "2026-01-21T12:17:30.694789+00:00",
+      "completedAt": "2026-01-21T12:17:30.694899+00:00",
+      "startedAt": "2026-01-21T12:17:30.694901+00:00"
     },
     {
       "id": "S083",
@@ -3040,7 +3043,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Re-engagement rate > 10% for 7-day inactive",
         "Low unsubscribe rate on sequence",
@@ -3078,7 +3081,10 @@
           "email_3": "[X] reviews are waiting for you",
           "email_4": "Should we stop emailing you?"
         }
-      }
+      },
+      "startedAt": "2026-01-21T12:17:32.757470+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T12:17:32.757613+00:00"
     },
     {
       "id": "S084",

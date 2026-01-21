@@ -6853,3 +6853,49 @@ Pass: 1/3 - Implementation
   - Week-over-week metrics need careful date handling with start/end boundaries
 - Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Quality Review)
 ---
+## S082 · Pass 2/3 · 2026-01-21
+Thread:
+Run: context-continuation (session recovery)
+Pass: 2/3 - Quality Review
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6e010f8 [Pass 2/3] fix(S082): Fix critical bugs in weekly summary email queries
+- Post-commit status: clean
+- Skills invoked:
+  - /code-review: yes (5 parallel agents, found 5 high-confidence issues)
+  - /vercel-react-best-practices: yes (email templates - server-rendered, no issues)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in S082 files)
+- Bugs fixed:
+  1. **CRITICAL (100%)**: survey_responses query used .eq("survey_id", loanOfficerId) - wrong field!
+     - survey_id references survey UUID, not loan officer ID
+     - Fixed: Added surveys!inner join with proper loan_officer_id filter
+     - File: src/lib/email/queries/weekly-lo-metrics.ts:196
+  2. **CRITICAL (95%)**: hasWeeklyActivity() counted ALL survey responses system-wide
+     - Missing LO filter meant skipIfNoActivity never worked correctly
+     - Fixed: Added same surveys!inner join pattern
+     - File: src/lib/email/queries/weekly-lo-metrics.ts:386-389
+  3. **HIGH (95%)**: Missing unsubscribe check before sending emails
+     - Pattern from send.ts uses isEmailUnsubscribed() - not implemented
+     - Fixed: Added isEmailUnsubscribed() function and call before each send
+     - File: src/lib/email/services/weekly-summary.ts
+  4. **HIGH (95%)**: Missing email logging
+     - Pattern from send.ts uses logEmail() for audit trail - not implemented
+     - Fixed: Added logEmail() function with success/failure logging
+     - File: src/lib/email/services/weekly-summary.ts
+  5. **MEDIUM (90%)**: N+1 query in team metrics
+     - Loop made individual DB query per team member for last activity
+     - Fixed: Batch fetch all last activities, build Map, lookup in loop
+     - File: src/lib/email/queries/weekly-team-metrics.ts:265-296
+- Additional improvements:
+  - Added Resend tags for email tracking (template, organization_id, loan_officer_id)
+  - Added EmailTemplate type import for proper logging
+- **Learnings for future iterations:**
+  - Always verify Supabase foreign key relationships when writing queries
+  - survey_responses.survey_id -> surveys.id -> surveys.loan_officer_id chain
+  - Batch queries before loops (N+1 prevention)
+  - Email services should always check unsubscribe + log sends
+- Status: Pass 2/3 COMPLETE - Ready for Pass 3 (Code Simplification)
+---
+

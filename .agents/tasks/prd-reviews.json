@@ -2515,7 +2515,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Sequence triggers correctly on signup",
         "Conditional logic skips completed actions",
@@ -2557,7 +2557,10 @@
           "src/app/api/cron/process-email-sequences/route.ts",
           "supabase/migrations/20260121_email_sequences.sql"
         ]
-      }
+      },
+      "updatedAt": "2026-01-21T07:24:56.250863+00:00",
+      "completedAt": "2026-01-21T07:24:56.250955+00:00",
+      "startedAt": "2026-01-21T07:24:56.250957+00:00"
     },
     {
       "id": "S075",
@@ -2579,7 +2582,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Org setup completion rate increases",
         "Integration connection rate improves",
@@ -2615,7 +2618,10 @@
           "src/lib/email/sequences/org-onboarding/email-5-billing.tsx",
           "src/lib/email/sequences/org-onboarding/email-6-advanced.tsx"
         ]
-      }
+      },
+      "startedAt": "2026-01-21T07:53:26.761241+00:00",
+      "completedAt": "2026-01-21T07:59:38.922333+00:00",
+      "updatedAt": "2026-01-21T07:59:38.922237+00:00"
     },
     {
       "id": "S076",
@@ -2635,7 +2641,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Invite acceptance rate tracked",
         "Reminder emails reduce pending invites",
@@ -2673,7 +2679,10 @@
           "src/lib/email/sequences/team-invite/welcome-manager.tsx",
           "src/lib/email/sequences/team-invite/expiry-notice.tsx"
         ]
-      }
+      },
+      "startedAt": "2026-01-21T08:33:46.842447+00:00",
+      "completedAt": "2026-01-21T08:41:25.406377+00:00",
+      "updatedAt": "2026-01-21T08:41:25.406254+00:00"
     },
     {
       "id": "S077",
@@ -2707,7 +2716,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Feature adoption rates improve",
         "Users engage with highlighted features",
@@ -2725,7 +2734,10 @@
           "src/lib/email/sequences/feature-onboarding/manager/",
           "src/lib/email/sequences/feature-onboarding/admin/"
         ]
-      }
+      },
+      "startedAt": "2026-01-21T08:56:22.984703+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T08:56:22.984865+00:00"
     },
     {
       "id": "S078",

@@ -267,5 +267,3 @@ export function ProfileCompletionMilestoneEmail({
     </EmailLayout>
   );
 }
-
-export default ProfileCompletionMilestoneEmail;

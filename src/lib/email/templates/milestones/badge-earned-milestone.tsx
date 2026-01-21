@@ -73,7 +73,6 @@ export function BadgeEarnedMilestoneEmail({ data }: BadgeEarnedMilestoneEmailPro
     badgeName,
     badgeDescription,
     badgeIcon,
-    badgeCategory: _badgeCategory,
     badgeTier,
     totalBadgesEarned,
     totalBadgesAvailable,
@@ -256,5 +255,3 @@ export function BadgeEarnedMilestoneEmail({ data }: BadgeEarnedMilestoneEmailPro
     </EmailLayout>
   );
 }
-
-export default BadgeEarnedMilestoneEmail;

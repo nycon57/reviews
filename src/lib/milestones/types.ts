@@ -1,5 +1,3 @@
-"use server";
-
 /**
  * Milestone Types and Constants (S081)
  *

@@ -53,7 +53,6 @@ export function StreakMilestoneEmail({ data }: StreakMilestoneEmailProps) {
   const {
     firstName,
     streakDays,
-    streakType: _streakType,
     streakDescription,
     nextStreakDays,
     viewStreakUrl,
@@ -228,5 +227,3 @@ export function StreakMilestoneEmail({ data }: StreakMilestoneEmailProps) {
     </EmailLayout>
   );
 }
-
-export default StreakMilestoneEmail;

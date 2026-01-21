@@ -223,5 +223,3 @@ export function LeaderboardMilestoneEmail({ data }: LeaderboardMilestoneEmailPro
     </EmailLayout>
   );
 }
-
-export default LeaderboardMilestoneEmail;

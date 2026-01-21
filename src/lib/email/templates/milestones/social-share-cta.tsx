@@ -99,5 +99,3 @@ export function SocialShareCta({ message, socialShareLinks }: SocialShareCtaProp
     </Section>
   );
 }
-
-export default SocialShareCta;

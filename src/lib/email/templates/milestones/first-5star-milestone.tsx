@@ -152,5 +152,3 @@ export function First5StarMilestoneEmail({ data }: First5StarMilestoneEmailProps
     </EmailLayout>
   );
 }
-
-export default First5StarMilestoneEmail;

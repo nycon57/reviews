@@ -32,6 +32,26 @@ function fromTable(supabase: ReturnType<typeof createAdminClient>, table: string
   return (supabase as any).from(table);
 }
 
+// Helper to map database milestone record to MilestoneRecord type
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapMilestoneRecord(m: any): MilestoneRecord {
+  return {
+    id: m.id,
+    userId: m.user_id,
+    organizationId: m.organization_id,
+    milestoneType: m.milestone_type as MilestoneType,
+    milestoneKey: m.milestone_key,
+    milestoneValue: m.milestone_value,
+    milestoneMetadata: m.milestone_metadata || {},
+    achievedAt: new Date(m.achieved_at),
+    emailSentAt: m.email_sent_at ? new Date(m.email_sent_at) : null,
+    emailStatus: m.email_status || "pending",
+    emailMessageId: m.email_message_id,
+    socialSharedAt: m.social_shared_at ? new Date(m.social_shared_at) : null,
+    socialPlatform: m.social_platform,
+  };
+}
+
 // Get user context for authenticated requests
 async function getUserContext() {
   const supabase = await createClient();
@@ -680,24 +700,7 @@ export async function getUserMilestones(
     return { success: false, error: "Failed to fetch milestones" };
   }
 
-  const milestones: MilestoneRecord[] = (data || []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (m: any) => ({
-      id: m.id,
-      userId: m.user_id,
-      organizationId: m.organization_id,
-      milestoneType: m.milestone_type as MilestoneType,
-      milestoneKey: m.milestone_key,
-      milestoneValue: m.milestone_value,
-      milestoneMetadata: m.milestone_metadata || {},
-      achievedAt: new Date(m.achieved_at),
-      emailSentAt: m.email_sent_at ? new Date(m.email_sent_at) : null,
-      emailStatus: m.email_status || "pending",
-      emailMessageId: m.email_message_id,
-      socialSharedAt: m.social_shared_at ? new Date(m.social_shared_at) : null,
-      socialPlatform: m.social_platform,
-    })
-  );
+  const milestones = (data || []).map(mapMilestoneRecord);
 
   return { success: true, data: milestones };
 }
@@ -726,24 +729,7 @@ export async function getPendingMilestoneEmails(): Promise<
     return { success: false, error: "Failed to fetch pending emails" };
   }
 
-  const milestones: MilestoneRecord[] = (data || []).map(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (m: any) => ({
-      id: m.id,
-      userId: m.user_id,
-      organizationId: m.organization_id,
-      milestoneType: m.milestone_type as MilestoneType,
-      milestoneKey: m.milestone_key,
-      milestoneValue: m.milestone_value,
-      milestoneMetadata: m.milestone_metadata || {},
-      achievedAt: new Date(m.achieved_at),
-      emailSentAt: m.email_sent_at ? new Date(m.email_sent_at) : null,
-      emailStatus: m.email_status || "pending",
-      emailMessageId: m.email_message_id,
-      socialSharedAt: m.social_shared_at ? new Date(m.social_shared_at) : null,
-      socialPlatform: m.social_platform,
-    })
-  );
+  const milestones = (data || []).map(mapMilestoneRecord);
 
   return { success: true, data: milestones };
 }

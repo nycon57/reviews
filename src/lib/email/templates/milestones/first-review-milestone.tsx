@@ -38,7 +38,6 @@ export function FirstReviewMilestoneEmail({ data }: FirstReviewMilestoneEmailPro
     reviewDate,
     nextMilestoneCount,
     viewReviewUrl,
-    dashboardUrl: _dashboardUrl,
     socialShareLinks,
     toEmail,
   } = data;
@@ -213,5 +212,3 @@ export function FirstReviewMilestoneEmail({ data }: FirstReviewMilestoneEmailPro
     </EmailLayout>
   );
 }
-
-export default FirstReviewMilestoneEmail;

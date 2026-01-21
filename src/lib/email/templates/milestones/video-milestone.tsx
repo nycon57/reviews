@@ -45,7 +45,6 @@ export function VideoMilestoneEmail({ data }: VideoMilestoneEmailProps) {
   const {
     firstName,
     videoCount,
-    previousMilestone: _previousMilestone,
     nextMilestone,
     latestVideoCustomerName,
     totalViewsCount,
@@ -250,5 +249,3 @@ export function VideoMilestoneEmail({ data }: VideoMilestoneEmailProps) {
     </EmailLayout>
   );
 }
-
-export default VideoMilestoneEmail;

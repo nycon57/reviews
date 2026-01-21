@@ -241,5 +241,3 @@ export function RatingImprovementMilestoneEmail({ data }: RatingImprovementMiles
     </EmailLayout>
   );
 }
-
-export default RatingImprovementMilestoneEmail;

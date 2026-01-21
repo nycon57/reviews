@@ -112,19 +112,28 @@ export async function renderLeaderboardMilestoneEmail(
 }
 
 /**
+ * Get emoji for badge tier
+ */
+function getBadgeTierEmoji(tier?: string): string {
+  switch (tier) {
+    case "platinum":
+      return "💎";
+    case "gold":
+      return "🏆";
+    case "silver":
+      return "🥈";
+    default:
+      return "🎖️";
+  }
+}
+
+/**
  * Render Badge Earned Milestone email to HTML
  */
 export async function renderBadgeEarnedMilestoneEmail(
   data: BadgeEarnedMilestoneEmailData
 ): Promise<{ subject: string; html: string }> {
-  const tierEmoji =
-    data.badgeTier === "platinum"
-      ? "💎"
-      : data.badgeTier === "gold"
-        ? "🏆"
-        : data.badgeTier === "silver"
-          ? "🥈"
-          : "🎖️";
+  const tierEmoji = getBadgeTierEmoji(data.badgeTier);
   const subject = `${tierEmoji} Badge unlocked: ${data.badgeName}!`;
   const html = await render(<BadgeEarnedMilestoneEmail data={data} />);
   return { subject, html };
@@ -178,12 +187,21 @@ export async function renderNpsImprovementMilestoneEmail(
 }
 
 /**
+ * Get emoji for profile completion percentage
+ */
+function getProfileCompletionEmoji(percent: number): string {
+  if (percent >= 100) return "🏆";
+  if (percent >= 75) return "🌟";
+  return "🎯";
+}
+
+/**
  * Render Profile Completion Milestone email to HTML
  */
 export async function renderProfileCompletionMilestoneEmail(
   data: ProfileCompletionMilestoneEmailData
 ): Promise<{ subject: string; html: string }> {
-  const emoji = data.completionPercent >= 100 ? "🏆" : data.completionPercent >= 75 ? "🌟" : "🎯";
+  const emoji = getProfileCompletionEmoji(data.completionPercent);
   const subject = `${emoji} ${data.firstName}, your profile is now ${data.completionPercent}% complete!`;
   const html = await render(<ProfileCompletionMilestoneEmail data={data} />);
   return { subject, html };

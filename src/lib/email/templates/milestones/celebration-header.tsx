@@ -85,5 +85,3 @@ export function CelebrationHeader({
     </Section>
   );
 }
-
-export default CelebrationHeader;

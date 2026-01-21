@@ -319,5 +319,3 @@ export function NpsImprovementMilestoneEmail({ data }: NpsImprovementMilestoneEm
     </EmailLayout>
   );
 }
-
-export default NpsImprovementMilestoneEmail;

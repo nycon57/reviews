@@ -58,7 +58,6 @@ export function ReviewCountMilestoneEmail({ data }: ReviewCountMilestoneEmailPro
     percentileRank,
     timeToAchieve,
     viewReviewsUrl,
-    dashboardUrl: _dashboardUrl,
     socialShareLinks,
     toEmail,
   } = data;
@@ -203,5 +202,3 @@ export function ReviewCountMilestoneEmail({ data }: ReviewCountMilestoneEmailPro
     </EmailLayout>
   );
 }
-
-export default ReviewCountMilestoneEmail;

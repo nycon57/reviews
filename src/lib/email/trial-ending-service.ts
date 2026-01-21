@@ -291,18 +291,64 @@ async function logEmail(params: {
 
 /**
  * Get usage statistics for the trial period
+ * Uses Promise.all to parallelize independent database queries
  */
 async function getTrialUsageStats(
   organizationId: string
 ): Promise<TrialUsageStats> {
   const supabase = createAdminClient();
 
-  // Get review count and average rating
-  const { data: reviews, error: reviewError } = await supabase
-    .from("reviews")
-    .select("rating")
-    .eq("organization_id", organizationId);
+  // Run all independent queries in parallel for better performance
+  const [
+    reviewsResult,
+    surveysSentResult,
+    surveyResponsesResult,
+    videoTestimonialsResult,
+    teamMembersResult,
+    googleConnectionResult,
+    orgResult,
+  ] = await Promise.all([
+    // Get review count and average rating
+    supabase.from("reviews").select("rating").eq("organization_id", organizationId),
+    // Get surveys sent
+    supabase
+      .from("surveys")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .in("status", ["sent", "opened", "completed"]),
+    // Get survey responses
+    supabase
+      .from("survey_responses")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    // Get video testimonials
+    supabase
+      .from("video_testimonial_responses")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    // Get team members
+    supabase
+      .from("users")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organizationId),
+    // Check Google connection
+    supabase
+      .from("google_connections")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .limit(1),
+    // Check custom branding
+    supabase
+      .from("organizations")
+      .select("logo_url, primary_color")
+      .eq("id", organizationId)
+      .single(),
+  ]);
 
+  // Process reviews
+  const reviews = reviewsResult.data;
+  const reviewError = reviewsResult.error;
   const totalReviews = reviews?.length || 0;
   const averageRating =
     reviews && reviews.length > 0
@@ -313,50 +359,18 @@ async function getTrialUsageStats(
     console.error("Error fetching reviews:", reviewError);
   }
 
-  // Get surveys sent
-  const { count: surveysSent } = await supabase
-    .from("surveys")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId)
-    .in("status", ["sent", "opened", "completed"]);
-
-  // Get survey response rate
-  const { count: surveyResponses } = await supabase
-    .from("survey_responses")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId);
+  // Extract counts
+  const surveysSent = surveysSentResult.count;
+  const surveyResponses = surveyResponsesResult.count;
+  const videoTestimonials = videoTestimonialsResult.count;
+  const teamMembers = teamMembersResult.count;
+  const googleConnection = googleConnectionResult.data;
+  const org = orgResult.data;
 
   const surveyResponseRate =
     surveysSent && surveysSent > 0
       ? Math.round(((surveyResponses || 0) / surveysSent) * 100)
       : 0;
-
-  // Get video testimonials
-  const { count: videoTestimonials } = await supabase
-    .from("video_testimonial_responses")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId);
-
-  // Get team members
-  const { count: teamMembers } = await supabase
-    .from("users")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId);
-
-  // Check Google connection
-  const { data: googleConnection } = await supabase
-    .from("google_connections")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .eq("is_active", true)
-    .limit(1);
-
-  // Check custom branding
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("logo_url, primary_color")
-    .eq("id", organizationId)
-    .single();
 
   const customBrandingConfigured = !!(
     org?.logo_url || (org?.primary_color && org.primary_color !== "#52796f")
@@ -824,28 +838,8 @@ async function processTrialSequenceStep(sequence: TrialSequenceRecord): Promise<
     return { success: false, error: `Invalid step: ${nextStep}` };
   }
 
-  // Check if step should be skipped (user upgraded)
-  if (stepConfig.canSkip && stepConfig.skipCondition === "has_upgraded") {
-    if (upgraded) {
-      await skipTrialSequenceStep(sequence, nextStep, "has_upgraded");
-
-      // Recursively process next step
-      const updatedSequence = {
-        ...sequence,
-        current_step: nextStep,
-        skipped_steps: [
-          ...sequence.skipped_steps,
-          {
-            step: nextStep,
-            reason: "has_upgraded",
-            skipped_at: new Date().toISOString(),
-          },
-        ],
-      };
-
-      return processTrialSequenceStep(updatedSequence);
-    }
-  }
+  // Note: Skip condition check is not needed here because upgrade check at lines 779-788
+  // already exits the sequence if the user has upgraded
 
   // Get usage stats
   const usageStats = await getTrialUsageStats(sequence.organization_id);
@@ -1133,42 +1127,6 @@ async function updateTrialSequenceStatus(
 
   if (error) {
     console.error("Failed to update sequence status:", error);
-  }
-}
-
-/**
- * Skip a sequence step
- */
-async function skipTrialSequenceStep(
-  sequence: TrialSequenceRecord,
-  step: number,
-  reason: string
-): Promise<void> {
-  const supabase = createAdminClient();
-  const now = new Date().toISOString();
-
-  const skippedSteps = [
-    ...sequence.skipped_steps,
-    { step, reason, skipped_at: now },
-  ];
-
-  const nextEmailAt = calculateNextEmailTime(
-    sequence.metadata.trialEndsAt,
-    step + 1
-  );
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase.from as any)("email_sequences")
-    .update({
-      current_step: step,
-      skipped_steps: skippedSteps,
-      next_email_at: nextEmailAt?.toISOString(),
-      updated_at: now,
-    })
-    .eq("id", sequence.id);
-
-  if (error) {
-    console.error("Failed to skip sequence step:", error);
   }
 }
 

@@ -786,7 +786,6 @@ export function getTrialEnding4GracePeriodEmail(
         <div style="font-size: 14px; font-weight: 600; color: ${colors.text.primary}; margin-bottom: 12px; text-align: center;">
           Don't lose what you've built
         </div>
-        ${createUsageStatsGrid(data.usageStats) ? "" : ""}
       </td>
     </tr>
     ${createUsageStatsGrid(data.usageStats)}

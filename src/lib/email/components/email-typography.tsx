@@ -446,8 +446,8 @@ export function EmailQuote({
   authorTitle,
   showQuoteMark = true,
 }: EmailQuoteProps) {
-  // Quote content component to avoid duplication
-  const QuoteContent = () => (
+  // Quote content JSX (reused in both branches)
+  const quoteContent = (
     <>
       <Text
         style={{
@@ -518,13 +518,13 @@ export function EmailQuote({
                       </Text>
                     </td>
                     <td style={{ verticalAlign: "top" }}>
-                      <QuoteContent />
+                      {quoteContent}
                     </td>
                   </tr>
                 </tbody>
               </table>
             ) : (
-              <QuoteContent />
+              quoteContent
             )}
           </td>
         </tr>

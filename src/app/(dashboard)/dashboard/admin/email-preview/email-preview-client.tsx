@@ -411,7 +411,8 @@ export function EmailPreviewClient() {
       }
     };
     renderEmail();
-  }, [selectedTemplate, EmailComponent]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- EmailComponent is derived from selectedTemplate and changes every render, causing infinite re-renders if included
+  }, [selectedTemplate]);
 
   const handleCopyHtml = async () => {
     await navigator.clipboard.writeText(htmlContent);
@@ -527,8 +528,7 @@ export function EmailPreviewClient() {
             <TabsContent value="preview" className="m-0">
               <div
                 className={cn(
-                  "bg-gray-100 p-6 flex justify-center min-h-[600px]",
-                  viewMode === "mobile" ? "items-start" : "items-start"
+                  "bg-gray-100 p-6 flex justify-center min-h-[600px] items-start"
                 )}
               >
                 {isLoading ? (

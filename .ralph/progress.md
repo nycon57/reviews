@@ -6343,3 +6343,37 @@ Run summary: (current session)
   - XSS protection via escapeHtml/sanitizeSubject utilities
 - Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Code Review)
 ---
+
+## [2026-01-21] - S078: Survey Lifecycle Email Enhancements
+Thread: 
+Run: 20260121-004232-375 (iteration 21)
+Pass: 2/3 - Quality Review
+Run log: (current session)
+Run summary: (current session)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: ba51c2e [Pass 2/3] fix(S078): Quality review fixes for survey lifecycle emails
+- Post-commit status: clean
+- Skills invoked:
+  - /code-review: yes (5 parallel review agents)
+  - /vercel-react-best-practices: no (backend email templates)
+  - /code-simplifier: pending (Pass 3)
+  - /frontend-design: no (no UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 warnings unrelated to S078)
+- Files modified:
+  - src/lib/email/index.ts: Added missing exports for types, send functions, templates
+  - src/lib/email/send.ts: Fixed getFromAddress to pass organizationName, added fromName to logEmail calls
+  - src/lib/email/templates.ts: Fixed URL sanitization (sanitizeUrl instead of escapeHtml for image URLs)
+- Code review findings and fixes:
+  - **Missing exports from index.ts**: Added 4 types, 4 send functions, 4 template functions
+  - **getFromAddress pattern violation**: Customer-facing emails weren't showing org name in From field - fixed in 3 functions
+  - **Missing fromName in logEmail**: Audit trail incomplete - added fromName to all 9 logEmail calls
+  - **Security: URL sanitization**: escapeHtml doesn't prevent javascript: URI injection - switched to sanitizeUrl for image URLs
+- Security review: PASS
+  - XSS protection via escapeHtml() for text content ✅
+  - URL sanitization via sanitizeUrl() for image URLs ✅
+  - Email header injection protection via sanitizeSubject() ✅
+- Status: Pass 2/3 COMPLETE - Ready for Pass 3 (Polish & Finalize)
+---

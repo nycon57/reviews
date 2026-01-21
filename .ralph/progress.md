@@ -6087,3 +6087,32 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The code-simplifier agent is effective at identifying duplicate code patterns
   - Helper functions improve readability for timing calculations
 ---
+
+## [2026-01-21] - S076: Team Member Invite Sequence - Pass 1/3
+Pass: 1/3 - Implementation
+- Commit: 0a92a94 [Pass 1/3] feat(S076): Implement team member invite email sequence
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 warnings unrelated to S076)
+- Files created:
+  - src/lib/email/team-invite-service.ts - Main sequence service
+  - src/lib/email/team-invite-templates.ts - 5 email templates
+  - src/app/api/cron/process-team-invites/route.ts - Cron endpoint
+  - supabase/migrations/20240101000044_team_invite_tracking.sql - Tracking columns
+- Files modified:
+  - src/lib/email/types.ts - Added 5 template types and data interfaces
+  - src/lib/email/index.ts - Exported new service and templates
+- What was implemented:
+  - Email 1 (Immediate): Initial invitation from inviter with org branding
+  - Email 2 (Day 2): First reminder if not accepted
+  - Email 3 (Day 5): Final reminder with urgency
+  - Email 4 (On Accept): Role-specific welcome and quick start
+  - Email 5 (Day 14): Expiration notice
+  - Role-specific content: LO sees review features, Manager sees team analytics
+  - Tracking columns: reminder_count, last_reminder_at, expiration_sent
+  - Funnel stats: getInviteFunnelStats() for invite → acceptance → activation
+  - resendTeamInvite() for manual re-invitations
+- **Learnings for future iterations:**
+  - Supabase typed queries on organization_invitations require (supabase as any) cast due to deep type instantiation
+  - "use server" files cannot export objects, only async functions
+---

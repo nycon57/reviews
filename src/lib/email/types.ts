@@ -87,7 +87,15 @@ export type EmailTemplate =
   | "reengagement_1_miss_you"
   | "reengagement_2_whats_new"
   | "reengagement_3_last_chance"
-  | "reengagement_4_final";
+  | "reengagement_4_final"
+  // Profile & Setup reminder emails (S084)
+  | "profile_reminder_photo"
+  | "profile_reminder_bio"
+  | "profile_reminder_final"
+  | "setup_reminder_survey_template"
+  | "setup_reminder_first_survey"
+  | "setup_reminder_google_connect"
+  | "setup_reminder_invite_team";
 
 // Base email data
 export interface BaseEmailData {
@@ -1265,5 +1273,91 @@ export interface ReengagementSequenceStatus {
 export interface ReengagementEmailPreferences {
   enabled: boolean;
   // Allow users to opt out of re-engagement emails specifically
+  optedOut: boolean;
+}
+
+// =============================================================================
+// PROFILE & SETUP REMINDER EMAIL DATA INTERFACES (S084)
+// =============================================================================
+
+// Base profile/setup reminder email data (shared across all reminder emails)
+export interface ProfileSetupReminderEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  sequenceId: string;
+  unsubscribeUrl: string;
+  completionPercent: number;
+}
+
+// Profile Reminder Email 1: Missing Photo (Day 3)
+export interface ProfileReminderPhotoEmailData extends ProfileSetupReminderEmailBaseData {
+  uploadPhotoUrl: string;
+}
+
+// Profile Reminder Email 2: Incomplete Bio (Day 7)
+export interface ProfileReminderBioEmailData extends ProfileSetupReminderEmailBaseData {
+  editProfileUrl: string;
+  bioTips?: string[];
+}
+
+// Profile Reminder Email 3: Final Reminder with Impact Stats (Day 14)
+export interface ProfileReminderFinalEmailData extends ProfileSetupReminderEmailBaseData {
+  profileUrl: string;
+  missingItems: Array<{
+    label: string;
+    actionUrl: string;
+  }>;
+  impactStats?: {
+    moreReviews?: string;
+    higherRating?: string;
+    moreResponses?: string;
+  };
+}
+
+// Setup Reminder Email 1: No Survey Template (Day 3)
+export interface SetupReminderSurveyTemplateEmailData extends ProfileSetupReminderEmailBaseData {
+  createTemplateUrl: string;
+  setupProgress: number;
+  helpUrl?: string;
+}
+
+// Setup Reminder Email 2: No Survey Sent (Day 7)
+export interface SetupReminderFirstSurveyEmailData extends ProfileSetupReminderEmailBaseData {
+  sendSurveyUrl: string;
+  setupProgress: number;
+  recentClientName?: string;
+}
+
+// Setup Reminder Email 3: No Google Connected (Day 5, Admins Only)
+export interface SetupReminderGoogleConnectEmailData extends ProfileSetupReminderEmailBaseData {
+  googleConnectUrl: string;
+  setupProgress: number;
+}
+
+// Setup Reminder Email 4: No Team Members Invited (Day 7, Admins Only)
+export interface SetupReminderInviteTeamEmailData extends ProfileSetupReminderEmailBaseData {
+  inviteTeamUrl: string;
+  setupProgress: number;
+  teamLimit?: number;
+  currentTeamCount?: number;
+}
+
+// Profile/Setup reminder sequence status (for tracking user state)
+export interface ProfileSetupReminderStatus {
+  has_photo: boolean;
+  has_bio: boolean;
+  has_survey_template: boolean;
+  has_sent_survey: boolean;
+  has_google_connected: boolean;
+  has_team_members: boolean;
+  profile_completion_percent: number;
+  setup_completion_percent: number;
+  days_since_signup: number;
+}
+
+// Profile/Setup reminder email preferences
+export interface ProfileSetupReminderPreferences {
+  enabled: boolean;
   optedOut: boolean;
 }

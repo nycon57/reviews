@@ -6152,3 +6152,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The `daysBetween` function using Math.abs is intentional for absolute difference
   - Existing code patterns in org-onboarding-service.ts serve as good reference
 ---
+
+## [2026-01-21] - S076: Team Member Invite Sequence
+Run: 20260121-004232-375 (iteration 16)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-16.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-16.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4b224bf [Pass 3/3] refactor(S076): Simplify team member invite email code
+- Post-commit status: clean (only pre-existing PRD changes remain)
+- Skills invoked:
+  - /feature-dev: no (backend code, not applicable)
+  - /code-review: no (completed in Pass 2)
+  - /vercel-react-best-practices: no (no React components in this story)
+  - /code-simplifier: yes (via Task agent)
+  - /frontend-design: no (no UI in this story)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 warnings unrelated to S076)
+- Files changed:
+  - src/lib/email/team-invite-templates.ts - Extracted createQuickStartItem helper (~120 lines removed)
+  - src/lib/email/team-invite-service.ts - Consolidated switch statement, removed unused imports
+- Code simplifications:
+  - Created createQuickStartItem() helper to eliminate duplicate HTML template code
+  - Extracted common reminderData object before switch statement
+  - Removed unused type imports (TeamInvite1/2/3/5 EmailData)
+- All acceptance criteria verified:
+  - ✅ Invite Email (Immediate): Subject includes inviter name and org name
+  - ✅ Reminder 1 (Day 2): Sent via processTeamInviteQueue when daysSinceCreation >= 2
+  - ✅ Reminder 2 (Day 5): Final reminder with urgency banner
+  - ✅ Welcome Email (On Accept): Role-specific quick start content
+  - ✅ Personalized: Inviter name and organization branding in all emails
+  - ✅ Role-specific content: LO sees reviews/leaderboard, Manager sees analytics/team
+  - ✅ Deep link: buildAcceptUrl creates /invite/accept?token=xxx
+  - ✅ Funnel tracking: getInviteFunnelStats returns totalInvites, pending, accepted, expired, acceptanceRate
+  - ✅ Expiration after 14 days: getTeamInvite5ExpirationEmail sent when expired
+- **Learnings for future iterations:**
+  - Code simplification removes ~120 lines while preserving functionality
+  - Helper functions for HTML templates significantly improve maintainability
+  - Unused type imports accumulate when data shapes are shared via base types
+---

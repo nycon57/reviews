@@ -125,3 +125,58 @@ export type {
   TeamInvite4WelcomeEmailData,
   TeamInvite5ExpirationEmailData,
 } from "./types";
+
+// Role-based feature onboarding sequence service
+export {
+  startRoleOnboardingSequence,
+  processRoleOnboardingSequenceQueue,
+  pauseRoleOnboardingSequence,
+  resumeRoleOnboardingSequence,
+  getRoleOnboardingSequenceStatus,
+} from "./role-onboarding-service";
+
+// Role-based feature onboarding email templates
+export {
+  getRoleOnboardingLO1DashboardEmail,
+  getRoleOnboardingLO2SurveysEmail,
+  getRoleOnboardingLO3SharingEmail,
+  getRoleOnboardingLO4RespondingEmail,
+  getRoleOnboardingLO5VideoEmail,
+  getRoleOnboardingLO6MobileEmail,
+  getRoleOnboardingLO7GoogleEmail,
+  getRoleOnboardingMgr1TeamDashboardEmail,
+  getRoleOnboardingMgr2ApprovalsEmail,
+  getRoleOnboardingMgr3LeaderboardsEmail,
+  getRoleOnboardingMgr4ReportsEmail,
+  getRoleOnboardingMgr5CoachingEmail,
+  getRoleOnboardingMgr6AnalyticsEmail,
+  getRoleOnboardingAdmin1SettingsEmail,
+  getRoleOnboardingAdmin2UsersEmail,
+  getRoleOnboardingAdmin3IntegrationsEmail,
+  getRoleOnboardingAdmin4BillingEmail,
+  getRoleOnboardingAdmin5ComplianceEmail,
+} from "./role-onboarding-templates";
+
+// Types for role-based feature onboarding
+export type {
+  RoleOnboardingEmailBaseData,
+  RoleOnboardingLO1DashboardEmailData,
+  RoleOnboardingLO2SurveysEmailData,
+  RoleOnboardingLO3SharingEmailData,
+  RoleOnboardingLO4RespondingEmailData,
+  RoleOnboardingLO5VideoEmailData,
+  RoleOnboardingLO6MobileEmailData,
+  RoleOnboardingLO7GoogleEmailData,
+  RoleOnboardingMgr1TeamDashboardEmailData,
+  RoleOnboardingMgr2ApprovalsEmailData,
+  RoleOnboardingMgr3LeaderboardsEmailData,
+  RoleOnboardingMgr4ReportsEmailData,
+  RoleOnboardingMgr5CoachingEmailData,
+  RoleOnboardingMgr6AnalyticsEmailData,
+  RoleOnboardingAdmin1SettingsEmailData,
+  RoleOnboardingAdmin2UsersEmailData,
+  RoleOnboardingAdmin3IntegrationsEmailData,
+  RoleOnboardingAdmin4BillingEmailData,
+  RoleOnboardingAdmin5ComplianceEmailData,
+  RoleOnboardingFeatureStatus,
+} from "./types";

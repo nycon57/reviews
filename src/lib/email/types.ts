@@ -32,7 +32,26 @@ export type EmailTemplate =
   | "team_invite_2_reminder"
   | "team_invite_3_final_reminder"
   | "team_invite_4_welcome"
-  | "team_invite_5_expiration";
+  | "team_invite_5_expiration"
+  // Role-based feature onboarding sequences
+  | "role_onboarding_lo_1_dashboard"
+  | "role_onboarding_lo_2_surveys"
+  | "role_onboarding_lo_3_sharing"
+  | "role_onboarding_lo_4_responding"
+  | "role_onboarding_lo_5_video"
+  | "role_onboarding_lo_6_mobile"
+  | "role_onboarding_lo_7_google"
+  | "role_onboarding_mgr_1_team_dashboard"
+  | "role_onboarding_mgr_2_approvals"
+  | "role_onboarding_mgr_3_leaderboards"
+  | "role_onboarding_mgr_4_reports"
+  | "role_onboarding_mgr_5_coaching"
+  | "role_onboarding_mgr_6_analytics"
+  | "role_onboarding_admin_1_settings"
+  | "role_onboarding_admin_2_users"
+  | "role_onboarding_admin_3_integrations"
+  | "role_onboarding_admin_4_billing"
+  | "role_onboarding_admin_5_compliance";
 
 // Base email data
 export interface BaseEmailData {
@@ -449,4 +468,195 @@ export interface TeamInvite5ExpirationEmailData extends TeamInviteEmailBaseData 
   expiredAt: string;
   canRequestNewInvite: boolean;
   requestNewInviteUrl?: string;
+}
+
+// =============================================================================
+// ROLE-BASED FEATURE ONBOARDING SEQUENCE EMAIL DATA INTERFACES
+// =============================================================================
+
+// Base role onboarding email data (shared across all role onboarding emails)
+export interface RoleOnboardingEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  role: "admin" | "manager" | "loan_officer";
+  dashboardUrl: string;
+  sequenceId: string;
+  unsubscribeUrl: string;
+  currentStep: number;
+  totalSteps: number;
+}
+
+// =============================================================================
+// LOAN OFFICER SEQUENCE (7 emails over 30 days - weekly pacing)
+// =============================================================================
+
+// LO Email 1 (Day 0): Dashboard tour and key metrics
+export interface RoleOnboardingLO1DashboardEmailData extends RoleOnboardingEmailBaseData {
+  dashboardTourUrl: string;
+  metricsUrl: string;
+  currentRating?: number;
+  currentReviewCount?: number;
+}
+
+// LO Email 2 (Day 7): Sending survey requests manually
+export interface RoleOnboardingLO2SurveysEmailData extends RoleOnboardingEmailBaseData {
+  createSurveyUrl: string;
+  surveyTemplatesUrl: string;
+  hasSentSurvey: boolean;
+}
+
+// LO Email 3 (Day 14): Sharing positive reviews
+export interface RoleOnboardingLO3SharingEmailData extends RoleOnboardingEmailBaseData {
+  reviewsUrl: string;
+  shareSettingsUrl: string;
+  testimonialsUrl: string;
+  hasSharedReview: boolean;
+}
+
+// LO Email 4 (Day 18): Responding to reviews
+export interface RoleOnboardingLO4RespondingEmailData extends RoleOnboardingEmailBaseData {
+  reviewsUrl: string;
+  responseTemplatesUrl: string;
+  hasRespondedToReview: boolean;
+  pendingResponseCount?: number;
+}
+
+// LO Email 5 (Day 21): Video testimonial requests
+export interface RoleOnboardingLO5VideoEmailData extends RoleOnboardingEmailBaseData {
+  videoRequestUrl: string;
+  videoGalleryUrl: string;
+  hasRequestedVideo: boolean;
+}
+
+// LO Email 6 (Day 25): Mobile app features
+export interface RoleOnboardingLO6MobileEmailData extends RoleOnboardingEmailBaseData {
+  appStoreUrl: string;
+  playStoreUrl: string;
+  mobileGuideUrl: string;
+  hasUsedMobile: boolean;
+}
+
+// LO Email 7 (Day 30): Google review management
+export interface RoleOnboardingLO7GoogleEmailData extends RoleOnboardingEmailBaseData {
+  googleConnectUrl: string;
+  googleReviewsUrl: string;
+  businessListingUrl: string;
+  hasConnectedGoogle: boolean;
+}
+
+// =============================================================================
+// MANAGER SEQUENCE (6 emails over 30 days - weekly pacing)
+// =============================================================================
+
+// Manager Email 1 (Day 0): Team dashboard overview
+export interface RoleOnboardingMgr1TeamDashboardEmailData extends RoleOnboardingEmailBaseData {
+  teamDashboardUrl: string;
+  teamMembersUrl: string;
+  teamSize: number;
+}
+
+// Manager Email 2 (Day 7): Review approval workflow
+export interface RoleOnboardingMgr2ApprovalsEmailData extends RoleOnboardingEmailBaseData {
+  approvalQueueUrl: string;
+  approvalSettingsUrl: string;
+  pendingApprovalCount: number;
+  hasApprovedReview: boolean;
+}
+
+// Manager Email 3 (Day 12): Leaderboards and gamification
+export interface RoleOnboardingMgr3LeaderboardsEmailData extends RoleOnboardingEmailBaseData {
+  leaderboardUrl: string;
+  gamificationSettingsUrl: string;
+  hasViewedLeaderboard: boolean;
+}
+
+// Manager Email 4 (Day 18): Reports and exports
+export interface RoleOnboardingMgr4ReportsEmailData extends RoleOnboardingEmailBaseData {
+  reportsUrl: string;
+  scheduledReportsUrl: string;
+  exportUrl: string;
+  hasGeneratedReport: boolean;
+}
+
+// Manager Email 5 (Day 23): Team performance coaching tips
+export interface RoleOnboardingMgr5CoachingEmailData extends RoleOnboardingEmailBaseData {
+  teamAnalyticsUrl: string;
+  performanceTipsUrl: string;
+  lowPerformersCount?: number;
+  topPerformersCount?: number;
+}
+
+// Manager Email 6 (Day 30): Advanced analytics
+export interface RoleOnboardingMgr6AnalyticsEmailData extends RoleOnboardingEmailBaseData {
+  advancedAnalyticsUrl: string;
+  trendsUrl: string;
+  benchmarksUrl: string;
+  hasUsedAdvancedAnalytics: boolean;
+}
+
+// =============================================================================
+// ADMIN SEQUENCE (5 emails over 30 days - weekly pacing)
+// =============================================================================
+
+// Admin Email 1 (Day 0): Settings and configuration
+export interface RoleOnboardingAdmin1SettingsEmailData extends RoleOnboardingEmailBaseData {
+  settingsUrl: string;
+  brandingUrl: string;
+  notificationsUrl: string;
+  setupProgress: number;
+}
+
+// Admin Email 2 (Day 7): User management and permissions
+export interface RoleOnboardingAdmin2UsersEmailData extends RoleOnboardingEmailBaseData {
+  usersUrl: string;
+  inviteUrl: string;
+  rolesUrl: string;
+  teamCount: number;
+  hasInvitedUser: boolean;
+}
+
+// Admin Email 3 (Day 14): Integration setup deep dive
+export interface RoleOnboardingAdmin3IntegrationsEmailData extends RoleOnboardingEmailBaseData {
+  integrationsUrl: string;
+  googleConnectUrl: string;
+  crmConnectUrl: string;
+  webhooksUrl: string;
+  connectedIntegrationsCount: number;
+}
+
+// Admin Email 4 (Day 21): Billing and subscription management
+export interface RoleOnboardingAdmin4BillingEmailData extends RoleOnboardingEmailBaseData {
+  billingUrl: string;
+  plansUrl: string;
+  invoicesUrl: string;
+  currentPlan: string;
+  billingConfigured: boolean;
+}
+
+// Admin Email 5 (Day 30): Compliance and audit features
+export interface RoleOnboardingAdmin5ComplianceEmailData extends RoleOnboardingEmailBaseData {
+  auditLogUrl: string;
+  complianceSettingsUrl: string;
+  dataExportUrl: string;
+  securitySettingsUrl: string;
+}
+
+// Role onboarding feature usage status (for conditional skipping)
+export interface RoleOnboardingFeatureStatus {
+  // Loan Officer features
+  has_sent_survey: boolean;
+  has_shared_review: boolean;
+  has_responded_to_review: boolean;
+  has_requested_video: boolean;
+  has_used_mobile: boolean;
+  has_connected_google: boolean;
+  // Manager features
+  has_approved_review: boolean;
+  has_viewed_leaderboard: boolean;
+  has_generated_report: boolean;
+  has_used_advanced_analytics: boolean;
+  // Admin features
+  has_invited_user: boolean;
+  has_configured_integrations: boolean;
+  has_configured_billing: boolean;
 }

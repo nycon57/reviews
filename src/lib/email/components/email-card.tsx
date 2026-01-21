@@ -400,7 +400,7 @@ export function ImageCard({
             <Img
               src={imageUrl}
               alt={imageAlt}
-              width={parseInt(imageWidth)}
+              width={parseInt(imageWidth, 10)}
               style={{
                 width: imageWidth,
                 height: "auto",

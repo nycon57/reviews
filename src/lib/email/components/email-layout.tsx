@@ -205,7 +205,7 @@ export function TwoColumnLayout({
           className={stackOnMobile ? "mobile-stack" : undefined}
           style={{
             width: leftWidth,
-            paddingRight: parseInt(gap) / 2 + "px",
+            paddingRight: parseInt(gap, 10) / 2 + "px",
             verticalAlign: "top",
           }}
         >
@@ -215,7 +215,7 @@ export function TwoColumnLayout({
           className={stackOnMobile ? "mobile-stack" : undefined}
           style={{
             width: rightWidth,
-            paddingLeft: parseInt(gap) / 2 + "px",
+            paddingLeft: parseInt(gap, 10) / 2 + "px",
             verticalAlign: "top",
           }}
         >
@@ -274,7 +274,7 @@ export function CardGridLayout({
               className="mobile-stack"
               style={{
                 width: columnWidth,
-                padding: `0 ${parseInt(gap) / 2}px`,
+                padding: `0 ${parseInt(gap, 10) / 2}px`,
                 verticalAlign: "top",
               }}
             >
@@ -289,7 +289,7 @@ export function CardGridLayout({
                 className="mobile-stack"
                 style={{
                   width: columnWidth,
-                  padding: `0 ${parseInt(gap) / 2}px`,
+                  padding: `0 ${parseInt(gap, 10) / 2}px`,
                 }}
               />
             ))}

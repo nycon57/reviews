@@ -385,17 +385,29 @@ export function EmailPreviewClient() {
   const template = emailTemplates[selectedTemplate];
   const EmailComponent = template.component;
 
-  // Render email to HTML
+  // Render email to HTML with loading and error states
   const [htmlContent, setHtmlContent] = React.useState<string>("");
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [renderError, setRenderError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const renderEmail = async () => {
+      setIsLoading(true);
+      setRenderError(null);
       try {
         const html = await render(<EmailComponent />, { pretty: true });
         setHtmlContent(html);
       } catch (error) {
         console.error("Error rendering email:", error);
-        setHtmlContent("Error rendering email");
+        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+        setRenderError(errorMessage);
+        setHtmlContent(`<!DOCTYPE html><html><body style="padding: 40px; font-family: sans-serif; text-align: center;">
+          <h2 style="color: #991b1b; margin-bottom: 16px;">Error Rendering Email</h2>
+          <p style="color: #666;">${errorMessage}</p>
+          <p style="color: #999; font-size: 14px; margin-top: 24px;">Check the console for more details.</p>
+        </body></html>`);
+      } finally {
+        setIsLoading(false);
       }
     };
     renderEmail();
@@ -519,21 +531,28 @@ export function EmailPreviewClient() {
                   viewMode === "mobile" ? "items-start" : "items-start"
                 )}
               >
-                <div
-                  className={cn(
-                    "bg-white shadow-lg transition-all duration-300",
-                    viewMode === "mobile" ? "w-[375px]" : "w-full max-w-[620px]"
-                  )}
-                >
-                  <iframe
-                    srcDoc={htmlContent}
-                    className="w-full border-0"
-                    style={{
-                      height: viewMode === "mobile" ? "800px" : "1000px",
-                    }}
-                    title="Email Preview"
-                  />
-                </div>
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center py-20">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-repwell-sage-200 border-t-repwell-teal-300" />
+                    <p className="mt-4 text-sm text-muted-foreground">Rendering email...</p>
+                  </div>
+                ) : (
+                  <div
+                    className={cn(
+                      "bg-white shadow-lg transition-all duration-300",
+                      viewMode === "mobile" ? "w-[375px]" : "w-full max-w-[620px]"
+                    )}
+                  >
+                    <iframe
+                      srcDoc={htmlContent}
+                      className="w-full border-0"
+                      style={{
+                        height: viewMode === "mobile" ? "800px" : "1000px",
+                      }}
+                      title="Email Preview"
+                    />
+                  </div>
+                )}
               </div>
             </TabsContent>
             <TabsContent value="html" className="m-0">
@@ -558,6 +577,9 @@ export function EmailPreviewClient() {
             <Badge variant="secondary">React Email</Badge>
             <Badge variant="secondary">Responsive</Badge>
             <Badge variant="secondary">Dark Mode Ready</Badge>
+            {renderError && (
+              <Badge variant="destructive">Render Error</Badge>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -508,9 +508,12 @@ export interface HiddenPreheaderProps {
  * Pads with whitespace to prevent body content from showing.
  */
 export function HiddenPreheader({ text, minLength = 150 }: HiddenPreheaderProps) {
+  // Clamp minLength to reasonable bounds to prevent memory issues
+  const clampedMinLength = Math.min(Math.max(minLength, 0), 500);
+
   // Pad with non-breaking spaces and zero-width characters
-  const padding = minLength > text.length
-    ? "\u200C\u00A0".repeat(Math.ceil((minLength - text.length) / 2))
+  const padding = clampedMinLength > text.length
+    ? "\u200C\u00A0".repeat(Math.ceil((clampedMinLength - text.length) / 2))
     : "";
 
   // Note: msoHide is a valid MSO-specific CSS property for Outlook email clients

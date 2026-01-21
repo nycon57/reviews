@@ -142,7 +142,7 @@ export function EmailFooter({
                 <Link href={socialLinks.linkedin}>
                   <Img
                     src={socialIcons.linkedin}
-                    alt="LinkedIn"
+                    alt="Follow us on LinkedIn"
                     width={24}
                     height={24}
                     style={{ display: "inline-block" }}
@@ -155,7 +155,7 @@ export function EmailFooter({
                 <Link href={socialLinks.twitter}>
                   <Img
                     src={socialIcons.twitter}
-                    alt="X (Twitter)"
+                    alt="Follow us on X (Twitter)"
                     width={24}
                     height={24}
                     style={{ display: "inline-block" }}
@@ -168,7 +168,7 @@ export function EmailFooter({
                 <Link href={socialLinks.facebook}>
                   <Img
                     src={socialIcons.facebook}
-                    alt="Facebook"
+                    alt="Follow us on Facebook"
                     width={24}
                     height={24}
                     style={{ display: "inline-block" }}
@@ -181,7 +181,7 @@ export function EmailFooter({
                 <Link href={socialLinks.instagram}>
                   <Img
                     src={socialIcons.instagram}
-                    alt="Instagram"
+                    alt="Follow us on Instagram"
                     width={24}
                     height={24}
                     style={{ display: "inline-block" }}

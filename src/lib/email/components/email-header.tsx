@@ -310,7 +310,7 @@ export function OrganizationHeader({
                     lineHeight: "80px",
                   }}
                 >
-                  {loanOfficer.name.charAt(0).toUpperCase()}
+                  {(loanOfficer.name.charAt(0) || "?").toUpperCase()}
                 </Text>
               </Section>
             )}

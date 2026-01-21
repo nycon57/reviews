@@ -438,6 +438,7 @@ export interface EmailQuoteProps {
 /**
  * Styled blockquote component following Repwell design.
  * Uses display font for a refined, editorial look.
+ * Uses table-based layout for Outlook email client compatibility.
  */
 export function EmailQuote({
   children,
@@ -445,6 +446,43 @@ export function EmailQuote({
   authorTitle,
   showQuoteMark = true,
 }: EmailQuoteProps) {
+  // Quote content component to avoid duplication
+  const QuoteContent = () => (
+    <>
+      <Text
+        style={{
+          fontFamily: typography.fontFamily.display,
+          fontSize: typography.fontSize.xl,
+          fontStyle: "italic",
+          lineHeight: typography.lineHeight.relaxed,
+          color: colors.repwell.teal[500],
+          margin: 0,
+        }}
+      >
+        {children}
+      </Text>
+      {(author || authorTitle) && (
+        <Text
+          style={{
+            fontFamily: typography.fontFamily.body,
+            fontSize: typography.fontSize.sm,
+            color: colors.repwell.teal[300],
+            marginTop: spacing[3],
+            marginBottom: 0,
+          }}
+        >
+          {author && (
+            <span style={{ fontWeight: typography.fontWeight.semibold }}>
+              {author}
+            </span>
+          )}
+          {author && authorTitle && " — "}
+          {authorTitle}
+        </Text>
+      )}
+    </>
+  );
+
   return (
     <table
       cellPadding={0}
@@ -460,53 +498,33 @@ export function EmailQuote({
     >
       <tbody>
         <tr>
-          <td style={{ position: "relative" }}>
-            {showQuoteMark && (
-              <Text
-                style={{
-                  fontFamily: typography.fontFamily.display,
-                  fontSize: "64px",
-                  color: colors.repwell.sage[100],
-                  lineHeight: "1",
-                  position: "absolute",
-                  top: "-20px",
-                  left: "-10px",
-                  margin: 0,
-                }}
-              >
-                &ldquo;
-              </Text>
-            )}
-            <Text
-              style={{
-                fontFamily: typography.fontFamily.display,
-                fontSize: typography.fontSize.xl,
-                fontStyle: "italic",
-                lineHeight: typography.lineHeight.relaxed,
-                color: colors.repwell.teal[500],
-                margin: 0,
-              }}
-            >
-              {children}
-            </Text>
-            {(author || authorTitle) && (
-              <Text
-                style={{
-                  fontFamily: typography.fontFamily.body,
-                  fontSize: typography.fontSize.sm,
-                  color: colors.repwell.teal[300],
-                  marginTop: spacing[3],
-                  marginBottom: 0,
-                }}
-              >
-                {author && (
-                  <span style={{ fontWeight: typography.fontWeight.semibold }}>
-                    {author}
-                  </span>
-                )}
-                {author && authorTitle && " — "}
-                {authorTitle}
-              </Text>
+          <td>
+            {showQuoteMark ? (
+              // Table-based layout for Outlook compatibility (no absolute positioning)
+              <table cellPadding={0} cellSpacing={0} role="presentation" style={{ width: "100%" }}>
+                <tbody>
+                  <tr>
+                    <td style={{ width: "40px", verticalAlign: "top" }}>
+                      <Text
+                        style={{
+                          fontFamily: typography.fontFamily.display,
+                          fontSize: "48px",
+                          color: colors.repwell.sage[100],
+                          lineHeight: "1",
+                          margin: 0,
+                        }}
+                      >
+                        &ldquo;
+                      </Text>
+                    </td>
+                    <td style={{ verticalAlign: "top" }}>
+                      <QuoteContent />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : (
+              <QuoteContent />
             )}
           </td>
         </tr>
@@ -547,7 +565,7 @@ export function EmailPreheader({ text }: EmailPreheaderProps) {
     <Text style={preheaderStyle}>
       {text}
       {/* Add whitespace to prevent other text from showing in preview */}
-      {"\u200C".repeat(150 - text.length)}
+      {"\u200C".repeat(Math.max(0, 150 - text.length))}
     </Text>
   );
 }

@@ -37,10 +37,10 @@ export const BrandedOutro: React.FC<BrandedOutroProps> = ({
   contactInfo,
   format,
   startFrame,
-  durationFrames,
+  durationFrames: _durationFrames,
 }) => {
   const frame = useCurrentFrame();
-  const { fps, width, height } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   // Relative frame within outro
   const relativeFrame = frame - startFrame;

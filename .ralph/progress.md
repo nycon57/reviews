@@ -7203,3 +7203,58 @@ Pass 3/3 - Polish & Finalize:
 - Sequence exits only when ALL steps complete (100%), not individual steps
 - Role-based reminders (admin vs non-admin) require role checks in condition logic
 ---
+
+## S085 · Pass 1/3 · 2026-01-21
+Thread: 
+Run: (session continued from compaction)
+Pass: 1/3 - Implementation
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 558c733 [Pass 1/3] feat(S085): Implement trial ending email sequence
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no (email sequence, no UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 43 warnings - pre-existing)
+- Files changed:
+  - src/lib/email/types.ts (add trial ending types and interfaces)
+  - src/lib/email/trial-ending-templates.ts (new - 5 email templates)
+  - src/lib/email/trial-ending-service.ts (new - sequence service)
+  - src/lib/email/send.ts (add 5 send functions)
+
+### What was implemented
+Pass 1/3 - Implementation:
+1. Added TypeScript interfaces for trial ending emails to types.ts:
+   - TrialUsageStats, TrialFeatureComparison, TrialPricingInfo, TrialSpecialOffer
+   - Email data interfaces for all 5 emails with proper typing
+2. Created trial-ending-templates.ts with 5 conversion-focused emails:
+   - Email 1 (7d before): Accomplishments summary with usage stats and ROI estimate
+   - Email 2 (3d before): Feature comparison showing what they'll lose vs keep
+   - Email 3 (1d before): Final reminder with urgency/value A/B test variants
+   - Email 4 (trial ended): Grace period notice with restricted features list
+   - Email 5 (3d after): Win-back offer with special discount for high-value prospects
+3. Created trial-ending-service.ts with:
+   - Sequence management (start, pause, resume, status)
+   - Usage stats aggregation (reviews, surveys, videos, team members)
+   - High-value prospect detection based on engagement metrics
+   - Special offer generation for win-back emails
+   - Feature comparison with user's actual usage data
+   - Cron job function for automatic sequence triggering
+4. Added 5 send functions to send.ts following established patterns
+
+### Acceptance criteria coverage
+- ✓ 5 emails at specific times (7d, 3d, 1d before, trial ended, 3d after)
+- ✓ Personalization with usage stats
+- ✓ ROI calculation when data available
+- ✓ Feature comparison (lose vs keep)
+- ✓ Pricing and upgrade paths
+- ✓ A/B testing for urgency vs value messaging (Email 3)
+- ✓ Special offer capability for high-value prospects
+
+- Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Test & Debug)
+---

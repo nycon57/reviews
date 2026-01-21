@@ -177,16 +177,16 @@ function createSetupItem(
   `;
 }
 
+function getStepIndicatorColor(step: number, currentStep: number): string {
+  if (step === currentStep) return colors.primary;
+  if (step < currentStep) return colors.secondary;
+  return colors.border.default;
+}
+
 function createStepIndicator(currentStep: number, totalSteps: number): string {
   const steps = [];
   for (let i = 1; i <= totalSteps; i++) {
-    const isActive = i === currentStep;
-    const isCompleted = i < currentStep;
-    const bgColor = isActive
-      ? colors.primary
-      : isCompleted
-        ? colors.secondary
-        : colors.border.default;
+    const bgColor = getStepIndicatorColor(i, currentStep);
     steps.push(
       `<td style="padding: 0 4px;">
         <div style="width: 8px; height: 8px; border-radius: 50%; background-color: ${bgColor};"></div>

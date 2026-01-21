@@ -149,6 +149,23 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
+/**
+ * Calculate the next email time based on sequence start and step configuration.
+ * Uses absolute delay from sequence start to prevent timing drift.
+ */
+function calculateNextEmailTime(
+  sequenceStartedAt: string,
+  nextStep: number
+): Date | null {
+  const nextStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
+    (s) => s.step === nextStep
+  );
+  if (!nextStepConfig) return null;
+
+  const sequenceStartTime = new Date(sequenceStartedAt);
+  return addDays(sequenceStartTime, nextStepConfig.delayDays);
+}
+
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
   const supabase = createAdminClient();
   const { data } = await supabase
@@ -853,26 +870,14 @@ async function skipOrgSequenceStep(
   reason: string
 ): Promise<void> {
   const supabase = createAdminClient();
+  const now = new Date().toISOString();
 
   const skippedSteps = [
     ...sequence.skipped_steps,
-    {
-      step,
-      reason,
-      skipped_at: new Date().toISOString(),
-    },
+    { step, reason, skipped_at: now },
   ];
 
-  // Calculate next email time from sequence start (absolute delay, not relative)
-  const nextStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step + 1
-  );
-
-  // Use absolute delay from sequence start to prevent timing drift
-  const sequenceStartTime = new Date(sequence.started_at);
-  const nextEmailAt = nextStepConfig
-    ? addDays(sequenceStartTime, nextStepConfig.delayDays)
-    : null;
+  const nextEmailAt = calculateNextEmailTime(sequence.started_at, step + 1);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from as any)("email_sequences")
@@ -880,7 +885,7 @@ async function skipOrgSequenceStep(
       current_step: step,
       skipped_steps: skippedSteps,
       next_email_at: nextEmailAt?.toISOString(),
-      updated_at: new Date().toISOString(),
+      updated_at: now,
     })
     .eq("id", sequence.id);
 
@@ -899,39 +904,26 @@ async function updateOrgSequenceAfterSend(
   templateName: EmailTemplate
 ): Promise<void> {
   const supabase = createAdminClient();
+  const now = new Date().toISOString();
 
   const stepsCompleted = [
     ...sequence.steps_completed,
-    {
-      step,
-      email_id: emailId,
-      sent_at: new Date().toISOString(),
-      template: templateName,
-    },
+    { step, email_id: emailId, sent_at: now, template: templateName },
   ];
 
-  // Calculate next email time from sequence start (absolute delay, not relative)
-  const nextStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step + 1
-  );
-
   const isComplete = step >= ORG_ONBOARDING_SEQUENCE_CONFIG.totalSteps;
-  // Use absolute delay from sequence start to prevent timing drift
-  const sequenceStartTime = new Date(sequence.started_at);
-  const nextEmailAt = nextStepConfig
-    ? addDays(sequenceStartTime, nextStepConfig.delayDays)
-    : null;
+  const nextEmailAt = calculateNextEmailTime(sequence.started_at, step + 1);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from as any)("email_sequences")
     .update({
       current_step: step,
       steps_completed: stepsCompleted,
-      last_email_at: new Date().toISOString(),
+      last_email_at: now,
       next_email_at: nextEmailAt?.toISOString(),
       status: isComplete ? "completed" : "active",
-      completed_at: isComplete ? new Date().toISOString() : null,
-      updated_at: new Date().toISOString(),
+      completed_at: isComplete ? now : null,
+      updated_at: now,
     })
     .eq("id", sequence.id);
 

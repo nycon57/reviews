@@ -6193,3 +6193,39 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Helper functions for HTML templates significantly improve maintainability
   - Unused type imports accumulate when data shapes are shared via base types
 ---
+
+## [2026-01-21] - S077: Role-Based Feature Onboarding Sequences
+Run: 20260121-manual-pass1
+Pass: 1/3 - Implementation
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 26c4cf9 [Pass 1/3] feat(S077): Implement role-based feature onboarding sequences
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes (architecture exploration)
+  - /code-review: no (Pass 2 task)
+  - /vercel-react-best-practices: no (no React components)
+  - /code-simplifier: no (Pass 3 task)
+  - /frontend-design: no (no UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 warnings unrelated to S077)
+- Files created:
+  - src/lib/email/role-onboarding-service.ts - Main sequence service (600+ lines)
+  - src/lib/email/role-onboarding-templates.ts - 18 email templates (1100+ lines)
+  - src/app/api/cron/process-role-onboarding/route.ts - Cron endpoint
+- Files modified:
+  - src/lib/email/types.ts - Added 18 template types, RoleOnboardingEmailBaseData, RoleOnboardingFeatureStatus
+  - src/lib/email/index.ts - Exported new service and templates
+- What was implemented:
+  - Loan Officer sequence (7 emails): dashboard, surveys, sharing, responding, video, mobile, Google
+  - Manager sequence (6 emails): team dashboard, approvals, leaderboards, reports, coaching, analytics
+  - Admin sequence (5 emails): settings, users, integrations, billing, compliance
+  - Weekly pacing (delayDays: 0, 7, 14, 21, 28, 35, 42)
+  - Feature usage detection via getRoleOnboardingFeatureStatus()
+  - Skip conditions for features already used
+  - Cron endpoint with batch processing and health check
+- **Learnings for future iterations:**
+  - Table name is google_connections not social_connections
+  - Use is_active=true not status='active' for google_connections
+---

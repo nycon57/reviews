@@ -259,6 +259,22 @@ export async function fetchWeeklyTeamMetrics(
         ? formatTrendValue(teamAvgRatingThisWeek, teamAvgRatingLastWeek, true)
         : "N/A";
 
+    // Batch fetch last activity dates for all team members (avoid N+1 query)
+    const { data: lastActivities } = await supabase
+      .from("reviews")
+      .select("loan_officer_id, created_at")
+      .in("loan_officer_id", teamMemberIds)
+      .order("created_at", { ascending: false });
+
+    // Build a map of loan_officer_id -> last activity date (first occurrence is most recent)
+    const lastActivityMap = new Map<string, Date>();
+    for (const activity of lastActivities || []) {
+      const loId = activity.loan_officer_id as string;
+      if (!lastActivityMap.has(loId)) {
+        lastActivityMap.set(loId, new Date(activity.created_at as string));
+      }
+    }
+
     // Calculate per-member metrics for top/bottom performers
     const memberMetrics: TeamMemberMetrics[] = [];
 
@@ -274,17 +290,7 @@ export async function fetchWeeklyTeamMetrics(
             ) / memberReviewsThisWeek.length
           : (member.average_rating as number | null);
 
-      // Get last activity date
-      const { data: lastReview } = await supabase
-        .from("reviews")
-        .select("created_at")
-        .eq("loan_officer_id", member.id)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      const lastActivityDate = lastReview?.[0]
-        ? new Date(lastReview[0].created_at as string)
-        : null;
+      const lastActivityDate = lastActivityMap.get(member.id as string) || null;
 
       memberMetrics.push({
         id: member.id as string,

@@ -4,7 +4,7 @@
  * Service for sending weekly performance summary emails to loan officers and managers.
  */
 
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, emailConfig, getFromAddress } from "../client";
 import {
   renderWeeklySummaryLOEmail,
@@ -20,7 +20,67 @@ import type {
   WeeklySummaryLOEmailData,
   WeeklySummaryManagerEmailData,
   WeeklySummaryEmailPreferences,
+  EmailTemplate,
 } from "../types";
+
+/**
+ * Check if an email address is unsubscribed
+ */
+async function isEmailUnsubscribed(email: string): Promise<boolean> {
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("email_unsubscribes")
+    .select("id")
+    .eq("email", email.toLowerCase())
+    .single();
+
+  return !!data;
+}
+
+/**
+ * Log email send attempt to database
+ */
+async function logEmail(params: {
+  toEmail: string;
+  toName?: string;
+  fromEmail: string;
+  fromName?: string;
+  subject: string;
+  templateName: EmailTemplate;
+  organizationId?: string;
+  loanOfficerId?: string;
+  resendMessageId?: string;
+  status: string;
+  errorMessage?: string;
+}): Promise<string | null> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("email_logs")
+    .insert({
+      to_email: params.toEmail,
+      to_name: params.toName,
+      from_email: params.fromEmail,
+      from_name: params.fromName,
+      subject: params.subject,
+      template_name: params.templateName,
+      organization_id: params.organizationId,
+      loan_officer_id: params.loanOfficerId,
+      resend_message_id: params.resendMessageId,
+      status: params.status,
+      sent_at: params.status === "sent" ? new Date().toISOString() : null,
+      error_message: params.errorMessage,
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error("Failed to log email:", error);
+    return null;
+  }
+
+  return data.id;
+}
 
 interface SendWeeklySummaryResult {
   success: boolean;
@@ -139,6 +199,13 @@ export async function sendWeeklyLOSummaries(): Promise<SendWeeklySummaryResult> 
           continue;
         }
 
+        // Check if email is unsubscribed
+        const unsubscribed = await isEmailUnsubscribed(user.email);
+        if (unsubscribed) {
+          result.skipped++;
+          continue;
+        }
+
         // Check if should send now (for scheduled runs)
         // Skip this check if running manually or as a weekly batch
         // Uncomment for hourly cron: if (!shouldSendNow(user.preferences)) { result.skipped++; continue; }
@@ -177,21 +244,50 @@ export async function sendWeeklyLOSummaries(): Promise<SendWeeklySummaryResult> 
 
         // Render and send email
         const { subject, html } = await renderWeeklySummaryLOEmail(emailData);
+        const fromAddress = getFromAddress();
 
-        const { error: sendError } = await resend.emails.send({
-          from: getFromAddress(),
+        const { data: sendData, error: sendError } = await resend.emails.send({
+          from: fromAddress,
           to: user.email,
           subject,
           html,
+          tags: [
+            { name: "template", value: "weekly_summary_lo" },
+            { name: "organization_id", value: user.organizationId },
+            { name: "loan_officer_id", value: user.userId },
+          ],
         });
 
         if (sendError) {
+          await logEmail({
+            toEmail: user.email,
+            toName: user.fullName,
+            fromEmail: emailConfig.defaultFromEmail,
+            subject,
+            templateName: "weekly_summary_lo",
+            organizationId: user.organizationId,
+            loanOfficerId: user.userId,
+            status: "failed",
+            errorMessage: sendError.message,
+          });
           result.errors.push(
             `Failed to send to ${user.email}: ${sendError.message}`
           );
           result.failed++;
           continue;
         }
+
+        await logEmail({
+          toEmail: user.email,
+          toName: user.fullName,
+          fromEmail: emailConfig.defaultFromEmail,
+          subject,
+          templateName: "weekly_summary_lo",
+          organizationId: user.organizationId,
+          loanOfficerId: user.userId,
+          resendMessageId: sendData?.id,
+          status: "sent",
+        });
 
         result.sent++;
       } catch (userError) {
@@ -242,6 +338,13 @@ export async function sendWeeklyManagerSummaries(): Promise<SendWeeklySummaryRes
           continue;
         }
 
+        // Check if email is unsubscribed
+        const unsubscribed = await isEmailUnsubscribed(user.email);
+        if (unsubscribed) {
+          result.skipped++;
+          continue;
+        }
+
         // Check for team activity if skip option is enabled
         if (user.preferences.skipIfNoActivity) {
           const hasActivity = await hasTeamWeeklyActivity(user.organizationId);
@@ -277,21 +380,47 @@ export async function sendWeeklyManagerSummaries(): Promise<SendWeeklySummaryRes
         // Render and send email
         const { subject, html } =
           await renderWeeklySummaryManagerEmail(emailData);
+        const fromAddress = getFromAddress();
 
-        const { error: sendError } = await resend.emails.send({
-          from: getFromAddress(),
+        const { data: sendData, error: sendError } = await resend.emails.send({
+          from: fromAddress,
           to: user.email,
           subject,
           html,
+          tags: [
+            { name: "template", value: "weekly_summary_manager" },
+            { name: "organization_id", value: user.organizationId },
+          ],
         });
 
         if (sendError) {
+          await logEmail({
+            toEmail: user.email,
+            toName: user.fullName,
+            fromEmail: emailConfig.defaultFromEmail,
+            subject,
+            templateName: "weekly_summary_manager",
+            organizationId: user.organizationId,
+            status: "failed",
+            errorMessage: sendError.message,
+          });
           result.errors.push(
             `Failed to send to ${user.email}: ${sendError.message}`
           );
           result.failed++;
           continue;
         }
+
+        await logEmail({
+          toEmail: user.email,
+          toName: user.fullName,
+          fromEmail: emailConfig.defaultFromEmail,
+          subject,
+          templateName: "weekly_summary_manager",
+          organizationId: user.organizationId,
+          resendMessageId: sendData?.id,
+          status: "sent",
+        });
 
         result.sent++;
       } catch (userError) {

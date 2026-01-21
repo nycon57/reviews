@@ -189,11 +189,11 @@ export async function fetchWeeklyLOMetrics(
         .order("snapshot_date", { ascending: false })
         .limit(2),
 
-      // Surveys completed this week
+      // Surveys completed this week (join through surveys to get LO's responses)
       supabase
         .from("survey_responses")
-        .select("id, overall_rating, nps_score")
-        .eq("survey_id", loanOfficerId) // Note: This joins through surveys table
+        .select("id, overall_rating, nps_score, surveys!inner(loan_officer_id)")
+        .eq("surveys.loan_officer_id", loanOfficerId)
         .gte("submitted_at", thisWeekStart.toISOString())
         .lte("submitted_at", thisWeekEnd.toISOString()),
 
@@ -384,7 +384,8 @@ export async function hasWeeklyActivity(
 
     supabase
       .from("survey_responses")
-      .select("id", { count: "exact" })
+      .select("id, surveys!inner(loan_officer_id)", { count: "exact" })
+      .eq("surveys.loan_officer_id", loanOfficerId)
       .gte("submitted_at", thisWeekStart.toISOString())
       .lte("submitted_at", thisWeekEnd.toISOString()),
 

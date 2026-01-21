@@ -5962,3 +5962,48 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Welcome sequence is a complex multi-file feature requiring database, service, templates, cron, and webhook integration
   - Type workarounds with eslint-disable comments are acceptable when DB types haven't been regenerated
 ---
+
+## [2026-01-21] - S075: Organization Onboarding Sequence - Pass 1/3
+Thread: Implementation pass
+Run: 20260121-continuation (Pass 1)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 0a3fc01 [Pass 1/3] feat(S075): Implement org onboarding email sequence
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes (guided implementation)
+  - /code-review: pending (Pass 2)
+  - /vercel-react-best-practices: not applicable (server-side code)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, pre-existing warnings only)
+- Files created:
+  - src/lib/email/org-onboarding-service.ts (full service implementation)
+  - src/lib/email/org-onboarding-templates.ts (6 email templates)
+  - src/app/api/cron/process-org-onboarding/route.ts (cron endpoint)
+- Files modified:
+  - src/lib/email/index.ts (exports for org onboarding)
+  - src/lib/email/types.ts (type definitions)
+  - src/lib/onboarding/actions.ts (start sequence on completion)
+- **Implementation Summary:**
+  1. 6-email org onboarding sequence:
+     - Email 1 (Immediate): Welcome + getting started guide
+     - Email 2 (Day 1): Branding setup (logo, colors)
+     - Email 3 (Day 2): Team setup (invite members)
+     - Email 4 (Day 4): Google integration guide
+     - Email 5 (Day 6): Billing reminder (conditional)
+     - Email 6 (Day 10): Advanced features
+  2. Conditional skipping logic:
+     - Skip billing email if subscription_status === "active"
+     - Skip integrations email if google_connections exists
+  3. Setup progress tracking (0-100%)
+  4. Exit on activation milestone (first survey sent)
+  5. Queue processing via cron (every 5 minutes)
+- **Bug fixes during implementation:**
+  - Fixed table name: "social_connections" -> "google_connections"
+  - Fixed billing check: removed non-existent stripe_subscription_id field
+- **Pending for Pass 2:**
+  - Code review for security, logic errors, design system compliance
+  - Review conditional skipping logic
+  - Verify email template content and styling
+---

@@ -6461,3 +6461,37 @@ Run summary: (current session)
   - Proper escaping (escapeHtml, sanitizeUrl, sanitizeSubject)
 - Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Code Review)
 ---
+
+## [2026-01-21] - S079: Review Lifecycle Email Enhancements
+Thread:
+Run: (current session)
+Pass: 2/3 - Quality Review
+Run log: (current session)
+Run summary: (current session)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 725004f [Pass 2/3] fix(S079): Quality review - fix URL encoding in email templates
+- Post-commit status: clean
+- Skills invoked:
+  - /code-review: manual (no open PR)
+  - /vercel-react-best-practices: no (backend email templates, not React)
+  - /frontend-design: no (no UI components)
+- Code Review Findings:
+  - Issues identified: 2
+  - Issues filtered (confidence < 80): 1 (pre-existing header injection in client.ts - out of scope)
+  - Issues fixed: 1 (URL encoding bug, confidence 85)
+- URL Encoding Fix:
+  - Problem: `escapeHtml(data.reviewId)` used for URL path segments produces malformed URLs
+  - Example: ID `123&456` becomes `123&amp;456` instead of `123%26456`
+  - Solution: Changed to `encodeURIComponent(data.reviewId)` for URL paths
+  - Files: src/lib/email/templates.ts lines 2642, 2821
+  - Note: Lines 2658, 2846 correctly use `escapeHtml` for text display context
+- Design System Compliance:
+  - Colors audited: 19 total
+  - Compliant: 15/19 (Repwell sage/teal palette, neutral grays)
+  - Contextual: 4/19 (warning yellow, error red, success backgrounds - acceptable for email states)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 warnings unrelated to S079)
+- Status: Pass 2/3 COMPLETE - Ready for Pass 3 (Polish & Finalize)
+---

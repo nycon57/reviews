@@ -23,16 +23,11 @@ import {
 } from "../../components";
 import { CelebrationHeader } from "./celebration-header";
 import { SocialShareCta } from "./social-share-cta";
+import { renderStars } from "../../utils";
 import type { RatingImprovementMilestoneEmailData } from "../../types";
 
 interface RatingImprovementMilestoneEmailProps {
   data: RatingImprovementMilestoneEmailData;
-}
-
-function renderStars(rating: number): string {
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating % 1 >= 0.5;
-  return "★".repeat(fullStars) + (hasHalf ? "½" : "") + "☆".repeat(5 - fullStars - (hasHalf ? 1 : 0));
 }
 
 export function RatingImprovementMilestoneEmail({ data }: RatingImprovementMilestoneEmailProps) {
@@ -91,7 +86,7 @@ export function RatingImprovementMilestoneEmail({ data }: RatingImprovementMiles
                 opacity: 0.7,
               }}
             >
-              {renderStars(previousRating)}
+              {renderStars(previousRating, true)}
             </Text>
             <Text
               style={{
@@ -137,7 +132,7 @@ export function RatingImprovementMilestoneEmail({ data }: RatingImprovementMiles
                 letterSpacing: "2px",
               }}
             >
-              {renderStars(currentRating)}
+              {renderStars(currentRating, true)}
             </Text>
             <Text
               style={{

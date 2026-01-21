@@ -6,7 +6,7 @@
  */
 
 import * as React from "react";
-import { Section, Text } from "@react-email/components";
+import { Section, Text, Row, Column } from "@react-email/components";
 import {
   EmailLayout,
   SingleColumnLayout,
@@ -147,16 +147,9 @@ export function NpsImprovementMilestoneEmail({ data }: NpsImprovementMilestoneEm
 
           <Spacer size="md" />
 
-          {/* Before/After */}
-          <Section
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: spacing[4],
-            }}
-          >
-            <Section style={{ textAlign: "center", flex: 1 }}>
+          {/* Before/After - using Row/Column for email client compatibility */}
+          <Row>
+            <Column style={{ width: "40%", textAlign: "center", verticalAlign: "middle" }}>
               <Text
                 style={{
                   margin: 0,
@@ -178,18 +171,20 @@ export function NpsImprovementMilestoneEmail({ data }: NpsImprovementMilestoneEm
               >
                 {previousNps > 0 ? `+${previousNps}` : previousNps}
               </Text>
-            </Section>
+            </Column>
 
-            <Text
-              style={{
-                margin: 0,
-                fontSize: "24px",
-              }}
-            >
-              →
-            </Text>
+            <Column style={{ width: "20%", textAlign: "center", verticalAlign: "middle" }}>
+              <Text
+                style={{
+                  margin: 0,
+                  fontSize: "24px",
+                }}
+              >
+                →
+              </Text>
+            </Column>
 
-            <Section style={{ textAlign: "center", flex: 1 }}>
+            <Column style={{ width: "40%", textAlign: "center", verticalAlign: "middle" }}>
               <Text
                 style={{
                   margin: 0,
@@ -211,8 +206,8 @@ export function NpsImprovementMilestoneEmail({ data }: NpsImprovementMilestoneEm
               >
                 {currentNps > 0 ? `+${currentNps}` : currentNps}
               </Text>
-            </Section>
-          </Section>
+            </Column>
+          </Row>
 
           <Spacer size="md" />
 

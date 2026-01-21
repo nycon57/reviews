@@ -22,14 +22,11 @@ import {
 } from "../../components";
 import { CelebrationHeader } from "./celebration-header";
 import { SocialShareCta } from "./social-share-cta";
+import { renderStars } from "../../utils";
 import type { FirstReviewMilestoneEmailData } from "../../types";
 
 interface FirstReviewMilestoneEmailProps {
   data: FirstReviewMilestoneEmailData;
-}
-
-function renderStars(rating: number): string {
-  return "★".repeat(Math.floor(rating)) + "☆".repeat(5 - Math.floor(rating));
 }
 
 export function FirstReviewMilestoneEmail({ data }: FirstReviewMilestoneEmailProps) {

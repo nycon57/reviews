@@ -6595,3 +6595,42 @@ Run summary: (manual run)
   - src/lib/email/index.ts (exports for new templates and types)
 - Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Quality Review)
 ---
+
+## S080 · Pass 2/3 · 2026-01-21
+Run log: (manual run)
+Run summary: (manual run)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 2b851e8 [Pass 2/3] fix(S080): Quality review - fix URL encoding and deduplicate utils
+- Post-commit status: clean
+- Skills invoked:
+  - /code-review: yes (parallel agents for bug detection, CLAUDE.md compliance, git history)
+  - /vercel-react-best-practices: yes (React Email components)
+- Quality Review Findings (5 issues identified and fixed):
+  1. **URL Encoding Bug** - testimonialId not URL-encoded in video-approval-needed.tsx
+  2. **Query String Bug** - URL construction didn't handle existing query strings
+  3. **Inconsistent Display** - Duration showed "N/A" instead of hiding when missing
+  4. **Misleading Comment** - Comment said "play button overlay" but showed metadata
+  5. **Code Duplication** - formatDuration function duplicated across 5 template files
+- Fixes Applied:
+  - Added encodeURIComponent() for testimonialId
+  - Added conditional check for existing query strings (? vs &)
+  - Changed duration to conditionally render only when present
+  - Updated misleading comment to accurately describe content
+  - Extracted formatDuration to new shared utils.ts file
+  - Removed duplicate functions from all 5 template files
+  - Removed unused imports (SummaryCard, Badge, Divider, videoPageUrl)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no S080-related warnings)
+- Files created:
+  - src/lib/email/utils.ts (shared utility functions)
+- Files modified:
+  - src/lib/email/index.ts (export utils)
+  - src/lib/email/templates/video-approval-needed.tsx (URL fix, duration display, remove unused imports)
+  - src/lib/email/templates/video-approved.tsx (use shared utils, remove unused imports)
+  - src/lib/email/templates/video-processing-complete.tsx (use shared utils, remove unused imports)
+  - src/lib/email/templates/video-processing-started.tsx (use shared utils, fix comment)
+  - src/lib/email/templates/video-shared.tsx (use shared utils, remove unused variable)
+- Status: Pass 2/3 COMPLETE - Ready for Pass 3 (Polish & Documentation)
+---

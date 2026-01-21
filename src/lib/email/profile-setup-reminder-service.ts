@@ -16,10 +16,14 @@
  * - Day 5: No Google connected (admins only)
  * - Day 7: No team members invited (admins only)
  *
- * Exit Conditions:
- * - User completes the specific step being reminded about
- * - User unsubscribes
+ * Individual reminders stop when:
+ * - User completes the specific step being reminded about (e.g., uploads photo)
+ *
+ * Sequence exits completely when:
+ * - User completes ALL profile and setup steps (100% completion)
+ * - User unsubscribes from emails
  * - User disables notifications
+ * - User no longer has an organization
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -234,6 +238,7 @@ async function logEmail(params: {
       subject: params.subject,
       template_name: params.templateName,
       organization_id: params.organizationId,
+      user_id: params.userId,
       resend_message_id: params.resendMessageId,
       status: params.status,
       sent_at: params.status === "sent" ? new Date().toISOString() : null,
@@ -423,12 +428,15 @@ export async function detectUsersAndStartReminderSequences(): Promise<DetectionR
   for (const user of eligibleUsers) {
     try {
       // Check if user already has an active profile-setup-reminder sequence
+      // Note: Don't include "processing" - that's a transient state from optimistic locking.
+      // If a sequence is stuck in "processing" state (due to crash/error), we should allow
+      // starting a new sequence rather than blocking the user indefinitely.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: existingSequence } = await (supabase.from as any)("email_sequences")
         .select("id")
         .eq("user_id", user.id)
         .eq("sequence_type", "profile-setup-reminder")
-        .in("status", ["active", "paused", "processing"])
+        .in("status", ["active", "paused"])
         .single();
 
       if (existingSequence) {
@@ -1065,7 +1073,12 @@ async function updateSequenceAfterSend(
 }
 
 /**
- * Exit reminder sequences when a user completes a specific step
+ * Check if reminder sequence should exit due to full completion.
+ *
+ * This function checks if ALL profile and setup steps are complete (100%)
+ * and exits the sequence if so. Individual step completion does NOT exit
+ * the sequence - it only prevents that specific reminder from being sent.
+ *
  * Call this when:
  * - User uploads photo
  * - User completes bio
@@ -1073,6 +1086,8 @@ async function updateSequenceAfterSend(
  * - User sends first survey
  * - User connects Google
  * - User invites team member
+ *
+ * Note: Returns { shouldExit: true } only when ALL steps are complete.
  */
 export async function checkAndExitSequenceOnCompletion(
   userId: string

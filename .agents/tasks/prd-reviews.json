@@ -3043,7 +3043,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Re-engagement rate > 10% for 7-day inactive",
         "Low unsubscribe rate on sequence",
@@ -3083,8 +3083,8 @@
         }
       },
       "startedAt": "2026-01-21T12:17:32.757470+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-21T12:17:32.757613+00:00"
+      "completedAt": "2026-01-21T12:42:20.137289+00:00",
+      "updatedAt": "2026-01-21T12:42:20.137166+00:00"
     },
     {
       "id": "S084",
@@ -3108,7 +3108,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Profile completion rate improves",
         "Setup completion rate improves",
@@ -3135,7 +3135,10 @@
           "has_google_connection",
           "has_team_members"
         ]
-      }
+      },
+      "startedAt": "2026-01-21T12:57:14.472054+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T12:57:14.472176+00:00"
     },
     {
       "id": "S085",

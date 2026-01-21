@@ -767,6 +767,59 @@ export type Database = {
           },
         ]
       }
+      generated_videos: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          format: string
+          id: string
+          organization_id: string
+          render_error: string | null
+          render_status: string
+          source_id: string
+          source_type: string
+          storage_path: string
+          template: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          format?: string
+          id?: string
+          organization_id: string
+          render_error?: string | null
+          render_status?: string
+          source_id: string
+          source_type: string
+          storage_path: string
+          template?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          format?: string
+          id?: string
+          organization_id?: string
+          render_error?: string | null
+          render_status?: string
+          source_id?: string
+          source_type?: string
+          storage_path?: string
+          template?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_videos_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       google_connections: {
         Row: {
           access_token: string
@@ -4234,6 +4287,7 @@ export type Database = {
       }
       video_testimonial_requests: {
         Row: {
+          clicked_at: string | null
           created_at: string
           created_by: string | null
           customer_email: string
@@ -4261,6 +4315,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          clicked_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_email: string
@@ -4288,6 +4343,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          clicked_at?: string | null
           created_at?: string
           created_by?: string | null
           customer_email?: string
@@ -4371,6 +4427,7 @@ export type Database = {
           device_type: string | null
           duration_seconds: number | null
           file_size_bytes: number | null
+          generated_video_urls: Json | null
           height: number | null
           id: string
           ip_address: unknown
@@ -4394,6 +4451,8 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           user_agent: string | null
+          video_generated_at: string | null
+          video_generation_status: string | null
           video_path: string
           video_url: string
           width: number | null
@@ -4416,6 +4475,7 @@ export type Database = {
           device_type?: string | null
           duration_seconds?: number | null
           file_size_bytes?: number | null
+          generated_video_urls?: Json | null
           height?: number | null
           id?: string
           ip_address?: unknown
@@ -4439,6 +4499,8 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           user_agent?: string | null
+          video_generated_at?: string | null
+          video_generation_status?: string | null
           video_path: string
           video_url: string
           width?: number | null
@@ -4461,6 +4523,7 @@ export type Database = {
           device_type?: string | null
           duration_seconds?: number | null
           file_size_bytes?: number | null
+          generated_video_urls?: Json | null
           height?: number | null
           id?: string
           ip_address?: unknown
@@ -4484,6 +4547,8 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           user_agent?: string | null
+          video_generated_at?: string | null
+          video_generation_status?: string | null
           video_path?: string
           video_url?: string
           width?: number | null
@@ -5001,4 +5066,3 @@ export const Constants = {
     },
   },
 } as const
-

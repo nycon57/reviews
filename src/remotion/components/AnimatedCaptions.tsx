@@ -49,7 +49,7 @@ export const AnimatedCaptions: React.FC<AnimatedCaptionsProps> = ({
   style = "default",
 }) => {
   const frame = useCurrentFrame();
-  const { fps, width, height } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   // Parse captions into individual words with timing
   const words = parseWordsFromCaptions(captions, fps, startFrame);
@@ -132,7 +132,7 @@ interface AnimatedWordProps {
 
 const AnimatedWord: React.FC<AnimatedWordProps> = ({
   word,
-  index,
+  index: _index,
   currentFrame,
   isActive,
   isPast,

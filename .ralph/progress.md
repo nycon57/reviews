@@ -5809,3 +5809,58 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - When removing useEffect dependencies intentionally, always document why with eslint-disable comment
   - Watch for copy-paste errors in ternary expressions where both branches are identical
 ---
+
+## [2026-01-21] - S074: New User Welcome Sequence - Pass 1/3
+Thread: Initial implementation pass
+Run: 20260121-continuation (Pass 1)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: bc59e3d [Pass 1/3] feat(S074): Implement new user welcome sequence
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, pre-existing warnings only)
+- Files created:
+  - supabase/migrations/20240101000043_email_sequences.sql
+  - src/lib/email/welcome-templates.ts
+  - src/lib/email/welcome-sequence-service.ts
+  - src/app/api/cron/process-welcome-sequence/route.ts
+  - src/app/api/email/welcome-sequence/route.ts
+- Files modified:
+  - src/lib/email/types.ts (added welcome email template types)
+  - src/app/auth/callback/route.ts (added welcome sequence trigger)
+  - src/app/api/webhooks/resend/route.ts (added welcome sequence tracking)
+- **Implementation Summary:**
+  1. **Database Schema:**
+     - Created email_sequences table for tracking sequence progress
+     - Added RLS policies, indexes, and helper functions
+     - get_user_onboarding_status() function for conditional branching
+     - check_user_activation_milestone() function for exit conditions
+  2. **5 Welcome Email Templates:**
+     - Email 1 (Immediate): Welcome + deliver access
+     - Email 2 (Day 1): Profile setup quick win
+     - Email 3 (Day 3): Feature highlight - first action
+     - Email 4 (Day 5): Social proof - customer success
+     - Email 5 (Day 7): Core value - metrics preview
+  3. **Welcome Sequence Service:**
+     - startWelcomeSequence() - triggered on signup
+     - processWelcomeSequenceQueue() - cron job processor
+     - pauseWelcomeSequence() / resumeWelcomeSequence() - user controls
+     - getWelcomeSequenceStatus() - status check
+  4. **Features Implemented:**
+     - A/B testing for Email 1 and Email 3 subject lines
+     - Conditional branching (skip emails for completed actions)
+     - Exit sequence when activation milestone reached (first survey sent)
+     - Respect email preferences and unsubscribe status
+     - Engagement tracking (opens, clicks via Resend webhook)
+     - Cron job endpoint at /api/cron/process-welcome-sequence
+  5. **Type Workarounds:**
+     - Used eslint-disable @typescript-eslint/no-explicit-any for email_sequences table
+     - Types will be correct after running npm run db:types post-migration
+---

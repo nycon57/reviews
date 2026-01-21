@@ -95,7 +95,13 @@ export type EmailTemplate =
   | "setup_reminder_survey_template"
   | "setup_reminder_first_survey"
   | "setup_reminder_google_connect"
-  | "setup_reminder_invite_team";
+  | "setup_reminder_invite_team"
+  // Trial ending sequence emails (S085)
+  | "trial_ending_1_accomplishments"
+  | "trial_ending_2_feature_comparison"
+  | "trial_ending_3_final_reminder"
+  | "trial_ending_4_grace_period"
+  | "trial_ending_5_winback";
 
 // Base email data
 export interface BaseEmailData {
@@ -1358,6 +1364,123 @@ export interface ProfileSetupReminderStatus {
 
 // Profile/Setup reminder email preferences
 export interface ProfileSetupReminderPreferences {
+  enabled: boolean;
+  optedOut: boolean;
+}
+
+// =============================================================================
+// TRIAL ENDING SEQUENCE EMAIL DATA INTERFACES (S085)
+// =============================================================================
+
+// Usage statistics for trial period
+export interface TrialUsageStats {
+  totalReviews: number;
+  averageRating: number | null;
+  surveysSent: number;
+  surveyResponseRate: number;
+  videoTestimonials: number;
+  teamMembersAdded: number;
+  googleConnected: boolean;
+  customBrandingConfigured: boolean;
+}
+
+// Feature comparison for free vs paid
+export interface TrialFeatureComparison {
+  featureName: string;
+  description: string;
+  includedInFree: boolean;
+  includedInPaid: boolean;
+  userHasUsed: boolean;
+}
+
+// Pricing info for upgrade CTA
+export interface TrialPricingInfo {
+  planName: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  annualDiscount: number;
+  features: string[];
+}
+
+// Special offer for high-value prospects
+export interface TrialSpecialOffer {
+  offerType: "discount" | "extended_trial" | "free_month";
+  discountPercent?: number;
+  extendedDays?: number;
+  expiresAt: string;
+  offerCode: string;
+}
+
+// Base trial ending email data (shared across all trial ending emails)
+export interface TrialEndingEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  sequenceId: string;
+  unsubscribeUrl: string;
+  trialEndsAt: string;
+  daysRemaining: number;
+  upgradeUrl: string;
+  pricingUrl: string;
+}
+
+// Email 1: Trial Ending Soon - What You've Accomplished (7 days before)
+export interface TrialEnding1AccomplishmentsEmailData extends TrialEndingEmailBaseData {
+  usageStats: TrialUsageStats;
+  topAccomplishment?: string;
+  roiEstimate?: {
+    timeSaved: string;
+    reputationImpact: string;
+  };
+}
+
+// Email 2: Feature Comparison - What You'll Lose vs Keep (3 days before)
+export interface TrialEnding2FeatureComparisonEmailData extends TrialEndingEmailBaseData {
+  featureComparison: TrialFeatureComparison[];
+  featuresUsedCount: number;
+  featuresAtRisk: string[];
+  pricing: TrialPricingInfo;
+}
+
+// Email 3: Final Reminder with Easy Upgrade CTA (1 day before)
+export interface TrialEnding3FinalReminderEmailData extends TrialEndingEmailBaseData {
+  usageStats: TrialUsageStats;
+  pricing: TrialPricingInfo;
+  specialOffer?: TrialSpecialOffer;
+  // A/B test variant: "urgency" focuses on what they'll lose, "value" focuses on benefits
+  messageVariant: "urgency" | "value";
+}
+
+// Email 4: Grace Period Notice (trial ended)
+export interface TrialEnding4GracePeriodEmailData extends TrialEndingEmailBaseData {
+  gracePeriodDays: number;
+  gracePeriodEndsAt: string;
+  usageStats: TrialUsageStats;
+  accountStatus: "grace_period" | "limited_access" | "read_only";
+  restrictedFeatures: string[];
+}
+
+// Email 5: Win-Back Offer (3 days after trial ended)
+export interface TrialEnding5WinbackEmailData extends TrialEndingEmailBaseData {
+  daysSinceTrialEnded: number;
+  usageStats: TrialUsageStats;
+  specialOffer: TrialSpecialOffer;
+  isHighValueProspect: boolean;
+  competitorMention?: string;
+}
+
+// Trial ending sequence status (for tracking user state)
+export interface TrialEndingSequenceStatus {
+  is_trial_user: boolean;
+  trial_ends_at: string | null;
+  days_until_trial_end: number | null;
+  has_upgraded: boolean;
+  is_in_grace_period: boolean;
+  grace_period_ends_at: string | null;
+}
+
+// Trial ending email preferences
+export interface TrialEndingEmailPreferences {
   enabled: boolean;
   optedOut: boolean;
 }

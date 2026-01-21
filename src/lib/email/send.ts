@@ -33,6 +33,12 @@ import type {
   BadgeEarnedMilestoneEmailData,
   StreakMilestoneEmailData,
   VideoMilestoneEmailData,
+  // Trial ending email types (S085)
+  TrialEnding1AccomplishmentsEmailData,
+  TrialEnding2FeatureComparisonEmailData,
+  TrialEnding3FinalReminderEmailData,
+  TrialEnding4GracePeriodEmailData,
+  TrialEnding5WinbackEmailData,
 } from "./types";
 import {
   getSurveyInvitationEmail,
@@ -67,6 +73,13 @@ import {
   renderStreakMilestoneEmail,
   renderVideoMilestoneEmail,
 } from "./templates/milestones";
+import {
+  getTrialEnding1AccomplishmentsEmail,
+  getTrialEnding2FeatureComparisonEmail,
+  getTrialEnding3FinalReminderEmail,
+  getTrialEnding4GracePeriodEmail,
+  getTrialEnding5WinbackEmail,
+} from "./trial-ending-templates";
 
 // Check if email is unsubscribed
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
@@ -2400,6 +2413,385 @@ export async function sendVideoMilestoneEmail(
       templateName: "milestone_video",
       organizationId: data.organizationId,
       loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// ============================================================================
+// Trial Ending Sequence Emails (S085)
+// ============================================================================
+
+// Send trial ending email 1 - Accomplishments summary (7 days before)
+export async function sendTrialEnding1AccomplishmentsEmail(
+  data: TrialEnding1AccomplishmentsEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getTrialEnding1AccomplishmentsEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "trial_ending_1_accomplishments" },
+        { name: "days_remaining", value: String(data.daysRemaining) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "trial_ending_1_accomplishments",
+        organizationId: data.organizationId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_1_accomplishments",
+      organizationId: data.organizationId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_1_accomplishments",
+      organizationId: data.organizationId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send trial ending email 2 - Feature comparison (3 days before)
+export async function sendTrialEnding2FeatureComparisonEmail(
+  data: TrialEnding2FeatureComparisonEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getTrialEnding2FeatureComparisonEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "trial_ending_2_feature_comparison" },
+        { name: "days_remaining", value: String(data.daysRemaining) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "trial_ending_2_feature_comparison",
+        organizationId: data.organizationId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_2_feature_comparison",
+      organizationId: data.organizationId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_2_feature_comparison",
+      organizationId: data.organizationId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send trial ending email 3 - Final reminder (1 day before)
+export async function sendTrialEnding3FinalReminderEmail(
+  data: TrialEnding3FinalReminderEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getTrialEnding3FinalReminderEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "trial_ending_3_final_reminder" },
+        { name: "days_remaining", value: String(data.daysRemaining) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        { name: "ab_variant", value: data.messageVariant },
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "trial_ending_3_final_reminder",
+        organizationId: data.organizationId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_3_final_reminder",
+      organizationId: data.organizationId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_3_final_reminder",
+      organizationId: data.organizationId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send trial ending email 4 - Grace period (trial ended)
+export async function sendTrialEnding4GracePeriodEmail(
+  data: TrialEnding4GracePeriodEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getTrialEnding4GracePeriodEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "trial_ending_4_grace_period" },
+        { name: "grace_period_days", value: String(data.gracePeriodDays) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "trial_ending_4_grace_period",
+        organizationId: data.organizationId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_4_grace_period",
+      organizationId: data.organizationId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_4_grace_period",
+      organizationId: data.organizationId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send trial ending email 5 - Win-back offer (3 days after)
+export async function sendTrialEnding5WinbackEmail(
+  data: TrialEnding5WinbackEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getTrialEnding5WinbackEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "trial_ending_5_winback" },
+        { name: "days_since_trial_ended", value: String(data.daysSinceTrialEnded) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.specialOffer
+          ? [{ name: "has_special_offer", value: "true" }]
+          : []),
+        { name: "is_high_value", value: String(data.isHighValueProspect) },
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "trial_ending_5_winback",
+        organizationId: data.organizationId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_5_winback",
+      organizationId: data.organizationId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "trial_ending_5_winback",
+      organizationId: data.organizationId,
       status: "failed",
       errorMessage,
     });

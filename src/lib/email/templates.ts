@@ -1323,3 +1323,637 @@ export function getVideoTestimonialPendingApprovalEmail(
     html: wrapInEmailTemplate(content, unsubscribeUrl),
   };
 }
+
+// =============================================================================
+// SURVEY LIFECYCLE EMAIL TEMPLATES
+// =============================================================================
+
+/**
+ * Survey completion thank you email
+ * Sent immediately after a customer submits a survey response
+ */
+export function getSurveyCompletionThankYouEmail(data: {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  rating: number;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  feedbackText?: string;
+  transactionType?: string;
+  toEmail: string;
+}): { subject: string; html: string } {
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeFeedback = data.feedbackText ? escapeHtml(data.feedbackText) : null;
+  const safeTransactionType = data.transactionType
+    ? escapeHtml(data.transactionType)
+    : null;
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  // Personalize subject based on survey type
+  const subjectByType: Record<string, string> = {
+    nps: `Thank you for your feedback, ${data.customerName}!`,
+    csat: `We appreciate your feedback, ${data.customerName}!`,
+    post_transaction: `Thank you for sharing your experience, ${data.customerName}!`,
+    general: `Thank you for your feedback, ${data.customerName}!`,
+  };
+
+  const subject = sanitizeSubject(subjectByType[data.surveyType] || subjectByType.general);
+
+  // Personalize message based on rating
+  const ratingMessage =
+    data.rating >= 4
+      ? "We're thrilled that you had a great experience!"
+      : data.rating === 3
+        ? "We value your honest feedback and are always looking to improve."
+        : "We're sorry to hear that your experience wasn't ideal. Your feedback helps us improve.";
+
+  // Generate star rating display
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 24px;">★</span>'
+      : '<span style="color: #e4e4e7; font-size: 24px;">★</span>'
+  ).join("");
+
+  // LO photo or initials
+  const loPhotoHtml = data.loanOfficerPhotoUrl
+    ? `<img src="${escapeHtml(data.loanOfficerPhotoUrl)}" alt="${safeLOName}" width="64" height="64" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
+    : `<div style="width: 64px; height: 64px; border-radius: 50%; background-color: #cad2c5; display: inline-flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 24px; font-weight: 600; color: #52796f;">${safeLOName.charAt(0).toUpperCase()}</div>`;
+
+  // Organization logo
+  const orgLogoHtml = data.organizationLogoUrl
+    ? `<img src="${escapeHtml(data.organizationLogoUrl)}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+    : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #52796f, #84a98c);"></div>
+
+        <!-- Header with org logo -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          ${orgLogoHtml}
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- LO Photo -->
+          <div style="margin-bottom: 24px;">
+            ${loPhotoHtml}
+          </div>
+
+          <!-- Thank you message -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            Thank You, ${safeCustomerName}!
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Your feedback means the world to us and helps ${safeLOName} continue providing excellent service.
+          </p>
+
+          <!-- Star rating display -->
+          <div style="margin: 32px 0; padding: 24px; background-color: #f8faf8; border-radius: 12px;">
+            <p style="margin: 0 0 12px 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f; text-transform: uppercase; letter-spacing: 0.05em;">
+              Your Rating
+            </p>
+            <div style="margin-bottom: 16px;">
+              ${starRating}
+            </div>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #354f52;">
+              ${escapeHtml(ratingMessage)}
+            </p>
+          </div>
+
+          ${
+            safeFeedback
+              ? `
+          <!-- Feedback quote -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #cad2c5; border-radius: 8px; border-left: 4px solid #52796f;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-style: italic; color: #2f3e46; line-height: 1.625;">
+              "${safeFeedback}"
+            </p>
+          </div>
+          `
+              : ""
+          }
+
+          ${
+            safeTransactionType
+              ? `
+          <p style="margin: 24px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c;">
+            Transaction type: ${safeTransactionType}
+          </p>
+          `
+              : ""
+          }
+        </div>
+
+        <!-- Footer message -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            Thank you for choosing ${safeOrgName}. We appreciate your business!
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+/**
+ * Survey high-rating follow-up email
+ * Sent to customers who gave 4-5 stars to encourage Google review
+ */
+export function getSurveyHighRatingFollowUpEmail(data: {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  rating: number;
+  googleReviewUrl?: string;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  transactionType?: string;
+  toEmail: string;
+  subjectVariant?: "question" | "statement";
+}): { subject: string; html: string } {
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeGoogleUrl = data.googleReviewUrl
+    ? sanitizeUrl(data.googleReviewUrl)
+    : null;
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  // A/B test subject lines - question vs statement format
+  const subjectVariants = {
+    question: `${data.customerName}, would you share your experience on Google?`,
+    statement: `Your feedback can help others, ${data.customerName}`,
+  };
+  const subjectVariant = data.subjectVariant || "question";
+  const subject = sanitizeSubject(subjectVariants[subjectVariant]);
+
+  // LO photo or initials
+  const loPhotoHtml = data.loanOfficerPhotoUrl
+    ? `<img src="${escapeHtml(data.loanOfficerPhotoUrl)}" alt="${safeLOName}" width="80" height="80" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
+    : `<div style="width: 80px; height: 80px; border-radius: 50%; background-color: #cad2c5; display: inline-flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 28px; font-weight: 600; color: #52796f;">${safeLOName.charAt(0).toUpperCase()}</div>`;
+
+  // Organization logo
+  const orgLogoHtml = data.organizationLogoUrl
+    ? `<img src="${escapeHtml(data.organizationLogoUrl)}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+    : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
+
+  // Star rating display
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 28px;">★</span>'
+      : '<span style="color: #e4e4e7; font-size: 28px;">★</span>'
+  ).join("");
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #52796f, #84a98c);"></div>
+
+        <!-- Header with org logo -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          ${orgLogoHtml}
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- LO Photo -->
+          <div style="margin-bottom: 24px;">
+            ${loPhotoHtml}
+          </div>
+
+          <!-- Thank you message -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            We're So Glad You Had a Great Experience!
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Hi ${safeCustomerName}, thank you again for your wonderful ${data.rating}-star rating! ${safeLOName} truly appreciates your kind words.
+          </p>
+
+          <!-- Rating reminder -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #f8faf8; border-radius: 12px;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+              Your Rating
+            </p>
+            ${starRating}
+          </div>
+
+          <!-- Google review request -->
+          <div style="margin: 32px 0; padding: 32px; background: linear-gradient(to bottom, #f8faf8, #ffffff); border-radius: 12px; border: 1px solid #e2e8e4;">
+            <h2 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #354f52;">
+              Share Your Experience on Google
+            </h2>
+
+            <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f; line-height: 1.625;">
+              Your review helps others find trustworthy professionals like ${safeLOName}. It only takes a moment and means the world to us.
+            </p>
+
+            ${
+              safeGoogleUrl
+                ? `
+            <!-- Large mobile-optimized CTA button -->
+            <a href="${safeGoogleUrl}" style="display: inline-block; padding: 18px 48px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 16px; border-radius: 8px; min-width: 200px;">
+              ⭐ Leave a Google Review
+            </a>
+            `
+                : `
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c; font-style: italic;">
+              A Google review link will be provided shortly.
+            </p>
+            `
+            }
+          </div>
+
+          <!-- Benefits of reviewing -->
+          <div style="margin: 24px 0;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #84a98c; line-height: 1.625;">
+              💡 <strong>Why review?</strong> Your honest feedback helps future homebuyers make informed decisions and rewards great service.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            Thank you for choosing ${safeOrgName}!
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+/**
+ * Survey low-rating follow-up email
+ * Sent to customers who gave 1-2 stars with empathy + internal escalation
+ */
+export function getSurveyLowRatingFollowUpEmail(data: {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  rating: number;
+  feedbackText?: string;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  transactionType?: string;
+  supportContactEmail?: string;
+  supportContactPhone?: string;
+  toEmail: string;
+}): { subject: string; html: string } {
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeFeedback = data.feedbackText ? escapeHtml(data.feedbackText) : null;
+  const safeSupportEmail = data.supportContactEmail
+    ? escapeHtml(data.supportContactEmail)
+    : null;
+  const safeSupportPhone = data.supportContactPhone
+    ? escapeHtml(data.supportContactPhone)
+    : null;
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const subject = sanitizeSubject(`${data.customerName}, we want to make things right`);
+
+  // Organization logo
+  const orgLogoHtml = data.organizationLogoUrl
+    ? `<img src="${escapeHtml(data.organizationLogoUrl)}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+    : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #52796f, #84a98c);"></div>
+
+        <!-- Header with org logo -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          ${orgLogoHtml}
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px;">
+          <!-- Empathetic opening -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25; text-align: center;">
+            We're Sorry, ${safeCustomerName}
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625; text-align: center;">
+            We're truly sorry to hear that your experience with ${safeLOName} at ${safeOrgName} didn't meet your expectations. Your feedback is invaluable in helping us improve.
+          </p>
+
+          ${
+            safeFeedback
+              ? `
+          <!-- Feedback acknowledgment -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #fef2f2; border-radius: 8px; border-left: 4px solid #c47c7c;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #991b1b; text-transform: uppercase; letter-spacing: 0.05em;">
+              Your Feedback
+            </p>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-style: italic; color: #2f3e46; line-height: 1.625;">
+              "${safeFeedback}"
+            </p>
+          </div>
+          `
+              : ""
+          }
+
+          <!-- Commitment to improvement -->
+          <div style="margin: 32px 0; padding: 24px; background-color: #f8faf8; border-radius: 12px; text-align: center;">
+            <h2 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 20px; font-weight: bold; color: #354f52;">
+              We Want to Make This Right
+            </h2>
+
+            <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f; line-height: 1.625;">
+              A member of our team will be reaching out to you shortly to discuss your experience and see how we can address your concerns. Your satisfaction is our priority.
+            </p>
+
+            <!-- Contact information -->
+            <div style="margin: 24px 0; padding: 16px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8e4;">
+              <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+                Need Immediate Assistance?
+              </p>
+              ${
+                safeSupportEmail
+                  ? `
+              <p style="margin: 8px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #354f52;">
+                📧 <a href="mailto:${safeSupportEmail}" style="color: #52796f; text-decoration: none;">${safeSupportEmail}</a>
+              </p>
+              `
+                  : ""
+              }
+              ${
+                safeSupportPhone
+                  ? `
+              <p style="margin: 8px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #354f52;">
+                📞 <a href="tel:${safeSupportPhone}" style="color: #52796f; text-decoration: none;">${safeSupportPhone}</a>
+              </p>
+              `
+                  : ""
+              }
+              ${
+                !safeSupportEmail && !safeSupportPhone
+                  ? `
+              <p style="margin: 8px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+                Please reply to this email and we'll get back to you promptly.
+              </p>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+
+          <!-- Sincere apology -->
+          <p style="margin: 24px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f; line-height: 1.625; text-align: center;">
+            We genuinely appreciate you taking the time to share your experience. Every piece of feedback helps us serve our customers better.
+          </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            The Team at ${safeOrgName}
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+/**
+ * Survey response received notification email
+ * Sent to the loan officer when a customer submits a survey response
+ */
+export function getSurveyResponseReceivedNotificationEmail(data: {
+  loanOfficerName: string;
+  customerName: string;
+  customerEmail?: string;
+  rating: number;
+  feedbackText?: string;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  transactionType?: string;
+  submittedAt: string;
+  dashboardUrl: string;
+  surveyResponseId: string;
+  toEmail: string;
+}): { subject: string; html: string } {
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeCustomerEmail = data.customerEmail
+    ? escapeHtml(data.customerEmail)
+    : null;
+  const safeFeedback = data.feedbackText ? escapeHtml(data.feedbackText) : null;
+  const safeTransactionType = data.transactionType
+    ? escapeHtml(data.transactionType)
+    : null;
+  const safeDashboardUrl = sanitizeUrl(data.dashboardUrl);
+  const safeSubmittedAt = escapeHtml(data.submittedAt);
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  // Subject line based on rating
+  const ratingEmoji =
+    data.rating >= 4 ? "🌟" : data.rating === 3 ? "📊" : "⚠️";
+  const subject = sanitizeSubject(`${ratingEmoji} New ${data.rating}-star survey response from ${data.customerName}`);
+
+  // Survey type label
+  const surveyTypeLabels: Record<string, string> = {
+    nps: "NPS Survey",
+    csat: "CSAT Survey",
+    post_transaction: "Post-Transaction Survey",
+    general: "Feedback Survey",
+  };
+  const surveyTypeLabel =
+    surveyTypeLabels[data.surveyType] || surveyTypeLabels.general;
+
+  // Star rating display
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 24px;">★</span>'
+      : '<span style="color: #e4e4e7; font-size: 24px;">★</span>'
+  ).join("");
+
+  // Rating color and status
+  const ratingConfig =
+    data.rating >= 4
+      ? {
+          bgColor: "#dcfce7",
+          borderColor: "#86efac",
+          textColor: "#166534",
+          status: "Positive",
+        }
+      : data.rating === 3
+        ? {
+            bgColor: "#fef3c7",
+            borderColor: "#fcd34d",
+            textColor: "#92400e",
+            status: "Neutral",
+          }
+        : {
+            bgColor: "#fef2f2",
+            borderColor: "#fecaca",
+            textColor: "#991b1b",
+            status: "Needs Attention",
+          };
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Status header -->
+        <div style="padding: 24px 32px; background-color: ${ratingConfig.bgColor}; border-bottom: 1px solid ${ratingConfig.borderColor}; text-align: center;">
+          <h1 style="margin: 0; font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: ${ratingConfig.textColor};">
+            New Survey Response Received
+          </h1>
+          <p style="margin: 8px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: ${ratingConfig.textColor};">
+            ${ratingConfig.status} • ${surveyTypeLabel}
+          </p>
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 32px;">
+          <!-- Greeting -->
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #2f3e46; line-height: 1.5;">
+            Hi ${safeLOName},
+          </p>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.5;">
+            You've received a new survey response from <strong style="color: #354f52;">${safeCustomerName}</strong>.
+          </p>
+
+          <!-- Rating display -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #f8faf8; border-radius: 12px; text-align: center;">
+            <p style="margin: 0 0 12px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+              Customer Rating
+            </p>
+            ${starRating}
+            <p style="margin: 12px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 28px; font-weight: bold; color: ${ratingConfig.textColor};">
+              ${data.rating} out of 5
+            </p>
+          </div>
+
+          ${
+            safeFeedback
+              ? `
+          <!-- Customer feedback -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8e4;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+              Customer Feedback
+            </p>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-style: italic; color: #2f3e46; line-height: 1.625;">
+              "${safeFeedback}"
+            </p>
+          </div>
+          `
+              : ""
+          }
+
+          <!-- Response details -->
+          <div style="margin: 24px 0; padding: 16px; background-color: #ffffff; border-radius: 8px; border: 1px solid #e2e8e4;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding: 8px 0;">
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c;">Customer:</span>
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #2f3e46; font-weight: 600; float: right;">${safeCustomerName}</span>
+                </td>
+              </tr>
+              ${
+                safeCustomerEmail
+                  ? `
+              <tr>
+                <td style="padding: 8px 0; border-top: 1px solid #e2e8e4;">
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c;">Email:</span>
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f; float: right;">
+                    <a href="mailto:${safeCustomerEmail}" style="color: #52796f; text-decoration: none;">${safeCustomerEmail}</a>
+                  </span>
+                </td>
+              </tr>
+              `
+                  : ""
+              }
+              <tr>
+                <td style="padding: 8px 0; border-top: 1px solid #e2e8e4;">
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c;">Survey Type:</span>
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #2f3e46; float: right;">${surveyTypeLabel}</span>
+                </td>
+              </tr>
+              ${
+                safeTransactionType
+                  ? `
+              <tr>
+                <td style="padding: 8px 0; border-top: 1px solid #e2e8e4;">
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c;">Transaction:</span>
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #2f3e46; float: right;">${safeTransactionType}</span>
+                </td>
+              </tr>
+              `
+                  : ""
+              }
+              <tr>
+                <td style="padding: 8px 0; border-top: 1px solid #e2e8e4;">
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c;">Submitted:</span>
+                  <span style="font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #2f3e46; float: right;">${safeSubmittedAt}</span>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- CTA Button -->
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 16px; border-radius: 8px;">
+              View Full Response
+            </a>
+          </div>
+
+          ${
+            data.rating <= 2
+              ? `
+          <!-- Low rating action prompt -->
+          <div style="margin: 24px 0; padding: 16px; background-color: #fef2f2; border-radius: 8px; border-left: 4px solid #c47c7c; text-align: left;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #991b1b;">
+              <strong>Action Required:</strong> This customer may benefit from a personal follow-up. Consider reaching out to address their concerns directly.
+            </p>
+          </div>
+          `
+              : ""
+          }
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            Response ID: ${escapeHtml(data.surveyResponseId)}
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}

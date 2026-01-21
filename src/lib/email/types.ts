@@ -51,7 +51,12 @@ export type EmailTemplate =
   | "role_onboarding_admin_2_users"
   | "role_onboarding_admin_3_integrations"
   | "role_onboarding_admin_4_billing"
-  | "role_onboarding_admin_5_compliance";
+  | "role_onboarding_admin_5_compliance"
+  // Survey lifecycle emails
+  | "survey_completion_thank_you"
+  | "survey_high_rating_followup"
+  | "survey_low_rating_followup"
+  | "survey_response_received_notification";
 
 // Base email data
 export interface BaseEmailData {
@@ -80,6 +85,68 @@ export interface SurveyReminderEmailData extends BaseEmailData {
   organizationName: string;
   surveyUrl: string;
   reminderNumber: 1 | 2;
+}
+
+// Survey completion thank you email data (sent immediately after submission)
+export interface SurveyCompletionThankYouEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  rating: number;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  feedbackText?: string;
+  transactionType?: string;
+}
+
+// Survey high-rating follow-up email data (4-5 stars - encourage Google review)
+export interface SurveyHighRatingFollowUpEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  rating: number;
+  googleReviewUrl?: string;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  transactionType?: string;
+}
+
+// Survey low-rating follow-up email data (1-2 stars - empathy + internal escalation)
+export interface SurveyLowRatingFollowUpEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  rating: number;
+  feedbackText?: string;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  transactionType?: string;
+  supportContactEmail?: string;
+  supportContactPhone?: string;
+}
+
+// Survey response received notification email data (sent to LO when response received)
+export interface SurveyResponseReceivedNotificationEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  customerEmail?: string;
+  rating: number;
+  feedbackText?: string;
+  surveyType: "nps" | "csat" | "post_transaction" | "general";
+  transactionType?: string;
+  submittedAt: string;
+  dashboardUrl: string;
+  surveyResponseId: string;
+}
+
+// A/B test subject line configuration
+export interface EmailSubjectABTest {
+  variant: "question" | "statement";
+  questionFormat: string;
+  statementFormat: string;
 }
 
 // New review notification email data

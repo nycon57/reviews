@@ -14,6 +14,10 @@ import type {
   VideoTestimonialReceivedEmailData,
   VideoTestimonialApprovedEmailData,
   VideoTestimonialPendingApprovalEmailData,
+  SurveyCompletionThankYouEmailData,
+  SurveyHighRatingFollowUpEmailData,
+  SurveyLowRatingFollowUpEmailData,
+  SurveyResponseReceivedNotificationEmailData,
 } from "./types";
 import {
   getSurveyInvitationEmail,
@@ -27,6 +31,10 @@ import {
   getVideoTestimonialReceivedEmail,
   getVideoTestimonialApprovedEmail,
   getVideoTestimonialPendingApprovalEmail,
+  getSurveyCompletionThankYouEmail,
+  getSurveyHighRatingFollowUpEmail,
+  getSurveyLowRatingFollowUpEmail,
+  getSurveyResponseReceivedNotificationEmail,
 } from "./templates";
 
 // Check if email is unsubscribed
@@ -867,6 +875,344 @@ export async function sendVideoTestimonialPendingApprovalEmail(
       fromEmail: emailConfig.defaultFromEmail,
       subject,
       templateName: "video_testimonial_pending_approval",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// =============================================================================
+// SURVEY LIFECYCLE EMAILS (S078)
+// =============================================================================
+
+// Send survey completion thank you email
+export async function sendSurveyCompletionThankYouEmail(
+  data: SurveyCompletionThankYouEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getSurveyCompletionThankYouEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "survey_completion_thank_you" },
+        { name: "survey_type", value: data.surveyType },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.customerName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "survey_completion_thank_you",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_completion_thank_you",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_completion_thank_you",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send high-rating follow-up email with Google review CTA
+// Supports A/B testing subject lines via subjectVariant parameter
+export async function sendSurveyHighRatingFollowUpEmail(
+  data: SurveyHighRatingFollowUpEmailData,
+  subjectVariant?: "question" | "statement"
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getSurveyHighRatingFollowUpEmail({
+    ...data,
+    subjectVariant,
+  });
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "survey_high_rating_followup" },
+        { name: "survey_type", value: data.surveyType },
+        { name: "rating", value: String(data.rating) },
+        ...(subjectVariant
+          ? [{ name: "subject_variant", value: subjectVariant }]
+          : []),
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.customerName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "survey_high_rating_followup",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_high_rating_followup",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_high_rating_followup",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send low-rating follow-up email with empathy messaging
+export async function sendSurveyLowRatingFollowUpEmail(
+  data: SurveyLowRatingFollowUpEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getSurveyLowRatingFollowUpEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "survey_low_rating_followup" },
+        { name: "survey_type", value: data.surveyType },
+        { name: "rating", value: String(data.rating) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.customerName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "survey_low_rating_followup",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_low_rating_followup",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.customerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_low_rating_followup",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send survey response notification to loan officer
+export async function sendSurveyResponseReceivedNotificationEmail(
+  data: SurveyResponseReceivedNotificationEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = getSurveyResponseReceivedNotificationEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "survey_response_received_notification" },
+        { name: "survey_type", value: data.surveyType },
+        { name: "rating", value: String(data.rating) },
+        ...(data.surveyResponseId
+          ? [{ name: "survey_response_id", value: data.surveyResponseId }]
+          : []),
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.loanOfficerName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "survey_response_received_notification",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.loanOfficerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_response_received_notification",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.loanOfficerName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "survey_response_received_notification",
       organizationId: data.organizationId,
       loanOfficerId: data.loanOfficerId,
       status: "failed",

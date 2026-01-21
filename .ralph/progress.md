@@ -5870,7 +5870,7 @@ Thread: Quality review pass
 Run: 20260121-continuation (Pass 2)
 - Guardrails reviewed: yes
 - No-commit run: false
-- Commit: (pending)
+- Commit: 71b8136 [Pass 2/3] fix(S074): Fix email timing calculation in welcome sequence
 - Post-commit status: clean
 - Skills invoked:
   - /feature-dev: no

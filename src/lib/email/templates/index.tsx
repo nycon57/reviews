@@ -7,13 +7,22 @@
 
 import { render } from "@react-email/components";
 
-// Template Components
-export { VideoProcessingStartedEmail } from "./video-processing-started";
-export { VideoProcessingCompleteEmail } from "./video-processing-complete";
-export { VideoApprovalNeededEmail } from "./video-approval-needed";
-export { VideoApprovedEmail } from "./video-approved";
-export { VideoSharedEmail } from "./video-shared";
-export { VideoCustomerThankYouEmail } from "./video-customer-thank-you";
+// Template Components - import for use and re-export
+import { VideoProcessingStartedEmail } from "./video-processing-started";
+import { VideoProcessingCompleteEmail } from "./video-processing-complete";
+import { VideoApprovalNeededEmail } from "./video-approval-needed";
+import { VideoApprovedEmail } from "./video-approved";
+import { VideoSharedEmail } from "./video-shared";
+import { VideoCustomerThankYouEmail } from "./video-customer-thank-you";
+
+export {
+  VideoProcessingStartedEmail,
+  VideoProcessingCompleteEmail,
+  VideoApprovalNeededEmail,
+  VideoApprovedEmail,
+  VideoSharedEmail,
+  VideoCustomerThankYouEmail,
+};
 
 // Types
 import type {
@@ -24,14 +33,6 @@ import type {
   VideoSharedEmailData,
   VideoCustomerThankYouEmailData,
 } from "../types";
-
-// Template Component Imports for rendering
-import { VideoProcessingStartedEmail } from "./video-processing-started";
-import { VideoProcessingCompleteEmail } from "./video-processing-complete";
-import { VideoApprovalNeededEmail } from "./video-approval-needed";
-import { VideoApprovedEmail } from "./video-approved";
-import { VideoSharedEmail } from "./video-shared";
-import { VideoCustomerThankYouEmail } from "./video-customer-thank-you";
 
 // =============================================================================
 // RENDERING FUNCTIONS

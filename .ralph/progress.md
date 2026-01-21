@@ -5901,3 +5901,64 @@ Run: 20260121-continuation (Pass 2)
   - API routes (correct authorization)
   - Migration (proper RLS, indexes)
 ---
+
+## [2026-01-21] - S074: New User Welcome Sequence - Pass 3/3
+Thread:
+Run: 20260121-004232-375 (iteration 7)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-7.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-7.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (verification only - no code changes needed)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /code-simplifier: unavailable
+  - /frontend-design: no (not applicable - backend email story)
+- Verification:
+  - Command: npm run lint -> PASS (0 errors, pre-existing warnings only)
+  - Command: npm run build -> PASS
+- Files changed: none (verification pass only)
+- **Final Acceptance Criteria Verification:**
+  1. ✅ Email 1 (Immediate): Welcome + deliver access, set expectations for sequence
+     - Implemented in `getWelcome1AccessEmail()` with delay 0 days
+  2. ✅ Email 2 (Day 1): Quick win - complete profile setup in 5 minutes
+     - Implemented in `getWelcome2ProfileEmail()` with delay 1 day
+  3. ✅ Email 3 (Day 3): Feature highlight - create first survey or request video testimonial
+     - Implemented in `getWelcome3FirstActionEmail()` with delay 3 days
+  4. ✅ Email 4 (Day 5): Social proof - customer success story relevant to their role
+     - Implemented in `getWelcome4SocialProofEmail()` with delay 5 days
+  5. ✅ Email 5 (Day 7): Core value - show key metrics they can unlock
+     - Implemented in `getWelcome5MetricsEmail()` with delay 7 days
+  6. ✅ Conditional branching: Skip emails for actions already completed
+     - Implemented in `processSequenceStep()` with `canSkip` and `skipCondition` checks
+  7. ✅ Exit sequence when user completes activation milestone (first survey sent)
+     - Implemented with `exitMilestone: "first_survey_sent"` in config
+  8. ✅ All emails use design system components from S073
+     - Templates use `colors` from `./theme` (design system tokens)
+  9. ✅ Personalization: First name, organization name, role-specific content
+     - `metadata` stores firstName, organizationName, role
+     - Templates use personalization data throughout
+  10. ✅ Track engagement: Opens, clicks, activation events
+     - Resend webhook handler in `handleWelcomeSequenceEmailEvent()`
+     - Updates `steps_completed` with `delivered_at`, `opened_at`, `clicked_at`
+  11. ✅ A/B test subject lines for Email 1 and Email 3
+     - `ab_test_assignments` in sequence record
+     - `WELCOME_EMAIL_VARIANTS` in welcome-templates.ts
+  12. ✅ Database table: email_sequences for tracking user sequence progress
+     - Migration `20240101000043_email_sequences.sql` creates table
+  13. ✅ Queue processing via cron job (every 5 minutes)
+     - `processWelcomeSequenceQueue()` function
+     - `/api/cron/process-welcome-sequence/route.ts` endpoint
+  14. ✅ Respect user email preferences and unsubscribe status
+     - `isEmailUnsubscribed()` check in `processSequenceStep()`
+     - `receive_notifications` check on user record
+- **All acceptance criteria VERIFIED - Story complete**
+- **Learnings for future iterations:**
+  - Pass 2 timing bug (using step number instead of delay values) caught in code review
+  - Welcome sequence is a complex multi-file feature requiring database, service, templates, cron, and webhook integration
+  - Type workarounds with eslint-disable comments are acceptable when DB types haven't been regenerated
+---

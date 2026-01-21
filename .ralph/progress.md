@@ -5864,3 +5864,40 @@ Run: 20260121-continuation (Pass 1)
      - Used eslint-disable @typescript-eslint/no-explicit-any for email_sequences table
      - Types will be correct after running npm run db:types post-migration
 ---
+
+## [2026-01-21] - S074: New User Welcome Sequence - Pass 2/3
+Thread: Quality review pass
+Run: 20260121-continuation (Pass 2)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: (pending)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (found 1 critical bug)
+  - /vercel-react-best-practices: not applicable (server-side code)
+  - /code-simplifier: no
+  - /frontend-design: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, pre-existing warnings only)
+- Files modified:
+  - src/lib/email/welcome-sequence-service.ts
+- **Pass 2 Fixes:**
+  1. **Critical Bug: Next email timing calculation**
+     - Location: welcome-sequence-service.ts lines 802-804 and 844-851
+     - Problem: Formula `nextStepConfig.delayDays - step` used step number instead of delay values
+     - Example: After step 1 (Day 0), step 2 should be 1 day later, but code calculated 1-1=0 days
+     - After step 2 (Day 1), step 3 should be 2 days later, but code calculated 3-2=1 day
+     - Fix: Changed to `nextStepConfig.delayDays - currentStepConfig.delayDays` (relative delay)
+     - Applied to both `updateSequenceAfterSend()` and `skipSequenceStep()` functions
+- **Code Review Summary:**
+  - Security: HTML escaping ✓, URL sanitization ✓, Subject line sanitization ✓
+  - Design system compliance: Verified email templates use correct theme colors
+  - Database migration: RLS policies correct, indexes appropriate
+  - API routes: Proper Vercel cron header validation, authorization checks in place
+- **No issues found in:**
+  - welcome-templates.ts (proper escaping, design system colors)
+  - API routes (correct authorization)
+  - Migration (proper RLS, indexes)
+---

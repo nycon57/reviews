@@ -794,13 +794,17 @@ async function skipSequenceStep(
     },
   ];
 
-  // Calculate next email time
+  // Calculate next email time using relative delay between steps
+  const currentStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
+    (s) => s.step === step
+  );
   const nextStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
     (s) => s.step === step + 1
   );
 
-  const nextEmailAt = nextStepConfig
-    ? addDays(new Date(), nextStepConfig.delayDays - (step > 1 ? step - 1 : 0))
+  // Calculate relative delay: next step's absolute delay minus current step's absolute delay
+  const nextEmailAt = nextStepConfig && currentStepConfig
+    ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
     : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -841,14 +845,18 @@ async function updateSequenceAfterSend(
     },
   ];
 
-  // Calculate next email time
+  // Calculate next email time using relative delay between steps
+  const currentStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
+    (s) => s.step === step
+  );
   const nextStepConfig = WELCOME_SEQUENCE_CONFIG.schedule.find(
     (s) => s.step === step + 1
   );
 
   const isComplete = step >= WELCOME_SEQUENCE_CONFIG.totalSteps;
-  const nextEmailAt = nextStepConfig
-    ? addDays(new Date(), nextStepConfig.delayDays - step)
+  // Calculate relative delay: next step's absolute delay minus current step's absolute delay
+  const nextEmailAt = nextStepConfig && currentStepConfig
+    ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
     : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

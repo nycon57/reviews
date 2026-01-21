@@ -27,7 +27,12 @@ export type EmailTemplate =
   | "org_onboarding_3_team"
   | "org_onboarding_4_integrations"
   | "org_onboarding_5_billing"
-  | "org_onboarding_6_advanced";
+  | "org_onboarding_6_advanced"
+  | "team_invite_1_initial"
+  | "team_invite_2_reminder"
+  | "team_invite_3_final_reminder"
+  | "team_invite_4_welcome"
+  | "team_invite_5_expiration";
 
 // Base email data
 export interface BaseEmailData {
@@ -391,4 +396,57 @@ export interface OrgOnboardingStatus {
   google_connected: boolean;
   billing_setup: boolean;
   first_survey_sent: boolean;
+}
+
+// =============================================================================
+// TEAM MEMBER INVITE SEQUENCE EMAIL DATA INTERFACES
+// =============================================================================
+
+// Base team invite email data (shared across all invite emails)
+export interface TeamInviteEmailBaseData extends BaseEmailData {
+  inviteeName: string;
+  inviteeEmail: string;
+  inviterName: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  role: "admin" | "manager" | "loan_officer";
+  invitationId: string;
+  acceptUrl: string;
+  unsubscribeUrl: string;
+}
+
+// Email 1: Initial Invitation (Immediate on invite)
+export interface TeamInvite1InitialEmailData extends TeamInviteEmailBaseData {
+  expiresAt: string;
+  daysUntilExpiration: number;
+}
+
+// Email 2: Reminder (Day 2)
+export interface TeamInvite2ReminderEmailData extends TeamInviteEmailBaseData {
+  expiresAt: string;
+  daysUntilExpiration: number;
+}
+
+// Email 3: Final Reminder with urgency (Day 5)
+export interface TeamInvite3FinalReminderEmailData extends TeamInviteEmailBaseData {
+  expiresAt: string;
+  daysUntilExpiration: number;
+}
+
+// Email 4: Welcome Email (On Accept) - role-specific content
+export interface TeamInvite4WelcomeEmailData extends TeamInviteEmailBaseData {
+  dashboardUrl: string;
+  profileUrl: string;
+  // Role-specific URLs
+  reviewsUrl?: string; // For loan officers
+  leaderboardUrl?: string; // For loan officers
+  teamAnalyticsUrl?: string; // For managers
+  teamManagementUrl?: string; // For managers
+}
+
+// Email 5: Invitation Expired Notice (Day 14)
+export interface TeamInvite5ExpirationEmailData extends TeamInviteEmailBaseData {
+  expiredAt: string;
+  canRequestNewInvite: boolean;
+  requestNewInviteUrl?: string;
 }

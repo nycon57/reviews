@@ -97,3 +97,31 @@ export type {
   OrgOnboarding6AdvancedEmailData,
   OrgOnboardingStatus,
 } from "./types";
+
+// Team invite sequence service
+export {
+  sendTeamInviteInitialEmail,
+  sendTeamInviteWelcomeEmail,
+  processTeamInviteQueue,
+  getInviteFunnelStats,
+  resendTeamInvite,
+} from "./team-invite-service";
+
+// Team invite email templates
+export {
+  getTeamInvite1InitialEmail,
+  getTeamInvite2ReminderEmail,
+  getTeamInvite3FinalReminderEmail,
+  getTeamInvite4WelcomeEmail,
+  getTeamInvite5ExpirationEmail,
+} from "./team-invite-templates";
+
+// Types for team invites
+export type {
+  TeamInviteEmailBaseData,
+  TeamInvite1InitialEmailData,
+  TeamInvite2ReminderEmailData,
+  TeamInvite3FinalReminderEmailData,
+  TeamInvite4WelcomeEmailData,
+  TeamInvite5ExpirationEmailData,
+} from "./types";

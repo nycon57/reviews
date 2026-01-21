@@ -17,6 +17,13 @@ export type EmailTemplate =
   | "video_testimonial_received"
   | "video_testimonial_approved"
   | "video_testimonial_pending_approval"
+  // Video testimonial lifecycle emails (S080)
+  | "video_processing_started"
+  | "video_processing_complete"
+  | "video_approval_needed"
+  | "video_approved_published"
+  | "video_shared"
+  | "video_customer_thank_you"
   | "welcome_1_access"
   | "welcome_2_profile"
   | "welcome_3_first_action"
@@ -381,6 +388,80 @@ export interface VideoTestimonialPendingApprovalEmailData extends BaseEmailData 
   durationSeconds?: number;
   approvalQueueUrl: string;
   testimonialId: string;
+}
+
+// =============================================================================
+// VIDEO TESTIMONIAL LIFECYCLE EMAIL DATA INTERFACES (S080)
+// =============================================================================
+
+// Base interface for video testimonial emails with common fields
+export interface VideoTestimonialBaseEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  testimonialId: string;
+  dashboardUrl: string;
+  videoThumbnailUrl?: string;
+  videoDurationSeconds?: number;
+}
+
+// Video processing started notification email data (sent to LO when processing begins)
+export interface VideoProcessingStartedEmailData extends VideoTestimonialBaseEmailData {
+  submittedAt: string;
+  estimatedProcessingTime?: string;
+}
+
+// Video processing complete notification email data (sent to LO with transcription)
+export interface VideoProcessingCompleteEmailData extends VideoTestimonialBaseEmailData {
+  processedAt: string;
+  transcriptionPreview?: string;
+  transcriptionFull?: string;
+  processingDurationSeconds?: number;
+}
+
+// Video approval needed notification email data (sent to manager with thumbnail)
+export interface VideoApprovalNeededEmailData extends BaseEmailData {
+  managerName: string;
+  loanOfficerName: string;
+  customerName: string;
+  testimonialId: string;
+  submittedAt: string;
+  approvalQueueUrl: string;
+  videoThumbnailUrl?: string;
+  videoDurationSeconds?: number;
+  transcriptionPreview?: string;
+}
+
+// Video approved and published notification email data (sent to LO)
+export interface VideoApprovedPublishedEmailData extends VideoTestimonialBaseEmailData {
+  approvedAt: string;
+  publishedAt?: string;
+  shareUrl: string;
+  videoPageUrl: string;
+  socialShareLinks?: {
+    linkedin?: string;
+    twitter?: string;
+    facebook?: string;
+  };
+}
+
+// Video shared notification email data (sent to LO when video is shared to social)
+export interface VideoSharedEmailData extends VideoTestimonialBaseEmailData {
+  sharedAt: string;
+  platform: "linkedin" | "twitter" | "facebook" | "email" | "embed";
+  shareUrl: string;
+  videoPageUrl: string;
+  sharedBy?: string;
+}
+
+// Customer thank you email data (sent to customer after video submission)
+export interface VideoCustomerThankYouEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  submittedAt: string;
+  nextStepsMessage?: string;
 }
 
 // =============================================================================

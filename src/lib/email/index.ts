@@ -19,6 +19,14 @@ export type {
   VideoTestimonialReceivedEmailData,
   VideoTestimonialApprovedEmailData,
   VideoTestimonialPendingApprovalEmailData,
+  // Video testimonial lifecycle types (S080)
+  VideoTestimonialBaseEmailData,
+  VideoProcessingStartedEmailData,
+  VideoProcessingCompleteEmailData,
+  VideoApprovalNeededEmailData,
+  VideoApprovedPublishedEmailData,
+  VideoSharedEmailData,
+  VideoCustomerThankYouEmailData,
   SurveyCompletionThankYouEmailData,
   SurveyHighRatingFollowUpEmailData,
   SurveyLowRatingFollowUpEmailData,
@@ -192,3 +200,19 @@ export type {
   RoleOnboardingAdmin5ComplianceEmailData,
   RoleOnboardingFeatureStatus,
 } from "./types";
+
+// Video testimonial lifecycle templates (S080)
+export {
+  VideoProcessingStartedEmail,
+  VideoProcessingCompleteEmail,
+  VideoApprovalNeededEmail,
+  VideoApprovedEmail,
+  VideoSharedEmail,
+  VideoCustomerThankYouEmail,
+  renderVideoProcessingStartedEmail,
+  renderVideoProcessingCompleteEmail,
+  renderVideoApprovalNeededEmail,
+  renderVideoApprovedEmail,
+  renderVideoSharedEmail,
+  renderVideoCustomerThankYouEmail,
+} from "./templates/index";

@@ -2465,14 +2465,16 @@ export async function getVideoTestimonialQueueStatus(): Promise<
     const adminSupabase = createAdminClient();
 
     // Check if queue is paused
-    const { data: settingData } = await adminSupabase
-      .from("organization_settings")
-      .select("value")
-      .eq("organization_id", userData.organization_id)
-      .eq("key", "video_testimonial_queue_paused")
+    // Note: organization_settings table doesn't exist, using organizations.settings instead
+    const { data: orgData } = await adminSupabase
+      .from("organizations")
+      .select("settings")
+      .eq("id", userData.organization_id)
       .single();
 
-    const isPaused = settingData?.value === "true";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const settings = (orgData?.settings || {}) as Record<string, any>;
+    const isPaused = settings.video_testimonial_queue_paused === true;
 
     // Get queue statistics
     const { data: queueData } = await adminSupabase
@@ -2538,22 +2540,26 @@ async function setQueuePauseState(paused: boolean): Promise<ActionResult> {
 
     const adminSupabase = createAdminClient();
 
-    const { error: upsertError } = await adminSupabase
-      .from("organization_settings")
-      .upsert(
-        {
-          organization_id: userData.organization_id,
-          key: "video_testimonial_queue_paused",
-          value: paused ? "true" : "false",
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "organization_id,key",
-        }
-      );
+    // Fetch current settings
+    const { data: orgData } = await adminSupabase
+      .from("organizations")
+      .select("settings")
+      .eq("id", userData.organization_id)
+      .single();
 
-    if (upsertError) {
-      console.error(`Error ${action}ing queue:`, upsertError);
+    const currentSettings = (orgData?.settings || {}) as Record<string, unknown>;
+    const newSettings = {
+      ...currentSettings,
+      video_testimonial_queue_paused: paused,
+    };
+
+    const { error: updateError } = await adminSupabase
+      .from("organizations")
+      .update({ settings: newSettings })
+      .eq("id", userData.organization_id);
+
+    if (updateError) {
+      console.error(`Error ${action}ing queue:`, updateError);
       return { success: false, error: `Failed to ${action} queue` };
     }
 

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Button, Section, Row, Column } from "@react-email/components";
-import { colors, typography, spacing, layout, buttonStyles } from "../theme";
+import { colors, typography, spacing, layout } from "../theme";
 
 // =============================================================================
 // EMAIL BUTTON COMPONENT

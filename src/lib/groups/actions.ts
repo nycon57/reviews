@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { Json } from "@/types/database.types";
 import {
   createGroupSchema,
   updateGroupSchema,
@@ -182,7 +183,7 @@ export async function getGroupWithMembers(
     email: (m.users as { email: string }).email,
     avatarUrl: (m.users as { avatar_url: string | null }).avatar_url,
     role: m.role as MemberRole,
-    joinedAt: m.created_at,
+    joinedAt: m.created_at || new Date().toISOString(),
   }));
 
   const group = rowToGroup(groupData as GroupRow);
@@ -258,7 +259,7 @@ export async function createGroup(
       description: parsed.data.description || null,
       type: parsed.data.type,
       is_active: parsed.data.isActive,
-      metadata: parsed.data.metadata,
+      metadata: (parsed.data.metadata || null) as Json,
     })
     .select()
     .single();

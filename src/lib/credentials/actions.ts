@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import type { Json } from "@/types/database.types";
 import {
   createCredentialSchema,
   updateCredentialSchema,
@@ -164,7 +165,7 @@ export async function createCredential(
       issued_date: parsed.data.issuedDate || null,
       expiry_date: parsed.data.expiryDate || null,
       is_public: parsed.data.isPublic,
-      metadata: parsed.data.metadata,
+      metadata: (parsed.data.metadata || null) as Json,
     })
     .select()
     .single();
@@ -227,7 +228,7 @@ export async function createCredentialForUser(
       issued_date: parsed.data.issuedDate || null,
       expiry_date: parsed.data.expiryDate || null,
       is_public: parsed.data.isPublic,
-      metadata: parsed.data.metadata,
+      metadata: (parsed.data.metadata || null) as Json,
     })
     .select()
     .single();

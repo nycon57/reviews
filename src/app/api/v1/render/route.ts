@@ -120,10 +120,10 @@ export async function POST(request: NextRequest) {
 
     // Verify user has access to organization
     const { data: membership, error: membershipError } = await supabase
-      .from("organization_members")
-      .select("role")
+      .from("users")
+      .select("role, organization_id")
       .eq("organization_id", renderRequest.organizationId)
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .single();
 
     if (membershipError || !membership) {
@@ -188,121 +188,40 @@ export async function POST(request: NextRequest) {
  * GET /api/v1/render?jobId=xxx
  *
  * Check render job status
+ * Note: generated_videos table not yet implemented
  */
-export async function GET(request: NextRequest) {
-  try {
-    // Authenticate user
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    // Get job ID from query
-    const jobId = request.nextUrl.searchParams.get("jobId");
-
-    if (!jobId) {
-      return NextResponse.json(
-        { error: "Job ID required" },
-        { status: 400 }
-      );
-    }
-
-    // Fetch job from database
-    const { data: job, error: jobError } = await supabase
-      .from("generated_videos")
-      .select("*")
-      .eq("id", jobId)
-      .single();
-
-    if (jobError || !job) {
-      return NextResponse.json(
-        { error: "Job not found" },
-        { status: 404 }
-      );
-    }
-
-    // Verify user has access to organization
-    const { data: membership } = await supabase
-      .from("organization_members")
-      .select("role")
-      .eq("organization_id", job.organization_id)
-      .eq("user_id", user.id)
-      .single();
-
-    if (!membership) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      );
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from("videos")
-      .getPublicUrl(job.storage_path);
-
-    return NextResponse.json({
-      id: job.id,
-      status: "completed",
-      compositionType: job.source_type,
-      format: job.format,
-      outputUrl: publicUrl,
-      storagePath: job.storage_path,
-      durationSeconds: job.duration_seconds,
-      createdAt: job.created_at,
-    });
-  } catch (error) {
-    console.error("Render status API error:", error);
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+export async function GET(_request: NextRequest) {
+  // Note: This endpoint requires the generated_videos table which doesn't exist yet
+  // TODO: Create generated_videos table and implement job tracking
+  return NextResponse.json(
+    { error: "Not implemented - generated_videos table not yet created" },
+    { status: 501 }
+  );
 }
 
 /**
  * Check organization's video generation quota
+ * Note: generated_videos table not yet implemented
  */
-async function checkRenderQuota(organizationId: string): Promise<{
+async function checkRenderQuota(_organizationId: string): Promise<{
   allowed: boolean;
   remaining: number;
   resetAt?: string;
 }> {
-  // TODO: Implement quota checking based on subscription tier
+  // Note: generated_videos table doesn't exist yet
+  // TODO: Create generated_videos table and implement quota tracking
   // For now, allow all renders with a generous limit
-
-  const supabase = await createClient();
-
-  // Count videos generated this month
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-
-  const { count } = await supabase
-    .from("generated_videos")
-    .select("*", { count: "exact", head: true })
-    .eq("organization_id", organizationId)
-    .gte("created_at", startOfMonth.toISOString());
-
-  const videosThisMonth = count || 0;
-  const monthlyLimit = 100; // Default limit
+  const monthlyLimit = 100;
 
   // Reset at end of month
-  const resetAt = new Date(startOfMonth);
+  const resetAt = new Date();
+  resetAt.setDate(1);
   resetAt.setMonth(resetAt.getMonth() + 1);
+  resetAt.setHours(0, 0, 0, 0);
 
   return {
-    allowed: videosThisMonth < monthlyLimit,
-    remaining: Math.max(0, monthlyLimit - videosThisMonth),
+    allowed: true,
+    remaining: monthlyLimit,
     resetAt: resetAt.toISOString(),
   };
 }

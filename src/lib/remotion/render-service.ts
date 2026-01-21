@@ -76,7 +76,7 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     const composition = await selectComposition({
       serveUrl: bundleLocation,
       id: compositionId,
-      inputProps: inputProps as Record<string, unknown>,
+      inputProps: inputProps as unknown as Record<string, unknown>,
     });
 
     // Determine output path
@@ -86,7 +86,7 @@ export async function renderVideo(request: RenderRequest): Promise<RenderResult>
     const outputPath = path.join("/tmp", outputFileName);
 
     // Render the output
-    const propsAsRecord = inputProps as Record<string, unknown>;
+    const propsAsRecord = inputProps as unknown as Record<string, unknown>;
     if (request.compositionType === "video-thumbnail") {
       // Render a still image for thumbnails
       await renderStill({
@@ -199,17 +199,20 @@ async function getVideoTestimonialProps(
       video_testimonial_requests!inner (
         loan_officer_id,
         organization_id,
+        customer_first_name,
+        customer_last_name,
+        customer_relationship,
         loan_officers!inner (
           id,
           full_name,
-          profile_photo_url
+          title,
+          photo_url
         ),
         organizations!inner (
           id,
           name,
           logo_url,
-          primary_color,
-          secondary_color
+          primary_color
         )
       )
     `)
@@ -220,12 +223,20 @@ async function getVideoTestimonialProps(
     throw new Error(`Video response not found: ${request.videoResponseId}`);
   }
 
-  const req = response.video_testimonial_requests;
+  // Cast to allow accessing properties that may not be in generated types
+  const req = response.video_testimonial_requests as unknown as {
+    customer_first_name: string | null;
+    customer_last_name: string | null;
+    customer_relationship: string | null;
+    organizations: { id: string; name: string; logo_url: string | null; primary_color?: string };
+    loan_officers: { id: string; full_name: string; title?: string; photo_url: string | null };
+  };
   const org = req.organizations;
   const lo = req.loan_officers;
+  const customerName = [req.customer_first_name, req.customer_last_name].filter(Boolean).join(" ") || "Valued Customer";
 
   // Parse transcription into caption segments
-  const captions = parseTranscriptionToCaptions(response.transcription_text);
+  const captions = parseTranscriptionToCaptions(response.transcription);
 
   return {
     videoUrl: response.video_url,
@@ -236,19 +247,23 @@ async function getVideoTestimonialProps(
       name: org.name,
       logoUrl: org.logo_url,
       primaryColor: org.primary_color || "#354f52",
-      secondaryColor: org.secondary_color || "#84a98c",
+      secondaryColor: "#84a98c", // Default brand secondary color
     },
     loanOfficer: {
       fullName: lo.full_name,
-      photoUrl: lo.profile_photo_url,
+      title: lo.title || null,
+      photoUrl: lo.photo_url,
     },
-    customerName: response.customer_name || "Valued Customer",
-    quote: response.ai_summary || response.key_phrases?.[0] || "",
-    rating: response.sentiment_score
-      ? Math.round((response.sentiment_score / 100) * 5)
-      : 5,
+    customer: {
+      displayName: customerName,
+      relationship: req.customer_relationship || null,
+    },
+    transcription: response.transcription || "",
+    aiQuote: response.ai_generated_text || (response.key_phrases as string[] | null)?.[0] || null,
+    showCaptions: true,
     showIntro: true,
     showOutro: true,
+    videoDurationMs: (response.duration_seconds || 60) * 1000,
   };
 }
 
@@ -269,8 +284,11 @@ async function getTextTestimonialProps(
         id,
         name,
         logo_url,
-        primary_color,
-        secondary_color
+        primary_color
+      ),
+      reviews!inner (
+        customer_name,
+        rating
       )
     `)
     .eq("id", request.testimonialId)
@@ -281,21 +299,22 @@ async function getTextTestimonialProps(
   }
 
   const org = testimonial.organizations;
+  const review = testimonial.reviews;
 
   return {
     text: testimonial.content,
-    author: testimonial.customer_name || "Anonymous",
-    rating: testimonial.rating || 5,
+    author: review.customer_name || "Anonymous",
+    rating: review.rating || 5,
     format: request.format,
     template: request.template || "modern",
     organization: {
       name: org.name,
       logoUrl: org.logo_url,
       primaryColor: org.primary_color || "#354f52",
-      secondaryColor: org.secondary_color || "#84a98c",
+      secondaryColor: "#84a98c", // Default brand secondary color
     },
-    authorSubtitle: testimonial.customer_title,
-    authorPhotoUrl: testimonial.customer_photo_url,
+    authorSubtitle: undefined,
+    authorPhotoUrl: undefined,
   };
 }
 
@@ -310,7 +329,7 @@ async function getLeaderboardCelebrationProps(
   // Fetch organization
   const { data: org } = await supabase
     .from("organizations")
-    .select("id, name, logo_url, primary_color, secondary_color")
+    .select("id, name, logo_url, primary_color")
     .eq("id", request.organizationId)
     .single();
 
@@ -322,92 +341,104 @@ async function getLeaderboardCelebrationProps(
   if (request.celebrationType === "new_leader" && request.userId) {
     const { data: user } = await supabase
       .from("loan_officers")
-      .select("id, full_name, profile_photo_url")
+      .select("id, full_name, photo_url")
       .eq("id", request.userId)
       .single();
 
     // Fetch their stats
     const { data: stats } = await supabase
-      .from("leaderboard_entries")
-      .select("score, rank, total_reviews, average_rating")
+      .from("leaderboard_snapshots")
+      .select("reputation_score, rank, total_reviews, average_rating")
       .eq("loan_officer_id", request.userId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
     return {
-      type: "new_leader",
-      format: request.format,
+      celebrationType: "new_first_place",
       organization: {
         name: org.name,
         logoUrl: org.logo_url,
         primaryColor: org.primary_color || "#354f52",
-        secondaryColor: org.secondary_color || "#84a98c",
+        secondaryColor: "#84a98c", // Default brand secondary color
       },
-      winner: user
-        ? {
-            name: user.full_name,
-            photoUrl: user.profile_photo_url,
-            score: stats?.score || 0,
-            rank: 1,
-          }
-        : undefined,
+      winner: {
+        name: user?.full_name || "Unknown",
+        photoUrl: user?.photo_url || null,
+        score: stats?.reputation_score || 0,
+        rank: 1,
+        previousRank: 2,
+        newRank: 1,
+      },
+      topFive: [],
+      period: "This Week",
     };
   }
 
   if (request.celebrationType === "weekly_highlights") {
     // Fetch top 5 from leaderboard
     const { data: entries } = await supabase
-      .from("leaderboard_entries")
+      .from("leaderboard_snapshots")
       .select(`
-        score,
+        reputation_score,
         rank,
         loan_officers!inner (
           id,
           full_name,
-          profile_photo_url
+          photo_url
         )
       `)
       .eq("organization_id", request.organizationId)
-      .order("score", { ascending: false })
+      .order("reputation_score", { ascending: false })
       .limit(5);
 
-    const topPerformers =
+    const topFive =
       entries?.map((e, i) => ({
         name: e.loan_officers.full_name,
-        photoUrl: e.loan_officers.profile_photo_url,
-        score: e.score,
+        photoUrl: e.loan_officers.photo_url,
+        score: e.reputation_score,
         rank: i + 1,
       })) || [];
 
+    const winner = topFive[0] || { name: "Unknown", photoUrl: null, score: 0, rank: 1, previousRank: 1, newRank: 1 };
+
     return {
-      type: "weekly_highlights",
-      format: request.format,
+      celebrationType: "weekly_highlights",
       organization: {
         name: org.name,
         logoUrl: org.logo_url,
         primaryColor: org.primary_color || "#354f52",
-        secondaryColor: org.secondary_color || "#84a98c",
+        secondaryColor: "#84a98c", // Default brand secondary color
       },
-      topPerformers,
+      winner: { ...winner, previousRank: 1, newRank: 1 },
+      topFive,
       period: "This Week",
     };
   }
 
-  // Achievement celebration
+  // Achievement celebration (badge_earned)
   return {
-    type: "achievement",
-    format: request.format,
+    celebrationType: "badge_earned",
     organization: {
       name: org.name,
       logoUrl: org.logo_url,
       primaryColor: org.primary_color || "#354f52",
-      secondaryColor: org.secondary_color || "#84a98c",
+      secondaryColor: "#84a98c", // Default brand secondary color
     },
-    achievement: {
+    winner: {
+      name: "Unknown",
+      photoUrl: null,
+      score: 0,
+      rank: 1,
+      previousRank: 1,
+      newRank: 1,
+    },
+    topFive: [],
+    period: "This Week",
+    badge: {
       name: request.badgeType || "Achievement Unlocked",
+      iconUrl: null,
       description: "Congratulations on your achievement!",
-      icon: "🏆",
     },
   };
 }
@@ -423,7 +454,7 @@ async function getReportSummaryProps(
   // Fetch organization
   const { data: org } = await supabase
     .from("organizations")
-    .select("id, name, logo_url, primary_color, secondary_color")
+    .select("id, name, logo_url, primary_color")
     .eq("id", request.organizationId)
     .single();
 
@@ -431,15 +462,9 @@ async function getReportSummaryProps(
     throw new Error(`Organization not found: ${request.organizationId}`);
   }
 
-  // Fetch report data
-  const { data: report } = await supabase
-    .from("reports")
-    .select("*")
-    .eq("id", request.reportId)
-    .single();
-
-  // Use report data or defaults
-  const metrics = report?.metrics || {
+  // Note: "reports" table doesn't exist yet, using defaults
+  // TODO: Implement reports table and fetch data when available
+  const metrics = {
     npsScore: 72,
     npsPrevious: 68,
     totalReviews: 156,
@@ -452,23 +477,24 @@ async function getReportSummaryProps(
 
   return {
     period: request.period,
-    format: request.format,
     organization: {
       name: org.name,
       logoUrl: org.logo_url,
+      primaryColor: org.primary_color || "#354f52",
+      secondaryColor: "#84a98c", // Default brand secondary color
     },
     metrics,
-    sentimentBreakdown: report?.sentiment || {
+    sentimentBreakdown: {
       positive: 75,
       neutral: 18,
       negative: 7,
     },
-    topPerformer: report?.topPerformer || {
+    topPerformer: {
       name: "Top Performer",
       photoUrl: null,
       score: 95,
     },
-    teamHighlights: report?.highlights || [],
+    teamHighlights: [],
   };
 }
 
@@ -483,7 +509,7 @@ async function getSocialClipProps(
   // Fetch organization
   const { data: org } = await supabase
     .from("organizations")
-    .select("id, name, logo_url, primary_color, secondary_color")
+    .select("id, name, logo_url, primary_color")
     .eq("id", request.organizationId)
     .single();
 
@@ -501,25 +527,31 @@ async function getSocialClipProps(
   if (request.sourceType === "testimonial") {
     const { data } = await supabase
       .from("testimonials")
-      .select("content, customer_name, rating")
+      .select(`
+        content,
+        reviews!inner (
+          customer_name,
+          rating
+        )
+      `)
       .eq("id", request.sourceId)
       .single();
 
     if (data) {
       quote = data.content;
-      author = data.customer_name || "Anonymous";
-      rating = data.rating || 5;
+      author = data.reviews.customer_name || "Anonymous";
+      rating = data.reviews.rating || 5;
     }
   } else if (request.sourceType === "review") {
     const { data } = await supabase
       .from("reviews")
-      .select("content, reviewer_name, rating")
+      .select("text, customer_name, rating")
       .eq("id", request.sourceId)
       .single();
 
     if (data) {
-      quote = data.content;
-      author = data.reviewer_name || "Anonymous";
+      quote = data.text || "";
+      author = data.customer_name || "Anonymous";
       rating = data.rating || 5;
     }
   }
@@ -534,7 +566,7 @@ async function getSocialClipProps(
       name: org.name,
       logoUrl: org.logo_url,
       primaryColor: org.primary_color || "#354f52",
-      secondaryColor: org.secondary_color || "#84a98c",
+      secondaryColor: "#84a98c", // Default brand secondary color
     },
     statValue,
     statLabel,
@@ -555,19 +587,19 @@ async function getVideoThumbnailProps(
     .select(`
       *,
       video_testimonial_requests!inner (
+        customer_name,
         loan_officer_id,
         organization_id,
         loan_officers!inner (
           id,
           full_name,
-          profile_photo_url
+          photo_url
         ),
         organizations!inner (
           id,
           name,
           logo_url,
-          primary_color,
-          secondary_color
+          primary_color
         )
       )
     `)
@@ -583,8 +615,8 @@ async function getVideoThumbnailProps(
   const lo = req.loan_officers;
 
   return {
-    customerName: response.customer_name || "Valued Customer",
-    quote: response.ai_summary || response.key_phrases?.[0] || "Great experience!",
+    customerName: req.customer_name || "Valued Customer",
+    quote: response.ai_generated_text || response.key_phrases?.[0] || "Great experience!",
     rating: response.sentiment_score
       ? Math.round((response.sentiment_score / 100) * 5)
       : 5,
@@ -592,13 +624,13 @@ async function getVideoThumbnailProps(
       name: org.name,
       logoUrl: org.logo_url,
       primaryColor: org.primary_color || "#354f52",
-      secondaryColor: org.secondary_color || "#84a98c",
+      secondaryColor: "#84a98c", // Default brand secondary color
     },
     loanOfficer: {
       fullName: lo.full_name,
-      photoUrl: lo.profile_photo_url,
+      photoUrl: lo.photo_url,
     },
-    customerPhotoUrl: response.customer_photo_url,
+    customerPhotoUrl: response.thumbnail_url,
   };
 }
 
@@ -676,7 +708,7 @@ async function uploadToStorage(
 /**
  * Save generated video record to database
  */
-async function saveGeneratedVideo(data: {
+async function saveGeneratedVideo(_data: {
   id: string;
   organizationId: string;
   sourceType: CompositionType;
@@ -686,18 +718,10 @@ async function saveGeneratedVideo(data: {
   storagePath: string;
   durationSeconds: number;
 }): Promise<void> {
-  const supabase = createAdminClient();
-
-  await supabase.from("generated_videos").insert({
-    id: data.id,
-    organization_id: data.organizationId,
-    source_type: data.sourceType,
-    source_id: data.sourceId,
-    template: data.template,
-    format: data.format,
-    storage_path: data.storagePath,
-    duration_seconds: data.durationSeconds,
-  });
+  // Note: "generated_videos" table doesn't exist yet
+  // TODO: Create generated_videos table and implement storage
+  // For now, this is a no-op
+  console.log("saveGeneratedVideo: table not yet implemented");
 }
 
 /**

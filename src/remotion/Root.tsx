@@ -78,6 +78,7 @@ const defaultLeaderboardProps: LeaderboardCelebrationProps = {
     name: "Sarah Johnson",
     photoUrl: null,
     score: 98,
+    rank: 1,
     previousRank: 3,
     newRank: 1,
   },
@@ -160,27 +161,41 @@ const defaultThumbnailProps: VideoThumbnailProps = {
 // Frame rate constant
 const FPS = 30;
 
+// Type-safe component wrappers for Remotion compatibility
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const VideoTestimonialComponent = VideoTestimonial as React.FC<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const TextTestimonialComponent = TextTestimonial as React.FC<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const LeaderboardCelebrationComponent = LeaderboardCelebration as React.FC<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ReportSummaryComponent = ReportSummary as React.FC<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SocialClipComponent = SocialClip as React.FC<any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const VideoThumbnailComponent = VideoThumbnail as React.FC<any>;
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
       {/* Video Testimonial - 16:9 Landscape */}
       <Composition
         id="VideoTestimonial-16-9"
-        component={VideoTestimonial}
+        component={VideoTestimonialComponent}
         durationInFrames={calculateVideoTestimonialDuration(defaultVideoTestimonialProps, FPS)}
         fps={FPS}
         width={1920}
         height={1080}
         defaultProps={defaultVideoTestimonialProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateVideoTestimonialDuration(props, FPS),
+          durationInFrames: calculateVideoTestimonialDuration(props as unknown as VideoTestimonialProps, FPS),
         })}
       />
 
       {/* Video Testimonial - 1:1 Square */}
       <Composition
         id="VideoTestimonial-1-1"
-        component={VideoTestimonial}
+        component={VideoTestimonialComponent}
         durationInFrames={calculateVideoTestimonialDuration(
           { ...defaultVideoTestimonialProps, format: "1:1" },
           FPS
@@ -190,14 +205,14 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ ...defaultVideoTestimonialProps, format: "1:1" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateVideoTestimonialDuration(props, FPS),
+          durationInFrames: calculateVideoTestimonialDuration(props as unknown as VideoTestimonialProps, FPS),
         })}
       />
 
       {/* Video Testimonial - 9:16 Vertical */}
       <Composition
         id="VideoTestimonial-9-16"
-        component={VideoTestimonial}
+        component={VideoTestimonialComponent}
         durationInFrames={calculateVideoTestimonialDuration(
           { ...defaultVideoTestimonialProps, format: "9:16" },
           FPS
@@ -207,28 +222,28 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={{ ...defaultVideoTestimonialProps, format: "9:16" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateVideoTestimonialDuration(props, FPS),
+          durationInFrames: calculateVideoTestimonialDuration(props as unknown as VideoTestimonialProps, FPS),
         })}
       />
 
       {/* Text Testimonial - 16:9 */}
       <Composition
         id="TextTestimonial-16-9"
-        component={TextTestimonial}
+        component={TextTestimonialComponent}
         durationInFrames={calculateTextTestimonialDuration(defaultTextTestimonialProps, FPS)}
         fps={FPS}
         width={1920}
         height={1080}
         defaultProps={defaultTextTestimonialProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateTextTestimonialDuration(props, FPS),
+          durationInFrames: calculateTextTestimonialDuration(props as unknown as TextTestimonialProps, FPS),
         })}
       />
 
       {/* Text Testimonial - 1:1 */}
       <Composition
         id="TextTestimonial-1-1"
-        component={TextTestimonial}
+        component={TextTestimonialComponent}
         durationInFrames={calculateTextTestimonialDuration(
           { ...defaultTextTestimonialProps, format: "1:1" },
           FPS
@@ -238,14 +253,14 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ ...defaultTextTestimonialProps, format: "1:1" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateTextTestimonialDuration(props, FPS),
+          durationInFrames: calculateTextTestimonialDuration(props as unknown as TextTestimonialProps, FPS),
         })}
       />
 
       {/* Text Testimonial - 9:16 */}
       <Composition
         id="TextTestimonial-9-16"
-        component={TextTestimonial}
+        component={TextTestimonialComponent}
         durationInFrames={calculateTextTestimonialDuration(
           { ...defaultTextTestimonialProps, format: "9:16" },
           FPS
@@ -255,56 +270,56 @@ export const RemotionRoot: React.FC = () => {
         height={1920}
         defaultProps={{ ...defaultTextTestimonialProps, format: "9:16" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateTextTestimonialDuration(props, FPS),
+          durationInFrames: calculateTextTestimonialDuration(props as unknown as TextTestimonialProps, FPS),
         })}
       />
 
       {/* Leaderboard Celebration */}
       <Composition
         id="LeaderboardCelebration"
-        component={LeaderboardCelebration}
+        component={LeaderboardCelebrationComponent}
         durationInFrames={calculateLeaderboardDuration(defaultLeaderboardProps, FPS)}
         fps={FPS}
         width={1080}
         height={1080}
         defaultProps={defaultLeaderboardProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateLeaderboardDuration(props, FPS),
+          durationInFrames: calculateLeaderboardDuration(props as unknown as LeaderboardCelebrationProps, FPS),
         })}
       />
 
       {/* Report Summary */}
       <Composition
         id="ReportSummary"
-        component={ReportSummary}
+        component={ReportSummaryComponent}
         durationInFrames={calculateReportDuration(defaultReportProps, FPS)}
         fps={FPS}
         width={1920}
         height={1080}
         defaultProps={defaultReportProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateReportDuration(props, FPS),
+          durationInFrames: calculateReportDuration(props as unknown as ReportSummaryProps, FPS),
         })}
       />
 
       {/* Social Clip - 9:16 Stories/Reels */}
       <Composition
         id="SocialClip-9-16"
-        component={SocialClip}
+        component={SocialClipComponent}
         durationInFrames={calculateSocialClipDuration(defaultSocialClipProps, FPS)}
         fps={FPS}
         width={1080}
         height={1920}
         defaultProps={defaultSocialClipProps}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateSocialClipDuration(props, FPS),
+          durationInFrames: calculateSocialClipDuration(props as unknown as SocialClipProps, FPS),
         })}
       />
 
       {/* Social Clip - 1:1 Feed */}
       <Composition
         id="SocialClip-1-1"
-        component={SocialClip}
+        component={SocialClipComponent}
         durationInFrames={calculateSocialClipDuration(
           { ...defaultSocialClipProps, format: "1:1" },
           FPS
@@ -314,14 +329,14 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
         defaultProps={{ ...defaultSocialClipProps, format: "1:1" }}
         calculateMetadata={({ props }) => ({
-          durationInFrames: calculateSocialClipDuration(props, FPS),
+          durationInFrames: calculateSocialClipDuration(props as unknown as SocialClipProps, FPS),
         })}
       />
 
       {/* Video Thumbnail - Static Image */}
       <Still
         id="VideoThumbnail"
-        component={VideoThumbnail}
+        component={VideoThumbnailComponent}
         width={1280}
         height={720}
         defaultProps={defaultThumbnailProps}

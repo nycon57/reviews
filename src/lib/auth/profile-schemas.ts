@@ -11,7 +11,7 @@ export const updateProfileSchema = z.object({
 
   // Contact info
   phone: z.string()
-    .regex(/^[\d\s\-\+\(\)]*$/, "Please enter a valid phone number")
+    .regex(/^[\d\s\-+()]*$/, "Please enter a valid phone number")
     .max(20, "Phone number is too long")
     .optional()
     .or(z.literal("")),

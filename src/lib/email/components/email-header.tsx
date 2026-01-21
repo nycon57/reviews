@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Section, Img, Text, Link } from "@react-email/components";
-import { colors, typography, spacing, gradients, layout } from "../theme";
+import { colors, typography, spacing, gradients } from "../theme";
 
 // =============================================================================
 // EMAIL HEADER COMPONENT

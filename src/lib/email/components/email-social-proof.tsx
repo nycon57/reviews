@@ -1,6 +1,40 @@
 import * as React from "react";
 import { Section, Text, Img, Row, Column } from "@react-email/components";
-import { colors, typography, spacing, layout, gradients } from "../theme";
+import { colors, typography, spacing, layout } from "../theme";
+
+// =============================================================================
+// STAR RATING HELPER COMPONENT
+// =============================================================================
+
+interface StarRatingProps {
+  rating?: number;
+}
+
+function StarRating({ rating }: StarRatingProps) {
+  if (!rating) return null;
+
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <span
+        key={i}
+        style={{
+          color: i <= rating ? "#facc15" : colors.border.default,
+          fontSize: "16px",
+          marginRight: "2px",
+        }}
+      >
+        ★
+      </span>
+    );
+  }
+
+  return (
+    <Section style={{ marginBottom: spacing[3] }}>
+      {stars}
+    </Section>
+  );
+}
 
 // =============================================================================
 // TESTIMONIAL COMPONENT
@@ -36,33 +70,6 @@ export function Testimonial({
   rating,
   variant = "default",
 }: TestimonialProps) {
-  // Star rating component
-  const StarRating = () => {
-    if (!rating) return null;
-
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <span
-          key={i}
-          style={{
-            color: i <= rating ? "#facc15" : colors.border.default,
-            fontSize: "16px",
-            marginRight: "2px",
-          }}
-        >
-          ★
-        </span>
-      );
-    }
-
-    return (
-      <Section style={{ marginBottom: spacing[3] }}>
-        {stars}
-      </Section>
-    );
-  };
-
   if (variant === "compact") {
     return (
       <Section
@@ -73,7 +80,7 @@ export function Testimonial({
           borderLeft: `3px solid ${colors.primary}`,
         }}
       >
-        <StarRating />
+        <StarRating rating={rating} />
         <Text
           style={{
             margin: 0,
@@ -125,7 +132,7 @@ export function Testimonial({
           "
         </Text>
 
-        <StarRating />
+        <StarRating rating={rating} />
 
         {/* Quote */}
         <Text
@@ -200,7 +207,7 @@ export function Testimonial({
         borderRadius: layout.borderRadius.lg,
       }}
     >
-      <StarRating />
+      <StarRating rating={rating} />
 
       {/* Quote */}
       <Text

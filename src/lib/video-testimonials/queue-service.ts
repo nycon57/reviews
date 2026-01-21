@@ -156,13 +156,13 @@ export async function isQueuePaused(
   const supabase = createAdminClient();
 
   const { data } = await supabase
-    .from("organization_settings")
-    .select("value")
-    .eq("organization_id", organizationId)
-    .eq("key", "video_testimonial_queue_paused")
+    .from("organizations")
+    .select("settings")
+    .eq("id", organizationId)
     .single();
 
-  return data?.value === "true";
+  const settings = (data?.settings || {}) as Record<string, unknown>;
+  return settings.video_testimonial_queue_paused === true;
 }
 
 /**
@@ -174,17 +174,23 @@ export async function setQueuePaused(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createAdminClient();
 
-  const { error } = await supabase.from("organization_settings").upsert(
-    {
-      organization_id: organizationId,
-      key: "video_testimonial_queue_paused",
-      value: paused ? "true" : "false",
-      updated_at: new Date().toISOString(),
-    },
-    {
-      onConflict: "organization_id,key",
-    }
-  );
+  // Fetch current settings
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("settings")
+    .eq("id", organizationId)
+    .single();
+
+  const currentSettings = (orgData?.settings || {}) as Record<string, unknown>;
+  const newSettings = {
+    ...currentSettings,
+    video_testimonial_queue_paused: paused,
+  };
+
+  const { error } = await supabase
+    .from("organizations")
+    .update({ settings: newSettings })
+    .eq("id", organizationId);
 
   if (error) {
     console.error("Error setting queue paused state:", error);

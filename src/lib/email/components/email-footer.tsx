@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Section, Text, Link, Row, Column, Img } from "@react-email/components";
-import { colors, typography, spacing, layout } from "../theme";
+import { colors, typography, spacing } from "../theme";
 
 // =============================================================================
 // SOCIAL LINK ICONS (inline SVG data URIs for email compatibility)

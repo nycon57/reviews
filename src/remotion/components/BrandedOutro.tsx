@@ -381,7 +381,6 @@ const PoweredByRepWell: React.FC<{
     <div
       style={{
         opacity,
-        transform: `translateY(${translateY}px)`,
         position: "absolute",
         bottom: "32px",
         left: "50%",

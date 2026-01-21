@@ -6677,3 +6677,77 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - React Email templates compile cleanly with Next.js build
 - Status: Pass 3/3 COMPLETE - STORY READY FOR COMPLETION
 ---
+
+## S081 · Pass 1/3 (Cont.) · 2026-01-21
+Thread:
+Run: 20260121-004232-375 (iteration 35)
+Pass: 1/3 - Implementation (Continuation)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-35.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-35.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 40be7c8 [Pass 1/3] feat(S081): Add missing milestone email templates
+- Post-commit status: clean (only PRD modified - managed by loop)
+- Skills invoked:
+  - /feature-dev: no (email templates)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (Pass 1)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (email templates, not UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 warnings from unrelated files)
+- Files created:
+  - src/lib/email/templates/milestones/rating-improvement-milestone.tsx
+  - src/lib/email/templates/milestones/nps-improvement-milestone.tsx
+  - src/lib/email/templates/milestones/profile-completion-milestone.tsx
+- Files modified:
+  - src/lib/email/templates/milestones/index.tsx (imports, exports, render functions)
+- What was implemented:
+  - Added 3 missing milestone email templates to complete acceptance criteria:
+    - Rating Improvement: Shows before/after rating comparison, improvement amount
+    - NPS Improvement: Shows NPS score change, category badge, benchmark comparison
+    - Profile Completion: Shows progress bar, unlocked benefits, remaining fields
+  - All templates follow S073 email design system
+  - All templates include celebratory header, social share CTA
+- **Learnings for future iterations:**
+  - Prior Pass 1/3 had implemented 7 templates but missed 3 (rating, nps, profile)
+  - Types existed for all 10 milestone types but only 7 templates were created
+  - Always cross-check types.ts against template files for completeness
+---
+
+## S081 · Pass 2/3 · 2026-01-21
+Thread:
+Run: 20260121-004232-375 (iteration 37)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-37.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-37.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 2aeca44 [Pass 2/3] fix(S081): Code review fixes for milestone email templates
+- Post-commit status: clean (only PRD modified - managed by loop)
+- Skills invoked:
+  - /feature-dev: no (email templates)
+  - /code-review: yes (feature-dev:code-reviewer)
+  - /vercel-react-best-practices: yes (reviewed)
+  - /code-simplifier: no (deferred to Pass 3)
+  - /frontend-design: no (email templates, not UI)
+- Code Review Issues Found & Fixed:
+  1. **Flexbox email compatibility** (Critical): Replaced CSS flexbox with Row/Column components in NPS template for Outlook compatibility
+  2. **renderStars crash** (Critical): Added bounds checking to prevent RangeError with invalid ratings
+  3. **Code duplication**: Extracted renderStars to shared utils.ts, removed duplicates from 2 templates
+  4. **Half-star support**: Added showHalf parameter for rating improvement template
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 warnings from unrelated files)
+- Files modified:
+  - src/lib/email/utils.ts (added renderStars utility)
+  - src/lib/email/templates/milestones/first-review-milestone.tsx (use shared util)
+  - src/lib/email/templates/milestones/rating-improvement-milestone.tsx (use shared util with half-stars)
+  - src/lib/email/templates/milestones/nps-improvement-milestone.tsx (fixed flexbox layout)
+- **Learnings for future iterations:**
+  - Email templates need Row/Column for layouts, not flexbox (Outlook incompatible)
+  - Always add bounds checking for functions that could receive invalid inputs
+  - Extract shared utilities early to avoid duplication across templates
+- Status: Pass 2/3 COMPLETE - Ready for Pass 3 (Polish & Finalize)
+---

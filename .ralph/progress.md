@@ -6229,3 +6229,42 @@ Pass: 1/3 - Implementation
   - Table name is google_connections not social_connections
   - Use is_active=true not status='active' for google_connections
 ---
+
+## [2026-01-21] - S077: Role-Based Feature Onboarding Sequences
+Thread: 
+Run: 20260121-004232-375 (iteration 18)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-18.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-004232-375-iter-18.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 783f4a3 [Pass 2/3] fix(S077): Add 'role_onboarding' to email_sequences constraint
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (code-review:code-review skill)
+  - /vercel-react-best-practices: yes (loaded, but N/A - no React components)
+  - /code-simplifier: no (Pass 3 task)
+  - /frontend-design: no (no UI)
+- Verification:
+  - Command: npm run lint -> PASS (0 errors)
+  - Command: npm run build -> PASS
+- Files created:
+  - supabase/migrations/20240101000045_add_role_onboarding_sequence_type.sql
+- Issues found and fixed:
+  - **CRITICAL BUG**: Database CHECK constraint on email_sequences.sequence_type didn't include 'role_onboarding'
+    - Service used sequence_type: "role_onboarding" but constraint only allowed: welcome, onboarding, win_back, feature_announcement, milestone
+    - This would cause INSERT failures when creating new role onboarding sequences
+    - Fix: Created migration to add 'role_onboarding' to the CHECK constraint
+- Security review: PASS
+  - XSS protection via escapeHtml() ✅
+  - URL sanitization via sanitizeUrl() ✅
+  - Email header injection protection via sanitizeSubject() ✅
+- Performance review: PASS
+  - Efficient batch processing with configurable batch size ✅
+  - Proper database indexing on next_email_at WHERE status = 'active' ✅
+- **Learnings for future iterations:**
+  - Always verify database CHECK constraints match the values used in application code
+  - When adding new enum-like values, update both migration and types
+  - Email sequences table requires type regeneration after migration: npm run db:types
+---

@@ -6961,3 +6961,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Progress entries should document verification even without changes
 - Status: Pass 3/3 COMPLETE - All acceptance criteria verified
 ---
+
+## S083 · Pass 1/3 · 2026-01-21
+Thread:
+Run: 20260121-continuation (context resumed)
+Pass: 1/3 - Implementation
+- Guardrails reviewed: yes (prior to context compaction)
+- No-commit run: false
+- Commit: e94501e [Pass 1/3] feat(S083): Add re-engagement email sequence for inactive users
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no (Pass 2)
+  - /vercel-react-best-practices: no (email templates - server-rendered)
+- Files created:
+  - src/lib/email/reengagement-templates.ts (4 email templates)
+  - src/lib/email/reengagement-sequence-service.ts (detection + queue processing)
+  - src/app/api/cron/process-reengagement/route.ts (cron job)
+- Files modified:
+  - src/lib/email/types.ts (added re-engagement email types)
+  - src/app/auth/callback/route.ts (exit sequences on login)
+- Implementation details:
+  - 4-email win-back sequence at 7, 14, 30, 45 days inactive
+  - Email 1: Soft check-in with value reminder
+  - Email 2: Feature highlights and what's new
+  - Email 3: Last chance with missed reviews count
+  - Email 4: Final email with unsubscribe option
+  - Different messaging for paid vs free users
+  - Exit sequence automatically on user login
+  - Uses email_sequences table with sequence_type "re-engagement"
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors)
+- Acceptance criteria implemented:
+  - ✅ Inactivity detection: No login for 7, 14, 30, 45 days
+  - ✅ Email 1 (Day 7): Soft check-in - 'We miss you' with value reminder
+  - ✅ Email 2 (Day 14): Feature highlight - Show what's new since they left
+  - ✅ Email 3 (Day 30): Last chance - Direct ask + incentive if applicable
+  - ✅ Email 4 (Day 45): Final email - Ask if they want to stay subscribed
+  - ✅ Exit sequence on any login activity
+  - ✅ Different messaging for paid vs free users
+  - ✅ Include specific metrics they're missing: X reviews received while away
+  - ✅ Personal from 'the team' vs automated feel
+- Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Code Review)
+---

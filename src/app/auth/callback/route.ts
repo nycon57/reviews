@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { startWelcomeSequence } from "@/lib/email/welcome-sequence-service";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -19,15 +20,31 @@ export async function GET(request: NextRequest) {
       }
 
       // Check onboarding status for new users
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         const { data: userData } = await supabase
           .from("users")
-          .select("organization_id")
+          .select("organization_id, created_at")
           .eq("id", user.id)
           .single();
 
         if (userData?.organization_id) {
+          // Check if this is a new user (created within the last minute)
+          if (userData.created_at) {
+            const userCreatedAt = new Date(userData.created_at);
+            const now = new Date();
+            const isNewUser = now.getTime() - userCreatedAt.getTime() < 60000; // 1 minute
+
+            // Start welcome sequence for new users (async, don't wait)
+            if (isNewUser) {
+              startWelcomeSequence(user.id).catch((err) => {
+                console.error("Failed to start welcome sequence:", err);
+              });
+            }
+          }
+
           // Fetch organization with all columns to access onboarding_status
           const { data: orgData } = await supabase
             .from("organizations")
@@ -37,7 +54,8 @@ export async function GET(request: NextRequest) {
 
           // Cast to access potentially untyped columns
           const orgAny = orgData as Record<string, unknown> | null;
-          const onboardingStatus = (orgAny?.onboarding_status as string) || "pending";
+          const onboardingStatus =
+            (orgAny?.onboarding_status as string) || "pending";
 
           // Redirect to onboarding if not completed
           if (onboardingStatus !== "completed") {

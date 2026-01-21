@@ -43,6 +43,15 @@ const VIDEO_TESTIMONIAL_TEMPLATES = [
   "video_testimonial_reminder_7day",
 ];
 
+// Welcome sequence template names
+const WELCOME_SEQUENCE_TEMPLATES = [
+  "welcome_1_access",
+  "welcome_2_profile",
+  "welcome_3_first_action",
+  "welcome_4_social_proof",
+  "welcome_5_metrics",
+];
+
 /**
  * Verify Resend webhook signature using Svix
  * Resend uses Svix for webhook signatures
@@ -165,6 +174,11 @@ export async function POST(request: NextRequest) {
     // Handle video testimonial-specific status updates
     if (emailLog?.template_name && VIDEO_TESTIMONIAL_TEMPLATES.includes(emailLog.template_name)) {
       await handleVideoTestimonialEmailEvent(supabase, type, data);
+    }
+
+    // Handle welcome sequence-specific status updates
+    if (emailLog?.template_name && WELCOME_SEQUENCE_TEMPLATES.includes(emailLog.template_name)) {
+      await handleWelcomeSequenceEmailEvent(supabase, type, data);
     }
 
     // For bounced/complained emails, we might want to add to unsubscribe list
@@ -317,4 +331,112 @@ export async function HEAD() {
 // GET request returns method not allowed
 export async function GET() {
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+}
+
+/**
+ * Handle welcome sequence email events
+ * Tracks engagement metrics on email_sequences table
+ */
+async function handleWelcomeSequenceEmailEvent(
+  supabase: ReturnType<typeof createAdminClient>,
+  eventType: string,
+  eventData: ResendWebhookPayload["data"]
+) {
+  // Try to extract sequence_id from tags
+  const sequenceId = eventData.tags?.sequence_id;
+  const sequenceStep = eventData.tags?.sequence_step;
+  // ab_variant is included in tags for analytics but not used in this handler
+  const _abVariant = eventData.tags?.ab_variant;
+
+  if (!sequenceId) {
+    // No sequence ID in tags, cannot update
+    return;
+  }
+
+  // Note: email_sequences table added in migration 20240101000043
+  // Types will be updated after running npm run db:types
+  // Using type assertions until types are regenerated
+
+  type StepData = {
+    step: number;
+    email_id: string;
+    sent_at: string;
+    template?: string;
+    variant?: string;
+    delivered_at?: string;
+    opened_at?: string;
+    clicked_at?: string;
+  };
+
+  // Get current sequence data
+  const { data: sequence, error: fetchError } = await (supabase as ReturnType<typeof createAdminClient>)
+    .from("email_sequences" as "users")
+    .select("steps_completed")
+    .eq("id", sequenceId)
+    .single() as { data: { steps_completed: StepData[] } | null; error: Error | null };
+
+  if (fetchError || !sequence) {
+    console.error("Failed to fetch sequence for tracking:", fetchError);
+    return;
+  }
+
+  // Parse existing steps
+  const stepsCompleted = (sequence.steps_completed || []) as StepData[];
+
+  const stepNum = parseInt(sequenceStep || "0", 10);
+  const stepIndex = stepsCompleted.findIndex((s) => s.step === stepNum);
+
+  if (stepIndex === -1) {
+    // Step not found in completed list
+    return;
+  }
+
+  const now = new Date().toISOString();
+
+  switch (eventType) {
+    case "email.delivered":
+      if (!stepsCompleted[stepIndex].delivered_at) {
+        stepsCompleted[stepIndex].delivered_at = now;
+      }
+      break;
+
+    case "email.opened":
+      if (!stepsCompleted[stepIndex].opened_at) {
+        stepsCompleted[stepIndex].opened_at = now;
+      }
+      break;
+
+    case "email.clicked":
+      if (!stepsCompleted[stepIndex].clicked_at) {
+        stepsCompleted[stepIndex].clicked_at = now;
+      }
+      break;
+
+    case "email.bounced":
+    case "email.complained":
+      // Mark sequence as cancelled due to email delivery failure
+      await (supabase as ReturnType<typeof createAdminClient>)
+        .from("email_sequences" as "users")
+        .update({
+          status: "cancelled",
+          exit_reason: eventType === "email.bounced" ? "email_bounced" : "email_complained",
+          exited_at: now,
+          steps_completed: stepsCompleted,
+        } as Record<string, unknown>)
+        .eq("id", sequenceId)
+        .eq("status", "active");
+      return;
+  }
+
+  // Update the sequence with engagement data
+  const { error: updateError } = await (supabase as ReturnType<typeof createAdminClient>)
+    .from("email_sequences" as "users")
+    .update({
+      steps_completed: stepsCompleted,
+    } as Record<string, unknown>)
+    .eq("id", sequenceId);
+
+  if (updateError) {
+    console.error("Failed to update sequence engagement:", updateError);
+  }
 }

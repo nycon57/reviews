@@ -16,7 +16,12 @@ export type EmailTemplate =
   | "video_testimonial_reminder_7day"
   | "video_testimonial_received"
   | "video_testimonial_approved"
-  | "video_testimonial_pending_approval";
+  | "video_testimonial_pending_approval"
+  | "welcome_1_access"
+  | "welcome_2_profile"
+  | "welcome_3_first_action"
+  | "welcome_4_social_proof"
+  | "welcome_5_metrics";
 
 // Base email data
 export interface BaseEmailData {
@@ -193,6 +198,65 @@ export interface VideoTestimonialPendingApprovalEmailData extends BaseEmailData 
   durationSeconds?: number;
   approvalQueueUrl: string;
   testimonialId: string;
+}
+
+// =============================================================================
+// WELCOME SEQUENCE EMAIL DATA INTERFACES
+// =============================================================================
+
+// Base welcome email data (shared across all welcome emails)
+export interface WelcomeEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  role: "admin" | "manager" | "loan_officer";
+  dashboardUrl: string;
+  sequenceId: string;
+  unsubscribeUrl: string;
+}
+
+// Email 1: Welcome + Access (sent immediately on signup)
+export interface Welcome1AccessEmailData extends WelcomeEmailBaseData {
+  loginUrl: string;
+  settingsUrl: string;
+}
+
+// Email 2: Profile Setup (Day 1)
+export interface Welcome2ProfileEmailData extends WelcomeEmailBaseData {
+  profileUrl: string;
+  profileCompletionPercent: number;
+  missingFields: string[];
+}
+
+// Email 3: First Action - Create Survey or Request Video (Day 3)
+export interface Welcome3FirstActionEmailData extends WelcomeEmailBaseData {
+  createSurveyUrl: string;
+  requestVideoUrl: string;
+  hasCompletedAction: boolean;
+}
+
+// Email 4: Social Proof - Customer Success Story (Day 5)
+export interface Welcome4SocialProofEmailData extends WelcomeEmailBaseData {
+  successStory: {
+    companyName: string;
+    personName: string;
+    personTitle: string;
+    quote: string;
+    metric?: string;
+    metricLabel?: string;
+  };
+  viewMoreStoriesUrl: string;
+}
+
+// Email 5: Core Value - Metrics Preview (Day 7)
+export interface Welcome5MetricsEmailData extends WelcomeEmailBaseData {
+  sampleMetrics: {
+    averageRating?: number;
+    reviewCount?: number;
+    npsScore?: number;
+    responseRate?: number;
+  };
+  analyticsUrl: string;
+  upgradeUrl?: string;
 }
 
 // Email send result

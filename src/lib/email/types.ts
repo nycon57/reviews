@@ -68,7 +68,18 @@ export type EmailTemplate =
   | "review_response_sent_confirmation"
   | "review_published_notification"
   | "review_response_received"
-  | "negative_review_alert_enhanced";
+  | "negative_review_alert_enhanced"
+  // Milestone & achievement celebration emails (S081)
+  | "milestone_first_review"
+  | "milestone_review_count"
+  | "milestone_first_5_star"
+  | "milestone_rating_improvement"
+  | "milestone_nps_improvement"
+  | "milestone_streak"
+  | "milestone_leaderboard"
+  | "milestone_badge_earned"
+  | "milestone_profile_completion"
+  | "milestone_video";
 
 // Base email data
 export interface BaseEmailData {
@@ -893,4 +904,168 @@ export interface RoleOnboardingFeatureStatus {
   has_invited_user: boolean;
   has_configured_integrations: boolean;
   has_configured_billing: boolean;
+}
+
+// =============================================================================
+// MILESTONE & ACHIEVEMENT EMAIL DATA INTERFACES (S081)
+// =============================================================================
+
+// Milestone types for categorization
+export type MilestoneType =
+  | "first_review"
+  | "review_milestone"
+  | "first_5_star"
+  | "rating_improvement"
+  | "nps_improvement"
+  | "streak"
+  | "leaderboard_achievement"
+  | "badge_earned"
+  | "profile_completion"
+  | "video_milestone";
+
+// Base milestone email data (shared across all milestone emails)
+export interface MilestoneEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  unsubscribeUrl: string;
+  milestoneId: string;
+  achievedAt: string;
+  // Social sharing
+  shareUrl?: string;
+  socialShareLinks?: {
+    linkedin?: string;
+    twitter?: string;
+    facebook?: string;
+  };
+}
+
+// First Review Celebration email data
+export interface FirstReviewMilestoneEmailData extends MilestoneEmailBaseData {
+  customerName: string;
+  reviewRating: number;
+  reviewText?: string;
+  reviewDate: string;
+  nextMilestoneCount: number; // e.g., 5
+  viewReviewUrl: string;
+}
+
+// Review Count Milestone email data (10, 25, 50, 100, 250, 500 reviews)
+export interface ReviewCountMilestoneEmailData extends MilestoneEmailBaseData {
+  reviewCount: number;
+  previousMilestone?: number;
+  nextMilestone?: number;
+  averageRating: number;
+  percentileRank?: number; // e.g., "Top 10%"
+  timeToAchieve?: string; // e.g., "3 months"
+  viewReviewsUrl: string;
+}
+
+// First 5-Star Review Celebration email data
+export interface First5StarMilestoneEmailData extends MilestoneEmailBaseData {
+  customerName: string;
+  reviewText?: string;
+  reviewDate: string;
+  totalReviews: number;
+  viewReviewUrl: string;
+}
+
+// Rating Improvement Milestone email data
+export interface RatingImprovementMilestoneEmailData extends MilestoneEmailBaseData {
+  previousRating: number;
+  currentRating: number;
+  improvementAmount: number;
+  totalReviews: number;
+  periodDescription: string; // e.g., "last 30 days"
+  viewAnalyticsUrl: string;
+}
+
+// NPS Score Improvement Milestone email data
+export interface NpsImprovementMilestoneEmailData extends MilestoneEmailBaseData {
+  previousNps: number;
+  currentNps: number;
+  improvementAmount: number;
+  totalResponses: number;
+  npsCategory: "promoter" | "passive" | "detractor";
+  industryBenchmark?: number;
+  viewAnalyticsUrl: string;
+}
+
+// Response Streak Milestone email data (7, 30, 90 day streaks)
+export interface StreakMilestoneEmailData extends MilestoneEmailBaseData {
+  streakDays: number;
+  streakType: "response" | "review" | "rating";
+  streakDescription: string; // e.g., "7 days of responding to reviews"
+  nextStreakDays?: number;
+  viewStreakUrl: string;
+}
+
+// Leaderboard Achievement Milestone email data
+export interface LeaderboardMilestoneEmailData extends MilestoneEmailBaseData {
+  currentRank: number;
+  previousRank?: number;
+  rankImprovement?: number;
+  totalParticipants: number;
+  periodType: "monthly" | "quarterly" | "yearly" | "all_time";
+  achievementType: "entered_top_10" | "reached_top_3" | "reached_number_1";
+  reputationScore: number;
+  viewLeaderboardUrl: string;
+}
+
+// Badge Earned Milestone email data
+export interface BadgeEarnedMilestoneEmailData extends MilestoneEmailBaseData {
+  badgeName: string;
+  badgeDescription: string;
+  badgeIcon: string;
+  badgeCategory: "milestone" | "performance" | "streak" | "special";
+  badgeTier?: "bronze" | "silver" | "gold" | "platinum";
+  totalBadgesEarned: number;
+  totalBadgesAvailable: number;
+  nextBadgeName?: string;
+  nextBadgeProgress?: number; // 0-100 percent
+  viewBadgesUrl: string;
+}
+
+// Profile Completion Milestone email data (50%, 75%, 100%)
+export interface ProfileCompletionMilestoneEmailData extends MilestoneEmailBaseData {
+  completionPercent: number;
+  previousPercent: number;
+  missingFields?: string[];
+  benefitsUnlocked?: string[];
+  profileUrl: string;
+}
+
+// Video Testimonial Milestone email data (first video, 5, 10 videos)
+export interface VideoMilestoneEmailData extends MilestoneEmailBaseData {
+  videoCount: number;
+  previousMilestone?: number;
+  nextMilestone?: number;
+  latestVideoCustomerName?: string;
+  totalViewsCount?: number;
+  viewVideosUrl: string;
+}
+
+// Union type for all milestone email data types
+export type MilestoneEmailData =
+  | FirstReviewMilestoneEmailData
+  | ReviewCountMilestoneEmailData
+  | First5StarMilestoneEmailData
+  | RatingImprovementMilestoneEmailData
+  | NpsImprovementMilestoneEmailData
+  | StreakMilestoneEmailData
+  | LeaderboardMilestoneEmailData
+  | BadgeEarnedMilestoneEmailData
+  | ProfileCompletionMilestoneEmailData
+  | VideoMilestoneEmailData;
+
+// Milestone email preferences (for user settings)
+export interface MilestoneEmailPreferences {
+  enabled: boolean;
+  reviewMilestones: boolean;
+  ratingMilestones: boolean;
+  streakMilestones: boolean;
+  leaderboardMilestones: boolean;
+  badgeMilestones: boolean;
+  profileMilestones: boolean;
+  videoMilestones: boolean;
 }

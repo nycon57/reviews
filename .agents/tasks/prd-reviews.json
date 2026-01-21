@@ -2865,7 +2865,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Video testimonial completion rate improves",
         "Processing status reduces support inquiries",
@@ -2887,9 +2887,9 @@
         ],
         "thumbnail_generation": "Use video poster frame or generate server-side"
       },
-      "startedAt": "2026-01-21T10:40:47.354403+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-21T10:40:47.354506+00:00"
+      "startedAt": "2026-01-21T10:51:00.554753+00:00",
+      "completedAt": "2026-01-21T10:55:18.287972+00:00",
+      "updatedAt": "2026-01-21T10:55:18.287872+00:00"
     },
     {
       "id": "S081",
@@ -2912,7 +2912,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Milestones trigger correctly at thresholds",
         "Celebration emails have high open rates (> 40%)",
@@ -2948,7 +2948,10 @@
           "leaderboard": "You're in the top 10!",
           "streak": "30-day response streak \u2014 you're on fire!"
         }
-      }
+      },
+      "startedAt": "2026-01-21T10:55:20.344300+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T10:55:20.344415+00:00"
     },
     {
       "id": "S082",

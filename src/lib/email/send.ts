@@ -25,6 +25,14 @@ import type {
   ReviewPublishedNotificationEmailData,
   ReviewResponseReceivedEmailData,
   NegativeReviewAlertEnhancedEmailData,
+  // Milestone email types (S081)
+  FirstReviewMilestoneEmailData,
+  ReviewCountMilestoneEmailData,
+  First5StarMilestoneEmailData,
+  LeaderboardMilestoneEmailData,
+  BadgeEarnedMilestoneEmailData,
+  StreakMilestoneEmailData,
+  VideoMilestoneEmailData,
 } from "./types";
 import {
   getSurveyInvitationEmail,
@@ -50,6 +58,15 @@ import {
   getReviewResponseReceivedEmail,
   getNegativeReviewAlertEnhancedEmail,
 } from "./templates";
+import {
+  renderFirstReviewMilestoneEmail,
+  renderReviewCountMilestoneEmail,
+  renderFirst5StarMilestoneEmail,
+  renderLeaderboardMilestoneEmail,
+  renderBadgeEarnedMilestoneEmail,
+  renderStreakMilestoneEmail,
+  renderVideoMilestoneEmail,
+} from "./templates/milestones";
 
 // Check if email is unsubscribed
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
@@ -1809,6 +1826,578 @@ export async function sendNegativeReviewAlertEnhancedEmail(
       fromEmail: emailConfig.defaultFromEmail,
       subject,
       templateName: "negative_review_alert_enhanced",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// =============================================================================
+// MILESTONE & ACHIEVEMENT EMAIL SEND FUNCTIONS (S081)
+// =============================================================================
+
+// Send first review milestone email
+export async function sendFirstReviewMilestoneEmail(
+  data: FirstReviewMilestoneEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = await renderFirstReviewMilestoneEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "milestone_first_review" },
+        { name: "milestone_id", value: data.milestoneId },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "milestone_first_review",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_first_review",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_first_review",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send review count milestone email
+export async function sendReviewCountMilestoneEmail(
+  data: ReviewCountMilestoneEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = await renderReviewCountMilestoneEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "milestone_review_count" },
+        { name: "milestone_id", value: data.milestoneId },
+        { name: "review_count", value: String(data.reviewCount) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "milestone_review_count",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_review_count",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_review_count",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send first 5-star milestone email
+export async function sendFirst5StarMilestoneEmail(
+  data: First5StarMilestoneEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = await renderFirst5StarMilestoneEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "milestone_first_5_star" },
+        { name: "milestone_id", value: data.milestoneId },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "milestone_first_5_star",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_first_5_star",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_first_5_star",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send leaderboard milestone email
+export async function sendLeaderboardMilestoneEmail(
+  data: LeaderboardMilestoneEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = await renderLeaderboardMilestoneEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "milestone_leaderboard" },
+        { name: "milestone_id", value: data.milestoneId },
+        { name: "achievement_type", value: data.achievementType },
+        { name: "current_rank", value: String(data.currentRank) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "milestone_leaderboard",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_leaderboard",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_leaderboard",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send badge earned milestone email
+export async function sendBadgeEarnedMilestoneEmail(
+  data: BadgeEarnedMilestoneEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = await renderBadgeEarnedMilestoneEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "milestone_badge_earned" },
+        { name: "milestone_id", value: data.milestoneId },
+        { name: "badge_name", value: data.badgeName },
+        ...(data.badgeTier ? [{ name: "badge_tier", value: data.badgeTier }] : []),
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "milestone_badge_earned",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_badge_earned",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_badge_earned",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send streak milestone email
+export async function sendStreakMilestoneEmail(
+  data: StreakMilestoneEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = await renderStreakMilestoneEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "milestone_streak" },
+        { name: "milestone_id", value: data.milestoneId },
+        { name: "streak_days", value: String(data.streakDays) },
+        { name: "streak_type", value: data.streakType },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "milestone_streak",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_streak",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_streak",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      status: "failed",
+      errorMessage,
+    });
+
+    return { success: false, error: errorMessage };
+  }
+}
+
+// Send video milestone email
+export async function sendVideoMilestoneEmail(
+  data: VideoMilestoneEmailData
+): Promise<EmailSendResult> {
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const resend = getResendClient();
+  const fromAddress = getFromAddress();
+  const { subject, html } = await renderVideoMilestoneEmail(data);
+
+  try {
+    const response = await resend.emails.send({
+      from: fromAddress,
+      to: data.toEmail,
+      subject,
+      html,
+      tags: [
+        { name: "template", value: "milestone_video" },
+        { name: "milestone_id", value: data.milestoneId },
+        { name: "video_count", value: String(data.videoCount) },
+        ...(data.organizationId
+          ? [{ name: "organization_id", value: data.organizationId }]
+          : []),
+        ...(data.loanOfficerId
+          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          : []),
+      ],
+    });
+
+    if (response.error) {
+      await logEmail({
+        toEmail: data.toEmail,
+        toName: data.firstName,
+        fromEmail: emailConfig.defaultFromEmail,
+        subject,
+        templateName: "milestone_video",
+        organizationId: data.organizationId,
+        loanOfficerId: data.loanOfficerId,
+        status: "failed",
+        errorMessage: response.error.message,
+      });
+
+      return { success: false, error: response.error.message };
+    }
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_video",
+      organizationId: data.organizationId,
+      loanOfficerId: data.loanOfficerId,
+      resendMessageId: response.data?.id,
+      status: "sent",
+    });
+
+    return { success: true, messageId: response.data?.id };
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+
+    await logEmail({
+      toEmail: data.toEmail,
+      toName: data.firstName,
+      fromEmail: emailConfig.defaultFromEmail,
+      subject,
+      templateName: "milestone_video",
       organizationId: data.organizationId,
       loanOfficerId: data.loanOfficerId,
       status: "failed",

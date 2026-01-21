@@ -8,7 +8,7 @@
  * - Processes queue to send scheduled emails
  * - Handles conditional branching (skip billing if subscribed, skip integration if connected)
  * - Tracks org setup completion percentage
- * - Exits sequence when all setup complete
+ * - Exits sequence when activation milestone reached (first survey sent)
  */
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -387,11 +387,11 @@ export async function startOrgOnboardingSequence(
     return { success: false, error: "User has disabled notifications" };
   }
 
-  // Check for existing active sequence
+  // Check for existing active sequence (use user_id to match UNIQUE constraint on (user_id, sequence_type))
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existingSequence } = await (supabase.from as any)("email_sequences")
     .select("id")
-    .eq("organization_id", organizationId)
+    .eq("user_id", adminUserId)
     .eq("sequence_type", "onboarding")
     .in("status", ["active", "paused"])
     .single();
@@ -863,17 +863,15 @@ async function skipOrgSequenceStep(
     },
   ];
 
-  // Calculate next email time using relative delay between steps
-  const currentStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step
-  );
+  // Calculate next email time from sequence start (absolute delay, not relative)
   const nextStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
     (s) => s.step === step + 1
   );
 
-  // Calculate relative delay: next step's absolute delay minus current step's absolute delay
-  const nextEmailAt = nextStepConfig && currentStepConfig
-    ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
+  // Use absolute delay from sequence start to prevent timing drift
+  const sequenceStartTime = new Date(sequence.started_at);
+  const nextEmailAt = nextStepConfig
+    ? addDays(sequenceStartTime, nextStepConfig.delayDays)
     : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -912,18 +910,16 @@ async function updateOrgSequenceAfterSend(
     },
   ];
 
-  // Calculate next email time using relative delay between steps
-  const currentStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
-    (s) => s.step === step
-  );
+  // Calculate next email time from sequence start (absolute delay, not relative)
   const nextStepConfig = ORG_ONBOARDING_SEQUENCE_CONFIG.schedule.find(
     (s) => s.step === step + 1
   );
 
   const isComplete = step >= ORG_ONBOARDING_SEQUENCE_CONFIG.totalSteps;
-  // Calculate relative delay: next step's absolute delay minus current step's absolute delay
-  const nextEmailAt = nextStepConfig && currentStepConfig
-    ? addDays(new Date(), nextStepConfig.delayDays - currentStepConfig.delayDays)
+  // Use absolute delay from sequence start to prevent timing drift
+  const sequenceStartTime = new Date(sequence.started_at);
+  const nextEmailAt = nextStepConfig
+    ? addDays(sequenceStartTime, nextStepConfig.delayDays)
     : null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

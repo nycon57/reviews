@@ -601,6 +601,15 @@ export async function uploadLogo(
     .from("logos")
     .getPublicUrl(fileName);
 
+  // Fetch old logo URL BEFORE updating (to properly clean up old files)
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("logo_url")
+    .eq("id", userData.organization_id)
+    .single();
+
+  const oldLogoUrl = orgData?.logo_url;
+
   // Update organization's logo_url in database
   const adminClient = createAdminClient();
   const { error: dbError } = await adminClient
@@ -618,14 +627,8 @@ export async function uploadLogo(
   }
 
   // Delete old logo if it exists and is from our storage
-  const { data: orgData } = await supabase
-    .from("organizations")
-    .select("logo_url")
-    .eq("id", userData.organization_id)
-    .single();
-
-  if (orgData?.logo_url && orgData.logo_url.includes("/logos/")) {
-    const oldPath = orgData.logo_url.split("/logos/").pop();
+  if (oldLogoUrl && oldLogoUrl.includes("/logos/")) {
+    const oldPath = oldLogoUrl.split("/logos/").pop();
     if (oldPath && oldPath !== fileName) {
       await supabase.storage.from("logos").remove([oldPath]);
     }

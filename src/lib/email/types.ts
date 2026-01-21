@@ -56,7 +56,12 @@ export type EmailTemplate =
   | "survey_completion_thank_you"
   | "survey_high_rating_followup"
   | "survey_low_rating_followup"
-  | "survey_response_received_notification";
+  | "survey_response_received_notification"
+  // Review lifecycle emails (S079)
+  | "review_response_sent_confirmation"
+  | "review_published_notification"
+  | "review_response_received"
+  | "negative_review_alert_enhanced";
 
 // Base email data
 export interface BaseEmailData {
@@ -157,6 +162,11 @@ export interface NewReviewNotificationEmailData extends BaseEmailData {
   reviewText?: string;
   reviewDate: string;
   dashboardUrl: string;
+  organizationName?: string;
+  organizationLogoUrl?: string;
+  loanOfficerPhotoUrl?: string;
+  reviewId?: string;
+  transactionType?: string;
 }
 
 // Review pending approval email data (sent to managers)
@@ -168,6 +178,9 @@ export interface ReviewPendingApprovalEmailData extends BaseEmailData {
   reviewText?: string;
   reviewDate: string;
   approvalQueueUrl: string;
+  organizationName?: string;
+  reviewId?: string;
+  quickApproveUrl?: string;
 }
 
 // Review approved notification email data (sent to loan officers)
@@ -177,6 +190,14 @@ export interface ReviewApprovedEmailData extends BaseEmailData {
   rating: number;
   reviewText?: string;
   dashboardUrl: string;
+  organizationName?: string;
+  approvedAt?: string;
+  reviewId?: string;
+  shareableLinks?: {
+    linkedin?: string;
+    twitter?: string;
+    facebook?: string;
+  };
 }
 
 // Review rejected notification email data (sent to loan officers)
@@ -186,6 +207,10 @@ export interface ReviewRejectedEmailData extends BaseEmailData {
   rating: number;
   rejectionReason: string;
   dashboardUrl: string;
+  organizationName?: string;
+  reviewText?: string;
+  rejectedAt?: string;
+  reviewId?: string;
 }
 
 // Scheduled report email data
@@ -212,6 +237,67 @@ export interface NegativeReviewAlertEmailData extends BaseEmailData {
   reviewDate: string;
   dashboardUrl: string;
   reviewId: string;
+}
+
+// Enhanced negative review alert with AI-suggested response (S079)
+export interface NegativeReviewAlertEnhancedEmailData extends BaseEmailData {
+  recipientName: string;
+  loanOfficerName: string;
+  customerName: string;
+  rating: number;
+  reviewText?: string;
+  reviewDate: string;
+  dashboardUrl: string;
+  reviewId: string;
+  organizationName: string;
+  aiSuggestedResponse?: string;
+  responseTemplates?: Array<{
+    name: string;
+    preview: string;
+  }>;
+}
+
+// Review response sent confirmation email data (sent to customer after LO responds)
+export interface ReviewResponseSentConfirmationEmailData extends BaseEmailData {
+  customerName: string;
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  originalReviewText?: string;
+  responseText: string;
+  rating: number;
+  reviewDate: string;
+}
+
+// Review published notification email data (when review is posted to Google)
+export interface ReviewPublishedNotificationEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  rating: number;
+  reviewText?: string;
+  publishedPlatform: "google" | "zillow" | "facebook" | "yelp" | "other";
+  publishedUrl?: string;
+  dashboardUrl: string;
+  organizationName: string;
+  shareableLinks?: {
+    linkedin?: string;
+    twitter?: string;
+    facebook?: string;
+  };
+}
+
+// Review response received notification email data (sent to LO when customer replies to response)
+export interface ReviewResponseReceivedEmailData extends BaseEmailData {
+  loanOfficerName: string;
+  customerName: string;
+  customerReplyText: string;
+  originalReviewText?: string;
+  originalResponseText: string;
+  rating: number;
+  dashboardUrl: string;
+  reviewId: string;
+  repliedAt: string;
 }
 
 // Notification digest email data

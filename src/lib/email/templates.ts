@@ -7,8 +7,12 @@ import type {
   ReviewRejectedEmailData,
   ScheduledReportEmailData,
   NegativeReviewAlertEmailData,
+  NegativeReviewAlertEnhancedEmailData,
   NotificationDigestEmailData,
   ReviewResponseToReviewerEmailData,
+  ReviewResponseSentConfirmationEmailData,
+  ReviewPublishedNotificationEmailData,
+  ReviewResponseReceivedEmailData,
   VideoTestimonialInvitationEmailData,
   VideoTestimonialReminderEmailData,
   VideoTestimonialReceivedEmailData,
@@ -250,55 +254,132 @@ export function getSurveyReminder7DayEmail(data: SurveyReminderEmailData): {
   };
 }
 
-// New review notification email template
+// New review notification email template (refactored with S073 components)
 export function getNewReviewNotificationEmail(
   data: NewReviewNotificationEmailData
 ): {
   subject: string;
   html: string;
 } {
-  const subject = `New ${data.rating}-star review from ${data.customerName}`;
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeReviewDate = escapeHtml(data.reviewDate);
+  const safeReviewText = data.reviewText ? escapeHtml(data.reviewText) : null;
+  const safeDashboardUrl = sanitizeUrl(data.dashboardUrl);
+  const safeOrgName = data.organizationName ? escapeHtml(data.organizationName) : "RepWell";
+  const safeTransactionType = data.transactionType ? escapeHtml(data.transactionType) : null;
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
-  const reviewTextSection = data.reviewText
-    ? `
-        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
-          <p style="margin: 0; font-size: 16px; color: #52525b; font-style: italic;">
-            "${data.reviewText}"
-          </p>
-        </div>
-      `
-    : "";
+  // Rating-based subject line and styling
+  const isPositive = data.rating >= 4;
+  const subject = sanitizeSubject(
+    isPositive
+      ? `🌟 Great news! New ${data.rating}-star review from ${data.customerName}`
+      : `New ${data.rating}-star review from ${data.customerName}`
+  );
+
+  // Star rating with Repwell colors
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 28px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 28px;">★</span>'
+  ).join("");
+
+  // Organization logo
+  const safeLogoUrl = data.organizationLogoUrl ? sanitizeUrl(data.organizationLogoUrl) : null;
+  const orgLogoHtml = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+    : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
+
+  // LO photo or initials avatar
+  const safePhotoUrl = data.loanOfficerPhotoUrl ? sanitizeUrl(data.loanOfficerPhotoUrl) : null;
+  const loAvatarHtml = safePhotoUrl
+    ? `<img src="${safePhotoUrl}" alt="${safeLOName}" width="64" height="64" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
+    : `<div style="width: 64px; height: 64px; border-radius: 50%; background-color: #cad2c5; display: inline-flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 24px; font-weight: 600; color: #52796f;">${safeLOName.charAt(0).toUpperCase()}</div>`;
+
+  // Rating badge color
+  const ratingBadgeColor = isPositive ? "#84a98c" : data.rating === 3 ? "#d4a574" : "#c47c7c";
+  const ratingBadgeBg = isPositive ? "#f0f4f0" : data.rating === 3 ? "#fef6ee" : "#fef2f2";
 
   const content = `
     <tr>
-      <td style="padding: 32px; text-align: center; background-color: #fafafa; border-bottom: 1px solid #e4e4e7;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 40px 32px;">
-        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          New Review Received!
-        </h1>
-        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
-          Hi ${data.loanOfficerName}, you've received a new review from ${data.customerName}.
-        </p>
-        <div style="text-align: center; margin: 24px 0;">
-          ${generateStarRating(data.rating)}
-          <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
-            ${data.rating} out of 5 stars
-          </p>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #52796f, #84a98c);"></div>
+
+        <!-- Header with org logo -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          ${orgLogoHtml}
         </div>
-        ${reviewTextSection}
-        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
-          Received on ${data.reviewDate}
-        </p>
-        <div style="text-align: center;">
-          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- LO Avatar -->
+          <div style="margin-bottom: 24px;">
+            ${loAvatarHtml}
+          </div>
+
+          <!-- Rating badge -->
+          <div style="margin-bottom: 24px;">
+            <span style="display: inline-block; background-color: ${ratingBadgeBg}; color: ${ratingBadgeColor}; padding: 8px 16px; border-radius: 999px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+              New Review
+            </span>
+          </div>
+
+          <!-- Greeting -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            ${isPositive ? "Great News!" : "New Review Received"}
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Hi ${safeLOName}, you've received a new review from <strong style="color: #354f52;">${safeCustomerName}</strong>${safeTransactionType ? ` for their ${safeTransactionType}` : ""}.
+          </p>
+
+          <!-- Star rating display -->
+          <div style="margin: 32px 0; padding: 24px; background-color: #f8faf8; border-radius: 12px;">
+            <div style="margin-bottom: 12px;">
+              ${starRating}
+            </div>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+              ${data.rating} out of 5 stars
+            </p>
+          </div>
+
+          ${safeReviewText ? `
+          <!-- Review text quote -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #cad2c5; border-radius: 8px; border-left: 4px solid #52796f;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-style: italic; color: #2f3e46; line-height: 1.625; text-align: left;">
+              "${safeReviewText}"
+            </p>
+          </div>
+          ` : ""}
+
+          <!-- Date received -->
+          <p style="margin: 24px 0 32px 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #84a98c;">
+            Received on ${safeReviewDate}
+          </p>
+
+          <!-- CTA Button -->
+          <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 40px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
             View in Dashboard
           </a>
+
+          ${!isPositive ? `
+          <!-- Tip for lower ratings -->
+          <div style="margin-top: 32px; padding: 16px; background-color: #f8faf8; border-radius: 8px; border: 1px solid #e2e8e4;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #52796f; line-height: 1.5;">
+              💡 <strong>Tip:</strong> Responding quickly to reviews shows customers you value their feedback.
+            </p>
+          </div>
+          ` : ""}
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            Powered by ${safeOrgName}
+          </p>
         </div>
       </td>
     </tr>
@@ -310,64 +391,122 @@ export function getNewReviewNotificationEmail(
   };
 }
 
-// Review pending approval email template (sent to managers)
+// Review pending approval email template (sent to managers) - refactored with S073 components
 export function getReviewPendingApprovalEmail(
   data: ReviewPendingApprovalEmailData
 ): {
   subject: string;
   html: string;
 } {
-  const subject = `Review Pending Approval: ${data.rating}-star from ${data.customerName}`;
+  const safeManagerName = escapeHtml(data.managerName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeReviewDate = escapeHtml(data.reviewDate);
+  const safeReviewText = data.reviewText ? escapeHtml(data.reviewText) : null;
+  const safeApprovalUrl = sanitizeUrl(data.approvalQueueUrl);
+  const safeQuickApproveUrl = data.quickApproveUrl ? sanitizeUrl(data.quickApproveUrl) : null;
+  const safeOrgName = data.organizationName ? escapeHtml(data.organizationName) : "RepWell";
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
-  const reviewTextSection = data.reviewText
-    ? `
-        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
-          <p style="margin: 0; font-size: 16px; color: #52525b; font-style: italic;">
-            "${data.reviewText}"
-          </p>
-        </div>
-      `
-    : `
-        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
-          <p style="margin: 0; font-size: 14px; color: #71717a; text-align: center;">
-            No written review provided
-          </p>
-        </div>
-      `;
+  const subject = sanitizeSubject(`⏳ Review Pending Approval: ${data.rating}-star from ${data.customerName}`);
+
+  // Star rating with Repwell colors
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 28px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 28px;">★</span>'
+  ).join("");
+
+  // Rating-based quick approve text
+  const isHighRating = data.rating >= 4;
 
   const content = `
     <tr>
-      <td style="padding: 32px; text-align: center; background-color: #fef3c7; border-bottom: 1px solid #fcd34d;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 40px 32px;">
-        <div style="background-color: #fef3c7; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
-          <span style="font-size: 14px; font-weight: 600; color: #92400e;">Action Required</span>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar (warning color for action required) -->
+        <div style="height: 4px; background: linear-gradient(to right, #d4a574, #facc15);"></div>
+
+        <!-- Header -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          <span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>
         </div>
-        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          New Review Awaiting Approval
-        </h1>
-        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
-          Hi ${data.managerName}, a new review for ${data.loanOfficerName} requires your approval.
-        </p>
-        <div style="text-align: center; margin: 24px 0;">
-          ${generateStarRating(data.rating)}
-          <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
-            ${data.rating} out of 5 stars from ${data.customerName}
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- Action required badge -->
+          <div style="margin-bottom: 24px;">
+            <span style="display: inline-block; background-color: #fef6ee; color: #d4a574; padding: 8px 16px; border-radius: 999px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+              ⏳ Action Required
+            </span>
+          </div>
+
+          <!-- Heading -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            New Review Awaiting Approval
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Hi ${safeManagerName}, a new review for <strong style="color: #354f52;">${safeLOName}</strong> requires your approval.
           </p>
+
+          <!-- Star rating display -->
+          <div style="margin: 32px 0; padding: 24px; background-color: #f8faf8; border-radius: 12px;">
+            <div style="margin-bottom: 12px;">
+              ${starRating}
+            </div>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+              ${data.rating} out of 5 stars from <strong>${safeCustomerName}</strong>
+            </p>
+          </div>
+
+          ${safeReviewText ? `
+          <!-- Review text quote -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #cad2c5; border-radius: 8px; border-left: 4px solid #52796f;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-style: italic; color: #2f3e46; line-height: 1.625; text-align: left;">
+              "${safeReviewText}"
+            </p>
+          </div>
+          ` : `
+          <!-- No review text -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #f8faf8; border-radius: 8px; border: 1px dashed #e2e8e4;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c; font-style: italic;">
+              No written review provided
+            </p>
+          </div>
+          `}
+
+          <!-- Date submitted -->
+          <p style="margin: 24px 0 32px 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #84a98c;">
+            Submitted on ${safeReviewDate}
+          </p>
+
+          <!-- CTA Buttons -->
+          <div style="margin-bottom: 16px;">
+            ${safeQuickApproveUrl && isHighRating ? `
+            <!-- Quick approve button for high ratings -->
+            <a href="${safeQuickApproveUrl}" style="display: inline-block; padding: 16px 40px; background-color: #84a98c; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px; margin-right: 12px;">
+              ✓ Quick Approve
+            </a>
+            ` : ""}
+            <a href="${safeApprovalUrl}" style="display: inline-block; padding: 16px 40px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
+              Review Details
+            </a>
+          </div>
+
+          ${isHighRating ? `
+          <!-- Quick approve tip -->
+          <p style="margin: 16px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c;">
+            💡 High ratings can be quickly approved with one click
+          </p>
+          ` : ""}
         </div>
-        ${reviewTextSection}
-        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
-          Submitted on ${data.reviewDate}
-        </p>
-        <div style="text-align: center;">
-          <a href="${data.approvalQueueUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
-            Review &amp; Approve
-          </a>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            You're receiving this because you manage reviews for ${safeOrgName}
+          </p>
         </div>
       </td>
     </tr>
@@ -379,55 +518,112 @@ export function getReviewPendingApprovalEmail(
   };
 }
 
-// Review approved notification email template (sent to loan officers)
+// Review approved notification email template (sent to loan officers) - refactored with S073 components & share options
 export function getReviewApprovedEmail(data: ReviewApprovedEmailData): {
   subject: string;
   html: string;
 } {
-  const subject = `Your ${data.rating}-star review has been approved!`;
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeReviewText = data.reviewText ? escapeHtml(data.reviewText) : null;
+  const safeDashboardUrl = sanitizeUrl(data.dashboardUrl);
+  const safeOrgName = data.organizationName ? escapeHtml(data.organizationName) : "RepWell";
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
-  const reviewTextSection = data.reviewText
-    ? `
-        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
-          <p style="margin: 0; font-size: 16px; color: #52525b; font-style: italic;">
-            "${data.reviewText}"
-          </p>
-        </div>
-      `
-    : "";
+  const subject = sanitizeSubject(`✅ Great news! Your ${data.rating}-star review has been approved`);
+
+  // Star rating with Repwell colors
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 28px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 28px;">★</span>'
+  ).join("");
+
+  // Share links
+  const hasShareLinks = data.shareableLinks && (data.shareableLinks.linkedin || data.shareableLinks.twitter || data.shareableLinks.facebook);
+  const safeLinkedIn = data.shareableLinks?.linkedin ? sanitizeUrl(data.shareableLinks.linkedin) : null;
+  const safeTwitter = data.shareableLinks?.twitter ? sanitizeUrl(data.shareableLinks.twitter) : null;
+  const safeFacebook = data.shareableLinks?.facebook ? sanitizeUrl(data.shareableLinks.facebook) : null;
 
   const content = `
     <tr>
-      <td style="padding: 32px; text-align: center; background-color: #dcfce7; border-bottom: 1px solid #86efac;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 40px 32px;">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <span style="display: inline-block; background-color: #dcfce7; color: #166534; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
-            Approved
-          </span>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar (success green) -->
+        <div style="height: 4px; background: linear-gradient(to right, #52796f, #84a98c);"></div>
+
+        <!-- Header -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          <span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>
         </div>
-        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          Great News, ${data.loanOfficerName}!
-        </h1>
-        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
-          Your review from ${data.customerName} has been approved and is now live on your profile.
-        </p>
-        <div style="text-align: center; margin: 24px 0;">
-          ${generateStarRating(data.rating)}
-          <p style="margin: 8px 0 0 0; font-size: 14px; color: #71717a;">
-            ${data.rating} out of 5 stars
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- Approved badge -->
+          <div style="margin-bottom: 24px;">
+            <span style="display: inline-block; background-color: #f0f4f0; color: #84a98c; padding: 10px 20px; border-radius: 999px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600;">
+              ✓ Review Approved
+            </span>
+          </div>
+
+          <!-- Heading -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            Great News, ${safeLOName}!
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Your review from <strong style="color: #354f52;">${safeCustomerName}</strong> has been approved and is now live on your profile.
           </p>
+
+          <!-- Star rating display -->
+          <div style="margin: 32px 0; padding: 24px; background-color: #f8faf8; border-radius: 12px;">
+            <div style="margin-bottom: 12px;">
+              ${starRating}
+            </div>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+              ${data.rating} out of 5 stars
+            </p>
+          </div>
+
+          ${safeReviewText ? `
+          <!-- Review text quote -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #cad2c5; border-radius: 8px; border-left: 4px solid #84a98c;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-style: italic; color: #2f3e46; line-height: 1.625; text-align: left;">
+              "${safeReviewText}"
+            </p>
+          </div>
+          ` : ""}
+
+          <!-- Share section -->
+          ${hasShareLinks && data.rating >= 4 ? `
+          <div style="margin: 32px 0; padding: 24px; background: linear-gradient(to bottom, #f8faf8, #ffffff); border-radius: 12px; border: 1px solid #e2e8e4;">
+            <h2 style="margin: 0 0 12px 0; font-family: Georgia, serif; font-size: 18px; font-weight: bold; color: #354f52;">
+              Share This Review
+            </h2>
+            <p style="margin: 0 0 20px 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+              Great reviews help build trust. Share it with your network!
+            </p>
+            <div style="text-align: center;">
+              ${safeLinkedIn ? `<a href="${safeLinkedIn}" style="display: inline-block; padding: 10px 20px; margin: 4px; background-color: #0077b5; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; border-radius: 6px;">LinkedIn</a>` : ""}
+              ${safeTwitter ? `<a href="${safeTwitter}" style="display: inline-block; padding: 10px 20px; margin: 4px; background-color: #1da1f2; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; border-radius: 6px;">Twitter</a>` : ""}
+              ${safeFacebook ? `<a href="${safeFacebook}" style="display: inline-block; padding: 10px 20px; margin: 4px; background-color: #1877f2; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; border-radius: 6px;">Facebook</a>` : ""}
+            </div>
+          </div>
+          ` : ""}
+
+          <!-- CTA Button -->
+          <div style="margin-top: 32px;">
+            <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 40px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
+              View Your Reviews
+            </a>
+          </div>
         </div>
-        ${reviewTextSection}
-        <div style="text-align: center; margin-top: 32px;">
-          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
-            View Your Reviews
-          </a>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            Keep up the great work! Every positive review strengthens your reputation.
+          </p>
         </div>
       </td>
     </tr>
@@ -439,49 +635,105 @@ export function getReviewApprovedEmail(data: ReviewApprovedEmailData): {
   };
 }
 
-// Review rejected notification email template (sent to loan officers)
+// Review rejected notification email template (sent to loan officers) - refactored with S073 components
 export function getReviewRejectedEmail(data: ReviewRejectedEmailData): {
   subject: string;
   html: string;
 } {
-  const subject = `Review Update: ${data.rating}-star review not published`;
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeRejectionReason = escapeHtml(data.rejectionReason);
+  const safeReviewText = data.reviewText ? escapeHtml(data.reviewText) : null;
+  const safeDashboardUrl = sanitizeUrl(data.dashboardUrl);
+  const safeOrgName = data.organizationName ? escapeHtml(data.organizationName) : "RepWell";
 
   const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
 
+  const subject = sanitizeSubject(`Review Update: ${data.rating}-star review not published`);
+
+  // Star rating with muted colors for rejected
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #d4d4d8; font-size: 24px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 24px;">★</span>'
+  ).join("");
+
   const content = `
     <tr>
-      <td style="padding: 32px; text-align: center; background-color: #fef2f2; border-bottom: 1px solid #fecaca;">
-        <span style="font-size: 24px; font-weight: bold; color: #18181b;">RepWell</span>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 40px 32px;">
-        <div style="text-align: center; margin-bottom: 24px;">
-          <span style="display: inline-block; background-color: #fef2f2; color: #991b1b; padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 600;">
-            Not Published
-          </span>
+      <td style="padding: 0;">
+        <!-- Muted accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #84a98c, #cad2c5);"></div>
+
+        <!-- Header -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          <span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>
         </div>
-        <h1 style="margin: 0 0 16px 0; font-size: 24px; font-weight: 600; color: #18181b; text-align: center;">
-          Review Update
-        </h1>
-        <p style="margin: 0 0 16px 0; font-size: 16px; color: #52525b; text-align: center;">
-          Hi ${data.loanOfficerName}, the ${data.rating}-star review from ${data.customerName} was not approved for publication.
-        </p>
-        <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; margin: 24px 0;">
-          <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #18181b;">
-            Reason:
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- Status badge -->
+          <div style="margin-bottom: 24px;">
+            <span style="display: inline-block; background-color: #f8faf8; color: #52796f; padding: 10px 20px; border-radius: 999px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600; border: 1px solid #e2e8e4;">
+              Review Update
+            </span>
+          </div>
+
+          <!-- Heading -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            Review Not Published
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Hi ${safeLOName}, the ${data.rating}-star review from <strong style="color: #354f52;">${safeCustomerName}</strong> was not approved for publication.
           </p>
-          <p style="margin: 0; font-size: 16px; color: #52525b;">
-            ${data.rejectionReason}
-          </p>
+
+          <!-- Star rating (muted) -->
+          <div style="margin: 24px 0; padding: 16px; background-color: #f8faf8; border-radius: 8px; display: inline-block;">
+            ${starRating}
+          </div>
+
+          ${safeReviewText ? `
+          <!-- Original review text -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #f8faf8; border-radius: 8px; border: 1px dashed #e2e8e4;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+              Original Review
+            </p>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-style: italic; color: #52796f; line-height: 1.625; text-align: left;">
+              "${safeReviewText}"
+            </p>
+          </div>
+          ` : ""}
+
+          <!-- Rejection reason -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #fef2f2; border-radius: 8px; border-left: 4px solid #c47c7c;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #c47c7c; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+              Reason
+            </p>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; color: #2f3e46; line-height: 1.625; text-align: left;">
+              ${safeRejectionReason}
+            </p>
+          </div>
+
+          <!-- Help text -->
+          <div style="margin: 24px 0; padding: 16px; background-color: #f8faf8; border-radius: 8px; border: 1px solid #e2e8e4;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #52796f; line-height: 1.5;">
+              💬 If you have questions about this decision, please contact your manager for clarification.
+            </p>
+          </div>
+
+          <!-- CTA Button -->
+          <div style="margin-top: 32px;">
+            <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 40px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
+              View Dashboard
+            </a>
+          </div>
         </div>
-        <p style="margin: 0 0 32px 0; font-size: 14px; color: #71717a; text-align: center;">
-          If you have questions about this decision, please contact your manager.
-        </p>
-        <div style="text-align: center;">
-          <a href="${data.dashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
-            View Dashboard
-          </a>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            This decision does not affect your overall rating or performance metrics.
+          </p>
         </div>
       </td>
     </tr>
@@ -1967,6 +2219,631 @@ export function getSurveyResponseReceivedNotificationEmail(data: {
         <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
           <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
             Response ID: ${escapeHtml(data.surveyResponseId)}
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+// =============================================================================
+// REVIEW LIFECYCLE EMAIL TEMPLATES (S079)
+// =============================================================================
+
+/**
+ * Review response sent confirmation email
+ * Sent to the customer when the loan officer responds to their review
+ */
+export function getReviewResponseSentConfirmationEmail(
+  data: ReviewResponseSentConfirmationEmailData
+): { subject: string; html: string } {
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeResponseText = escapeHtml(data.responseText);
+  const safeOriginalReview = data.originalReviewText
+    ? escapeHtml(data.originalReviewText)
+    : null;
+  const safeReviewDate = escapeHtml(data.reviewDate);
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const subject = sanitizeSubject(
+    `${data.loanOfficerName} has responded to your review`
+  );
+
+  // Organization logo
+  const safeLogoUrl = data.organizationLogoUrl
+    ? sanitizeUrl(data.organizationLogoUrl)
+    : null;
+  const orgLogoHtml = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+    : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
+
+  // LO photo or initials
+  const safePhotoUrl = data.loanOfficerPhotoUrl
+    ? sanitizeUrl(data.loanOfficerPhotoUrl)
+    : null;
+  const loAvatarHtml = safePhotoUrl
+    ? `<img src="${safePhotoUrl}" alt="${safeLOName}" width="64" height="64" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
+    : `<div style="width: 64px; height: 64px; border-radius: 50%; background-color: #cad2c5; display: inline-flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 24px; font-weight: 600; color: #52796f;">${safeLOName.charAt(0).toUpperCase()}</div>`;
+
+  // Star rating
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 20px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 20px;">★</span>'
+  ).join("");
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #52796f, #84a98c);"></div>
+
+        <!-- Header with org logo -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          ${orgLogoHtml}
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- LO Avatar -->
+          <div style="margin-bottom: 24px;">
+            ${loAvatarHtml}
+          </div>
+
+          <!-- Heading -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            ${safeLOName} Responded to Your Review
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Hi ${safeCustomerName}, thank you for sharing your feedback. ${safeLOName} has personally responded to your review.
+          </p>
+
+          ${
+            safeOriginalReview
+              ? `
+          <!-- Original review -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #f8faf8; border-radius: 8px; border: 1px dashed #e2e8e4; text-align: left;">
+            <div style="margin-bottom: 8px;">
+              ${starRating}
+              <span style="font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; margin-left: 8px;">${safeReviewDate}</span>
+            </div>
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+              Your Review
+            </p>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-style: italic; color: #52796f; line-height: 1.625;">
+              "${safeOriginalReview}"
+            </p>
+          </div>
+          `
+              : ""
+          }
+
+          <!-- Response from LO -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #cad2c5; border-radius: 8px; border-left: 4px solid #52796f; text-align: left;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #52796f; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+              Response from ${safeLOName}
+            </p>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; color: #2f3e46; line-height: 1.625;">
+              ${safeResponseText}
+            </p>
+          </div>
+
+          <!-- Thank you message -->
+          <div style="margin: 32px 0; padding: 20px; background-color: #f8faf8; border-radius: 8px; border: 1px solid #e2e8e4;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f; line-height: 1.5;">
+              💚 Your feedback helps us improve and provide better service. Thank you for being a valued customer!
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            Thank you for choosing ${safeOrgName}
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+/**
+ * Review published notification email
+ * Sent to the loan officer when their review is posted to an external platform (Google, etc.)
+ */
+export function getReviewPublishedNotificationEmail(
+  data: ReviewPublishedNotificationEmailData
+): { subject: string; html: string } {
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeReviewText = data.reviewText ? escapeHtml(data.reviewText) : null;
+  const safeDashboardUrl = sanitizeUrl(data.dashboardUrl);
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safePublishedUrl = data.publishedUrl
+    ? sanitizeUrl(data.publishedUrl)
+    : null;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  // Platform display names
+  const platformNames: Record<string, string> = {
+    google: "Google",
+    zillow: "Zillow",
+    facebook: "Facebook",
+    yelp: "Yelp",
+    other: "external platform",
+  };
+  const platformName = platformNames[data.publishedPlatform] || "external platform";
+
+  const subject = sanitizeSubject(
+    `🎉 Your ${data.rating}-star review is now live on ${platformName}!`
+  );
+
+  // Star rating
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 28px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 28px;">★</span>'
+  ).join("");
+
+  // Share links
+  const hasShareLinks =
+    data.shareableLinks &&
+    (data.shareableLinks.linkedin ||
+      data.shareableLinks.twitter ||
+      data.shareableLinks.facebook);
+  const safeLinkedIn = data.shareableLinks?.linkedin
+    ? sanitizeUrl(data.shareableLinks.linkedin)
+    : null;
+  const safeTwitter = data.shareableLinks?.twitter
+    ? sanitizeUrl(data.shareableLinks.twitter)
+    : null;
+  const safeFacebook = data.shareableLinks?.facebook
+    ? sanitizeUrl(data.shareableLinks.facebook)
+    : null;
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar (celebration) -->
+        <div style="height: 4px; background: linear-gradient(to right, #84a98c, #52796f, #84a98c);"></div>
+
+        <!-- Header -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          <span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px; text-align: center;">
+          <!-- Celebration badge -->
+          <div style="margin-bottom: 24px;">
+            <span style="display: inline-block; background-color: #f0f4f0; color: #84a98c; padding: 12px 24px; border-radius: 999px; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-weight: 600;">
+              🎉 Review Published!
+            </span>
+          </div>
+
+          <!-- Heading -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25;">
+            Your Review is Live on ${platformName}!
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625;">
+            Congratulations ${safeLOName}! Your ${data.rating}-star review from <strong style="color: #354f52;">${safeCustomerName}</strong> has been published.
+          </p>
+
+          <!-- Star rating display -->
+          <div style="margin: 32px 0; padding: 24px; background-color: #f8faf8; border-radius: 12px;">
+            <div style="margin-bottom: 12px;">
+              ${starRating}
+            </div>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+              ${data.rating} out of 5 stars • Now visible on ${platformName}
+            </p>
+          </div>
+
+          ${
+            safeReviewText
+              ? `
+          <!-- Review text -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #cad2c5; border-radius: 8px; border-left: 4px solid #52796f;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-style: italic; color: #2f3e46; line-height: 1.625; text-align: left;">
+              "${safeReviewText}"
+            </p>
+            <p style="margin: 12px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #52796f; text-align: right;">
+              — ${safeCustomerName}
+            </p>
+          </div>
+          `
+              : ""
+          }
+
+          <!-- View on platform button -->
+          ${
+            safePublishedUrl
+              ? `
+          <div style="margin: 24px 0;">
+            <a href="${safePublishedUrl}" style="display: inline-block; padding: 14px 32px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
+              View on ${platformName}
+            </a>
+          </div>
+          `
+              : ""
+          }
+
+          <!-- Share section -->
+          ${
+            hasShareLinks
+              ? `
+          <div style="margin: 32px 0; padding: 24px; background: linear-gradient(to bottom, #f8faf8, #ffffff); border-radius: 12px; border: 1px solid #e2e8e4;">
+            <h2 style="margin: 0 0 12px 0; font-family: Georgia, serif; font-size: 18px; font-weight: bold; color: #354f52;">
+              Share Your Success
+            </h2>
+            <p style="margin: 0 0 20px 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+              Let your network know about this great review!
+            </p>
+            <div style="text-align: center;">
+              ${safeLinkedIn ? `<a href="${safeLinkedIn}" style="display: inline-block; padding: 10px 20px; margin: 4px; background-color: #0077b5; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; border-radius: 6px;">LinkedIn</a>` : ""}
+              ${safeTwitter ? `<a href="${safeTwitter}" style="display: inline-block; padding: 10px 20px; margin: 4px; background-color: #1da1f2; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; border-radius: 6px;">Twitter</a>` : ""}
+              ${safeFacebook ? `<a href="${safeFacebook}" style="display: inline-block; padding: 10px 20px; margin: 4px; background-color: #1877f2; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; border-radius: 6px;">Facebook</a>` : ""}
+            </div>
+          </div>
+          `
+              : ""
+          }
+
+          <!-- Dashboard CTA -->
+          <div style="margin-top: 24px;">
+            <a href="${safeDashboardUrl}" style="display: inline-block; padding: 14px 32px; background-color: #354f52; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 14px; border-radius: 8px;">
+              View All Reviews
+            </a>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            🌟 Your reputation is growing! Keep up the great work.
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+/**
+ * Review response received notification email
+ * Sent to the loan officer when a customer replies to their response
+ */
+export function getReviewResponseReceivedEmail(
+  data: ReviewResponseReceivedEmailData
+): { subject: string; html: string } {
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeCustomerReply = escapeHtml(data.customerReplyText);
+  const safeOriginalReview = data.originalReviewText
+    ? escapeHtml(data.originalReviewText)
+    : null;
+  const safeOriginalResponse = escapeHtml(data.originalResponseText);
+  const safeDashboardUrl = sanitizeUrl(data.dashboardUrl);
+  const safeRepliedAt = escapeHtml(data.repliedAt);
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const subject = sanitizeSubject(
+    `${data.customerName} replied to your response`
+  );
+
+  // Star rating (muted for context)
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #facc15; font-size: 18px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 18px;">★</span>'
+  ).join("");
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Gradient accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #52796f, #84a98c);"></div>
+
+        <!-- Header -->
+        <div style="padding: 32px; text-align: center; border-bottom: 1px solid #e2e8e4;">
+          <span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">RepWell</span>
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px;">
+          <!-- Notification badge -->
+          <div style="text-align: center; margin-bottom: 24px;">
+            <span style="display: inline-block; background-color: #7c9eb8; color: #ffffff; padding: 10px 20px; border-radius: 999px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600;">
+              💬 New Reply
+            </span>
+          </div>
+
+          <!-- Heading -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25; text-align: center;">
+            ${safeCustomerName} Replied
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625; text-align: center;">
+            Hi ${safeLOName}, you have a new reply from ${safeCustomerName} on your review response.
+          </p>
+
+          <!-- Conversation thread -->
+          <div style="margin: 24px 0; border: 1px solid #e2e8e4; border-radius: 12px; overflow: hidden;">
+            ${
+              safeOriginalReview
+                ? `
+            <!-- Original review -->
+            <div style="padding: 20px; background-color: #f8faf8; border-bottom: 1px solid #e2e8e4;">
+              <div style="margin-bottom: 8px; display: flex; align-items: center;">
+                ${starRating}
+                <span style="font-family: 'Source Sans 3', sans-serif; font-size: 11px; color: #84a98c; margin-left: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Original Review</span>
+              </div>
+              <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; font-style: italic; color: #52796f; line-height: 1.5;">
+                "${safeOriginalReview}"
+              </p>
+              <p style="margin: 8px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c;">
+                — ${safeCustomerName}
+              </p>
+            </div>
+            `
+                : ""
+            }
+
+            <!-- Your response -->
+            <div style="padding: 20px; background-color: #ffffff; border-bottom: 1px solid #e2e8e4;">
+              <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 11px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+                Your Response
+              </p>
+              <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #354f52; line-height: 1.5;">
+                ${safeOriginalResponse}
+              </p>
+              <p style="margin: 8px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c;">
+                — ${safeLOName}
+              </p>
+            </div>
+
+            <!-- Customer reply (highlighted) -->
+            <div style="padding: 20px; background-color: #cad2c5;">
+              <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 11px; color: #52796f; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">
+                ✨ New Reply
+              </p>
+              <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; color: #2f3e46; line-height: 1.625;">
+                ${safeCustomerReply}
+              </p>
+              <p style="margin: 12px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #52796f;">
+                — ${safeCustomerName} • ${safeRepliedAt}
+              </p>
+            </div>
+          </div>
+
+          <!-- CTA Button -->
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${safeDashboardUrl}/reviews/${escapeHtml(data.reviewId)}" style="display: inline-block; padding: 16px 40px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px;">
+              View Conversation
+            </a>
+          </div>
+
+          <!-- Tip -->
+          <div style="margin: 24px 0; padding: 16px; background-color: #f8faf8; border-radius: 8px; border: 1px solid #e2e8e4; text-align: center;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #52796f; line-height: 1.5;">
+              💡 <strong>Tip:</strong> Continuing the conversation shows customers you're engaged and care about their experience.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            Review ID: ${escapeHtml(data.reviewId)}
+          </p>
+        </div>
+      </td>
+    </tr>
+  `;
+
+  return {
+    subject,
+    html: wrapInEmailTemplate(content, unsubscribeUrl),
+  };
+}
+
+/**
+ * Enhanced negative review alert email with AI-suggested response
+ * Instant alert for low ratings with AI-powered response suggestions
+ */
+export function getNegativeReviewAlertEnhancedEmail(
+  data: NegativeReviewAlertEnhancedEmailData
+): { subject: string; html: string } {
+  const safeRecipientName = escapeHtml(data.recipientName);
+  const safeLOName = escapeHtml(data.loanOfficerName);
+  const safeCustomerName = escapeHtml(data.customerName);
+  const safeReviewText = data.reviewText ? escapeHtml(data.reviewText) : null;
+  const safeReviewDate = escapeHtml(data.reviewDate);
+  const safeDashboardUrl = sanitizeUrl(data.dashboardUrl);
+  const safeOrgName = escapeHtml(data.organizationName);
+  const safeAISuggestion = data.aiSuggestedResponse
+    ? escapeHtml(data.aiSuggestedResponse)
+    : null;
+
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+
+  const subject = sanitizeSubject(
+    `🚨 Alert: ${data.rating}-star review requires attention`
+  );
+
+  // Star rating (warning colors)
+  const starRating = Array.from({ length: 5 }, (_, i) =>
+    i < data.rating
+      ? '<span style="color: #c47c7c; font-size: 28px;">★</span>'
+      : '<span style="color: #e2e8e4; font-size: 28px;">★</span>'
+  ).join("");
+
+  // Response templates section
+  const templateSection =
+    data.responseTemplates && data.responseTemplates.length > 0
+      ? `
+    <div style="margin: 24px 0;">
+      <p style="margin: 0 0 12px 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #84a98c; text-transform: uppercase; letter-spacing: 0.05em;">
+        Quick Response Templates
+      </p>
+      ${data.responseTemplates
+        .map(
+          (template) => `
+        <div style="margin: 8px 0; padding: 12px 16px; background-color: #ffffff; border-radius: 6px; border: 1px solid #e2e8e4;">
+          <p style="margin: 0 0 4px 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; color: #354f52;">
+            ${escapeHtml(template.name)}
+          </p>
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #52796f; font-style: italic;">
+            "${escapeHtml(template.preview.substring(0, 100))}${template.preview.length > 100 ? "..." : ""}"
+          </p>
+        </div>
+      `
+        )
+        .join("")}
+    </div>
+    `
+      : "";
+
+  const content = `
+    <tr>
+      <td style="padding: 0;">
+        <!-- Warning accent bar -->
+        <div style="height: 4px; background: linear-gradient(to right, #c47c7c, #d4a574);"></div>
+
+        <!-- Header -->
+        <div style="padding: 32px; text-align: center; background-color: #fef2f2; border-bottom: 1px solid #fecaca;">
+          <span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #991b1b;">Urgent Alert</span>
+        </div>
+
+        <!-- Main content -->
+        <div style="padding: 40px 32px;">
+          <!-- Alert badge -->
+          <div style="text-align: center; margin-bottom: 24px;">
+            <span style="display: inline-block; background-color: #fef2f2; color: #c47c7c; padding: 10px 20px; border-radius: 999px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; font-weight: 600; border: 1px solid #fecaca;">
+              🚨 Low Rating Alert
+            </span>
+          </div>
+
+          <!-- Heading -->
+          <h1 style="margin: 0 0 16px 0; font-family: Georgia, serif; font-size: 28px; font-weight: bold; color: #354f52; line-height: 1.25; text-align: center;">
+            Attention Required
+          </h1>
+
+          <p style="margin: 0 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 16px; color: #52796f; line-height: 1.625; text-align: center;">
+            Hi ${safeRecipientName}, a customer has left a ${data.rating}-star review for <strong style="color: #354f52;">${safeLOName}</strong> that may need immediate attention.
+          </p>
+
+          <!-- Star rating -->
+          <div style="text-align: center; margin: 24px 0; padding: 20px; background-color: #fef2f2; border-radius: 12px; border: 1px solid #fecaca;">
+            <div style="margin-bottom: 8px;">
+              ${starRating}
+            </div>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #c47c7c; font-weight: 600;">
+              ${data.rating} out of 5 stars from ${safeCustomerName}
+            </p>
+          </div>
+
+          ${
+            safeReviewText
+              ? `
+          <!-- Review text -->
+          <div style="margin: 24px 0; padding: 24px; background-color: #fef2f2; border-radius: 8px; border-left: 4px solid #c47c7c;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #c47c7c; text-transform: uppercase; letter-spacing: 0.05em;">
+              Customer Feedback
+            </p>
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 15px; font-style: italic; color: #2f3e46; line-height: 1.625;">
+              "${safeReviewText}"
+            </p>
+          </div>
+          `
+              : `
+          <div style="margin: 24px 0; padding: 20px; background-color: #f8faf8; border-radius: 8px; border: 1px dashed #e2e8e4; text-align: center;">
+            <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #84a98c; font-style: italic;">
+              No written feedback provided
+            </p>
+          </div>
+          `
+          }
+
+          <!-- Date -->
+          <p style="margin: 16px 0 24px 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #84a98c; text-align: center;">
+            Received on ${safeReviewDate}
+          </p>
+
+          ${
+            safeAISuggestion
+              ? `
+          <!-- AI-suggested response -->
+          <div style="margin: 32px 0; padding: 24px; background: linear-gradient(to bottom, #f8faf8, #ffffff); border-radius: 12px; border: 1px solid #e2e8e4;">
+            <div style="margin-bottom: 16px; text-align: center;">
+              <span style="display: inline-block; background-color: #cad2c5; color: #354f52; padding: 6px 12px; border-radius: 6px; font-family: 'Source Sans 3', sans-serif; font-size: 12px; font-weight: 600;">
+                ✨ AI-Suggested Response
+              </span>
+            </div>
+            <div style="padding: 16px; background-color: #ffffff; border-radius: 8px; border: 1px solid #cad2c5;">
+              <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #2f3e46; line-height: 1.625;">
+                ${safeAISuggestion}
+              </p>
+            </div>
+            <p style="margin: 12px 0 0 0; font-family: 'Source Sans 3', sans-serif; font-size: 12px; color: #84a98c; text-align: center; font-style: italic;">
+              Edit this suggestion in the dashboard before sending
+            </p>
+          </div>
+          `
+              : ""
+          }
+
+          ${templateSection}
+
+          <!-- CTA Buttons -->
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="${safeDashboardUrl}/reviews/${escapeHtml(data.reviewId)}" style="display: inline-block; padding: 16px 40px; background-color: #c47c7c; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 15px; border-radius: 8px; margin-right: 12px;">
+              Respond Now
+            </a>
+            <a href="${safeDashboardUrl}" style="display: inline-block; padding: 16px 32px; background-color: #52796f; color: #ffffff; text-decoration: none; font-family: 'Source Sans 3', sans-serif; font-weight: 600; font-size: 14px; border-radius: 8px;">
+              View Dashboard
+            </a>
+          </div>
+
+          <!-- Tips -->
+          <div style="margin: 24px 0; padding: 20px; background-color: #f8faf8; border-radius: 8px; border: 1px solid #e2e8e4;">
+            <p style="margin: 0 0 8px 0; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #354f52; font-weight: 600;">
+              💡 Tips for responding:
+            </p>
+            <ul style="margin: 0; padding-left: 20px; font-family: 'Source Sans 3', sans-serif; font-size: 13px; color: #52796f; line-height: 1.75;">
+              <li>Respond within 24 hours to show you care</li>
+              <li>Acknowledge the customer's concerns empathetically</li>
+              <li>Take the conversation offline if needed</li>
+              <li>Offer a specific solution or next step</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 24px 32px; background-color: #f8faf8; border-top: 1px solid #e2e8e4; text-align: center;">
+          <p style="margin: 0; font-family: 'Source Sans 3', sans-serif; font-size: 14px; color: #52796f;">
+            ${safeOrgName} • Review ID: ${escapeHtml(data.reviewId)}
           </p>
         </div>
       </td>

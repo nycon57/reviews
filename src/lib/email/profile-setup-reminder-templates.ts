@@ -166,9 +166,15 @@ function createButton(
   `;
 }
 
+function getProgressColor(percent: number): string {
+  if (percent >= 80) return colors.accent.success;
+  if (percent >= 50) return colors.accent.warning;
+  return colors.primary;
+}
+
 function createProgressBar(completionPercent: number): string {
   const fillWidth = Math.min(100, Math.max(0, completionPercent));
-  const progressColor = fillWidth >= 80 ? colors.accent.success : fillWidth >= 50 ? colors.accent.warning : colors.primary;
+  const progressColor = getProgressColor(fillWidth);
 
   return `
     <div style="margin: 16px 0;">

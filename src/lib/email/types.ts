@@ -21,7 +21,13 @@ export type EmailTemplate =
   | "welcome_2_profile"
   | "welcome_3_first_action"
   | "welcome_4_social_proof"
-  | "welcome_5_metrics";
+  | "welcome_5_metrics"
+  | "org_onboarding_1_welcome"
+  | "org_onboarding_2_branding"
+  | "org_onboarding_3_team"
+  | "org_onboarding_4_integrations"
+  | "org_onboarding_5_billing"
+  | "org_onboarding_6_advanced";
 
 // Base email data
 export interface BaseEmailData {
@@ -315,4 +321,74 @@ export interface EmailLogEntry {
   openedAt?: string;
   clickedAt?: string;
   errorMessage?: string;
+}
+
+// =============================================================================
+// ORGANIZATION ONBOARDING SEQUENCE EMAIL DATA INTERFACES
+// =============================================================================
+
+// Base org onboarding email data (shared across all org onboarding emails)
+export interface OrgOnboardingEmailBaseData extends BaseEmailData {
+  adminName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  sequenceId: string;
+  unsubscribeUrl: string;
+  setupProgress: number; // 0-100
+}
+
+// Email 1: Org Created Confirmation + Getting Started Guide (Immediate)
+export interface OrgOnboarding1WelcomeEmailData extends OrgOnboardingEmailBaseData {
+  loginUrl: string;
+  settingsUrl: string;
+  helpCenterUrl: string;
+}
+
+// Email 2: Branding Setup (Day 1)
+export interface OrgOnboarding2BrandingEmailData extends OrgOnboardingEmailBaseData {
+  brandingUrl: string;
+  surveyPreviewUrl: string;
+  hasLogo: boolean;
+  hasCustomColor: boolean;
+}
+
+// Email 3: Team Setup (Day 2)
+export interface OrgOnboarding3TeamEmailData extends OrgOnboardingEmailBaseData {
+  teamUrl: string;
+  inviteUrl: string;
+  teamCount: number;
+  teamLimit?: number;
+}
+
+// Email 4: Integration Guide - Google Business Profile (Day 4)
+export interface OrgOnboarding4IntegrationsEmailData extends OrgOnboardingEmailBaseData {
+  integrationsUrl: string;
+  googleConnectUrl: string;
+  hasGoogleConnected: boolean;
+}
+
+// Email 5: Billing Setup Reminder (Day 6) - Conditional
+export interface OrgOnboarding5BillingEmailData extends OrgOnboardingEmailBaseData {
+  billingUrl: string;
+  pricingUrl: string;
+  currentPlan: string;
+  trialEndsAt?: string;
+  daysRemaining?: number;
+}
+
+// Email 6: Advanced Features (Day 10)
+export interface OrgOnboarding6AdvancedEmailData extends OrgOnboardingEmailBaseData {
+  leaderboardsUrl: string;
+  reportsUrl: string;
+  automationUrl: string;
+  analyticsUrl: string;
+}
+
+// Organization onboarding status (for conditional skipping)
+export interface OrgOnboardingStatus {
+  branding_configured: boolean;
+  team_invited: boolean;
+  google_connected: boolean;
+  billing_setup: boolean;
+  first_survey_sent: boolean;
 }

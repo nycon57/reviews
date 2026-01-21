@@ -57,3 +57,43 @@ export {
   getVideoTestimonialApprovedEmail,
   getVideoTestimonialPendingApprovalEmail,
 } from "./templates";
+
+// Welcome sequence service
+export {
+  startWelcomeSequence,
+  processWelcomeSequenceQueue,
+  pauseWelcomeSequence,
+  resumeWelcomeSequence,
+  getWelcomeSequenceStatus,
+} from "./welcome-sequence-service";
+
+// Org onboarding sequence service
+export {
+  startOrgOnboardingSequence,
+  processOrgOnboardingSequenceQueue,
+  pauseOrgOnboardingSequence,
+  resumeOrgOnboardingSequence,
+  getOrgOnboardingSequenceStatus,
+  getOrgSetupProgress,
+} from "./org-onboarding-service";
+
+// Org onboarding email templates
+export {
+  getOrgOnboarding1WelcomeEmail,
+  getOrgOnboarding2BrandingEmail,
+  getOrgOnboarding3TeamEmail,
+  getOrgOnboarding4IntegrationsEmail,
+  getOrgOnboarding5BillingEmail,
+  getOrgOnboarding6AdvancedEmail,
+} from "./org-onboarding-templates";
+
+// Types for org onboarding
+export type {
+  OrgOnboarding1WelcomeEmailData,
+  OrgOnboarding2BrandingEmailData,
+  OrgOnboarding3TeamEmailData,
+  OrgOnboarding4IntegrationsEmailData,
+  OrgOnboarding5BillingEmailData,
+  OrgOnboarding6AdvancedEmailData,
+  OrgOnboardingStatus,
+} from "./types";

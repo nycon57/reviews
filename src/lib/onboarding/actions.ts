@@ -481,7 +481,7 @@ export async function completeOnboarding(): Promise<ActionResult> {
 
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("organization_id, role")
     .eq("id", user.id)
     .single();
 
@@ -510,6 +510,16 @@ export async function completeOnboarding(): Promise<ActionResult> {
       step_name: "complete",
       completed_at: new Date().toISOString(),
     }, { onConflict: "organization_id,step_name" });
+
+  // Start org onboarding email sequence for admins
+  if (userData.role === "admin") {
+    const { startOrgOnboardingSequence } = await import("@/lib/email/org-onboarding-service");
+    const result = await startOrgOnboardingSequence(userData.organization_id, user.id);
+    if (!result.success) {
+      // Log but don't fail - onboarding is complete, email sequence is secondary
+      console.warn("Failed to start org onboarding sequence:", result.error);
+    }
+  }
 
   revalidatePath("/onboarding");
   revalidatePath("/dashboard");

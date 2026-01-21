@@ -7090,3 +7090,40 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Optimistic locking pattern prevents duplicate emails from concurrent cron runs
 - Status: Pass 3/3 COMPLETE - All acceptance criteria verified
 ---
+
+## S084 · Pass 1/3 · 2026-01-21
+Thread:
+Run: 20260121-continuation (context resumed)
+Pass: 1/3 - Implementation
+- Guardrails reviewed: yes (prior to context compaction)
+- No-commit run: false
+- Commit: 1386021 [Pass 1/3] feat(S084): Add incomplete profile & setup reminder sequence
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no (pattern followed from S083)
+  - /vercel-react-best-practices: no (email templates - server-rendered)
+- Files created:
+  - src/lib/email/profile-setup-reminder-templates.ts (7 email templates)
+  - src/lib/email/profile-setup-reminder-service.ts (detection + queue processing)
+  - src/app/api/cron/process-profile-reminders/route.ts (cron endpoint)
+- Files modified:
+  - src/lib/email/types.ts (new email types and data interfaces)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 49 pre-existing warnings)
+- Acceptance criteria implemented:
+  - ✅ Profile completion reminders (Day 3: photo, Day 7: bio, Day 14: final with impact stats)
+  - ✅ Setup completion reminders (Day 3: template, Day 7: survey, Day 5: Google, Day 7: team)
+  - ✅ Show completion progress bar in email (profileCompletionPercent, setupCompletionPercent)
+  - ✅ Highlight benefits of completing (stats, trust signals, impact metrics)
+  - ✅ Deep link directly to incomplete section (profile/settings/survey sections)
+  - ✅ Exit sequence when step completed (checkAndExitSequenceOnCompletion)
+  - ✅ Different reminders for admins vs regular users (admin-specific: Google, team)
+- Architecture:
+  - Reused patterns from reengagement-sequence-service.ts
+  - Optimistic locking for concurrent cron processing
+  - Timing-safe CRON_SECRET verification
+  - Security helpers (escapeHtml, sanitizeUrl, sanitizeSubject)
+  - Progress bar visualization with gradient fill
+- Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Code Review)
+---

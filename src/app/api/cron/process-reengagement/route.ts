@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { timingSafeEqual } from "crypto";
 import {
   detectInactiveUsersAndStartSequences,
   processReengagementSequenceQueue,
@@ -21,17 +22,42 @@ const cronParamsSchema = z.object({
     .default(false),
 });
 
-// Verify the request is from a valid cron job source
+/**
+ * Verify the request is from a valid cron job source
+ * Uses timing-safe comparison to prevent timing attacks
+ */
 function verifyCronSecret(request: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
 
-  // If no secret is configured, only allow in development
+  // SECURITY: Require CRON_SECRET in production to prevent unauthorized access
   if (!cronSecret) {
-    return process.env.NODE_ENV === "development";
+    if (process.env.NODE_ENV === "development") {
+      return true; // Allow in development only
+    }
+    console.error("CRON_SECRET is not configured - denying access");
+    return false;
   }
 
   const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${cronSecret}`;
+  if (!authHeader) {
+    return false;
+  }
+
+  const expectedHeader = `Bearer ${cronSecret}`;
+
+  // Use timing-safe comparison to prevent timing attacks
+  if (authHeader.length !== expectedHeader.length) {
+    return false;
+  }
+
+  try {
+    return timingSafeEqual(
+      Buffer.from(authHeader, "utf8"),
+      Buffer.from(expectedHeader, "utf8")
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**

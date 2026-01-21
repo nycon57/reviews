@@ -53,6 +53,7 @@ interface SequenceRecord {
     step: number;
     email_id: string;
     sent_at: string;
+    template?: string; // Optional for backwards compatibility with existing records
   }>;
   ab_test_assignments: Record<string, "A" | "B">;
   skipped_steps: Array<{
@@ -451,6 +452,7 @@ export async function startReengagementSequence(
 /**
  * Process the re-engagement sequence queue
  * Called by cron job every 5 minutes
+ * Uses optimistic locking to prevent duplicate email sends from concurrent runs
  */
 export async function processReengagementSequenceQueue(
   batchSize: number = 50
@@ -485,34 +487,84 @@ export async function processReengagementSequenceQueue(
     return result;
   }
 
-  // Process each sequence
-  for (const sequence of sequences as SequenceRecord[]) {
+  // OPTIMISTIC LOCKING: Immediately mark fetched sequences as "processing"
+  // This prevents concurrent cron job instances from processing the same sequences
+  const sequenceIds = (sequences as SequenceRecord[]).map(s => s.id);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: lockedSequences, error: lockError } = await (supabase.from as any)("email_sequences")
+    .update({
+      status: "processing",
+      updated_at: new Date().toISOString()
+    })
+    .in("id", sequenceIds)
+    .eq("status", "active") // Only lock if still active (optimistic lock check)
+    .select("id");
+
+  if (lockError) {
+    result.errors.push(`Failed to acquire lock: ${lockError.message}`);
+    return result;
+  }
+
+  // Filter sequences to only process those we successfully locked
+  const lockedIds = new Set((lockedSequences || []).map((s: { id: string }) => s.id));
+  const sequencesToProcess = (sequences as SequenceRecord[]).filter(s => lockedIds.has(s.id));
+
+  if (sequencesToProcess.length === 0) {
+    // All sequences were already taken by another process
+    return result;
+  }
+
+  // Process each sequence that we successfully locked
+  for (const sequence of sequencesToProcess) {
     try {
       const processResult = await processSequenceStep(sequence);
 
       if (processResult.success) {
         if (processResult.action === "sent") {
           result.processed++;
+          // Note: updateSequenceAfterSend already sets status back to "active" or "completed"
         } else if (processResult.action === "skipped") {
           result.skipped++;
-        } else if (processResult.action === "exited") {
+          // Reset status back to "active" for skipped sequences (next_email_at already updated)
+          await resetSequenceToActive(supabase, sequence.id);
+        } else if (processResult.action === "exited" || processResult.action === "completed") {
           result.exited++;
+          // No reset needed - status is already set to terminal state
         }
       } else {
         result.failed++;
         result.errors.push(
           `Sequence ${sequence.id}: ${processResult.error || "Unknown error"}`
         );
+        // Reset status back to "active" so it can be retried
+        await resetSequenceToActive(supabase, sequence.id);
       }
     } catch (err) {
       result.failed++;
       result.errors.push(
         `Sequence ${sequence.id}: ${err instanceof Error ? err.message : "Unknown error"}`
       );
+      // Reset status back to "active" so it can be retried
+      await resetSequenceToActive(supabase, sequence.id);
     }
   }
 
   return result;
+}
+
+/**
+ * Helper to reset a sequence status back to "active" after processing lock
+ */
+async function resetSequenceToActive(supabase: ReturnType<typeof createAdminClient>, sequenceId: string): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from as any)("email_sequences")
+    .update({
+      status: "active",
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", sequenceId)
+    .eq("status", "processing"); // Only reset if still in processing state
 }
 
 /**

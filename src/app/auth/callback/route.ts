@@ -25,18 +25,37 @@ export async function GET(request: NextRequest) {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        const { data: userData } = await supabase
+        const { data: userData, error: userError } = await supabase
           .from("users")
           .select("organization_id, created_at")
           .eq("id", user.id)
           .single();
 
+        if (userError) {
+          console.error("Failed to fetch user data:", userError);
+          // Continue with redirect, but log the error
+          return NextResponse.redirect(`${origin}${next}`);
+        }
+
+        // CRITICAL: Update last_login_at for re-engagement sequence tracking
+        // This allows re-engagement sequences to exit when user logs back in
+        supabase
+          .from("users")
+          .update({ last_login_at: new Date().toISOString() })
+          .eq("id", user.id)
+          .then(({ error: updateError }) => {
+            if (updateError) {
+              console.error("Failed to update last_login_at:", updateError);
+            }
+          });
+
         if (userData?.organization_id) {
-          // Check if this is a new user (created within the last minute)
+          // Check if this is a new user (created within the last 5 minutes)
+          // Using 5 minutes instead of 1 minute to account for OAuth delays
           if (userData.created_at) {
             const userCreatedAt = new Date(userData.created_at);
             const now = new Date();
-            const isNewUser = now.getTime() - userCreatedAt.getTime() < 60000; // 1 minute
+            const isNewUser = now.getTime() - userCreatedAt.getTime() < 300000; // 5 minutes
 
             // Start welcome sequence for new users (async, don't wait)
             if (isNewUser) {

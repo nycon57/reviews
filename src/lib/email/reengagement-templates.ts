@@ -27,7 +27,8 @@ function escapeHtml(unsafe: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(/'/g, "&#039;")
+    .replace(/`/g, "&#96;"); // Escape backticks to prevent template literal injection
 }
 
 function sanitizeUrl(url: string): string {
@@ -37,14 +38,18 @@ function sanitizeUrl(url: string): string {
     if (!allowedProtocols.includes(parsed.protocol)) {
       return "#";
     }
-    return url;
+    // Return normalized URL to prevent encoding tricks
+    return parsed.href;
   } catch {
     return "#";
   }
 }
 
 function sanitizeSubject(subject: string): string {
-  return subject.replace(/[\r\n]/g, "");
+  // Remove all control characters (0x00-0x1F, 0x7F-0x9F) and newlines
+  // to prevent email header injection attacks
+  // eslint-disable-next-line no-control-regex
+  return subject.replace(/[\x00-\x1F\x7F-\x9F\r\n]/g, "");
 }
 
 // ============================================================================

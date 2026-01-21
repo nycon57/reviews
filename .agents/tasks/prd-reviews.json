@@ -2716,7 +2716,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "Feature adoption rates improve",
         "Users engage with highlighted features",
@@ -2736,8 +2736,8 @@
         ]
       },
       "startedAt": "2026-01-21T08:56:22.984703+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-21T08:56:22.984865+00:00"
+      "completedAt": "2026-01-21T09:05:20.332303+00:00",
+      "updatedAt": "2026-01-21T09:05:20.332146+00:00"
     },
     {
       "id": "S078",
@@ -2759,7 +2759,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "Survey completion rate improves vs current templates",
         "Google review redirect achieves > 20% click-through",
@@ -2788,7 +2788,10 @@
           "high_rating": "Would you share your experience on Google?",
           "low_rating": "We hear you \u2014 here's what we're doing"
         }
-      }
+      },
+      "startedAt": "2026-01-21T09:16:51.867395+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-21T09:16:51.867546+00:00"
     },
     {
       "id": "S079",

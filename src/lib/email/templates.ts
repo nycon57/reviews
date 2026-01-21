@@ -1378,14 +1378,22 @@ export function getSurveyCompletionThankYouEmail(data: {
       : '<span style="color: #e4e4e7; font-size: 24px;">★</span>'
   ).join("");
 
+  // Sanitize URLs to prevent javascript: URI injection
+  const safePhotoUrl = data.loanOfficerPhotoUrl
+    ? sanitizeUrl(data.loanOfficerPhotoUrl)
+    : null;
+  const safeLogoUrl = data.organizationLogoUrl
+    ? sanitizeUrl(data.organizationLogoUrl)
+    : null;
+
   // LO photo or initials
-  const loPhotoHtml = data.loanOfficerPhotoUrl
-    ? `<img src="${escapeHtml(data.loanOfficerPhotoUrl)}" alt="${safeLOName}" width="64" height="64" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
+  const loPhotoHtml = safePhotoUrl
+    ? `<img src="${safePhotoUrl}" alt="${safeLOName}" width="64" height="64" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
     : `<div style="width: 64px; height: 64px; border-radius: 50%; background-color: #cad2c5; display: inline-flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 24px; font-weight: 600; color: #52796f;">${safeLOName.charAt(0).toUpperCase()}</div>`;
 
   // Organization logo
-  const orgLogoHtml = data.organizationLogoUrl
-    ? `<img src="${escapeHtml(data.organizationLogoUrl)}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+  const orgLogoHtml = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
     : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
 
   const content = `
@@ -1501,14 +1509,22 @@ export function getSurveyHighRatingFollowUpEmail(data: {
   const subjectVariant = data.subjectVariant || "question";
   const subject = sanitizeSubject(subjectVariants[subjectVariant]);
 
+  // Sanitize URLs to prevent javascript: URI injection
+  const safePhotoUrl = data.loanOfficerPhotoUrl
+    ? sanitizeUrl(data.loanOfficerPhotoUrl)
+    : null;
+  const safeLogoUrl = data.organizationLogoUrl
+    ? sanitizeUrl(data.organizationLogoUrl)
+    : null;
+
   // LO photo or initials
-  const loPhotoHtml = data.loanOfficerPhotoUrl
-    ? `<img src="${escapeHtml(data.loanOfficerPhotoUrl)}" alt="${safeLOName}" width="80" height="80" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
+  const loPhotoHtml = safePhotoUrl
+    ? `<img src="${safePhotoUrl}" alt="${safeLOName}" width="80" height="80" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #84a98c;" />`
     : `<div style="width: 80px; height: 80px; border-radius: 50%; background-color: #cad2c5; display: inline-flex; align-items: center; justify-content: center; font-family: sans-serif; font-size: 28px; font-weight: 600; color: #52796f;">${safeLOName.charAt(0).toUpperCase()}</div>`;
 
   // Organization logo
-  const orgLogoHtml = data.organizationLogoUrl
-    ? `<img src="${escapeHtml(data.organizationLogoUrl)}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+  const orgLogoHtml = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
     : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
 
   // Star rating display
@@ -1635,9 +1651,14 @@ export function getSurveyLowRatingFollowUpEmail(data: {
 
   const subject = sanitizeSubject(`${data.customerName}, we want to make things right`);
 
+  // Sanitize URLs to prevent javascript: URI injection
+  const safeLogoUrl = data.organizationLogoUrl
+    ? sanitizeUrl(data.organizationLogoUrl)
+    : null;
+
   // Organization logo
-  const orgLogoHtml = data.organizationLogoUrl
-    ? `<img src="${escapeHtml(data.organizationLogoUrl)}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
+  const orgLogoHtml = safeLogoUrl
+    ? `<img src="${safeLogoUrl}" alt="${safeOrgName}" height="48" style="height: 48px; max-width: 200px; width: auto;" />`
     : `<span style="font-family: Georgia, serif; font-size: 24px; font-weight: bold; color: #354f52;">${safeOrgName}</span>`;
 
   const content = `

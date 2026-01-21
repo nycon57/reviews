@@ -19,6 +19,10 @@ export type {
   VideoTestimonialReceivedEmailData,
   VideoTestimonialApprovedEmailData,
   VideoTestimonialPendingApprovalEmailData,
+  SurveyCompletionThankYouEmailData,
+  SurveyHighRatingFollowUpEmailData,
+  SurveyLowRatingFollowUpEmailData,
+  SurveyResponseReceivedNotificationEmailData,
   EmailSendResult,
   ResendWebhookEventType,
   ResendWebhookPayload,
@@ -35,6 +39,10 @@ export {
   sendVideoTestimonialReceivedEmail,
   sendVideoTestimonialApprovedEmail,
   sendVideoTestimonialPendingApprovalEmail,
+  sendSurveyCompletionThankYouEmail,
+  sendSurveyHighRatingFollowUpEmail,
+  sendSurveyLowRatingFollowUpEmail,
+  sendSurveyResponseReceivedNotificationEmail,
   updateEmailTrackingStatus,
 } from "./send";
 
@@ -56,6 +64,10 @@ export {
   getVideoTestimonialReceivedEmail,
   getVideoTestimonialApprovedEmail,
   getVideoTestimonialPendingApprovalEmail,
+  getSurveyCompletionThankYouEmail,
+  getSurveyHighRatingFollowUpEmail,
+  getSurveyLowRatingFollowUpEmail,
+  getSurveyResponseReceivedNotificationEmail,
 } from "./templates";
 
 // Welcome sequence service

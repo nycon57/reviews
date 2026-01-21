@@ -899,7 +899,7 @@ export async function sendSurveyCompletionThankYouEmail(
   }
 
   const resend = getResendClient();
-  const fromAddress = getFromAddress();
+  const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getSurveyCompletionThankYouEmail(data);
 
   try {
@@ -925,6 +925,7 @@ export async function sendSurveyCompletionThankYouEmail(
         toEmail: data.toEmail,
         toName: data.customerName,
         fromEmail: emailConfig.defaultFromEmail,
+        fromName: data.organizationName,
         subject,
         templateName: "survey_completion_thank_you",
         organizationId: data.organizationId,
@@ -940,6 +941,7 @@ export async function sendSurveyCompletionThankYouEmail(
       toEmail: data.toEmail,
       toName: data.customerName,
       fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
       subject,
       templateName: "survey_completion_thank_you",
       organizationId: data.organizationId,
@@ -957,6 +959,7 @@ export async function sendSurveyCompletionThankYouEmail(
       toEmail: data.toEmail,
       toName: data.customerName,
       fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
       subject,
       templateName: "survey_completion_thank_you",
       organizationId: data.organizationId,
@@ -981,7 +984,7 @@ export async function sendSurveyHighRatingFollowUpEmail(
   }
 
   const resend = getResendClient();
-  const fromAddress = getFromAddress();
+  const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getSurveyHighRatingFollowUpEmail({
     ...data,
     subjectVariant,
@@ -1014,6 +1017,7 @@ export async function sendSurveyHighRatingFollowUpEmail(
         toEmail: data.toEmail,
         toName: data.customerName,
         fromEmail: emailConfig.defaultFromEmail,
+        fromName: data.organizationName,
         subject,
         templateName: "survey_high_rating_followup",
         organizationId: data.organizationId,
@@ -1029,6 +1033,7 @@ export async function sendSurveyHighRatingFollowUpEmail(
       toEmail: data.toEmail,
       toName: data.customerName,
       fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
       subject,
       templateName: "survey_high_rating_followup",
       organizationId: data.organizationId,
@@ -1046,6 +1051,7 @@ export async function sendSurveyHighRatingFollowUpEmail(
       toEmail: data.toEmail,
       toName: data.customerName,
       fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
       subject,
       templateName: "survey_high_rating_followup",
       organizationId: data.organizationId,
@@ -1068,7 +1074,7 @@ export async function sendSurveyLowRatingFollowUpEmail(
   }
 
   const resend = getResendClient();
-  const fromAddress = getFromAddress();
+  const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getSurveyLowRatingFollowUpEmail(data);
 
   try {
@@ -1095,6 +1101,7 @@ export async function sendSurveyLowRatingFollowUpEmail(
         toEmail: data.toEmail,
         toName: data.customerName,
         fromEmail: emailConfig.defaultFromEmail,
+        fromName: data.organizationName,
         subject,
         templateName: "survey_low_rating_followup",
         organizationId: data.organizationId,
@@ -1110,6 +1117,7 @@ export async function sendSurveyLowRatingFollowUpEmail(
       toEmail: data.toEmail,
       toName: data.customerName,
       fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
       subject,
       templateName: "survey_low_rating_followup",
       organizationId: data.organizationId,
@@ -1127,6 +1135,7 @@ export async function sendSurveyLowRatingFollowUpEmail(
       toEmail: data.toEmail,
       toName: data.customerName,
       fromEmail: emailConfig.defaultFromEmail,
+      fromName: data.organizationName,
       subject,
       templateName: "survey_low_rating_followup",
       organizationId: data.organizationId,

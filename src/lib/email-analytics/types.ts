@@ -78,36 +78,6 @@ export interface SequencePerformance {
   funnel: SequenceFunnelStep[];
 }
 
-export interface ABTestResult {
-  sequenceType: string;
-  step: number;
-  variantA: {
-    sent: number;
-    opened: number;
-    clicked: number;
-    openRate: number;
-    clickRate: number;
-  };
-  variantB: {
-    sent: number;
-    opened: number;
-    clicked: number;
-    openRate: number;
-    clickRate: number;
-  };
-  winner: "A" | "B" | "tie";
-  confidence: number;
-}
-
-export interface EmailAnalyticsData {
-  metrics: EmailMetrics;
-  trends: EmailTrendPoint[];
-  byType: EmailTypePerformance[];
-  unsubscribes: UnsubscribeMetrics;
-  sequences: SequencePerformance[];
-  abTests: ABTestResult[];
-}
-
 // Industry benchmarks for email performance
 export const INDUSTRY_BENCHMARKS = {
   deliveryRate: 95,

@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
@@ -8,10 +9,34 @@ import type {
   EmailTypePerformance,
   UnsubscribeMetrics,
   SequencePerformance,
-  ABTestResult,
   TimePeriod,
 } from "./types";
 import { getTemplateDisplayName, getTemplateCategory } from "./types";
+
+// ============================================================================
+// Validation Schemas
+// ============================================================================
+
+const timePeriodSchema = z.enum(["7d", "30d", "90d", "all"]);
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Sanitize a value for CSV export to prevent formula injection.
+ * Values starting with =, +, -, @, tab, or carriage return can be
+ * interpreted as formulas in spreadsheet applications.
+ */
+function sanitizeCSVValue(value: string | null | undefined): string {
+  if (!value) return "";
+  const str = String(value);
+  // If the value starts with a potentially dangerous character, prefix with a single quote
+  if (/^[=+\-@\t\r]/.test(str)) {
+    return `'${str}`;
+  }
+  return str;
+}
 
 // Get admin context - requires admin role
 async function getAdminContext() {
@@ -81,6 +106,12 @@ function getPreviousPeriod(period: TimePeriod): { start: Date; end: Date } {
 export async function getEmailMetrics(
   period: TimePeriod = "30d"
 ): Promise<ActionResult<EmailMetrics>> {
+  // Validate input
+  const validatedPeriod = timePeriodSchema.safeParse(period);
+  if (!validatedPeriod.success) {
+    return { success: false, error: "Invalid time period parameter" };
+  }
+
   const context = await getAdminContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Admin access required" };
@@ -184,6 +215,12 @@ export async function getEmailMetrics(
 export async function getEmailTrends(
   period: TimePeriod = "30d"
 ): Promise<ActionResult<EmailTrendPoint[]>> {
+  // Validate input
+  const validatedPeriod = timePeriodSchema.safeParse(period);
+  if (!validatedPeriod.success) {
+    return { success: false, error: "Invalid time period parameter" };
+  }
+
   const context = await getAdminContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Admin access required" };
@@ -275,6 +312,12 @@ export async function getEmailTrends(
 export async function getEmailTypePerformance(
   period: TimePeriod = "30d"
 ): Promise<ActionResult<EmailTypePerformance[]>> {
+  // Validate input
+  const validatedPeriod = timePeriodSchema.safeParse(period);
+  if (!validatedPeriod.success) {
+    return { success: false, error: "Invalid time period parameter" };
+  }
+
   const context = await getAdminContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Admin access required" };
@@ -359,6 +402,12 @@ export async function getEmailTypePerformance(
 export async function getUnsubscribeMetrics(
   period: TimePeriod = "30d"
 ): Promise<ActionResult<UnsubscribeMetrics>> {
+  // Validate input
+  const validatedPeriod = timePeriodSchema.safeParse(period);
+  if (!validatedPeriod.success) {
+    return { success: false, error: "Invalid time period parameter" };
+  }
+
   const context = await getAdminContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Admin access required" };
@@ -389,7 +438,7 @@ export async function getUnsubscribeMetrics(
     .gte("unsubscribed_at", previous.start.toISOString())
     .lte("unsubscribed_at", previous.end.toISOString());
 
-  // Get total emails sent for rate calculation
+  // Get total emails sent for rate calculation (current period)
   const { data: totalEmails } = await supabase
     .from("email_logs")
     .select("id")
@@ -398,9 +447,19 @@ export async function getUnsubscribeMetrics(
     .lte("created_at", end.toISOString())
     .not("status", "in", "(queued,failed)");
 
+  // Get previous period email count for rate comparison
+  const { data: prevTotalEmails } = await supabase
+    .from("email_logs")
+    .select("id")
+    .eq("organization_id", context.organizationId)
+    .gte("created_at", previous.start.toISOString())
+    .lte("created_at", previous.end.toISOString())
+    .not("status", "in", "(queued,failed)");
+
   const unsubs = currentUnsubs || [];
   const total = unsubs.length;
   const emailCount = totalEmails?.length || 0;
+  const prevEmailCount = prevTotalEmails?.length || 0;
 
   // Group by reason
   const byReason = new Map<string, number>();
@@ -409,10 +468,12 @@ export async function getUnsubscribeMetrics(
     byReason.set(reason, (byReason.get(reason) || 0) + 1);
   }
 
+  // Calculate rates (current and previous)
   const rate = emailCount > 0 ? Number(((total / emailCount) * 100).toFixed(2)) : 0;
-  const prevTotal = prevUnsubs?.length || 0;
-  const rateChange =
-    prevTotal > 0 ? Number((((total - prevTotal) / prevTotal) * 100).toFixed(1)) : 0;
+  const prevUnsubCount = prevUnsubs?.length || 0;
+  const prevRate = prevEmailCount > 0 ? (prevUnsubCount / prevEmailCount) * 100 : 0;
+  // Calculate the actual rate change (difference in percentage points)
+  const rateChange = Number((rate - prevRate).toFixed(2));
 
   return {
     success: true,
@@ -565,145 +626,17 @@ export async function getSequencePerformance(): Promise<ActionResult<SequencePer
 }
 
 /**
- * Get A/B test results (from email sequences)
- */
-export async function getABTestResults(): Promise<ActionResult<ABTestResult[]>> {
-  const context = await getAdminContext();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Admin access required" };
-  }
-
-  const supabase = await createClient();
-
-  // Query email sequences with A/B test data
-  type ABSequenceRow = {
-    sequence_type: string;
-    ab_test_assignments: Record<string, string>;
-    steps_completed: Array<{
-      step: number;
-      variant?: string;
-      sent_at?: string;
-      opened_at?: string;
-      clicked_at?: string;
-    }>;
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: sequences, error } = await (supabase as any)
-    .from("email_sequences")
-    .select("sequence_type, ab_test_assignments, steps_completed")
-    .eq("organization_id", context.organizationId)
-    .not("ab_test_assignments", "is", null) as {
-    data: ABSequenceRow[] | null;
-    error: Error | null;
-  };
-
-  if (error) {
-    console.error("Error fetching A/B test results:", error);
-    return { success: false, error: "Failed to fetch A/B test results" };
-  }
-
-  // Aggregate by sequence type and step
-  const testData = new Map<
-    string,
-    Map<
-      number,
-      {
-        A: { sent: number; opened: number; clicked: number };
-        B: { sent: number; opened: number; clicked: number };
-      }
-    >
-  >();
-
-  for (const seq of sequences || []) {
-    const seqType = seq.sequence_type || "unknown";
-
-    if (!testData.has(seqType)) {
-      testData.set(seqType, new Map());
-    }
-
-    const seqData = testData.get(seqType)!;
-    const steps = seq.steps_completed || [];
-
-    for (const step of steps) {
-      if (!step.variant) continue;
-
-      if (!seqData.has(step.step)) {
-        seqData.set(step.step, {
-          A: { sent: 0, opened: 0, clicked: 0 },
-          B: { sent: 0, opened: 0, clicked: 0 },
-        });
-      }
-
-      const stepData = seqData.get(step.step)!;
-      const variant = step.variant === "B" ? "B" : "A";
-
-      if (step.sent_at) stepData[variant].sent += 1;
-      if (step.opened_at) stepData[variant].opened += 1;
-      if (step.clicked_at) stepData[variant].clicked += 1;
-    }
-  }
-
-  // Convert to array and calculate stats
-  const results: ABTestResult[] = [];
-
-  for (const [seqType, steps] of testData) {
-    for (const [step, data] of steps) {
-      const aOpenRate =
-        data.A.sent > 0 ? Number(((data.A.opened / data.A.sent) * 100).toFixed(1)) : 0;
-      const bOpenRate =
-        data.B.sent > 0 ? Number(((data.B.opened / data.B.sent) * 100).toFixed(1)) : 0;
-      const aClickRate =
-        data.A.opened > 0 ? Number(((data.A.clicked / data.A.opened) * 100).toFixed(1)) : 0;
-      const bClickRate =
-        data.B.opened > 0 ? Number(((data.B.clicked / data.B.opened) * 100).toFixed(1)) : 0;
-
-      // Determine winner based on open rate (primary metric)
-      let winner: "A" | "B" | "tie" = "tie";
-      const diff = Math.abs(aOpenRate - bOpenRate);
-      if (diff > 2) {
-        winner = aOpenRate > bOpenRate ? "A" : "B";
-      }
-
-      // Simple confidence calculation based on sample size and difference
-      const totalSamples = data.A.sent + data.B.sent;
-      const confidence = Math.min(
-        95,
-        Math.round(50 + (diff * 3) + (totalSamples / 100) * 10)
-      );
-
-      results.push({
-        sequenceType: seqType,
-        step,
-        variantA: {
-          sent: data.A.sent,
-          opened: data.A.opened,
-          clicked: data.A.clicked,
-          openRate: aOpenRate,
-          clickRate: aClickRate,
-        },
-        variantB: {
-          sent: data.B.sent,
-          opened: data.B.opened,
-          clicked: data.B.clicked,
-          openRate: bOpenRate,
-          clickRate: bClickRate,
-        },
-        winner,
-        confidence,
-      });
-    }
-  }
-
-  return { success: true, data: results };
-}
-
-/**
  * Export email analytics data to CSV format
  */
 export async function exportEmailAnalyticsCSV(
   period: TimePeriod = "30d"
 ): Promise<ActionResult<string>> {
+  // Validate input
+  const validatedPeriod = timePeriodSchema.safeParse(period);
+  if (!validatedPeriod.success) {
+    return { success: false, error: "Invalid time period parameter" };
+  }
+
   const context = await getAdminContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Admin access required" };
@@ -728,7 +661,7 @@ export async function exportEmailAnalyticsCSV(
     return { success: false, error: "Failed to export email analytics" };
   }
 
-  // Build CSV
+  // Build CSV with sanitized values to prevent formula injection
   const headers = [
     "ID",
     "Recipient",
@@ -744,17 +677,17 @@ export async function exportEmailAnalyticsCSV(
   ];
 
   const rows = (emails || []).map((email) => [
-    email.id,
-    email.to_email,
-    `"${(email.subject || "").replace(/"/g, '""')}"`,
-    email.template_name || "",
-    getTemplateCategory(email.template_name || ""),
-    email.status,
+    sanitizeCSVValue(email.id),
+    sanitizeCSVValue(email.to_email),
+    `"${sanitizeCSVValue(email.subject).replace(/"/g, '""')}"`,
+    sanitizeCSVValue(email.template_name),
+    sanitizeCSVValue(getTemplateCategory(email.template_name || "")),
+    sanitizeCSVValue(email.status),
     email.sent_at || "",
     email.delivered_at || "",
     email.opened_at || "",
     email.clicked_at || "",
-    email.created_at,
+    email.created_at || "",
   ]);
 
   const csv = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n");

@@ -114,9 +114,20 @@ function TrendIndicator({ value, suffix = "%" }: { value: number; suffix?: strin
   );
 }
 
-function BenchmarkIndicator({ value, benchmark, label }: { value: number; benchmark: number; label: string }) {
+function BenchmarkIndicator({
+  value,
+  benchmark,
+  label,
+  lowerIsBetter = false,
+}: {
+  value: number;
+  benchmark: number;
+  label: string;
+  lowerIsBetter?: boolean;
+}) {
   const diff = value - benchmark;
-  const isGood = diff >= 0;
+  // For metrics where lower is better (bounce rate, unsubscribe rate), invert the logic
+  const isGood = lowerIsBetter ? diff <= 0 : diff >= 0;
 
   return (
     <TooltipProvider>
@@ -127,16 +138,24 @@ function BenchmarkIndicator({ value, benchmark, label }: { value: number; benchm
               className={`h-2 w-2 rounded-full ${isGood ? "bg-green-500" : "bg-amber-500"}`}
             />
             <span className="text-xs text-muted-foreground">
-              {isGood ? "Above" : "Below"} benchmark
+              {lowerIsBetter
+                ? isGood
+                  ? "At or below"
+                  : "Above"
+                : isGood
+                  ? "Above"
+                  : "Below"}{" "}
+              benchmark
             </span>
           </div>
         </TooltipTrigger>
         <TooltipContent>
           <p className="text-xs">
             Industry benchmark for {label}: {benchmark}%
+            {lowerIsBetter && " (lower is better)"}
           </p>
           <p className="text-xs font-medium">
-            Your rate: {value}% ({isGood ? "+" : ""}{diff.toFixed(1)}%)
+            Your rate: {value}% ({diff > 0 ? "+" : ""}{diff.toFixed(1)}%)
           </p>
         </TooltipContent>
       </Tooltip>
@@ -153,6 +172,7 @@ function MetricCard({
   benchmarkLabel,
   iconBg,
   suffix = "",
+  lowerIsBetter = false,
 }: {
   title: string;
   value: number | string;
@@ -162,6 +182,7 @@ function MetricCard({
   benchmarkLabel?: string;
   iconBg: string;
   suffix?: string;
+  lowerIsBetter?: boolean;
 }) {
   return (
     <Card>
@@ -177,7 +198,12 @@ function MetricCard({
                 {value}{suffix}
               </p>
               {benchmark !== undefined && benchmarkLabel && (
-                <BenchmarkIndicator value={Number(value)} benchmark={benchmark} label={benchmarkLabel} />
+                <BenchmarkIndicator
+                  value={Number(value)}
+                  benchmark={benchmark}
+                  label={benchmarkLabel}
+                  lowerIsBetter={lowerIsBetter}
+                />
               )}
             </div>
           </div>
@@ -362,6 +388,7 @@ export function EmailAnalyticsDashboard() {
           benchmarkLabel="bounce rate"
           iconBg="bg-red-100 text-red-600"
           suffix="%"
+          lowerIsBetter={true}
         />
       </div>
 
@@ -717,6 +744,7 @@ export function EmailAnalyticsDashboard() {
                       value={unsubscribes.rate}
                       benchmark={INDUSTRY_BENCHMARKS.unsubscribeRate}
                       label="unsubscribe rate"
+                      lowerIsBetter={true}
                     />
                   </div>
                 </div>

@@ -7484,3 +7484,58 @@ Created complete 5-email dunning sequence for failed subscription payments:
 
 - Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Quality Review)
 ---
+
+## S086 · Pass 2/3 · 2026-01-21
+Thread:
+Run: 20260121-220335-64055 (iteration 4)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260121-220335-64055-iter-4.log
+Run summary: Quality review of dunning sequence, found and fixed missing column bug
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b7ad317 [Pass 2/3] refactor(S086): Quality review fixes for dunning sequence
+- Post-commit status: clean (except prd-reviews.json which is not committed)
+- Skills invoked:
+  - /feature-dev: no (Pass 2)
+  - /code-review: yes
+  - /vercel-react-best-practices: no (email templates, not React)
+  - /code-simplifier: no (Pass 2)
+  - /frontend-design: no (email templates, not UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 43 warnings pre-existing)
+
+### Code Review Summary
+
+**Bug Found and Fixed:**
+- `suspended_at` column referenced in dunning-service.ts (lines 340-346, 361-363, 889) but did not exist in organizations table schema
+- Created migration `20240101000047_add_organization_suspended_at.sql` to add the missing column
+
+**Security Review: PASS**
+- `escapeHtml()` properly escapes user input (& < > " ' `)
+- `sanitizeUrl()` validates URL protocols (http:, https:, mailto:)
+- `sanitizeSubject()` removes control characters from email subjects
+- All user data is escaped before rendering in HTML templates
+
+**Logic Review: PASS**
+- 5-step dunning schedule correctly configured (Day 0, 3, 7, 10, 14)
+- Payment recovery detection works via hasPaymentRecovered()
+- Sequence properly exits on successful payment (handlePaymentRecovery)
+- Account suspension triggered at step 5 (Day 14)
+
+**Webhook Integration Review: PASS**
+- invoice.payment_failed correctly starts dunning sequence
+- invoice.paid correctly handles payment recovery
+- Subscription invoice filtering correct (checks billing_reason)
+- Decline code extraction from last_finalization_error is correct
+
+### Files Changed
+- supabase/migrations/20240101000047_add_organization_suspended_at.sql (new)
+
+### Learnings for future iterations
+- Always verify that columns referenced in code exist in database schema
+- The database.types.ts file is the source of truth for what columns exist
+- When code uses `createUntypedAdminClient()`, it bypasses TypeScript checks - manual verification needed
+
+- Status: Pass 2/3 COMPLETE - Ready for Pass 3 (Polish & Finalize)
+---

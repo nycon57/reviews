@@ -72,8 +72,6 @@ export function AnnouncementMaintenanceEmail({ data }: AnnouncementMaintenanceEm
     ctaText,
     ctaUrl,
     toEmail,
-    unsubscribeUrl,
-    preferencesUrl,
   } = data;
 
   const impact = impactStyles[impactLevel] || impactStyles.partial;

@@ -81,16 +81,6 @@ interface Announcement {
   createdBy?: string;
 }
 
-interface ChangelogEntry {
-  title: string;
-  description: string;
-  category: "feature" | "improvement" | "bugfix" | "performance" | "security" | "other";
-  docsUrl?: string;
-  imageUrl?: string;
-  version?: string;
-  releaseDate?: string;
-}
-
 // ============================================================================
 // Helper Functions
 // ============================================================================

@@ -7,7 +7,7 @@
  */
 
 import * as React from "react";
-import { Img, Section, Text, Link, Row, Column } from "@react-email/components";
+import { Img, Section, Text, Link } from "@react-email/components";
 import {
   EmailLayout,
   SingleColumnLayout,
@@ -19,7 +19,6 @@ import {
   InfoCard,
   Spacer,
   Badge,
-  EmailButton,
   EmailButtonGroup,
   colors,
   typography,
@@ -47,8 +46,6 @@ export function AnnouncementFeatureEmail({ data }: AnnouncementFeatureEmailProps
     featureHighlights,
     releaseDate,
     toEmail,
-    unsubscribeUrl,
-    preferencesUrl,
   } = data;
 
   // Use GIF if available, otherwise use static image

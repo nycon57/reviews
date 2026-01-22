@@ -17,7 +17,6 @@ import {
   EmailParagraph,
   EmailCard,
   Spacer,
-  Badge,
   EmailButton,
   colors,
   typography,
@@ -54,8 +53,6 @@ export function AnnouncementUpdateEmail({ data }: AnnouncementUpdateEmailProps) 
     ctaUrl,
     period,
     toEmail,
-    unsubscribeUrl,
-    preferencesUrl,
   } = data;
 
   // Format period dates

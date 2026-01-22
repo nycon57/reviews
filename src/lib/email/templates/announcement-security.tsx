@@ -85,8 +85,6 @@ export function AnnouncementSecurityEmail({ data }: AnnouncementSecurityEmailPro
     ctaUrl,
     securityPageUrl,
     toEmail,
-    unsubscribeUrl,
-    preferencesUrl,
   } = data;
 
   const severityStyle = severityStyles[severity] || severityStyles.medium;

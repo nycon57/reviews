@@ -144,6 +144,28 @@ const initialFormData: AnnouncementFormData = {
   scheduledAt: "",
 };
 
+/**
+ * Get badge variant based on announcement status
+ */
+function getStatusBadgeVariant(status: string): "default" | "secondary" | "outline" {
+  if (status === "sent") return "default";
+  if (status === "scheduled") return "secondary";
+  return "outline";
+}
+
+/**
+ * Format announcement date display text
+ */
+function formatAnnouncementDate(announcement: AnnouncementSummary): string {
+  if (announcement.sentAt) {
+    return `Sent ${format(new Date(announcement.sentAt), "PPp")}`;
+  }
+  if (announcement.scheduledAt) {
+    return `Scheduled for ${format(new Date(announcement.scheduledAt), "PPp")}`;
+  }
+  return announcement.status;
+}
+
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
@@ -756,11 +778,7 @@ export function AnnouncementsClient() {
                         <div>
                           <h4 className="font-medium">{announcement.title}</h4>
                           <p className="text-sm text-gray-500">
-                            {announcement.sentAt
-                              ? `Sent ${format(new Date(announcement.sentAt), "PPp")}`
-                              : announcement.scheduledAt
-                                ? `Scheduled for ${format(new Date(announcement.scheduledAt), "PPp")}`
-                                : announcement.status}
+                            {formatAnnouncementDate(announcement)}
                           </p>
                         </div>
                       </div>
@@ -779,15 +797,7 @@ export function AnnouncementsClient() {
                           <div className="font-semibold">{announcement.totalClicked}</div>
                           <div className="text-gray-500">Clicked</div>
                         </div>
-                        <Badge
-                          variant={
-                            announcement.status === "sent"
-                              ? "default"
-                              : announcement.status === "scheduled"
-                                ? "secondary"
-                                : "outline"
-                          }
-                        >
+                        <Badge variant={getStatusBadgeVariant(announcement.status)}>
                           {announcement.status}
                         </Badge>
                       </div>

@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_actions: {
+        Row: {
+          id: string
+          user_id: string
+          organization_id: string
+          action_type: string
+          status: string
+          context: Json
+          resume_url: string | null
+          recovery_email_1_sent_at: string | null
+          recovery_email_2_sent_at: string | null
+          recovery_email_1_id: string | null
+          recovery_email_2_id: string | null
+          started_at: string
+          completed_at: string | null
+          abandoned_at: string | null
+          recovered_at: string | null
+          expired_at: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          organization_id: string
+          action_type: string
+          status?: string
+          context?: Json
+          resume_url?: string | null
+          recovery_email_1_sent_at?: string | null
+          recovery_email_2_sent_at?: string | null
+          recovery_email_1_id?: string | null
+          recovery_email_2_id?: string | null
+          started_at?: string
+          completed_at?: string | null
+          abandoned_at?: string | null
+          recovered_at?: string | null
+          expired_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          organization_id?: string
+          action_type?: string
+          status?: string
+          context?: Json
+          resume_url?: string | null
+          recovery_email_1_sent_at?: string | null
+          recovery_email_2_sent_at?: string | null
+          recovery_email_1_id?: string | null
+          recovery_email_2_id?: string | null
+          started_at?: string
+          completed_at?: string | null
+          abandoned_at?: string | null
+          recovered_at?: string | null
+          expired_at?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abandoned_actions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abandoned_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_key_usage_logs: {
         Row: {
           api_key_id: string
@@ -4899,6 +4977,52 @@ export type Database = {
           rate_limit: number
           scopes: string[]
         }[]
+      }
+      // Abandoned action recovery functions (S093)
+      track_action_started: {
+        Args: {
+          p_user_id: string
+          p_organization_id: string
+          p_action_type: string
+          p_context?: Json
+          p_resume_url?: string
+        }
+        Returns: string
+      }
+      track_action_completed: {
+        Args: {
+          p_user_id: string
+          p_action_type: string
+        }
+        Returns: boolean
+      }
+      get_actions_for_recovery_email_1: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          action_id: string
+          user_id: string
+          organization_id: string
+          action_type: string
+          context: Json
+          resume_url: string | null
+          started_at: string
+        }[]
+      }
+      get_actions_for_recovery_email_2: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          action_id: string
+          user_id: string
+          organization_id: string
+          action_type: string
+          context: Json
+          resume_url: string | null
+          started_at: string
+        }[]
+      }
+      expire_old_abandoned_actions: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
     }
     Enums: {

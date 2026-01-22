@@ -133,7 +133,20 @@ export type EmailTemplate =
   | "admin_alert_team_member_left"
   | "admin_alert_unusual_activity"
   | "admin_alert_integration_disconnected"
-  | "admin_alert_digest";
+  | "admin_alert_digest"
+  // Abandoned Action Recovery Emails (S093)
+  | "abandoned_survey_creation_1"
+  | "abandoned_survey_creation_2"
+  | "abandoned_survey_send_1"
+  | "abandoned_survey_send_2"
+  | "abandoned_video_request_1"
+  | "abandoned_video_request_2"
+  | "abandoned_billing_upgrade_1"
+  | "abandoned_billing_upgrade_2"
+  | "abandoned_profile_completion_1"
+  | "abandoned_profile_completion_2"
+  | "abandoned_integration_setup_1"
+  | "abandoned_integration_setup_2";
 
 // Base email data
 export interface BaseEmailData {
@@ -2169,4 +2182,125 @@ export interface AdminAlertPreferences {
   alertTeamMemberLeft: boolean;
   alertUnusualActivity: boolean;
   alertIntegrationDisconnected: boolean;
+}
+
+// =============================================================================
+// ABANDONED ACTION RECOVERY EMAIL DATA INTERFACES (S093)
+// =============================================================================
+
+// Abandoned action types
+export type AbandonedActionType =
+  | "survey_creation"
+  | "survey_send"
+  | "video_request"
+  | "billing_upgrade"
+  | "profile_completion"
+  | "integration_setup";
+
+// Base abandoned action email data (shared across all abandoned action emails)
+export interface AbandonedActionEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  resumeUrl: string;
+  unsubscribeUrl: string;
+  actionStartedAt: string;
+  emailNumber: 1 | 2;
+}
+
+// Abandoned Survey Creation Email Data (started creating survey template, didn't finish)
+export interface AbandonedSurveyCreationEmailData extends AbandonedActionEmailBaseData {
+  templateName?: string;
+  lastStep?: string;
+  lastFieldEdited?: string;
+  createSurveyUrl: string;
+  helpText?: string;
+}
+
+// Abandoned Survey Send Email Data (selected contacts but didn't send)
+export interface AbandonedSurveySendEmailData extends AbandonedActionEmailBaseData {
+  contactsSelected: number;
+  templateName?: string;
+  sendSurveyUrl: string;
+  helpText?: string;
+}
+
+// Abandoned Video Request Email Data (started form but didn't submit)
+export interface AbandonedVideoRequestEmailData extends AbandonedActionEmailBaseData {
+  customerName?: string;
+  requestStep?: string;
+  createRequestUrl: string;
+  helpText?: string;
+}
+
+// Abandoned Billing Upgrade Email Data (visited pricing but didn't complete)
+export interface AbandonedBillingUpgradeEmailData extends AbandonedActionEmailBaseData {
+  targetPlan?: string;
+  currentPlan?: string;
+  pricingUrl: string;
+  upgradeUrl: string;
+  featuresHighlight?: string[];
+  specialOffer?: {
+    discountPercent?: number;
+    validUntil?: string;
+  };
+  helpText?: string;
+}
+
+// Abandoned Profile Completion Email Data (started editing but left incomplete)
+export interface AbandonedProfileCompletionEmailData extends AbandonedActionEmailBaseData {
+  completionPercent: number;
+  fieldsIncomplete: string[];
+  profileUrl: string;
+  benefitStats?: {
+    moreInquiries?: string;
+    higherTrust?: string;
+  };
+  helpText?: string;
+}
+
+// Abandoned Integration Setup Email Data (started OAuth but didn't complete)
+export interface AbandonedIntegrationSetupEmailData extends AbandonedActionEmailBaseData {
+  integrationType: string;
+  integrationDisplayName: string;
+  oauthStep?: string;
+  integrationsUrl: string;
+  setupGuideUrl?: string;
+  integrationBenefits?: string[];
+  helpText?: string;
+}
+
+// Union type for all abandoned action email data
+export type AbandonedActionEmailData =
+  | AbandonedSurveyCreationEmailData
+  | AbandonedSurveySendEmailData
+  | AbandonedVideoRequestEmailData
+  | AbandonedBillingUpgradeEmailData
+  | AbandonedProfileCompletionEmailData
+  | AbandonedIntegrationSetupEmailData;
+
+// Abandoned action tracking record (from database)
+export interface AbandonedActionRecord {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  action_type: AbandonedActionType;
+  status: "started" | "completed" | "abandoned" | "recovered" | "expired";
+  context: Record<string, unknown>;
+  resume_url?: string;
+  recovery_email_1_sent_at?: string;
+  recovery_email_2_sent_at?: string;
+  recovery_email_1_id?: string;
+  recovery_email_2_id?: string;
+  started_at: string;
+  completed_at?: string;
+  abandoned_at?: string;
+  recovered_at?: string;
+  expired_at?: string;
+}
+
+// Abandoned action recovery email preferences
+export interface AbandonedActionRecoveryPreferences {
+  enabled: boolean;
+  optedOut: boolean;
 }

@@ -57,6 +57,21 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   marketing: Megaphone,
 };
 
+// Pre-computed time options to avoid regeneration on each render
+const TIME_OPTIONS = (() => {
+  const options = [];
+  for (let hour = 0; hour < 24; hour++) {
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const value = `${hour.toString().padStart(2, "0")}:00`;
+    options.push({
+      value,
+      label: `${hour12}:00 ${ampm}`,
+    });
+  }
+  return options;
+})();
+
 export function EmailPreferencesContent() {
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
@@ -64,16 +79,24 @@ export function EmailPreferencesContent() {
   const [preferences, setPreferences] = React.useState<EmailPreferences | null>(null);
 
   React.useEffect(() => {
+    let cancelled = false;
+
     const fetchPreferences = async () => {
       setLoading(true);
       const prefs = await getEmailPreferences();
-      setPreferences(prefs || DEFAULT_EMAIL_PREFERENCES);
-      setLoading(false);
+      if (!cancelled) {
+        setPreferences(prefs || DEFAULT_EMAIL_PREFERENCES);
+        setLoading(false);
+      }
     };
     fetchPreferences();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleSave = async (updates: Partial<EmailPreferences>) => {
+  const handleSave = React.useCallback(async (updates: Partial<EmailPreferences>) => {
     setSaving(true);
     const result = await updateEmailPreferences(updates);
     if (result.success) {
@@ -90,7 +113,7 @@ export function EmailPreferencesContent() {
       });
     }
     setSaving(false);
-  };
+  }, [toast]);
 
   if (loading) {
     return (
@@ -136,12 +159,13 @@ export function EmailPreferencesContent() {
         <CardContent>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div>
-              <Label className="text-base font-medium">All Emails</Label>
+              <Label id="all-emails-label" className="text-base font-medium">All Emails</Label>
               <p className="text-sm text-muted-foreground">
                 Master toggle for all email notifications
               </p>
             </div>
             <Switch
+              aria-labelledby="all-emails-label"
               checked={preferences?.email_enabled ?? true}
               onCheckedChange={(checked) => handleSave({ email_enabled: checked })}
               disabled={saving}
@@ -205,6 +229,7 @@ export function EmailPreferencesContent() {
                     </div>
                     {category.canDisable ? (
                       <Switch
+                        aria-label={`Enable ${category.label} emails`}
                         checked={fieldValue}
                         onCheckedChange={(checked) =>
                           handleSave({ [category.field]: checked })
@@ -212,7 +237,7 @@ export function EmailPreferencesContent() {
                         disabled={saving}
                       />
                     ) : (
-                      <Lock className="h-4 w-4 text-muted-foreground" />
+                      <Lock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                     )}
                   </div>
                 </div>
@@ -242,15 +267,25 @@ export function EmailPreferencesContent() {
                 {FREQUENCY_OPTIONS.map((option) => (
                   <div
                     key={option.value}
-                    className={`cursor-pointer rounded-lg border p-4 transition-colors ${
+                    role="radio"
+                    aria-checked={preferences?.email_frequency_mode === option.value}
+                    tabIndex={0}
+                    className={`cursor-pointer rounded-lg border p-4 transition-colors focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2 ${
                       preferences?.email_frequency_mode === option.value
                         ? "border-repwell-teal-300 bg-repwell-sage-100/30"
                         : "hover:bg-muted/50"
                     }`}
                     onClick={() => handleSave({ email_frequency_mode: option.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSave({ email_frequency_mode: option.value });
+                      }
+                    }}
                   >
                     <div className="flex items-center gap-2">
                       <div
+                        aria-hidden="true"
                         className={`h-4 w-4 rounded-full border-2 ${
                           preferences?.email_frequency_mode === option.value
                             ? "border-repwell-teal-300 bg-repwell-teal-300"
@@ -305,7 +340,7 @@ export function EmailPreferencesContent() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle id="quiet-hours-title" className="flex items-center gap-2">
                   <Moon className="h-5 w-5" />
                   Quiet Hours
                 </CardTitle>
@@ -314,6 +349,7 @@ export function EmailPreferencesContent() {
                 </CardDescription>
               </div>
               <Switch
+                aria-labelledby="quiet-hours-title"
                 checked={preferences?.quiet_hours_enabled ?? false}
                 onCheckedChange={(checked) =>
                   handleSave({ quiet_hours_enabled: checked })
@@ -338,7 +374,7 @@ export function EmailPreferencesContent() {
                       <SelectValue placeholder="Select start time" />
                     </SelectTrigger>
                     <SelectContent>
-                      {generateTimeOptions().map((time) => (
+                      {TIME_OPTIONS.map((time) => (
                         <SelectItem key={time.value} value={time.value}>
                           {time.label}
                         </SelectItem>
@@ -359,7 +395,7 @@ export function EmailPreferencesContent() {
                       <SelectValue placeholder="Select end time" />
                     </SelectTrigger>
                     <SelectContent>
-                      {generateTimeOptions().map((time) => (
+                      {TIME_OPTIONS.map((time) => (
                         <SelectItem key={time.value} value={time.value}>
                           {time.label}
                         </SelectItem>
@@ -393,18 +429,4 @@ export function EmailPreferencesContent() {
       )}
     </div>
   );
-}
-
-function generateTimeOptions() {
-  const options = [];
-  for (let hour = 0; hour < 24; hour++) {
-    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const value = `${hour.toString().padStart(2, "0")}:00`;
-    options.push({
-      value,
-      label: `${hour12}:00 ${ampm}`,
-    });
-  }
-  return options;
 }

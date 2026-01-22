@@ -4,6 +4,36 @@ import { createClient } from "@/lib/supabase/server";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import type { EmailPreferences, EmailPreferencesWithToken } from "./types";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
+
+// ============================================================================
+// Zod Validation Schemas
+// ============================================================================
+
+const emailPreferencesSchema = z.object({
+  email_enabled: z.boolean().optional(),
+  email_onboarding_enabled: z.boolean().optional(),
+  email_weekly_summary_enabled: z.boolean().optional(),
+  email_milestones_enabled: z.boolean().optional(),
+  email_product_updates_enabled: z.boolean().optional(),
+  email_marketing_enabled: z.boolean().optional(),
+  email_frequency_mode: z.enum(["immediate", "daily", "weekly", "none"]).optional(),
+  email_timezone: z.string().max(100).optional(),
+  quiet_hours_enabled: z.boolean().optional(),
+  quiet_hours_start: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
+  quiet_hours_end: z.string().regex(/^\d{2}:\d{2}$/).nullable().optional(),
+});
+
+const tokenSchema = z.string().min(32).max(128);
+const userIdSchema = z.string().uuid();
+
+const resubscribeCategoriesSchema = z.object({
+  onboarding: z.boolean().optional(),
+  weekly_summary: z.boolean().optional(),
+  milestones: z.boolean().optional(),
+  product_updates: z.boolean().optional(),
+  marketing: z.boolean().optional(),
+}).optional();
 
 // ============================================================================
 // Authenticated User Actions
@@ -74,6 +104,13 @@ export async function getEmailPreferences(): Promise<EmailPreferences | null> {
 export async function updateEmailPreferences(
   preferences: Partial<EmailPreferences>
 ): Promise<{ success: boolean; error?: string }> {
+  // Validate input with Zod
+  const validationResult = emailPreferencesSchema.safeParse(preferences);
+  if (!validationResult.success) {
+    return { success: false, error: "Invalid preferences data" };
+  }
+  const validatedPrefs = validationResult.data;
+
   const authClient = await createClient();
   const {
     data: { user },
@@ -96,7 +133,7 @@ export async function updateEmailPreferences(
     // Update existing preferences
     const { error } = await supabase
       .from("notification_preferences")
-      .update(preferences)
+      .update(validatedPrefs)
       .eq("user_id", user.id);
 
     if (error) {
@@ -107,7 +144,7 @@ export async function updateEmailPreferences(
     // Create new preferences
     const { error } = await supabase
       .from("notification_preferences")
-      .insert({ user_id: user.id, ...preferences });
+      .insert({ user_id: user.id, ...validatedPrefs });
 
     if (error) {
       console.error("Error creating email preferences:", error);
@@ -159,7 +196,9 @@ export async function getEmailPreferenceToken(): Promise<string | null> {
 export async function getEmailPreferencesByToken(
   token: string
 ): Promise<EmailPreferencesWithToken | null> {
-  if (!token || token.length < 32) {
+  // Validate token format with Zod
+  const tokenResult = tokenSchema.safeParse(token);
+  if (!tokenResult.success) {
     return null;
   }
 
@@ -206,25 +245,34 @@ export async function updateEmailPreferencesByToken(
   token: string,
   preferences: Partial<EmailPreferences>
 ): Promise<{ success: boolean; error?: string }> {
-  if (!token || token.length < 32) {
-    return { success: false, error: "Invalid token" };
+  // Validate token format with Zod
+  const tokenResult = tokenSchema.safeParse(token);
+  if (!tokenResult.success) {
+    return { success: false, error: "Invalid token format" };
   }
+
+  // Validate preferences with Zod
+  const prefsResult = emailPreferencesSchema.safeParse(preferences);
+  if (!prefsResult.success) {
+    return { success: false, error: "Invalid preferences data" };
+  }
+  const validatedPrefs = prefsResult.data;
 
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase.rpc("update_email_preferences_by_token", {
     p_token: token,
-    p_email_enabled: preferences.email_enabled ?? null,
-    p_email_onboarding_enabled: preferences.email_onboarding_enabled ?? null,
-    p_email_weekly_summary_enabled: preferences.email_weekly_summary_enabled ?? null,
-    p_email_milestones_enabled: preferences.email_milestones_enabled ?? null,
-    p_email_product_updates_enabled: preferences.email_product_updates_enabled ?? null,
-    p_email_marketing_enabled: preferences.email_marketing_enabled ?? null,
-    p_email_frequency_mode: preferences.email_frequency_mode ?? null,
-    p_email_timezone: preferences.email_timezone ?? null,
-    p_quiet_hours_enabled: preferences.quiet_hours_enabled ?? null,
-    p_quiet_hours_start: preferences.quiet_hours_start ?? null,
-    p_quiet_hours_end: preferences.quiet_hours_end ?? null,
+    p_email_enabled: validatedPrefs.email_enabled ?? null,
+    p_email_onboarding_enabled: validatedPrefs.email_onboarding_enabled ?? null,
+    p_email_weekly_summary_enabled: validatedPrefs.email_weekly_summary_enabled ?? null,
+    p_email_milestones_enabled: validatedPrefs.email_milestones_enabled ?? null,
+    p_email_product_updates_enabled: validatedPrefs.email_product_updates_enabled ?? null,
+    p_email_marketing_enabled: validatedPrefs.email_marketing_enabled ?? null,
+    p_email_frequency_mode: validatedPrefs.email_frequency_mode ?? null,
+    p_email_timezone: validatedPrefs.email_timezone ?? null,
+    p_quiet_hours_enabled: validatedPrefs.quiet_hours_enabled ?? null,
+    p_quiet_hours_start: validatedPrefs.quiet_hours_start ?? null,
+    p_quiet_hours_end: validatedPrefs.quiet_hours_end ?? null,
   });
 
   if (error) {
@@ -246,8 +294,10 @@ export async function updateEmailPreferencesByToken(
 export async function unsubscribeAllByToken(
   token: string
 ): Promise<{ success: boolean; error?: string }> {
-  if (!token || token.length < 32) {
-    return { success: false, error: "Invalid token" };
+  // Validate token format with Zod
+  const tokenResult = tokenSchema.safeParse(token);
+  if (!tokenResult.success) {
+    return { success: false, error: "Invalid token format" };
   }
 
   const supabase = createUntypedAdminClient();
@@ -282,19 +332,28 @@ export async function resubscribeByToken(
     marketing?: boolean;
   }
 ): Promise<{ success: boolean; error?: string }> {
-  if (!token || token.length < 32) {
-    return { success: false, error: "Invalid token" };
+  // Validate token format with Zod
+  const tokenResult = tokenSchema.safeParse(token);
+  if (!tokenResult.success) {
+    return { success: false, error: "Invalid token format" };
   }
+
+  // Validate categories with Zod
+  const categoriesResult = resubscribeCategoriesSchema.safeParse(categories);
+  if (!categoriesResult.success) {
+    return { success: false, error: "Invalid categories data" };
+  }
+  const validatedCategories = categoriesResult.data;
 
   // Default to enabling common categories if none specified
   const prefs: Partial<EmailPreferences> = {
     email_enabled: true,
     email_frequency_mode: "immediate",
-    email_onboarding_enabled: categories?.onboarding ?? true,
-    email_weekly_summary_enabled: categories?.weekly_summary ?? true,
-    email_milestones_enabled: categories?.milestones ?? true,
-    email_product_updates_enabled: categories?.product_updates ?? true,
-    email_marketing_enabled: categories?.marketing ?? false,
+    email_onboarding_enabled: validatedCategories?.onboarding ?? true,
+    email_weekly_summary_enabled: validatedCategories?.weekly_summary ?? true,
+    email_milestones_enabled: validatedCategories?.milestones ?? true,
+    email_product_updates_enabled: validatedCategories?.product_updates ?? true,
+    email_marketing_enabled: validatedCategories?.marketing ?? false,
   };
 
   return updateEmailPreferencesByToken(token, prefs);
@@ -307,10 +366,18 @@ export async function resubscribeByToken(
 /**
  * Generate email preference token for a user (admin use)
  * Used when sending emails to include unsubscribe links
+ * NOTE: This is a server-only function called internally when sending emails
  */
 export async function generateEmailPreferenceTokenForUser(
   userId: string
 ): Promise<string | null> {
+  // Validate userId format with Zod
+  const userIdResult = userIdSchema.safeParse(userId);
+  if (!userIdResult.success) {
+    console.error("Invalid userId format for token generation");
+    return null;
+  }
+
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase.rpc("get_or_create_email_preference_token", {
@@ -327,8 +394,16 @@ export async function generateEmailPreferenceTokenForUser(
 
 /**
  * Check if a user has unsubscribed from all emails
+ * NOTE: This is a server-only function called internally when deciding to send emails
  */
 export async function isUserUnsubscribed(userId: string): Promise<boolean> {
+  // Validate userId format with Zod
+  const userIdResult = userIdSchema.safeParse(userId);
+  if (!userIdResult.success) {
+    console.error("Invalid userId format for subscription check");
+    return false;
+  }
+
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
@@ -351,6 +426,7 @@ export async function isUserUnsubscribed(userId: string): Promise<boolean> {
 
 /**
  * Check if a specific email category is enabled for a user
+ * NOTE: This is a server-only function called internally when deciding to send emails
  */
 export async function isEmailCategoryEnabled(
   userId: string,
@@ -363,6 +439,13 @@ export async function isEmailCategoryEnabled(
     | "email_marketing_enabled"
   >
 ): Promise<boolean> {
+  // Validate userId format with Zod
+  const userIdResult = userIdSchema.safeParse(userId);
+  if (!userIdResult.success) {
+    console.error("Invalid userId format for category check");
+    return true; // Default to enabled on invalid input
+  }
+
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase

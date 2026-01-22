@@ -61,6 +61,21 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   marketing: Megaphone,
 };
 
+// Pre-computed time options to avoid regeneration on each render
+const TIME_OPTIONS = (() => {
+  const options = [];
+  for (let hour = 0; hour < 24; hour++) {
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const value = `${hour.toString().padStart(2, "0")}:00`;
+    options.push({
+      value,
+      label: `${hour12}:00 ${ampm}`,
+    });
+  }
+  return options;
+})();
+
 export default function PublicEmailPreferencesPage() {
   const params = useParams();
   const { toast } = useToast();
@@ -73,10 +88,14 @@ export default function PublicEmailPreferencesPage() {
   const [saved, setSaved] = React.useState(false);
 
   React.useEffect(() => {
+    let cancelled = false;
+
     async function loadPreferences() {
       setLoading(true);
       try {
         const prefs = await getEmailPreferencesByToken(token);
+        if (cancelled) return;
+
         if (prefs) {
           if (!prefs.is_valid) {
             setError("This link has expired. Please contact support for a new link.");
@@ -87,15 +106,31 @@ export default function PublicEmailPreferencesPage() {
           setError("Invalid link. Please check your email for a valid link.");
         }
       } catch {
-        setError("An unexpected error occurred. Please try again later.");
+        if (!cancelled) {
+          setError("An unexpected error occurred. Please try again later.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
     loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
-  const handleSave = async (updates: Partial<EmailPreferences>) => {
+  // Cleanup timeout for saved state to prevent memory leak
+  React.useEffect(() => {
+    if (saved) {
+      const timer = setTimeout(() => setSaved(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [saved]);
+
+  const handleSave = React.useCallback(async (updates: Partial<EmailPreferences>) => {
     setSaving(true);
     setSaved(false);
 
@@ -108,7 +143,6 @@ export default function PublicEmailPreferencesPage() {
           title: "Preferences saved",
           description: "Your email preferences have been updated.",
         });
-        setTimeout(() => setSaved(false), 3000);
       } else {
         toast({
           title: "Error",
@@ -125,9 +159,9 @@ export default function PublicEmailPreferencesPage() {
     } finally {
       setSaving(false);
     }
-  };
+  }, [token, toast]);
 
-  const handleResubscribe = async () => {
+  const handleResubscribe = React.useCallback(async () => {
     setSaving(true);
     try {
       const result = await resubscribeByToken(token);
@@ -157,11 +191,11 @@ export default function PublicEmailPreferencesPage() {
     } finally {
       setSaving(false);
     }
-  };
+  }, [token, toast]);
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-repwell-sage-50">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -169,7 +203,7 @@ export default function PublicEmailPreferencesPage() {
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-repwell-sage-50 p-4">
         <Card className="max-w-md w-full">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <AlertCircle className="h-12 w-12 text-red-500" />
@@ -187,7 +221,7 @@ export default function PublicEmailPreferencesPage() {
   const isUnsubscribed = !preferences?.email_enabled || preferences?.email_frequency_mode === "none";
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-repwell-sage-50 py-12">
       <div className="mx-auto max-w-2xl px-4">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -198,7 +232,7 @@ export default function PublicEmailPreferencesPage() {
             height={40}
             className="mx-auto mb-4"
           />
-          <h1 className="text-2xl font-semibold text-gray-900">Email Preferences</h1>
+          <h1 className="text-2xl font-semibold text-repwell-teal-500">Email Preferences</h1>
           <p className="mt-2 text-muted-foreground">
             Manage your email preferences for{" "}
             <span className="font-medium text-foreground">{preferences?.email}</span>
@@ -287,8 +321,8 @@ export default function PublicEmailPreferencesPage() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-3">
-                            <div className="mt-0.5 rounded-md bg-gray-100 p-2">
-                              <Icon className="h-4 w-4 text-gray-600" />
+                            <div className="mt-0.5 rounded-md bg-repwell-sage-100/50 p-2">
+                              <Icon className="h-4 w-4 text-repwell-teal-400" />
                             </div>
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
@@ -319,6 +353,7 @@ export default function PublicEmailPreferencesPage() {
                           </div>
                           {category.canDisable ? (
                             <Switch
+                              aria-label={`Enable ${category.label} emails`}
                               checked={fieldValue}
                               onCheckedChange={(checked) =>
                                 handleSave({ [category.field]: checked })
@@ -326,7 +361,7 @@ export default function PublicEmailPreferencesPage() {
                               disabled={saving}
                             />
                           ) : (
-                            <Lock className="h-4 w-4 text-muted-foreground" />
+                            <Lock className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                           )}
                         </div>
                       </div>
@@ -356,18 +391,28 @@ export default function PublicEmailPreferencesPage() {
                       {FREQUENCY_OPTIONS.map((option) => (
                         <div
                           key={option.value}
-                          className={`cursor-pointer rounded-lg border p-4 transition-colors ${
+                          role="radio"
+                          aria-checked={preferences?.email_frequency_mode === option.value}
+                          tabIndex={0}
+                          className={`cursor-pointer rounded-lg border p-4 transition-colors focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2 ${
                             preferences?.email_frequency_mode === option.value
-                              ? "border-primary bg-primary/5"
+                              ? "border-repwell-teal-300 bg-repwell-sage-100/30"
                               : "hover:bg-muted/50"
                           }`}
                           onClick={() => handleSave({ email_frequency_mode: option.value })}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleSave({ email_frequency_mode: option.value });
+                            }
+                          }}
                         >
                           <div className="flex items-center gap-2">
                             <div
+                              aria-hidden="true"
                               className={`h-4 w-4 rounded-full border-2 ${
                                 preferences?.email_frequency_mode === option.value
-                                  ? "border-primary bg-primary"
+                                  ? "border-repwell-teal-300 bg-repwell-teal-300"
                                   : "border-muted-foreground"
                               }`}
                             />
@@ -428,6 +473,7 @@ export default function PublicEmailPreferencesPage() {
                       </CardDescription>
                     </div>
                     <Switch
+                      aria-label="Enable quiet hours"
                       checked={preferences?.quiet_hours_enabled ?? false}
                       onCheckedChange={(checked) =>
                         handleSave({ quiet_hours_enabled: checked })
@@ -452,7 +498,7 @@ export default function PublicEmailPreferencesPage() {
                             <SelectValue placeholder="Select start time" />
                           </SelectTrigger>
                           <SelectContent>
-                            {generateTimeOptions().map((time) => (
+                            {TIME_OPTIONS.map((time) => (
                               <SelectItem key={time.value} value={time.value}>
                                 {time.label}
                               </SelectItem>
@@ -473,7 +519,7 @@ export default function PublicEmailPreferencesPage() {
                             <SelectValue placeholder="Select end time" />
                           </SelectTrigger>
                           <SelectContent>
-                            {generateTimeOptions().map((time) => (
+                            {TIME_OPTIONS.map((time) => (
                               <SelectItem key={time.value} value={time.value}>
                                 {time.label}
                               </SelectItem>
@@ -511,18 +557,4 @@ export default function PublicEmailPreferencesPage() {
       </div>
     </div>
   );
-}
-
-function generateTimeOptions() {
-  const options = [];
-  for (let hour = 0; hour < 24; hour++) {
-    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const value = `${hour.toString().padStart(2, "0")}:00`;
-    options.push({
-      value,
-      label: `${hour12}:00 ${ampm}`,
-    });
-  }
-  return options;
 }

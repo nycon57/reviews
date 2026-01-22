@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,10 +24,14 @@ export default function UnsubscribePage() {
   const [unsubscribed, setUnsubscribed] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadPreferences() {
       setLoading(true);
       try {
         const prefs = await getEmailPreferencesByToken(token);
+        if (cancelled) return;
+
         if (prefs) {
           if (!prefs.is_valid) {
             setError("This unsubscribe link has expired. Please contact support for assistance.");
@@ -38,15 +42,23 @@ export default function UnsubscribePage() {
           setError("Invalid unsubscribe link. Please check your email for a valid link.");
         }
       } catch {
-        setError("An unexpected error occurred. Please try again later.");
+        if (!cancelled) {
+          setError("An unexpected error occurred. Please try again later.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
     loadPreferences();
+
+    return () => {
+      cancelled = true;
+    };
   }, [token]);
 
-  async function handleUnsubscribeAll() {
+  const handleUnsubscribeAll = useCallback(async () => {
     setProcessing(true);
     setError(null);
 
@@ -62,11 +74,11 @@ export default function UnsubscribePage() {
     } finally {
       setProcessing(false);
     }
-  }
+  }, [token]);
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex min-h-screen items-center justify-center bg-repwell-sage-50">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -74,7 +86,7 @@ export default function UnsubscribePage() {
 
   if (error && !preferences) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-repwell-sage-50 p-4">
         <Card className="max-w-md w-full">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <AlertCircle className="h-12 w-12 text-red-500" />
@@ -91,7 +103,7 @@ export default function UnsubscribePage() {
 
   if (unsubscribed) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-repwell-sage-50 p-4">
         <Card className="max-w-md w-full">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <div className="rounded-full bg-green-100 p-3">
@@ -123,7 +135,7 @@ export default function UnsubscribePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-repwell-sage-50 py-12">
       <div className="mx-auto max-w-lg px-4">
         {/* Header */}
         <div className="mb-8 text-center">

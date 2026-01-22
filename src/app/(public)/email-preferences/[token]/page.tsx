@@ -33,10 +33,12 @@ import {
   Gift,
   MailCheck,
 } from "lucide-react";
-import type { EmailPreferences, EmailPreferencesWithToken, EmailFrequencyMode } from "@/lib/email-preferences/types";
+import type { EmailPreferences, EmailPreferencesWithToken } from "@/lib/email-preferences/types";
 import {
   EMAIL_CATEGORIES,
   COMMON_TIMEZONES,
+  FREQUENCY_OPTIONS,
+  TIME_OPTIONS,
 } from "@/lib/email-preferences/types";
 import {
   getEmailPreferencesByToken,
@@ -44,13 +46,6 @@ import {
   resubscribeByToken,
 } from "@/lib/email-preferences/actions";
 import Link from "next/link";
-
-const FREQUENCY_OPTIONS: { value: EmailFrequencyMode; label: string; description: string }[] = [
-  { value: "immediate", label: "Immediate", description: "Receive emails as they happen" },
-  { value: "daily", label: "Daily Digest", description: "One email per day summarizing activity" },
-  { value: "weekly", label: "Weekly Digest", description: "One email per week summarizing activity" },
-  { value: "none", label: "None", description: "Don't receive any emails" },
-];
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   transactional: Lock,
@@ -60,21 +55,6 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   product_updates: Gift,
   marketing: Megaphone,
 };
-
-// Pre-computed time options to avoid regeneration on each render
-const TIME_OPTIONS = (() => {
-  const options = [];
-  for (let hour = 0; hour < 24; hour++) {
-    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const value = `${hour.toString().padStart(2, "0")}:00`;
-    options.push({
-      value,
-      label: `${hour12}:00 ${ampm}`,
-    });
-  }
-  return options;
-})();
 
 export default function PublicEmailPreferencesPage() {
   const params = useParams();

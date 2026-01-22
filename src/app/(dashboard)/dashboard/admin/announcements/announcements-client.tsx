@@ -156,10 +156,33 @@ export function AnnouncementsClient() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [announcements, setAnnouncements] = useState<AnnouncementSummary[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
   const [sendResult, setSendResult] = useState<{
     success: boolean;
     message: string;
   } | null>(null);
+
+  // Fetch announcements history when switching to history tab
+  React.useEffect(() => {
+    if (activeTab === "history") {
+      const fetchAnnouncements = async () => {
+        setIsLoadingHistory(true);
+        try {
+          const response = await fetch("/api/admin/announcements");
+          if (response.ok) {
+            const data = await response.json();
+            setAnnouncements(data.announcements || []);
+          }
+        } catch (error) {
+          console.error("Failed to fetch announcements:", error);
+        } finally {
+          setIsLoadingHistory(false);
+        }
+      };
+      fetchAnnouncements();
+    }
+  }, [activeTab]);
 
   // Handle form field changes
   const handleChange = useCallback(
@@ -201,19 +224,29 @@ export function AnnouncementsClient() {
 
   // Send test email
   const handleTestSend = useCallback(async () => {
+    if (!testEmail) {
+      setSendResult({
+        success: false,
+        message: "Please enter a test email address",
+      });
+      return;
+    }
     setIsSending(true);
     setSendResult(null);
     try {
       const response = await fetch("/api/admin/announcements/test-send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          testEmail,
+        }),
       });
       const data = await response.json();
       setSendResult({
         success: data.success,
         message: data.success
-          ? "Test email sent successfully!"
+          ? `Test email sent to ${testEmail}!`
           : data.error || "Failed to send test email",
       });
     } catch (error) {
@@ -224,7 +257,7 @@ export function AnnouncementsClient() {
     } finally {
       setIsSending(false);
     }
-  }, [formData]);
+  }, [formData, testEmail]);
 
   // Send or schedule announcement
   const handleSend = useCallback(async () => {
@@ -261,9 +294,6 @@ export function AnnouncementsClient() {
       setIsSending(false);
     }
   }, [formData, isScheduled]);
-
-  // Get type config
-  const typeConfig = ANNOUNCEMENT_TYPES.find((t) => t.value === formData.type);
 
   return (
     <div className="space-y-6">
@@ -593,11 +623,24 @@ export function AnnouncementsClient() {
                     Preview
                   </Button>
 
+                  <div className="space-y-2">
+                    <Label htmlFor="testEmail" className="text-sm">
+                      Test Email Address
+                    </Label>
+                    <Input
+                      id="testEmail"
+                      type="email"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+
                   <Button
                     variant="outline"
                     className="w-full"
                     onClick={handleTestSend}
-                    disabled={isSending || !formData.title}
+                    disabled={isSending || !formData.title || !testEmail}
                   >
                     {isSending ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -676,7 +719,11 @@ export function AnnouncementsClient() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {announcements.length === 0 ? (
+              {isLoadingHistory ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                </div>
+              ) : announcements.length === 0 ? (
                 <div className="text-center py-12 text-gray-500">
                   <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No announcements sent yet</p>

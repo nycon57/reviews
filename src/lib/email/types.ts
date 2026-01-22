@@ -123,7 +123,17 @@ export type EmailTemplate =
   | "announcement_update"
   | "announcement_maintenance"
   | "announcement_security"
-  | "announcement_digest";
+  | "announcement_digest"
+  // Manager & Admin Alert Emails (S089)
+  | "admin_alert_negative_review"
+  | "admin_alert_team_struggling"
+  | "admin_alert_compliance_violation"
+  | "admin_alert_usage_limit"
+  | "admin_alert_team_member_joined"
+  | "admin_alert_team_member_left"
+  | "admin_alert_unusual_activity"
+  | "admin_alert_integration_disconnected"
+  | "admin_alert_digest";
 
 // Base email data
 export interface BaseEmailData {
@@ -1993,4 +2003,170 @@ export interface AnnouncementTrackingData {
   clickCount?: number;
   clickedUrls?: { url: string; clickedAt: string }[];
   errorMessage?: string;
+}
+
+// =============================================================================
+// MANAGER & ADMIN ALERT EMAIL DATA INTERFACES (S089)
+// =============================================================================
+
+export type AdminAlertType =
+  | "negative_review"
+  | "team_struggling"
+  | "compliance_violation"
+  | "usage_limit"
+  | "team_member_joined"
+  | "team_member_left"
+  | "unusual_activity"
+  | "integration_disconnected";
+
+export type AdminAlertSeverity = "low" | "medium" | "high" | "critical";
+
+// Base interface for all admin alert emails
+export interface AdminAlertBaseEmailData extends BaseEmailData {
+  recipientName: string;
+  organizationName: string;
+  actionUrl: string;
+  unsubscribeUrl: string;
+}
+
+// Negative review alert (for managers when team member gets low rating)
+export interface AdminAlertNegativeReviewEmailData extends AdminAlertBaseEmailData {
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  customerName: string;
+  rating: number;
+  reviewText?: string;
+  reviewDate: string;
+  reviewSource?: string;
+  suggestedResponse?: string;
+}
+
+// Team member struggling alert (below threshold performance)
+export interface AdminAlertTeamStrugglingEmailData extends AdminAlertBaseEmailData {
+  loanOfficerName: string;
+  loanOfficerPhotoUrl?: string;
+  currentRating: number;
+  previousRating?: number;
+  threshold: number;
+  reviewCount?: number;
+  trend: "declining" | "stagnant" | "volatile";
+  recentReviews?: Array<{
+    rating: number;
+    date: string;
+    customerName?: string;
+    source?: string;
+  }>;
+  actionUrl: string;
+  coachingUrl: string;
+}
+
+// Compliance violation alert (flagged content)
+export interface AdminAlertComplianceViolationEmailData extends AdminAlertBaseEmailData {
+  loanOfficerName?: string;
+  customerName?: string;
+  violationType: "profanity" | "pii" | "legal_risk" | "brand_violation" | "other";
+  contentSource: "review" | "response" | "testimonial" | "bio";
+  flaggedContent: string;
+  flaggedAt: string;
+  reviewQueueUrl: string;
+}
+
+// Usage limit approaching alert
+export interface AdminAlertUsageLimitEmailData extends AdminAlertBaseEmailData {
+  limitType: "surveys" | "reviews" | "team_members" | "api_calls" | "storage";
+  currentUsage: number;
+  maxLimit: number;
+  percentUsed: number;
+  periodEnd?: string;
+  actionUrl: string;
+  upgradeUrl: string;
+  usageDetailsUrl: string;
+}
+
+// Team member joined notification
+export interface AdminAlertTeamMemberJoinedEmailData extends AdminAlertBaseEmailData {
+  newMemberName: string;
+  newMemberEmail: string;
+  newMemberRole: string;
+  newMemberPhotoUrl?: string;
+  invitedBy?: string;
+  joinedAt: string;
+  teamDirectoryUrl: string;
+}
+
+// Team member left notification
+export interface AdminAlertTeamMemberLeftEmailData extends AdminAlertBaseEmailData {
+  departedMemberName: string;
+  departedMemberEmail: string;
+  departedMemberRole: string;
+  leftAt: string;
+  reason?: "resigned" | "terminated" | "account_deleted" | "unknown";
+  pendingItemsCount?: number;
+  reassignUrl?: string;
+}
+
+// Unusual activity alert (security-related)
+export interface AdminAlertUnusualActivityEmailData extends AdminAlertBaseEmailData {
+  activityType: "login_anomaly" | "bulk_action" | "data_export" | "permission_change" | "api_abuse" | "unknown";
+  description: string;
+  userInvolved?: string;
+  userEmail?: string;
+  ipAddress?: string;
+  location?: string;
+  detectedAt: string;
+  riskLevel: AdminAlertSeverity;
+  securitySettingsUrl: string;
+}
+
+// Integration disconnected alert
+export interface AdminAlertIntegrationDisconnectedEmailData extends AdminAlertBaseEmailData {
+  integrationName: string;
+  disconnectedAt: string;
+  reason?: "token_expired" | "revoked" | "api_error" | "rate_limited" | "account_suspended" | "unknown";
+  affectedFeatures?: string[];
+  reconnectUrl: string;
+  integrationsUrl: string;
+}
+
+// Individual alert item for digest emails
+export interface AdminAlertDigestItem {
+  alertType: string;
+  severity: AdminAlertSeverity;
+  title: string;
+  summary: string;
+  timestamp: string;
+  actionUrl: string;
+}
+
+// Daily digest of all admin alerts
+export interface AdminAlertDigestEmailData extends BaseEmailData {
+  recipientName: string;
+  organizationName: string;
+  digestDate: string;
+  alerts: AdminAlertDigestItem[];
+  totalAlerts: number;
+  criticalCount: number;
+  highCount: number;
+  dashboardUrl: string;
+  alertSettingsUrl: string;
+  unsubscribeUrl: string;
+}
+
+// Admin alert preferences (mirrors database table)
+export interface AdminAlertPreferences {
+  alertsEnabled: boolean;
+  deliveryMode: "immediate" | "daily_digest";
+  digestHour: number;
+  digestTimezone: string;
+  alertNegativeReview: boolean;
+  negativeReviewThreshold: number;
+  alertTeamStruggling: boolean;
+  teamStrugglingRatingThreshold: number;
+  alertComplianceViolation: boolean;
+  alertUsageLimit: boolean;
+  usageLimitThresholdPercent: number;
+  alertTeamMemberJoined: boolean;
+  alertTeamMemberLeft: boolean;
+  alertUnusualActivity: boolean;
+  alertIntegrationDisconnected: boolean;
 }

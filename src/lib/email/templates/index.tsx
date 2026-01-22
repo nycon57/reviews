@@ -25,6 +25,19 @@ import { AnnouncementUpdateEmail } from "./announcement-update";
 import { AnnouncementMaintenanceEmail } from "./announcement-maintenance";
 import { AnnouncementSecurityEmail } from "./announcement-security";
 
+// Admin Alert Templates (S089)
+export {
+  AdminAlertNegativeReviewEmail,
+  AdminAlertTeamStrugglingEmail,
+  AdminAlertComplianceViolationEmail,
+  AdminAlertUsageLimitEmail,
+  AdminAlertTeamMemberJoinedEmail,
+  AdminAlertTeamMemberLeftEmail,
+  AdminAlertUnusualActivityEmail,
+  AdminAlertIntegrationDisconnectedEmail,
+  AdminAlertDigestEmail,
+} from "./admin-alerts";
+
 export {
   // Video templates
   VideoProcessingStartedEmail,

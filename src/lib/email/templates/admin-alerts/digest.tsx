@@ -176,9 +176,7 @@ export function AdminAlertDigestEmail({ data }: Props) {
     dashboardUrl,
     alertSettingsUrl,
     toEmail,
-    unsubscribeUrl: _unsubscribeUrl,
   } = data;
-  void _unsubscribeUrl;
 
   // Group alerts by severity
   const criticalAlerts = alerts.filter((a) => a.severity === "critical");

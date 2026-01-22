@@ -46,13 +46,11 @@ export function AdminAlertUsageLimitEmail({ data }: Props) {
     maxLimit,
     percentUsed,
     periodEnd,
-    actionUrl: _actionUrl,
     upgradeUrl,
     usageDetailsUrl,
     toEmail,
     unsubscribeUrl,
   } = data;
-  void _actionUrl; // Reserved for future use
 
   const limitInfo = limitTypeLabels[limitType] || { label: limitType, unit: "items", icon: "📈" };
   const remaining = maxLimit - currentUsage;

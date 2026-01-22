@@ -55,9 +55,6 @@ export function AdminAlertTeamStrugglingEmail({ data }: Props) {
 
   const trendInfo = trendLabels[trend] || trendLabels.declining;
   const ratingPercent = Math.min((currentRating / 5) * 100, 100);
-  // Threshold percent for potential future use in threshold line visualization
-  const _thresholdPercent = (threshold / 5) * 100;
-  void _thresholdPercent;
 
   return (
     <AlertLayout

@@ -58,7 +58,6 @@ export function AlertLayout({
   alertType,
   children,
   toEmail,
-  unsubscribeUrl: _unsubscribeUrl,
 }: AlertLayoutProps) {
   const severityStyle = severityColors[severity];
 

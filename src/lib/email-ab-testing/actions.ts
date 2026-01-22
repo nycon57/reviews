@@ -766,7 +766,7 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
 
   const { data: tests, error } = await supabase
     .from("email_ab_tests")
-    .select("status, winner_variant, started_at, ended_at")
+    .select("id, status, winner_variant, started_at, ended_at")
     .eq("organization_id", context.organizationId)
     .neq("status", "archived");
 
@@ -795,7 +795,7 @@ export async function getABTestSummary(): Promise<ActionResult<ABTestSummary>> {
       : 0;
 
   // Get total emails sent across all tests for this organization
-  const testIds = allTests.map((t) => (t as unknown as { id: string }).id);
+  const testIds = allTests.map((t) => t.id);
   let totalEmailsSent = 0;
 
   if (testIds.length > 0) {

@@ -10,6 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
   ErrorBar,
+  Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ABTestResult, WinningMetric } from "@/lib/email-ab-testing/types";
@@ -134,7 +135,7 @@ export function ABTestResultsChart({
               maxBarSize={80}
             >
               {chartData.map((entry) => (
-                <rect key={entry.variant} fill={entry.fill} />
+                <Cell key={entry.variant} fill={entry.fill} />
               ))}
               <ErrorBar
                 dataKey="errorUpper"

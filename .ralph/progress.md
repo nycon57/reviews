@@ -8123,3 +8123,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Traffic split slider allows dynamic allocation between 2-4 variants
   - Test lifecycle: draft -> active -> paused/completed -> archived
 ---
+
+## [2026-01-22] - S092: Email A/B Testing System
+Thread:
+Run: 20260122-103822-95184 (iteration 18)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-18.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-18.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: (pending)
+- Post-commit status: (pending)
+- Skills invoked:
+  - /code-review: yes (code review on S092 implementation)
+  - /vercel-react-best-practices: yes (React components reviewed)
+  - /code-simplifier: no (scheduled for Pass 3)
+  - /frontend-design: no (scheduled for Pass 3)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (57 warnings, 0 errors)
+- Issues found and fixed:
+  1. Missing `id` field in select query - actions.ts:767 was selecting test data without `id` but later tried to map test IDs
+  2. Unsafe type assertion - actions.ts:798 had `(t as unknown as { id: string }).id` which was unnecessary after adding `id` to select
+  3. Confidence level format inconsistency - statistical-significance-badge.tsx expected percentage but received decimal (0.95 vs 95), added conversion logic
+  4. Incorrect Recharts API usage - ab-test-results-chart.tsx used `<rect>` inside `<Bar>` instead of proper `<Cell>` component
+  5. Unused prop - variant-comparison-table.tsx had unused `variants` prop defined but never used, removed from interface and call sites
+- Files modified:
+  - src/lib/email-ab-testing/actions.ts (fixed query and type assertion)
+  - src/components/admin/email-ab-tests/statistical-significance-badge.tsx (fixed confidence level handling)
+  - src/components/admin/email-ab-tests/ab-test-results-chart.tsx (fixed Cell component usage)
+  - src/components/admin/email-ab-tests/variant-comparison-table.tsx (removed unused prop)
+  - src/app/(dashboard)/dashboard/admin/email-ab-tests/[id]/ab-test-detail-client.tsx (removed variants prop from call sites)
+- Best practices review findings:
+  - Direct imports from @/components/ui/* (no barrel file issues)
+  - Proper use of useTransition for async server action calls
+  - Correct ternary operators for conditional rendering
+  - Clean component structure with small helper components
+- **Learnings for future iterations:**
+  - Always ensure select queries include all fields needed downstream
+  - Use Recharts Cell component, not rect, for individual bar customization
+  - Handle format inconsistencies at component boundaries (decimal vs percentage)
+---

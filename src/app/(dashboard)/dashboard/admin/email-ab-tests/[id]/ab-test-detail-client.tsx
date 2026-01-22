@@ -466,7 +466,6 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
               winnerVariant={test.winnerVariant ?? null}
               confidenceLevel={test.confidenceLevel}
               minSampleSize={test.minSampleSize}
-              variants={test.variants}
               onDeclareWinner={
                 test.status === "completed" && !test.winnerVariant
                   ? handleDeclareWinner
@@ -570,7 +569,6 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
                 winnerVariant={test.winnerVariant ?? null}
                 confidenceLevel={test.confidenceLevel}
                 minSampleSize={test.minSampleSize}
-                variants={test.variants}
                 onDeclareWinner={
                   test.status === "completed" && !test.winnerVariant
                     ? handleDeclareWinner

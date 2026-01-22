@@ -47,6 +47,9 @@ export function StatisticalSignificanceBadge({
     );
   }
 
+  // Convert decimal to percentage if needed (0.95 -> 95)
+  const displayConfidence = confidenceLevel < 1 ? confidenceLevel * 100 : confidenceLevel;
+
   if (isSignificant) {
     return (
       <TooltipProvider>
@@ -57,13 +60,13 @@ export function StatisticalSignificanceBadge({
               className="gap-1 bg-green-600 hover:bg-green-700"
             >
               <CheckCircle className="h-3 w-3" />
-              Significant ({confidenceLevel}% CI)
+              Significant ({displayConfidence.toFixed(0)}% CI)
             </Badge>
           </TooltipTrigger>
           <TooltipContent>
             <p className="max-w-xs">
               The difference is statistically significant at the{" "}
-              {confidenceLevel}% confidence level.
+              {displayConfidence.toFixed(0)}% confidence level.
               {pValue !== null && (
                 <>
                   <br />
@@ -76,6 +79,9 @@ export function StatisticalSignificanceBadge({
       </TooltipProvider>
     );
   }
+
+  // Calculate alpha (significance threshold) from confidence level
+  const alpha = confidenceLevel < 1 ? (1 - confidenceLevel) : (1 - confidenceLevel / 100);
 
   return (
     <TooltipProvider>
@@ -94,7 +100,7 @@ export function StatisticalSignificanceBadge({
               <>
                 <br />
                 p-value: {pValue.toFixed(4)} (need &lt;{" "}
-                {(1 - confidenceLevel / 100).toFixed(2)})
+                {alpha.toFixed(2)})
               </>
             )}
           </p>

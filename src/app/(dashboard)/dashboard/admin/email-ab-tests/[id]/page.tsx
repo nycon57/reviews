@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { checkAdminAccess } from "@/lib/auth/actions";
 import { LoadingSpinner } from "@/components/shared";
 import { ABTestDetailClient } from "./ab-test-detail-client";
 import { getABTestWithResults } from "@/lib/email-ab-testing";
@@ -15,25 +15,6 @@ export async function generateMetadata({ params }: PageProps) {
     title: `A/B Test Details | RepWell`,
     description: `View A/B test details and results`,
   };
-}
-
-async function checkAdminAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return false;
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  return userData?.role === "admin";
 }
 
 async function ABTestDetailLoader({ id }: { id: string }) {

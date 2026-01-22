@@ -257,3 +257,33 @@ export async function getUserWithProfile() {
 
   return profile;
 }
+
+/**
+ * Check if the current user has admin access
+ * Returns true if user is authenticated, has admin role, AND belongs to an enterprise organization.
+ * This matches the permission system's VIEW_ADMIN_ANALYTICS requirement (isEnterprise && isAdmin).
+ */
+export async function checkAdminAccess(): Promise<boolean> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return false;
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select(`
+      role,
+      organization:organizations!inner(account_type)
+    `)
+    .eq("id", user.id)
+    .single();
+
+  if (!userData) return false;
+
+  // Check both admin role AND enterprise account type to match permission system
+  const isAdmin = userData.role === "admin";
+  const organization = userData.organization as { account_type: string } | null;
+  const isEnterprise = organization?.account_type === "enterprise";
+
+  return isAdmin && isEnterprise;
+}

@@ -53,7 +53,6 @@ import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import {
   type ABTestWithResults,
-  type ABTestStatus,
   startABTest,
   stopABTest,
   pauseABTest,
@@ -62,7 +61,6 @@ import {
   declareWinner,
   getTestTypeDisplayName,
   getWinningMetricDisplayName,
-  getStatusDisplayName,
   formatRate,
   formatConfidenceLevel,
   calculateStatisticalSignificance,
@@ -72,29 +70,8 @@ import {
   VariantComparisonTable,
   ABTestResultsChart,
   MetricsComparisonChart,
+  StatusBadge,
 } from "@/components/admin/email-ab-tests";
-
-// =============================================================================
-// STATUS BADGE COMPONENT
-// =============================================================================
-
-function StatusBadge({ status }: { status: ABTestStatus }) {
-  const variants: Record<ABTestStatus, { variant: "default" | "secondary" | "outline"; className: string }> = {
-    draft: { variant: "outline", className: "text-gray-600 border-gray-300" },
-    active: { variant: "default", className: "bg-green-600 hover:bg-green-700" },
-    paused: { variant: "secondary", className: "bg-amber-100 text-amber-700" },
-    completed: { variant: "secondary", className: "bg-blue-100 text-blue-700" },
-    archived: { variant: "outline", className: "text-gray-400 border-gray-200" },
-  };
-
-  const config = variants[status];
-
-  return (
-    <Badge variant={config.variant} className={config.className}>
-      {getStatusDisplayName(status)}
-    </Badge>
-  );
-}
 
 // =============================================================================
 // INFO ROW COMPONENT

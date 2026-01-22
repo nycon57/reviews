@@ -143,6 +143,13 @@ function calculateTrafficSplit(variantCount: number): Record<string, number> {
   return split;
 }
 
+function formatSendTimeOffset(hours: number | undefined): string {
+  const offset = hours || 0;
+  if (offset === 0) return "Same as base time";
+  if (offset > 0) return `${offset} hours later`;
+  return `${Math.abs(offset)} hours earlier`;
+}
+
 // =============================================================================
 // MAIN COMPONENT
 // =============================================================================
@@ -569,11 +576,7 @@ export function CreateABTestForm() {
                       className="w-24"
                     />
                     <span className="text-sm text-muted-foreground">
-                      {(variant.sendTimeOffsetHours || 0) === 0
-                        ? "Same as base time"
-                        : (variant.sendTimeOffsetHours || 0) > 0
-                          ? `${variant.sendTimeOffsetHours} hours later`
-                          : `${Math.abs(variant.sendTimeOffsetHours || 0)} hours earlier`}
+                      {formatSendTimeOffset(variant.sendTimeOffsetHours)}
                     </span>
                   </div>
                 </div>

@@ -107,7 +107,23 @@ export type EmailTemplate =
   | "dunning_2_reminder"
   | "dunning_3_urgent"
   | "dunning_4_final_warning"
-  | "dunning_5_suspended";
+  | "dunning_5_suspended"
+  // Subscription lifecycle emails (S087)
+  | "subscription_upgrade_confirmation"
+  | "subscription_downgrade_confirmation"
+  | "subscription_renewal_reminder"
+  | "subscription_renewed"
+  | "subscription_cancelled"
+  | "subscription_cancellation_feedback"
+  | "subscription_plan_change_scheduled"
+  | "subscription_invoice_available"
+  | "subscription_price_increase_notice"
+  // Product announcement emails (S088)
+  | "announcement_feature"
+  | "announcement_update"
+  | "announcement_maintenance"
+  | "announcement_security"
+  | "announcement_digest";
 
 // Base email data
 export interface BaseEmailData {
@@ -1604,4 +1620,377 @@ export interface DunningSequenceStatus {
 export interface DunningEmailPreferences {
   enabled: boolean;
   optedOut: boolean;
+}
+
+// =============================================================================
+// SUBSCRIPTION LIFECYCLE EMAIL DATA INTERFACES (S087)
+// =============================================================================
+
+// Plan feature details for upgrade/downgrade emails
+export interface PlanFeature {
+  name: string;
+  description: string;
+  includedInCurrentPlan: boolean;
+  includedInNewPlan: boolean;
+  highlight?: boolean;
+}
+
+// Invoice/receipt line item
+export interface InvoiceLineItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+}
+
+// Invoice details for receipt emails
+export interface SubscriptionInvoiceDetails {
+  invoiceId: string;
+  invoiceNumber: string | null;
+  invoiceDate: string;
+  dueDate?: string;
+  status: "draft" | "open" | "paid" | "uncollectible" | "void";
+  subtotal: number;
+  tax?: number;
+  total: number;
+  currency: string;
+  lineItems: InvoiceLineItem[];
+  pdfUrl?: string;
+  hostedInvoiceUrl?: string;
+}
+
+// Payment method summary
+export interface PaymentMethodSummary {
+  type: "card" | "bank_account" | "other";
+  brand?: string;
+  last4: string;
+  expMonth?: number;
+  expYear?: number;
+}
+
+// Base subscription lifecycle email data (shared across all subscription emails)
+export interface SubscriptionEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  billingUrl: string;
+  supportEmail: string;
+  unsubscribeUrl: string;
+}
+
+// Upgrade Confirmation Email Data
+export interface SubscriptionUpgradeConfirmationEmailData extends SubscriptionEmailBaseData {
+  previousPlanName: string;
+  newPlanName: string;
+  previousPrice: number;
+  newPrice: number;
+  billingCycle: "monthly" | "yearly";
+  currency: string;
+  effectiveDate: string;
+  proratedAmount?: number;
+  newFeatures: PlanFeature[];
+  nextBillingDate: string;
+  nextBillingAmount: number;
+  paymentMethod?: PaymentMethodSummary;
+  invoiceDetails?: SubscriptionInvoiceDetails;
+}
+
+// Downgrade Confirmation Email Data
+export interface SubscriptionDowngradeConfirmationEmailData extends SubscriptionEmailBaseData {
+  previousPlanName: string;
+  newPlanName: string;
+  previousPrice: number;
+  newPrice: number;
+  billingCycle: "monthly" | "yearly";
+  currency: string;
+  effectiveDate: string;
+  featuresLosing: PlanFeature[];
+  featuresKeeping: PlanFeature[];
+  creditAmount?: number;
+  nextBillingDate: string;
+  nextBillingAmount: number;
+  isEndOfPeriod: boolean;
+  upgradeUrl: string;
+}
+
+// Renewal Reminder Email Data (14 days before annual renewal)
+export interface SubscriptionRenewalReminderEmailData extends SubscriptionEmailBaseData {
+  planName: string;
+  renewalDate: string;
+  renewalAmount: number;
+  currency: string;
+  billingCycle: "monthly" | "yearly";
+  daysTillRenewal: number;
+  paymentMethod?: PaymentMethodSummary;
+  updatePaymentUrl: string;
+  cancelUrl: string;
+  usageSummary?: {
+    reviewsCollected: number;
+    surveysSent: number;
+    teamMembers: number;
+  };
+}
+
+// Subscription Renewed Email Data (after successful renewal)
+export interface SubscriptionRenewedEmailData extends SubscriptionEmailBaseData {
+  planName: string;
+  renewedDate: string;
+  amountPaid: number;
+  currency: string;
+  billingCycle: "monthly" | "yearly";
+  nextBillingDate: string;
+  nextBillingAmount: number;
+  paymentMethod?: PaymentMethodSummary;
+  invoiceDetails: SubscriptionInvoiceDetails;
+}
+
+// Subscription Cancelled Email Data
+export interface SubscriptionCancelledEmailData extends SubscriptionEmailBaseData {
+  planName: string;
+  cancellationDate: string;
+  effectiveEndDate: string;
+  daysRemaining: number;
+  reason?: string;
+  offboardingChecklist: Array<{
+    title: string;
+    description: string;
+    actionUrl?: string;
+    completed?: boolean;
+  }>;
+  dataExportUrl: string;
+  reactivateUrl: string;
+  feedbackUrl: string;
+}
+
+// Cancellation Feedback Request Email Data
+export interface SubscriptionCancellationFeedbackEmailData extends SubscriptionEmailBaseData {
+  planName: string;
+  cancellationDate: string;
+  effectiveEndDate: string;
+  feedbackUrl: string;
+  feedbackOptions: Array<{
+    value: string;
+    label: string;
+  }>;
+  specialOfferAvailable?: boolean;
+  specialOfferDetails?: {
+    discountPercent: number;
+    validUntil: string;
+    reactivateUrl: string;
+  };
+}
+
+// Plan Change Scheduled Email Data (for end-of-period changes)
+export interface SubscriptionPlanChangeScheduledEmailData extends SubscriptionEmailBaseData {
+  currentPlanName: string;
+  scheduledPlanName: string;
+  currentPrice: number;
+  scheduledPrice: number;
+  currency: string;
+  billingCycle: "monthly" | "yearly";
+  changeType: "upgrade" | "downgrade";
+  scheduledDate: string;
+  daysUntilChange: number;
+  featureChanges: PlanFeature[];
+  cancelChangeUrl: string;
+}
+
+// Invoice Available Email Data
+export interface SubscriptionInvoiceAvailableEmailData extends SubscriptionEmailBaseData {
+  invoiceDetails: SubscriptionInvoiceDetails;
+  planName: string;
+  billingPeriod: {
+    start: string;
+    end: string;
+  };
+  paymentMethod?: PaymentMethodSummary;
+  payNowUrl?: string;
+}
+
+// Price Increase Notice Email Data (30 days advance for annual)
+export interface SubscriptionPriceIncreaseNoticeEmailData extends SubscriptionEmailBaseData {
+  planName: string;
+  currentPrice: number;
+  newPrice: number;
+  priceIncreaseAmount: number;
+  priceIncreasePercent: number;
+  currency: string;
+  billingCycle: "monthly" | "yearly";
+  effectiveDate: string;
+  daysUntilIncrease: number;
+  reason?: string;
+  newFeatures?: string[];
+  cancelUrl: string;
+  downgradePlanUrl?: string;
+  acknowledgmentRequired?: boolean;
+}
+
+// Union type for all subscription lifecycle email data
+export type SubscriptionLifecycleEmailData =
+  | SubscriptionUpgradeConfirmationEmailData
+  | SubscriptionDowngradeConfirmationEmailData
+  | SubscriptionRenewalReminderEmailData
+  | SubscriptionRenewedEmailData
+  | SubscriptionCancelledEmailData
+  | SubscriptionCancellationFeedbackEmailData
+  | SubscriptionPlanChangeScheduledEmailData
+  | SubscriptionInvoiceAvailableEmailData
+  | SubscriptionPriceIncreaseNoticeEmailData;
+
+// Subscription lifecycle email preferences
+export interface SubscriptionLifecycleEmailPreferences {
+  enabled: boolean;
+  renewalReminders: boolean;
+  invoiceNotifications: boolean;
+  priceChangeNotices: boolean;
+}
+
+// ============================================================================
+// Product Announcement Email Types (S088)
+// ============================================================================
+
+// Announcement types
+export type AnnouncementType = "feature" | "update" | "maintenance" | "security";
+
+// Announcement audience segments
+export type AnnouncementAudience =
+  | "all"
+  | "admins_only"
+  | "managers_only"
+  | "loan_officers_only"
+  | "free_tier"
+  | "starter_tier"
+  | "professional_tier"
+  | "enterprise_tier"
+  | "trial_users"
+  | "custom";
+
+// Base announcement email data
+export interface AnnouncementEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  announcementId: string;
+  unsubscribeUrl: string;
+  preferencesUrl: string;
+  supportEmail: string;
+}
+
+// Feature announcement email data (new feature launch)
+export interface AnnouncementFeatureEmailData extends AnnouncementEmailBaseData {
+  title: string;
+  subtitle?: string;
+  content: string;
+  imageUrl?: string;
+  gifUrl?: string;
+  videoUrl?: string;
+  ctaText: string;
+  ctaUrl: string;
+  secondaryCtaText?: string;
+  secondaryCtaUrl?: string;
+  featureHighlights?: {
+    title: string;
+    description: string;
+    icon?: string;
+  }[];
+  releaseDate?: string;
+}
+
+// Product update digest email data (monthly changelog)
+export interface AnnouncementUpdateEmailData extends AnnouncementEmailBaseData {
+  title: string;
+  subtitle?: string;
+  introText?: string;
+  changelogEntries: {
+    title: string;
+    description: string;
+    category: "feature" | "improvement" | "bugfix" | "performance" | "security" | "other";
+    docsUrl?: string;
+    imageUrl?: string;
+    version?: string;
+    releaseDate?: string;
+  }[];
+  ctaText?: string;
+  ctaUrl?: string;
+  period: {
+    start: string;
+    end: string;
+  };
+}
+
+// Maintenance notification email data
+export interface AnnouncementMaintenanceEmailData extends AnnouncementEmailBaseData {
+  title: string;
+  content: string;
+  maintenanceStart: string;
+  maintenanceEnd: string;
+  expectedDuration: string;
+  affectedServices: string[];
+  impactLevel: "minimal" | "partial" | "full";
+  workarounds?: string[];
+  statusPageUrl?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+}
+
+// Security update notification email data
+export interface AnnouncementSecurityEmailData extends AnnouncementEmailBaseData {
+  title: string;
+  content: string;
+  severity: "critical" | "high" | "medium" | "low";
+  actionRequired: boolean;
+  requiredActions?: {
+    title: string;
+    description: string;
+    actionUrl?: string;
+    deadline?: string;
+  }[];
+  affectedFeatures?: string[];
+  ctaText: string;
+  ctaUrl: string;
+  securityPageUrl?: string;
+}
+
+// Generic announcement email data (for custom announcements)
+export interface AnnouncementGenericEmailData extends AnnouncementEmailBaseData {
+  type: AnnouncementType;
+  title: string;
+  subtitle?: string;
+  content: string;
+  imageUrl?: string;
+  ctaText?: string;
+  ctaUrl?: string;
+  secondaryCtaText?: string;
+  secondaryCtaUrl?: string;
+}
+
+// Union type for all announcement email data
+export type AnnouncementEmailData =
+  | AnnouncementFeatureEmailData
+  | AnnouncementUpdateEmailData
+  | AnnouncementMaintenanceEmailData
+  | AnnouncementSecurityEmailData
+  | AnnouncementGenericEmailData;
+
+// User announcement preferences
+export interface AnnouncementEmailPreferences {
+  featureAnnouncements: boolean;
+  productUpdates: boolean;
+  maintenanceNotifications: boolean;
+  securityUpdates: boolean; // Cannot be disabled for critical security
+  digestOnly: boolean;
+}
+
+// Announcement tracking data (for engagement analytics)
+export interface AnnouncementTrackingData {
+  announcementId: string;
+  userId: string;
+  email: string;
+  status: "pending" | "sent" | "delivered" | "opened" | "clicked" | "bounced" | "failed" | "unsubscribed";
+  sentAt?: string;
+  deliveredAt?: string;
+  openedAt?: string;
+  clickedAt?: string;
+  clickCount?: number;
+  clickedUrls?: { url: string; clickedAt: string }[];
+  errorMessage?: string;
 }

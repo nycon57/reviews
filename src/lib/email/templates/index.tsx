@@ -19,6 +19,12 @@ import { VideoCustomerThankYouEmail } from "./video-customer-thank-you";
 import { WeeklySummaryLOEmail } from "./weekly-summary-lo";
 import { WeeklySummaryManagerEmail } from "./weekly-summary-manager";
 
+// Announcement Templates (S088)
+import { AnnouncementFeatureEmail } from "./announcement-feature";
+import { AnnouncementUpdateEmail } from "./announcement-update";
+import { AnnouncementMaintenanceEmail } from "./announcement-maintenance";
+import { AnnouncementSecurityEmail } from "./announcement-security";
+
 export {
   // Video templates
   VideoProcessingStartedEmail,
@@ -30,6 +36,11 @@ export {
   // Weekly summary templates
   WeeklySummaryLOEmail,
   WeeklySummaryManagerEmail,
+  // Announcement templates (S088)
+  AnnouncementFeatureEmail,
+  AnnouncementUpdateEmail,
+  AnnouncementMaintenanceEmail,
+  AnnouncementSecurityEmail,
 };
 
 // Types
@@ -42,6 +53,11 @@ import type {
   VideoCustomerThankYouEmailData,
   WeeklySummaryLOEmailData,
   WeeklySummaryManagerEmailData,
+  // Announcement types (S088)
+  AnnouncementFeatureEmailData,
+  AnnouncementUpdateEmailData,
+  AnnouncementMaintenanceEmailData,
+  AnnouncementSecurityEmailData,
 } from "../types";
 
 // =============================================================================
@@ -145,5 +161,68 @@ export async function renderWeeklySummaryManagerEmail(
 ): Promise<{ subject: string; html: string }> {
   const subject = `Team weekly summary: ${data.teamReviewsThisWeek} reviews from ${data.teamSize} team members`;
   const html = await render(<WeeklySummaryManagerEmail data={data} />);
+  return { subject, html };
+}
+
+// =============================================================================
+// ANNOUNCEMENT EMAIL RENDERING FUNCTIONS (S088)
+// =============================================================================
+
+/**
+ * Render Feature Announcement email to HTML
+ */
+export async function renderAnnouncementFeatureEmail(
+  data: AnnouncementFeatureEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = `New Feature: ${data.title}`;
+  const html = await render(<AnnouncementFeatureEmail data={data} />);
+  return { subject, html };
+}
+
+/**
+ * Render Product Update Digest email to HTML
+ */
+export async function renderAnnouncementUpdateEmail(
+  data: AnnouncementUpdateEmailData
+): Promise<{ subject: string; html: string }> {
+  const entryCount = data.changelogEntries.length;
+  const subject = `Product Update: ${data.title} (${entryCount} update${entryCount !== 1 ? "s" : ""})`;
+  const html = await render(<AnnouncementUpdateEmail data={data} />);
+  return { subject, html };
+}
+
+/**
+ * Render Maintenance Notification email to HTML
+ */
+export async function renderAnnouncementMaintenanceEmail(
+  data: AnnouncementMaintenanceEmailData
+): Promise<{ subject: string; html: string }> {
+  const impactPrefix =
+    data.impactLevel === "full"
+      ? "Service Outage: "
+      : data.impactLevel === "partial"
+        ? "Partial Outage: "
+        : "";
+  const subject = `${impactPrefix}Scheduled Maintenance - ${data.title}`;
+  const html = await render(<AnnouncementMaintenanceEmail data={data} />);
+  return { subject, html };
+}
+
+/**
+ * Render Security Update email to HTML
+ */
+export async function renderAnnouncementSecurityEmail(
+  data: AnnouncementSecurityEmailData
+): Promise<{ subject: string; html: string }> {
+  const severityLabels: Record<string, string> = {
+    critical: "[CRITICAL]",
+    high: "[HIGH]",
+    medium: "[MEDIUM]",
+    low: "[LOW]",
+  };
+  const severityPrefix = severityLabels[data.severity] || "";
+  const actionText = data.actionRequired ? " - Action Required" : "";
+  const subject = `${severityPrefix} Security Update: ${data.title}${actionText}`;
+  const html = await render(<AnnouncementSecurityEmail data={data} />);
   return { subject, html };
 }

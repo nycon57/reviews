@@ -10,7 +10,23 @@ _No stories completed yet._
 
 ## In Progress
 
-_No stories currently in progress._
+### S093: Abandoned Action Recovery Emails
+- **Epic**: Email System
+- **Priority**: P1
+- **Pass**: 1/3 (Implementation complete)
+- **Status**: Pass 1 Complete - Awaiting Pass 2
+- **Commit**: `[Pass 1/3] feat(S093): Implement Abandoned Action Recovery Emails`
+- **Files Created**:
+  - `supabase/migrations/20240101000052_abandoned_action_recovery.sql`
+  - `src/lib/email/abandoned-action-recovery-templates.ts`
+  - `src/lib/email/abandoned-action-recovery-service.ts`
+  - `src/app/api/abandoned-actions/track/route.ts`
+  - `src/app/api/cron/process-abandoned-actions/route.ts`
+- **Features**:
+  - Tracks 6 action types: survey_creation, survey_send, video_request, billing_upgrade, profile_completion, integration_setup
+  - 12 email templates (2 per action type)
+  - Recovery emails at 1 hour and 24 hours
+  - Auto-expire after 7 days
 
 ## Next Up
 

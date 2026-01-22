@@ -101,7 +101,13 @@ export type EmailTemplate =
   | "trial_ending_2_feature_comparison"
   | "trial_ending_3_final_reminder"
   | "trial_ending_4_grace_period"
-  | "trial_ending_5_winback";
+  | "trial_ending_5_winback"
+  // Failed payment recovery (dunning) sequence emails (S086)
+  | "dunning_1_payment_failed"
+  | "dunning_2_reminder"
+  | "dunning_3_urgent"
+  | "dunning_4_final_warning"
+  | "dunning_5_suspended";
 
 // Base email data
 export interface BaseEmailData {
@@ -1481,6 +1487,121 @@ export interface TrialEndingSequenceStatus {
 
 // Trial ending email preferences
 export interface TrialEndingEmailPreferences {
+  enabled: boolean;
+  optedOut: boolean;
+}
+
+// =============================================================================
+// FAILED PAYMENT RECOVERY (DUNNING) SEQUENCE EMAIL DATA INTERFACES (S086)
+// =============================================================================
+
+// Payment decline reason categories for helpful messaging
+export type PaymentDeclineReason =
+  | "card_declined"
+  | "insufficient_funds"
+  | "expired_card"
+  | "incorrect_cvc"
+  | "processing_error"
+  | "fraud_suspected"
+  | "unknown";
+
+// Payment method info for display in emails
+export interface DunningPaymentMethodInfo {
+  cardBrand: string | null;
+  cardLast4: string | null;
+  cardExpMonth: number | null;
+  cardExpYear: number | null;
+}
+
+// Account summary for dunning emails
+export interface DunningAccountSummary {
+  totalReviews: number;
+  totalSurveys: number;
+  teamMembersCount: number;
+  currentPlan: string;
+  monthlyPrice: number;
+}
+
+// Base dunning email data (shared across all dunning emails)
+export interface DunningEmailBaseData extends BaseEmailData {
+  firstName: string;
+  organizationName: string;
+  dashboardUrl: string;
+  sequenceId: string;
+  unsubscribeUrl: string;
+  updatePaymentUrl: string;
+  supportEmail: string;
+  invoiceAmount: number;
+  invoiceCurrency: string;
+  invoiceNumber: string | null;
+  failedAt: string;
+  paymentMethod: DunningPaymentMethodInfo | null;
+}
+
+// Email 1: Friendly Payment Failed Notice (Day 0 - Immediate)
+export interface Dunning1PaymentFailedEmailData extends DunningEmailBaseData {
+  declineReason: PaymentDeclineReason;
+  declineMessage: string;
+  retryDate?: string;
+  commonSolutions: string[];
+}
+
+// Email 2: Reminder with Easy Update Payment Link (Day 3)
+export interface Dunning2ReminderEmailData extends DunningEmailBaseData {
+  daysSinceFailure: number;
+  accountSummary: DunningAccountSummary;
+  featuresAtRisk: string[];
+}
+
+// Email 3: Urgent Notice - Service May Be Interrupted (Day 7)
+export interface Dunning3UrgentEmailData extends DunningEmailBaseData {
+  daysSinceFailure: number;
+  daysUntilSuspension: number;
+  suspensionDate: string;
+  accountSummary: DunningAccountSummary;
+  featuresAlreadyLimited: string[];
+}
+
+// Email 4: Final Warning Before Suspension (Day 10)
+export interface Dunning4FinalWarningEmailData extends DunningEmailBaseData {
+  daysSinceFailure: number;
+  suspensionDate: string;
+  accountSummary: DunningAccountSummary;
+  dataRetentionDays: number;
+}
+
+// Email 5: Account Suspended Notice with Recovery Path (Day 14)
+export interface Dunning5SuspendedEmailData extends DunningEmailBaseData {
+  suspendedAt: string;
+  accountSummary: DunningAccountSummary;
+  dataRetentionEndsAt: string;
+  dataRetentionDays: number;
+  reactivateUrl: string;
+  exportDataUrl: string;
+}
+
+// Union type for all dunning email data
+export type DunningEmailData =
+  | Dunning1PaymentFailedEmailData
+  | Dunning2ReminderEmailData
+  | Dunning3UrgentEmailData
+  | Dunning4FinalWarningEmailData
+  | Dunning5SuspendedEmailData;
+
+// Dunning sequence status (for tracking payment recovery state)
+export interface DunningSequenceStatus {
+  is_past_due: boolean;
+  payment_failed_at: string | null;
+  days_since_failure: number | null;
+  retry_count: number;
+  is_suspended: boolean;
+  suspended_at: string | null;
+  recovery_email_step: number; // 1-5, which email in the sequence
+  last_email_sent_at: string | null;
+}
+
+// Dunning email preferences
+export interface DunningEmailPreferences {
   enabled: boolean;
   optedOut: boolean;
 }

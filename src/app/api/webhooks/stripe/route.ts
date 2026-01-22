@@ -10,7 +10,12 @@ import {
   syncCustomer,
 } from "@/lib/stripe/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  startDunningSequence,
+  handleInvoicePaidWebhook,
+} from "@/lib/email/dunning-service";
 import type Stripe from "stripe";
+import type { DunningPaymentMethodInfo } from "@/lib/email/types";
 
 /**
  * Stripe Webhook Handler
@@ -146,6 +151,33 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice;
       await syncInvoice(invoice);
+
+      // Handle dunning recovery - if payment succeeded after a dunning sequence started
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id;
+
+      if (customerId) {
+        const adminClient = createAdminClient();
+        const { data: org } = await adminClient
+          .from("organizations")
+          .select("id")
+          .eq("stripe_customer_id", customerId)
+          .single();
+
+        if (org?.id) {
+          const recoveryResult = await handleInvoicePaidWebhook(
+            invoice.id,
+            org.id
+          );
+          if (recoveryResult.success) {
+            console.log(
+              `Dunning recovery handled for invoice ${invoice.id}, org ${org.id}`
+            );
+          }
+        }
+      }
       break;
     }
 
@@ -154,8 +186,84 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
       const invoice = event.data.object as Stripe.Invoice;
       await syncInvoice(invoice);
 
-      // TODO: Send dunning email via Resend
-      // This would notify the customer about the failed payment
+      // Start dunning sequence for failed subscription payments
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : invoice.customer?.id;
+
+      // Only trigger dunning for subscription-related invoices
+      const isSubscriptionInvoice = invoice.billing_reason && [
+        "subscription",
+        "subscription_create",
+        "subscription_cycle",
+        "subscription_threshold",
+        "subscription_update",
+      ].includes(invoice.billing_reason);
+
+      if (customerId && isSubscriptionInvoice) {
+        const adminClient = createAdminClient();
+        const { data: org } = await adminClient
+          .from("organizations")
+          .select("id")
+          .eq("stripe_customer_id", customerId)
+          .single();
+
+        if (org?.id) {
+          // Extract decline code and payment method info
+          let paymentMethodInfo: DunningPaymentMethodInfo | null = null;
+          let declineCode: string | null = null;
+
+          // Get decline code from last_finalization_error if available
+          if (invoice.last_finalization_error) {
+            declineCode = invoice.last_finalization_error.decline_code || null;
+
+            // Try to get charge details if available
+            if (invoice.last_finalization_error.charge) {
+              try {
+                const charge = await stripe.charges.retrieve(
+                  invoice.last_finalization_error.charge
+                );
+
+                // Get payment method details from the charge
+                if (charge.payment_method_details?.card) {
+                  const card = charge.payment_method_details.card;
+                  paymentMethodInfo = {
+                    cardBrand: card.brand || null,
+                    cardLast4: card.last4 || null,
+                    cardExpMonth: card.exp_month || null,
+                    cardExpYear: card.exp_year || null,
+                  };
+                }
+              } catch (chargeError) {
+                console.error("Failed to retrieve charge details:", chargeError);
+              }
+            }
+          }
+
+          // Start the dunning sequence
+          const dunningResult = await startDunningSequence({
+            organizationId: org.id,
+            stripeInvoiceId: invoice.id,
+            invoiceAmount: invoice.amount_due,
+            invoiceCurrency: invoice.currency,
+            invoiceNumber: invoice.number,
+            declineCode,
+            paymentMethod: paymentMethodInfo,
+          });
+
+          if (dunningResult.success) {
+            console.log(
+              `Dunning sequence started for invoice ${invoice.id}, org ${org.id}, sequence ${dunningResult.sequenceId}`
+            );
+          } else {
+            console.error(
+              `Failed to start dunning sequence for invoice ${invoice.id}:`,
+              dunningResult.error
+            );
+          }
+        }
+      }
       break;
     }
 

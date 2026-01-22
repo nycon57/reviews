@@ -7408,3 +7408,79 @@ All 11 acceptance criteria implemented and verified:
 
 - Status: Pass 3/3 COMPLETE - Story S085 VERIFIED
 ---
+
+## S086 · Pass 1/3 · 2026-01-21
+Thread:
+Run: manual
+Pass: 1/3 - Implementation
+Run log: context continuation
+Run summary: Implemented 5-email failed payment recovery (dunning) sequence
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: ceee841 [Pass 1/3] feat(S086): Implement failed payment recovery (dunning) sequence
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (email templates, not React components)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (email templates, not React UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 43 warnings pre-existing)
+
+### Implementation Summary
+Created complete 5-email dunning sequence for failed subscription payments:
+
+**New Files:**
+- src/lib/email/dunning-templates.ts (876 lines) - 5 email templates with:
+  - Card decline reason messaging (8 mapped decline types)
+  - Escalating urgency through the sequence
+  - Payment method card UI component
+  - Account summary section
+  - Consistent branding via theme.ts
+  
+- src/lib/email/dunning-service.ts (307 lines) - Sequence management with:
+  - 5-step schedule (Day 0, 3, 7, 10, 14)
+  - startDunningSequence() - Triggers on payment failure
+  - processDunningSequenceQueue() - Cron job processor
+  - handleInvoicePaidWebhook() - Recovery tracking
+  - mapStripeDeclineCode() - Decline code translation
+  - Account suspension/reactivation functions
+
+**Modified Files:**
+- src/lib/email/types.ts - Added dunning types:
+  - 5 email template types
+  - PaymentDeclineReason enum
+  - DunningPaymentMethodInfo, DunningAccountSummary interfaces
+  - DunningSequenceStatus interface
+
+- src/app/api/webhooks/stripe/route.ts - Integrated dunning:
+  - invoice.payment_failed -> startDunningSequence()
+  - invoice.paid -> handleInvoicePaidWebhook()
+
+### Acceptance Criteria Status
+1. ✓ Email 1 (Day 0): Friendly payment failed notice
+2. ✓ Email 2 (Day 3): Reminder with easy update payment link
+3. ✓ Email 3 (Day 7): Urgent notice - service may be interrupted
+4. ✓ Email 4 (Day 10): Final warning before suspension
+5. ✓ Email 5 (Day 14): Account suspended notice with recovery path
+6. ✓ Clear update payment CTA linking to Stripe Customer Portal
+7. ✓ Avoid guilt - assume card expired or bank issue
+8. ✓ Include common card decline reasons and solutions
+9. ✓ Track recovery: successful payment after email
+10. ✓ Integration with Stripe dunning webhooks
+
+### Security Notes
+- User input escaped with escapeHtml()
+- URLs sanitized with sanitizeUrl()
+- Subject lines sanitized with sanitizeSubject()
+- Parameterized Supabase queries prevent SQL injection
+
+### Technical Decisions
+- Used createUntypedAdminClient() for invoices table (not in typed schema)
+- Extracted decline code from last_finalization_error (newer Stripe API)
+- Check billing_reason for subscription-related invoices
+
+- Status: Pass 1/3 COMPLETE - Ready for Pass 2 (Quality Review)
+---

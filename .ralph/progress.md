@@ -7825,3 +7825,118 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Code simplification should focus on removing workarounds, not just comments
 - Status: Pass 3/3 COMPLETE - Story S089 DONE
 ---
+
+## [2026-01-22] - S090: Email Preferences Center
+Thread:
+Run: 20260122-103822-95184 (iteration 8)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-8.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-8.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 3e88198 [Pass 1/3] feat(S090): Implement Email Preferences Center
+- Post-commit status: clean (prd-reviews.json, package-lock.json unrelated)
+- Skills invoked:
+  - /feature-dev: yes (guided implementation)
+  - /code-review: no (will run in Pass 2)
+  - /vercel-react-best-practices: no (will review in Pass 2)
+  - /code-simplifier: no (will run in Pass 3)
+  - /frontend-design: yes (dashboard and public pages)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (warnings only in unrelated files)
+- Files created:
+  - supabase/migrations/20240101000050_email_preferences_center.sql
+  - src/lib/email-preferences/types.ts
+  - src/lib/email-preferences/actions.ts
+  - src/app/(dashboard)/dashboard/settings/email-preferences/page.tsx
+  - src/app/(dashboard)/dashboard/settings/email-preferences/email-preferences-content.tsx
+  - src/app/(public)/unsubscribe/[token]/page.tsx
+  - src/app/(public)/email-preferences/[token]/page.tsx
+- What was implemented:
+  - Database migration extending notification_preferences with email category columns
+  - email_preference_tokens table for public access via token links
+  - PostgreSQL functions: get_or_create_email_preference_token, validate_email_preference_token, update_email_preferences_by_token, unsubscribe_all_by_token
+  - Server actions for authenticated and token-based preference management
+  - Dashboard email preferences page with category toggles, frequency controls, quiet hours, timezone
+  - Public unsubscribe landing page with one-click unsubscribe
+  - Public email preferences page for managing preferences from email links
+  - Email category definitions: transactional (required), onboarding, weekly summaries, milestones, product updates, marketing
+  - Frequency modes: immediate, daily digest, weekly digest, none
+---
+
+## [2026-01-22] - S090: Email Preferences Center
+Thread:
+Run: 20260122-103822-95184 (iteration 10)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-10.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-10.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 2fd90b8 [Pass 2/3] fix(S090): Quality improvements for Email Preferences Center
+- Post-commit status: clean (prd-reviews.json, package-lock.json unrelated)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (identified security and React issues)
+  - /vercel-react-best-practices: yes (identified memory leaks, accessibility issues)
+  - /code-simplifier: no (will run in Pass 3)
+  - /frontend-design: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (warnings only in unrelated files)
+- Files changed:
+  - src/lib/email-preferences/actions.ts
+  - src/app/(dashboard)/dashboard/settings/email-preferences/email-preferences-content.tsx
+  - src/app/(public)/email-preferences/[token]/page.tsx
+  - src/app/(public)/unsubscribe/[token]/page.tsx
+- What was fixed:
+  - Added Zod validation schemas to all server actions for input security
+  - Fixed race conditions in useEffect hooks with cancellation logic
+  - Fixed setTimeout memory leak with proper cleanup in separate useEffect
+  - Added ARIA labels for accessibility on all Switch components
+  - Added keyboard navigation (Enter/Space) to frequency radio options
+  - Replaced generateTimeOptions() with pre-computed TIME_OPTIONS constant to avoid re-renders
+  - Updated design system colors (bg-gray-50 → bg-repwell-sage-50, text-gray-900 → text-repwell-teal-500)
+  - Added useCallback to memoize event handlers (handleSave, handleResubscribe, handleUnsubscribeAll)
+- **Learnings for future iterations:**
+  - Always validate server action inputs with Zod before processing
+  - Async operations in useEffect need cancellation logic to prevent state updates on unmounted components
+  - setTimeout in React needs cleanup to prevent memory leaks - use separate useEffect with cleanup return
+  - Design system colors must be used consistently (repwell-sage-*, repwell-teal-*) not generic grays
+  - Interactive elements need ARIA labels for screen readers
+  - Pre-compute static data outside components to avoid re-renders
+---
+
+## [2026-01-22] - S090: Email Preferences Center
+Thread:
+Run: 20260122-103822-95184 (iteration 11)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-11.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-11.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: ceb0dfe [Pass 3/3] refactor(S090): Code simplification and cleanup
+- Post-commit status: clean (prd-reviews.json, package-lock.json unrelated)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no (completed in Pass 2)
+  - /vercel-react-best-practices: no (completed in Pass 2)
+  - /code-simplifier: yes (manual simplification)
+  - /frontend-design: no (completed in Pass 1)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (warnings only in unrelated files)
+- Files changed:
+  - src/lib/email-preferences/types.ts (added shared FREQUENCY_OPTIONS, TIME_OPTIONS constants)
+  - src/app/(dashboard)/dashboard/settings/email-preferences/email-preferences-content.tsx (removed duplicates, use shared imports)
+  - src/app/(public)/email-preferences/[token]/page.tsx (removed duplicates, use shared imports)
+- What was simplified:
+  - Extracted duplicated FREQUENCY_OPTIONS and TIME_OPTIONS constants to types.ts
+  - Updated both dashboard and public email preferences components to import shared constants
+  - Reduced code duplication across 3 files (46 lines removed, 26 lines added = net -20 lines)
+  - Code now follows DRY principles with single source of truth for configuration
+- **Learnings for future iterations:**
+  - When creating components with similar functionality (dashboard vs public), extract shared constants to a central location from the start
+  - Pre-computed time options pattern (IIFE returning array) is good for avoiding re-renders but should be defined once
+  - Pass 3 simplification is valuable for catching redundancy introduced during initial implementation
+---

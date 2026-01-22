@@ -7591,3 +7591,117 @@ Run summary: Final verification and polish of dunning sequence
 
 - Status: Pass 3/3 COMPLETE - Story S086 DONE
 ---
+
+## [2026-01-22T10:00:00] - S088: Product Update & Announcement Emails
+Thread:
+Run: 20260122-100000-00000 (iteration 1)
+Pass: 1/3 - Implementation
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5e1d463 [Pass 1/3] feat(S088): Implement product update & announcement emails
+- Post-commit status: clean (prd-reviews.json and package-lock.json uncommitted but unrelated)
+- Skills invoked:
+  - /feature-dev: no (manual implementation)
+  - /vercel-react-best-practices: no (primarily email templates and API routes)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors, 69 warnings pre-existing)
+
+### Implementation Summary
+
+**New Files Created:**
+- supabase/migrations/20240101000048_announcements.sql - Database schema for announcements
+- src/lib/email/templates/announcement-feature.tsx - Feature announcement template
+- src/lib/email/templates/announcement-update.tsx - Update announcement template  
+- src/lib/email/templates/announcement-maintenance.tsx - Maintenance notice template
+- src/lib/email/templates/announcement-security.tsx - Security alert template
+- src/lib/email/announcement-service.ts - Announcement service with send logic
+- src/app/(dashboard)/dashboard/admin/announcements/page.tsx - Admin UI page
+- src/app/(dashboard)/dashboard/admin/announcements/announcements-client.tsx - Client component
+- src/app/api/admin/announcements/preview/route.ts - Preview API route
+- src/app/api/admin/announcements/test-send/route.ts - Test send API route
+- src/app/api/admin/announcements/send/route.ts - Send API route
+
+**Files Modified:**
+- src/lib/email/types.ts - Added announcement types (AnnouncementType, AnnouncementAudience, etc.)
+- src/lib/email/templates/index.tsx - Exported announcement templates
+- src/lib/email/subscription-service.ts - Fixed type errors (column name corrections)
+- src/app/api/webhooks/stripe/route.ts - Fixed type errors for subscription service calls
+
+**Features Implemented:**
+- 4 announcement email templates (feature, update, maintenance, security)
+- Segmented audience targeting (role-based, plan-based, custom filters)
+- Admin UI at /admin/announcements with rich text editor
+- Live HTML preview with recipient customization
+- Test send to specified email address
+- Full send with audience targeting and scheduling
+- Database schema for tracking announcements and delivery stats
+
+**Type Fixes During Build:**
+- Fixed subscription_period_end -> subscription_ends_at column reference
+- Fixed cancelled_at -> subscription_cancelled_at column reference
+- Added missing parameters to subscription email functions
+
+- Status: Pass 1/3 COMPLETE - Ready for code review (Pass 2/3)
+---
+
+## [2026-01-22T10:45:00] - S088: Product Update & Announcement Emails
+Thread:
+Run: 20260122-103822-95184 (iteration 2)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 878e51a [Pass 2/3] refactor(S088): Quality review fixes for announcements
+- Post-commit status: clean (prd-reviews.json, progress.md, package-lock.json pending)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review conducted)
+  - /vercel-react-best-practices: yes
+  - /code-simplifier: no
+  - /frontend-design: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (announcement files have 0 warnings now)
+- Files changed:
+  - src/app/(dashboard)/dashboard/admin/announcements/announcements-client.tsx
+  - src/app/api/admin/announcements/route.ts (new)
+
+### Quality Review Summary
+
+**Issues Found and Fixed:**
+
+1. **BUG (Critical)**: handleTestSend was sending formData without testEmail
+   - The API route requires testEmail as a required field
+   - Fixed by adding testEmail state and input field in Actions card
+   - Updated handleTestSend to include testEmail in payload
+   - Added validation to prevent sending without email address
+
+2. **Unused Variable**: typeConfig was defined but never used
+   - Removed unused const assignment
+
+3. **Missing Functionality**: History tab had no data loading
+   - Added isLoadingHistory state
+   - Added useEffect to fetch announcements when History tab is selected
+   - Added loading spinner in History tab
+
+4. **New API Route**: Created GET /api/admin/announcements
+   - Admin-only endpoint for listing announcements
+   - Supports pagination (limit, offset) and status filtering
+   - Uses admin client with type assertion for announcements table
+   - Returns formatted announcement summaries for dashboard
+
+**React Best Practices Verified:**
+- useCallback properly used for event handlers with correct dependencies
+- Functional setState pattern used correctly
+- Conditional rendering uses ternary operators (not &&)
+- Client component directive only where needed
+
+- **Learnings for future iterations:**
+  - When adding form submission to API, verify all required fields are passed
+  - Always check unused variable lint warnings relate to actual functionality gaps
+  - History/list views need data fetching logic wired up
+
+- Status: Pass 2/3 COMPLETE - Ready for polish (Pass 3/3)
+---

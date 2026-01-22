@@ -72,14 +72,14 @@ const alertTypeToTemplate: Record<AdminAlertType, EmailTemplate> = {
 };
 
 const alertTypeToPreferenceColumn: Record<AdminAlertType, string> = {
-  negative_review: "negative_review_enabled",
-  team_struggling: "team_struggling_enabled",
-  compliance_violation: "compliance_violation_enabled",
-  usage_limit: "usage_limit_enabled",
-  team_member_joined: "team_member_joined_enabled",
-  team_member_left: "team_member_left_enabled",
-  unusual_activity: "unusual_activity_enabled",
-  integration_disconnected: "integration_disconnected_enabled",
+  negative_review: "alert_negative_review",
+  team_struggling: "alert_team_struggling",
+  compliance_violation: "alert_compliance_violation",
+  usage_limit: "alert_usage_limit",
+  team_member_joined: "alert_team_member_joined",
+  team_member_left: "alert_team_member_left",
+  unusual_activity: "alert_unusual_activity",
+  integration_disconnected: "alert_integration_disconnected",
 };
 
 /**
@@ -200,8 +200,8 @@ async function queueAlertForDigest(
   alertType: AdminAlertType,
   severity: AdminAlertSeverity,
   title: string,
-  summary: string,
-  payload: Record<string, unknown>
+  message: string,
+  metadata: Record<string, unknown>
 ): Promise<boolean> {
   // Use untyped client since admin_alert_queue isn't in generated types yet
   const supabase = createUntypedAdminClient();
@@ -212,9 +212,8 @@ async function queueAlertForDigest(
     alert_type: alertType,
     severity,
     title,
-    summary,
-    payload,
-    status: "pending",
+    message,
+    metadata,
   });
 
   if (error) {
@@ -320,7 +319,7 @@ export async function sendAdminAlert<T extends AlertEmailData>(
   alertType: AdminAlertType,
   severity: AdminAlertSeverity,
   buildEmailData: (recipient: AdminAlertPreferences) => T,
-  digestInfo?: { title: string; summary: string }
+  digestInfo?: { title: string; message: string }
 ): Promise<SendAlertResult> {
   const result: SendAlertResult = {
     success: true,
@@ -360,7 +359,7 @@ export async function sendAdminAlert<T extends AlertEmailData>(
               alertType,
               severity,
               digestInfo.title,
-              digestInfo.summary,
+              digestInfo.message,
               emailData as unknown as Record<string, unknown>
             );
             if (queued) {
@@ -475,7 +474,7 @@ export async function sendNegativeReviewAlert(
     }),
     {
       title: "Negative Review",
-      summary: `${reviewData.loanOfficerName} received a ${reviewData.rating}-star review`,
+      message: `${reviewData.loanOfficerName} received a ${reviewData.rating}-star review`,
     }
   );
 }
@@ -520,7 +519,7 @@ export async function sendTeamStrugglingAlert(
     }),
     {
       title: "Team Member Struggling",
-      summary: `${alertData.loanOfficerName}'s rating dropped to ${alertData.currentRating.toFixed(1)}`,
+      message: `${alertData.loanOfficerName}'s rating dropped to ${alertData.currentRating.toFixed(1)}`,
     }
   );
 }
@@ -569,7 +568,7 @@ export async function sendComplianceViolationAlert(
     }),
     {
       title: "Compliance Violation",
-      summary: `${alertData.violationType.replace("_", " ")} detected in ${alertData.contentSource}`,
+      message: `${alertData.violationType.replace("_", " ")} detected in ${alertData.contentSource}`,
     }
   );
 }
@@ -613,7 +612,7 @@ export async function sendUsageLimitAlert(
     }),
     {
       title: "Usage Limit",
-      summary: `${alertData.percentUsed}% of ${alertData.limitType.replace("_", " ")} limit used`,
+      message: `${alertData.percentUsed}% of ${alertData.limitType.replace("_", " ")} limit used`,
     }
   );
 }
@@ -654,7 +653,7 @@ export async function sendTeamMemberJoinedAlert(
     }),
     {
       title: "New Team Member",
-      summary: `${alertData.newMemberName} joined as ${alertData.newMemberRole}`,
+      message: `${alertData.newMemberName} joined as ${alertData.newMemberRole}`,
     }
   );
 }
@@ -697,7 +696,7 @@ export async function sendTeamMemberLeftAlert(
     }),
     {
       title: "Team Member Left",
-      summary: `${alertData.departedMemberName} departed${hasPendingItems ? ` (${alertData.pendingItemsCount} pending items)` : ""}`,
+      message: `${alertData.departedMemberName} departed${hasPendingItems ? ` (${alertData.pendingItemsCount} pending items)` : ""}`,
     }
   );
 }
@@ -742,7 +741,7 @@ export async function sendUnusualActivityAlert(
     }),
     {
       title: "Unusual Activity",
-      summary: alertData.description.substring(0, 100),
+      message: alertData.description.substring(0, 100),
     }
   );
 }
@@ -781,7 +780,7 @@ export async function sendIntegrationDisconnectedAlert(
     }),
     {
       title: "Integration Disconnected",
-      summary: `${alertData.integrationName} connection lost`,
+      message: `${alertData.integrationName} connection lost`,
     }
   );
 }

@@ -29,8 +29,8 @@ interface QueuedAlert {
   alert_type: string;
   severity: AdminAlertSeverity;
   title: string;
-  summary: string;
-  payload: Record<string, unknown>;
+  message: string;
+  metadata: Record<string, unknown>;
   created_at: string;
   action_url?: string;
 }
@@ -93,11 +93,11 @@ async function getUsersWithPendingAlerts(): Promise<
 > {
   const supabase = createUntypedAdminClient();
 
-  // Get distinct user IDs from the queue with pending alerts
+  // Get distinct user IDs from the queue with pending alerts (processed_at IS NULL means pending)
   const { data: queuedUsers, error: queueError } = await supabase
     .from("admin_alert_queue")
     .select("user_id")
-    .eq("status", "pending");
+    .is("processed_at", null);
 
   if (queueError || !queuedUsers) {
     console.error("Error fetching queued users:", queueError);
@@ -147,7 +147,7 @@ async function getPendingAlertsForUser(userId: string): Promise<QueuedAlert[]> {
     .from("admin_alert_queue")
     .select("*")
     .eq("user_id", userId)
-    .eq("status", "pending")
+    .is("processed_at", null)
     .order("created_at", { ascending: false });
 
   if (error || !data) {
@@ -167,9 +167,10 @@ async function markAlertsAsSent(alertIds: string[]): Promise<void> {
   // Use untyped client since admin_alert_queue isn't in generated types yet
   const supabase = createUntypedAdminClient();
 
+  const now = new Date().toISOString();
   await supabase
     .from("admin_alert_queue")
-    .update({ status: "sent", sent_at: new Date().toISOString() })
+    .update({ processed_at: now, sent_at: now })
     .in("id", alertIds);
 }
 
@@ -200,12 +201,12 @@ function formatTimestamp(isoString: string): string {
 }
 
 /**
- * Build action URL from alert payload
+ * Build action URL from alert metadata
  */
 function getActionUrl(alert: QueuedAlert): string {
-  // Try to extract action URL from payload
-  if (alert.payload?.actionUrl) {
-    return alert.payload.actionUrl as string;
+  // Try to extract action URL from metadata
+  if (alert.metadata?.actionUrl) {
+    return alert.metadata.actionUrl as string;
   }
   if (alert.action_url) {
     return alert.action_url;
@@ -243,7 +244,7 @@ async function sendDigestToUser(
       alertType: alert.alert_type,
       severity: alert.severity,
       title: alert.title,
-      summary: alert.summary,
+      summary: alert.message,
       timestamp: formatTimestamp(alert.created_at),
       actionUrl: getActionUrl(alert),
     }));
@@ -410,7 +411,7 @@ export async function getDigestPreview(userId: string): Promise<{
       alertType: alert.alert_type,
       severity: alert.severity,
       title: alert.title,
-      summary: alert.summary,
+      summary: alert.message,
       timestamp: formatTimestamp(alert.created_at),
       actionUrl: getActionUrl(alert),
     }));

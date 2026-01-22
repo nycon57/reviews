@@ -7743,3 +7743,85 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Temporary database types (until migration) should be kept self-contained in each file
 - Status: Pass 3/3 COMPLETE - Story S088 DONE
 ---
+
+## [2026-01-22] - S089: Manager & Admin Alert Emails
+Thread: 
+Run: 20260122-103822-95184 (iteration 6)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-6.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-6.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 0a87713 [Pass 2/3] fix(S089): Correct database column name mismatches
+- Post-commit status: clean (prd-reviews.json, package-lock.json unrelated)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review due to no PR)
+  - /vercel-react-best-practices: no (not applicable - no React component changes)
+  - /code-simplifier: no (will run in Pass 3)
+  - /frontend-design: no (email templates, not UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (warnings only in unrelated files)
+- Files changed:
+  - src/lib/email/services/admin-alerts.ts
+  - src/lib/email/services/admin-alert-digest.ts
+- What was implemented:
+  - Fixed alertTypeToPreferenceColumn mapping to use actual migration column names
+    (alert_negative_review, alert_team_struggling, etc. instead of *_enabled variants)
+  - Fixed status column issue - migration uses processed_at IS NULL, not status = 'pending'
+  - Fixed summary -> message and payload -> metadata column name mismatches
+  - All queue operations now use correct column names matching the migration schema
+- **Learnings for future iterations:**
+  - Always verify column names between migration files and service code
+  - Migration uses processed_at IS NULL for pending status, not a status column
+  - DB types not yet generated means column name mismatches can slip through
+  - Run npm run db:types after schema changes to catch these issues early
+---
+
+## [2026-01-22] - S089: Manager & Admin Alert Emails
+Thread:
+Run: 20260122-103822-95184 (iteration 7)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-7.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-103822-95184-iter-7.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 55b4169 [Pass 3/3] refactor(S089): Code simplification and cleanup
+- Post-commit status: clean (prd-reviews.json, package-lock.json unrelated)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /code-simplifier: yes (manual since skill unavailable)
+  - /frontend-design: no (email templates, not UI)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (warnings only in unrelated files)
+- Files changed:
+  - src/lib/email/templates/admin-alerts/alert-layout.tsx
+  - src/lib/email/templates/admin-alerts/digest.tsx
+  - src/lib/email/templates/admin-alerts/team-struggling.tsx
+  - src/lib/email/templates/admin-alerts/usage-limit.tsx
+- What was implemented:
+  - Removed unused variable assignments with void expressions
+  - Cleaned up _thresholdPercent, _actionUrl, _unsubscribeUrl unused variables
+  - All templates now have clean destructuring without workarounds
+- Acceptance Criteria Verification:
+  - ✅ Negative review alert (configurable threshold 1-2 stars) - negative-review.tsx
+  - ✅ Team member struggling alert - team-struggling.tsx
+  - ✅ Compliance violation alert - compliance-violation.tsx
+  - ✅ Usage limit approaching alert - usage-limit.tsx
+  - ✅ Team member joined notification - team-member-joined.tsx
+  - ✅ Team member left notification - team-member-left.tsx
+  - ✅ Unusual activity alert - unusual-activity.tsx
+  - ✅ Integration disconnected alert - integration-disconnected.tsx
+  - ✅ Configurable alert preferences - admin_alert_preferences table with per-alert toggles
+  - ✅ Digest option (immediate vs daily) - delivery_mode column, admin-alert-digest.ts service
+  - ✅ Deep links to dashboard sections - All templates have actionUrl deep links
+- **Learnings for future iterations:**
+  - RepwellFooter generates unsubscribe URL internally from email prop
+  - Unused optional props in interface should be omitted from destructuring, not aliased with void
+  - Code simplification should focus on removing workarounds, not just comments
+- Status: Pass 3/3 COMPLETE - Story S089 DONE
+---

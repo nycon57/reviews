@@ -8355,3 +8355,39 @@ Run summary: N/A
   - CalloutBox variants are: default, info, tip, warning, important (not "highlight")
   - RepwellHeader doesn't accept logoUrl - branding is internal
 ---
+
+## 2026-01-22 22:15 - S094: Referral Program Emails
+Thread: codex exec session
+Run: 20260122-210244-77746 (iteration 5)
+Pass: 2/3 - Quality Review
+Run log: N/A
+Run summary: N/A
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cb5f68c [Pass 2/3] fix(S094): Code quality fixes for Referral Program Emails
+- Post-commit status: clean (only prd-reviews.json and unrelated files uncommitted)
+- Skills invoked:
+  - /code-review: yes (manual review, no PR existed)
+  - /vercel-react-best-practices: yes (applied to React Email templates)
+- Verification:
+  - Command: npm run type-check -> PASS (only pre-existing icon errors)
+  - Command: npm run lint -> PASS (no errors in referral files)
+- Files changed:
+  - src/lib/email/referral-service.ts (URL encoding, typo fix, TODO comments)
+  - src/lib/email/templates/referral-friend-signed-up.tsx (division by zero fix)
+  - src/lib/email/templates/referral-friend-converted.tsx (formatRewardValue helper)
+  - src/lib/email/templates/referral-reward-earned.tsx (formatRewardValue helper)
+- Pass 2 Fixes Applied:
+  - **Fix 1 (Security)**: Added URL encoding for referral codes in generateReferralLink to prevent injection attacks
+  - **Fix 2 (Typo)**: Fixed daysInactiveTreshold → daysInactiveThreshold across all occurrences
+  - **Fix 3 (Bug)**: Fixed division by zero in ProgressBar calculation using Math.max(nextMilestone.referralsNeeded, 1)
+  - **Fix 4 (Display)**: Added formatRewardValue helper for proper reward type formatting (credit/discount/cash/points)
+  - **Fix 5 (Documentation)**: Added TODO comments documenting mock data that needs real implementation
+- Issues identified but not fixed (require schema changes or broader context):
+  - sendReferralReminderEmails query for inactive users marked with TODO for proper implementation
+  - Mock settings data in batch functions documented with TODO comments
+- **Learnings for future iterations:**
+  - URL parameters should always be encoded with encodeURIComponent
+  - Division operations need guard against zero divisors, especially in UI progress calculations
+  - Reward values need type-aware formatting ($ for cash/credit, % for discount, pts for points)
+---

@@ -35,6 +35,34 @@ _No stories completed yet._
   - Added runtime type safety helpers for context extraction (MEDIUM)
   - Defense-in-depth: validation at both API input and email template output
 
+### S095: Email Sequence Orchestration Engine
+- **Epic**: Email System
+- **Priority**: P1
+- **Pass**: 1/3 (Implementation)
+- **Status**: Pass 1 Complete - Awaiting Pass 2
+- **Commits**:
+  - `[Pass 1/3] feat(S095): Implement Email Sequence Orchestration Engine`
+- **Files Created**:
+  - `src/lib/email/orchestration/types.ts`
+  - `src/lib/email/orchestration/conditions.ts`
+  - `src/lib/email/orchestration/triggers.ts`
+  - `src/lib/email/orchestration/executor.ts`
+  - `src/lib/email/orchestration/queue.ts`
+  - `src/lib/email/orchestration/registry.ts`
+  - `src/lib/email/orchestration/index.ts`
+- **Features**:
+  - JSON-based sequence definition schema with steps, triggers, and exit conditions
+  - Event-based triggers (user_signup, review_received, etc.)
+  - Time-based triggers for scheduled sequences
+  - Step execution with configurable delays (minutes, hours, days, weeks)
+  - Conditional branching with 14 operators (equals, contains, greater_than, etc.)
+  - Exit conditions (action_completed, unsubscribe, timeout)
+  - Sequence pause/resume per user and per sequence
+  - Queue management with optimistic locking
+  - Pre-built evaluators (isProfileCompleted, isPaidUser, isInactiveForDays)
+  - A/B test variant assignment and tracking
+  - Central registry for definitions and custom evaluators
+
 ## Next Up
 
 ### S001: Initialize Next.js 14 Project with ShadCN

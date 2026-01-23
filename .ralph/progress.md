@@ -8391,3 +8391,66 @@ Run summary: N/A
   - Division operations need guard against zero divisors, especially in UI progress calculations
   - Reward values need type-aware formatting ($ for cash/credit, % for discount, pts for points)
 ---
+
+## 2026-01-22 22:45 - S094: Referral Program Emails
+Thread: codex exec session
+Run: 20260122-210244-77746 (iteration 6)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-210244-77746-iter-6.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-210244-77746-iter-6.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5e385fe [Pass 3/3] refactor(S094): Simplify and polish Referral Program Emails
+- Post-commit status: clean (only prd-reviews.json and unrelated files uncommitted)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no (completed in Pass 2)
+  - /vercel-react-best-practices: no (completed in Pass 2)
+  - /code-simplifier: yes (extracted ~320 lines of duplicate code)
+  - /frontend-design: no (email templates, not UI)
+- Verification:
+  - Command: npm run build -> PASS (pre-existing icon errors only)
+  - Command: npx eslint src/lib/email/**/referral-*.tsx src/lib/email/referral-*.ts -> PASS
+  - Command: npx tsc --noEmit --skipLibCheck | grep referral -> PASS (no errors)
+- Files created:
+  - src/lib/email/referral-utils.ts (shared utility functions)
+  - src/lib/email/components/referral-shared.tsx (shared React components)
+- Files changed:
+  - src/lib/email/components/index.ts (added referral-shared exports)
+  - src/lib/email/templates/referral-invite.tsx (simplified with shared components)
+  - src/lib/email/templates/referral-reminder.tsx (simplified with shared components)
+  - src/lib/email/templates/referral-reward-earned.tsx (simplified with utilities)
+  - src/lib/email/templates/referral-friend-signed-up.tsx (simplified with utilities)
+  - src/lib/email/templates/referral-friend-converted.tsx (simplified with utilities)
+  - src/lib/email/templates/referral-leaderboard.tsx (simplified with utilities and components)
+- What was implemented (Pass 3 - Polish & Finalize):
+  - Created referral-utils.ts with shared functions:
+    - formatRewardValue(value, type) - Format reward values by type
+    - getRewardIcon(type) - Get emoji icon for reward type
+    - formatDateLong(dateString) - Format dates as "January 15, 2024"
+    - formatDateShort(dateString) - Format dates as "Jan 15"
+    - getRankDisplay(rank) - Get medal emoji or #N for leaderboard ranks
+    - getRankColor(rank, defaultColor) - Get color for leaderboard rank
+    - getOrdinalSuffix(n) - Get ordinal suffix (1st, 2nd, 3rd, etc.)
+  - Created referral-shared.tsx with shared React components:
+    - ReferralLinkBox - Styled box displaying user's referral link
+    - SocialShareButtons - Social media share buttons (LinkedIn, Twitter, Facebook, WhatsApp)
+    - SocialShareSection - Social share buttons with subtle background wrapper
+  - Simplified all 6 referral email templates to use shared code
+  - Removed ~320 lines of duplicate code across templates
+  - Fixed nested ternaries in leaderboard template with explicit helper functions
+  - Used nullish coalescing for cleaner conditionals
+- Final Acceptance Criteria Verification:
+  - ✓ Referral invite email (referral-invite.tsx)
+  - ✓ Referral reminder email (referral-reminder.tsx)
+  - ✓ Reward notification emails (referral-reward-earned.tsx, referral-friend-converted.tsx)
+  - ✓ Friend signed up notification (referral-friend-signed-up.tsx)
+  - ✓ Leaderboard update email (referral-leaderboard.tsx)
+  - ✓ Service functions for sending all email types (referral-service.ts)
+  - ✓ Batch processing for reminders and leaderboard updates
+- **Learnings for future iterations:**
+  - Extract shared utilities early to prevent duplicate code across email templates
+  - React Email theme values (colors, typography, spacing) can be imported from "../theme"
+  - Social share buttons benefit from component abstraction given repetitive structure
+  - Code simplifier effectively identifies duplicate patterns across similar templates
+---

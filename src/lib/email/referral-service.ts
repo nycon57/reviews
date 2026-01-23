@@ -114,7 +114,7 @@ async function logEmail(params: {
 }
 
 function generateReferralLink(baseUrl: string, referralCode: string): string {
-  return `${baseUrl}/signup?ref=${referralCode}`;
+  return `${baseUrl}/signup?ref=${encodeURIComponent(referralCode)}`;
 }
 
 function generateSocialShareLinks(
@@ -704,7 +704,7 @@ export async function sendReferralLeaderboardEmail(
  * Called by cron job (e.g., weekly)
  */
 export async function processReferralReminders(
-  daysInactiveTreshold: number = 30,
+  daysInactiveThreshold: number = 30,
   batchSize: number = 50
 ): Promise<{
   processed: number;
@@ -722,13 +722,24 @@ export async function processReferralReminders(
 
   const baseUrl = emailConfig.baseUrl;
   const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - daysInactiveTreshold);
+  cutoffDate.setDate(cutoffDate.getDate() - daysInactiveThreshold);
 
+  // TODO(S094): Implement proper inactive referrer filtering
+  // The query below is incomplete - it needs to:
+  // 1. Join with referrals table to find users who have made referrals
+  // 2. Filter where last referral date < cutoffDate
+  // 3. Exclude users who have already received a reminder recently
+  //
+  // Example of what the query should look like:
+  // .from("referrals")
+  // .select("referrer_user_id, max(created_at) as last_referral")
+  // .lt("max_created_at", cutoffDate.toISOString())
+  // .group("referrer_user_id")
+  //
   // Find users who:
   // 1. Have made at least one referral
   // 2. Haven't made a referral in X days
   // 3. Want to receive notifications
-  // This query assumes a `referrals` table exists with referral tracking
   const { data: inactiveReferrers, error } = await supabase
     .from("users")
     .select(`
@@ -764,7 +775,8 @@ export async function processReferralReminders(
       const org = user.organizations as { name: string };
       const firstName = user.full_name?.split(" ")[0] || "there";
 
-      // Generate referral code (in production, this would come from the referrals table)
+      // TODO(S094): Generate referral code from actual referrals table
+      // This is a placeholder - real implementation needs to fetch user's actual referral code
       const referralCode = `REF-${user.id.substring(0, 8).toUpperCase()}`;
       const referralLink = generateReferralLink(baseUrl, referralCode);
 
@@ -784,8 +796,10 @@ export async function processReferralReminders(
         dashboardUrl: `${baseUrl}/dashboard`,
         referralProgramUrl: `${baseUrl}/dashboard/referrals`,
         unsubscribeUrl: `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`,
-        daysSinceLastReferral: daysInactiveTreshold,
-        totalReferrals: 0, // Would be fetched from referrals table
+        daysSinceLastReferral: daysInactiveThreshold,
+        // TODO(S094): Fetch actual referral stats from referrals table
+        // These are placeholder values - real implementation needs database queries
+        totalReferrals: 0,
         pendingRewards: 0,
         potentialEarnings: "$50",
         rewardPerReferral: "$25",
@@ -864,7 +878,11 @@ export async function processLeaderboardUpdates(
     return result;
   }
 
-  // Build leaderboard entries (mock data - would come from actual referral tracking)
+  // TODO(S094): Build leaderboard entries from actual referral tracking data
+  // This is mock data - real implementation needs to:
+  // 1. Query actual referral counts per user from referrals table
+  // 2. Sort by referral count to get actual rankings
+  // 3. Include only users with at least one referral
   const leaderboardEntries = topReferrers.map((user, index) => ({
     rank: index + 1,
     name: user.full_name || "Anonymous",

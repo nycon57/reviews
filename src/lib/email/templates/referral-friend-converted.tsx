@@ -27,6 +27,20 @@ interface ReferralFriendConvertedEmailProps {
   data: ReferralFriendConvertedEmailData;
 }
 
+function formatRewardValue(value: number, type: "credit" | "discount" | "cash" | "points"): string {
+  switch (type) {
+    case "cash":
+    case "credit":
+      return `$${value}`;
+    case "discount":
+      return `${value}%`;
+    case "points":
+      return `${value} pts`;
+    default:
+      return `$${value}`;
+  }
+}
+
 export function ReferralFriendConvertedEmail({ data }: ReferralFriendConvertedEmailProps) {
   const {
     referrerFirstName,
@@ -296,7 +310,7 @@ export function ReferralFriendConvertedEmail({ data }: ReferralFriendConvertedEm
                   color: colors.accent.success,
                 }}
               >
-                ${totalRewardsEarned}
+                {formatRewardValue(totalRewardsEarned, rewardType)}
               </Text>
               <Text
                 style={{

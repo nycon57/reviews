@@ -28,6 +28,20 @@ interface ReferralRewardEarnedEmailProps {
   data: ReferralRewardEarnedEmailData;
 }
 
+function formatRewardValue(value: number, type: "credit" | "discount" | "cash" | "points"): string {
+  switch (type) {
+    case "cash":
+    case "credit":
+      return `$${value}`;
+    case "discount":
+      return `${value}%`;
+    case "points":
+      return `${value} pts`;
+    default:
+      return `$${value}`;
+  }
+}
+
 export function ReferralRewardEarnedEmail({ data }: ReferralRewardEarnedEmailProps) {
   const {
     referrerFirstName,
@@ -215,7 +229,7 @@ export function ReferralRewardEarnedEmail({ data }: ReferralRewardEarnedEmailPro
                   color: colors.accent.success,
                 }}
               >
-                ${availableBalance}
+                {formatRewardValue(availableBalance, rewardType)}
               </Text>
               <Text
                 style={{
@@ -238,7 +252,7 @@ export function ReferralRewardEarnedEmail({ data }: ReferralRewardEarnedEmailPro
                   color: colors.primary,
                 }}
               >
-                ${totalRewardsEarned}
+                {formatRewardValue(totalRewardsEarned, rewardType)}
               </Text>
               <Text
                 style={{

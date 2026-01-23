@@ -279,7 +279,7 @@ export function ReferralFriendSignedUpEmail({ data }: ReferralFriendSignedUpEmai
                 Next Milestone
               </Text>
               <ProgressBar
-                value={Math.round((totalReferrals / nextMilestone.referralsNeeded) * 100)}
+                value={Math.round((totalReferrals / Math.max(nextMilestone.referralsNeeded, 1)) * 100)}
                 color={colors.primary}
               />
               <Spacer size="sm" />

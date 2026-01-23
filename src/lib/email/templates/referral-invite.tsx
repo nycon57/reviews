@@ -6,7 +6,7 @@
  */
 
 import * as React from "react";
-import { Section, Text, Link } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 import {
   EmailLayout,
   SingleColumnLayout,
@@ -18,6 +18,8 @@ import {
   Spacer,
   Badge,
   CalloutBox,
+  ReferralLinkBox,
+  SocialShareSection,
   colors,
   typography,
   spacing,
@@ -41,7 +43,7 @@ export function ReferralInviteEmail({ data }: ReferralInviteEmailProps) {
     toEmail,
   } = data;
 
-  const recipientGreeting = recipientName ? recipientName : "there";
+  const recipientGreeting = recipientName ?? "there";
 
   return (
     <EmailLayout
@@ -219,123 +221,19 @@ export function ReferralInviteEmail({ data }: ReferralInviteEmailProps) {
         {/* Social Share Section */}
         {socialShareLinks && (
           <>
-            <Section
-              style={{
-                padding: spacing[4],
-                backgroundColor: colors.background.subtle,
-                borderRadius: "8px",
-                textAlign: "center",
-              }}
-            >
-              <Text
-                style={{
-                  margin: 0,
-                  fontFamily: typography.fontFamily.body,
-                  fontSize: typography.fontSize.sm,
-                  color: colors.text.secondary,
-                  marginBottom: spacing[3],
-                }}
-              >
-                Share Repwell with others:
-              </Text>
-              <Section
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: spacing[2],
-                }}
-              >
-                {socialShareLinks.linkedin && (
-                  <Link
-                    href={socialShareLinks.linkedin}
-                    style={{
-                      display: "inline-block",
-                      padding: `${spacing[2]} ${spacing[3]}`,
-                      backgroundColor: "#0A66C2",
-                      color: "#ffffff",
-                      borderRadius: "6px",
-                      fontSize: typography.fontSize.xs,
-                      fontWeight: typography.fontWeight.medium,
-                      textDecoration: "none",
-                      marginRight: spacing[2],
-                    }}
-                  >
-                    LinkedIn
-                  </Link>
-                )}
-                {socialShareLinks.twitter && (
-                  <Link
-                    href={socialShareLinks.twitter}
-                    style={{
-                      display: "inline-block",
-                      padding: `${spacing[2]} ${spacing[3]}`,
-                      backgroundColor: "#1DA1F2",
-                      color: "#ffffff",
-                      borderRadius: "6px",
-                      fontSize: typography.fontSize.xs,
-                      fontWeight: typography.fontWeight.medium,
-                      textDecoration: "none",
-                      marginRight: spacing[2],
-                    }}
-                  >
-                    Twitter
-                  </Link>
-                )}
-                {socialShareLinks.facebook && (
-                  <Link
-                    href={socialShareLinks.facebook}
-                    style={{
-                      display: "inline-block",
-                      padding: `${spacing[2]} ${spacing[3]}`,
-                      backgroundColor: "#1877F2",
-                      color: "#ffffff",
-                      borderRadius: "6px",
-                      fontSize: typography.fontSize.xs,
-                      fontWeight: typography.fontWeight.medium,
-                      textDecoration: "none",
-                    }}
-                  >
-                    Facebook
-                  </Link>
-                )}
-              </Section>
-            </Section>
+            <SocialShareSection
+              links={socialShareLinks}
+              label="Share Repwell with others:"
+            />
             <Spacer size="md" />
           </>
         )}
 
         {/* Referral Link */}
-        <Section
-          style={{
-            padding: spacing[4],
-            backgroundColor: colors.background.muted,
-            borderRadius: "8px",
-            textAlign: "center",
-          }}
-        >
-          <Text
-            style={{
-              margin: 0,
-              fontFamily: typography.fontFamily.body,
-              fontSize: typography.fontSize.xs,
-              color: colors.text.muted,
-              marginBottom: spacing[2],
-            }}
-          >
-            Your personal referral link:
-          </Text>
-          <Text
-            style={{
-              margin: 0,
-              fontFamily: typography.fontFamily.mono,
-              fontSize: typography.fontSize.sm,
-              color: colors.primary,
-              wordBreak: "break-all",
-            }}
-          >
-            {referralLink}
-          </Text>
-        </Section>
+        <ReferralLinkBox
+          referralLink={referralLink}
+          label="Your personal referral link:"
+        />
       </SingleColumnLayout>
 
       <Spacer size="lg" />

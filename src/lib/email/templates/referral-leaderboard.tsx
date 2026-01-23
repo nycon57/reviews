@@ -6,7 +6,7 @@
  */
 
 import * as React from "react";
-import { Section, Text, Link } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 import {
   EmailLayout,
   SingleColumnLayout,
@@ -17,11 +17,19 @@ import {
   EmailCard,
   Spacer,
   Badge,
+  ReferralLinkBox,
+  SocialShareButtons,
   colors,
   typography,
   spacing,
 } from "../components";
 import type { ReferralLeaderboardEmailData } from "../types";
+import {
+  formatDateShort,
+  getRankDisplay,
+  getRankColor,
+  getOrdinalSuffix,
+} from "../referral-utils";
 
 interface ReferralLeaderboardEmailProps {
   data: ReferralLeaderboardEmailData;
@@ -52,28 +60,17 @@ export function ReferralLeaderboardEmail({ data }: ReferralLeaderboardEmailProps
     all_time: "All Time",
   }[leaderboardPeriod];
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  };
+  function getRankChangeIcon(): string {
+    if (!rankChange || rankChange === "same") return "\u27A1\uFE0F";
+    if (rankChange === "up") return "\u2B06\uFE0F";
+    return "\u2B07\uFE0F";
+  }
 
-  const getRankChangeIcon = () => {
-    if (!rankChange || rankChange === "same") return "➡️";
-    return rankChange === "up" ? "⬆️" : "⬇️";
-  };
-
-  const getRankChangeColor = () => {
+  function getRankChangeColor(): string {
     if (!rankChange || rankChange === "same") return colors.text.muted;
-    return rankChange === "up" ? colors.accent.success : colors.accent.error;
-  };
-
-  const getOrdinalSuffix = (n: number) => {
-    const s = ["th", "st", "nd", "rd"];
-    const v = n % 100;
-    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-  };
+    if (rankChange === "up") return colors.accent.success;
+    return colors.accent.error;
+  }
 
   return (
     <EmailLayout
@@ -116,7 +113,7 @@ export function ReferralLeaderboardEmail({ data }: ReferralLeaderboardEmailProps
               marginTop: spacing[2],
             }}
           >
-            {formatDate(periodStartDate)} - {formatDate(periodEndDate)}
+            {formatDateShort(periodStartDate)} - {formatDateShort(periodEndDate)}
           </Text>
         </Section>
 
@@ -236,23 +233,10 @@ export function ReferralLeaderboardEmail({ data }: ReferralLeaderboardEmailProps
                     fontFamily: typography.fontFamily.display,
                     fontSize: referrer.rank <= 3 ? typography.fontSize.xl : typography.fontSize.base,
                     fontWeight: typography.fontWeight.bold,
-                    color:
-                      referrer.rank === 1
-                        ? "#FFD700"
-                        : referrer.rank === 2
-                        ? "#C0C0C0"
-                        : referrer.rank === 3
-                        ? "#CD7F32"
-                        : colors.text.muted,
+                    color: getRankColor(referrer.rank, colors.text.muted),
                   }}
                 >
-                  {referrer.rank === 1
-                    ? "🥇"
-                    : referrer.rank === 2
-                    ? "🥈"
-                    : referrer.rank === 3
-                    ? "🥉"
-                    : `#${referrer.rank}`}
+                  {getRankDisplay(referrer.rank)}
                 </Text>
               </Section>
               <Section style={{ flex: 1 }}>
@@ -409,98 +393,13 @@ export function ReferralLeaderboardEmail({ data }: ReferralLeaderboardEmailProps
         <Spacer size="md" />
 
         {/* Referral Link */}
-        <Section
-          style={{
-            padding: spacing[4],
-            backgroundColor: colors.background.muted,
-            borderRadius: "8px",
-            textAlign: "center",
-          }}
-        >
-          <Text
-            style={{
-              margin: 0,
-              fontFamily: typography.fontFamily.body,
-              fontSize: typography.fontSize.xs,
-              color: colors.text.muted,
-              marginBottom: spacing[2],
-            }}
-          >
-            Your referral link:
-          </Text>
-          <Text
-            style={{
-              margin: 0,
-              fontFamily: typography.fontFamily.mono,
-              fontSize: typography.fontSize.sm,
-              color: colors.primary,
-              wordBreak: "break-all",
-            }}
-          >
-            {referralLink}
-          </Text>
-        </Section>
+        <ReferralLinkBox referralLink={referralLink} />
 
         {/* Social Share */}
         {socialShareLinks && (
           <>
             <Spacer size="md" />
-            <Section style={{ textAlign: "center" }}>
-              <Text
-                style={{
-                  margin: 0,
-                  fontFamily: typography.fontFamily.body,
-                  fontSize: typography.fontSize.sm,
-                  color: colors.text.muted,
-                  marginBottom: spacing[3],
-                }}
-              >
-                Quick share:
-              </Text>
-              <Section
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: spacing[2],
-                }}
-              >
-                {socialShareLinks.linkedin && (
-                  <Link
-                    href={socialShareLinks.linkedin}
-                    style={{
-                      display: "inline-block",
-                      padding: `${spacing[2]} ${spacing[3]}`,
-                      backgroundColor: "#0A66C2",
-                      color: "#ffffff",
-                      borderRadius: "6px",
-                      fontSize: typography.fontSize.xs,
-                      fontWeight: typography.fontWeight.medium,
-                      textDecoration: "none",
-                      marginRight: spacing[2],
-                    }}
-                  >
-                    LinkedIn
-                  </Link>
-                )}
-                {socialShareLinks.twitter && (
-                  <Link
-                    href={socialShareLinks.twitter}
-                    style={{
-                      display: "inline-block",
-                      padding: `${spacing[2]} ${spacing[3]}`,
-                      backgroundColor: "#1DA1F2",
-                      color: "#ffffff",
-                      borderRadius: "6px",
-                      fontSize: typography.fontSize.xs,
-                      fontWeight: typography.fontWeight.medium,
-                      textDecoration: "none",
-                    }}
-                  >
-                    Twitter
-                  </Link>
-                )}
-              </Section>
-            </Section>
+            <SocialShareButtons links={socialShareLinks} label="Quick share:" />
           </>
         )}
       </SingleColumnLayout>

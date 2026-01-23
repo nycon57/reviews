@@ -23,6 +23,7 @@ import {
   spacing,
 } from "../components";
 import type { ReferralFriendSignedUpEmailData } from "../types";
+import { formatDateLong } from "../referral-utils";
 
 interface ReferralFriendSignedUpEmailProps {
   data: ReferralFriendSignedUpEmailData;
@@ -41,11 +42,7 @@ export function ReferralFriendSignedUpEmail({ data }: ReferralFriendSignedUpEmai
     toEmail,
   } = data;
 
-  const formattedDate = new Date(signedUpAt).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
+  const formattedDate = formatDateLong(signedUpAt);
 
   return (
     <EmailLayout

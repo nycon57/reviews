@@ -6,7 +6,7 @@
  */
 
 import * as React from "react";
-import { Section, Text, Link } from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 import {
   EmailLayout,
   SingleColumnLayout,
@@ -17,6 +17,8 @@ import {
   EmailCard,
   Spacer,
   CalloutBox,
+  ReferralLinkBox,
+  SocialShareButtons,
   colors,
   typography,
   spacing,
@@ -253,108 +255,17 @@ export function ReferralReminderEmail({ data }: ReferralReminderEmailProps) {
 
           {/* Social Share Buttons */}
           {socialShareLinks && (
-            <Section
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: spacing[2],
-                justifyContent: "center",
-              }}
-            >
-              {socialShareLinks.linkedin && (
-                <Link
-                  href={socialShareLinks.linkedin}
-                  style={{
-                    display: "inline-block",
-                    padding: `${spacing[2]} ${spacing[4]}`,
-                    backgroundColor: "#0A66C2",
-                    color: "#ffffff",
-                    borderRadius: "6px",
-                    fontSize: typography.fontSize.sm,
-                    fontWeight: typography.fontWeight.medium,
-                    textDecoration: "none",
-                    marginRight: spacing[2],
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  Share on LinkedIn
-                </Link>
-              )}
-              {socialShareLinks.twitter && (
-                <Link
-                  href={socialShareLinks.twitter}
-                  style={{
-                    display: "inline-block",
-                    padding: `${spacing[2]} ${spacing[4]}`,
-                    backgroundColor: "#1DA1F2",
-                    color: "#ffffff",
-                    borderRadius: "6px",
-                    fontSize: typography.fontSize.sm,
-                    fontWeight: typography.fontWeight.medium,
-                    textDecoration: "none",
-                    marginRight: spacing[2],
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  Share on Twitter
-                </Link>
-              )}
-              {socialShareLinks.whatsapp && (
-                <Link
-                  href={socialShareLinks.whatsapp}
-                  style={{
-                    display: "inline-block",
-                    padding: `${spacing[2]} ${spacing[4]}`,
-                    backgroundColor: "#25D366",
-                    color: "#ffffff",
-                    borderRadius: "6px",
-                    fontSize: typography.fontSize.sm,
-                    fontWeight: typography.fontWeight.medium,
-                    textDecoration: "none",
-                    marginBottom: spacing[2],
-                  }}
-                >
-                  Share via WhatsApp
-                </Link>
-              )}
-            </Section>
+            <SocialShareButtons links={socialShareLinks} variant="full" />
           )}
         </EmailCard>
 
         <Spacer size="md" />
 
         {/* Referral Link */}
-        <Section
-          style={{
-            padding: spacing[4],
-            backgroundColor: colors.background.muted,
-            borderRadius: "8px",
-            textAlign: "center",
-          }}
-        >
-          <Text
-            style={{
-              margin: 0,
-              fontFamily: typography.fontFamily.body,
-              fontSize: typography.fontSize.xs,
-              color: colors.text.muted,
-              marginBottom: spacing[2],
-            }}
-          >
-            Your unique referral link:
-          </Text>
-          <Text
-            style={{
-              margin: 0,
-              fontFamily: typography.fontFamily.mono,
-              fontSize: typography.fontSize.sm,
-              color: colors.primary,
-              wordBreak: "break-all",
-            }}
-          >
-            {referralLink}
-          </Text>
-        </Section>
+        <ReferralLinkBox
+          referralLink={referralLink}
+          label="Your unique referral link:"
+        />
 
         <Spacer size="lg" />
 

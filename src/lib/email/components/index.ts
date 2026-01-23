@@ -201,3 +201,16 @@ export {
   type ResponsiveHideProps,
   type EmptyStateProps,
 } from "./email-utilities";
+
+// =============================================================================
+// REFERRAL SHARED COMPONENTS
+// =============================================================================
+export {
+  ReferralLinkBox,
+  SocialShareButtons,
+  SocialShareSection,
+  type ReferralLinkBoxProps,
+  type SocialShareButtonsProps,
+  type SocialShareSectionProps,
+  type SocialShareLinksType,
+} from "./referral-shared";

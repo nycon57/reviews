@@ -22,23 +22,14 @@ import {
   spacing,
 } from "../components";
 import type { ReferralFriendConvertedEmailData } from "../types";
+import {
+  formatRewardValue,
+  getRewardIcon,
+  formatDateLong,
+} from "../referral-utils";
 
 interface ReferralFriendConvertedEmailProps {
   data: ReferralFriendConvertedEmailData;
-}
-
-function formatRewardValue(value: number, type: "credit" | "discount" | "cash" | "points"): string {
-  switch (type) {
-    case "cash":
-    case "credit":
-      return `$${value}`;
-    case "discount":
-      return `${value}%`;
-    case "points":
-      return `${value} pts`;
-    default:
-      return `$${value}`;
-  }
 }
 
 export function ReferralFriendConvertedEmail({ data }: ReferralFriendConvertedEmailProps) {
@@ -55,18 +46,8 @@ export function ReferralFriendConvertedEmail({ data }: ReferralFriendConvertedEm
     toEmail,
   } = data;
 
-  const formattedDate = new Date(convertedAt).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  const rewardIcon = {
-    credit: "💳",
-    discount: "🏷️",
-    cash: "💵",
-    points: "⭐",
-  }[rewardType];
+  const formattedDate = formatDateLong(convertedAt);
+  const rewardIcon = getRewardIcon(rewardType);
 
   return (
     <EmailLayout

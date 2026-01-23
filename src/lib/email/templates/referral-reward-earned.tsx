@@ -23,23 +23,14 @@ import {
   spacing,
 } from "../components";
 import type { ReferralRewardEarnedEmailData } from "../types";
+import {
+  formatRewardValue,
+  getRewardIcon,
+  formatDateLong,
+} from "../referral-utils";
 
 interface ReferralRewardEarnedEmailProps {
   data: ReferralRewardEarnedEmailData;
-}
-
-function formatRewardValue(value: number, type: "credit" | "discount" | "cash" | "points"): string {
-  switch (type) {
-    case "cash":
-    case "credit":
-      return `$${value}`;
-    case "discount":
-      return `${value}%`;
-    case "points":
-      return `${value} pts`;
-    default:
-      return `$${value}`;
-  }
 }
 
 export function ReferralRewardEarnedEmail({ data }: ReferralRewardEarnedEmailProps) {
@@ -57,20 +48,8 @@ export function ReferralRewardEarnedEmail({ data }: ReferralRewardEarnedEmailPro
     toEmail,
   } = data;
 
-  const rewardIcon = {
-    credit: "💳",
-    discount: "🏷️",
-    cash: "💵",
-    points: "⭐",
-  }[rewardType];
-
-  const formattedExpiry = rewardExpiresAt
-    ? new Date(rewardExpiresAt).toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
-    : null;
+  const rewardIcon = getRewardIcon(rewardType);
+  const formattedExpiry = rewardExpiresAt ? formatDateLong(rewardExpiresAt) : null;
 
   return (
     <EmailLayout

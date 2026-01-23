@@ -10,6 +10,7 @@
  * - Conditional triggers based on user state
  */
 
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   SequenceType,
@@ -22,6 +23,30 @@ import type {
   DelayConfig,
 } from "./types";
 import { evaluateConditions, defaultCustomEvaluators } from "./conditions";
+
+// ============================================================================
+// Validation Schemas
+// ============================================================================
+
+const uuidSchema = z.string().uuid();
+
+const delayConfigSchema = z.object({
+  value: z.number().positive().max(365),
+  unit: z.enum(["minutes", "hours", "days", "weeks"]),
+});
+
+const manualTriggerOptionsSchema = z.object({
+  replaceExisting: z.boolean().optional(),
+  allowMultiple: z.boolean().optional(),
+  delay: delayConfigSchema.optional(),
+});
+
+const manualTriggerSchema = z.object({
+  userId: uuidSchema,
+  organizationId: uuidSchema,
+  metadata: z.record(z.unknown()).optional(),
+  options: manualTriggerOptionsSchema.optional(),
+});
 
 // ============================================================================
 // Helper Functions
@@ -367,6 +392,21 @@ export async function triggerSequenceManually(
     delay?: DelayConfig;
   }
 ): Promise<StartSequenceResult> {
+  // Validate input
+  const validation = manualTriggerSchema.safeParse({
+    userId,
+    organizationId,
+    metadata,
+    options,
+  });
+
+  if (!validation.success) {
+    return {
+      success: false,
+      error: validation.error.message,
+    };
+  }
+
   // Check if sequence is enabled
   if (definition.enabled === false) {
     return {
@@ -377,16 +417,16 @@ export async function triggerSequenceManually(
   }
 
   const context: TriggerContext = {
-    userId,
-    organizationId,
-    metadata,
+    userId: validation.data.userId,
+    organizationId: validation.data.organizationId,
+    metadata: validation.data.metadata,
   };
 
   const trigger: SequenceTrigger = {
     type: "manual",
-    replaceExisting: options?.replaceExisting,
-    allowMultiple: options?.allowMultiple,
-    delay: options?.delay,
+    replaceExisting: validation.data.options?.replaceExisting,
+    allowMultiple: validation.data.options?.allowMultiple,
+    delay: validation.data.options?.delay,
   };
 
   return createSequenceInstance(definition, context, trigger);
@@ -442,6 +482,12 @@ export async function checkTimeBasedTriggers(
   // Process each user
   for (const user of users) {
     try {
+      // Skip users without organization
+      if (!user.organization_id) {
+        result.skipped++;
+        continue;
+      }
+
       // Check if user already has an active sequence
       const existingCheck = await hasActiveSequence(user.id, definition.type);
       if (existingCheck.exists) {
@@ -494,7 +540,7 @@ export async function checkTimeBasedTriggers(
 // ============================================================================
 
 /**
- * Get all users eligible for a sequence
+ * Get all users eligible for a sequence using efficient single query
  * Useful for batch operations or reports
  */
 export async function getEligibleUsers(
@@ -503,27 +549,33 @@ export async function getEligibleUsers(
 ): Promise<{ id: string; organization_id: string; email: string }[]> {
   const supabase = createAdminClient();
 
-  // Get users without an active sequence
-  const { data: users, error } = await supabase
+  // First get users who already have an active sequence of this type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: activeSequenceUserIds } = await (supabase.from as any)("email_sequences")
+    .select("user_id")
+    .eq("sequence_type", definition.type)
+    .in("status", ["active", "paused", "processing"]);
+
+  const excludeUserIds = new Set((activeSequenceUserIds || []).map((r: { user_id: string }) => r.user_id));
+
+  // Get eligible users (active, with notifications enabled, not in exclude list)
+  let query = supabase
     .from("users")
     .select("id, organization_id, email")
     .eq("is_active", true)
     .eq("receive_notifications", true)
     .limit(limit);
 
+  const { data: users, error } = await query;
+
   if (error || !users) {
     return [];
   }
 
-  // Filter out users with existing sequences
-  const eligibleUsers: { id: string; organization_id: string; email: string }[] = [];
-
-  for (const user of users) {
-    const existingCheck = await hasActiveSequence(user.id, definition.type);
-    if (!existingCheck.exists) {
-      eligibleUsers.push(user);
-    }
-  }
-
-  return eligibleUsers;
+  // Filter out users who already have active sequences and users without organization
+  // (in-memory filter is now O(1) per user)
+  return users
+    .filter((user): user is typeof user & { organization_id: string } =>
+      !excludeUserIds.has(user.id) && user.organization_id !== null
+    );
 }

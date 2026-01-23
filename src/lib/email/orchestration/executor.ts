@@ -24,7 +24,6 @@ import type {
   ConditionalBranch,
 } from "./types";
 import {
-  evaluateConditions,
   evaluateExitConditions,
   evaluateBranches,
   defaultCustomEvaluators,
@@ -95,13 +94,13 @@ async function isEmailUnsubscribed(email: string): Promise<boolean> {
 }
 
 /**
- * Select A/B test variant
+ * Select A/B test variant with weight validation
  */
 function selectVariant(
   step: SequenceStep,
   assignments: Record<string, string>
 ): string | undefined {
-  if (!step.abTest) return undefined;
+  if (!step.abTest || !step.abTest.variants.length) return undefined;
 
   // Check if already assigned
   const assignmentKey = `step_${step.step}`;
@@ -109,9 +108,17 @@ function selectVariant(
     return assignments[assignmentKey];
   }
 
-  // Assign based on weights
   const variants = step.abTest.variants;
-  const random = Math.random() * 100;
+
+  // Calculate total weight and normalize if needed
+  const totalWeight = variants.reduce((sum, v) => sum + v.weight, 0);
+  if (totalWeight <= 0) {
+    console.warn(`Invalid A/B test weights for step ${step.step}, using first variant`);
+    return variants[0]?.id;
+  }
+
+  // Select based on normalized weights
+  const random = Math.random() * totalWeight;
   let cumulative = 0;
 
   for (const variant of variants) {
@@ -458,56 +465,99 @@ export async function executeStep(
     return { success: true, action: "exited" };
   }
 
-  // Check if step should be skipped
-  const skipResult = await shouldSkipStep(sequence, stepConfig);
-  if (skipResult.skip) {
+  // Handle skipped steps iteratively to avoid stack overflow
+  let currentStepNum = nextStepNum;
+  let currentStepConfig = stepConfig;
+  let workingSequence = { ...sequence };
+  let skipsThisRun = 0;
+  const MAX_CONSECUTIVE_SKIPS = 100; // Prevent infinite loops
+
+  while (skipsThisRun < MAX_CONSECUTIVE_SKIPS) {
+    const skipResult = await shouldSkipStep(workingSequence, currentStepConfig);
+
+    if (!skipResult.skip) {
+      break; // Found a step to execute
+    }
+
+    skipsThisRun++;
+
     // Calculate next email time
-    const nextStep = definition.steps.find((s) => s.step === nextStepNum + 1);
-    const nextEmailAt = nextStep ? addDelay(new Date(), nextStep.delay) : null;
+    const followingStep = definition.steps.find((s) => s.step === currentStepNum + 1);
+    const nextEmailAt = followingStep ? addDelay(new Date(), followingStep.delay) : null;
 
     await updateSequenceAfterSkip(
-      sequence,
-      nextStepNum,
+      workingSequence,
+      currentStepNum,
       skipResult.reason || "condition_met",
       nextEmailAt
     );
 
-    // Recursively process next step if available
-    if (nextStepNum < sequence.total_steps) {
-      const updatedSequence: SequenceRecord = {
-        ...sequence,
-        current_step: nextStepNum,
-        skipped_steps: [
-          ...sequence.skipped_steps,
-          {
-            step: nextStepNum,
-            reason: skipResult.reason || "condition_met",
-            skipped_at: new Date().toISOString(),
-          },
-        ],
-      };
-      return executeStep(updatedSequence, definition, emailSender);
+    // Check if sequence is complete
+    if (currentStepNum >= workingSequence.total_steps) {
+      return { success: true, action: "skipped" };
     }
 
-    return { success: true, action: "skipped" };
+    // Update working sequence and move to next step
+    workingSequence = {
+      ...workingSequence,
+      current_step: currentStepNum,
+      skipped_steps: [
+        ...workingSequence.skipped_steps,
+        {
+          step: currentStepNum,
+          reason: skipResult.reason || "condition_met",
+          skipped_at: new Date().toISOString(),
+        },
+      ],
+    };
+
+    // Move to next step
+    currentStepNum++;
+    const nextConfig = definition.steps.find((s) => s.step === currentStepNum);
+    if (!nextConfig) {
+      // No more steps, sequence complete
+      await updateSequenceStatus(workingSequence.id, "completed");
+      return { success: true, action: "completed" };
+    }
+    currentStepConfig = nextConfig;
+
+    // Re-check exit conditions for the new step
+    const stepExitCheck = await checkStepExitConditions(workingSequence, currentStepConfig);
+    if (stepExitCheck) {
+      await updateSequenceStatus(
+        workingSequence.id,
+        "exited",
+        stepExitCheck.reason,
+        stepExitCheck.milestone
+      );
+      return { success: true, action: "exited" };
+    }
   }
 
+  if (skipsThisRun >= MAX_CONSECUTIVE_SKIPS) {
+    console.error(`Sequence ${sequence.id} hit max consecutive skips (${MAX_CONSECUTIVE_SKIPS})`);
+    return { success: false, error: "Max consecutive skips exceeded" };
+  }
+
+  // Update references to use the potentially updated values
+  const stepToExecute = currentStepConfig;
+
   // Evaluate branches for variant selection
-  const branch = await evaluateStepBranches(sequence, stepConfig);
+  const branch = await evaluateStepBranches(workingSequence, stepToExecute);
   let variant: string | undefined;
 
   if (branch?.action === "send_variant" && branch.variant) {
     variant = branch.variant;
   } else {
     // Select variant from A/B test config
-    variant = selectVariant(stepConfig, sequence.ab_test_assignments);
+    variant = selectVariant(stepToExecute, workingSequence.ab_test_assignments);
   }
 
   // Get user data for email sending
   const { data: user } = await supabase
     .from("users")
     .select("id, email, full_name")
-    .eq("id", sequence.user_id)
+    .eq("id", workingSequence.user_id)
     .single();
 
   if (!user) {
@@ -516,15 +566,15 @@ export async function executeStep(
 
   // Build email context
   const emailContext: EmailContext = {
-    sequence,
-    step: stepConfig,
+    sequence: workingSequence,
+    step: stepToExecute,
     user: {
       id: user.id,
       email: user.email,
       full_name: user.full_name,
     },
     variant,
-    metadata: sequence.metadata,
+    metadata: workingSequence.metadata,
   };
 
   // Send the email
@@ -535,15 +585,15 @@ export async function executeStep(
   }
 
   // Calculate next email time
-  const nextStep = definition.steps.find((s) => s.step === nextStepNum + 1);
-  const nextEmailAt = nextStep ? addDelay(new Date(), nextStep.delay) : null;
+  const followingStepForSend = definition.steps.find((s) => s.step === currentStepNum + 1);
+  const nextEmailAt = followingStepForSend ? addDelay(new Date(), followingStepForSend.delay) : null;
 
   // Update sequence state
   await updateSequenceAfterSend(
-    sequence,
-    nextStepNum,
+    workingSequence,
+    currentStepNum,
     sendResult.emailId || "unknown",
-    stepConfig.template.name,
+    stepToExecute.template.name,
     variant,
     nextEmailAt
   );

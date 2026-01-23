@@ -11,6 +11,7 @@
  * - Queue statistics and monitoring
  */
 
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   SequenceType,
@@ -20,6 +21,56 @@ import type {
   EmailContext,
 } from "./types";
 import { executeStep, updateSequenceStatus } from "./executor";
+
+// ============================================================================
+// Validation Schemas
+// ============================================================================
+
+const uuidSchema = z.string().uuid();
+const sequenceTypeSchema = z.enum([
+  "welcome",
+  "onboarding",
+  "org_onboarding",
+  "role_onboarding",
+  "team_invite",
+  "re-engagement",
+  "win_back",
+  "feature_announcement",
+  "milestone",
+  "trial_ending",
+  "dunning",
+  "subscription",
+  "announcement",
+  "abandoned_action",
+  "referral",
+  "profile_reminder",
+  "custom",
+]);
+
+const pauseSequenceSchema = z.object({
+  sequenceId: uuidSchema,
+});
+
+const resumeSequenceSchema = z.object({
+  sequenceId: uuidSchema,
+  resumeImmediately: z.boolean().optional().default(true),
+});
+
+const cancelSequenceSchema = z.object({
+  sequenceId: uuidSchema,
+  reason: z.string().max(255).optional().default("manual_cancel"),
+});
+
+const userSequencesSchema = z.object({
+  userId: uuidSchema,
+  sequenceType: sequenceTypeSchema.optional(),
+});
+
+const cancelUserSequencesSchema = z.object({
+  userId: uuidSchema,
+  reason: z.string().max(255).optional().default("manual_cancel"),
+  sequenceType: sequenceTypeSchema.optional(),
+});
 
 // ============================================================================
 // Queue Processing
@@ -210,6 +261,12 @@ export async function processAllSequenceQueues(
 export async function pauseSequence(
   sequenceId: string
 ): Promise<{ success: boolean; error?: string }> {
+  // Validate input
+  const validation = pauseSequenceSchema.safeParse({ sequenceId });
+  if (!validation.success) {
+    return { success: false, error: validation.error.message };
+  }
+
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -218,7 +275,7 @@ export async function pauseSequence(
       status: "paused",
       updated_at: new Date().toISOString(),
     })
-    .eq("id", sequenceId)
+    .eq("id", validation.data.sequenceId)
     .in("status", ["active", "processing"]);
 
   if (error) {
@@ -235,6 +292,12 @@ export async function resumeSequence(
   sequenceId: string,
   resumeImmediately: boolean = true
 ): Promise<{ success: boolean; error?: string }> {
+  // Validate input
+  const validation = resumeSequenceSchema.safeParse({ sequenceId, resumeImmediately });
+  if (!validation.success) {
+    return { success: false, error: validation.error.message };
+  }
+
   const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = {
@@ -242,7 +305,7 @@ export async function resumeSequence(
     updated_at: new Date().toISOString(),
   };
 
-  if (resumeImmediately) {
+  if (validation.data.resumeImmediately) {
     // Send next email soon
     updateData.next_email_at = new Date().toISOString();
   }
@@ -250,7 +313,7 @@ export async function resumeSequence(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase.from as any)("email_sequences")
     .update(updateData)
-    .eq("id", sequenceId)
+    .eq("id", validation.data.sequenceId)
     .eq("status", "paused");
 
   if (error) {
@@ -267,6 +330,12 @@ export async function pauseUserSequences(
   userId: string,
   sequenceType?: SequenceType
 ): Promise<{ success: boolean; pausedCount: number; error?: string }> {
+  // Validate input
+  const validation = userSequencesSchema.safeParse({ userId, sequenceType });
+  if (!validation.success) {
+    return { success: false, pausedCount: 0, error: validation.error.message };
+  }
+
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -275,11 +344,11 @@ export async function pauseUserSequences(
       status: "paused",
       updated_at: new Date().toISOString(),
     })
-    .eq("user_id", userId)
+    .eq("user_id", validation.data.userId)
     .in("status", ["active", "processing"]);
 
-  if (sequenceType) {
-    query = query.eq("sequence_type", sequenceType);
+  if (validation.data.sequenceType) {
+    query = query.eq("sequence_type", validation.data.sequenceType);
   }
 
   const { data, error } = await query.select("id");
@@ -299,6 +368,12 @@ export async function resumeUserSequences(
   sequenceType?: SequenceType,
   resumeImmediately: boolean = true
 ): Promise<{ success: boolean; resumedCount: number; error?: string }> {
+  // Validate input
+  const validation = userSequencesSchema.safeParse({ userId, sequenceType });
+  if (!validation.success) {
+    return { success: false, resumedCount: 0, error: validation.error.message };
+  }
+
   const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = {
@@ -313,11 +388,11 @@ export async function resumeUserSequences(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase.from as any)("email_sequences")
     .update(updateData)
-    .eq("user_id", userId)
+    .eq("user_id", validation.data.userId)
     .eq("status", "paused");
 
-  if (sequenceType) {
-    query = query.eq("sequence_type", sequenceType);
+  if (validation.data.sequenceType) {
+    query = query.eq("sequence_type", validation.data.sequenceType);
   }
 
   const { data, error } = await query.select("id");
@@ -336,7 +411,13 @@ export async function cancelSequence(
   sequenceId: string,
   reason: string = "manual_cancel"
 ): Promise<{ success: boolean; error?: string }> {
-  await updateSequenceStatus(sequenceId, "cancelled", reason);
+  // Validate input
+  const validation = cancelSequenceSchema.safeParse({ sequenceId, reason });
+  if (!validation.success) {
+    return { success: false, error: validation.error.message };
+  }
+
+  await updateSequenceStatus(validation.data.sequenceId, "cancelled", validation.data.reason);
   return { success: true };
 }
 
@@ -348,21 +429,27 @@ export async function cancelUserSequences(
   reason: string = "manual_cancel",
   sequenceType?: SequenceType
 ): Promise<{ success: boolean; cancelledCount: number; error?: string }> {
+  // Validate input
+  const validation = cancelUserSequencesSchema.safeParse({ userId, reason, sequenceType });
+  if (!validation.success) {
+    return { success: false, cancelledCount: 0, error: validation.error.message };
+  }
+
   const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query = (supabase.from as any)("email_sequences")
     .update({
       status: "cancelled",
-      exit_reason: reason,
+      exit_reason: validation.data.reason,
       exited_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .eq("user_id", userId)
+    .eq("user_id", validation.data.userId)
     .in("status", ["active", "paused", "processing"]);
 
-  if (sequenceType) {
-    query = query.eq("sequence_type", sequenceType);
+  if (validation.data.sequenceType) {
+    query = query.eq("sequence_type", validation.data.sequenceType);
   }
 
   const { data, error } = await query.select("id");
@@ -379,7 +466,7 @@ export async function cancelUserSequences(
 // ============================================================================
 
 /**
- * Get queue statistics
+ * Get queue statistics using database aggregation for efficiency
  */
 export async function getQueueStats(
   sequenceType?: SequenceType
@@ -397,24 +484,20 @@ export async function getQueueStats(
   const now = new Date();
   const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-  // Get counts by status
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query = (supabase.from as any)("email_sequences").select("status", { count: "exact" });
-
-  if (sequenceType) {
-    query = query.eq("sequence_type", sequenceType);
-  }
-
-  // Get all sequences grouped by status
-  const { data: allSequences } = await query;
-
-  // Count by status
-  const counts: Record<string, number> = {};
-  if (allSequences) {
-    for (const seq of allSequences) {
-      counts[seq.status] = (counts[seq.status] || 0) + 1;
+  // Use individual count queries for each status to avoid loading all records
+  const statusQueries = ["active", "paused", "processing", "completed", "cancelled", "exited"].map(
+    async (status) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let query = (supabase.from as any)("email_sequences")
+        .select("id", { count: "exact", head: true })
+        .eq("status", status);
+      if (sequenceType) {
+        query = query.eq("sequence_type", sequenceType);
+      }
+      const { count } = await query;
+      return { status, count: count || 0 };
     }
-  }
+  );
 
   // Get pending counts
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -435,10 +518,18 @@ export async function getQueueStats(
     pendingNext24hQuery = pendingNext24hQuery.eq("sequence_type", sequenceType);
   }
 
-  const [{ count: pendingNow }, { count: pendingNext24h }] = await Promise.all([
+  // Execute all queries in parallel
+  const [statusResults, pendingNow, pendingNext24h] = await Promise.all([
+    Promise.all(statusQueries),
     pendingNowQuery,
     pendingNext24hQuery,
   ]);
+
+  // Convert status results to counts object
+  const counts: Record<string, number> = {};
+  for (const { status, count } of statusResults) {
+    counts[status] = count;
+  }
 
   return {
     active: counts["active"] || 0,
@@ -447,8 +538,8 @@ export async function getQueueStats(
     completed: counts["completed"] || 0,
     cancelled: counts["cancelled"] || 0,
     exited: counts["exited"] || 0,
-    pendingNow: pendingNow || 0,
-    pendingNext24h: pendingNext24h || 0,
+    pendingNow: pendingNow.count || 0,
+    pendingNext24h: pendingNext24h.count || 0,
   };
 }
 

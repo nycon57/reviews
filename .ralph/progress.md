@@ -13,9 +13,11 @@ _No stories completed yet._
 ### S093: Abandoned Action Recovery Emails
 - **Epic**: Email System
 - **Priority**: P1
-- **Pass**: 1/3 (Implementation complete)
-- **Status**: Pass 1 Complete - Awaiting Pass 2
-- **Commit**: `[Pass 1/3] feat(S093): Implement Abandoned Action Recovery Emails`
+- **Pass**: 2/3 (Quality Review complete)
+- **Status**: Pass 2 Complete - Awaiting Pass 3
+- **Commits**:
+  - `[Pass 1/3] feat(S093): Implement Abandoned Action Recovery Emails`
+  - `[Pass 2/3] fix(S093): Security and quality improvements for Abandoned Action Recovery`
 - **Files Created**:
   - `supabase/migrations/20240101000052_abandoned_action_recovery.sql`
   - `src/lib/email/abandoned-action-recovery-templates.ts`
@@ -27,6 +29,11 @@ _No stories completed yet._
   - 12 email templates (2 per action type)
   - Recovery emails at 1 hour and 24 hours
   - Auto-expire after 7 days
+- **Pass 2 Fixes**:
+  - Fixed open redirect vulnerability in resumeUrl parameter (HIGH)
+  - Added domain validation to sanitizeUrl function
+  - Added runtime type safety helpers for context extraction (MEDIUM)
+  - Defense-in-depth: validation at both API input and email template output
 
 ## Next Up
 
@@ -8225,4 +8232,39 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Always verify shared auth utilities match the permission system's requirements
   - Extract shared components early to avoid duplicate implementations
   - Helper functions for nested ternaries improve readability
+---
+
+## [2026-01-22T21:15:00] - S093: Abandoned Action Recovery Emails
+Thread: 
+Run: 20260122-210244-77746 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-210244-77746-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260122-210244-77746-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4447f3b [Pass 2/3] fix(S093): Security and quality improvements for Abandoned Action Recovery
+- Post-commit status: clean (except PRD which is not committed per instructions)
+- Skills invoked:
+  - /feature-dev: no (not needed for quality review)
+  - /code-review: yes (via Task agent)
+  - /vercel-react-best-practices: yes (backend code, no React changes)
+  - /code-simplifier: no (Pass 3 task)
+  - /frontend-design: no (no UI changes)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (57 warnings in unrelated files, 0 errors)
+- Files changed:
+  - src/app/api/abandoned-actions/track/route.ts (added domain validation for resumeUrl)
+  - src/lib/email/abandoned-action-recovery-service.ts (added runtime type safety helpers)
+  - src/lib/email/abandoned-action-recovery-templates.ts (added domain validation to sanitizeUrl)
+- What was implemented:
+  - Fixed HIGH severity open redirect vulnerability: Added domain whitelist validation to prevent phishing attacks via resumeUrl
+  - Fixed MEDIUM severity type safety issue: Added runtime validation helpers (safeString, safeNumber, safeInteger, safeStringArray, safeSpecialOffer)
+  - Defense-in-depth: Validation at both API input (Zod schema) and email template output (sanitizeUrl)
+  - Code review identified N+1 query pattern as LOW priority - acceptable at current scale, documented for future optimization
+- **Learnings for future iterations:**
+  - Always validate URL domains for any user-provided URLs that appear in emails (phishing vector)
+  - Type assertions (as type) don't provide runtime safety - use explicit validation helpers
+  - Defense-in-depth is important for security: validate at input AND output
+  - Code review skills are valuable for catching security issues that static analysis might miss
 ---

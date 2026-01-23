@@ -25,6 +25,14 @@ import { AnnouncementUpdateEmail } from "./announcement-update";
 import { AnnouncementMaintenanceEmail } from "./announcement-maintenance";
 import { AnnouncementSecurityEmail } from "./announcement-security";
 
+// Referral Program Templates (S094)
+import { ReferralInviteEmail } from "./referral-invite";
+import { ReferralFriendSignedUpEmail } from "./referral-friend-signed-up";
+import { ReferralFriendConvertedEmail } from "./referral-friend-converted";
+import { ReferralRewardEarnedEmail } from "./referral-reward-earned";
+import { ReferralReminderEmail } from "./referral-reminder";
+import { ReferralLeaderboardEmail } from "./referral-leaderboard";
+
 // Admin Alert Templates (S089)
 export {
   AdminAlertNegativeReviewEmail,
@@ -54,6 +62,13 @@ export {
   AnnouncementUpdateEmail,
   AnnouncementMaintenanceEmail,
   AnnouncementSecurityEmail,
+  // Referral program templates (S094)
+  ReferralInviteEmail,
+  ReferralFriendSignedUpEmail,
+  ReferralFriendConvertedEmail,
+  ReferralRewardEarnedEmail,
+  ReferralReminderEmail,
+  ReferralLeaderboardEmail,
 };
 
 // Types

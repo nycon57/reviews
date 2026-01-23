@@ -146,7 +146,14 @@ export type EmailTemplate =
   | "abandoned_profile_completion_1"
   | "abandoned_profile_completion_2"
   | "abandoned_integration_setup_1"
-  | "abandoned_integration_setup_2";
+  | "abandoned_integration_setup_2"
+  // Referral Program Emails (S094)
+  | "referral_invite"
+  | "referral_friend_signed_up"
+  | "referral_friend_converted"
+  | "referral_reward_earned"
+  | "referral_reminder"
+  | "referral_leaderboard";
 
 // Base email data
 export interface BaseEmailData {
@@ -2304,3 +2311,175 @@ export interface AbandonedActionRecoveryPreferences {
   enabled: boolean;
   optedOut: boolean;
 }
+
+// =============================================================================
+// REFERRAL PROGRAM EMAILS (S094)
+// =============================================================================
+
+// Social sharing link configuration
+export interface ReferralSocialShareLinks {
+  linkedin?: string;
+  twitter?: string;
+  facebook?: string;
+  whatsapp?: string;
+  email?: string;
+}
+
+// Pre-filled social messages
+export interface ReferralSocialMessages {
+  linkedin?: string;
+  twitter?: string;
+  facebook?: string;
+  whatsapp?: string;
+  email?: {
+    subject: string;
+    body: string;
+  };
+}
+
+// Base referral email data (shared across all referral emails)
+export interface ReferralEmailBaseData extends BaseEmailData {
+  referrerFirstName: string;
+  referrerFullName: string;
+  referrerEmail: string;
+  organizationName: string;
+  organizationLogoUrl?: string;
+  referralLink: string;
+  referralCode: string;
+  dashboardUrl: string;
+  referralProgramUrl: string;
+  unsubscribeUrl: string;
+}
+
+// Referral invite email (sent by referrer to friends)
+export interface ReferralInviteEmailData extends ReferralEmailBaseData {
+  recipientName?: string;
+  recipientEmail: string;
+  personalMessage?: string;
+  rewardForReferrer: string;
+  rewardForFriend: string;
+  signupUrl: string;
+  socialShareLinks?: ReferralSocialShareLinks;
+  socialMessages?: ReferralSocialMessages;
+}
+
+// Referrer notification when friend signs up
+export interface ReferralFriendSignedUpEmailData extends ReferralEmailBaseData {
+  friendName: string;
+  friendEmail: string;
+  signedUpAt: string;
+  totalReferrals: number;
+  pendingRewards: number;
+  nextMilestone?: {
+    referralsNeeded: number;
+    reward: string;
+  };
+}
+
+// Referrer notification when friend converts to paid
+export interface ReferralFriendConvertedEmailData extends ReferralEmailBaseData {
+  friendName: string;
+  friendPlanName: string;
+  convertedAt: string;
+  rewardEarned: string;
+  rewardType: "credit" | "discount" | "cash" | "points";
+  rewardValue: number;
+  totalRewardsEarned: number;
+  totalSuccessfulReferrals: number;
+}
+
+// Reward earned notification (referral credit/discount)
+export interface ReferralRewardEarnedEmailData extends ReferralEmailBaseData {
+  rewardDescription: string;
+  rewardType: "credit" | "discount" | "cash" | "points";
+  rewardValue: number;
+  rewardExpiresAt?: string;
+  howToRedeem: string;
+  redeemUrl: string;
+  totalRewardsEarned: number;
+  availableBalance: number;
+  friendName?: string;
+}
+
+// Referral program reminder (for inactive referrers)
+export interface ReferralReminderEmailData extends ReferralEmailBaseData {
+  daysSinceLastReferral: number;
+  totalReferrals: number;
+  pendingRewards: number;
+  potentialEarnings: string;
+  rewardPerReferral: string;
+  socialShareLinks?: ReferralSocialShareLinks;
+  socialMessages?: ReferralSocialMessages;
+  topReferrerStats?: {
+    name: string;
+    referrals: number;
+  };
+}
+
+// Referral leaderboard update (top referrers)
+export interface ReferralLeaderboardEmailData extends ReferralEmailBaseData {
+  leaderboardPeriod: "weekly" | "monthly" | "all_time";
+  periodStartDate: string;
+  periodEndDate: string;
+  userRank: number;
+  userReferrals: number;
+  previousRank?: number;
+  rankChange?: "up" | "down" | "same";
+  topReferrers: Array<{
+    rank: number;
+    name: string;
+    referrals: number;
+    reward?: string;
+    isCurrentUser?: boolean;
+  }>;
+  referralsToNextRank?: number;
+  leaderboardRewards?: Array<{
+    rank: string;
+    reward: string;
+  }>;
+  socialShareLinks?: ReferralSocialShareLinks;
+}
+
+// Referral tracking record (from database)
+export interface ReferralRecord {
+  id: string;
+  referrer_user_id: string;
+  referred_user_id?: string;
+  referral_code: string;
+  referral_link: string;
+  status: "pending" | "signed_up" | "converted" | "rewarded" | "expired";
+  invite_sent_at?: string;
+  signed_up_at?: string;
+  converted_at?: string;
+  reward_issued_at?: string;
+  reward_type?: "credit" | "discount" | "cash" | "points";
+  reward_value?: number;
+  reward_expires_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Referral program settings (per organization)
+export interface ReferralProgramSettings {
+  enabled: boolean;
+  rewardType: "credit" | "discount" | "cash" | "points";
+  referrerReward: number;
+  friendReward: number;
+  rewardExpirationDays?: number;
+  maxReferralsPerUser?: number;
+  requirePaidConversion: boolean;
+  customMessaging?: {
+    inviteSubject?: string;
+    inviteBody?: string;
+    socialMessages?: ReferralSocialMessages;
+  };
+}
+
+// Union type for all referral email data
+export type ReferralEmailData =
+  | ReferralInviteEmailData
+  | ReferralFriendSignedUpEmailData
+  | ReferralFriendConvertedEmailData
+  | ReferralRewardEarnedEmailData
+  | ReferralReminderEmailData
+  | ReferralLeaderboardEmailData;

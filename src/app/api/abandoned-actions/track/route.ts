@@ -18,11 +18,33 @@ const validActionTypes: AbandonedActionType[] = [
   "integration_setup",
 ];
 
+// Helper function to validate URL is from application domain (prevents open redirect)
+function isValidApplicationUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const allowedHostname = new URL(baseUrl).hostname;
+
+    // Allow exact match or localhost for development
+    return (
+      parsed.hostname === allowedHostname || parsed.hostname === "localhost"
+    );
+  } catch {
+    return false;
+  }
+}
+
 // Schema for tracking action start
 const trackStartSchema = z.object({
   actionType: z.enum(validActionTypes as [string, ...string[]]),
   context: z.record(z.unknown()).optional().default({}),
-  resumeUrl: z.string().url().optional(),
+  resumeUrl: z
+    .string()
+    .url()
+    .refine(isValidApplicationUrl, {
+      message: "Resume URL must be from the application domain",
+    })
+    .optional(),
 });
 
 // Schema for tracking action completion

@@ -69,6 +69,77 @@ interface ActionReadyForEmail {
 }
 
 // ============================================================================
+// Context Validation Helpers (Runtime Type Safety)
+// ============================================================================
+
+/**
+ * Safely extracts a string from context, returning undefined if not a valid string
+ */
+function safeString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() !== "" ? value : undefined;
+}
+
+/**
+ * Safely extracts a number from context, converting strings if valid
+ */
+function safeNumber(value: unknown, defaultValue: number = 0): number {
+  if (typeof value === "number" && !Number.isNaN(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? defaultValue : parsed;
+  }
+  return defaultValue;
+}
+
+/**
+ * Safely extracts an integer from context with bounds checking
+ */
+function safeInteger(
+  value: unknown,
+  defaultValue: number = 0,
+  min: number = 0,
+  max: number = Number.MAX_SAFE_INTEGER
+): number {
+  const num = safeNumber(value, defaultValue);
+  const bounded = Math.max(min, Math.min(max, Math.floor(num)));
+  return bounded;
+}
+
+/**
+ * Safely extracts a string array from context
+ */
+function safeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+/**
+ * Safely extracts special offer object from context
+ */
+function safeSpecialOffer(
+  value: unknown
+): { discountPercent?: number; validUntil?: string } | undefined {
+  if (!value || typeof value !== "object" || value === null) {
+    return undefined;
+  }
+  const obj = value as Record<string, unknown>;
+  const result: { discountPercent?: number; validUntil?: string } = {};
+
+  if (typeof obj.discountPercent === "number" && !Number.isNaN(obj.discountPercent)) {
+    result.discountPercent = Math.max(0, Math.min(100, obj.discountPercent));
+  }
+  if (typeof obj.validUntil === "string") {
+    result.validUntil = obj.validUntil;
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -449,13 +520,14 @@ async function sendRecoveryEmail(
     | AbandonedProfileCompletionEmailData
     | AbandonedIntegrationSetupEmailData;
 
+  // Build email data with runtime-validated context values
   switch (action.action_type) {
     case "survey_creation":
       emailData = {
         ...baseEmailData,
-        templateName: context.template_name as string | undefined,
-        lastStep: context.step as string | undefined,
-        lastFieldEdited: context.last_field as string | undefined,
+        templateName: safeString(context.template_name),
+        lastStep: safeString(context.step),
+        lastFieldEdited: safeString(context.last_field),
         createSurveyUrl: `${baseUrl}/dashboard/surveys/templates/new`,
       };
       break;
@@ -463,8 +535,8 @@ async function sendRecoveryEmail(
     case "survey_send":
       emailData = {
         ...baseEmailData,
-        contactsSelected: (context.contacts_selected as number) || 0,
-        templateName: context.template_name as string | undefined,
+        contactsSelected: safeInteger(context.contacts_selected, 0, 0, 10000),
+        templateName: safeString(context.template_name),
         sendSurveyUrl: `${baseUrl}/dashboard/surveys/send`,
       };
       break;
@@ -472,8 +544,8 @@ async function sendRecoveryEmail(
     case "video_request":
       emailData = {
         ...baseEmailData,
-        customerName: context.customer_name as string | undefined,
-        requestStep: context.step as string | undefined,
+        customerName: safeString(context.customer_name),
+        requestStep: safeString(context.step),
         createRequestUrl: `${baseUrl}/dashboard/video-testimonials/request`,
       };
       break;
@@ -481,39 +553,38 @@ async function sendRecoveryEmail(
     case "billing_upgrade":
       emailData = {
         ...baseEmailData,
-        targetPlan: context.target_plan as string | undefined,
-        currentPlan: context.current_plan as string | undefined,
+        targetPlan: safeString(context.target_plan),
+        currentPlan: safeString(context.current_plan),
         pricingUrl: `${baseUrl}/pricing`,
         upgradeUrl: `${baseUrl}/dashboard/settings/billing/upgrade`,
-        featuresHighlight: context.features_highlight as string[] | undefined,
-        specialOffer: context.special_offer as
-          | { discountPercent?: number; validUntil?: string }
-          | undefined,
+        featuresHighlight: safeStringArray(context.features_highlight),
+        specialOffer: safeSpecialOffer(context.special_offer),
       };
       break;
 
     case "profile_completion":
       emailData = {
         ...baseEmailData,
-        completionPercent: (context.completion_percent as number) || 0,
-        fieldsIncomplete: (context.fields_incomplete as string[]) || [],
+        completionPercent: safeInteger(context.completion_percent, 0, 0, 100),
+        fieldsIncomplete: safeStringArray(context.fields_incomplete),
         profileUrl: `${baseUrl}/dashboard/profile`,
       };
       break;
 
-    case "integration_setup":
+    case "integration_setup": {
+      const integrationType = safeString(context.integration_type) || "unknown";
       emailData = {
         ...baseEmailData,
-        integrationType: (context.integration_type as string) || "unknown",
+        integrationType,
         integrationDisplayName:
-          getIntegrationDisplayName(context.integration_type as string) ||
-          "Integration",
-        oauthStep: context.oauth_step as string | undefined,
+          getIntegrationDisplayName(integrationType) || "Integration",
+        oauthStep: safeString(context.oauth_step),
         integrationsUrl: `${baseUrl}/dashboard/settings/integrations`,
-        setupGuideUrl: context.setup_guide_url as string | undefined,
-        integrationBenefits: context.benefits as string[] | undefined,
+        setupGuideUrl: safeString(context.setup_guide_url),
+        integrationBenefits: safeStringArray(context.benefits),
       };
       break;
+    }
   }
 
   // Generate email content

@@ -47,6 +47,27 @@ function sanitizeUrl(url: string): string {
     if (!allowedProtocols.includes(parsed.protocol)) {
       return "#";
     }
+
+    // For http/https URLs, validate domain is from our application
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+      const baseUrl = emailConfig.baseUrl;
+      let allowedHostname: string;
+      try {
+        allowedHostname = new URL(baseUrl).hostname;
+      } catch {
+        allowedHostname = "localhost";
+      }
+
+      // Allow exact match or localhost for development
+      if (
+        parsed.hostname !== allowedHostname &&
+        parsed.hostname !== "localhost"
+      ) {
+        console.warn(`Blocked external URL in email template: ${url}`);
+        return "#";
+      }
+    }
+
     return parsed.href;
   } catch {
     return "#";

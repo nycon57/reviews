@@ -201,14 +201,19 @@ function createButton(
   `;
 }
 
+function getProgressColor(fillWidth: number): string {
+  if (fillWidth >= 80) {
+    return colors.accent.success;
+  }
+  if (fillWidth >= 50) {
+    return colors.accent.warning;
+  }
+  return colors.primary;
+}
+
 function createProgressBar(completionPercent: number): string {
   const fillWidth = Math.min(100, Math.max(0, completionPercent));
-  const progressColor =
-    fillWidth >= 80
-      ? colors.accent.success
-      : fillWidth >= 50
-        ? colors.accent.warning
-        : colors.primary;
+  const progressColor = getProgressColor(fillWidth);
 
   return `
     <div style="margin: 16px 0;">
@@ -1315,64 +1320,60 @@ export function getAbandonedIntegrationSetup2Email(
 // Email Template Dispatch Function
 // ============================================================================
 
+type EmailGeneratorPair<T> = [
+  (data: T) => { subject: string; html: string },
+  (data: T) => { subject: string; html: string }
+];
+
+type AbandonedEmailData =
+  | AbandonedSurveyCreationEmailData
+  | AbandonedSurveySendEmailData
+  | AbandonedVideoRequestEmailData
+  | AbandonedBillingUpgradeEmailData
+  | AbandonedProfileCompletionEmailData
+  | AbandonedIntegrationSetupEmailData;
+
+const EMAIL_GENERATORS: Record<string, EmailGeneratorPair<AbandonedEmailData>> = {
+  survey_creation: [
+    getAbandonedSurveyCreation1Email as (data: AbandonedEmailData) => { subject: string; html: string },
+    getAbandonedSurveyCreation2Email as (data: AbandonedEmailData) => { subject: string; html: string },
+  ],
+  survey_send: [
+    getAbandonedSurveySend1Email as (data: AbandonedEmailData) => { subject: string; html: string },
+    getAbandonedSurveySend2Email as (data: AbandonedEmailData) => { subject: string; html: string },
+  ],
+  video_request: [
+    getAbandonedVideoRequest1Email as (data: AbandonedEmailData) => { subject: string; html: string },
+    getAbandonedVideoRequest2Email as (data: AbandonedEmailData) => { subject: string; html: string },
+  ],
+  billing_upgrade: [
+    getAbandonedBillingUpgrade1Email as (data: AbandonedEmailData) => { subject: string; html: string },
+    getAbandonedBillingUpgrade2Email as (data: AbandonedEmailData) => { subject: string; html: string },
+  ],
+  profile_completion: [
+    getAbandonedProfileCompletion1Email as (data: AbandonedEmailData) => { subject: string; html: string },
+    getAbandonedProfileCompletion2Email as (data: AbandonedEmailData) => { subject: string; html: string },
+  ],
+  integration_setup: [
+    getAbandonedIntegrationSetup1Email as (data: AbandonedEmailData) => { subject: string; html: string },
+    getAbandonedIntegrationSetup2Email as (data: AbandonedEmailData) => { subject: string; html: string },
+  ],
+};
+
 /**
  * Gets the appropriate email template based on action type and email number
  */
 export function getAbandonedActionRecoveryEmail(
   actionType: string,
   emailNumber: 1 | 2,
-  data:
-    | AbandonedSurveyCreationEmailData
-    | AbandonedSurveySendEmailData
-    | AbandonedVideoRequestEmailData
-    | AbandonedBillingUpgradeEmailData
-    | AbandonedProfileCompletionEmailData
-    | AbandonedIntegrationSetupEmailData
+  data: AbandonedEmailData
 ): { subject: string; html: string } {
-  switch (actionType) {
-    case "survey_creation":
-      return emailNumber === 1
-        ? getAbandonedSurveyCreation1Email(
-            data as AbandonedSurveyCreationEmailData
-          )
-        : getAbandonedSurveyCreation2Email(
-            data as AbandonedSurveyCreationEmailData
-          );
-    case "survey_send":
-      return emailNumber === 1
-        ? getAbandonedSurveySend1Email(data as AbandonedSurveySendEmailData)
-        : getAbandonedSurveySend2Email(data as AbandonedSurveySendEmailData);
-    case "video_request":
-      return emailNumber === 1
-        ? getAbandonedVideoRequest1Email(data as AbandonedVideoRequestEmailData)
-        : getAbandonedVideoRequest2Email(
-            data as AbandonedVideoRequestEmailData
-          );
-    case "billing_upgrade":
-      return emailNumber === 1
-        ? getAbandonedBillingUpgrade1Email(
-            data as AbandonedBillingUpgradeEmailData
-          )
-        : getAbandonedBillingUpgrade2Email(
-            data as AbandonedBillingUpgradeEmailData
-          );
-    case "profile_completion":
-      return emailNumber === 1
-        ? getAbandonedProfileCompletion1Email(
-            data as AbandonedProfileCompletionEmailData
-          )
-        : getAbandonedProfileCompletion2Email(
-            data as AbandonedProfileCompletionEmailData
-          );
-    case "integration_setup":
-      return emailNumber === 1
-        ? getAbandonedIntegrationSetup1Email(
-            data as AbandonedIntegrationSetupEmailData
-          )
-        : getAbandonedIntegrationSetup2Email(
-            data as AbandonedIntegrationSetupEmailData
-          );
-    default:
-      throw new Error(`Unknown abandoned action type: ${actionType}`);
+  const generators = EMAIL_GENERATORS[actionType];
+
+  if (!generators) {
+    throw new Error(`Unknown abandoned action type: ${actionType}`);
   }
+
+  const generator = generators[emailNumber - 1];
+  return generator(data);
 }

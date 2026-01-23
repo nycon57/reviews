@@ -103,8 +103,7 @@ function safeInteger(
   max: number = Number.MAX_SAFE_INTEGER
 ): number {
   const num = safeNumber(value, defaultValue);
-  const bounded = Math.max(min, Math.min(max, Math.floor(num)));
-  return bounded;
+  return Math.max(min, Math.min(max, Math.floor(num)));
 }
 
 /**
@@ -328,10 +327,11 @@ export async function updateActionContext(
 // ============================================================================
 
 /**
- * Process recovery email queue for email 1 (1 hour after start)
+ * Process recovery email queue for a specific email number
  * Called by cron job every 5 minutes
  */
-export async function processRecoveryEmail1Queue(
+async function processRecoveryEmailQueue(
+  emailNumber: 1 | 2,
   batchSize: number = 50
 ): Promise<QueueProcessResult> {
   const supabase = createAdminClient();
@@ -342,14 +342,16 @@ export async function processRecoveryEmail1Queue(
     errors: [],
   };
 
-  // Get actions ready for email 1
-  const { data: actions, error } = await supabase.rpc(
-    "get_actions_for_recovery_email_1",
-    { p_batch_size: batchSize }
-  );
+  const rpcName = emailNumber === 1
+    ? "get_actions_for_recovery_email_1"
+    : "get_actions_for_recovery_email_2";
+
+  const { data: actions, error } = await supabase.rpc(rpcName, {
+    p_batch_size: batchSize,
+  });
 
   if (error) {
-    result.errors.push(`Failed to fetch actions for email 1: ${error.message}`);
+    result.errors.push(`Failed to fetch actions for email ${emailNumber}: ${error.message}`);
     return result;
   }
 
@@ -359,7 +361,7 @@ export async function processRecoveryEmail1Queue(
 
   for (const action of actions as ActionReadyForEmail[]) {
     try {
-      const sendResult = await sendRecoveryEmail(action, 1);
+      const sendResult = await sendRecoveryEmail(action, emailNumber);
 
       if (sendResult.success) {
         result.processed++;
@@ -381,56 +383,23 @@ export async function processRecoveryEmail1Queue(
 }
 
 /**
+ * Process recovery email queue for email 1 (1 hour after start)
+ * Called by cron job every 5 minutes
+ */
+export async function processRecoveryEmail1Queue(
+  batchSize: number = 50
+): Promise<QueueProcessResult> {
+  return processRecoveryEmailQueue(1, batchSize);
+}
+
+/**
  * Process recovery email queue for email 2 (24 hours after start)
  * Called by cron job every 5 minutes
  */
 export async function processRecoveryEmail2Queue(
   batchSize: number = 50
 ): Promise<QueueProcessResult> {
-  const supabase = createAdminClient();
-  const result: QueueProcessResult = {
-    processed: 0,
-    failed: 0,
-    skipped: 0,
-    errors: [],
-  };
-
-  // Get actions ready for email 2
-  const { data: actions, error } = await supabase.rpc(
-    "get_actions_for_recovery_email_2",
-    { p_batch_size: batchSize }
-  );
-
-  if (error) {
-    result.errors.push(`Failed to fetch actions for email 2: ${error.message}`);
-    return result;
-  }
-
-  if (!actions || actions.length === 0) {
-    return result;
-  }
-
-  for (const action of actions as ActionReadyForEmail[]) {
-    try {
-      const sendResult = await sendRecoveryEmail(action, 2);
-
-      if (sendResult.success) {
-        result.processed++;
-      } else if (sendResult.skipped) {
-        result.skipped++;
-      } else {
-        result.failed++;
-        result.errors.push(`Action ${action.action_id}: ${sendResult.error}`);
-      }
-    } catch (err) {
-      result.failed++;
-      result.errors.push(
-        `Action ${action.action_id}: ${err instanceof Error ? err.message : "Unknown error"}`
-      );
-    }
-  }
-
-  return result;
+  return processRecoveryEmailQueue(2, batchSize);
 }
 
 /**

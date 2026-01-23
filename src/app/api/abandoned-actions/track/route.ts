@@ -187,9 +187,6 @@ export async function POST(request: NextRequest) {
           message: "Action context updated",
         });
       }
-
-      default:
-        return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
   } catch (error) {
     console.error("Abandoned action tracking error:", error);

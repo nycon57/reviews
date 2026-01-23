@@ -212,13 +212,10 @@ export function evaluateBranches(
   branches: ConditionalBranch[],
   context: ConditionContext
 ): ConditionalBranch | null {
-  for (const branch of branches) {
-    const result = evaluateBranch(branch, context);
-    if (result) {
-      return result;
-    }
-  }
-  return null;
+  return (
+    branches.find((branch) => evaluateConditions(branch.conditions, context)) ??
+    null
+  );
 }
 
 // ============================================================================
@@ -233,12 +230,10 @@ export function evaluateExitConditions(
   exitConditions: ExitCondition[],
   context: ConditionContext
 ): ExitCondition | null {
-  for (const exitCondition of exitConditions) {
-    if (evaluateConditions(exitCondition.conditions, context)) {
-      return exitCondition;
-    }
-  }
-  return null;
+  return (
+    exitConditions.find((ec) => evaluateConditions(ec.conditions, context)) ??
+    null
+  );
 }
 
 // ============================================================================

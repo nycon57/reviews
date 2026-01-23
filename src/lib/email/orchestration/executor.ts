@@ -19,7 +19,6 @@ import type {
   StepProcessResult,
   ConditionContext,
   EmailContext,
-  DelayConfig,
   ExitCondition,
   ConditionalBranch,
 } from "./types";
@@ -28,25 +27,11 @@ import {
   evaluateBranches,
   defaultCustomEvaluators,
 } from "./conditions";
+import { addDelay } from "./utils";
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/**
- * Convert delay config to date
- */
-function addDelay(date: Date, delay: DelayConfig): Date {
-  const result = new Date(date);
-  const multipliers: Record<string, number> = {
-    minutes: 60 * 1000,
-    hours: 60 * 60 * 1000,
-    days: 24 * 60 * 60 * 1000,
-    weeks: 7 * 24 * 60 * 60 * 1000,
-  };
-  result.setTime(result.getTime() + delay.value * multipliers[delay.unit]);
-  return result;
-}
 
 /**
  * Build condition context for evaluation

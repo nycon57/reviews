@@ -200,3 +200,13 @@ export {
   getRegistryStats,
   clearRegistry,
 } from "./registry";
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+export {
+  // Delay calculations
+  delayToMs,
+  addDelay,
+} from "./utils";

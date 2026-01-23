@@ -23,6 +23,7 @@ import type {
   DelayConfig,
 } from "./types";
 import { evaluateConditions, defaultCustomEvaluators } from "./conditions";
+import { addDelay } from "./utils";
 
 // ============================================================================
 // Validation Schemas
@@ -51,28 +52,6 @@ const manualTriggerSchema = z.object({
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-/**
- * Convert delay config to milliseconds
- */
-function delayToMs(delay: DelayConfig): number {
-  const multipliers: Record<string, number> = {
-    minutes: 60 * 1000,
-    hours: 60 * 60 * 1000,
-    days: 24 * 60 * 60 * 1000,
-    weeks: 7 * 24 * 60 * 60 * 1000,
-  };
-  return delay.value * (multipliers[delay.unit] || 0);
-}
-
-/**
- * Add delay to a date
- */
-function addDelay(date: Date, delay: DelayConfig): Date {
-  const result = new Date(date);
-  result.setTime(result.getTime() + delayToMs(delay));
-  return result;
-}
 
 /**
  * Check if user has an active sequence of the given type

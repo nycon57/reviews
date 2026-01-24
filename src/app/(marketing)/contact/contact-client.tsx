@@ -7,16 +7,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Mail,
+  Envelope as Mail,
   Phone,
   Calendar,
-  Send,
+  PaperPlaneRight as Send,
   CheckCircle,
   Clock,
-  MessageSquare,
-  ChevronDown,
+  Chats as MessageSquare,
+  CaretDown as ChevronDown,
   ArrowRight,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import {
   fadeInUp,
   staggerContainer,

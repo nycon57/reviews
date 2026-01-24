@@ -2,7 +2,9 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { checkAdminAccess } from "@/lib/auth/actions";
 import { StatsRowSkeleton, TableSkeleton } from "@/components/shared";
-import { FlaskConical } from "lucide-react";
+import {
+  Flask as FlaskConical,
+} from "@phosphor-icons/react/dist/ssr";
 import { ABTestsListClient } from "./ab-tests-list-client";
 
 export const metadata = {

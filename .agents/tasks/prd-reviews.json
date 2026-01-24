@@ -3160,7 +3160,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Trial-to-paid conversion rate improves",
         "Sequence timing accurate to trial end date",
@@ -3193,7 +3193,10 @@
           "email_4": "Your trial has ended",
           "email_5": "We'd love to have you back \u2014 special offer inside"
         }
-      }
+      },
+      "startedAt": "2026-01-22T03:03:35.485115+00:00",
+      "completedAt": "2026-01-22T03:07:38.473803+00:00",
+      "updatedAt": "2026-01-22T03:07:38.473647+00:00"
     },
     {
       "id": "S086",
@@ -3215,7 +3218,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Payment recovery rate > 60%",
         "Emails trigger on payment_intent.payment_failed webhook",
@@ -3253,7 +3256,10 @@
           "email_4": "Final notice: Update payment to avoid suspension",
           "email_5": "Your account has been suspended"
         }
-      }
+      },
+      "startedAt": "2026-01-22T03:36:42.206328+00:00",
+      "completedAt": "2026-01-22T03:40:39.596783+00:00",
+      "updatedAt": "2026-01-22T03:40:39.596621+00:00"
     },
     {
       "id": "S087",
@@ -3275,7 +3281,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "All subscription events trigger correct emails",
         "Invoice PDFs attach correctly",
@@ -3302,7 +3308,10 @@
           "src/lib/email/templates/subscription-feedback.tsx",
           "src/lib/email/templates/invoice-available.tsx"
         ]
-      }
+      },
+      "startedAt": "2026-01-22T03:40:41.667424+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-22T03:40:41.667589+00:00"
     },
     {
       "id": "S088",
@@ -3324,7 +3333,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Announcements send to correct segments",
         "Admin UI functional and secure",
@@ -3364,7 +3373,10 @@
             "created_by"
           ]
         }
-      }
+      },
+      "startedAt": "2026-01-22T16:22:05.261084+00:00",
+      "completedAt": "2026-01-22T16:29:49.818335+00:00",
+      "updatedAt": "2026-01-22T16:29:49.818205+00:00"
     },
     {
       "id": "S089",
@@ -3386,7 +3398,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Alerts trigger in real-time (< 5 min delay)",
         "Preferences respected",
@@ -3408,7 +3420,10 @@
           "src/lib/email/templates/alert-integration-disconnected.tsx"
         ],
         "smart_grouping": "Aggregate multiple alerts of same type within 1 hour"
-      }
+      },
+      "startedAt": "2026-01-22T17:26:16.943333+00:00",
+      "completedAt": "2026-01-22T17:30:53.738478+00:00",
+      "updatedAt": "2026-01-22T17:30:53.738202+00:00"
     },
     {
       "id": "S090",
@@ -3434,7 +3449,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "All preferences respected across all email sends",
         "One-click unsubscribe works from any email",
@@ -3465,7 +3480,10 @@
         "components": [
           "src/components/settings/email-preferences-form.tsx"
         ]
-      }
+      },
+      "startedAt": "2026-01-22T18:00:50.046814+00:00",
+      "completedAt": "2026-01-22T18:04:23.752435+00:00",
+      "updatedAt": "2026-01-22T18:04:23.752326+00:00"
     },
     {
       "id": "S091",
@@ -3489,7 +3507,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Metrics accurately reflect Resend webhook data",
         "Dashboard loads within 3 seconds",
@@ -3516,7 +3534,10 @@
         "queries": [
           "src/lib/email/analytics/queries.ts"
         ]
-      }
+      },
+      "startedAt": "2026-01-22T18:32:46.321103+00:00",
+      "completedAt": "2026-01-22T18:36:26.443599+00:00",
+      "updatedAt": "2026-01-22T18:36:26.443473+00:00"
     },
     {
       "id": "S092",
@@ -3538,7 +3559,7 @@
       ],
       "priority": "P3",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "A/B split distributes correctly",
         "Statistical significance calculation accurate",
@@ -3559,7 +3580,10 @@
           "src/app/(dashboard)/admin/email-ab-tests/page.tsx",
           "src/app/(dashboard)/admin/email-ab-tests/[id]/page.tsx"
         ]
-      }
+      },
+      "startedAt": "2026-01-22T19:29:23.893955+00:00",
+      "completedAt": "2026-01-22T19:43:34.261241+00:00",
+      "updatedAt": "2026-01-22T19:43:34.260953+00:00"
     },
     {
       "id": "S093",
@@ -3581,7 +3605,7 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Abandonment detection accurate",
         "Recovery emails increase completion rates",
@@ -3621,7 +3645,10 @@
           "email_1": "1 hour after abandonment",
           "email_2": "24 hours after abandonment"
         }
-      }
+      },
+      "startedAt": "2026-01-23T02:11:56.951452+00:00",
+      "completedAt": "2026-01-23T02:18:15.225988+00:00",
+      "updatedAt": "2026-01-23T02:18:15.225871+00:00"
     },
     {
       "id": "S094",
@@ -3642,7 +3669,7 @@
       ],
       "priority": "P3",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Referral tracking accurate",
         "Reward notifications trigger correctly",
@@ -3661,7 +3688,10 @@
           "src/lib/email/templates/referral-leaderboard.tsx"
         ],
         "referral_tracking": "Integrate with referral system (if exists) or create basic tracking"
-      }
+      },
+      "startedAt": "2026-01-23T02:56:20.384452+00:00",
+      "completedAt": "2026-01-23T03:06:59.455585+00:00",
+      "updatedAt": "2026-01-23T03:06:59.455476+00:00"
     },
     {
       "id": "S095",
@@ -3685,7 +3715,7 @@
       ],
       "priority": "P0",
       "estimate": "XL",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Sequences execute reliably at scale",
         "Conditional logic works correctly",
@@ -3724,7 +3754,10 @@
           "src/app/api/cron/process-email-sequences/route.ts",
           "supabase/migrations/20260121_email_sequences.sql"
         ]
-      }
+      },
+      "startedAt": "2026-01-23T03:40:24.538052+00:00",
+      "completedAt": "2026-01-23T03:51:12.758406+00:00",
+      "updatedAt": "2026-01-23T03:51:12.758242+00:00"
     }
   ],
   "phases": [

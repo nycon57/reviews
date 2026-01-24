@@ -7,7 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Monitor, Smartphone, Code, Eye, Copy, Check } from "lucide-react";
+import {
+  Monitor,
+  DeviceMobile as Smartphone,
+  Code,
+  Eye,
+  Copy,
+  Check,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 // Import email components for preview

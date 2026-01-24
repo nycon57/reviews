@@ -20,23 +20,23 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
   Megaphone,
-  Sparkles,
+  Sparkle as Sparkles,
   Wrench,
   Shield,
-  Send,
+  PaperPlaneRight as Send,
   Eye,
   Calendar,
   Users,
-  Mail,
-  Loader2,
+  Envelope as Mail,
+  SpinnerGap as Loader2,
   Clock,
-  AlertCircle,
-  CheckCircle2,
+  WarningCircle as AlertCircle,
+  CheckCircle as CheckCircle2,
   Image as ImageIcon,
-  Video,
+  VideoCamera as Video,
   FileText,
-  BarChart3,
-} from "lucide-react";
+  ChartBar as BarChart3,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -49,7 +49,7 @@ type AnnouncementAudience =
   | "all"
   | "admins_only"
   | "managers_only"
-  | "loan_officers_only"
+  | "users_only"
   | "free_tier"
   | "starter_tier"
   | "professional_tier"
@@ -105,7 +105,7 @@ const AUDIENCE_OPTIONS: { value: AnnouncementAudience; label: string }[] = [
   { value: "all", label: "All Users" },
   { value: "admins_only", label: "Admins Only" },
   { value: "managers_only", label: "Managers Only" },
-  { value: "loan_officers_only", label: "Loan Officers Only" },
+  { value: "users_only", label: "Users Only" },
   { value: "free_tier", label: "Free Tier Users" },
   { value: "starter_tier", label: "Starter Plan Users" },
   { value: "professional_tier", label: "Professional Plan Users" },

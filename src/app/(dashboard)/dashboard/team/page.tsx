@@ -1,10 +1,11 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users } from "lucide-react";
+import {
+  Users,
+} from "@phosphor-icons/react/dist/ssr";
 import { TeamManagement } from "./team-management";
+import { requireEnterpriseManager } from "@/lib/access";
 
 export const metadata = {
   title: "Team Management | RepWell",
@@ -35,34 +36,10 @@ function TeamSkeleton() {
   );
 }
 
-async function checkTeamAccess() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  // Only managers and admins can access team management
-  if (userData.role !== "admin" && userData.role !== "manager") {
-    redirect("/dashboard");
-  }
-
-  return { role: userData.role };
-}
-
 export default async function TeamPage() {
-  const { role } = await checkTeamAccess();
+  // Check access - requires enterprise account + manager/admin role
+  const ctx = await requireEnterpriseManager();
+  const role = ctx.role;
 
   return (
     <div className="flex-1 space-y-6">

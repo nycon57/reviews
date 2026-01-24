@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useTransition, useRef } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Settings, TestTube, Activity, Book, Building2 } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  Gear as Settings,
+  TestTube,
+  Pulse as Activity,
+  Book,
+  BuildingOffice as Building2,
+} from "@phosphor-icons/react";
 import { WebhookConfigManager } from "@/components/distribution";
 import { WebhookTester } from "@/components/webhooks/webhook-tester";
 import { WebhookLogsViewer } from "@/components/webhooks/webhook-logs-viewer";

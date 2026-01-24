@@ -40,24 +40,24 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  FlaskConical,
+  Flask as FlaskConical,
   Plus,
-  Search,
-  MoreHorizontal,
+  MagnifyingGlass as Search,
+  DotsThree as MoreHorizontal,
   Eye,
   Pencil,
-  Trash2,
+  Trash as Trash2,
   Play,
   Pause,
   Square,
   Trophy,
-  RefreshCcw,
-  Activity,
-  CheckCircle2,
-  FileEdit,
-  Loader2,
-  AlertCircle,
-} from "lucide-react";
+  ArrowCounterClockwise as RefreshCcw,
+  Pulse as Activity,
+  CheckCircle as CheckCircle2,
+  NotePencil as FileEdit,
+  SpinnerGap as Loader2,
+  WarningCircle as AlertCircle,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";

@@ -1,38 +1,19 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { Eye } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import {
+  Eye,
+} from "@phosphor-icons/react/dist/ssr";
 import { CardSkeleton } from "@/components/shared";
 import { GeoDashboard } from "./geo-dashboard";
+import { requireProTier } from "@/lib/access";
 
 export const metadata = {
   title: "AI Visibility & GEO | RepWell",
   description: "Optimize your content for AI search engines like ChatGPT, Perplexity, and Google AI Overviews",
 };
 
-async function checkAccess() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  return { role: userData.role, organizationId: userData.organization_id };
-}
-
 export default async function GeoPage() {
-  await checkAccess();
+  // Check access - requires Pro tier (pro or enterprise subscription)
+  await requireProTier();
 
   return (
     <div className="flex-1 space-y-6">

@@ -1,6 +1,13 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, AlertTriangle, Key, Shield, Lock } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Warning as AlertTriangle,
+  Key,
+  Shield,
+  Lock,
+} from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";

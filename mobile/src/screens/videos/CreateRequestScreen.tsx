@@ -65,7 +65,7 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
         setLoanOfficers(officers);
 
         // If user is a loan officer, pre-select themselves
-        if (profile?.role === 'loan_officer') {
+        if (profile?.role === 'user') {
           // Match by user_id, not loan officer id
           const userOfficer = officers.find(lo => lo.user_id === profile.id);
           if (userOfficer) {

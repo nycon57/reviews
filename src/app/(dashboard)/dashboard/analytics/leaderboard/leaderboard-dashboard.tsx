@@ -3,7 +3,13 @@
 import { useEffect, useState, useTransition, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EnhancedLeaderboard, ProfileCompletionLeaderboard } from "@/components/gamification";
-import { Crown, Medal, Award, Users, Loader2 } from "lucide-react";
+import {
+  Crown,
+  Medal,
+  Medal as Award,
+  Users,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { getEnhancedLeaderboard } from "@/lib/gamification/actions";
 import type { FilterOptions } from "@/lib/dashboard";
 import type { EnhancedLeaderboardEntry } from "@/lib/gamification/types";

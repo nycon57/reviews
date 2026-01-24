@@ -6,19 +6,19 @@ import {
   Book,
   Key,
   Clock,
-  AlertTriangle,
-  Webhook,
+  Warning as AlertTriangle,
+  Plugs as Webhook,
   Code,
   Play,
   Copy,
   Check,
-  ChevronRight,
-  ChevronDown,
-  ExternalLink,
-  Loader2,
-  Send,
-  FileJson,
-} from "lucide-react";
+  CaretRight as ChevronRight,
+  CaretDown as ChevronDown,
+  ArrowSquareOut as ExternalLink,
+  SpinnerGap as Loader2,
+  PaperPlaneRight as Send,
+  FileCode as FileJson,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -254,7 +254,7 @@ const apiEndpoints: ApiEndpoint[] = [
     tag: "Users",
     parameters: [
       { name: "page", in: "query", type: "integer", description: "Page number" },
-      { name: "role", in: "query", type: "string", description: "Filter by role: admin, manager, loan_officer" },
+      { name: "role", in: "query", type: "string", description: "Filter by role: admin, manager, user" },
     ],
   },
   {

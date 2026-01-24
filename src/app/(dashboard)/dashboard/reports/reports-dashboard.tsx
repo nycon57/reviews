@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { FileText, Download, Clock, Share2, Loader2 } from "lucide-react";
+import {
+  FileText,
+  DownloadSimple as Download,
+  Clock,
+  ShareNetwork as Share2,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

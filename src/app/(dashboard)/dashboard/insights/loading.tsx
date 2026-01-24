@@ -1,4 +1,6 @@
-import { Sparkles } from "lucide-react";
+import {
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react/dist/ssr";
 import { ChartSkeleton, CardSkeleton } from "@/components/shared";
 import { Skeleton } from "@/components/ui/skeleton";
 

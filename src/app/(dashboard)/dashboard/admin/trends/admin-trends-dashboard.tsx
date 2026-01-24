@@ -23,15 +23,15 @@ import {
   Bar,
 } from "recharts";
 import {
-  Loader2,
+  SpinnerGap as Loader2,
   Star,
-  TrendingUp,
-  TrendingDown,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
   Minus,
   Users,
-  BarChart3,
-  MessageSquare,
-} from "lucide-react";
+  ChartBar as BarChart3,
+  Chats as MessageSquare,
+} from "@phosphor-icons/react";
 import {
   getTeamMetrics,
   getTeamRatingTrend,

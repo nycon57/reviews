@@ -1,5 +1,6 @@
 import { redirect, notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { VideoDetailView } from "@/components/reviews/video-detail-view";
 import { ReviewDetailView } from "@/components/reviews/review-detail-view";
 
@@ -9,15 +10,13 @@ export const metadata = {
 };
 
 async function checkAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("role, organization_id")
@@ -29,13 +28,13 @@ async function checkAccess() {
   }
 
   return {
-    role: userData.role as "admin" | "manager" | "loan_officer",
+    role: userData.role as "admin" | "manager" | "user",
     organizationId: userData.organization_id,
   };
 }
 
 async function getVideoTestimonial(id: string, organizationId: string) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("video_testimonial_responses")
@@ -128,7 +127,7 @@ async function getVideoTestimonial(id: string, organizationId: string) {
 }
 
 async function getTextReview(id: string, organizationId: string) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")

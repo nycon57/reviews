@@ -22,7 +22,16 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import { Loader2, Star, TrendingUp, TrendingDown, Minus, Users, BarChart3, MessageSquare } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  Star,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
+  Minus,
+  Users,
+  ChartBar as BarChart3,
+  Chats as MessageSquare,
+} from "@phosphor-icons/react";
 import { getRatingTrend, getNPSTrend, type TrendDataPoint } from "@/lib/dashboard";
 import { getTeamRatingTrend, getFilterOptions, type FilterOptions } from "@/lib/dashboard";
 

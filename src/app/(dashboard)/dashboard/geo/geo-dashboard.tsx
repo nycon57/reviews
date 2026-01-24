@@ -27,7 +27,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Lightbulb, Code2, HelpCircle, RefreshCw } from "lucide-react";
+import {
+  Eye,
+  Lightbulb,
+  CodeSimple as Code2,
+  Question as HelpCircle,
+  ArrowsClockwise as RefreshCw,
+} from "@phosphor-icons/react";
 
 export function GeoDashboard() {
   const [isPending, startTransition] = useTransition();

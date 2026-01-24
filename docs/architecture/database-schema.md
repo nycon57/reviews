@@ -76,7 +76,7 @@ CREATE TABLE users (
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   avatar_url TEXT,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'loan_officer')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'manager', 'user')),
   is_active BOOLEAN DEFAULT TRUE,
   last_login_at TIMESTAMPTZ,
   notification_preferences JSONB DEFAULT '{}',

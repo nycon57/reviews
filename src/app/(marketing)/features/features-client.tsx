@@ -5,24 +5,24 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Star,
-  BarChart3,
-  MessageSquare,
-  Zap,
-  Send,
-  LineChart,
+  ChartBar as BarChart3,
+  Chats as MessageSquare,
+  Lightning as Zap,
+  PaperPlaneRight as Send,
+  ChartLine as LineChart,
   Target,
   Brain,
   Shield,
   Globe,
-  Smartphone,
+  DeviceMobile as Smartphone,
   Users,
   Bell,
   FileText,
-  TrendingUp,
-  Award,
+  TrendUp as TrendingUp,
+  Medal as Award,
   CheckCircle,
   ArrowRight,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { fadeInUp, staggerContainer, staggerChildrenDelayed, blobFloat, blobFloatRotate, viewportOnce } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

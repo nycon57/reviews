@@ -6,18 +6,18 @@ import { useRouter } from "next/navigation";
 import {
   Plus,
   FileText,
-  MoreHorizontal,
-  Edit,
+  DotsThree as MoreHorizontal,
+  PencilSimple as Edit,
   Copy,
-  Trash2,
+  Trash as Trash2,
   Eye,
   Star,
   Hash,
-  MessageSquare,
+  Chats as MessageSquare,
   List,
   ToggleLeft,
   ToggleRight,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {

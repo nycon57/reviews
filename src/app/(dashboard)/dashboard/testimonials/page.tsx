@@ -1,10 +1,13 @@
 import { Suspense } from "react";
-import { Quote } from "lucide-react";
+import {
+  Quotes as Quote,
+} from "@phosphor-icons/react/dist/ssr";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CardSkeleton } from "@/components/shared";
 import { TestimonialGenerator } from "@/components/testimonials/testimonial-generator";
 import { TestimonialGallery } from "@/components/testimonials/testimonial-gallery";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { redirect } from "next/navigation";
 import type { TestimonialStats, TestimonialFormat, TestimonialStatus } from "@/lib/ai/testimonial-types";
 import type { SentimentLabel, ReviewTheme } from "@/lib/ai/types";
@@ -16,14 +19,13 @@ export const metadata = {
 
 // Get best review candidates for testimonial generation
 async function getTestimonialCandidates() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // Get high-rated, approved reviews that don't have testimonials yet
   const { data: reviews, error } = await supabase
@@ -88,14 +90,13 @@ async function getTestimonialCandidates() {
 
 // Get existing testimonials
 async function getTestimonials() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: testimonials, error, count } = await (supabase as any)
@@ -174,14 +175,13 @@ async function getTestimonials() {
 
 // Get testimonial stats
 async function getTestimonialStats(): Promise<TestimonialStats> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   const { data } = await supabase
     .from("testimonials")

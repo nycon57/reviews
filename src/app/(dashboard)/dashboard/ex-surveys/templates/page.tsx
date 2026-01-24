@@ -3,22 +3,23 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
-  ClipboardList,
+  ClipboardText as ClipboardList,
   Users,
-  Zap,
-  LogOut,
+  Lightning as Zap,
+  SignOut as LogOut,
   UserPlus,
   Plus,
   FileText,
   ArrowRight,
-} from "lucide-react";
+} from "@phosphor-icons/react/dist/ssr";
 import { getEXSurveyTemplates, getEXSurveys, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
 
 export const metadata = {
@@ -27,15 +28,13 @@ export const metadata = {
 };
 
 async function checkAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("role, organization_id")

@@ -27,27 +27,27 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  FlaskConical,
+  Flask as FlaskConical,
   ArrowLeft,
-  MoreHorizontal,
+  DotsThree as MoreHorizontal,
   Play,
   Pause,
   Square,
   Pencil,
-  Trash2,
+  Trash as Trash2,
   Trophy,
   Clock,
   Target,
-  TrendingUp,
+  TrendUp as TrendingUp,
   Users,
-  Mail,
-  MousePointerClick,
+  Envelope as Mail,
+  CursorClick as MousePointerClick,
   Eye,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
+  SpinnerGap as Loader2,
+  WarningCircle as AlertCircle,
+  CheckCircle as CheckCircle2,
   Info,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "@/hooks/use-toast";

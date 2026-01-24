@@ -1,5 +1,6 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { redirect } from "next/navigation";
 import { WebhooksPageContent } from "./webhooks-page-content";
 import { CardSkeleton } from "@/components/shared/skeletons";
@@ -10,15 +11,13 @@ export const metadata = {
 };
 
 export default async function WebhooksPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // Check if user is admin
   const { data: userData } = await supabase

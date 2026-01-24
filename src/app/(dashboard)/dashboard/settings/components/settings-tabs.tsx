@@ -3,17 +3,24 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, Suspense } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Link2, Key, Bell } from 'lucide-react';
+import {
+  User,
+  Link as Link2,
+  Key,
+  Bell,
+  CreditCard,
+} from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { ProfileTab } from './profile-tab';
 import { IntegrationsTab } from './integrations-tab';
 import { ApiTab } from './api-tab';
 import { NotificationsTab } from './notifications-tab';
+import { BillingTab } from './billing-tab';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications';
+type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing';
 
-const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications'];
+const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing'];
 
 function isSettingsTab(value: string | null): value is SettingsTab {
   return value !== null && VALID_TABS.includes(value as SettingsTab);
@@ -21,6 +28,7 @@ function isSettingsTab(value: string | null): value is SettingsTab {
 
 const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
   { value: 'profile', label: 'Profile', icon: User },
+  { value: 'billing', label: 'Billing', icon: CreditCard },
   { value: 'integrations', label: 'Integrations', icon: Link2 },
   { value: 'api', label: 'API', icon: Key },
   { value: 'notifications', label: 'Notifications', icon: Bell },
@@ -120,6 +128,12 @@ export function SettingsTabs({
               userZillowProfileUrl={userZillowProfileUrl}
               userTimezone={userTimezone}
             />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="billing" className="m-0 animate-fade-in">
+          <Suspense fallback={<TabSkeleton />}>
+            <BillingTab />
           </Suspense>
         </TabsContent>
 

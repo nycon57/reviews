@@ -1,6 +1,4 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { StatsRowSkeleton, ChartSkeleton, CardSkeleton } from "@/components/shared";
 import {
   TeamStatsCards,
@@ -18,31 +16,12 @@ import {
   getLowPerformers,
   getTeamRatingTrend,
 } from "@/lib/dashboard";
+import { requireEnterpriseManager } from "@/lib/access";
 
 export const metadata = {
   title: "Manager Dashboard | RepWell",
   description: "Team performance overview and analytics",
 };
-
-// Check if user is a manager or admin
-async function checkManagerAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return false;
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  return userData?.role === "manager" || userData?.role === "admin";
-}
 
 // Server component for team stats
 async function TeamStats() {
@@ -113,12 +92,8 @@ async function getInitialData() {
 }
 
 export default async function ManagerDashboardPage() {
-  // Check access
-  const hasAccess = await checkManagerAccess();
-
-  if (!hasAccess) {
-    redirect("/dashboard");
-  }
+  // Check access - requires enterprise account + manager/admin role
+  await requireEnterpriseManager();
 
   // Get initial data for client component
   const initialData = await getInitialData();

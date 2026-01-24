@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock, Loader2, Check, X, ShieldCheck } from "lucide-react";
+import {
+  Lock,
+  SpinnerGap as Loader2,
+  Check,
+  X,
+  ShieldCheck,
+} from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { updatePassword } from "@/lib/auth/actions";
+import { unifiedUpdatePassword } from "@/lib/auth/actions";
 import {
   updatePasswordSchema,
   type UpdatePasswordInput,
@@ -101,7 +107,7 @@ export default function ResetPasswordPage() {
   const onSubmit = async (data: UpdatePasswordInput) => {
     setIsLoading(true);
     try {
-      const result = await updatePassword(data);
+      const result = await unifiedUpdatePassword(data);
       if (result.success) {
         toast({
           title: "Password updated!",

@@ -1,43 +1,20 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { CardSkeleton } from "@/components/shared";
-import { Mail } from "lucide-react";
+import {
+  Envelope as Mail,
+} from "@phosphor-icons/react/dist/ssr";
 import { CampaignsDashboard } from "./campaigns-dashboard";
+import { requireEnterpriseManager } from "@/lib/access";
 
 export const metadata = {
   title: "Email Campaigns | RepWell",
   description: "Manage and create email campaigns for survey distribution",
 };
 
-async function checkCampaignAccess() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  // Only managers and admins can access campaigns
-  if (userData.role !== "admin" && userData.role !== "manager") {
-    redirect("/dashboard");
-  }
-
-  return { role: userData.role };
-}
-
 export default async function CampaignsPage() {
-  const { role } = await checkCampaignAccess();
+  // Check access - requires enterprise account + manager/admin role
+  const ctx = await requireEnterpriseManager();
+  const role = ctx.role;
 
   return (
     <div className="flex-1 space-y-6">

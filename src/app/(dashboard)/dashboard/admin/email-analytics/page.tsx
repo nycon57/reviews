@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { StatsRowSkeleton, ChartSkeleton, TableSkeleton } from "@/components/shared";
-import { Mail } from "lucide-react";
+import {
+  Envelope as Mail,
+} from "@phosphor-icons/react/dist/ssr";
 import { EmailAnalyticsDashboard } from "./email-analytics-dashboard";
 
 export const metadata = {
@@ -11,15 +14,13 @@ export const metadata = {
 };
 
 async function checkAdminAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return false;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("role")

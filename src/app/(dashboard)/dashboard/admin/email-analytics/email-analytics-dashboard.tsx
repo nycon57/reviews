@@ -40,21 +40,21 @@ import {
   Cell,
 } from "recharts";
 import {
-  Loader2,
-  Mail,
-  Send,
-  CheckCircle2,
+  SpinnerGap as Loader2,
+  Envelope as Mail,
+  PaperPlaneRight as Send,
+  CheckCircle as CheckCircle2,
   Eye,
-  MousePointerClick,
-  AlertTriangle,
-  TrendingUp,
-  TrendingDown,
+  CursorClick as MousePointerClick,
+  Warning as AlertTriangle,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
   Minus,
-  Download,
-  RefreshCw,
+  DownloadSimple as Download,
+  ArrowsClockwise as RefreshCw,
   Info,
-  MailX,
-} from "lucide-react";
+  EnvelopeSimple as MailX,
+} from "@phosphor-icons/react";
 import {
   getEmailMetrics,
   getEmailTrends,

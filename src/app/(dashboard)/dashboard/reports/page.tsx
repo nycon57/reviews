@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { getReportTemplates, initializeDefaultTemplates } from "@/lib/reporting";
 import { ReportsDashboard } from "./reports-dashboard";
 
@@ -9,14 +10,13 @@ export const metadata = {
 };
 
 export default async function ReportsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // Get user profile with organization
   const { data: profile } = await supabase

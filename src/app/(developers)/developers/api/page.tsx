@@ -1,6 +1,9 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowSquareOut as ExternalLink,
+} from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { SwaggerUIClient } from "./swagger-ui-client";
 

@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { Send } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import {
+  PaperPlaneRight as Send,
+} from "@phosphor-icons/react/dist/ssr";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { UnifiedRequestsHub } from "@/components/requests/unified-requests-hub";
 import {
@@ -9,30 +11,29 @@ import {
   getVideoTestimonialRequestStats,
   getLoanOfficersForVideoRequests,
 } from "@/lib/video-testimonials/actions";
+import { unifiedGetUser } from "@/lib/auth/actions";
 
 export const metadata = {
   title: "Requests | RepWell",
   description: "Manage all customer outreach: video testimonial requests and survey distribution",
 };
 
-type UserRole = "admin" | "manager" | "loan_officer";
+type UserRole = "admin" | "manager" | "user";
 
-const VALID_ROLES: readonly UserRole[] = ["admin", "manager", "loan_officer"] as const;
+const VALID_ROLES: readonly UserRole[] = ["admin", "manager", "user"] as const;
 
 function isValidRole(role: unknown): role is UserRole {
   return typeof role === "string" && VALID_ROLES.includes(role as UserRole);
 }
 
 async function checkAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("role, organization_id")
@@ -43,8 +44,8 @@ async function checkAccess() {
     redirect("/dashboard");
   }
 
-  // Validate role is one of the allowed values, default to loan_officer if invalid
-  const role: UserRole = isValidRole(userData.role) ? userData.role : "loan_officer";
+  // Validate role is one of the allowed values, default to user if invalid
+  const role: UserRole = isValidRole(userData.role) ? userData.role : "user";
 
   return { role };
 }

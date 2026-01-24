@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Building2 } from "lucide-react";
+import {
+  BuildingOffice as Building2,
+} from "@phosphor-icons/react/dist/ssr";
 import { OrganizationSettings } from "@/components/organization/organization-settings";
 import { OrganizationBranding } from "@/components/organization/organization-branding";
 import { OrganizationTeam } from "@/components/organization/organization-team";
@@ -12,6 +12,7 @@ import { OrganizationBilling } from "@/components/organization/organization-bill
 import { OrganizationOverview } from "@/components/organization/organization-overview";
 import { OrganizationSEO } from "@/components/organization/organization-seo";
 import { ResponseTemplatesTab } from "@/components/organization/response-templates-tab";
+import { requireEnterpriseAdmin } from "@/lib/access";
 
 export const metadata = {
   title: "Organization Settings | RepWell",
@@ -37,33 +38,9 @@ function TabSkeleton() {
   );
 }
 
-async function checkAdminAccess() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  if (userData.role !== "admin") {
-    redirect("/dashboard");
-  }
-
-  return true;
-}
-
 export default async function OrganizationPage() {
-  await checkAdminAccess();
+  // Check access - requires enterprise account + admin role
+  await requireEnterpriseAdmin();
 
   return (
     <div className="flex-1 space-y-6">

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { OnboardingProgress } from "./onboarding-progress";
 
 export const metadata = {
@@ -14,12 +15,13 @@ interface OnboardingLayoutProps {
 }
 
 export default async function OnboardingLayout({ children }: OnboardingLayoutProps) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization and onboarding status
   // Note: onboarding_status and selected_plan columns are added via migration

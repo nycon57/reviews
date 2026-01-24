@@ -1,6 +1,8 @@
 "use client";
 
-import { Check } from "lucide-react";
+import {
+  Check,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface OnboardingProgressProps {

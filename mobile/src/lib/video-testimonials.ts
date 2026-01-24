@@ -193,7 +193,7 @@ export async function getVideoTestimonialResponses(params?: {
 
   // Role-based filtering for loan officers
   let loanOfficerId: string | null = null;
-  if (auth.role === 'loan_officer') {
+  if (auth.role === 'user') {
     loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
     if (loanOfficerId) {
       query = query.eq('loan_officer_id', loanOfficerId);
@@ -367,7 +367,7 @@ export async function getVideoTestimonialRequests(params?: {
   }
 
   // Role-based filtering for loan officers
-  if (auth.role === 'loan_officer') {
+  if (auth.role === 'user') {
     const loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
     if (loanOfficerId) {
       query = query.eq('loan_officer_id', loanOfficerId);

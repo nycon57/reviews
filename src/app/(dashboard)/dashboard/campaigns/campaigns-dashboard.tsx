@@ -27,19 +27,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Mail,
+  Envelope as Mail,
   Plus,
-  Send,
+  PaperPlaneRight as Send,
   Clock,
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   Pause,
   Play,
   Calendar,
   Users,
-  BarChart3,
+  ChartBar as BarChart3,
   Eye,
-  MoreHorizontal,
-} from "lucide-react";
+  DotsThree as MoreHorizontal,
+} from "@phosphor-icons/react";
 
 interface CampaignsDashboardProps {
   userRole: string;

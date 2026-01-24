@@ -1017,36 +1017,61 @@ function Accordion({ title, children, isOpen, onToggle }) {
 
 ## Iconography
 
-### Icon Style Guidelines
-- **Library**: Use Lucide React icons (consistent with shadcn/ui)
-- **Stroke width**: 1.5px-2px (default Lucide)
+### Icon Library
+- **Library**: Phosphor Icons (`@phosphor-icons/react`)
+- **Weights**: 6 weights available (thin, light, regular, bold, fill, duotone)
 - **Size scale**: 16px (inline), 20px (buttons), 24px (standalone), 32px+ (feature icons)
-- **Color**: Match text color or use `text-repwell-teal-300` for accent
+- **Base size**: 16px default (optimized for small-size legibility)
+
+### Icon Weight Strategy
+
+| Context | Weight | Example Usage |
+|---------|--------|---------------|
+| Navigation/sidebar | `regular` | Menu, Home, Settings icons |
+| Feature cards | `duotone` | Star, TrendingUp, Shield icons |
+| Empty states | `duotone` | BarChart, Send, FileText icons |
+| Buttons | `regular` or `bold` | ArrowRight, Plus, Check icons |
+| Status indicators | `fill` | CheckCircle, XCircle icons |
+| Gamification badges | `fill` or `duotone` | Trophy, Medal, Crown icons |
 
 ### Common Icon Patterns
 
 ```jsx
-// Inline with text
+import { CheckCircle, ArrowRight, Star, TrendUp } from "@phosphor-icons/react";
+
+// Inline with text (regular weight, small size)
 <span className="inline-flex items-center gap-2">
-  <CheckCircle className="w-4 h-4 text-repwell-sage-200" />
+  <CheckCircle weight="regular" size={16} className="text-repwell-sage-200" />
   Feature included
 </span>
 
-// In buttons
+// In buttons (regular weight)
 <button className="inline-flex items-center gap-2">
-  <ArrowRight className="w-5 h-5" />
+  <ArrowRight weight="regular" size={20} />
   Continue
 </button>
 
-// Feature icon with background
+// Feature icon with background (duotone weight for brand emphasis)
 <div className="w-12 h-12 bg-repwell-sage-100/50 rounded-xl flex items-center justify-center">
-  <Star className="w-6 h-6 text-repwell-teal-300" />
+  <Star weight="duotone" size={24} className="text-repwell-teal-300" />
 </div>
 
-// Large decorative icon
+// Large decorative icon (duotone for visual interest)
 <div className="w-16 h-16 bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50 rounded-2xl flex items-center justify-center">
-  <TrendingUp className="w-8 h-8 text-repwell-teal-400" />
+  <TrendUp weight="duotone" size={32} className="text-repwell-teal-400" />
 </div>
+```
+
+### Duotone Brand Integration
+Duotone icons support two colors for a proprietary brand feel:
+```jsx
+// Using duotone with brand colors
+<Star
+  weight="duotone"
+  size={24}
+  color="#52796f"  // repwell-teal-300 (primary)
+/>
+// Note: duotone secondary color follows the primary at 20% opacity
 ```
 
 ### Icon Color Rules
@@ -1058,6 +1083,18 @@ function Accordion({ title, children, isOpen, onToggle }) {
 | Muted/secondary | `text-repwell-teal-300/50` |
 | On dark background | `text-white` or `text-repwell-sage-100` |
 | Error/warning | Use semantic accent colors |
+
+### Key Icon Name Changes from Lucide
+When referencing icons, note these name differences:
+- `ChevronDown/Up/Left/Right` → `CaretDown/Up/Left/Right`
+- `Send` → `PaperPlaneRight`
+- `Settings` → `Gear`
+- `BarChart3` → `ChartBar`
+- `TrendingUp/Down` → `TrendUp/TrendDown`
+- `AlertCircle` → `WarningCircle`
+- `ExternalLink` → `ArrowSquareOut`
+- `RefreshCw` → `ArrowsClockwise`
+- `Loader2` → `SpinnerGap`
 
 ---
 

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { XCircle, ArrowLeft, CreditCard } from "lucide-react";
+import {
+  XCircle,
+  ArrowLeft,
+  CreditCard,
+} from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 

@@ -1,5 +1,7 @@
 import { Suspense } from "react";
-import { Sparkles } from "lucide-react";
+import {
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react/dist/ssr";
 import { ChartSkeleton, CardSkeleton } from "@/components/shared";
 import {
   SentimentTrendChart,
@@ -13,7 +15,7 @@ import {
 } from "@/components/insights";
 import { getAIInsightsData } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { requireProTier, type AccessContext } from "@/lib/access";
 
 export const metadata = {
   title: "AI Insights | RepWell",
@@ -21,31 +23,17 @@ export const metadata = {
 };
 
 // Server component to fetch current user's loan officer ID
-async function getCurrentLoanOfficerId(): Promise<string | undefined> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("id, role")
-    .eq("id", user.id)
-    .single();
-
-  // If not a loan officer, return undefined (get org-wide data)
-  if (userData?.role !== "loan_officer") {
+async function getCurrentLoanOfficerId(ctx: AccessContext): Promise<string | undefined> {
+  // If not a regular user, return undefined (get org-wide data)
+  if (ctx.role !== "user") {
     return undefined;
   }
 
+  const supabase = await createClient();
   const { data: loanOfficer } = await supabase
     .from("loan_officers")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", ctx.userId)
     .single();
 
   return loanOfficer?.id;
@@ -151,7 +139,9 @@ async function ExportSection({ loanOfficerId }: { loanOfficerId?: string }) {
 }
 
 export default async function AIInsightsPage() {
-  const loanOfficerId = await getCurrentLoanOfficerId();
+  // Check access - requires Pro tier (pro or enterprise subscription)
+  const ctx = await requireProTier();
+  const loanOfficerId = await getCurrentLoanOfficerId(ctx);
 
   return (
     <div className="flex-1 space-y-6">

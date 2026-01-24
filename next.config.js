@@ -21,7 +21,7 @@ const nextConfig = {
     },
     // Optimize barrel imports for better tree-shaking
     optimizePackageImports: [
-      "lucide-react",
+      "@phosphor-icons/react",
       "date-fns",
       "@radix-ui/react-accordion",
       "@radix-ui/react-alert-dialog",

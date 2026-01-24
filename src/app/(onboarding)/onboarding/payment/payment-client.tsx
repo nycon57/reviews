@@ -3,7 +3,12 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { CreditCard, Shield, ChevronLeft, AlertCircle } from "lucide-react";
+import {
+  CreditCard,
+  Shield,
+  CaretLeft as ChevronLeft,
+  WarningCircle as AlertCircle,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {

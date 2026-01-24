@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { redirect } from "next/navigation";
 import { SurveyBuilder } from "@/components/surveys/survey-builder";
 
@@ -9,11 +9,7 @@ interface EditSurveyPageProps {
 export default async function EditSurveyPage({ params }: EditSurveyPageProps) {
   const { id } = await params;
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");

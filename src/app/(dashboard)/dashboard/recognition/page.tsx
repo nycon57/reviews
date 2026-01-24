@@ -1,10 +1,16 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Award, Gift, TrendingUp, Users, Target, MessageSquare, CheckCircle2 } from "lucide-react";
+import {
+  Medal as Award,
+  Gift,
+  TrendUp as TrendingUp,
+  Users,
+  Target,
+  Chats as MessageSquare,
+  CheckCircle as CheckCircle2,
+} from "@phosphor-icons/react/dist/ssr";
 import {
   getRecognitions,
   getRecognitionAnalytics,
@@ -18,38 +24,12 @@ import {
   GiveRecognitionDialog,
   GiveFeedbackDialog,
 } from "@/components/recognition";
+import { requireEnterprise, isManagerOrAbove } from "@/lib/access";
 
 export const metadata = {
   title: "Recognition & Feedback | RepWell",
   description: "Employee recognition and continuous feedback",
 };
-
-async function checkAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("id, role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  return {
-    userId: userData.id,
-    role: userData.role,
-    isManager: userData.role === "admin" || userData.role === "manager",
-  };
-}
 
 function StatCardSkeleton() {
   return (
@@ -152,7 +132,10 @@ async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string
 }
 
 export default async function RecognitionPage() {
-  const { userId, isManager } = await checkAccess();
+  // Check access - requires enterprise account (all enterprise users can view)
+  const ctx = await requireEnterprise();
+  const userId = ctx.userId;
+  const isManager = isManagerOrAbove(ctx);
 
   // Initialize default badges if needed
   await initializeDefaultBadges();

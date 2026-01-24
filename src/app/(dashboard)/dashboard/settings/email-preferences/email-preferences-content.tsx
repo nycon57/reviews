@@ -17,18 +17,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Mail,
+  Envelope as Mail,
   Clock,
   Globe,
   Moon,
-  ChevronLeft,
+  CaretLeft as ChevronLeft,
   Lock,
-  Sparkles,
-  BarChart3,
+  Sparkle as Sparkles,
+  ChartBar as BarChart3,
   Trophy,
   Megaphone,
   Gift,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import type { EmailPreferences } from "@/lib/email-preferences/types";
 import {
   EMAIL_CATEGORIES,

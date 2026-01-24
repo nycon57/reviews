@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { StatsRowSkeleton, ChartSkeleton, CardSkeleton } from "@/components/shared";
-import { BarChart3 } from "lucide-react";
+import {
+  ChartBar as BarChart3,
+} from "@phosphor-icons/react/dist/ssr";
 import { AdminAnalyticsDashboard } from "./admin-analytics-dashboard";
 
 export const metadata = {
@@ -12,15 +15,13 @@ export const metadata = {
 
 // Check if user is an admin
 async function checkAdminAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return false;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("role")

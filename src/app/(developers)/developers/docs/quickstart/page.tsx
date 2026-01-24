@@ -1,6 +1,11 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CheckCircle2, Copy } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle as CheckCircle2,
+  Copy,
+} from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 

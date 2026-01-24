@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Lock, Loader2, Sparkles } from "lucide-react";
+import {
+  Envelope as Mail,
+  Lock,
+  SpinnerGap as Loader2,
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +31,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { signIn, signInWithMagicLink } from "@/lib/auth/actions";
+import { unifiedSignIn, unifiedSignInWithMagicLink } from "@/lib/auth/actions";
 import {
   signInSchema,
   magicLinkSchema,
@@ -94,7 +99,7 @@ function LoginContent() {
   const onPasswordSubmit = async (data: SignInInput) => {
     setIsLoading(true);
     try {
-      const result = await signIn(data);
+      const result = await unifiedSignIn(data);
       if (result.success) {
         toast({
           title: "Welcome back!",
@@ -123,7 +128,7 @@ function LoginContent() {
   const onMagicLinkSubmit = async (data: MagicLinkInput) => {
     setIsLoading(true);
     try {
-      const result = await signInWithMagicLink(data);
+      const result = await unifiedSignInWithMagicLink(data);
       if (result.success) {
         setMagicLinkSent(true);
         toast({

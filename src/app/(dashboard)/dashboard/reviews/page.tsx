@@ -17,7 +17,8 @@ import {
 } from "@/lib/video-testimonials/actions";
 import { getCurrentOrganization } from "@/lib/organization/actions";
 import { TIER_FEATURES } from "@/lib/organization/types";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 
 // Dynamic import for heavy UnifiedContentHub component
 const UnifiedContentHub = dynamic(
@@ -61,22 +62,20 @@ const DEFAULT_VIDEO_STATS: VideoLibraryStats = {
   totalDuration: 0,
 };
 
-const ALLOWED_ROLES = new Set(["admin", "manager", "loan_officer"] as const);
-type UserRole = "admin" | "manager" | "loan_officer";
+const ALLOWED_ROLES = new Set(["admin", "manager", "user"] as const);
+type UserRole = "admin" | "manager" | "user";
 
 function isValidRole(role: unknown): role is UserRole {
   return typeof role === "string" && ALLOWED_ROLES.has(role as UserRole);
 }
 
 async function getUserRole(): Promise<UserRole> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   const { data: userData } = await supabase
     .from("users")

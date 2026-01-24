@@ -1,36 +1,16 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { CardSkeleton } from "@/components/shared";
-import { Trophy } from "lucide-react";
+import {
+  Trophy,
+} from "@phosphor-icons/react/dist/ssr";
 import { LeaderboardDashboard } from "./leaderboard-dashboard";
 import { getFilterOptions } from "@/lib/dashboard";
+import { requireEnterprise } from "@/lib/access";
 
 export const metadata = {
   title: "Leaderboard | RepWell",
   description: "View team performance rankings and achievements",
 };
-
-async function checkAccess() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  return { role: userData.role };
-}
 
 async function getInitialFilters() {
   const result = await getFilterOptions();
@@ -38,7 +18,8 @@ async function getInitialFilters() {
 }
 
 export default async function LeaderboardPage() {
-  await checkAccess();
+  // Check access - requires enterprise account (all enterprise users can view)
+  await requireEnterprise();
   const filters = await getInitialFilters();
 
   return (

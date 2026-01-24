@@ -1,7 +1,6 @@
 import { Suspense } from "react";
-import { Button } from "@/components/ui/button";
-import { Send, TrendingUp, Users } from "lucide-react";
-import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, EmptyState } from "@/components/shared";
+import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, EmptyState, EmptyStateCard } from "@/components/shared";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import {
   LOStatsCards,
   LOTrendChart,
@@ -22,6 +21,7 @@ import {
   getRatingTrend,
   getNPSTrend,
 } from "@/lib/dashboard";
+import { getCurrentUser } from "@/lib/users/actions";
 
 export const metadata = {
   title: "Dashboard | RepWell",
@@ -79,13 +79,12 @@ async function RatingTrendChart() {
 
   if (!hasData) {
     return (
-      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-repwell-sage-100/20 p-6 text-center">
-        <TrendingUp className="mb-3 h-10 w-10 text-repwell-teal-400/40" />
-        <p className="text-sm font-medium text-repwell-teal-500">No rating data yet</p>
-        <p className="mt-1 text-xs text-repwell-teal-400">
-          Your rating trends will appear once you collect reviews
-        </p>
-      </div>
+      <EmptyStateCard
+        iconName="trending-up"
+        title="No rating data yet"
+        description="Your rating trends will appear once you collect reviews"
+        className="h-[280px]"
+      />
     );
   }
 
@@ -108,13 +107,12 @@ async function NPSTrendChart() {
 
   if (!hasData) {
     return (
-      <div className="flex h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-border bg-repwell-sage-100/20 p-6 text-center">
-        <Users className="mb-3 h-10 w-10 text-repwell-teal-400/40" />
-        <p className="text-sm font-medium text-repwell-teal-500">No NPS data yet</p>
-        <p className="mt-1 text-xs text-repwell-teal-400">
-          Send surveys to start tracking your NPS score
-        </p>
-      </div>
+      <EmptyStateCard
+        iconName="users"
+        title="No NPS data yet"
+        description="Send surveys to start tracking your NPS score"
+        className="h-[280px]"
+      />
     );
   }
 
@@ -137,26 +135,14 @@ async function RecentReviewsList() {
 }
 
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const userResult = await getCurrentUser();
+  const userName = userResult.success ? userResult.data?.fullName : null;
+
   return (
     <div className="flex-1 space-y-8">
       {/* Page header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-heading-lg font-bold tracking-tight text-repwell-teal-500">
-            Dashboard
-          </h1>
-          <p className="text-body-base text-repwell-teal-400 mt-1">
-            Welcome back! Here&apos;s an overview of your performance.
-          </p>
-        </div>
-        <Button variant="default" asChild>
-          <a href="/dashboard/distribution">
-            <Send className="mr-2 h-4 w-4" />
-            Send Survey
-          </a>
-        </Button>
-      </div>
+      <DashboardHeader userName={userName} />
 
       {/* Stats cards */}
       <Suspense fallback={<StatsRowSkeleton />}>

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requireProTier } from "@/lib/access";
 
 // Dynamic import for heavy dashboard with recharts (Suspense handles loading)
 const WebsiteAnalyticsDashboard = dynamic(
@@ -29,7 +30,9 @@ function LoadingSkeleton() {
   );
 }
 
-export default function WebsiteAnalyticsPage() {
+export default async function WebsiteAnalyticsPage() {
+  // Check access - requires Pro tier (pro or enterprise subscription)
+  await requireProTier();
   return (
     <div className="flex-1 space-y-6">
       <div>

@@ -1,6 +1,14 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Code2, Key, Book, Zap, Shield, Clock } from "lucide-react";
+import {
+  ArrowRight,
+  CodeSimple as Code2,
+  Key,
+  Book,
+  Lightning as Zap,
+  Shield,
+  Clock,
+} from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 

@@ -51,7 +51,7 @@ RepWell is a customer experience & review management platform for mortgage/finan
 - **Server client:** `src/lib/supabase/server.ts` - Cookie-based, use for server components/actions
 - **Browser client:** `src/lib/supabase/client.ts` - Public anon key only
 - **Admin client:** `src/lib/supabase/admin.ts` - Service role, bypasses RLS (server-only)
-- **User roles:** `admin`, `manager`, `loan_officer`
+- **User roles:** `admin`, `manager`, `user`
 
 ### Data Patterns
 - **Server Actions** (`src/lib/*/actions.ts`): Primary pattern for mutations. Use Zod validation, call `revalidatePath` after changes.

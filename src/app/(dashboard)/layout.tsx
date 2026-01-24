@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard";
-import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/lib/auth/actions";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedSignOut, unifiedGetUser } from "@/lib/auth/actions";
 import type { UserContext, AccountType, SubscriptionTier } from "@/lib/permissions";
 
 function getInitials(name: string | null): string {
@@ -19,12 +19,13 @@ export default async function DashboardRootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const authUser = await unifiedGetUser();
 
   if (!authUser) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // Fetch user profile with organization details for permission context
   // Note: Using * and casting because is_owner and account_type may not be in generated types yet
@@ -57,11 +58,16 @@ export default async function DashboardRootLayout({
     .eq("user_id", authUser.id)
     .single();
 
+  // Handle both Supabase Auth (user_metadata) and Better Auth (name) user structures
+  const authUserName =
+    (authUser as { name?: string }).name ||
+    (authUser as { user_metadata?: { full_name?: string } }).user_metadata?.full_name;
+
   const user = {
-    name: profile?.full_name || authUser.user_metadata?.full_name || "User",
+    name: profile?.full_name || authUserName || "User",
     email: authUser.email || "",
     avatar: profile?.avatar_url || undefined,
-    initials: getInitials(profile?.full_name || authUser.user_metadata?.full_name),
+    initials: getInitials(profile?.full_name || authUserName || null),
     loanOfficerId: loanOfficer?.id || undefined,
   };
 
@@ -71,8 +77,8 @@ export default async function DashboardRootLayout({
   const userContext: UserContext | null = profile?.organization_id
     ? {
         userId: authUser.id,
-        role: (profile.role || "loan_officer") as UserContext["role"],
-        accountType: (orgData?.account_type || "enterprise") as AccountType,
+        role: (profile.role || "user") as UserContext["role"],
+        accountType: (orgData?.account_type || "individual") as AccountType,
         isOwner: profile.is_owner || false,
         subscriptionTier: (orgData?.subscription_tier || "basic") as SubscriptionTier,
         organizationId: profile.organization_id,
@@ -80,7 +86,7 @@ export default async function DashboardRootLayout({
     : null;
 
   return (
-    <DashboardLayout user={user} userContext={userContext} onSignOut={signOut}>
+    <DashboardLayout user={user} userContext={userContext} onSignOut={unifiedSignOut}>
       {children}
     </DashboardLayout>
   );

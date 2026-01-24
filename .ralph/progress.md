@@ -1007,7 +1007,7 @@ Run: session (iteration 1)
   - Password reset flow (forgot password + reset page)
   - Email verification waiting page with resend functionality
   - Auth callback route for Supabase redirects (magic link, password recovery)
-  - Role-based middleware protecting routes by user role (admin, manager, loan_officer)
+  - Role-based middleware protecting routes by user role (admin, manager, user)
   - User profile management with avatar upload, name editing, password change
   - Dashboard layout with sidebar, header, mobile navigation
   - Theme toggle (dark/light mode)

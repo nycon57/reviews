@@ -5,7 +5,14 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { Calendar, Clock, ArrowRight, Mail, Loader2, ImageIcon } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ArrowRight,
+  Envelope as Mail,
+  SpinnerGap as Loader2,
+  Image as ImageIcon,
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { BlogPostMeta, BlogCategory, BLOG_CATEGORIES } from "@/types/blog";
 import {

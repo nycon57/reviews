@@ -4,7 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Loader2, ArrowLeft } from "lucide-react";
+import {
+  Envelope as Mail,
+  SpinnerGap as Loader2,
+  ArrowLeft,
+} from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +29,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { resetPassword } from "@/lib/auth/actions";
+import { unifiedResetPassword } from "@/lib/auth/actions";
 import {
   resetPasswordSchema,
   type ResetPasswordInput,
@@ -46,7 +50,7 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ResetPasswordInput) => {
     setIsLoading(true);
     try {
-      const result = await resetPassword(data);
+      const result = await unifiedResetPassword(data);
       if (result.success) {
         setEmailSent(true);
         toast({

@@ -5,7 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Mail, Lock, User, Building, Loader2, Check, X } from "lucide-react";
+import {
+  Envelope as Mail,
+  Lock,
+  User,
+  Buildings as Building,
+  SpinnerGap as Loader2,
+  Check,
+  X,
+} from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +34,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { signUp } from "@/lib/auth/actions";
+import { unifiedSignUp } from "@/lib/auth/actions";
 import { signUpSchema, type SignUpInput } from "@/lib/auth/schemas";
 
 interface PasswordRequirement {
@@ -102,7 +110,7 @@ export default function SignUpPage() {
   const onSubmit = async (data: SignUpInput) => {
     setIsLoading(true);
     try {
-      const result = await signUp(data);
+      const result = await unifiedSignUp(data);
       if (result.success) {
         toast({
           title: "Account created!",

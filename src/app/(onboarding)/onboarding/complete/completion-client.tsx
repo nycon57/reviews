@@ -3,7 +3,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { PartyPopper, Rocket, Users, Star, ArrowRight } from "lucide-react";
+import {
+  Confetti as PartyPopper,
+  Rocket,
+  Users,
+  Star,
+  ArrowRight,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { completeOnboarding } from "@/lib/onboarding/actions";

@@ -1,15 +1,11 @@
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { redirect } from "next/navigation";
 import { SurveyTemplatesList } from "./survey-templates-list";
 import { CardSkeleton } from "@/components/shared/skeletons";
 
 export default async function SurveysPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");

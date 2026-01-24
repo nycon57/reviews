@@ -14,19 +14,19 @@ import { Badge } from "@/components/ui/badge";
 import {
   Book,
   FileText,
-  Mail,
-  MessageCircle,
-  Search,
-  ExternalLink,
-  Video,
+  Envelope as Mail,
+  ChatCircle as MessageCircle,
+  MagnifyingGlass as Search,
+  ArrowSquareOut as ExternalLink,
+  VideoCamera as Video,
   Lightbulb,
   Shield,
-  Settings,
+  Gear as Settings,
   Users,
-  BarChart3,
-  Send,
+  ChartBar as BarChart3,
+  PaperPlaneRight as Send,
   Star,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 interface FAQItem {
   id: string;

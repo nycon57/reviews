@@ -21,7 +21,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, CalendarIcon, Loader2, Users, Zap, LogOut, UserPlus } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarBlank as CalendarIcon,
+  SpinnerGap as Loader2,
+  Users,
+  Lightning as Zap,
+  SignOut as LogOut,
+  UserPlus,
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { createEXSurvey, getEXSurveyTemplates, getDepartments } from "@/lib/ex-surveys/actions";

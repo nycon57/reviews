@@ -3,7 +3,8 @@
 import { Suspense } from "react";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +13,12 @@ import { Progress } from "@/components/ui/progress";
 import {
   ArrowLeft,
   Users,
-  BarChart3,
-  TrendingUp,
+  ChartBar as BarChart3,
+  TrendUp as TrendingUp,
   Clock,
-  Mail,
-  CheckCircle2,
-} from "lucide-react";
+  Envelope as Mail,
+  CheckCircle as CheckCircle2,
+} from "@phosphor-icons/react/dist/ssr";
 import { getEXSurveyResponses, closeEXSurvey } from "@/lib/ex-surveys/actions";
 import { interpretENPS, calculateENPS } from "@/types/ex-survey.types";
 import { EXSurveyLaunchButton } from "@/components/ex-surveys";
@@ -33,15 +34,13 @@ interface PageProps {
 }
 
 async function getSurveyData(surveyId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("role, organization_id")

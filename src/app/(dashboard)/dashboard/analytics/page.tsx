@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   getVideoTestimonialFunnelMetrics,
   getVideoTestimonialTrends,
@@ -15,15 +16,13 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // Get user role and organization info
   const { data: userData } = await supabase
@@ -32,7 +31,7 @@ export default async function AnalyticsPage() {
     .eq("id", user.id)
     .single();
 
-  const userRole = (userData?.role || "loan_officer") as "admin" | "manager" | "loan_officer";
+  const userRole = (userData?.role || "user") as "admin" | "manager" | "user";
   const organizationId = userData?.organization_id;
 
   if (!organizationId) {
@@ -70,10 +69,10 @@ export default async function AnalyticsPage() {
   ] = await Promise.all([
     getVideoTestimonialFunnelMetrics(),
     getVideoTestimonialTrends({ period: "daily" }),
-    userRole !== "loan_officer"
+    userRole !== "user"
       ? getVideoTestimonialStatsByLoanOfficer()
       : Promise.resolve({ success: true, data: [] }),
-    userRole !== "loan_officer"
+    userRole !== "user"
       ? getLoanOfficersForVideoRequests()
       : Promise.resolve({ success: true, data: [] }),
     getResponseAnalytics(),

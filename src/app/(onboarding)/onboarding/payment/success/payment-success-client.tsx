@@ -3,7 +3,10 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { CheckCircle, Loader2 } from "lucide-react";
+import {
+  CheckCircle,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { completePaymentStep } from "@/lib/onboarding/actions";
 import { fadeInUp, staggerContainer } from "@/lib/motion";

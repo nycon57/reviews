@@ -20,16 +20,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import {
   Copy,
-  CheckCircle2,
-  ChevronDown,
-  ExternalLink,
+  CheckCircle as CheckCircle2,
+  CaretDown as ChevronDown,
+  ArrowSquareOut as ExternalLink,
   Shield,
   Clock,
-  Zap,
-  AlertTriangle,
-  Building2,
+  Lightning as Zap,
+  Warning as AlertTriangle,
+  BuildingOffice as Building2,
   Info,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 export function WebhookDocumentation() {
   const [copiedItem, setCopiedItem] = useState<string | null>(null);

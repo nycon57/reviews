@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HelpCircle } from "lucide-react";
+import {
+  Question as HelpCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import { HelpCenter } from "./help-center";
 
 export const metadata = {

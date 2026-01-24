@@ -17,17 +17,17 @@ import {
   Cell,
 } from "recharts";
 import {
-  Loader2,
+  SpinnerGap as Loader2,
   Star,
-  TrendingUp,
-  TrendingDown,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
   Minus,
   Users,
-  BarChart3,
-  MessageSquare,
-  AlertTriangle,
+  ChartBar as BarChart3,
+  Chats as MessageSquare,
+  Warning as AlertTriangle,
   Trophy,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import {
   getTeamMetrics,
   getLoanOfficerComparison,

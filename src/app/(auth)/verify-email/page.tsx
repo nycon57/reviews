@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Mail, Loader2 } from "lucide-react";
+import {
+  Envelope as Mail,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { resendVerificationEmail } from "@/lib/auth/actions";
+import { unifiedResendVerificationEmail } from "@/lib/auth/actions";
 
 export default function VerifyEmailPage() {
   const [isResending, setIsResending] = useState(false);
@@ -23,7 +26,7 @@ export default function VerifyEmailPage() {
   const handleResend = async () => {
     setIsResending(true);
     try {
-      const result = await resendVerificationEmail();
+      const result = await unifiedResendVerificationEmail();
       if (result.success) {
         toast({
           title: "Email sent!",

@@ -11,13 +11,13 @@ import {
   CheckCircle,
   Clock,
   Users,
-  BarChart3,
-  Zap,
+  ChartBar as BarChart3,
+  Lightning as Zap,
   ArrowRight,
-  Sparkles,
+  Sparkle as Sparkles,
   Calendar,
-  MessageSquare,
-} from "lucide-react";
+  Chats as MessageSquare,
+} from "@phosphor-icons/react";
 import {
   staggerContainer,
   fadeInUp,

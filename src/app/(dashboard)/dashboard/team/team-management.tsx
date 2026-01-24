@@ -17,20 +17,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2,
+  SpinnerGap as Loader2,
   UserPlus,
-  MoreHorizontal,
-  Mail,
+  DotsThree as MoreHorizontal,
+  Envelope as Mail,
   Shield,
-  UserX,
+  UserMinus as UserX,
   UserCheck,
   X,
   Clock,
   Star,
-  ExternalLink,
-  Search,
+  ArrowSquareOut as ExternalLink,
+  MagnifyingGlass as Search,
   Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import {
   getOrganizationMembers,
   getPendingInvitations,
@@ -48,7 +48,7 @@ import {
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },
   manager: { label: "Manager", variant: "secondary" },
-  loan_officer: { label: "Loan Officer", variant: "outline" },
+  user: { label: "User", variant: "outline" },
 };
 
 interface TeamManagementProps {
@@ -70,7 +70,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     resolver: zodResolver(createInvitationSchema),
     defaultValues: {
       email: "",
-      role: "loan_officer",
+      role: "user",
     },
   });
 
@@ -157,7 +157,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     });
   }
 
-  async function handleUpdateRole(memberId: string, newRole: "admin" | "manager" | "loan_officer") {
+  async function handleUpdateRole(memberId: string, newRole: "admin" | "manager" | "user") {
     startTransition(async () => {
       const result = await updateMemberRole(memberId, newRole);
 
@@ -308,9 +308,9 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {activeMembers.filter((m) => m.role === "loan_officer").length}
+                  {activeMembers.filter((m) => m.role === "user").length}
                 </p>
-                <p className="text-xs text-muted-foreground">Loan Officers</p>
+                <p className="text-xs text-muted-foreground">Users</p>
               </div>
             </div>
           </CardContent>
@@ -376,7 +376,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                               <SelectItem value="admin">Admin - Full access</SelectItem>
                             )}
                             <SelectItem value="manager">Manager - Team management</SelectItem>
-                            <SelectItem value="loan_officer">Loan Officer - Basic access</SelectItem>
+                            <SelectItem value="user">User - Basic access</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
@@ -453,7 +453,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{member.full_name || "No name"}</p>
-                          {member.role === "loan_officer" && (
+                          {member.role === "user" && (
                             <Link
                               href={`/dashboard/team/${member.id}`}
                               className="text-muted-foreground hover:text-foreground"
@@ -497,9 +497,9 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                               <Shield className="mr-2 h-4 w-4" />
                               Make Manager
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "loan_officer")}>
+                            <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "user")}>
                               <Shield className="mr-2 h-4 w-4" />
-                              Make Loan Officer
+                              Make User
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                           </>

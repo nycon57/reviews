@@ -25,7 +25,7 @@ export interface UserProfile {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
-  role: 'admin' | 'manager' | 'loan_officer';
+  role: 'admin' | 'manager' | 'user';
   organization_id: string | null;
   created_at: string;
   updated_at: string;

@@ -1,7 +1,5 @@
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,49 +8,23 @@ import {
   Users,
   Plus,
   FileText,
-  TrendingUp,
+  TrendUp as TrendingUp,
   Target,
-  ClipboardList,
+  ClipboardText as ClipboardList,
   ArrowRight,
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   Clock,
-  BarChart3,
-} from "lucide-react";
+  ChartBar as BarChart3,
+} from "@phosphor-icons/react/dist/ssr";
 import { getEXSurveys, getEXMetrics, getActionPlans, getEXTrends, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
 import { interpretENPS } from "@/types/ex-survey.types";
 import { EXMultiMetricChart } from "@/components/ex-surveys";
+import { requireEnterpriseManager } from "@/lib/access";
 
 export const metadata = {
   title: "Employee Experience | RepWell",
   description: "Employee engagement surveys and culture measurement",
 };
-
-async function checkAccess() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  if (userData.role !== "admin" && userData.role !== "manager") {
-    redirect("/dashboard");
-  }
-
-  return { role: userData.role };
-}
 
 function StatCardSkeleton() {
   return (
@@ -280,7 +252,8 @@ async function ActionPlansList() {
 }
 
 export default async function EXSurveysPage() {
-  await checkAccess();
+  // Check access - requires enterprise account + manager/admin role
+  await requireEnterpriseManager();
 
   // Initialize default templates if needed
   await initializeDefaultEXTemplates();

@@ -33,7 +33,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash as Trash2,
+} from "@phosphor-icons/react";
 import { createActionPlan, updateActionPlan, deleteActionPlan } from "@/lib/ex-surveys/actions";
 import { useToast } from "@/hooks/use-toast";
 import type { EXActionPlan } from "@/types/ex-survey.types";

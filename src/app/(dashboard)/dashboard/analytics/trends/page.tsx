@@ -1,8 +1,11 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { ChartSkeleton, CardSkeleton } from "@/components/shared";
-import { TrendingUp } from "lucide-react";
+import {
+  TrendUp as TrendingUp,
+} from "@phosphor-icons/react/dist/ssr";
 import { TrendsDashboard } from "./trends-dashboard";
 
 export const metadata = {
@@ -11,13 +14,13 @@ export const metadata = {
 };
 
 async function checkAccess() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("role, organization_id")

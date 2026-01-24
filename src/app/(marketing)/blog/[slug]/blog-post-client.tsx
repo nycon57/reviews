@@ -17,16 +17,16 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
-  ChevronRight,
-  Twitter,
-  Facebook,
-  Linkedin,
-  Link2,
+  CaretRight as ChevronRight,
+  TwitterLogo as Twitter,
+  FacebookLogo as Facebook,
+  LinkedinLogo as Linkedin,
+  Link as Link2,
   Check,
   ArrowRight,
-  Mail,
-  Loader2,
-} from "lucide-react";
+  Envelope as Mail,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { BlogPost, BlogPostMeta } from "@/types/blog";
 import {
   BlogTableOfContents,

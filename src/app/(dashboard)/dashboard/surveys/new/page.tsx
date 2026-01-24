@@ -1,13 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { redirect } from "next/navigation";
 import { SurveyBuilder } from "@/components/surveys/survey-builder";
 
 export default async function NewSurveyPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     redirect("/login");

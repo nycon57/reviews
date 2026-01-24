@@ -20,19 +20,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  FlaskConical,
+  Flask as FlaskConical,
   ArrowLeft,
   Plus,
-  Trash2,
-  Loader2,
-  HelpCircle,
-  Mail,
-  Type,
+  Trash as Trash2,
+  SpinnerGap as Loader2,
+  Question as HelpCircle,
+  Envelope as Mail,
+  TextT as Type,
   FileText,
   Clock,
   Target,
-  Settings2,
-} from "lucide-react";
+  GearSix as Settings2,
+} from "@phosphor-icons/react";
 import {
   Tooltip,
   TooltipContent,

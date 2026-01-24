@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
   Badge,
@@ -17,7 +18,7 @@ import type {
 
 // Helper to access gamification tables that may not be in generated types yet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function fromTable(supabase: Awaited<ReturnType<typeof createClient>>, table: string): any {
+function fromTable(supabase: ReturnType<typeof createAdminClient>, table: string): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (supabase as any).from(table);
 }
@@ -63,13 +64,11 @@ interface ReputationHistoryRow {
 
 // Get user context
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) return null;
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -102,7 +101,7 @@ export async function getAvailableBadges(): Promise<ActionResult<Badge[]>> {
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await fromTable(supabase, "badges")
     .select("*")
@@ -148,7 +147,7 @@ export async function getUserBadges(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await fromTable(supabase, "user_badges")
     .select(
@@ -223,7 +222,7 @@ export async function getBadgeProgress(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get loan officer stats
   const { data: loData } = await supabase
@@ -354,7 +353,7 @@ export async function getEnhancedLeaderboard(
     return { success: false, error: "Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const limit = filters.limit || 10;
 
   // Build query with optional filters
@@ -505,7 +504,7 @@ export async function getReputationBreakdown(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get loan officer stats
   const { data: loData, error: loError } = await supabase
@@ -721,7 +720,7 @@ export async function getReputationHistory(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await fromTable(supabase, "reputation_history")
     .select("*")
@@ -763,7 +762,7 @@ export async function getGamificationStats(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get loan officer data
   const { data: loData } = await supabase
@@ -870,7 +869,7 @@ export async function saveLeaderboardSnapshot(
     return { success: false, error: "Admin or manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const periodKey = getCurrentPeriodKey(period);
   const snapshotDate = new Date().toISOString().split("T")[0];
 
@@ -976,7 +975,7 @@ export async function checkAndAwardBadges(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Call the database function to check and award badges
   const { data, error } = await supabase.rpc("check_badges_for_loan_officer", {

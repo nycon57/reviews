@@ -49,14 +49,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2,
+  SpinnerGap as Loader2,
   Plus,
-  Trash2,
+  Trash as Trash2,
   Clock,
   FileText,
   Info,
-  ExternalLink,
-} from "lucide-react";
+  ArrowSquareOut as ExternalLink,
+} from "@phosphor-icons/react";
 import {
   getMilestoneMappings,
   updateMilestoneMapping,

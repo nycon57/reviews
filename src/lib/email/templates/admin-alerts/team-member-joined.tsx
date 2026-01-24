@@ -31,7 +31,7 @@ interface Props {
 const roleLabels: Record<string, { label: string; variant: "default" | "info" | "brand" }> = {
   admin: { label: "Admin", variant: "brand" },
   manager: { label: "Manager", variant: "info" },
-  loan_officer: { label: "Loan Officer", variant: "default" },
+  user: { label: "User", variant: "default" },
 };
 
 export function AdminAlertTeamMemberJoinedEmail({ data }: Props) {
@@ -50,7 +50,7 @@ export function AdminAlertTeamMemberJoinedEmail({ data }: Props) {
     unsubscribeUrl,
   } = data;
 
-  const roleInfo = roleLabels[newMemberRole] || roleLabels.loan_officer;
+  const roleInfo = roleLabels[newMemberRole] || roleLabels.user;
 
   return (
     <AlertLayout

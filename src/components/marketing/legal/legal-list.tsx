@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Check, Circle } from "lucide-react";
+import {
+  Check,
+  Circle,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface LegalListItem {

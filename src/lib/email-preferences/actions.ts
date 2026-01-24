@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { EmailPreferences, EmailPreferencesWithToken } from "./types";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -43,11 +43,7 @@ const resubscribeCategoriesSchema = z.object({
  * Get email preferences for the current authenticated user
  */
 export async function getEmailPreferences(): Promise<EmailPreferences | null> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
@@ -111,11 +107,7 @@ export async function updateEmailPreferences(
   }
   const validatedPrefs = validationResult.data;
 
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
@@ -161,11 +153,7 @@ export async function updateEmailPreferences(
  * Used for including unsubscribe links in emails
  */
 export async function getEmailPreferenceToken(): Promise<string | null> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }

@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { z } from "zod";
 import type { Json, Database } from "@/types/database.types";
 import { sendInitialVideoTestimonialEmailImmediately } from "./queue-service";
@@ -135,7 +135,7 @@ function sanitizeSearchInput(input: string): string {
 }
 
 async function checkOrganizationVideoTestimonialAccess(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   organizationId: string
 ): Promise<{ allowed: boolean; reason?: string }> {
   const { data: org, error } = await supabase
@@ -211,12 +211,10 @@ export async function createVideoTestimonialRequest(
       };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -445,12 +443,10 @@ export async function createBulkVideoTestimonialRequests(
       };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Check authentication
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -551,11 +547,9 @@ export async function getVideoTestimonialRequests(params?: {
   }>
 > {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -623,7 +617,7 @@ export async function getVideoTestimonialRequests(params?: {
     }
 
     // Role-based filtering: loan officers see only their own requests
-    if (userData.role === "loan_officer") {
+    if (userData.role === "user") {
       const { data: loData } = await supabase
         .from("loan_officers")
         .select("id")
@@ -704,11 +698,9 @@ export async function getVideoTestimonialRequestStats(params?: {
   loanOfficerId?: string;
 }): Promise<ActionResult<VideoRequestStats>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -732,7 +724,7 @@ export async function getVideoTestimonialRequestStats(params?: {
     // Filter by loan officer if specified or if user is a loan officer
     if (params?.loanOfficerId) {
       query = query.eq("loan_officer_id", params.loanOfficerId);
-    } else if (userData.role === "loan_officer") {
+    } else if (userData.role === "user") {
       query = query.eq("loan_officer_id", user.id);
     }
 
@@ -786,11 +778,9 @@ export async function getVideoTestimonialRequest(
   requestId: string
 ): Promise<ActionResult<VideoTestimonialRequest>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -857,11 +847,9 @@ export async function cancelVideoTestimonialRequest(
   requestId: string
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -955,11 +943,9 @@ export async function resendVideoTestimonialRequest(
   console.error("=== [VideoTestimonial] resendVideoTestimonialRequest START ===", { requestId });
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -1095,11 +1081,9 @@ export async function getVideoTestimonialQueue(params?: {
   pageSize?: number;
 }): Promise<ActionResult<{ items: VideoTestimonialQueueItem[]; total: number }>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -1202,11 +1186,9 @@ export async function getLoanOfficersForVideoRequests(): Promise<
   ActionResult<Array<{ id: string; fullName: string; email: string }>>
 > {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -1320,11 +1302,9 @@ export async function getVideoTestimonialResponses(params?: {
   }>
 > {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -1419,7 +1399,7 @@ export async function getVideoTestimonialResponses(params?: {
 
     // Role-based filtering: loan officers see only their own responses
     let loanOfficerIdForFilter: string | null = null;
-    if (userData.role === "loan_officer") {
+    if (userData.role === "user") {
       const { data: loData } = await supabase
         .from("loan_officers")
         .select("id")
@@ -1553,11 +1533,9 @@ export async function getVideoTestimonialResponse(
   responseId: string
 ): Promise<ActionResult<VideoTestimonialResponse>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -1592,7 +1570,7 @@ export async function getVideoTestimonialResponse(
       .eq("organization_id", userData.organization_id);
 
     // Role-based access: loan officers can only access their own videos
-    if (userData.role === "loan_officer") {
+    if (userData.role === "user") {
       const { data: loData } = await supabase
         .from("loan_officers")
         .select("id")
@@ -1689,11 +1667,9 @@ export async function updateVideoApprovalStatus(
       return { success: false, error: `AI text cannot exceed ${MAX_AI_TEXT_LENGTH} characters` };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -1891,11 +1867,9 @@ export async function deleteVideoTestimonialResponse(
   responseId: string
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -1976,11 +1950,9 @@ export async function getVideoSignedUrl(
   videoPath: string
 ): Promise<ActionResult<{ signedUrl: string }>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -2014,7 +1986,7 @@ export async function getVideoSignedUrl(
     }
 
     // Role-based access: loan officers can only access their own videos
-    if (userData.role === "loan_officer") {
+    if (userData.role === "user") {
       const { data: loData } = await supabase
         .from("loan_officers")
         .select("id")
@@ -2062,11 +2034,9 @@ export async function updateVideoAIText(
       return { success: false, error: `AI text cannot exceed ${MAX_AI_TEXT_LENGTH} characters` };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -2161,11 +2131,9 @@ export async function bulkUpdateVideoApprovalStatus(
       return { success: false, error: "Maximum 50 videos per bulk operation" };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -2246,11 +2214,9 @@ export async function getVideosPendingApproval(params?: {
   }>
 > {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -2438,11 +2404,9 @@ export async function getVideoTestimonialQueueStatus(): Promise<
   ActionResult<QueueStatus>
 > {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -2515,11 +2479,9 @@ async function setQueuePauseState(paused: boolean): Promise<ActionResult> {
   const action = paused ? "pause" : "resume";
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -2605,11 +2567,9 @@ export async function retryFailedVideoTestimonialQueueItems(): Promise<
   ActionResult<{ retried: number }>
 > {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }

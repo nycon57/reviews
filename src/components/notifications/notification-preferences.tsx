@@ -16,10 +16,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   Bell,
-  Mail,
+  Envelope as Mail,
   Clock,
-  AlertTriangle,
-} from "lucide-react";
+  Warning as AlertTriangle,
+} from "@phosphor-icons/react";
 import type { NotificationPreferences, DigestFrequency } from "@/lib/notifications/types";
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/lib/notifications/types";
 import {

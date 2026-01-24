@@ -18,18 +18,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Star,
-  Sparkles,
+  Sparkle as Sparkles,
   Copy,
   Check,
   FileText,
-  Twitter,
-  MessageSquare,
+  TwitterLogo as Twitter,
+  Chats as MessageSquare,
   AlignLeft,
-  Loader2,
-  ExternalLink,
+  SpinnerGap as Loader2,
+  ArrowSquareOut as ExternalLink,
   Image as ImageIcon,
-  Download,
-} from 'lucide-react';
+  DownloadSimple as Download,
+} from "@phosphor-icons/react";
 import type { TestimonialFormat, Testimonial } from '@/lib/ai/testimonial-types';
 import {
   generateMultipleTestimonialFormats,

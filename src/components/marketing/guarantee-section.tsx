@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import * as LucideIcons from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import { CheckCircle } from "lucide-react";
+import * as PhosphorIcons from "@phosphor-icons/react";
+import {
+  CheckCircle,
+  type IconProps,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -55,11 +57,11 @@ const itemVariants = {
 };
 
 /**
- * Get Lucide icon component by name
+ * Get Phosphor icon component by name
  */
-function getIconByName(name: string): LucideIcon {
-  const icons = LucideIcons as unknown as Record<string, LucideIcon>;
-  return icons[name] || LucideIcons.Shield;
+function getIconByName(name: string): React.ComponentType<IconProps> {
+  const icons = PhosphorIcons as unknown as Record<string, React.ComponentType<IconProps>>;
+  return icons[name] || PhosphorIcons.Shield;
 }
 
 export function GuaranteeSection({
@@ -154,7 +156,7 @@ export function GuaranteeSection({
           className="mt-12 md:mt-16 text-center"
         >
           <div className="inline-flex items-center gap-3 bg-repwell-teal-500 text-white px-6 py-3 rounded-full">
-            <LucideIcons.Shield className="w-5 h-5" />
+            <PhosphorIcons.Shield className="w-5 h-5" />
             <span className="font-sans font-medium">
               Backed by our 100% satisfaction guarantee
             </span>

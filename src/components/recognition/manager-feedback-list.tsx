@@ -5,7 +5,10 @@ import { ManagerFeedbackCard } from "./manager-feedback-card";
 import { GiveFeedbackDialog } from "./give-feedback-dialog";
 import { ManagerFeedback, FeedbackType } from "@/types/recognition.types";
 import { getManagerFeedback } from "@/lib/recognition/actions";
-import { Loader2, Inbox } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  Tray as Inbox,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Select,

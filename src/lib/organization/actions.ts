@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import type { Tables } from "@/types/database.types";
 import {
@@ -60,12 +61,12 @@ export async function getCurrentOrganization(): Promise<{
   organization: Organization | null;
   error: string | null
 }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { organization: null, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization_id
   const { data: userData } = await supabase
@@ -96,12 +97,12 @@ export async function getCurrentOrganization(): Promise<{
 export async function updateOrganizationSettings(
   data: UpdateOrganizationSettings
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Validate input
   const validated = updateOrganizationSettingsSchema.safeParse(data);
@@ -145,12 +146,12 @@ export async function updateOrganizationSettings(
 export async function updateOrganizationBranding(
   data: UpdateOrganizationBranding
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Validate input
   const validated = updateOrganizationBrandingSchema.safeParse(data);
@@ -194,12 +195,12 @@ export async function updateOrganizationBranding(
 export async function updateOrganizationBilling(
   data: UpdateOrganizationBilling
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Validate input
   const validated = updateOrganizationBillingSchema.safeParse(data);
@@ -244,12 +245,12 @@ export async function getOrganizationMembers(): Promise<{
   members: OrganizationMember[];
   error: string | null;
 }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { members: [], error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization
   const { data: userData } = await supabase
@@ -279,11 +280,9 @@ export async function getOrganizationMembers(): Promise<{
 // Update member role (enterprise accounts only)
 export async function updateMemberRole(
   memberId: string,
-  newRole: "admin" | "manager" | "loan_officer"
+  newRole: "admin" | "manager" | "user"
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
@@ -292,6 +291,8 @@ export async function updateMemberRole(
   if (memberId === user.id) {
     return { success: false, error: "Cannot change your own role" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization, role, and account type
   const { data: userData } = await supabase
@@ -354,9 +355,7 @@ export async function updateMemberRole(
 export async function deactivateMember(
   memberId: string
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
@@ -365,6 +364,8 @@ export async function deactivateMember(
   if (memberId === user.id) {
     return { success: false, error: "Cannot deactivate yourself" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization and role
   const { data: userData } = await supabase
@@ -406,12 +407,12 @@ export async function deactivateMember(
 export async function reactivateMember(
   memberId: string
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization and role
   const { data: userData } = await supabase
@@ -453,12 +454,12 @@ export async function reactivateMember(
 export async function createInvitation(
   data: CreateInvitation
 ): Promise<{ invitation: Invitation | null; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { invitation: null, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Validate input
   const validated = createInvitationSchema.safeParse(data);
@@ -528,12 +529,12 @@ export async function getPendingInvitations(): Promise<{
   invitations: Invitation[];
   error: string | null;
 }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { invitations: [], error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization
   const { data: userData } = await supabase
@@ -566,12 +567,12 @@ export async function getPendingInvitations(): Promise<{
 export async function revokeInvitation(
   invitationId: string
 ): Promise<{ success: boolean; error: string | null }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization and role
   const { data: userData } = await supabase
@@ -604,12 +605,12 @@ export async function getOrganizationStats(): Promise<{
   stats: OrganizationStats | null;
   error: string | null;
 }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { stats: null, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization
   const { data: userData } = await supabase
@@ -668,12 +669,12 @@ export async function getAuditLogs(limit = 50): Promise<{
   logs: AuditLog[];
   error: string | null;
 }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { logs: [], error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   // Get user's organization and role
   const { data: userData } = await supabase
@@ -703,10 +704,10 @@ export async function getAuditLogs(limit = 50): Promise<{
 
 // Check if user is organization admin
 export async function isOrganizationAdmin(): Promise<boolean> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) return false;
+
+  const supabase = createAdminClient();
 
   const { data: userData } = await supabase
     .from("users")

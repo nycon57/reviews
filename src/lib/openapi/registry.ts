@@ -285,7 +285,7 @@ const UserSchema = z
     id: z.string().uuid(),
     email: z.string().email(),
     full_name: z.string().nullable(),
-    role: z.enum(['admin', 'manager', 'loan_officer']),
+    role: z.enum(['admin', 'manager', 'user']),
     is_active: z.boolean(),
     avatar_url: z.string().url().nullable(),
     last_login_at: z.string().datetime().nullable(),
@@ -296,7 +296,7 @@ const UserSchema = z
 const InviteUserSchema = z
   .object({
     email: z.string().email().openapi({ example: 'newuser@example.com' }),
-    role: z.enum(['admin', 'manager', 'loan_officer']).openapi({ example: 'loan_officer' }),
+    role: z.enum(['admin', 'manager', 'user']).openapi({ example: 'user' }),
     first_name: z.string().max(100).optional(),
     last_name: z.string().max(100).optional(),
   })
@@ -665,7 +665,7 @@ registry.registerPath({
     query: z.object({
       page: z.coerce.number().int().min(1).default(1).optional(),
       page_size: z.coerce.number().int().min(1).max(100).default(25).optional(),
-      role: z.enum(['admin', 'manager', 'loan_officer']).optional(),
+      role: z.enum(['admin', 'manager', 'user']).optional(),
       is_active: z.enum(['true', 'false']).optional(),
       search: z.string().max(200).optional(),
     }),

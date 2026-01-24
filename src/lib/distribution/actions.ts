@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import {
@@ -71,14 +71,12 @@ export async function createSurveyAndQueue(
       };
     }
 
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     // Get user's organization
     const { data: userData, error: userError } = await supabase
@@ -244,14 +242,12 @@ export async function sendSurveyManually(
   surveyId: string
 ): Promise<ActionResult<{ sent: boolean; messageId?: string }>> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     // Get user's organization
     const { data: userData, error: userError } = await supabase
@@ -439,14 +435,12 @@ export async function getSurveysForDistribution(params?: {
   }>
 > {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     const { data: userData, error: userError } = await supabase
       .from("users")
@@ -537,14 +531,12 @@ export async function getLoanOfficersForSend(): Promise<
   ActionResult<Array<{ id: string; fullName: string; email: string }>>
 > {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     const { data: userData, error: userError } = await supabase
       .from("users")
@@ -585,14 +577,12 @@ export async function getActiveTemplatesForSend(): Promise<
   ActionResult<Array<{ id: string; name: string; description: string | null }>>
 > {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     const { data: userData, error: userError } = await supabase
       .from("users")
@@ -635,14 +625,12 @@ export async function getDistributionQueue(params?: {
   pageSize?: number;
 }): Promise<ActionResult<{ items: DistributionQueueItem[]; total: number }>> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     const { data: userData, error: userError } = await supabase
       .from("users")
@@ -753,15 +741,12 @@ const createWebhookConfigSchema = z.object({
 // Get webhook configurations for the current organization
 export async function getWebhookConfigs(): Promise<ActionResult<WebhookConfig[]>> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("organization_id, role")
@@ -820,15 +805,12 @@ export async function createWebhookConfig(
       };
     }
 
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("organization_id, role")
@@ -895,15 +877,12 @@ export async function toggleWebhookConfig(
   isActive: boolean
 ): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("organization_id, role")
@@ -939,15 +918,12 @@ export async function toggleWebhookConfig(
 // Delete a webhook configuration
 export async function deleteWebhookConfig(id: string): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("organization_id, role")
@@ -985,15 +961,12 @@ export async function regenerateWebhookSecret(
   id: string
 ): Promise<ActionResult<{ secretKey: string }>> {
   try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData, error: userError } = await supabase
       .from("users")
       .select("organization_id, role")

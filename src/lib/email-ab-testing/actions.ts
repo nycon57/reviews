@@ -6,7 +6,8 @@
  */
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -14,8 +15,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * These tables are not yet in generated types - regenerate after migration
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function getSupabaseForABTesting(): Promise<SupabaseClient<any, any, any>> {
-  return createClient() as unknown as SupabaseClient<any, any, any>;
+function getSupabaseForABTesting(): SupabaseClient<any, any, any> {
+  return createAdminClient() as unknown as SupabaseClient<any, any, any>;
 }
 import type {
   ActionResult,
@@ -51,15 +52,12 @@ import {
  * Get admin context - requires admin role
  */
 async function getAdminContext() {
-  const supabase = await getSupabaseForABTesting();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = getSupabaseForABTesting();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")

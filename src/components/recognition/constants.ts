@@ -5,33 +5,36 @@ import {
   GraduationCap,
   Heart,
   Star,
-  Smile,
+  Smiley,
   Shield,
-  Award,
-  MessageSquare,
-  TrendingUp,
-  ClipboardList,
+  Medal,
+  Chats,
+  TrendUp,
+  ClipboardText,
   FileText,
-} from "lucide-react";
+  type IconProps,
+} from "@phosphor-icons/react";
+
+type PhosphorIcon = React.ComponentType<IconProps & { style?: React.CSSProperties }>;
 
 // Icon mapping for recognition badges
-export const BADGE_ICONS: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+export const BADGE_ICONS: Record<string, PhosphorIcon> = {
   Users,
   Lightbulb,
   Rocket,
   GraduationCap,
   Heart,
   Star,
-  Smile,
+  Smile: Smiley,
   Shield,
-  Award,
+  Award: Medal,
 };
 
 // Icon mapping for feedback types
 export const FEEDBACK_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   Star,
-  MessageSquare,
-  TrendingUp,
-  ClipboardList,
+  MessageSquare: Chats,
+  TrendingUp: TrendUp,
+  ClipboardList: ClipboardText,
   FileText,
 };

@@ -139,7 +139,7 @@ export async function fetchWeeklyTeamMetrics(
       .from("users")
       .select("id, full_name, avatar_url, average_rating, nps_score")
       .eq("organization_id", organizationId)
-      .eq("role", "loan_officer")
+      .eq("role", "user")
       .eq("is_active", true);
 
     if (teamError) {
@@ -478,7 +478,7 @@ export async function hasTeamWeeklyActivity(
     .from("users")
     .select("id")
     .eq("organization_id", organizationId)
-    .eq("role", "loan_officer")
+    .eq("role", "user")
     .eq("is_active", true);
 
   const teamMemberIds = (teamMembers || []).map((m) => m.id as string);

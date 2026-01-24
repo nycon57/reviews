@@ -26,16 +26,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2,
+  SpinnerGap as Loader2,
   Play,
   Copy,
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   XCircle,
-  ChevronDown,
+  CaretDown as ChevronDown,
   Clock,
   Code,
   Terminal,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import type { WebhookConfig } from "@/lib/distribution";
 
 interface WebhookTesterProps {

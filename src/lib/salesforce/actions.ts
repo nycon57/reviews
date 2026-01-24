@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient, createUntypedServerClient } from '@/lib/supabase/server';
-import { createUntypedAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient, createUntypedAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { revalidatePath } from 'next/cache';
 import {
   exchangeCodeForTokens,
@@ -24,15 +24,12 @@ import type { Json } from '@/types/database.types';
 
 // Get user's role and organization ID
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from('users')
     .select('id, organization_id, role')
@@ -228,7 +225,7 @@ export async function getSalesforceConnection(): Promise<ActionResult<Salesforce
   }
 
   // Use untyped client for salesforce_connections table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
     .from('salesforce_connections')
@@ -283,7 +280,7 @@ export async function disconnectSalesforce(connectionId: string): Promise<Action
   }
 
   // Use untyped client for salesforce_connections table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
     .from('salesforce_connections')
@@ -317,7 +314,7 @@ export async function updateSalesforceSettings(
   }
 
   // Use untyped client for salesforce_connections table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const updateData: Record<string, unknown> = {};
   if (settings.syncContacts !== undefined)
@@ -946,7 +943,7 @@ export async function getSalesforceSyncLogs(
   }
 
   // Use untyped client for salesforce_sync_logs table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
     .from('salesforce_sync_logs')

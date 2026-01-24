@@ -5,7 +5,8 @@
  * Performs technical SEO audits on pages
  */
 
-import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import type { SEOAuditResult, SEOIssue, SEORecommendation } from "./types";
 import type { Json } from "@/types/database.types";
@@ -14,15 +15,12 @@ import type { Json } from "@/types/database.types";
  * Get user context
  */
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -550,7 +548,7 @@ export async function runPageSEOAudit(
 
     // Get previous audit for comparison
     // Use untyped client for website_seo_audits table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
     const { data: previousAudit } = await supabase
       .from("website_seo_audits")
       .select("seo_score")

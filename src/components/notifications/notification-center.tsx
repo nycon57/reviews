@@ -14,15 +14,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bell,
   Check,
-  CheckCheck,
+  Checks as CheckCheck,
   Star,
-  AlertTriangle,
-  MessageSquare,
+  Warning as AlertTriangle,
+  Chats as MessageSquare,
   Trophy,
   FileText,
-  Settings,
+  Gear as Settings,
   Archive,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
 import {

@@ -1,7 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { Database } from "@/types/database.types";
 
 // ============================================================================
@@ -129,14 +130,12 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
     // Validate input with Zod
     const validatedParams = dateRangeSchema.parse(params);
 
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     const { data: userData, error: userError } = await supabase
       .from("users")
@@ -150,7 +149,7 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
 
     // Role-based filtering - query loan officer ID once
     let loanOfficerIdFilter: string | undefined = validatedParams?.loanOfficerId;
-    if (userData.role === "loan_officer") {
+    if (userData.role === "user") {
       const { data: loData } = await supabase
         .from("loan_officers")
         .select("id")
@@ -307,14 +306,12 @@ export async function getVideoTestimonialTrends(params?: {
     // Validate input with Zod
     const validatedParams = trendsParamsSchema.parse(params);
 
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     const { data: userData, error: userError } = await supabase
       .from("users")
@@ -334,7 +331,7 @@ export async function getVideoTestimonialTrends(params?: {
 
     // Role-based filtering - query loan officer ID once
     let loanOfficerIdFilter: string | undefined = validatedParams?.loanOfficerId;
-    if (userData.role === "loan_officer") {
+    if (userData.role === "user") {
       const { data: loData } = await supabase
         .from("loan_officers")
         .select("id")
@@ -496,14 +493,12 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
     // Validate input with Zod
     const validatedParams = loStatsParamsSchema.parse(params);
 
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
+
+    const supabase = createAdminClient();
 
     const { data: userData, error: userError } = await supabase
       .from("users")

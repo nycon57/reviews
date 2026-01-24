@@ -32,7 +32,7 @@ interface Props {
 const roleLabels: Record<string, string> = {
   admin: "Admin",
   manager: "Manager",
-  loan_officer: "Loan Officer",
+  user: "User",
 };
 
 const reasonLabels: Record<string, { label: string; color: string }> = {

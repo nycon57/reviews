@@ -14,19 +14,19 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Star,
-  ExternalLink,
+  ArrowSquareOut as ExternalLink,
   Archive,
   Flag,
-  MessageSquare,
+  Chats as MessageSquare,
   Calendar,
   MapPin,
   User,
-  Building2,
-  TrendingUp,
-  Tags,
+  BuildingOffice as Building2,
+  TrendUp as TrendingUp,
+  Tag as Tags,
   Clock,
-  Share2,
-} from "lucide-react";
+  ShareNetwork as Share2,
+} from "@phosphor-icons/react";
 import type { AggregatedReview } from "@/lib/reviews/types";
 import {
   archiveReview,

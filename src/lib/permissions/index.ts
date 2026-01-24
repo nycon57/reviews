@@ -78,7 +78,7 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
   const isEnterprise = accountType === "enterprise";
   const isAdmin = role === "admin";
   const isManager = role === "manager";
-  const _isLoanOfficer = role === "loan_officer"; // Reserved for future loan officer-specific permissions
+  const _isUser = role === "user"; // Reserved for future user-specific permissions
   const isManagerOrAbove = isAdmin || isManager;
   const isPro = subscriptionTier === "pro" || subscriptionTier === "enterprise";
 

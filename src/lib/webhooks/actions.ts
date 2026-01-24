@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   getNextRetryTime,
   shouldRetry,
@@ -86,16 +86,12 @@ async function requireAdminAccess(): Promise<
   | { success: true; organizationId: string }
   | { success: false; error: string }
 > {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   const { data: userData, error: userError } = await supabase
     .from("users")
     .select("organization_id, role")
@@ -125,7 +121,7 @@ export async function getWebhookLogs(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const offset = (page - 1) * pageSize;
 
     let query = supabase
@@ -199,7 +195,7 @@ export async function getWebhookStats(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     let query = supabase
       .from("webhook_logs")
@@ -287,7 +283,7 @@ export async function getWebhookLogDetail(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from("webhook_logs")
@@ -336,7 +332,7 @@ export async function retryFailedQueueItem(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data: queueItem, error: queueError } = await supabase
       .from("survey_distribution_queue")
@@ -413,7 +409,7 @@ export async function getWebhookEventTypes(): Promise<ActionResult<string[]>> {
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from("webhook_logs")

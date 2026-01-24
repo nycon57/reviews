@@ -18,15 +18,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  Sparkles,
+  Sparkle as Sparkles,
   FileText,
-  Send,
-  Save,
+  PaperPlaneRight as Send,
+  FloppyDisk as Save,
   CheckCircle,
-  Loader2,
-  RefreshCw,
+  SpinnerGap as Loader2,
+  ArrowsClockwise as RefreshCw,
   Lock,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import {
   getResponseTemplates,

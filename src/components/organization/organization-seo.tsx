@@ -9,19 +9,19 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   XCircle,
-  AlertTriangle,
-  RefreshCw,
-  ExternalLink,
-  FileCode2,
+  Warning as AlertTriangle,
+  ArrowsClockwise as RefreshCw,
+  ArrowSquareOut as ExternalLink,
+  FileCode as FileCode2,
   Globe,
-  Search,
+  MagnifyingGlass as Search,
   FileText,
-  Loader2,
+  SpinnerGap as Loader2,
   Copy,
   Check,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { runSEOAudit, type SEOAuditResult } from "@/lib/seo/audit-actions";
 
 type AuditItemStatus = "pass" | "fail" | "warning" | "not_applicable";

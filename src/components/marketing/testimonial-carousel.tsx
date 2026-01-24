@@ -1,7 +1,10 @@
 "use client";
 
 import AutoScroll from "embla-carousel-auto-scroll";
-import { ChevronRight, Star } from "lucide-react";
+import {
+  CaretRight as ChevronRight,
+  Star,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRef } from "react";
 

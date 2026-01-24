@@ -5,7 +5,8 @@
  * Fetch and process AI-generated insights data
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
   SentimentTrendPoint,
@@ -25,15 +26,13 @@ import { randomUUID } from "crypto";
  * Get user context for analytics operations - parallelized queries
  */
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   // Parallelize independent queries
   const [userDataResult, loanOfficerResult] = await Promise.all([
     supabase
@@ -74,7 +73,7 @@ export async function getSentimentTrend(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
 
@@ -173,7 +172,7 @@ export async function getThemeFrequencies(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
 
@@ -307,7 +306,7 @@ export async function getTopKeyPhrases(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - 3); // Last 3 months
 
@@ -403,7 +402,7 @@ export async function getSentimentDistribution(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
 
@@ -447,7 +446,7 @@ export async function generateAISummary(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
   const endDate = new Date();
@@ -655,7 +654,7 @@ export async function getImprovementRecommendations(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - 3);
 
@@ -874,7 +873,7 @@ export async function getIndustryBenchmarks(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - 3);
 

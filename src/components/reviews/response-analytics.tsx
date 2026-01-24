@@ -5,15 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  MessageSquare,
+  Chats as MessageSquare,
   Clock,
-  TrendingUp,
-  Sparkles,
+  TrendUp as TrendingUp,
+  Sparkle as Sparkles,
   CheckCircle,
-  AlertCircle,
-  Loader2,
-  BarChart3,
-} from "lucide-react";
+  WarningCircle as AlertCircle,
+  SpinnerGap as Loader2,
+  ChartBar as BarChart3,
+} from "@phosphor-icons/react";
 import { getResponseAnalytics, type ResponseAnalytics } from "@/lib/reviews/response-actions";
 
 interface ResponseAnalyticsDashboardProps {

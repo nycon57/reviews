@@ -104,7 +104,7 @@ const DEFAULT_WEEKLY_PREFERENCES: WeeklySummaryEmailPreferences = {
  * Get users who should receive weekly summary emails
  */
 async function getUsersForWeeklySummary(
-  role: "loan_officer" | "manager"
+  role: "user" | "manager"
 ): Promise<
   Array<{
     userId: string;
@@ -189,7 +189,7 @@ export async function sendWeeklyLOSummaries(): Promise<SendWeeklySummaryResult> 
 
   try {
     const resend = getResendClient();
-    const users = await getUsersForWeeklySummary("loan_officer");
+    const users = await getUsersForWeeklySummary("user");
 
     for (const user of users) {
       try {

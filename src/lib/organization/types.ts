@@ -104,7 +104,7 @@ export type UpdateOrganizationBilling = z.infer<typeof updateOrganizationBilling
 // Invitation schema
 export const createInvitationSchema = z.object({
   email: z.string().email("Invalid email address"),
-  role: z.enum(["admin", "manager", "loan_officer"]),
+  role: z.enum(["admin", "manager", "user"]),
 });
 export type CreateInvitation = z.infer<typeof createInvitationSchema>;
 
@@ -112,7 +112,7 @@ export const invitationSchema = z.object({
   id: z.string().uuid(),
   organization_id: z.string().uuid(),
   email: z.string().email(),
-  role: z.enum(["admin", "manager", "loan_officer"]),
+  role: z.enum(["admin", "manager", "user"]),
   token: z.string(),
   invited_by: z.string().uuid().nullable(),
   expires_at: z.string(),
@@ -127,7 +127,7 @@ export const organizationMemberSchema = z.object({
   email: z.string().email(),
   full_name: z.string().nullable(),
   avatar_url: z.string().url().nullable(),
-  role: z.enum(["admin", "manager", "loan_officer"]),
+  role: z.enum(["admin", "manager", "user"]),
   is_active: z.boolean(),
   last_login_at: z.string().nullable(),
   created_at: z.string(),

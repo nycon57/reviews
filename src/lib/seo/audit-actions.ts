@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { SEOAuditItem, SEOAuditResult } from "./types";
 
 export type { SEOAuditResult } from "./types";
@@ -15,14 +16,12 @@ export async function runSEOAudit(): Promise<{
   error?: string;
 }> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Unauthorized" };
     }
+
+    const supabase = createAdminClient();
 
     // Get user's organization
     const { data: userData } = await supabase

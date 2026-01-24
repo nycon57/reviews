@@ -219,3 +219,36 @@ export {
 
 // Email utility functions
 export { formatDuration } from "./utils";
+
+// Email sending utilities with reliability features (idempotency, retry, List-Unsubscribe)
+export {
+  sendEmailWithReliability,
+  sendWithReliability,
+  checkEmailSize,
+  getUnsubscribeUrl,
+  getEmailPreferencesUrl,
+  getListUnsubscribeHeaders,
+  // Idempotency key generators
+  getSurveyInvitationIdempotencyKey,
+  getSurveyReminderIdempotencyKey,
+  getReviewNotificationIdempotencyKey,
+  getVideoTestimonialIdempotencyKey,
+  getMilestoneIdempotencyKey,
+  getWelcomeSequenceIdempotencyKey,
+  getWeeklySummaryIdempotencyKey,
+  getTrialEndingIdempotencyKey,
+  getDunningIdempotencyKey,
+  getAnnouncementIdempotencyKey,
+  getReferralIdempotencyKey,
+  // Category awareness
+  EMAIL_TEMPLATE_CATEGORIES,
+  getCategoryPreferenceField,
+  shouldSendEmail,
+  // Constants
+  COMPANY_MAILING_ADDRESS,
+  // Types
+  type EmailSendOptions,
+  type SimpleSendOptions,
+  type EmailSendResult as ReliableEmailSendResult,
+  type EmailCategory,
+} from "./send-utils";

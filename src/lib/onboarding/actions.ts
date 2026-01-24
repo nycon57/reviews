@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { getStripe } from "@/lib/stripe/server";
 import { PRICING_TIERS, type BillingCycle } from "@/lib/stripe/types";
 import {
@@ -36,8 +36,8 @@ interface OnboardingStatusResult {
  * Get current onboarding status for the user
  */
 export async function getOnboardingStatus(): Promise<OnboardingStatusResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -123,8 +123,8 @@ export async function selectPlan(input: SelectPlanInput): Promise<ActionResult> 
 
   const { plan, billingCycle } = validated.data;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -192,8 +192,8 @@ export async function createOnboardingCheckout(): Promise<{
   url?: string;
   error?: string
 }> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -335,8 +335,8 @@ export async function createOnboardingCheckout(): Promise<{
  * Complete payment step after successful checkout
  */
 export async function completePaymentStep(sessionId: string): Promise<ActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -403,8 +403,8 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
     return { success: false, error: validated.error.errors[0].message };
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -472,8 +472,8 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
  * Complete onboarding and mark as finished
  */
 export async function completeOnboarding(): Promise<ActionResult> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
 
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -541,13 +541,12 @@ export async function skipPayment(): Promise<ActionResult> {
 export async function uploadLogo(
   formData: FormData
 ): Promise<{ success: boolean; url?: string; error?: string }> {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   // Get user's organization
   const { data: userData, error: userError } = await supabase
     .from("users")

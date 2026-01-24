@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import type {
   AggregatedReview,
@@ -12,15 +13,13 @@ import type {
 
 // Get user's role and organization ID
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -115,7 +114,7 @@ export async function getAggregatedReviews(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const page = filters?.page || 1;
   const limit = filters?.limit || 50;
   const offset = (page - 1) * limit;
@@ -276,7 +275,7 @@ export async function getAggregatedReviewById(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")
@@ -364,7 +363,7 @@ export async function getReviewAggregationStats(): Promise<
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")
@@ -433,7 +432,7 @@ export async function toggleReviewFeatured(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("reviews")
@@ -457,7 +456,7 @@ export async function archiveReview(reviewId: string): Promise<ActionResult> {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("reviews")
@@ -488,7 +487,7 @@ export async function bulkArchiveReviews(
     return { success: false, error: "No reviews selected" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")
@@ -521,7 +520,7 @@ export async function bulkToggleFeatured(
     return { success: false, error: "No reviews selected" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")
@@ -548,7 +547,7 @@ export async function exportReviews(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Build query without pagination for export
   let query = supabase

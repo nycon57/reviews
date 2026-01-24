@@ -1,7 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { FileBarChart, Users, Plus, Check } from "lucide-react";
+import {
+  ChartBar as FileBarChart,
+  Users,
+  Plus,
+  Check,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

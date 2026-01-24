@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import type { Json } from "@/types/database.types";
 import {
@@ -15,15 +16,12 @@ import {
 
 // Get user context
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -56,14 +54,12 @@ async function requireAdminRole(): Promise<{
 export async function getMyCredentials(): Promise<
   ActionResult<UserCredential[]>
 > {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("user_credentials")
@@ -92,7 +88,7 @@ export async function getUserCredentials(
     return { success: false, error: "Unauthorized - Admin role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("user_credentials")
@@ -117,7 +113,7 @@ export async function getUserCredentials(
 export async function getPublicCredentials(
   userId: string
 ): Promise<ActionResult<UserCredential[]>> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("user_credentials")
@@ -152,7 +148,7 @@ export async function createCredential(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("user_credentials")
@@ -203,7 +199,7 @@ export async function createCredentialForUser(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify user belongs to same organization
   const { data: targetUser } = await supabase
@@ -265,7 +261,7 @@ export async function updateCredential(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Build update object with only provided fields
   const updates: Record<string, unknown> = {};
@@ -319,7 +315,7 @@ export async function deleteCredential(id: string): Promise<ActionResult> {
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get credential to check ownership and get user_id for revalidation
   let query = supabase.from("user_credentials").select("user_id").eq("id", id);
@@ -367,7 +363,7 @@ export async function verifyCredential(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("user_credentials")
@@ -405,7 +401,7 @@ export async function getExpiringCredentials(
     return { success: false, error: "Unauthorized - Admin role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const futureDate = new Date();
   futureDate.setDate(futureDate.getDate() + daysUntilExpiry);

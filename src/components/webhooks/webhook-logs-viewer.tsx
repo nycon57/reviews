@@ -38,20 +38,20 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2,
-  RefreshCw,
-  Search,
+  SpinnerGap as Loader2,
+  ArrowsClockwise as RefreshCw,
+  MagnifyingGlass as Search,
   Eye,
-  ChevronLeft,
-  ChevronRight,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
   Clock,
-  CheckCircle2,
+  CheckCircle as CheckCircle2,
   XCircle,
-  AlertCircle,
-  Filter,
-  BarChart3,
+  WarningCircle as AlertCircle,
+  Funnel as Filter,
+  ChartBar as BarChart3,
   Copy,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   getWebhookLogs,

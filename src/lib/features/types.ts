@@ -61,7 +61,7 @@ export interface FeatureHowItWorksStep {
  */
 export interface FeatureUseCase {
   /** Role identifier */
-  role: "loan_officer" | "manager" | "enterprise";
+  role: "user" | "manager" | "enterprise";
   /** Role display label */
   label: string;
   /** Use case description */

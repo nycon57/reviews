@@ -2,7 +2,7 @@
 // @ts-nocheck - ex_surveys tables not in generated types yet
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { EXSurveyAnswer, TenureRange } from "@/types/ex-survey.types";
 import { Question } from "@/types/survey.types";
 
@@ -41,7 +41,7 @@ export interface PublicEXSurvey {
 export async function getEXSurveyByToken(
   token: string
 ): Promise<{ success: boolean; data?: PublicEXSurvey; error?: string }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get the invitation with survey and template
   const { data: invitation, error } = await supabase
@@ -145,7 +145,7 @@ export async function submitEXSurveyResponse(
     roleCategory?: string;
   }
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get the invitation
   const { data: invitation, error: inviteError } = await supabase
@@ -241,7 +241,7 @@ export async function getEXSurveyStatus(
   data?: { status: string; completedAt?: string };
   error?: string;
 }> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("ex_survey_invitations")

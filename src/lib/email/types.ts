@@ -557,7 +557,7 @@ export interface VideoCustomerThankYouEmailData extends BaseEmailData {
 export interface WelcomeEmailBaseData extends BaseEmailData {
   firstName: string;
   organizationName: string;
-  role: "admin" | "manager" | "loan_officer";
+  role: "admin" | "manager" | "user";
   dashboardUrl: string;
   sequenceId: string;
   unsubscribeUrl: string;
@@ -747,7 +747,7 @@ export interface TeamInviteEmailBaseData extends BaseEmailData {
   inviterName: string;
   organizationName: string;
   organizationLogoUrl?: string;
-  role: "admin" | "manager" | "loan_officer";
+  role: "admin" | "manager" | "user";
   invitationId: string;
   acceptUrl: string;
   unsubscribeUrl: string;
@@ -797,7 +797,7 @@ export interface TeamInvite5ExpirationEmailData extends TeamInviteEmailBaseData 
 export interface RoleOnboardingEmailBaseData extends BaseEmailData {
   firstName: string;
   organizationName: string;
-  role: "admin" | "manager" | "loan_officer";
+  role: "admin" | "manager" | "user";
   dashboardUrl: string;
   sequenceId: string;
   unsubscribeUrl: string;
@@ -1887,7 +1887,7 @@ export type AnnouncementAudience =
   | "all"
   | "admins_only"
   | "managers_only"
-  | "loan_officers_only"
+  | "users_only"
   | "free_tier"
   | "starter_tier"
   | "professional_tier"

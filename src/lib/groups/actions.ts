@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import type { Json } from "@/types/database.types";
 import {
@@ -20,15 +21,12 @@ import {
 
 // Get user context
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -73,7 +71,7 @@ export async function getGroups(params?: {
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   let query = supabase
     .from("groups")
@@ -110,7 +108,7 @@ export async function getGroup(id: string): Promise<ActionResult<Group>> {
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("groups")
@@ -141,7 +139,7 @@ export async function getGroupWithMembers(
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get group
   const { data: groupData, error: groupError } = await supabase
@@ -211,7 +209,7 @@ export async function getUserGroups(
 
   const targetUserId = userId || context.id;
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("user_groups")
@@ -249,7 +247,7 @@ export async function createGroup(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("groups")
@@ -296,7 +294,7 @@ export async function updateGroup(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Build update object with only provided fields
   const updates: Record<string, unknown> = {};
@@ -345,7 +343,7 @@ export async function deleteGroup(id: string): Promise<ActionResult> {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("groups")
@@ -377,7 +375,7 @@ export async function addMember(input: unknown): Promise<ActionResult> {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify group belongs to organization
   const { data: group } = await supabase
@@ -436,7 +434,7 @@ export async function updateMemberRole(input: unknown): Promise<ActionResult> {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify group belongs to organization
   const { data: group } = await supabase
@@ -479,7 +477,7 @@ export async function removeMember(input: unknown): Promise<ActionResult> {
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify group belongs to organization
   const { data: group } = await supabase
@@ -526,7 +524,7 @@ export async function addMembers(
     return { success: false, error: "No users provided" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify group belongs to organization
   const { data: group } = await supabase

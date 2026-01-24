@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient, createUntypedServerClient } from '@/lib/supabase/server';
-import { createUntypedAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient, createUntypedAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { revalidatePath } from 'next/cache';
 import {
   exchangeCodeForTokens,
@@ -30,15 +30,12 @@ import type {
 
 // Get user's role and organization ID
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from('users')
     .select('id, organization_id, role')
@@ -350,7 +347,7 @@ export async function getSocialConnections(): Promise<ActionResult<SocialConnect
   }
 
   // Use untyped client for social_connections table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
     .from('social_connections')
@@ -398,7 +395,7 @@ export async function disconnectSocial(connectionId: string): Promise<ActionResu
   }
 
   // Use untyped client for social_connections table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
     .from('social_connections')
@@ -426,7 +423,7 @@ export async function updateAutoPublishSettings(
   }
 
   // Use untyped client for social_connections table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
     .from('social_connections')
@@ -455,7 +452,7 @@ export async function getSocialPostTemplates(
   }
 
   // Use untyped client for social_post_templates table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   let query = supabase
     .from('social_post_templates')
@@ -507,7 +504,7 @@ export async function generatePostPreview(
   }
 
   // Use untyped client for social_post_templates table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   // Get review with loan officer info
   const { data: review, error: reviewError } = await supabase
@@ -815,7 +812,7 @@ export async function getSocialPosts(params?: {
   }
 
   // Use untyped client for social_posts table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   let query = supabase
     .from('social_posts')
@@ -878,7 +875,7 @@ export async function deleteSocialPost(postId: string): Promise<ActionResult> {
   }
 
   // Use untyped client for social_posts table (not in generated types)
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
     .from('social_posts')

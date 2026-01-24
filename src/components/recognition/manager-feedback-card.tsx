@@ -27,7 +27,12 @@ import {
   formatRecognitionDate,
 } from "@/types/recognition.types";
 import { deleteManagerFeedback } from "@/lib/recognition/actions";
-import { MoreHorizontal, Trash2, Lock, MessageSquare } from "lucide-react";
+import {
+  DotsThree as MoreHorizontal,
+  Trash as Trash2,
+  Lock,
+  Chats as MessageSquare,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { FEEDBACK_ICONS } from "./constants";
 

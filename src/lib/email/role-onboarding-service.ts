@@ -43,7 +43,7 @@ import {
 // Types
 // ============================================================================
 
-type UserRole = "admin" | "manager" | "loan_officer";
+type UserRole = "admin" | "manager" | "user";
 
 interface RoleSequenceConfig {
   totalSteps: number;
@@ -241,7 +241,7 @@ const ADMIN_SEQUENCE_CONFIG: RoleSequenceConfig = {
 
 function getSequenceConfig(role: UserRole): RoleSequenceConfig {
   switch (role) {
-    case "loan_officer":
+    case "user":
       return LOAN_OFFICER_SEQUENCE_CONFIG;
     case "manager":
       return MANAGER_SEQUENCE_CONFIG;
@@ -472,7 +472,7 @@ export async function startRoleOnboardingSequence(userId: string): Promise<{
 
   // Validate role
   const role = user.role as UserRole;
-  if (!["admin", "manager", "loan_officer"].includes(role)) {
+  if (!["admin", "manager", "user"].includes(role)) {
     return { success: false, error: `Invalid role: ${role}` };
   }
 

@@ -21,7 +21,14 @@ import { FeedbackType, FEEDBACK_TYPE_CONFIG } from "@/types/recognition.types";
 import { createManagerFeedback, searchUsers } from "@/lib/recognition/actions";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Search, Plus, Check, Loader2, Send, MessageSquare } from "lucide-react";
+import {
+  MagnifyingGlass as Search,
+  Plus,
+  Check,
+  SpinnerGap as Loader2,
+  PaperPlaneRight as Send,
+  Chats as MessageSquare,
+} from "@phosphor-icons/react";
 import { FEEDBACK_ICONS } from "./constants";
 
 interface GiveFeedbackDialogProps {

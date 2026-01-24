@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, UserCheck, Star, FileText, Clock, CheckCircle2, Building2 } from "lucide-react";
+import {
+  Users,
+  UserCheck,
+  Star,
+  FileText,
+  Clock,
+  CheckCircle as CheckCircle2,
+  BuildingOffice as Building2,
+} from "@phosphor-icons/react";
 import {
   getCurrentOrganization,
   getOrganizationStats,

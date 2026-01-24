@@ -1,6 +1,7 @@
 "use server";
 
-import { createUntypedServerClient } from "@/lib/supabase/server";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import {
   PROFILE_SECTIONS,
@@ -18,13 +19,11 @@ import {
 
 // Get user context - parallelized queries for better performance
 async function getUserContext() {
-  const supabase = await createUntypedServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) return null;
 
+  const supabase = createUntypedAdminClient();
   // Parallelize independent queries
   const [userDataResult, loDataResult] = await Promise.all([
     supabase
@@ -75,7 +74,7 @@ export async function getProfileCompletionScore(
     return { success: false, error: "No loan officer specified" };
   }
 
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   // Get loan officer profile data
   const { data: loData, error: loError } = await supabase
@@ -314,7 +313,7 @@ export async function getProfileCompletionScore(
 
 // Helper to get simple profile score for ranking
 async function getSimpleProfileScore(loanOfficerId: string): Promise<number> {
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   const { data: loData } = await supabase
     .from("loan_officers")
@@ -398,7 +397,7 @@ export async function getProfileCompletionLeaderboard(
     return { success: false, error: "Manager access required" };
   }
 
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
 
   // Get all active loan officers
   const { data: loanOfficers, error } = await supabase

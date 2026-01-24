@@ -316,8 +316,8 @@ async function getRecipients(
     case "managers_only":
       query = query.eq("role", "manager");
       break;
-    case "loan_officers_only":
-      query = query.eq("role", "loan_officer");
+    case "users_only":
+      query = query.eq("role", "user");
       break;
     case "free_tier":
       query = query.eq("organizations.subscription_tier", "free");

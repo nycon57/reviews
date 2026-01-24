@@ -161,7 +161,7 @@ export const exampleRequestBodies: Record<string, Record<string, unknown>> = {
   },
   "POST /api/v1/users/invite": {
     email: "newuser@company.com",
-    role: "loan_officer",
+    role: "user",
     first_name: "John",
     last_name: "Smith",
   },
@@ -198,6 +198,6 @@ export const exampleQueryParams: Record<string, Record<string, string>> = {
   },
   "GET /api/v1/users": {
     page: "1",
-    role: "loan_officer",
+    role: "user",
   },
 };

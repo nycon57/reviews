@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Trophy,
   Medal,
-  Medal as Award,
+  Certificate,
   Star,
 } from "@phosphor-icons/react";
 import type { LeaderboardEntry } from "@/lib/dashboard";
@@ -36,7 +36,7 @@ export function PerformanceLeaderboard({
       case 2:
         return <Medal className="h-5 w-5 text-gray-400" />;
       case 3:
-        return <Award className="h-5 w-5 text-amber-600" />;
+        return <Certificate className="h-5 w-5 text-amber-600" />;
       default:
         return (
           <span className="flex h-5 w-5 items-center justify-center text-sm font-semibold text-muted-foreground">

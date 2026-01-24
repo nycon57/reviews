@@ -5,7 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ThumbsUp, MoreHorizontal, Trash2, User, Award } from "lucide-react";
+import {
+  ThumbsUp,
+  DotsThree as MoreHorizontal,
+  Trash as Trash2,
+  User,
+  Medal as Award,
+} from "@phosphor-icons/react";
 import {
   DropdownMenu,
   DropdownMenuContent,

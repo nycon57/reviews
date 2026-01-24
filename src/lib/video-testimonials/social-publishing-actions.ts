@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { formatDuration, formatRelationship, type ActionResult } from "./types";
 
@@ -163,10 +163,10 @@ function fillVideoTemplatePlaceholders(
 }
 
 async function requireManagerRole(): Promise<{ userId: string; organizationId: string } | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
   if (!user) return null;
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -199,7 +199,7 @@ export async function generateVideoPostPreview(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data: video, error: videoError } = await supabase
     .from("video_testimonial_responses")
     .select(`
@@ -385,7 +385,7 @@ export async function getVideoSocialPosts(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
   const { data, error } = await supabase
     .from("social_posts")
     .select("*")
@@ -428,7 +428,7 @@ export async function getConnectedPlatforms(): Promise<
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createUntypedServerClient();
+  const supabase = createUntypedAdminClient();
   const { data, error } = await supabase
     .from("social_connections")
     .select("id, platform, platform_display_name, page_name, is_active")

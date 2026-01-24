@@ -12,18 +12,18 @@ import {
   type TextApprovalData,
 } from "@/lib/video-testimonials/approval-actions";
 import {
-  Loader2,
+  SpinnerGap as Loader2,
   Star,
-  RefreshCw,
-  CheckCircle2,
+  ArrowsClockwise as RefreshCw,
+  CheckCircle as CheckCircle2,
   XCircle,
-  ExternalLink,
-  Edit3,
+  ArrowSquareOut as ExternalLink,
+  PencilSimple as Edit3,
   Eye,
   Shield,
-  Sparkles,
-  AlertCircle,
-} from "lucide-react";
+  Sparkle as Sparkles,
+  WarningCircle as AlertCircle,
+} from "@phosphor-icons/react";
 
 interface TextApprovalStepProps {
   token: string;

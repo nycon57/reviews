@@ -17,7 +17,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Award, Search, Plus, Check, Loader2, Send } from "lucide-react";
+import {
+  Medal as Award,
+  MagnifyingGlass as Search,
+  Plus,
+  Check,
+  SpinnerGap as Loader2,
+  PaperPlaneRight as Send,
+} from "@phosphor-icons/react";
 import { RecognitionBadge } from "@/types/recognition.types";
 import { createRecognition, searchUsers, getRecognitionBadges } from "@/lib/recognition/actions";
 import { cn } from "@/lib/utils";

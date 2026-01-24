@@ -7,8 +7,8 @@
  * Integrates with the gamification system and email service.
  */
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import {
   REVIEW_MILESTONES,
@@ -54,13 +54,10 @@ function mapMilestoneRecord(m: any): MilestoneRecord {
 
 // Get user context for authenticated requests
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) return null;
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role, email, full_name")

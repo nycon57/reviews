@@ -2,12 +2,12 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Users,
-  Star,
-  TrendUp as TrendingUp,
-  Chats as MessageSquare,
-  ArrowUpRight,
-  ArrowDownRight,
+  UsersIcon as Users,
+  StarIcon as Star,
+  TrendUpIcon as TrendingUp,
+  ChatsIcon as MessageSquare,
+  ArrowUpRightIcon as ArrowUpRight,
+  ArrowDownRightIcon as ArrowDownRight,
 } from "@phosphor-icons/react";
 import type { TeamMetrics } from "@/lib/dashboard";
 

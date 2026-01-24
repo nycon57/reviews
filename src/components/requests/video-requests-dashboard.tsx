@@ -3,23 +3,23 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Plus,
-  Search,
-  RefreshCw,
+  MagnifyingGlass as Search,
+  ArrowsClockwise as RefreshCw,
   X,
-  Send,
-  MoreHorizontal,
-  Download,
-  Mail,
+  PaperPlaneRight as Send,
+  DotsThree as MoreHorizontal,
+  DownloadSimple as Download,
+  Envelope as Mail,
   Clock,
   Eye,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Upload,
+  WarningCircle as AlertCircle,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  UploadSimple as Upload,
   Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -108,7 +108,7 @@ interface Props {
   initialTotal: number;
   initialStats: RequestStats;
   loanOfficers: LoanOfficer[];
-  userRole: "admin" | "manager" | "loan_officer";
+  userRole: "admin" | "manager" | "user";
 }
 
 // ============================================================================

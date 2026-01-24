@@ -3,7 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Play, ArrowRight } from "lucide-react";
+import {
+  Play,
+  ArrowRight,
+} from "@phosphor-icons/react";
 import { fadeInUp, scaleIn, staggerContainer, viewportOnce } from "@/lib/motion";
 import { BrowserMockup } from "./browser-mockup";
 import { Badge } from "@/components/ui/badge";

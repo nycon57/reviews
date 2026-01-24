@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { revalidatePath } from 'next/cache';
 import {
   exchangeCodeForTokens,
@@ -19,15 +19,12 @@ import { analyzeNewReview } from '@/lib/ai/actions';
 
 // Get user's role and organization ID
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from('users')
     .select('id, organization_id, role')
@@ -214,7 +211,7 @@ export async function getGoogleConnections(): Promise<ActionResult<GoogleConnect
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('google_connections')
@@ -257,7 +254,7 @@ export async function disconnectGoogle(connectionId: string): Promise<ActionResu
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from('google_connections')
@@ -627,7 +624,7 @@ export async function getSyncLogs(
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('google_sync_logs')
@@ -681,7 +678,7 @@ export async function getLoanOfficersForGoogle(): Promise<
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from('loan_officers')

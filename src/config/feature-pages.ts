@@ -122,7 +122,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
 
   useCases: [
     {
-      role: "loan_officer",
+      role: "user",
       label: "Loan Officers",
       description: "Build your review profile and generate more referrals",
       benefits: [
@@ -328,7 +328,7 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
 
   useCases: [
     {
-      role: "loan_officer",
+      role: "user",
       label: "Loan Officers",
       description: "Track your personal performance and client satisfaction",
       benefits: [
@@ -525,7 +525,7 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
 
   useCases: [
     {
-      role: "loan_officer",
+      role: "user",
       label: "Loan Officers",
       description: "Understand client feedback and respond quickly",
       benefits: [
@@ -720,7 +720,7 @@ export const amplificationFeatureConfig: FeaturePageConfig = {
 
   useCases: [
     {
-      role: "loan_officer",
+      role: "user",
       label: "Loan Officers",
       description: "Build your personal online presence",
       benefits: [
@@ -917,7 +917,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
 
   useCases: [
     {
-      role: "loan_officer",
+      role: "user",
       label: "Loan Officers",
       description: "Personal survey distribution and feedback",
       benefits: [
@@ -1113,7 +1113,7 @@ export const testimonialsFeatureConfig: FeaturePageConfig = {
 
   useCases: [
     {
-      role: "loan_officer",
+      role: "user",
       label: "Loan Officers",
       description: "Build your personal testimonial library",
       benefits: [

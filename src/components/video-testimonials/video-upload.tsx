@@ -7,16 +7,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  Upload,
+  UploadSimple as Upload,
   FileVideo,
-  AlertCircle,
+  WarningCircle as AlertCircle,
   Check,
   X,
-  RotateCcw,
+  ArrowCounterClockwise as RotateCcw,
   Play,
   Pause,
-  Loader2,
-} from "lucide-react";
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 /** Accepted video MIME types (per acceptance criteria: MP4, WebM, MOV) */

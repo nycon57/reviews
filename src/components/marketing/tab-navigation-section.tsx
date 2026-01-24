@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import {
+  CheckCircle as CheckCircle2,
+} from "@phosphor-icons/react";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { BrowserMockup } from "./browser-mockup";
 import { Badge } from "@/components/ui/badge";

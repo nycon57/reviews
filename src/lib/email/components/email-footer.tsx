@@ -314,8 +314,10 @@ export function EmailFooter({
 // =============================================================================
 
 export interface RepwellFooterProps {
-  /** Email address for unsubscribe */
-  email: string;
+  /** Unsubscribe token (preferred) or email address */
+  unsubscribeToken?: string;
+  /** Email address for unsubscribe (fallback if no token) */
+  email?: string;
   /** Base URL for the app */
   baseUrl?: string;
   /** Variant */
@@ -324,16 +326,32 @@ export interface RepwellFooterProps {
 
 /**
  * Pre-configured Repwell branded footer with standard links.
+ * CAN-SPAM compliant with physical address.
+ *
+ * IMPORTANT: Prefer using unsubscribeToken over email for better privacy.
  */
 export function RepwellFooter({
+  unsubscribeToken,
   email,
   baseUrl = "https://app.repwell.ai",
   variant = "default",
 }: RepwellFooterProps) {
-  const unsubscribeUrl = `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(email)}`;
-  const preferencesUrl = `${baseUrl}/settings/notifications`;
+  // Prefer token-based unsubscribe for privacy
+  const unsubscribeUrl = unsubscribeToken
+    ? `${baseUrl}/unsubscribe/${unsubscribeToken}`
+    : email
+      ? `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(email)}`
+      : `${baseUrl}/unsubscribed`;
+
+  const preferencesUrl = unsubscribeToken
+    ? `${baseUrl}/email-preferences/${unsubscribeToken}`
+    : `${baseUrl}/settings/notifications`;
+
   const privacyUrl = `${baseUrl}/privacy`;
   const termsUrl = `${baseUrl}/terms`;
+
+  // CAN-SPAM requires physical mailing address
+  const companyAddress = "Repwell Inc., 123 Main Street, Suite 100, San Francisco, CA 94105";
 
   return (
     <EmailFooter
@@ -342,6 +360,7 @@ export function RepwellFooter({
       privacyUrl={privacyUrl}
       termsUrl={termsUrl}
       companyName="Repwell"
+      address={companyAddress}
       tagline="Reputation done well."
       showSocialLinks={true}
       socialLinks={{
@@ -362,15 +381,22 @@ export interface PoweredByFooterProps {
   unsubscribeUrl: string;
   /** Organization name (optional) */
   organizationName?: string;
+  /** Organization address for CAN-SPAM compliance (optional, falls back to Repwell) */
+  organizationAddress?: string;
 }
 
 /**
  * Minimal "Powered by Repwell" footer for white-label emails.
+ * CAN-SPAM compliant with physical address.
  */
 export function PoweredByFooter({
   unsubscribeUrl,
   organizationName,
+  organizationAddress,
 }: PoweredByFooterProps) {
+  // CAN-SPAM requires physical mailing address
+  const displayAddress = organizationAddress || "Repwell Inc., 123 Main Street, Suite 100, San Francisco, CA 94105";
+
   return (
     <Section
       style={{
@@ -403,6 +429,18 @@ export function PoweredByFooter({
         >
           Repwell
         </Link>
+      </Text>
+      {/* CAN-SPAM compliant address */}
+      <Text
+        style={{
+          margin: `${spacing[2]} 0 0 0`,
+          fontFamily: typography.fontFamily.body,
+          fontSize: typography.fontSize.xs,
+          color: colors.repwell.teal[300],
+          opacity: 0.8,
+        }}
+      >
+        {displayAddress}
       </Text>
       <Text
         style={{

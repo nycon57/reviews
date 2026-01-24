@@ -11,7 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Building2, Palette } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  BuildingOffice as Building2,
+  Palette,
+} from "@phosphor-icons/react";
 import {
   getCurrentOrganization,
   updateOrganizationBranding,

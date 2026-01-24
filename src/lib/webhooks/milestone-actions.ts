@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 
 export interface MilestoneMapping {
@@ -30,13 +31,12 @@ export interface ActionResult<T> {
  */
 export async function getMilestoneMappings(): Promise<ActionResult<MilestoneMapping[]>> {
   try {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData } = await supabase
       .from("users")
       .select("organization_id")
@@ -104,13 +104,12 @@ export async function updateMilestoneMapping(
   }
 ): Promise<ActionResult<MilestoneMapping>> {
   try {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData } = await supabase
       .from("users")
       .select("organization_id, role")
@@ -203,13 +202,12 @@ export async function createMilestoneMapping(
   }
 ): Promise<ActionResult<MilestoneMapping>> {
   try {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData } = await supabase
       .from("users")
       .select("organization_id, role")
@@ -287,13 +285,12 @@ export async function createMilestoneMapping(
  */
 export async function deleteMilestoneMapping(id: string): Promise<ActionResult<void>> {
   try {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
+    const supabase = createAdminClient();
     const { data: userData } = await supabase
       .from("users")
       .select("organization_id, role")

@@ -3,28 +3,28 @@
 import { useState, useCallback, useEffect, useRef, memo, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  Search,
-  RefreshCw,
+  MagnifyingGlass as Search,
+  ArrowsClockwise as RefreshCw,
   Play,
   Clock,
   CheckCircle,
   XCircle,
   FileText,
-  MoreHorizontal,
-  ChevronLeft,
-  ChevronRight,
+  DotsThree as MoreHorizontal,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
   ThumbsUp,
   ThumbsDown,
-  Share2,
-  Trash2,
-  Film,
-  LayoutGrid,
+  ShareNetwork as Share2,
+  Trash as Trash2,
+  FilmStrip as Film,
+  GridFour as LayoutGrid,
   List,
   CheckSquare,
   Square,
-  Loader2,
-  MessageSquare,
-} from "lucide-react";
+  SpinnerGap as Loader2,
+  Chats as MessageSquare,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -118,7 +118,7 @@ interface UnifiedContentHubProps {
   videoStats: VideoLibraryStats;
   // Shared
   loanOfficers: LoanOfficer[];
-  userRole: "admin" | "manager" | "loan_officer";
+  userRole: "admin" | "manager" | "user";
   hasAiAccess: boolean;
   initialReviewId?: string;
 }
@@ -733,7 +733,7 @@ function VideoTabContent({
   initialTotal: number;
   videoStats: VideoLibraryStats;
   loanOfficers: LoanOfficer[];
-  userRole: "admin" | "manager" | "loan_officer";
+  userRole: "admin" | "manager" | "user";
 }) {
   const router = useRouter();
   const [responses, setResponses] = useState<VideoTestimonialResponse[]>(initialVideos);

@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Filter, X } from "lucide-react";
+import {
+  Funnel as Filter,
+  X,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {

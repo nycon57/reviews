@@ -5,7 +5,8 @@
  * Actions for managing reports, schedules, and sharing
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { randomBytes } from "crypto";
 import { addDays, addMonths, setHours, setMinutes, startOfDay, nextMonday } from "date-fns";
 import type { ActionResult } from "@/lib/reviews/types";
@@ -27,15 +28,12 @@ import { getExportFilename } from "./utils";
  * Get user context
  */
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -120,7 +118,7 @@ export async function createScheduledReport(
     return { success: false, error: "At least one recipient is required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const nextRunAt = calculateNextRunTime(schedule, dayOfWeek, dayOfMonth, scheduleTime);
 
@@ -196,7 +194,7 @@ export async function updateScheduledReport(
     return { success: false, error: "Only managers and admins can update scheduled reports" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Calculate new next run if schedule changed
   let nextRunAt: Date | undefined;
@@ -278,7 +276,7 @@ export async function deleteScheduledReport(id: string): Promise<ActionResult<vo
     return { success: false, error: "Only managers and admins can delete scheduled reports" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("scheduled_reports")
@@ -303,7 +301,7 @@ export async function getScheduledReports(): Promise<ActionResult<ScheduledRepor
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("scheduled_reports")
@@ -357,7 +355,7 @@ export async function createReportShare(
     return { success: false, error: "Only managers and admins can share reports" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const shareToken = randomBytes(32).toString("hex");
   const expiresAt = expiresInDays
@@ -411,7 +409,7 @@ export async function createReportShare(
 export async function getReportShareByToken(
   token: string
 ): Promise<ActionResult<ReportShare>> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("report_shares")
@@ -467,7 +465,7 @@ export async function revokeReportShare(id: string): Promise<ActionResult<void>>
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("report_shares")
@@ -492,7 +490,7 @@ export async function getReportShares(): Promise<ActionResult<ReportShare[]>> {
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("report_shares")
@@ -562,7 +560,7 @@ export async function exportAndRecordReport(
     }
     case "pdf": {
       // Get organization name
-      const supabase = await createClient();
+      const supabase = createAdminClient();
       const { data: org } = await supabase
         .from("organizations")
         .select("name")
@@ -589,7 +587,7 @@ export async function exportAndRecordReport(
   const filename = getExportFilename(report.templateName, format);
 
   // Record the export
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   await supabase.from("report_exports").insert({
     organization_id: context.organizationId,
     template_id: templateId,
@@ -621,7 +619,7 @@ export async function getReportExports(): Promise<ActionResult<ReportExport[]>> 
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("report_exports")

@@ -5,15 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  CodeSimple as Code2,
+  CodeSimpleIcon as Code2,
   CheckCircle,
   WarningCircle as AlertCircle,
   Warning as AlertTriangle,
-  Copy,
-  Check,
-  ArrowSquareOut as ExternalLink,
-  CaretDown as ChevronDown,
-  CaretUp as ChevronUp,
+  CopyIcon as Copy,
+  CheckIcon as Check,
+  ArrowSquareOutIcon as ExternalLink,
+  CaretDownIcon as ChevronDown,
+  CaretUpIcon as ChevronUp,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { SchemaRecommendation } from "@/lib/geo/types";

@@ -1,6 +1,7 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { revalidatePath } from 'next/cache';
 import {
   generateTestimonial,
@@ -29,13 +30,12 @@ import type { SentimentLabel, ReviewTheme } from './types';
 
 // Helper to get authenticated user
 async function getAuthenticatedUser() {
-  const supabase = await createClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-
-  if (error || !user) {
+  const user = await unifiedGetUser();
+  if (!user) {
     throw new Error('Authentication required');
   }
 
+  const supabase = createAdminClient();
   // Get user's organization
   const { data: userData, error: userError } = await supabase
     .from('users')
@@ -56,7 +56,7 @@ async function getAuthenticatedUser() {
 
 // Get review context for testimonial generation
 async function getReviewContext(reviewId: string): Promise<TestimonialReviewContext> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data: review, error } = await supabase
     .from('reviews')
@@ -124,7 +124,7 @@ export async function generateTestimonialFromReview(
     const generated = await generateTestimonial(context, format);
 
     // Save to database
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const { data: testimonial, error } = await supabase
       .from('testimonials')
       .insert({
@@ -189,7 +189,7 @@ export async function generateMultipleTestimonialFormats(
     }
 
     // Save all to database
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const insertData = result.testimonials.map((t) => ({
       organization_id: organizationId,
       review_id: reviewId,
@@ -232,7 +232,7 @@ export async function batchGenerateTestimonials(
 ): Promise<TestimonialActionResult<BatchGenerationResult>> {
   try {
     const { organizationId } = await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const results: BatchGenerationResult = {
       total: request.reviewIds.length,
@@ -294,7 +294,7 @@ export async function getTestimonials(
 ): Promise<TestimonialActionResult<{ testimonials: Testimonial[]; total: number }>> {
   try {
     await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const {
       status,
@@ -393,7 +393,7 @@ export async function getTestimonials(
 export async function getTestimonialStats(): Promise<TestimonialActionResult<TestimonialStats>> {
   try {
     await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('testimonials')
@@ -439,7 +439,7 @@ export async function updateTestimonialStatus(
 ): Promise<TestimonialActionResult> {
   try {
     const { user } = await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const updateData: Record<string, unknown> = { status };
 
@@ -478,7 +478,7 @@ export async function bulkUpdateTestimonialStatus(
 ): Promise<TestimonialActionResult<{ updated: number }>> {
   try {
     const { user } = await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const updateData: Record<string, unknown> = { status };
 
@@ -515,7 +515,7 @@ export async function updateTestimonialContent(
 ): Promise<TestimonialActionResult> {
   try {
     await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { error } = await supabase
       .from('testimonials')
@@ -542,7 +542,7 @@ export async function deleteTestimonial(
 ): Promise<TestimonialActionResult> {
   try {
     await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { error } = await supabase
       .from('testimonials')
@@ -570,7 +570,7 @@ export async function generateGraphicForTestimonial(
 ): Promise<TestimonialActionResult<GeneratedGraphic>> {
   try {
     const { organizationId } = await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get testimonial with review data
     const { data: testimonial, error: fetchError } = await supabase
@@ -640,7 +640,7 @@ export async function exportTestimonial(
 ): Promise<TestimonialActionResult<TestimonialExportResult>> {
   try {
     await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data: testimonial, error } = await supabase
       .from('testimonials')
@@ -745,7 +745,7 @@ export async function getBestTestimonialCandidates(
 ): Promise<TestimonialActionResult<TestimonialReviewContext[]>> {
   try {
     await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get high-rated reviews that don't have testimonials yet
     const { data: reviews, error } = await supabase
@@ -824,7 +824,7 @@ export async function getBestTestimonialCandidates(
 export async function getTestimonialTemplates(): Promise<TestimonialActionResult<TestimonialTemplate[]>> {
   try {
     await getAuthenticatedUser();
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('testimonial_templates')

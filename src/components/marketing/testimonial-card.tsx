@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Quote, Star } from "lucide-react";
+import {
+  Quotes as Quote,
+  Star,
+} from "@phosphor-icons/react";
 import { fadeInUp, cardHover, cardTap } from "@/lib/motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";

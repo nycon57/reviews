@@ -2,6 +2,14 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, getFromAddress, emailConfig } from "./client";
+import {
+  sendWithReliability,
+  getSurveyInvitationIdempotencyKey,
+  getSurveyReminderIdempotencyKey,
+  getReviewNotificationIdempotencyKey,
+  getVideoTestimonialIdempotencyKey,
+  shouldSendEmail,
+} from "./send-utils";
 import type {
   EmailTemplate,
   EmailSendResult,
@@ -148,78 +156,48 @@ export async function sendSurveyInvitationEmail(
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
   const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getSurveyInvitationEmail(data);
+  const idempotencyKey = getSurveyInvitationIdempotencyKey(
+    data.surveyId || `survey-${Date.now()}`,
+    data.toEmail
+  );
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "survey_invitation" },
-        ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-      ],
-    });
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.customerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "survey_invitation" },
+      ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
 
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.customerName,
-        fromEmail: emailConfig.defaultFromEmail,
-        fromName: data.organizationName,
-        subject,
-        templateName: "survey_invitation",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        surveyId: data.surveyId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.customerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName: "survey_invitation",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    surveyId: data.surveyId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
 
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName: "survey_invitation",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      surveyId: data.surveyId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName: "survey_invitation",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      surveyId: data.surveyId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return result;
 }
 
 // Send survey reminder email (3-day or 7-day)
@@ -231,7 +209,6 @@ export async function sendSurveyReminderEmail(
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
   const fromAddress = getFromAddress(data.organizationName);
   const templateName: EmailTemplate =
     data.reminderNumber === 1 ? "survey_reminder_3day" : "survey_reminder_7day";
@@ -239,75 +216,47 @@ export async function sendSurveyReminderEmail(
     data.reminderNumber === 1
       ? getSurveyReminder3DayEmail(data)
       : getSurveyReminder7DayEmail(data);
+  const idempotencyKey = getSurveyReminderIdempotencyKey(
+    data.surveyId || `survey-${Date.now()}`,
+    data.toEmail,
+    data.reminderNumber
+  );
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: templateName },
-        ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-      ],
-    });
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.customerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: templateName },
+      ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
 
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.customerName,
-        fromEmail: emailConfig.defaultFromEmail,
-        fromName: data.organizationName,
-        subject,
-        templateName,
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        surveyId: data.surveyId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.customerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName,
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    surveyId: data.surveyId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
 
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName,
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      surveyId: data.surveyId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName,
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      surveyId: data.surveyId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return result;
 }
 
 // Send new review notification email
@@ -319,71 +268,45 @@ export async function sendNewReviewNotificationEmail(
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
   const fromAddress = getFromAddress();
   const { subject, html } = getNewReviewNotificationEmail(data);
+  const idempotencyKey = getReviewNotificationIdempotencyKey(
+    data.reviewId || `review-${Date.now()}`,
+    data.toEmail
+  );
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "new_review_notification" },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-      ],
-    });
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.loanOfficerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "new_review_notification" },
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
 
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.loanOfficerName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "new_review_notification",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.loanOfficerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    subject,
+    templateName: "new_review_notification",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
 
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.loanOfficerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "new_review_notification",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.loanOfficerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "new_review_notification",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return result;
 }
 
 // Update email log with tracking events
@@ -424,77 +347,49 @@ export async function sendReviewResponseEmail(
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
   const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getReviewResponseToReviewerEmail(data);
+  // Use organization + LO + customer email + response hash for idempotency
+  // This prevents duplicate emails for the same response to the same customer
+  const responseHash = data.responseText ? data.responseText.slice(0, 50).replace(/\W/g, "") : "default";
+  const idempotencyKey = `review-response-${data.organizationId || "org"}-${data.loanOfficerId || "lo"}-${data.toEmail.toLowerCase()}-${responseHash}`;
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "review_response_to_reviewer" },
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-        ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
-          : []),
-      ],
-    });
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.customerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "review_response_to_reviewer" },
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+      ...(data.loanOfficerId
+        ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+        : []),
+    ],
+  });
 
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.customerName,
-        fromEmail: emailConfig.defaultFromEmail,
-        fromName: data.organizationName,
-        subject,
-        templateName: "review_response_to_reviewer",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.customerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName: "review_response_to_reviewer",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
 
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName: "review_response_to_reviewer",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName: "review_response_to_reviewer",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return result;
 }
 
 // ============================================================================
@@ -505,102 +400,75 @@ export async function sendReviewResponseEmail(
 export async function sendVideoTestimonialInvitationEmail(
   data: VideoTestimonialInvitationEmailData
 ): Promise<EmailSendResult> {
-  console.error("[Email] sendVideoTestimonialInvitationEmail called", {
+  console.log("[Email] sendVideoTestimonialInvitationEmail called", {
     requestId: data.requestId,
   });
 
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
-    console.error("[Email] Email is unsubscribed", { requestId: data.requestId });
+    console.log("[Email] Email is unsubscribed", { requestId: data.requestId });
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
   const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getVideoTestimonialInvitationEmail(data);
+  const idempotencyKey = getVideoTestimonialIdempotencyKey(
+    data.requestId || `vt-${Date.now()}`,
+    "invitation",
+    data.toEmail
+  );
 
-  console.error("[Email] Sending via Resend", {
+  console.log("[Email] Sending via Resend with reliability", {
     requestId: data.requestId,
     subject,
     htmlLength: html?.length,
+    idempotencyKey,
   });
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "video_testimonial_invitation" },
-        ...(data.requestId
-          ? [{ name: "request_id", value: data.requestId }]
-          : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-      ],
-    });
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.customerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "video_testimonial_invitation" },
+      ...(data.requestId
+        ? [{ name: "request_id", value: data.requestId }]
+        : []),
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
 
-    console.error("[Email] Resend response", {
-      hasError: !!response.error,
-      errorMessage: response.error?.message,
-      messageId: response.data?.id,
-    });
+  console.log("[Email] Send result", {
+    requestId: data.requestId,
+    success: result.success,
+    messageId: result.messageId,
+    error: result.error,
+    retries: result.retries,
+  });
 
-    if (response.error) {
-      console.error("[Email] Resend returned error", { error: response.error });
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.customerName,
-        fromEmail: emailConfig.defaultFromEmail,
-        fromName: data.organizationName,
-        subject,
-        templateName: "video_testimonial_invitation",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.customerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName: "video_testimonial_invitation",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
 
-      return { success: false, error: response.error.message };
-    }
-
-    console.error("[Email] Email sent successfully", { messageId: response.data?.id });
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName: "video_testimonial_invitation",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    console.error("[Email] Exception sending email", { error: errorMessage });
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName: "video_testimonial_invitation",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return result;
 }
 
 // Send video testimonial reminder email (3-day or 7-day)
@@ -612,7 +480,6 @@ export async function sendVideoTestimonialReminderEmail(
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
   const fromAddress = getFromAddress(data.organizationName);
   const templateName: EmailTemplate =
     data.reminderNumber === 1
@@ -622,74 +489,48 @@ export async function sendVideoTestimonialReminderEmail(
     data.reminderNumber === 1
       ? getVideoTestimonialReminder3DayEmail(data)
       : getVideoTestimonialReminder7DayEmail(data);
+  const idempotencyKey = getVideoTestimonialIdempotencyKey(
+    data.requestId || `vt-${Date.now()}`,
+    `reminder-${data.reminderNumber}`,
+    data.toEmail
+  );
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: templateName },
-        ...(data.requestId
-          ? [{ name: "request_id", value: data.requestId }]
-          : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-      ],
-    });
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.customerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: templateName },
+      ...(data.requestId
+        ? [{ name: "request_id", value: data.requestId }]
+        : []),
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
 
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.customerName,
-        fromEmail: emailConfig.defaultFromEmail,
-        fromName: data.organizationName,
-        subject,
-        templateName,
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.customerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName,
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
 
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName,
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.customerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      fromName: data.organizationName,
-      subject,
-      templateName,
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return result;
 }
 
 // Send video testimonial received notification email (sent to LO)
@@ -701,74 +542,49 @@ export async function sendVideoTestimonialReceivedEmail(
     return { success: false, error: "Email is unsubscribed" };
   }
 
-  const resend = getResendClient();
   const fromAddress = getFromAddress();
   const { subject, html } = getVideoTestimonialReceivedEmail(data);
+  const idempotencyKey = getVideoTestimonialIdempotencyKey(
+    data.testimonialId || `vt-${Date.now()}`,
+    "received",
+    data.toEmail
+  );
 
-  try {
-    const response = await resend.emails.send({
-      from: fromAddress,
-      to: data.toEmail,
-      subject,
-      html,
-      tags: [
-        { name: "template", value: "video_testimonial_received" },
-        ...(data.testimonialId
-          ? [{ name: "testimonial_id", value: data.testimonialId }]
-          : []),
-        ...(data.organizationId
-          ? [{ name: "organization_id", value: data.organizationId }]
-          : []),
-      ],
-    });
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.loanOfficerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "video_testimonial_received" },
+      ...(data.testimonialId
+        ? [{ name: "testimonial_id", value: data.testimonialId }]
+        : []),
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
 
-    if (response.error) {
-      await logEmail({
-        toEmail: data.toEmail,
-        toName: data.loanOfficerName,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject,
-        templateName: "video_testimonial_received",
-        organizationId: data.organizationId,
-        loanOfficerId: data.loanOfficerId,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.loanOfficerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    subject,
+    templateName: "video_testimonial_received",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
 
-      return { success: false, error: response.error.message };
-    }
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.loanOfficerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "video_testimonial_received",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      resendMessageId: response.data?.id,
-      status: "sent",
-    });
-
-    return { success: true, messageId: response.data?.id };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: data.toEmail,
-      toName: data.loanOfficerName,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject,
-      templateName: "video_testimonial_received",
-      organizationId: data.organizationId,
-      loanOfficerId: data.loanOfficerId,
-      status: "failed",
-      errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
+  return result;
 }
 
 // Send video testimonial approved notification email (sent to LO)
@@ -1857,6 +1673,12 @@ export async function sendNegativeReviewAlertEnhancedEmail(
 export async function sendFirstReviewMilestoneEmail(
   data: FirstReviewMilestoneEmailData
 ): Promise<EmailSendResult> {
+  // Check user email preferences for milestone category
+  const preferenceCheck = await shouldSendEmail("milestone_first_review", data.loanOfficerId);
+  if (!preferenceCheck.allowed) {
+    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+  }
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
     return { success: false, error: "Email is unsubscribed" };
@@ -1937,6 +1759,12 @@ export async function sendFirstReviewMilestoneEmail(
 export async function sendReviewCountMilestoneEmail(
   data: ReviewCountMilestoneEmailData
 ): Promise<EmailSendResult> {
+  // Check user email preferences for milestone category
+  const preferenceCheck = await shouldSendEmail("milestone_review_count", data.loanOfficerId);
+  if (!preferenceCheck.allowed) {
+    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+  }
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
     return { success: false, error: "Email is unsubscribed" };
@@ -2018,6 +1846,12 @@ export async function sendReviewCountMilestoneEmail(
 export async function sendFirst5StarMilestoneEmail(
   data: First5StarMilestoneEmailData
 ): Promise<EmailSendResult> {
+  // Check user email preferences for milestone category
+  const preferenceCheck = await shouldSendEmail("milestone_first_5_star", data.loanOfficerId);
+  if (!preferenceCheck.allowed) {
+    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+  }
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
     return { success: false, error: "Email is unsubscribed" };
@@ -2098,6 +1932,12 @@ export async function sendFirst5StarMilestoneEmail(
 export async function sendLeaderboardMilestoneEmail(
   data: LeaderboardMilestoneEmailData
 ): Promise<EmailSendResult> {
+  // Check user email preferences for milestone category
+  const preferenceCheck = await shouldSendEmail("milestone_leaderboard", data.loanOfficerId);
+  if (!preferenceCheck.allowed) {
+    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+  }
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
     return { success: false, error: "Email is unsubscribed" };
@@ -2180,6 +2020,12 @@ export async function sendLeaderboardMilestoneEmail(
 export async function sendBadgeEarnedMilestoneEmail(
   data: BadgeEarnedMilestoneEmailData
 ): Promise<EmailSendResult> {
+  // Check user email preferences for milestone category
+  const preferenceCheck = await shouldSendEmail("milestone_badge_earned", data.loanOfficerId);
+  if (!preferenceCheck.allowed) {
+    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+  }
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
     return { success: false, error: "Email is unsubscribed" };
@@ -2262,6 +2108,12 @@ export async function sendBadgeEarnedMilestoneEmail(
 export async function sendStreakMilestoneEmail(
   data: StreakMilestoneEmailData
 ): Promise<EmailSendResult> {
+  // Check user email preferences for milestone category
+  const preferenceCheck = await shouldSendEmail("milestone_streak", data.loanOfficerId);
+  if (!preferenceCheck.allowed) {
+    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+  }
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
     return { success: false, error: "Email is unsubscribed" };
@@ -2344,6 +2196,12 @@ export async function sendStreakMilestoneEmail(
 export async function sendVideoMilestoneEmail(
   data: VideoMilestoneEmailData
 ): Promise<EmailSendResult> {
+  // Check user email preferences for milestone category
+  const preferenceCheck = await shouldSendEmail("milestone_video", data.loanOfficerId);
+  if (!preferenceCheck.allowed) {
+    return { success: false, error: preferenceCheck.reason || "User has disabled milestone emails" };
+  }
+
   const unsubscribed = await isEmailUnsubscribed(data.toEmail);
   if (unsubscribed) {
     return { success: false, error: "Email is unsubscribed" };

@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, Clock, CreditCard, Zap, X } from "lucide-react";
+import {
+  Warning as AlertTriangle,
+  Clock,
+  CreditCard,
+  Lightning as Zap,
+  X,
+} from "@phosphor-icons/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { checkSubscriptionAccess } from "@/lib/stripe";

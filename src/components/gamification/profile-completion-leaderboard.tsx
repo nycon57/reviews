@@ -15,7 +15,7 @@ import {
 import {
   Crown,
   Medal,
-  Medal as Award,
+  Trophy,
   Target,
   Star,
   Users,
@@ -259,7 +259,7 @@ function PodiumCard({
     ) : entry.rank === 2 ? (
       <Medal className="h-5 w-5 text-gray-400" />
     ) : (
-      <Award className="h-5 w-5 text-amber-600" />
+      <Trophy className="h-5 w-5 text-amber-600" />
     );
 
   const rankLabel =
@@ -437,7 +437,7 @@ export function CompactProfileLeaderboard({
                     ) : entry.rank === 2 ? (
                       <Medal className="h-3 w-3 text-gray-400" />
                     ) : (
-                      <Award className="h-3 w-3 text-amber-600" />
+                      <Trophy className="h-3 w-3 text-amber-600" />
                     )}
                   </div>
                 )}

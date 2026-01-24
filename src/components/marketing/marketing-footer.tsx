@@ -4,7 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Linkedin, Twitter, Loader2 } from "lucide-react";
+import {
+  LinkedinLogo as Linkedin,
+  TwitterLogo as Twitter,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

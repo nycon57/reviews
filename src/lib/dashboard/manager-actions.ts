@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 
 // Types for manager dashboard
@@ -53,15 +54,13 @@ export interface LeaderboardEntry {
 
 // Get user context for manager actions - requires manager or admin role
 async function getManagerContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -91,7 +90,7 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get all loan officers for this organization
   const { data: loanOfficers, error: loError } = await supabase
@@ -201,7 +200,7 @@ export async function getLoanOfficerComparison(
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Build query with optional filters
   let query = supabase
@@ -317,7 +316,7 @@ export async function getFilterOptions(): Promise<ActionResult<FilterOptions>> {
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data: loanOfficers, error } = await supabase
     .from("loan_officers")
@@ -356,7 +355,7 @@ export async function getLeaderboard(
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Determine sort field
   const sortField = metric === "reputation"
@@ -431,7 +430,7 @@ export async function getTeamNPSTrend(
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
@@ -521,7 +520,7 @@ export async function getTeamRatingTrend(
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);

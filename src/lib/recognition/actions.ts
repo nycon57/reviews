@@ -3,7 +3,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   Recognition,
   RecognitionBadge,
@@ -15,15 +16,13 @@ import {
 
 // Helper to get current user's organization
 async function getUserOrganization() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return { error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("organization_id, role, department_id")
@@ -60,7 +59,7 @@ export async function getRecognitionBadges(): Promise<{ success: boolean; data?:
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("recognition_badges")
     .select("*")
@@ -95,7 +94,7 @@ export async function initializeDefaultBadges(): Promise<{ success: boolean; err
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Check if badges already exist
   const { count } = await supabase
@@ -142,7 +141,7 @@ export async function getRecognitions(options?: {
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   let query = supabase
     .from("recognitions")
     .select(`
@@ -274,7 +273,7 @@ export async function createRecognition(input: {
     return { success: false, error: "Cannot recognize yourself" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("recognitions")
     .insert({
@@ -317,7 +316,7 @@ export async function deleteRecognition(id: string): Promise<{ success: boolean;
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("recognitions")
     .delete()
@@ -339,7 +338,7 @@ export async function toggleReaction(
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Check if reaction exists
   const { data: existing } = await supabase
@@ -388,7 +387,7 @@ export async function getManagerFeedback(options?: {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   let query = supabase
     .from("manager_feedback")
     .select(`
@@ -458,7 +457,7 @@ export async function createManagerFeedback(input: {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("manager_feedback")
     .insert({
@@ -506,7 +505,7 @@ export async function updateManagerFeedback(input: {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = {};
   if (input.subject !== undefined) updateData.subject = input.subject;
@@ -531,7 +530,7 @@ export async function deleteManagerFeedback(id: string): Promise<{ success: bool
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("manager_feedback")
     .delete()
@@ -592,7 +591,7 @@ export async function getRecognitionAnalytics(
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { start, end } = getPeriodDates(period);
 
   // Get recognitions for the period
@@ -719,7 +718,7 @@ export async function searchUsers(query: string): Promise<{
     return { success: true, data: [] };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("users")
     .select("id, full_name, email, avatar_url, role")

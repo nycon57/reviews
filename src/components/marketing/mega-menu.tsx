@@ -3,8 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
-import { ChevronDown } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import {
+  CaretDown as ChevronDown,
+} from "@phosphor-icons/react";
+import * as PhosphorIcons from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import {
   featureNavItems,
@@ -23,7 +25,7 @@ function DynamicIcon({
   name: string;
   className?: string;
 }) {
-  const IconComponent = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[name];
+  const IconComponent = (PhosphorIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[name];
   if (!IconComponent) return null;
   return <IconComponent className={className} />;
 }

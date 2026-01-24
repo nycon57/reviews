@@ -3,7 +3,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   EXSurveyTemplate,
   EXSurvey,
@@ -16,15 +17,12 @@ import {
 
 // Helper to get current user's organization
 async function getUserOrganization() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("organization_id, role")
@@ -56,7 +54,7 @@ export async function getDepartments(): Promise<{ success: boolean; data?: Depar
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("departments")
     .select("*")
@@ -95,7 +93,7 @@ export async function createDepartment(input: {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("departments")
     .insert({
@@ -138,7 +136,7 @@ export async function getEXSurveyTemplates(): Promise<{ success: boolean; data?:
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("ex_survey_templates")
     .select("*")
@@ -181,7 +179,7 @@ export async function initializeDefaultEXTemplates(): Promise<{ success: boolean
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Check if templates already exist
   const { count } = await supabase
@@ -228,7 +226,7 @@ export async function getEXSurveys(): Promise<{ success: boolean; data?: (EXSurv
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("ex_surveys")
     .select(`
@@ -283,7 +281,7 @@ export async function createEXSurvey(input: {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("ex_surveys")
     .insert({
@@ -335,7 +333,7 @@ export async function launchEXSurvey(surveyId: string): Promise<{ success: boole
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get survey details
   const { data: survey, error: surveyError } = await supabase
@@ -410,7 +408,7 @@ export async function closeEXSurvey(surveyId: string): Promise<{ success: boolea
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("ex_surveys")
     .update({ status: "closed" })
@@ -431,7 +429,7 @@ export async function getEXSurveyResponses(surveyId: string): Promise<{ success:
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify survey belongs to organization
   const { data: survey } = await supabase
@@ -495,7 +493,7 @@ export async function getEXTrends(limit: number = 12): Promise<{ success: boolea
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get completed surveys ordered by close/start date
   const { data: surveys, error } = await supabase
@@ -527,7 +525,7 @@ export async function getEXMetrics(): Promise<{ success: boolean; data?: { enpsS
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get recent survey data
   const { data: surveys } = await supabase
@@ -570,7 +568,7 @@ export async function getActionPlans(): Promise<{ success: boolean; data?: EXAct
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("ex_action_plans")
     .select("*")
@@ -619,7 +617,7 @@ export async function createActionPlan(input: {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("ex_action_plans")
     .insert({
@@ -681,7 +679,7 @@ export async function updateActionPlan(input: {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Build update object with only provided fields
   const updateData: Record<string, unknown> = {};
@@ -741,7 +739,7 @@ export async function deleteActionPlan(id: string): Promise<{ success: boolean; 
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { error } = await supabase
     .from("ex_action_plans")
     .delete()

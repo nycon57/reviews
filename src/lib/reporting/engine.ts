@@ -5,7 +5,8 @@
  * Generates comprehensive report data using the analytics engine
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   getNPSMetrics,
   getCSATMetrics,
@@ -36,15 +37,12 @@ import { format, subDays } from "date-fns";
  * Get user context for report operations
  */
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -73,7 +71,7 @@ export async function getReportTemplate(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("report_templates")
@@ -113,7 +111,7 @@ export async function getReportTemplates(): Promise<ActionResult<ReportTemplate[
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("report_templates")
@@ -198,7 +196,7 @@ async function generateTeamComparison(
   dateRange: DateRange,
   organizationId: string
 ): Promise<TeamComparisonRow[]> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get all active loan officers
   const { data: loanOfficers } = await supabase
@@ -385,7 +383,7 @@ export async function createReportTemplate(
     return { success: false, error: "Only managers and admins can create templates" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("report_templates")
@@ -432,7 +430,7 @@ export async function initializeDefaultTemplates(): Promise<ActionResult<void>> 
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Check if templates already exist
   const { data: existing } = await supabase

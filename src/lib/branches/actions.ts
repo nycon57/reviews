@@ -5,8 +5,8 @@
  * CRUD operations for branch management
  */
 
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type {
@@ -133,16 +133,12 @@ async function requireAccess(): Promise<
   | { success: true; organizationId: string; userId: string; role: string }
   | { success: false; error: string }
 > {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: 'Not authenticated' };
   }
 
+  const supabase = createAdminClient();
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('organization_id, role')
@@ -173,7 +169,7 @@ export async function getBranches(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     let query = supabase
       .from('branches')
@@ -223,7 +219,7 @@ export async function getBranch(id: string): Promise<ActionResult<Branch>> {
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('branches')
@@ -258,7 +254,7 @@ export async function getBranchWithLoanOfficers(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get branch
     const { data: branchData, error: branchError } = await supabase
@@ -438,7 +434,7 @@ export async function updateBranch(
       };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Build update object
     const updateData: Record<string, unknown> = {
@@ -526,7 +522,7 @@ export async function deleteBranch(id: string): Promise<ActionResult> {
       return { success: false, error: 'Only admins can delete branches' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Soft delete by setting is_active to false
     const { error } = await supabase
@@ -570,7 +566,7 @@ export async function assignLoanOfficerToBranch(
       return { success: false, error: 'Insufficient permissions' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Verify branch exists (if assigning to a branch)
     if (branchId) {
@@ -647,7 +643,7 @@ export async function getBranchRegions(): Promise<ActionResult<string[]>> {
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('branches')

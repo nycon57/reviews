@@ -235,10 +235,10 @@ export function getWelcome1AccessEmail(
     WELCOME_EMAIL_VARIANTS.email_1[variant](data.firstName, data.organizationName)
   );
 
-  const roleWelcome = {
+  const roleWelcome: Record<'admin' | 'manager' | 'user', string> = {
     admin: "As an admin, you have full control over your organization's reputation management.",
     manager: "As a manager, you can oversee your team's performance and review collection.",
-    loan_officer: "You're all set to start collecting reviews and building your online reputation.",
+    user: "You're all set to start collecting reviews and building your online reputation.",
   };
 
   const content = `

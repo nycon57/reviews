@@ -5,8 +5,8 @@
  * CRUD operations for managing API keys
  */
 
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { generateApiKey } from './generate';
@@ -94,15 +94,12 @@ async function requireAdminAccess(): Promise<
   | { success: true; organizationId: string; userId: string }
   | { success: false; error: string }
 > {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: 'Not authenticated' };
   }
+
+  const supabase = createAdminClient();
 
   const { data: userData, error: userError } = await supabase
     .from('users')
@@ -133,7 +130,7 @@ export async function getApiKeys(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     let query = supabase
       .from('api_keys')
@@ -182,7 +179,7 @@ export async function getApiKey(id: string): Promise<ActionResult<ApiKey>> {
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('api_keys')
@@ -321,7 +318,7 @@ export async function updateApiKey(
       updateData.expires_at = validated.data.expiresAt;
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { data, error } = await supabase
       .from('api_keys')
@@ -357,7 +354,7 @@ export async function deleteApiKey(id: string): Promise<ActionResult> {
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { error } = await supabase
       .from('api_keys')
@@ -390,7 +387,7 @@ export async function rotateApiKey(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get existing key
     const { data: existingKey, error: fetchError } = await supabase
@@ -475,7 +472,7 @@ export async function getApiKeyStats(
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Verify key belongs to organization
     const { data: apiKey, error: keyError } = await supabase
@@ -576,7 +573,7 @@ export async function hasActiveApiKeys(): Promise<ActionResult<boolean>> {
       return { success: false, error: auth.error };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const { count, error } = await supabase
       .from('api_keys')

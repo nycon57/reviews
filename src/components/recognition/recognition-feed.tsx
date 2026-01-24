@@ -5,7 +5,10 @@ import { RecognitionCard } from "./recognition-card";
 import { GiveRecognitionDialog } from "./give-recognition-dialog";
 import { Recognition } from "@/types/recognition.types";
 import { getRecognitions } from "@/lib/recognition/actions";
-import { Loader2, Inbox } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  Tray as Inbox,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 interface RecognitionFeedProps {

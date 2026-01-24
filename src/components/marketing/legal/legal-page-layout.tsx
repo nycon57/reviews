@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import { Printer, ArrowUp } from "lucide-react";
+import {
+  Printer,
+  ArrowUp,
+} from "@phosphor-icons/react";
 import { fadeInUp, staggerChildrenDelayed, blobFloat, blobFloatRotate } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

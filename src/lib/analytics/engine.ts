@@ -5,7 +5,8 @@
  * Fetches data from database and calculates comprehensive metrics
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
   PeriodType,
@@ -41,14 +42,12 @@ const CACHE_DURATION_MINUTES = 60;
  * Get user context for analytics operations - parallelized queries
  */
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
+
+  const supabase = createAdminClient();
 
   // Parallelize independent queries
   const [userDataResult, loanOfficerResult] = await Promise.all([
@@ -89,7 +88,7 @@ export async function getNPSMetrics(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const range = dateRange || getDateRangeForPeriod("all_time");
 
   let query = supabase
@@ -140,7 +139,7 @@ export async function getCSATMetrics(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const range = dateRange || getDateRangeForPeriod("all_time");
 
   let query = supabase
@@ -191,7 +190,7 @@ export async function getResponseRateMetrics(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const range = dateRange || getDateRangeForPeriod("all_time");
 
   let query = supabase
@@ -235,7 +234,7 @@ export async function getReviewVelocityMetrics(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const range = dateRange || getDateRangeForPeriod("monthly");
 
   let query = supabase
@@ -279,13 +278,13 @@ export async function getLoanOfficerAnalytics(
 
   // Check authorization
   if (
-    context.role === "loan_officer" &&
+    context.role === "user" &&
     loanOfficerId !== context.loanOfficerId
   ) {
     return { success: false, error: "Unauthorized - Can only view own analytics" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const dateRange = getDateRangeForPeriod(periodType);
 
   // Try to get cached metrics first
@@ -409,7 +408,7 @@ export async function getOrganizationAnalytics(
     return { success: false, error: "Unauthorized - Manager or admin access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const dateRange = getDateRangeForPeriod(periodType);
 
   // Fetch all metrics without loan officer filter (org-wide)
@@ -481,7 +480,7 @@ export async function getNPSTrendData(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
 
@@ -533,7 +532,7 @@ export async function getCSATTrendData(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
 
@@ -585,7 +584,7 @@ export async function getReviewVelocityTrendData(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - months);
 
@@ -715,7 +714,7 @@ async function cacheMetrics(
   const context = await getUserContext();
   if (!context) return;
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Serialize metrics to JSON-safe format (using JSON.parse/stringify to strip type info)
   const metricsJson = JSON.parse(JSON.stringify({
@@ -765,7 +764,7 @@ async function getCachedMetrics(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const dateRange = getDateRangeForPeriod(periodType);
 
   let query = supabase
@@ -818,7 +817,7 @@ export async function invalidateMetricsCache(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   let query = supabase
     .from("metrics_snapshots")

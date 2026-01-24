@@ -1,7 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
   EmailMetrics,
@@ -40,15 +41,12 @@ function sanitizeCSVValue(value: string | null | undefined): string {
 
 // Get admin context - requires admin role
 async function getAdminContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -117,7 +115,7 @@ export async function getEmailMetrics(
     return { success: false, error: "Unauthorized - Admin access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { start, end } = getDateRange(period);
   const previous = getPreviousPeriod(period);
 
@@ -226,7 +224,7 @@ export async function getEmailTrends(
     return { success: false, error: "Unauthorized - Admin access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { start, end } = getDateRange(period);
 
   const { data: emails, error } = await supabase
@@ -323,7 +321,7 @@ export async function getEmailTypePerformance(
     return { success: false, error: "Unauthorized - Admin access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { start, end } = getDateRange(period);
 
   const { data: emails, error } = await supabase
@@ -413,7 +411,7 @@ export async function getUnsubscribeMetrics(
     return { success: false, error: "Unauthorized - Admin access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { start, end } = getDateRange(period);
   const previous = getPreviousPeriod(period);
 
@@ -497,7 +495,7 @@ export async function getSequencePerformance(): Promise<ActionResult<SequencePer
     return { success: false, error: "Unauthorized - Admin access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Note: email_sequences table exists based on migration 20240101000043
   // Using type assertion since types may not be regenerated
@@ -642,7 +640,7 @@ export async function exportEmailAnalyticsCSV(
     return { success: false, error: "Unauthorized - Admin access required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { start, end } = getDateRange(period);
 
   // Fetch detailed email logs

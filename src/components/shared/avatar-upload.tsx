@@ -18,7 +18,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { Upload, X, ZoomIn, Loader2 } from "lucide-react";
+import {
+  UploadSimple as Upload,
+  X,
+  MagnifyingGlassPlus as ZoomIn,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface AvatarUploadProps {

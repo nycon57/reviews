@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type {
   Notification,
   NotificationPreferences,
@@ -67,11 +67,7 @@ export async function getNotifications(options: {
   unreadOnly?: boolean;
   includeArchived?: boolean;
 }): Promise<{ notifications: NotificationWithDetails[]; total: number }> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { notifications: [], total: 0 };
   }
@@ -118,11 +114,7 @@ export async function getNotifications(options: {
 
 // Get unread notification count
 export async function getUnreadNotificationCount(): Promise<number> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return 0;
   }
@@ -147,11 +139,7 @@ export async function getUnreadNotificationCount(): Promise<number> {
 export async function markNotificationsAsRead(
   notificationIds?: string[]
 ): Promise<{ success: boolean; error?: string }> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
@@ -182,11 +170,7 @@ export async function markNotificationsAsRead(
 export async function archiveNotification(
   notificationId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
@@ -209,11 +193,7 @@ export async function archiveNotification(
 
 // Get notification preferences for the current user
 export async function getNotificationPreferences(): Promise<NotificationPreferences | null> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
@@ -237,11 +217,7 @@ export async function getNotificationPreferences(): Promise<NotificationPreferen
 export async function updateNotificationPreferences(
   preferences: Partial<Omit<NotificationPreferences, "id" | "user_id" | "created_at" | "updated_at">>
 ): Promise<{ success: boolean; error?: string }> {
-  const authClient = await createClient();
-  const {
-    data: { user },
-  } = await authClient.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }

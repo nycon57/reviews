@@ -14,80 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      abandoned_actions: {
+      accounts: {
         Row: {
-          id: string
-          user_id: string
-          organization_id: string
-          action_type: string
-          status: string
-          context: Json
-          resume_url: string | null
-          recovery_email_1_sent_at: string | null
-          recovery_email_2_sent_at: string | null
-          recovery_email_1_id: string | null
-          recovery_email_2_id: string | null
-          started_at: string
-          completed_at: string | null
-          abandoned_at: string | null
-          recovered_at: string | null
-          expired_at: string | null
+          access_token: string | null
+          access_token_expires_at: string | null
+          account_id: string
           created_at: string | null
+          id: string
+          id_token: string | null
+          password: string | null
+          provider_id: string
+          refresh_token: string | null
+          refresh_token_expires_at: string | null
+          scope: string | null
           updated_at: string | null
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          organization_id: string
-          action_type: string
-          status?: string
-          context?: Json
-          resume_url?: string | null
-          recovery_email_1_sent_at?: string | null
-          recovery_email_2_sent_at?: string | null
-          recovery_email_1_id?: string | null
-          recovery_email_2_id?: string | null
-          started_at?: string
-          completed_at?: string | null
-          abandoned_at?: string | null
-          recovered_at?: string | null
-          expired_at?: string | null
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          account_id: string
           created_at?: string | null
+          id: string
+          id_token?: string | null
+          password?: string | null
+          provider_id: string
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          scope?: string | null
           updated_at?: string | null
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          organization_id?: string
-          action_type?: string
-          status?: string
-          context?: Json
-          resume_url?: string | null
-          recovery_email_1_sent_at?: string | null
-          recovery_email_2_sent_at?: string | null
-          recovery_email_1_id?: string | null
-          recovery_email_2_id?: string | null
-          started_at?: string
-          completed_at?: string | null
-          abandoned_at?: string | null
-          recovered_at?: string | null
-          expired_at?: string | null
+          access_token?: string | null
+          access_token_expires_at?: string | null
+          account_id?: string
           created_at?: string | null
+          id?: string
+          id_token?: string | null
+          password?: string | null
+          provider_id?: string
+          refresh_token?: string | null
+          refresh_token_expires_at?: string | null
+          scope?: string | null
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "abandoned_actions_user_id_fkey"
+            foreignKeyName: "accounts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "loan_officers_compat"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "abandoned_actions_organization_id_fkey"
-            columns: ["organization_id"]
+            foreignKeyName: "accounts_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: "organizations"
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1177,6 +1169,68 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string
+          id: string
+          inviter_id: string | null
+          organization_id: string
+          role: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at: string
+          id: string
+          inviter_id?: string | null
+          organization_id: string
+          role?: string
+          status?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string
+          id?: string
+          inviter_id?: string | null
+          organization_id?: string
+          role?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "invitations_inviter_id_fkey"
+            columns: ["inviter_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leaderboard_snapshots: {
         Row: {
           average_rating: number | null
@@ -1564,6 +1618,59 @@ export type Database = {
           },
           {
             foreignKeyName: "loan_officers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      members: {
+        Row: {
+          created_at: string | null
+          id: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          organization_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "members_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -3286,6 +3393,61 @@ export type Database = {
           },
         ]
       }
+      sessions: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          token: string
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id: string
+          ip_address?: string | null
+          token: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          token?: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "loan_officers_compat"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       slack_webhook_logs: {
         Row: {
           created_at: string | null
@@ -4169,11 +4331,13 @@ export type Database = {
           branch_id: string | null
           created_at: string | null
           email: string
+          email_verified_at: string | null
           full_name: string | null
           google_business_id: string | null
           google_place_id: string | null
           hire_date: string | null
           id: string
+          industry: string | null
           is_active: boolean | null
           is_owner: boolean | null
           last_login_at: string | null
@@ -4204,11 +4368,13 @@ export type Database = {
           branch_id?: string | null
           created_at?: string | null
           email: string
+          email_verified_at?: string | null
           full_name?: string | null
           google_business_id?: string | null
           google_place_id?: string | null
           hire_date?: string | null
           id: string
+          industry?: string | null
           is_active?: boolean | null
           is_owner?: boolean | null
           last_login_at?: string | null
@@ -4239,11 +4405,13 @@ export type Database = {
           branch_id?: string | null
           created_at?: string | null
           email?: string
+          email_verified_at?: string | null
           full_name?: string | null
           google_business_id?: string | null
           google_place_id?: string | null
           hire_date?: string | null
           id?: string
+          industry?: string | null
           is_active?: boolean | null
           is_owner?: boolean | null
           last_login_at?: string | null
@@ -4302,6 +4470,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      verifications: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          identifier: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id: string
+          identifier: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          identifier?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
       }
       video_testimonial_queue: {
         Row: {
@@ -4912,7 +5107,9 @@ export type Database = {
         Args: { p_organization_id: string }
         Returns: boolean
       }
+      cleanup_expired_auth_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limit_windows: { Args: never; Returns: number }
+      get_current_user_id: { Args: never; Returns: string }
       get_pending_distribution_items: {
         Args: { p_limit?: number }
         Returns: {
@@ -4977,52 +5174,6 @@ export type Database = {
           rate_limit: number
           scopes: string[]
         }[]
-      }
-      // Abandoned action recovery functions (S093)
-      track_action_started: {
-        Args: {
-          p_user_id: string
-          p_organization_id: string
-          p_action_type: string
-          p_context?: Json
-          p_resume_url?: string
-        }
-        Returns: string
-      }
-      track_action_completed: {
-        Args: {
-          p_user_id: string
-          p_action_type: string
-        }
-        Returns: boolean
-      }
-      get_actions_for_recovery_email_1: {
-        Args: { p_batch_size?: number }
-        Returns: {
-          action_id: string
-          user_id: string
-          organization_id: string
-          action_type: string
-          context: Json
-          resume_url: string | null
-          started_at: string
-        }[]
-      }
-      get_actions_for_recovery_email_2: {
-        Args: { p_batch_size?: number }
-        Returns: {
-          action_id: string
-          user_id: string
-          organization_id: string
-          action_type: string
-          context: Json
-          resume_url: string | null
-          started_at: string
-        }[]
-      }
-      expire_old_abandoned_actions: {
-        Args: Record<PropertyKey, never>
-        Returns: number
       }
     }
     Enums: {
@@ -5190,3 +5341,4 @@ export const Constants = {
     },
   },
 } as const
+

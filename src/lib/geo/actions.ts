@@ -1,6 +1,7 @@
 'use server';
 
-import { createClient, createUntypedServerClient } from '@/lib/supabase/server';
+import { createAdminClient, createUntypedAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { createChatCompletion, isAIEnabled } from '@/lib/ai/client';
 import type {
   ActionResult,
@@ -25,11 +26,10 @@ async function getOrganizationContext(): Promise<{
   organizationId: string;
   role: string;
 } | null> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) return null;
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from('users')
     .select('id, role, organization_id')
@@ -58,7 +58,7 @@ export async function calculateVisibilityScore(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Fetch entity data based on type
     let entityData: Record<string, unknown> | null = null;
@@ -243,7 +243,7 @@ export async function generateOptimizationSuggestions(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Fetch entity data
     let entityData: Record<string, unknown> | null = null;
@@ -413,7 +413,7 @@ export async function generateAIOptimizedFAQs(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Fetch entity data
     let entityData: Record<string, unknown> | null = null;
@@ -580,7 +580,7 @@ export async function generateSchemaRecommendations(
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Fetch entity data
     let entityData: Record<string, unknown> | null = null;
@@ -838,7 +838,7 @@ export async function getGEODashboardSummary(): Promise<ActionResult<GEODashboar
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get loan officers for the organization
     const { data: loanOfficers } = await supabase
@@ -1078,7 +1078,7 @@ export async function getCompetitors(): Promise<ActionResult<Competitor[]>> {
     }
 
     // Use untyped client for geo_competitors table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { data, error } = await supabase
       .from('geo_competitors')
@@ -1123,7 +1123,7 @@ export async function addCompetitor(
     }
 
     // Use untyped client for geo_competitors table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { data, error } = await supabase
       .from('geo_competitors')
@@ -1170,7 +1170,7 @@ export async function removeCompetitor(competitorId: string): Promise<ActionResu
     }
 
     // Use untyped client for geo_competitors table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { error } = await supabase
       .from('geo_competitors')
@@ -1211,7 +1211,7 @@ export async function compareWithCompetitor(
     }
 
     // Use untyped client for geo_competitors table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     // Get competitor
     const { data: competitorData, error: compError } = await supabase
@@ -1336,7 +1336,7 @@ export async function saveFAQ(
     }
 
     // Use untyped client for geo_faqs table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { data, error } = await supabase
       .from('geo_faqs')
@@ -1381,7 +1381,7 @@ export async function getSavedFAQs(
     }
 
     // Use untyped client for geo_faqs table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { data, error } = await supabase
       .from('geo_faqs')
@@ -1443,7 +1443,7 @@ export async function updateFAQ(
     }
 
     // Use untyped client for geo_faqs table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const updateData: Record<string, unknown> = {};
     if (updates.question !== undefined) updateData.question = updates.question;
@@ -1481,7 +1481,7 @@ export async function deleteFAQ(faqId: string): Promise<ActionResult> {
     }
 
     // Use untyped client for geo_faqs table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { error } = await supabase
       .from('geo_faqs')
@@ -1520,7 +1520,7 @@ export async function recordPerformanceSnapshot(
     }
 
     // Use untyped client for geo_performance_history table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     // Get current visibility score
     const scoreResult = await calculateVisibilityScore(entityType, entityId);
@@ -1593,7 +1593,7 @@ export async function getPerformanceHistory(
     }
 
     // Use untyped client for geo_performance_history table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { data, error } = await supabase
       .from('geo_performance_history')
@@ -1642,7 +1642,7 @@ export async function getOrganizationEntities(): Promise<ActionResult<{
       return { success: false, error: 'Not authenticated' };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     // Get loan officers
     const { data: loData } = await supabase

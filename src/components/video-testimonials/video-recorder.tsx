@@ -13,18 +13,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Video,
-  Mic,
+  VideoCamera as Video,
+  Microphone as Mic,
   Circle,
   Square,
   Pause,
   Play,
-  RotateCcw,
+  ArrowCounterClockwise as RotateCcw,
   Check,
-  AlertCircle,
+  WarningCircle as AlertCircle,
   Camera,
-  Loader2,
-} from "lucide-react";
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useMediaRecorder, type RecorderStatus } from "@/hooks/use-media-recorder";
 

@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { motion } from "framer-motion";
-import * as LucideIcons from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import * as PhosphorIcons from "@phosphor-icons/react";
+import type { IconProps } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -57,11 +57,11 @@ const itemVariants = {
 };
 
 /**
- * Get Lucide icon component by name
+ * Get Phosphor icon component by name
  */
-function getIconByName(name: string): LucideIcon {
-  const icons = LucideIcons as unknown as Record<string, LucideIcon>;
-  return icons[name] || LucideIcons.HelpCircle;
+function getIconByName(name: string): React.ComponentType<IconProps> {
+  const icons = PhosphorIcons as unknown as Record<string, React.ComponentType<IconProps>>;
+  return icons[name] || PhosphorIcons.Question;
 }
 
 export function PainPointSection({

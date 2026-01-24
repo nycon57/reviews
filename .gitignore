@@ -51,6 +51,7 @@ next-env.d.ts
 # Supabase
 supabase/.temp/
 supabase/.branches/
+supabase/migrations/
 
 # Ralph state (keep templates, ignore state)
 .ralph/runs/
@@ -72,3 +73,6 @@ wordpress-plugin/vendor/
 # Misc
 *.pem
 .turbo
+
+# docs
+docs/

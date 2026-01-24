@@ -25,15 +25,15 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus,
-  Save,
+  FloppyDisk as Save,
   Eye,
   ArrowLeft,
   Star,
   Hash,
-  MessageSquare,
+  Chats as MessageSquare,
   List,
-  Loader2,
-} from "lucide-react";
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { QuestionEditor } from "./question-editor";
 import { SurveyPreview } from "./survey-preview";
 import {
@@ -49,6 +49,55 @@ import type {
   ThankYouConfig,
 } from "@/types/survey.types";
 import { createDefaultQuestion } from "@/types/survey.types";
+
+// Normalize questions loaded from database to ensure proper config defaults
+function normalizeQuestion(q: Question): Question {
+  switch (q.type) {
+    case "rating":
+      return {
+        ...q,
+        config: {
+          maxRating: q.config?.maxRating ?? 5,
+          labels: q.config?.labels ?? { low: "Poor", high: "Excellent" },
+        },
+      };
+    case "nps":
+      return {
+        ...q,
+        config: {
+          labels: q.config?.labels ?? {
+            detractor: "Not likely",
+            passive: "Neutral",
+            promoter: "Very likely",
+          },
+        },
+      };
+    case "text":
+      return {
+        ...q,
+        config: {
+          multiline: q.config?.multiline ?? true,
+          placeholder: q.config?.placeholder ?? "Enter your response...",
+          minLength: q.config?.minLength,
+          maxLength: q.config?.maxLength,
+        },
+      };
+    case "multiple_choice":
+      return {
+        ...q,
+        config: {
+          options: q.config?.options ?? [
+            { id: crypto.randomUUID(), label: "Option 1", value: "option_1" },
+            { id: crypto.randomUUID(), label: "Option 2", value: "option_2" },
+          ],
+          allowMultiple: q.config?.allowMultiple ?? false,
+          allowOther: q.config?.allowOther ?? false,
+        },
+      };
+    default:
+      return q;
+  }
+}
 
 interface SurveyBuilderProps {
   mode: "create" | "edit";
@@ -87,7 +136,8 @@ export function SurveyBuilder({ mode, templateId }: SurveyBuilderProps) {
       const template = result.data;
       setName(template.name);
       setDescription(template.description || "");
-      setQuestions(template.questions);
+      // Normalize questions to ensure proper config defaults for older data
+      setQuestions(template.questions.map(normalizeQuestion));
       setBranding(template.branding || {
         showProgressBar: true,
         showQuestionNumbers: true,

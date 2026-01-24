@@ -3,18 +3,18 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-  GripVertical,
-  Trash2,
+  DotsSixVertical as GripVertical,
+  Trash as Trash2,
   Copy,
-  ChevronDown,
-  ChevronUp,
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
   Plus,
   X,
   Star,
   Hash,
-  MessageSquare,
+  Chats as MessageSquare,
   List,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -256,10 +256,11 @@ function RatingSettings({
   question: RatingQuestion;
   onChange: (q: Question) => void;
 }) {
+  const config = question.config ?? { maxRating: 5 };
   const updateConfig = (updates: Partial<RatingQuestion["config"]>) => {
     onChange({
       ...question,
-      config: { ...question.config, ...updates },
+      config: { ...config, ...updates },
     });
   };
 
@@ -268,7 +269,7 @@ function RatingSettings({
       <div>
         <Label htmlFor="max-rating">Rating Scale</Label>
         <Select
-          value={String(question.config.maxRating)}
+          value={String(config.maxRating ?? 5)}
           onValueChange={(v) => updateConfig({ maxRating: Number(v) })}
         >
           <SelectTrigger id="max-rating" className="mt-1.5">
@@ -286,10 +287,10 @@ function RatingSettings({
           <Label htmlFor="low-label">Low Rating Label</Label>
           <Input
             id="low-label"
-            value={question.config.labels?.low || ""}
+            value={config.labels?.low || ""}
             onChange={(e) =>
               updateConfig({
-                labels: { ...question.config.labels, low: e.target.value },
+                labels: { ...config.labels, low: e.target.value },
               })
             }
             placeholder="e.g., Poor"
@@ -300,10 +301,10 @@ function RatingSettings({
           <Label htmlFor="high-label">High Rating Label</Label>
           <Input
             id="high-label"
-            value={question.config.labels?.high || ""}
+            value={config.labels?.high || ""}
             onChange={(e) =>
               updateConfig({
-                labels: { ...question.config.labels, high: e.target.value },
+                labels: { ...config.labels, high: e.target.value },
               })
             }
             placeholder="e.g., Excellent"
@@ -323,10 +324,11 @@ function NPSSettings({
   question: NPSQuestion;
   onChange: (q: Question) => void;
 }) {
+  const config = question.config ?? {};
   const updateConfig = (updates: Partial<NPSQuestion["config"]>) => {
     onChange({
       ...question,
-      config: { ...question.config, ...updates },
+      config: { ...config, ...updates },
     });
   };
 
@@ -336,10 +338,10 @@ function NPSSettings({
         <Label htmlFor="detractor-label">Detractor Label (0-6)</Label>
         <Input
           id="detractor-label"
-          value={question.config.labels?.detractor || ""}
+          value={config.labels?.detractor || ""}
           onChange={(e) =>
             updateConfig({
-              labels: { ...question.config.labels, detractor: e.target.value },
+              labels: { ...config.labels, detractor: e.target.value },
             })
           }
           placeholder="e.g., Not at all likely"
@@ -350,10 +352,10 @@ function NPSSettings({
         <Label htmlFor="passive-label">Passive Label (7-8)</Label>
         <Input
           id="passive-label"
-          value={question.config.labels?.passive || ""}
+          value={config.labels?.passive || ""}
           onChange={(e) =>
             updateConfig({
-              labels: { ...question.config.labels, passive: e.target.value },
+              labels: { ...config.labels, passive: e.target.value },
             })
           }
           placeholder="e.g., Neutral"
@@ -364,10 +366,10 @@ function NPSSettings({
         <Label htmlFor="promoter-label">Promoter Label (9-10)</Label>
         <Input
           id="promoter-label"
-          value={question.config.labels?.promoter || ""}
+          value={config.labels?.promoter || ""}
           onChange={(e) =>
             updateConfig({
-              labels: { ...question.config.labels, promoter: e.target.value },
+              labels: { ...config.labels, promoter: e.target.value },
             })
           }
           placeholder="e.g., Extremely likely"
@@ -386,10 +388,11 @@ function TextSettings({
   question: TextQuestion;
   onChange: (q: Question) => void;
 }) {
+  const config = question.config ?? { multiline: false };
   const updateConfig = (updates: Partial<TextQuestion["config"]>) => {
     onChange({
       ...question,
-      config: { ...question.config, ...updates },
+      config: { ...config, ...updates },
     });
   };
 
@@ -406,7 +409,7 @@ function TextSettings({
         </div>
         <Switch
           id="multiline"
-          checked={question.config.multiline}
+          checked={config.multiline ?? false}
           onCheckedChange={(checked) => updateConfig({ multiline: checked })}
         />
       </div>
@@ -415,7 +418,7 @@ function TextSettings({
         <Label htmlFor="placeholder">Placeholder Text</Label>
         <Input
           id="placeholder"
-          value={question.config.placeholder || ""}
+          value={config.placeholder || ""}
           onChange={(e) => updateConfig({ placeholder: e.target.value })}
           placeholder="e.g., Enter your response..."
           className="mt-1.5"
@@ -428,7 +431,7 @@ function TextSettings({
           id="min-length"
           type="number"
           min={0}
-          value={question.config.minLength || ""}
+          value={config.minLength || ""}
           onChange={(e) =>
             updateConfig({
               minLength: e.target.value ? Number(e.target.value) : undefined,
@@ -444,7 +447,7 @@ function TextSettings({
           id="max-length"
           type="number"
           min={1}
-          value={question.config.maxLength || ""}
+          value={config.maxLength || ""}
           onChange={(e) =>
             updateConfig({
               maxLength: e.target.value ? Number(e.target.value) : undefined,
@@ -466,34 +469,41 @@ function MultipleChoiceSettings({
   question: MultipleChoiceQuestion;
   onChange: (q: Question) => void;
 }) {
+  const defaultOptions = [
+    { id: crypto.randomUUID(), label: "Option 1", value: "option_1" },
+    { id: crypto.randomUUID(), label: "Option 2", value: "option_2" },
+  ];
+  const config = question.config ?? { options: defaultOptions, allowMultiple: false, allowOther: false };
+  const options = config.options ?? defaultOptions;
+
   const updateConfig = (updates: Partial<MultipleChoiceQuestion["config"]>) => {
     onChange({
       ...question,
-      config: { ...question.config, ...updates },
+      config: { ...config, ...updates },
     });
   };
 
   const addOption = () => {
     const newOption = {
       id: globalThis.crypto.randomUUID(),
-      label: `Option ${question.config.options.length + 1}`,
-      value: `option_${question.config.options.length + 1}`,
+      label: `Option ${options.length + 1}`,
+      value: `option_${options.length + 1}`,
     };
-    updateConfig({ options: [...question.config.options, newOption] });
+    updateConfig({ options: [...options, newOption] });
   };
 
   const updateOption = (
     index: number,
     updates: Partial<MultipleChoiceQuestion["config"]["options"][0]>
   ) => {
-    const newOptions = [...question.config.options];
+    const newOptions = [...options];
     newOptions[index] = { ...newOptions[index], ...updates };
     updateConfig({ options: newOptions });
   };
 
   const removeOption = (index: number) => {
-    if (question.config.options.length <= 2) return; // Keep at least 2 options
-    const newOptions = question.config.options.filter((_, i) => i !== index);
+    if (options.length <= 2) return; // Keep at least 2 options
+    const newOptions = options.filter((_, i) => i !== index);
     updateConfig({ options: newOptions });
   };
 
@@ -511,7 +521,7 @@ function MultipleChoiceSettings({
           </div>
           <Switch
             id="allow-multiple"
-            checked={question.config.allowMultiple}
+            checked={config.allowMultiple ?? false}
             onCheckedChange={(checked) => updateConfig({ allowMultiple: checked })}
           />
         </div>
@@ -526,7 +536,7 @@ function MultipleChoiceSettings({
           </div>
           <Switch
             id="allow-other"
-            checked={question.config.allowOther}
+            checked={config.allowOther ?? false}
             onCheckedChange={(checked) => updateConfig({ allowOther: checked })}
           />
         </div>
@@ -535,7 +545,7 @@ function MultipleChoiceSettings({
       <div className="space-y-2">
         <Label>Answer Options</Label>
         <div className="space-y-2">
-          {question.config.options.map((option, index) => (
+          {options.map((option, index) => (
             <div key={option.id} className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center text-sm text-muted-foreground">
                 {index + 1}.
@@ -551,7 +561,7 @@ function MultipleChoiceSettings({
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => removeOption(index)}
-                disabled={question.config.options.length <= 2}
+                disabled={options.length <= 2}
               >
                 <X className="h-4 w-4" />
               </Button>

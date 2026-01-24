@@ -26,33 +26,11 @@ export function getStripe(): Promise<Stripe | null> {
 /**
  * Redirect to Stripe Checkout
  * Uses URL redirect since we get the checkout URL from server
+ * This is the preferred method per Stripe best practices
  */
 export function redirectToCheckout(checkoutUrl: string): void {
   if (typeof window !== "undefined") {
     window.location.href = checkoutUrl;
-  }
-}
-
-/**
- * Redirect to Stripe Checkout by session ID (legacy method)
- * Kept for backwards compatibility
- */
-export async function redirectToCheckoutBySession(sessionId: string): Promise<void> {
-  const stripe = await getStripe();
-
-  if (!stripe) {
-    throw new Error("Stripe not initialized");
-  }
-
-  // Use type assertion since this method still exists but may not be in types
-  const stripeWithLegacy = stripe as Stripe & {
-    redirectToCheckout: (options: { sessionId: string }) => Promise<{ error?: { message: string } }>;
-  };
-
-  const { error } = await stripeWithLegacy.redirectToCheckout({ sessionId });
-
-  if (error) {
-    throw new Error(error.message);
   }
 }
 

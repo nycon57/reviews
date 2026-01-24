@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // User role enum
-export const userRoles = ["admin", "manager", "loan_officer"] as const;
+export const userRoles = ["admin", "manager", "user"] as const;
 export type UserRole = (typeof userRoles)[number];
 
 // Address type

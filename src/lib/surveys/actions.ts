@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   createSurveyTemplateSchema,
   updateSurveyTemplateSchema,
@@ -23,9 +24,9 @@ export interface ActionResult<T = void> {
 // Get all survey templates for the current organization
 export async function getSurveyTemplates(): Promise<ActionResult<SurveyTemplate[]>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -73,9 +74,9 @@ export async function getSurveyTemplates(): Promise<ActionResult<SurveyTemplate[
 // Get a single survey template by ID
 export async function getSurveyTemplate(id: string): Promise<ActionResult<SurveyTemplate>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -122,9 +123,9 @@ export async function createSurveyTemplate(
       return { success: false, error: validated.error.errors[0]?.message || "Validation failed" };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -192,9 +193,9 @@ export async function updateSurveyTemplate(
       return { success: false, error: validated.error.errors[0]?.message || "Validation failed" };
     }
 
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -245,9 +246,9 @@ export async function updateSurveyTemplate(
 // Delete a survey template
 export async function deleteSurveyTemplate(id: string): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -286,9 +287,9 @@ export async function deleteSurveyTemplate(id: string): Promise<ActionResult> {
 // Duplicate a survey template
 export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<SurveyTemplate>> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }
@@ -348,9 +349,9 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
 // Toggle template active status
 export async function toggleTemplateStatus(id: string, isActive: boolean): Promise<ActionResult> {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await unifiedGetUser();
     if (!user) {
       return { success: false, error: "Not authenticated" };
     }

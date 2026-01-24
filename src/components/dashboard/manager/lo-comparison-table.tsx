@@ -241,7 +241,7 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <Star className="h-3 w-3 text-yellow-400" weight="fill" />
                       <span className="font-medium">{lo.averageRating.toFixed(1)}</span>
                     </div>
                   </TableCell>

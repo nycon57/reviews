@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import {
   updateUserProfileSchema,
@@ -18,15 +19,13 @@ import {
 
 // Get user context
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -84,15 +83,12 @@ async function requireManagerRole(): Promise<{
  * Get the current user's full profile
  */
 export async function getCurrentUser(): Promise<ActionResult<User>> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -115,7 +111,7 @@ export async function getUser(userId: string): Promise<ActionResult<User>> {
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("users")
@@ -146,7 +142,7 @@ export async function getUserWithBranch(
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("users")
@@ -200,7 +196,7 @@ export async function getOrganizationUsers(params?: {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const page = params?.page || 1;
   const limit = params?.limit || 50;
   const offset = (page - 1) * limit;
@@ -267,7 +263,7 @@ export async function getPublicUsers(params?: {
     return { success: false, error: "Organization ID is required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const page = params?.page || 1;
   const limit = params?.limit || 50;
   const offset = (page - 1) * limit;
@@ -276,7 +272,7 @@ export async function getPublicUsers(params?: {
     .from("users")
     .select("*", { count: "exact" })
     .eq("organization_id", params.organizationId)
-    .eq("role", "loan_officer")
+    .eq("role", "user")
     .eq("is_active", true)
     .order("full_name");
 
@@ -320,15 +316,12 @@ export async function getPublicUsers(params?: {
 export async function updateMyProfile(
   input: unknown
 ): Promise<ActionResult<User>> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   const parsed = updateUserProfileSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message };
@@ -373,15 +366,12 @@ export async function updateMyProfile(
 export async function updateMySettings(
   input: unknown
 ): Promise<ActionResult<User>> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   const parsed = updateUserSettingsSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0]?.message };
@@ -428,7 +418,7 @@ export async function updateUserByAdmin(
     return { success: false, error: parsed.error.issues[0]?.message };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Build update object
   const updates: Record<string, unknown> = {};
@@ -486,7 +476,7 @@ export async function deactivateUser(userId: string): Promise<ActionResult> {
     return { success: false, error: "You cannot deactivate your own account" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("users")
@@ -512,7 +502,7 @@ export async function reactivateUser(userId: string): Promise<ActionResult> {
     return { success: false, error: "Unauthorized - Admin role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("users")
@@ -542,7 +532,7 @@ export async function getDirectReports(
 
   const targetManagerId = managerId || context.id;
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("users")
@@ -569,7 +559,7 @@ export async function getDirectReports(
 export async function getPublicUserProfile(
   userId: string
 ): Promise<ActionResult<PublicUser>> {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("users")

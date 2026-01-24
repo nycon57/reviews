@@ -4,7 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, Star, Award, TrendingUp, Trophy, Target } from "lucide-react";
+import {
+  Users,
+  Star,
+  Medal as Award,
+  TrendUp as TrendingUp,
+  Trophy,
+  Target,
+} from "@phosphor-icons/react";
 import type { RecognitionAnalytics } from "@/types/recognition.types";
 import { BADGE_ICONS } from "./constants";
 

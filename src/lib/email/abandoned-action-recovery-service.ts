@@ -25,7 +25,7 @@
  * 5. 'expired' - 7 days passed without completion
  */
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, getFromAddress, emailConfig } from "./client";
 import type {
   EmailTemplate,
@@ -143,7 +143,7 @@ function safeSpecialOffer(
 // ============================================================================
 
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
   const { data } = await supabase
     .from("email_unsubscribes")
     .select("id")
@@ -166,7 +166,7 @@ async function logEmail(params: {
   status: string;
   errorMessage?: string;
 }): Promise<string | null> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
     .from("email_logs")
@@ -226,7 +226,7 @@ export async function trackActionStarted(
   context: Record<string, unknown> = {},
   resumeUrl?: string
 ): Promise<ActionTrackingResult> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase.rpc("track_action_started", {
     p_user_id: userId,
@@ -254,7 +254,7 @@ export async function trackActionCompleted(
   userId: string,
   actionType: AbandonedActionType
 ): Promise<ActionTrackingResult> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase.rpc("track_action_completed", {
     p_user_id: userId,
@@ -280,7 +280,7 @@ export async function updateActionContext(
   actionType: AbandonedActionType,
   contextUpdate: Record<string, unknown>
 ): Promise<ActionTrackingResult> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   // Find the active action
   const { data: action, error: findError } = await supabase
@@ -334,7 +334,7 @@ async function processRecoveryEmailQueue(
   emailNumber: 1 | 2,
   batchSize: number = 50
 ): Promise<QueueProcessResult> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
   const result: QueueProcessResult = {
     processed: 0,
     failed: 0,
@@ -407,7 +407,7 @@ export async function processRecoveryEmail2Queue(
  * Called by cron job daily
  */
 export async function expireOldAbandonedActions(): Promise<number> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase.rpc("expire_old_abandoned_actions");
 
@@ -427,7 +427,7 @@ async function sendRecoveryEmail(
   action: ActionReadyForEmail,
   emailNumber: 1 | 2
 ): Promise<{ success: boolean; skipped?: boolean; error?: string }> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
   const resend = getResendClient();
 
   // Get user data
@@ -464,7 +464,8 @@ async function sendRecoveryEmail(
   const unsubscribeUrl = `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`;
   const dashboardUrl = `${baseUrl}/dashboard`;
   const resumeUrl = action.resume_url || dashboardUrl;
-  const org = user.organizations as { name: string };
+  const orgs = user.organizations as { name: string }[] | null;
+  const org = orgs?.[0] || { name: "Your Organization" };
   const firstName = user.full_name?.split(" ")[0] || "there";
   const context = action.context || {};
 
@@ -648,7 +649,7 @@ async function updateActionAfterEmailSent(
   emailNumber: 1 | 2,
   emailId: string | null
 ): Promise<void> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const updateData: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
@@ -701,7 +702,7 @@ export async function getAbandonedAction(
   userId: string,
   actionType: AbandonedActionType
 ): Promise<AbandonedActionRecord | null> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
     .from("abandoned_actions")
@@ -724,7 +725,7 @@ export async function getAbandonedAction(
 export async function getUserAbandonedActions(
   userId: string
 ): Promise<AbandonedActionRecord[]> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
     .from("abandoned_actions")
@@ -754,7 +755,7 @@ export async function getAbandonedActionStats(organizationId: string): Promise<{
     { started: number; completed: number; recovered: number }
   >;
 }> {
-  const supabase = createAdminClient();
+  const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
     .from("abandoned_actions")

@@ -15,7 +15,17 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, UserPlus, MoreHorizontal, Mail, Shield, UserX, UserCheck, X, Clock } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  UserPlus,
+  DotsThree as MoreHorizontal,
+  Envelope as Mail,
+  Shield,
+  UserMinus as UserX,
+  UserCheck,
+  X,
+  Clock,
+} from "@phosphor-icons/react";
 import {
   getOrganizationMembers,
   getPendingInvitations,
@@ -33,7 +43,7 @@ import {
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },
   manager: { label: "Manager", variant: "secondary" },
-  loan_officer: { label: "Loan Officer", variant: "outline" },
+  user: { label: "User", variant: "outline" },
 };
 
 export function OrganizationTeam() {
@@ -48,7 +58,7 @@ export function OrganizationTeam() {
     resolver: zodResolver(createInvitationSchema),
     defaultValues: {
       email: "",
-      role: "loan_officer",
+      role: "user",
     },
   });
 
@@ -135,7 +145,7 @@ export function OrganizationTeam() {
     });
   }
 
-  async function handleUpdateRole(memberId: string, newRole: "admin" | "manager" | "loan_officer") {
+  async function handleUpdateRole(memberId: string, newRole: "admin" | "manager" | "user") {
     startTransition(async () => {
       const result = await updateMemberRole(memberId, newRole);
 
@@ -280,7 +290,7 @@ export function OrganizationTeam() {
                           <SelectContent>
                             <SelectItem value="admin">Admin - Full access</SelectItem>
                             <SelectItem value="manager">Manager - Team management</SelectItem>
-                            <SelectItem value="loan_officer">Loan Officer - Basic access</SelectItem>
+                            <SelectItem value="user">User - Basic access</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormDescription>
@@ -376,9 +386,9 @@ export function OrganizationTeam() {
                           <Shield className="mr-2 h-4 w-4" />
                           Make Manager
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "loan_officer")}>
+                        <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "user")}>
                           <Shield className="mr-2 h-4 w-4" />
-                          Make Loan Officer
+                          Make User
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

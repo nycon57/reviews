@@ -6,19 +6,19 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Star,
-  ExternalLink,
+  ArrowSquareOut as ExternalLink,
   Archive,
   Flag,
-  MessageSquare,
+  Chats as MessageSquare,
   Calendar,
   MapPin,
   User,
-  Building2,
-  TrendingUp,
-  Tags,
+  BuildingOffice as Building2,
+  TrendUp as TrendingUp,
+  Tag as Tags,
   Clock,
-  Share2,
-} from "lucide-react";
+  ShareNetwork as Share2,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,7 +72,7 @@ interface ReviewDetail {
 
 interface Props {
   review: ReviewDetail;
-  userRole: "admin" | "manager" | "loan_officer";
+  userRole: "admin" | "manager" | "user";
   hasAiAccess?: boolean;
 }
 

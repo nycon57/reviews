@@ -37,7 +37,7 @@ interface InvitationRecord {
   id: string;
   organization_id: string;
   email: string;
-  role: "admin" | "manager" | "loan_officer";
+  role: "admin" | "manager" | "user";
   token: string;
   invited_by: string | null;
   expires_at: string;
@@ -409,7 +409,7 @@ export async function sendTeamInviteWelcomeEmail(
     inviterName: inviterInfo?.name || "Your organization",
     organizationName: orgInfo.name,
     organizationLogoUrl: orgInfo.logoUrl,
-    role: invitation.role as "admin" | "manager" | "loan_officer",
+    role: invitation.role as "admin" | "manager" | "user",
     invitationId: invitation.id,
     acceptUrl: buildAcceptUrl(invitation.token),
     unsubscribeUrl: buildUnsubscribeUrl(user.email, invitation.organization_id),
@@ -418,11 +418,11 @@ export async function sendTeamInviteWelcomeEmail(
     profileUrl,
     // Role-specific URLs
     reviewsUrl:
-      invitation.role === "loan_officer"
+      invitation.role === "user"
         ? `${baseUrl}/dashboard/reviews`
         : undefined,
     leaderboardUrl:
-      invitation.role === "loan_officer"
+      invitation.role === "user"
         ? `${baseUrl}/dashboard/leaderboard`
         : undefined,
     teamAnalyticsUrl:

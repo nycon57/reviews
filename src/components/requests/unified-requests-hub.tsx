@@ -1,7 +1,10 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Video, Mail } from "lucide-react";
+import {
+  VideoCamera as Video,
+  Envelope as Mail,
+} from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { VideoTestimonialRequestsDashboard, type RequestStats } from "./video-requests-dashboard";
@@ -23,7 +26,7 @@ interface UnifiedRequestsHubProps {
   initialVideoTotal: number;
   initialVideoStats: RequestStats;
   loanOfficers: LoanOfficer[];
-  userRole: "admin" | "manager" | "loan_officer";
+  userRole: "admin" | "manager" | "user";
   initialTab?: string;
 }
 

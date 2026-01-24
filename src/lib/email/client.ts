@@ -29,6 +29,15 @@ export const emailConfig = {
 
   // Webhook signing secret (set in Resend dashboard)
   webhookSecret: process.env.RESEND_WEBHOOK_SECRET,
+
+  // Physical mailing address for CAN-SPAM compliance (REQUIRED)
+  // Update this to your actual company address
+  companyAddress:
+    process.env.COMPANY_MAILING_ADDRESS ||
+    "Repwell Inc., 123 Main Street, Suite 100, San Francisco, CA 94105",
+
+  // Unsubscribe email for List-Unsubscribe header
+  unsubscribeEmail: process.env.UNSUBSCRIBE_EMAIL || "unsubscribe@repwell.ai",
 };
 
 export function getFromAddress(orgName?: string): string {

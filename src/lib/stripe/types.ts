@@ -2,9 +2,8 @@ import { z } from "zod";
 
 // Subscription tier definitions
 export const SUBSCRIPTION_TIERS = {
-  FREE: "free",
-  STARTER: "starter",
-  PROFESSIONAL: "professional",
+  BASIC: "basic",
+  PRO: "pro",
   ENTERPRISE: "enterprise",
 } as const;
 
@@ -57,96 +56,73 @@ export interface PricingTier {
 
 export const PRICING_TIERS: PricingTier[] = [
   {
-    id: "free",
-    name: "Free",
-    description: "Get started with basic features",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    stripePriceIdMonthly: null,
-    stripePriceIdYearly: null,
+    id: "basic",
+    name: "Basic",
+    description: "For individual professionals",
+    monthlyPrice: 29,
+    yearlyPrice: 290,
+    stripePriceIdMonthly: process.env.STRIPE_BASIC_PRICE_MONTHLY || "",
+    stripePriceIdYearly: process.env.STRIPE_BASIC_PRICE_YEARLY || "",
     features: [
-      "Up to 3 team members",
-      "5 loan officer profiles",
+      "1 user profile",
       "100 surveys/month",
       "Basic analytics",
+      "Review management",
+      "Testimonial collection",
       "Email support",
     ],
     limits: {
-      maxUsers: 3,
-      maxLoanOfficers: 5,
+      maxUsers: 1,
+      maxLoanOfficers: 1,
       maxSurveysPerMonth: 100,
       maxApiCallsPerDay: 100,
     },
     cta: "Get Started",
   },
   {
-    id: "starter",
-    name: "Starter",
-    description: "For growing teams",
-    monthlyPrice: 49,
-    yearlyPrice: 470,
-    stripePriceIdMonthly: process.env.STRIPE_STARTER_PRICE_MONTHLY || "",
-    stripePriceIdYearly: process.env.STRIPE_STARTER_PRICE_YEARLY || "",
+    id: "pro",
+    name: "Pro",
+    description: "For power users",
+    monthlyPrice: 79,
+    yearlyPrice: 790,
+    stripePriceIdMonthly: process.env.STRIPE_PRO_PRICE_MONTHLY || "",
+    stripePriceIdYearly: process.env.STRIPE_PRO_PRICE_YEARLY || "",
     features: [
-      "Up to 10 team members",
-      "25 loan officer profiles",
+      "Everything in Basic",
+      "AI-powered insights",
+      "Geo visibility tracking",
+      "Website analytics",
       "500 surveys/month",
-      "Advanced analytics",
-      "Google Business integration",
-      "Priority email support",
+      "API access",
+      "Priority support",
     ],
     limits: {
-      maxUsers: 10,
-      maxLoanOfficers: 25,
+      maxUsers: 1,
+      maxLoanOfficers: 1,
       maxSurveysPerMonth: 500,
       maxApiCallsPerDay: 1000,
     },
-    cta: "Start Free Trial",
-  },
-  {
-    id: "professional",
-    name: "Professional",
-    description: "For established businesses",
-    monthlyPrice: 149,
-    yearlyPrice: 1430,
-    stripePriceIdMonthly: process.env.STRIPE_PROFESSIONAL_PRICE_MONTHLY || "",
-    stripePriceIdYearly: process.env.STRIPE_PROFESSIONAL_PRICE_YEARLY || "",
-    features: [
-      "Up to 50 team members",
-      "100 loan officer profiles",
-      "2,500 surveys/month",
-      "AI-powered insights",
-      "All integrations",
-      "API access",
-      "Phone support",
-      "Custom branding",
-    ],
-    limits: {
-      maxUsers: 50,
-      maxLoanOfficers: 100,
-      maxSurveysPerMonth: 2500,
-      maxApiCallsPerDay: 10000,
-    },
     popular: true,
-    cta: "Start Free Trial",
+    cta: "Upgrade to Pro",
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    description: "For large organizations",
+    description: "For teams and organizations",
     monthlyPrice: -1, // Custom pricing
     yearlyPrice: -1,
     stripePriceIdMonthly: null,
     stripePriceIdYearly: null,
     features: [
+      "Everything in Pro",
       "Unlimited team members",
-      "Unlimited loan officers",
       "Unlimited surveys",
-      "Dedicated success manager",
-      "Custom integrations",
+      "Manager dashboard",
+      "Team leaderboards",
+      "Recognition system",
+      "EX surveys",
       "SSO/SAML support",
-      "SLA guarantee",
-      "On-premise option",
+      "Dedicated success manager",
     ],
     limits: {
       maxUsers: -1, // Unlimited
@@ -243,6 +219,7 @@ export interface BillingOverview {
     surveysThisMonth: number;
     apiCallsToday: number;
   };
+  userRole: 'admin' | 'manager' | 'user';
 }
 
 // Webhook event types we handle

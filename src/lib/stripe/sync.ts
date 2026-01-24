@@ -347,22 +347,22 @@ export async function syncCustomer(customer: Stripe.Customer): Promise<void> {
  */
 function getPlanTierFromPriceId(
   priceId: string | undefined
-): "free" | "starter" | "professional" | "enterprise" {
-  if (!priceId) return "free";
+): "basic" | "pro" | "enterprise" {
+  if (!priceId) return "basic";
 
   // Match against environment variables
   if (
-    priceId === process.env.STRIPE_STARTER_PRICE_MONTHLY ||
-    priceId === process.env.STRIPE_STARTER_PRICE_YEARLY
+    priceId === process.env.STRIPE_BASIC_PRICE_MONTHLY ||
+    priceId === process.env.STRIPE_BASIC_PRICE_YEARLY
   ) {
-    return "starter";
+    return "basic";
   }
 
   if (
-    priceId === process.env.STRIPE_PROFESSIONAL_PRICE_MONTHLY ||
-    priceId === process.env.STRIPE_PROFESSIONAL_PRICE_YEARLY
+    priceId === process.env.STRIPE_PRO_PRICE_MONTHLY ||
+    priceId === process.env.STRIPE_PRO_PRICE_YEARLY
   ) {
-    return "professional";
+    return "pro";
   }
 
   if (
@@ -372,6 +372,6 @@ function getPlanTierFromPriceId(
     return "enterprise";
   }
 
-  // Default to professional for unknown prices
-  return "professional";
+  // Default to pro for unknown prices
+  return "pro";
 }

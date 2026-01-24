@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Star, Target } from 'lucide-react';
+import {
+  Star,
+  Target,
+} from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { getProfileCompletionScore } from '@/lib/gamification/profile-completion-actions';
 import type { ProfileCompletionScore } from '@/lib/gamification/profile-completion-types';

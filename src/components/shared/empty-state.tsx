@@ -1,28 +1,32 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
-  Send,
+  ChartBar,
+  PaperPlaneRight,
   Star,
   Users,
-  TrendingUp,
+  TrendUp,
   FileText,
   Plus,
-  Settings,
+  Gear,
   Lock,
-  type LucideIcon,
-} from "lucide-react";
+  type IconProps,
+} from "@phosphor-icons/react";
+
+type PhosphorIcon = React.ComponentType<IconProps>;
 
 // Icon map for server component compatibility
-const iconMap: Record<string, LucideIcon> = {
-  "bar-chart": BarChart3,
-  send: Send,
+const iconMap: Record<string, PhosphorIcon> = {
+  "bar-chart": ChartBar,
+  send: PaperPlaneRight,
   star: Star,
   users: Users,
-  "trending-up": TrendingUp,
+  "trending-up": TrendUp,
   "file-text": FileText,
   plus: Plus,
-  settings: Settings,
+  settings: Gear,
   lock: Lock,
 };
 
@@ -51,7 +55,7 @@ export function EmptyState({
   className,
   compact = false,
 }: EmptyStateProps) {
-  const Icon = iconMap[iconName] || BarChart3;
+  const Icon = iconMap[iconName] || ChartBar;
 
   return (
     <div
@@ -87,10 +91,9 @@ export function EmptyState({
           )}
         >
           <Icon
-            className={cn(
-              "text-repwell-teal-300",
-              compact ? "h-7 w-7" : "h-8 w-8 md:h-10 md:w-10"
-            )}
+            weight="duotone"
+            size={compact ? 28 : 40}
+            className="text-repwell-teal-300"
           />
         </div>
 
@@ -126,7 +129,7 @@ export function EmptyState({
               const ActionIcon = action.iconName ? iconMap[action.iconName] : undefined;
               const buttonContent = (
                 <>
-                  {ActionIcon && <ActionIcon className="mr-2 h-4 w-4" />}
+                  {ActionIcon && <ActionIcon size={16} className="mr-2" />}
                   {action.label}
                 </>
               );
@@ -165,7 +168,7 @@ export function EmptyStateCard({
   action,
   className,
 }: EmptyStateCardProps) {
-  const Icon = iconMap[iconName] || BarChart3;
+  const Icon = iconMap[iconName] || ChartBar;
 
   return (
     <div
@@ -175,7 +178,7 @@ export function EmptyStateCard({
       )}
     >
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-        <Icon className="h-6 w-6 text-repwell-teal-400" />
+        <Icon weight="duotone" size={24} className="text-repwell-teal-400" />
       </div>
       <h4 className="text-sm font-medium text-repwell-teal-500">{title}</h4>
       <p className="mt-1 text-xs text-repwell-teal-400 max-w-[200px]">{description}</p>
@@ -186,7 +189,7 @@ export function EmptyStateCard({
               {action.iconName && iconMap[action.iconName] && (
                 (() => {
                   const ActionIcon = iconMap[action.iconName];
-                  return <ActionIcon className="mr-1.5 h-3.5 w-3.5" />;
+                  return <ActionIcon size={14} className="mr-1.5" />;
                 })()
               )}
               {action.label}

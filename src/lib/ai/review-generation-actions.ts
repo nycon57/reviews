@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
@@ -30,16 +30,12 @@ export interface ReviewGenerationActionResult {
  * Get authenticated user and their organization
  */
 async function getAuthenticatedUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
+  const user = await unifiedGetUser();
+  if (!user) {
     throw new Error("Authentication required");
   }
 
+  const supabase = createAdminClient();
   const { data: userData, error: userError } = await supabase
     .from("users")
     .select("organization_id, role")

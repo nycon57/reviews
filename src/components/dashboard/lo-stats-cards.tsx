@@ -3,12 +3,12 @@
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Star,
-  TrendUp as TrendingUp,
-  Chats as MessageSquare,
-  Users,
-  ArrowUpRight,
-  ArrowDownRight,
+  StarIcon as Star,
+  TrendUpIcon as TrendingUp,
+  ChatsIcon as MessageSquare,
+  UsersIcon as Users,
+  ArrowUpRightIcon as ArrowUpRight,
+  ArrowDownRightIcon as ArrowDownRight,
 } from "@phosphor-icons/react";
 import { cardHover, cardTap, staggerContainer, fadeInUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";

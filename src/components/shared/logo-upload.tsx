@@ -6,7 +6,12 @@
 import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, ImageIcon, Palette } from "lucide-react";
+import {
+  X,
+  SpinnerGap as Loader2,
+  Image as ImageIcon,
+  Palette,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

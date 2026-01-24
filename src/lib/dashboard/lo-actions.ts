@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 
 // Types for loan officer dashboard
@@ -56,15 +57,13 @@ export interface ProfileCompletionItem {
 
 // Get user context - returns user id, role, organization_id, and linked loan_officer_id
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -99,11 +98,11 @@ export async function getLoanOfficerMetrics(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
 
   // For loan officers, they can only view their own metrics
-  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
     return { success: false, error: "Unauthorized - Can only view own metrics" };
   }
 
@@ -224,11 +223,11 @@ export async function getLoanOfficerRecentReviews(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
 
   // For loan officers, they can only view their own reviews
-  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
     return { success: false, error: "Unauthorized - Can only view own reviews" };
   }
 
@@ -283,11 +282,11 @@ export async function getRatingTrend(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
 
   // For loan officers, they can only view their own data
-  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -358,11 +357,11 @@ export async function getNPSTrend(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
 
   // For loan officers, they can only view their own data
-  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
     return { success: false, error: "Unauthorized" };
   }
 
@@ -459,11 +458,11 @@ export async function getLoanOfficerProfile(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
 
   // For loan officers, they can only view their own profile
-  if (context.role === "loan_officer" && targetLoanOfficerId !== context.loanOfficerId) {
+  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
     return { success: false, error: "Unauthorized - Can only view own profile" };
   }
 

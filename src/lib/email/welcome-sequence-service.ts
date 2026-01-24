@@ -13,6 +13,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, getFromAddress, emailConfig } from "./client";
+import { getUnsubscribeUrl, getEmailPreferencesUrl } from "./send-utils";
 import type {
   EmailTemplate,
   Welcome1AccessEmailData,
@@ -73,7 +74,7 @@ interface SequenceRecord {
   metadata: {
     firstName: string;
     organizationName: string;
-    role: "admin" | "manager" | "loan_officer";
+    role: "admin" | "manager" | "user";
   };
   started_at: string;
   completed_at?: string;
@@ -590,7 +591,8 @@ async function sendWelcomeEmail(
 }> {
   const resend = getResendClient();
   const baseUrl = emailConfig.baseUrl;
-  const unsubscribeUrl = `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`;
+  // Use token-based unsubscribe URL for better privacy
+  const unsubscribeUrl = await getUnsubscribeUrl(user.id, user.email);
   const dashboardUrl = `${baseUrl}/dashboard`;
 
   const baseData = {

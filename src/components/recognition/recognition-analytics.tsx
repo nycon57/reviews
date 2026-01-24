@@ -12,7 +12,14 @@ import {
   ANALYTICS_PERIODS,
 } from "@/types/recognition.types";
 import { getRecognitionAnalytics } from "@/lib/recognition/actions";
-import { Users, Award, TrendingUp, Gift, Target, Loader2 } from "lucide-react";
+import {
+  Users,
+  Medal as Award,
+  TrendUp as TrendingUp,
+  Gift,
+  Target,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { BADGE_ICONS } from "./constants";
 
 interface RecognitionAnalyticsDashboardProps {

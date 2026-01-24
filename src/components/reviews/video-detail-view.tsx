@@ -11,15 +11,15 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Share2,
+  ShareNetwork as Share2,
   ThumbsUp,
   ThumbsDown,
-  MessageSquare,
-  Edit3,
-  Loader2,
+  Chats as MessageSquare,
+  PencilSimple as Edit3,
+  SpinnerGap as Loader2,
   Calendar,
-  AlertCircle,
-} from "lucide-react";
+  WarningCircle as AlertCircle,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -79,7 +79,7 @@ interface VideoDetail {
 
 interface Props {
   video: VideoDetail;
-  userRole: "admin" | "manager" | "loan_officer";
+  userRole: "admin" | "manager" | "user";
 }
 
 type ApprovalAction = "approve" | "reject" | "request_changes" | "publish";

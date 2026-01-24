@@ -5,8 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import * as LucideIcons from "lucide-react";
-import { Menu, ChevronDown } from "lucide-react";
+import * as PhosphorIcons from "@phosphor-icons/react";
+import {
+  List as Menu,
+  CaretDown as ChevronDown,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,7 +39,7 @@ function DynamicIcon({
   className?: string;
 }) {
   const IconComponent = (
-    LucideIcons as unknown as Record<
+    PhosphorIcons as unknown as Record<
       string,
       React.ComponentType<{ className?: string }>
     >

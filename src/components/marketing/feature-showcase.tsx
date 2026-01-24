@@ -3,7 +3,11 @@
 import * as React from "react";
 import Image from "next/image";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { CheckCircle2, X, ArrowRight } from "lucide-react";
+import {
+  CheckCircle as CheckCircle2,
+  X,
+  ArrowRight,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface TimelineStep {

@@ -17,19 +17,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Bell,
   Check,
-  CheckCheck,
+  Checks as CheckCheck,
   Star,
-  AlertTriangle,
-  MessageSquare,
+  Warning as AlertTriangle,
+  Chats as MessageSquare,
   Trophy,
   FileText,
   Archive,
-  ChevronLeft,
-  ChevronRight,
-  Settings,
-  Inbox,
-  Filter,
-} from "lucide-react";
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  Gear as Settings,
+  Tray as Inbox,
+  Funnel as Filter,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { NotificationWithDetails, NotificationType } from "@/lib/notifications/types";
 import {

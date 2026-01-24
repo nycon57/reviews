@@ -11,15 +11,15 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   CreditCard,
   Calendar,
-  TrendingUp,
-  AlertTriangle,
+  TrendUp as TrendingUp,
+  Warning as AlertTriangle,
   CheckCircle,
-  Zap,
-  ExternalLink,
-  Download,
-  Loader2,
-  RefreshCw,
-} from "lucide-react";
+  Lightning as Zap,
+  ArrowSquareOut as ExternalLink,
+  DownloadSimple as Download,
+  SpinnerGap as Loader2,
+  ArrowsClockwise as RefreshCw,
+} from "@phosphor-icons/react";
 import {
   getCurrentOrganization,
   type Organization,

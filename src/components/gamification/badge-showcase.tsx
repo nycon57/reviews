@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  Medal as Award,
-  Lock,
-  CaretRight as ChevronRight,
+  MedalIcon as Award,
+  LockIcon as Lock,
+  CaretRightIcon as ChevronRight,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { BadgeIcon } from "./badge-icon";
@@ -55,7 +55,7 @@ export function BadgeShowcase({
       <Card className={className}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Award className="h-5 w-5 text-purple-500" />
+            <Award size={20} className="text-purple-500" />
             Achievements
           </CardTitle>
         </CardHeader>
@@ -83,7 +83,7 @@ export function BadgeShowcase({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
-            <Award className="h-5 w-5 text-purple-500" />
+            <Award size={20} className="text-purple-500" />
             Achievements
           </CardTitle>
           <Badge variant="secondary" className="font-normal">
@@ -111,14 +111,14 @@ export function BadgeShowcase({
                 className="mt-3 flex items-center gap-1 text-sm text-primary hover:underline"
               >
                 Show all {earned.length} badges
-                <ChevronRight className="h-3 w-3" />
+                <ChevronRight size={12} />
               </button>
             )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-6 text-center">
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-50 to-purple-100">
-              <Lock className="h-6 w-6 text-purple-400" />
+              <Lock size={24} className="text-purple-400" />
             </div>
             <p className="text-sm font-medium text-repwell-teal-500">No badges earned yet</p>
             <p className="mt-1 max-w-[220px] text-xs text-repwell-teal-400">

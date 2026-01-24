@@ -300,7 +300,7 @@ export interface UpdateOrganizationInput {
 
 export interface InviteUserInput {
   email: string;
-  role: 'admin' | 'manager' | 'loan_officer';
+  role: 'admin' | 'manager' | 'user';
   first_name?: string;
   last_name?: string;
 }

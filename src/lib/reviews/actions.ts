@@ -1,7 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Json } from "@/types/database.types";
@@ -10,15 +10,13 @@ import { DEFAULT_AUTO_APPROVAL_RULES } from "./types";
 
 // Get user's role and organization ID
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -63,7 +61,7 @@ export async function getPendingReviews(params?: {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const page = params?.page || 1;
   const limit = params?.limit || 50;
   const offset = (page - 1) * limit;
@@ -199,7 +197,7 @@ export async function getReviews(params?: {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const page = params?.page || 1;
   const limit = params?.limit || 50;
   const offset = (page - 1) * limit;
@@ -329,7 +327,7 @@ export async function getReviewById(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")
@@ -448,7 +446,7 @@ export async function approveReview(
   }
 
   const { reviewId, editedText, publish } = validated.data;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify review belongs to organization
   const { data: existingReview } = await supabase
@@ -514,7 +512,7 @@ export async function rejectReview(
   }
 
   const { reviewId, reason } = validated.data;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify review belongs to organization
   const { data: existingReview } = await supabase
@@ -568,7 +566,7 @@ export async function updateReviewText(
   }
 
   const { reviewId, text } = validated.data;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Verify review belongs to organization
   const { data: existingReview } = await supabase
@@ -610,7 +608,7 @@ export async function bulkApproveReviews(
     return { success: false, error: "No reviews selected" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   let approved = 0;
   let failed = 0;
 
@@ -665,7 +663,7 @@ export async function bulkRejectReviews(
     return { success: false, error: "Rejection reason is required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")
@@ -699,7 +697,7 @@ export async function revertToPending(reviewId: string): Promise<ActionResult> {
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("reviews")
@@ -732,7 +730,7 @@ export async function getAutoApprovalRules(): Promise<
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data: org, error } = await supabase
     .from("organizations")
@@ -760,7 +758,7 @@ export async function updateAutoApprovalRules(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get current settings
   const { data: org } = await supabase
@@ -849,7 +847,7 @@ export async function getReviewStats(): Promise<
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("reviews")
@@ -886,7 +884,7 @@ export async function getLoanOfficersForFilter(): Promise<
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { data, error } = await supabase
     .from("loan_officers")

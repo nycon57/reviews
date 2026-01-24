@@ -9,7 +9,7 @@
  * - Email 5 (Day 14): Expiration notice
  *
  * Role-specific content:
- * - Loan Officer: Sees review collection, testimonials, leaderboard features
+ * - User: Sees review collection, testimonials, leaderboard features
  * - Manager: Sees team analytics, performance tracking, approval workflows
  */
 
@@ -57,33 +57,33 @@ function sanitizeSubject(subject: string): string {
 // Role Display Helpers
 // ============================================================================
 
-function getRoleDisplayName(role: "admin" | "manager" | "loan_officer"): string {
+function getRoleDisplayName(role: "admin" | "manager" | "user"): string {
   switch (role) {
     case "admin":
       return "Administrator";
     case "manager":
       return "Team Manager";
-    case "loan_officer":
-      return "Loan Officer";
+    case "user":
+      return "Team Member";
     default:
       return "Team Member";
   }
 }
 
-function getRoleIcon(role: "admin" | "manager" | "loan_officer"): string {
+function getRoleIcon(role: "admin" | "manager" | "user"): string {
   switch (role) {
     case "admin":
       return "&#128272;"; // key
     case "manager":
       return "&#128200;"; // chart
-    case "loan_officer":
+    case "user":
       return "&#11088;"; // star
     default:
       return "&#128100;"; // person
   }
 }
 
-function getRoleFeatures(role: "admin" | "manager" | "loan_officer"): string[] {
+function getRoleFeatures(role: "admin" | "manager" | "user"): string[] {
   switch (role) {
     case "admin":
       return [
@@ -96,10 +96,10 @@ function getRoleFeatures(role: "admin" | "manager" | "loan_officer"): string[] {
       return [
         "Team performance analytics",
         "Review and testimonial approval",
-        "Loan officer oversight",
+        "Team member oversight",
         "Team leaderboard access",
       ];
-    case "loan_officer":
+    case "user":
       return [
         "Collect customer reviews",
         "Request video testimonials",
@@ -526,7 +526,7 @@ export function getTeamInvite4WelcomeEmail(
   function buildQuickStartContent(): string {
     const items: string[] = [];
 
-    if (data.role === "loan_officer") {
+    if (data.role === "user") {
       items.push(
         createQuickStartItem(
           "&#11088;",

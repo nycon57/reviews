@@ -1,6 +1,7 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import type { ActionResult } from "./types";
 import {
@@ -59,11 +60,11 @@ export interface ResponseAnalytics {
 
 // Get user context
 async function getUserContext() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user) return null;
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -99,7 +100,7 @@ export async function getResponseTemplates(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Use type assertion for response_templates table (migration pending)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -150,7 +151,7 @@ export async function createResponseTemplate(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
@@ -206,7 +207,7 @@ export async function updateResponseTemplate(
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const updateData: Record<string, unknown> = {};
   if (updates.name !== undefined) updateData.name = updates.name;
@@ -240,7 +241,7 @@ export async function deleteResponseTemplate(templateId: string): Promise<Action
     return { success: false, error: "Unauthorized - Manager role required" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Soft delete by setting is_active to false
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -274,7 +275,7 @@ export async function saveDraftResponse(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
@@ -326,7 +327,7 @@ export async function postResponse(
     options = templateIdOrOptions;
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get the review to determine the platform and post accordingly
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -468,13 +469,13 @@ export async function getResponseAnalytics(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Role-based filtering
   let loanOfficerIdFilter: string | undefined = params.loanOfficerId;
 
   // For loan officers, always filter to their own data
-  if (context.role === "loan_officer") {
+  if (context.role === "user") {
     const { data: loData } = await supabase
       .from("loan_officers")
       .select("id")
@@ -614,7 +615,7 @@ export async function generateAISuggestion(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get the review content with sentiment data
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -686,7 +687,7 @@ export async function trackResponseEdit(
     return { success: false, error: "Unauthorized" };
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Get the review context for analysis
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

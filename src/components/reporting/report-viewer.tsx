@@ -3,14 +3,14 @@
 import * as React from "react";
 import { format } from "date-fns";
 import {
-  TrendingUp,
-  TrendingDown,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
   Minus,
   Star,
   Users,
-  MessageSquare,
-  BarChart3,
-} from "lucide-react";
+  Chats as MessageSquare,
+  ChartBar as BarChart3,
+} from "@phosphor-icons/react";
 import {
   LineChart,
   Line,

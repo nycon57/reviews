@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Download, FileSpreadsheet, FileText, FileJson, Loader2 } from "lucide-react";
+import {
+  DownloadSimple as Download,
+  FileXls as FileSpreadsheet,
+  FileText,
+  FileCode as FileJson,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

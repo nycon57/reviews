@@ -5,7 +5,8 @@
  * Fetches and manages website analytics and SEO audit data
  */
 
-import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import type {
   WebsiteAnalyticsOverview,
@@ -26,15 +27,12 @@ import type {
  * Get user context for analytics operations
  */
 async function getUserContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return null;
   }
 
+  const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
     .select("id, organization_id, role")
@@ -95,7 +93,7 @@ export async function getWebsiteAnalytics(
     }
 
     // Use untyped client for website_analytics table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
     const { start, end } = getDateRange(period);
 
     // Fetch analytics data for the period
@@ -309,7 +307,7 @@ export async function getWebsiteSEOOverview(): Promise<ActionResult<WebsiteSEOOv
     }
 
     // Use untyped client for website_seo_audits table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     // Fetch the latest audit for each page
     const { data: audits, error } = await supabase
@@ -552,7 +550,7 @@ export async function getPageSEOAudit(
     }
 
     // Use untyped client for website_seo_audits table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
 
     const { data: audit, error } = await supabase
       .from("website_seo_audits")
@@ -672,7 +670,7 @@ export async function recordAnalytics(data: {
     }
 
     // Use untyped client for website_analytics table (not in generated types yet)
-    const supabase = await createUntypedServerClient();
+    const supabase = createUntypedAdminClient();
     const today = new Date().toISOString().split("T")[0];
 
     // Check if record exists for today + page

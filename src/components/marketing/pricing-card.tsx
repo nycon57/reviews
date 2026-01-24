@@ -3,7 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check } from "lucide-react";
+import {
+  Check,
+} from "@phosphor-icons/react";
 import { fadeInUp, cardHover, cardTap } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

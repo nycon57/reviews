@@ -39,14 +39,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Plus,
-  MoreVertical,
-  Edit,
+  DotsThreeVertical as MoreVertical,
+  PencilSimple as Edit,
   Trash,
-  Loader2,
+  SpinnerGap as Loader2,
   FileText,
   CheckCircle,
-  AlertCircle,
-} from "lucide-react";
+  WarningCircle as AlertCircle,
+} from "@phosphor-icons/react";
 import {
   getResponseTemplates,
   createResponseTemplate,

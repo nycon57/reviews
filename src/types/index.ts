@@ -1,6 +1,6 @@
 // Application types for RepWell
 
-export type UserRole = "admin" | "manager" | "loan_officer";
+export type UserRole = "admin" | "manager" | "user";
 
 export type AccountType = "individual" | "enterprise";
 
@@ -56,6 +56,9 @@ export interface User {
   // Employment
   managerUserId: string | null;
   hireDate: string | null;
+
+  // Industry Context
+  industry: string | null;
 
   // Aggregated Metrics
   averageRating: number;

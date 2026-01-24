@@ -4,15 +4,15 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import type { LucideIcon } from "lucide-react";
 import {
   ArrowRight,
   Star,
-  BarChart3,
-  MessageSquare,
-  Zap,
+  ChartBar as BarChart3,
+  Chats as MessageSquare,
+  Lightning as Zap,
   CheckCircle,
-} from "lucide-react";
+  type IconProps,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,7 @@ type ImageType = {
 type LayoutVariant = "single" | "floating" | "wide" | "grid";
 
 interface FeatureTab {
-  icon: LucideIcon;
+  icon: React.ComponentType<IconProps>;
   title: string;
   tabName: string;
   summary: string;

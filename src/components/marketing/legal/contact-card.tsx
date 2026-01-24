@@ -1,7 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Mail, MapPin, Phone } from "lucide-react";
+import {
+  Envelope as Mail,
+  MapPin,
+  Phone,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface ContactInfo {

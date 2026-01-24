@@ -1,7 +1,7 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { unifiedGetUser } from '@/lib/auth/actions';
 import { isAIEnabled } from './client';
 import { analyzeReviewSentiment, analyzeReviewSentimentFallback } from './sentiment';
 import {
@@ -62,16 +62,12 @@ export async function analyzeNewReview(
 
 // Get auth context helper
 async function getAuthContext() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+  const user = await unifiedGetUser();
+  if (!user) {
     return { error: 'Unauthorized' };
   }
 
+  const supabase = createAdminClient();
   // Get user with organization
   const { data: dbUser, error: userError } = await supabase
     .from('users')
@@ -104,7 +100,7 @@ export async function analyzeReview(
 
   try {
     // Fetch the review
-    const { data: review, error: fetchError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { data: review, error: fetchError } = await supabase
       .from('reviews')
       .select('id, text, rating, sentiment_score')
       .eq('id', reviewId)
@@ -134,7 +130,7 @@ export async function analyzeReview(
     }
 
     // Update the review
-    const { error: updateError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { error: updateError } = await supabase
       .from('reviews')
       .update({
         sentiment_score: analysis.sentimentScore,
@@ -206,7 +202,7 @@ export async function getUnanalyzedReviews(
   const { supabase, organizationId } = context;
 
   try {
-    const { data: reviews, error } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { data: reviews, error } = await supabase
       .from('reviews')
       .select('id, text, rating')
       .eq('organization_id', organizationId)
@@ -255,7 +251,7 @@ export async function batchAnalyzeReviews(
 
   try {
     // Fetch reviews
-    const { data: reviews, error: fetchError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { data: reviews, error: fetchError } = await supabase
       .from('reviews')
       .select('id, text, rating')
       .eq('organization_id', organizationId)
@@ -286,7 +282,7 @@ export async function batchAnalyzeReviews(
         }
 
         // Update the review
-        const { error: updateError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+        const { error: updateError } = await supabase
           .from('reviews')
           .update({
             sentiment_score: analysis.sentimentScore,
@@ -352,7 +348,7 @@ export async function getAnalysisStats(): Promise<
 
   try {
     // Get total count
-    const { count: totalCount, error: totalError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { count: totalCount, error: totalError } = await supabase
       .from('reviews')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', organizationId)
@@ -363,7 +359,7 @@ export async function getAnalysisStats(): Promise<
     }
 
     // Get analyzed count
-    const { count: analyzedCount, error: analyzedError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { count: analyzedCount, error: analyzedError } = await supabase
       .from('reviews')
       .select('id', { count: 'exact', head: true })
       .eq('organization_id', organizationId)
@@ -374,7 +370,7 @@ export async function getAnalysisStats(): Promise<
     }
 
     // Get breakdown by label
-    const { data: labelData, error: labelError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { data: labelData, error: labelError } = await supabase
       .from('reviews')
       .select('sentiment_label')
       .eq('organization_id', organizationId)
@@ -428,7 +424,7 @@ export async function analyzeAllUnanalyzedReviews(): Promise<
 
   try {
     // Get all unanalyzed reviews
-    const { data: reviews, error: fetchError } = await (supabase as ReturnType<typeof createClient> extends Promise<infer T> ? T : never)
+    const { data: reviews, error: fetchError } = await supabase
       .from('reviews')
       .select('id, text, rating')
       .eq('organization_id', organizationId)

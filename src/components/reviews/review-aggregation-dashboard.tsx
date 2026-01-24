@@ -25,21 +25,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Star,
-  Search,
-  Filter,
-  RefreshCcw,
-  Download,
-  MoreHorizontal,
+  MagnifyingGlass as Search,
+  Funnel as Filter,
+  ArrowCounterClockwise as RefreshCcw,
+  DownloadSimple as Download,
+  DotsThree as MoreHorizontal,
   Archive,
   Flag,
-  ExternalLink,
+  ArrowSquareOut as ExternalLink,
   Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  MessageSquare,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  Chats as MessageSquare,
   Eye,
   X,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import type {

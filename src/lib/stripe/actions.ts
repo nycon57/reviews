@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient, createUntypedServerClient } from "@/lib/supabase/server";
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { getStripe } from "./server";
 import {
   createCheckoutSessionSchema,
@@ -32,15 +32,12 @@ export async function getOrCreateStripeCustomer(): Promise<{
   customerId?: string;
   error?: string;
 }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   // Get user's organization
   const { data: userData, error: userError } = await supabase
     .from("users")
@@ -77,14 +74,21 @@ export async function getOrCreateStripeCustomer(): Promise<{
   const stripe = getStripe();
 
   try {
-    const customer = await stripe.customers.create({
-      name: org.name,
-      email: org.billing_email || userData.email,
-      metadata: {
-        organization_id: org.id,
-        created_by: user.id,
+    const customer = await stripe.customers.create(
+      {
+        name: org.name,
+        email: org.billing_email || userData.email,
+        metadata: {
+          organization_id: org.id,
+          created_by: user.id,
+          environment: process.env.NODE_ENV || "development",
+        },
       },
-    });
+      {
+        // Idempotency key ensures we don't create duplicate customers on retry
+        idempotencyKey: `customer_create_${org.id}`,
+      }
+    );
 
     // Update organization with Stripe customer ID
     const adminClient = createUntypedAdminClient();
@@ -121,28 +125,48 @@ export async function createCheckoutSession(
 
   const stripe = getStripe();
 
+  // Generate idempotency key based on customer, price, and a short time window
+  // This allows retries within the same request but not duplicate checkouts
+  const timeWindow = Math.floor(Date.now() / (1000 * 60 * 5)); // 5-minute window
+  const idempotencyKey = `checkout_${customerResult.customerId}_${priceId}_${timeWindow}`;
+
   try {
-    const session = await stripe.checkout.sessions.create({
-      customer: customerResult.customerId,
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
+    const session = await stripe.checkout.sessions.create(
+      {
+        customer: customerResult.customerId,
+        mode: "subscription",
+        // Let Stripe dynamically choose optimal payment methods based on customer location
+        // Configure available methods in Stripe Dashboard > Settings > Payment methods
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        subscription_data: {
+          trial_period_days: 14, // 14-day free trial
+          metadata: {
+            billing_cycle: billingCycle,
+            source: "checkout",
+            environment: process.env.NODE_ENV || "development",
+          },
         },
-      ],
-      subscription_data: {
-        trial_period_days: 14, // 14-day free trial
+        // Session-level metadata for debugging
         metadata: {
+          price_id: priceId,
           billing_cycle: billingCycle,
+          initiated_at: new Date().toISOString(),
+          environment: process.env.NODE_ENV || "development",
         },
+        success_url: successUrl || `${APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: cancelUrl || `${APP_URL}/checkout/cancel`,
+        billing_address_collection: "required",
+        allow_promotion_codes: true,
       },
-      success_url: successUrl || `${APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl || `${APP_URL}/checkout/cancel`,
-      billing_address_collection: "required",
-      allow_promotion_codes: true,
-    });
+      {
+        idempotencyKey,
+      }
+    );
 
     return { success: true, sessionId: session.id, url: session.url || undefined };
   } catch (error) {
@@ -175,7 +199,7 @@ export async function createPortalSession(
   try {
     const session = await stripe.billingPortal.sessions.create({
       customer: customerResult.customerId,
-      return_url: returnUrl || `${APP_URL}/dashboard/settings/billing`,
+      return_url: returnUrl || `${APP_URL}/dashboard/settings?tab=billing`,
     });
 
     return { success: true, url: session.url };
@@ -192,15 +216,13 @@ export async function cancelSubscription(
   subscriptionId: string,
   cancelImmediately: boolean = false
 ): Promise<{ success: boolean; error?: string }> {
-  // Use untyped client for subscriptions table (not in generated types)
-  const supabase = await createUntypedServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  // Use untyped client for subscriptions table (not in generated types)
+  const supabase = createUntypedAdminClient();
 
   // Verify user has access to this subscription
   const { data: subscription, error: subError } = await supabase
@@ -245,15 +267,13 @@ export async function cancelSubscription(
 export async function resumeSubscription(
   subscriptionId: string
 ): Promise<{ success: boolean; error?: string }> {
-  // Use untyped client for subscriptions table (not in generated types)
-  const supabase = await createUntypedServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  // Use untyped client for subscriptions table (not in generated types)
+  const supabase = createUntypedAdminClient();
 
   // Verify user has access to this subscription
   const { data: subscription, error: subError } = await supabase
@@ -294,15 +314,13 @@ export async function updateSubscription(
 
   const { subscriptionId, priceId, quantity, cancelAtPeriodEnd } = validated.data;
 
-  // Use untyped client for subscriptions table (not in generated types)
-  const supabase = await createUntypedServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+
+  // Use untyped client for subscriptions table (not in generated types)
+  const supabase = createUntypedAdminClient();
 
   // Verify user has access to this subscription
   const { data: subscription, error: subError } = await supabase
@@ -381,14 +399,11 @@ export async function getBillingOverview(): Promise<{
   error?: string;
 }> {
   // Use untyped client for subscriptions table (not in generated types)
-  const supabase = await createUntypedServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
+  const supabase = createUntypedAdminClient();
 
   // Get user's organization
   const { data: userData, error: userError } = await supabase
@@ -494,7 +509,7 @@ export async function getBillingOverview(): Promise<{
   );
 
   // Get current tier
-  const tierName = (orgData?.subscription_tier || "free") as SubscriptionTier;
+  const tierName = (orgData?.subscription_tier || "basic") as SubscriptionTier;
   const tier = getPricingTier(tierName);
 
   // Get usage
@@ -513,6 +528,7 @@ export async function getBillingOverview(): Promise<{
       paymentMethods,
       tier,
       usage,
+      userRole: userData.role as 'admin' | 'manager' | 'user',
     },
   };
 }
@@ -553,16 +569,16 @@ export async function getPricingForCheckout(): Promise<{
     monthlyPrice: tier.monthlyPrice,
     yearlyPrice: tier.yearlyPrice,
     stripePriceIdMonthly:
-      tier.id === "starter"
-        ? process.env.STRIPE_STARTER_PRICE_MONTHLY || null
-        : tier.id === "professional"
-        ? process.env.STRIPE_PROFESSIONAL_PRICE_MONTHLY || null
+      tier.id === "basic"
+        ? process.env.STRIPE_BASIC_PRICE_MONTHLY || null
+        : tier.id === "pro"
+        ? process.env.STRIPE_PRO_PRICE_MONTHLY || null
         : null,
     stripePriceIdYearly:
-      tier.id === "starter"
-        ? process.env.STRIPE_STARTER_PRICE_YEARLY || null
-        : tier.id === "professional"
-        ? process.env.STRIPE_PROFESSIONAL_PRICE_YEARLY || null
+      tier.id === "basic"
+        ? process.env.STRIPE_BASIC_PRICE_YEARLY || null
+        : tier.id === "pro"
+        ? process.env.STRIPE_PRO_PRICE_YEARLY || null
         : null,
     popular: tier.popular,
     cta: tier.cta,
@@ -580,15 +596,12 @@ export async function checkSubscriptionAccess(): Promise<{
   tier?: string;
   message?: string;
 }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { hasAccess: false, message: "Not authenticated" };
   }
 
+  const supabase = createAdminClient();
   // Get user's organization
   const { data: userData, error: userError } = await supabase
     .from("users")
@@ -611,11 +624,11 @@ export async function checkSubscriptionAccess(): Promise<{
     return { hasAccess: false, message: "Organization not found" };
   }
 
-  const status = org.subscription_status || "free";
-  const tier = org.subscription_tier || "free";
+  const status = org.subscription_status || "active";
+  const tier = org.subscription_tier || "basic";
 
-  // Free tier always has access
-  if (tier === "free") {
+  // Basic tier always has access (for basic features)
+  if (tier === "basic") {
     return { hasAccess: true, status, tier };
   }
 

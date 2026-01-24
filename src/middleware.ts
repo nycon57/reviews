@@ -1,8 +1,13 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
+import type { Database } from "@/types/database.types";
+
+// Feature flag for Better Auth migration
+const USE_BETTER_AUTH = process.env.USE_BETTER_AUTH === "true";
 
 // Role-based access control configuration
-type UserRole = "admin" | "manager" | "loan_officer";
+type UserRole = "admin" | "manager" | "user";
 type AccountType = "individual" | "enterprise";
 type SubscriptionTier = "basic" | "pro" | "enterprise";
 type OnboardingStatus = "pending" | "plan_selected" | "payment_complete" | "profile_complete" | "completed";
@@ -52,14 +57,48 @@ const roleProtectedRoutes: RouteConfig[] = [
 // Paths that are part of the onboarding flow
 const onboardingPaths = ["/onboarding"];
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+/**
+ * Get user from Better Auth session via API call
+ * Uses fetch instead of direct import to avoid Node.js modules in Edge runtime
+ */
+async function getBetterAuthUser(request: NextRequest) {
+  try {
+    // Derive base URL from the request (handles any port: 3000, 3001, 3002, 3003, or prod)
+    const protocol = request.headers.get("x-forwarded-proto") || "http";
+    const host = request.headers.get("host") || "localhost:3000";
+    const baseUrl = `${protocol}://${host}`;
 
-  const supabase = createServerClient(
+    // Forward cookies to the Better Auth session endpoint
+    const cookieHeader = request.headers.get("cookie") || "";
+
+    const response = await fetch(`${baseUrl}/api/auth/get-session`, {
+      method: "GET",
+      headers: {
+        cookie: cookieHeader,
+      },
+    });
+
+    if (!response.ok) {
+      // If rate limited (429), log and return null to avoid redirect loops
+      // The rate limiter should be disabled or configured to allow session checks
+      if (response.status === 429) {
+        console.warn("[Middleware] Session check rate limited - consider disabling rate limiting for get-session");
+      }
+      return null;
+    }
+
+    const session = await response.json();
+    return session?.user ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get user from Supabase Auth (legacy)
+ */
+async function getSupabaseUser(request: NextRequest, response: NextResponse) {
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -73,11 +112,6 @@ export async function middleware(request: NextRequest) {
             value,
             ...options,
           });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
           response.cookies.set({
             name,
             value,
@@ -89,11 +123,6 @@ export async function middleware(request: NextRequest) {
             name,
             value: "",
             ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
           });
           response.cookies.set({
             name,
@@ -109,6 +138,44 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  return { user, supabase };
+}
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  // Skip auth check for RSC/Server Action POST requests - these are data fetches for already-authed pages
+  // The initial GET request already verified auth, and cookies are still valid
+  // RSC requests have Next-Router-State-Tree header, Server Actions have Next-Action header
+  const isRSCOrServerAction = request.method === "POST" && (
+    request.headers.get("next-router-state-tree") !== null ||
+    request.headers.get("next-action") !== null ||
+    request.headers.get("rsc") !== null
+  );
+
+  if (isRSCOrServerAction) {
+    return response;
+  }
+
+  // Get authenticated user based on auth system
+  let user: { id: string; email?: string | null } | null = null;
+  // Use union type to support both createClient (service_role) and createServerClient (SSR)
+  let supabase: ReturnType<typeof createServerClient<Database>> | ReturnType<typeof createClient<Database>> | null = null;
+
+  if (USE_BETTER_AUTH) {
+    // Use Better Auth
+    user = await getBetterAuthUser(request);
+  } else {
+    // Use Supabase Auth (legacy)
+    const result = await getSupabaseUser(request, response);
+    user = result.user;
+    supabase = result.supabase;
+  }
+
   // Protected routes - require authentication
   const protectedPaths = ["/dashboard", "/reviews", "/surveys", "/analytics", "/team", "/settings", "/profile"];
   const isProtectedPath = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
@@ -120,53 +187,103 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Check onboarding status for protected paths (not onboarding paths themselves)
-  if (user && isProtectedPath && !isOnboardingPath) {
-    // Fetch user's organization ID first
-    const { data: userData } = await supabase
+  // For database queries, create a Supabase client if we haven't already
+  // Use service role key when Better Auth is enabled (bypasses RLS since session token isn't set)
+  // IMPORTANT: Use createClient (not createServerClient) for service_role to properly bypass RLS
+  if (!supabase && user) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = USE_BETTER_AUTH
+      ? process.env.SUPABASE_SERVICE_ROLE_KEY
+      : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error(`[Middleware] Missing Supabase config: url=${!!supabaseUrl}, key=${!!supabaseKey}`);
+    } else if (USE_BETTER_AUTH) {
+      // Use createClient directly for service_role - it properly sets both apikey and Authorization headers
+      // createServerClient from @supabase/ssr doesn't correctly bypass RLS with service_role
+      supabase = createClient<Database>(supabaseUrl, supabaseKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
+    } else {
+      // For Supabase Auth, use the SSR client with cookies
+      supabase = createServerClient<Database>(
+        supabaseUrl,
+        supabaseKey,
+        {
+          cookies: {
+            get(name: string) {
+              return request.cookies.get(name)?.value;
+            },
+            set() {},
+            remove() {},
+          },
+        }
+      );
+    }
+  }
+
+  // Fetch user data once for both onboarding and access checks
+  let cachedUserData: { role: string | null; organization_id: string | null } | null = null;
+  let cachedOrgData: { subscription_tier: string | null; account_type: string | null; onboarding_status: string | null } | null = null;
+
+  if (user && supabase && isProtectedPath) {
+    // Fetch user data using .limit(1) instead of .single() to avoid PGRST116 errors
+    const { data: userRows, error: userQueryError } = await supabase
       .from("users")
-      .select("organization_id")
+      .select("role, organization_id")
       .eq("id", user.id)
-      .single();
+      .limit(1);
 
-    if (userData?.organization_id) {
-      // Fetch organization with all columns to access onboarding_status
-      const { data: orgData } = await supabase
-        .from("organizations")
-        .select("*")
-        .eq("id", userData.organization_id)
-        .single();
+    if (userQueryError) {
+      console.error(`[Middleware] User query error for user.id=${user.id}:`, userQueryError.message, userQueryError.code);
+    } else if (userRows && userRows.length > 0) {
+      cachedUserData = userRows[0];
 
-      // Cast to access potentially untyped columns
-      const orgAny = orgData as Record<string, unknown> | null;
-      const onboardingStatus = (orgAny?.onboarding_status as OnboardingStatus) || "pending";
+      // Fetch organization data if user has an organization
+      if (cachedUserData?.organization_id) {
+        const { data: orgRows, error: orgQueryError } = await supabase
+          .from("organizations")
+          .select("subscription_tier, account_type, onboarding_status")
+          .eq("id", cachedUserData.organization_id)
+          .limit(1);
 
-      // If onboarding not completed, redirect to onboarding
-      if (onboardingStatus !== "completed") {
-        return NextResponse.redirect(new URL("/onboarding", request.url));
+        if (orgQueryError) {
+          console.error(`[Middleware] Org query error:`, orgQueryError.message, orgQueryError.code);
+        } else if (orgRows && orgRows.length > 0) {
+          cachedOrgData = orgRows[0];
+        }
       }
     }
   }
 
+  // Check onboarding status for protected paths (not onboarding paths themselves)
+  if (user && isProtectedPath && !isOnboardingPath && cachedOrgData) {
+    const onboardingStatus = (cachedOrgData.onboarding_status || "pending") as OnboardingStatus;
+
+    // If onboarding not completed, redirect to onboarding
+    if (onboardingStatus !== "completed") {
+      return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+  }
+
   // Role-based and subscription-based access control for authenticated users
-  if (user && isProtectedPath) {
+  if (user && supabase && isProtectedPath) {
     // Find if current path requires role-based or subscription-based access
     const routeConfig = roleProtectedRoutes.find((route) =>
       request.nextUrl.pathname.startsWith(route.path)
     );
 
     if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin) {
-      // Fetch user's role and organization details from the database
-      const { data: userData } = await supabase
-        .from("users")
-        .select("role, organization_id, organizations(subscription_tier, account_type)")
-        .eq("id", user.id)
-        .single();
-
-      const userRole = userData?.role as UserRole | undefined;
-      const orgData = userData?.organizations as { subscription_tier?: string; account_type?: string } | null;
-      const subscriptionTier = (orgData?.subscription_tier || "basic") as SubscriptionTier;
-      const accountType = (orgData?.account_type || "enterprise") as AccountType;
+      // Default to "user" role if not set (consistent with access module)
+      // Also handle legacy "loan_officer" role by treating it as "user"
+      const rawRole = cachedUserData?.role;
+      const userRole = (rawRole === "loan_officer" ? "user" : rawRole || "user") as UserRole;
+      const subscriptionTier = (cachedOrgData?.subscription_tier || "basic") as SubscriptionTier;
+      // Default to "individual" (not "enterprise") for safety
+      const accountType = (cachedOrgData?.account_type || "individual") as AccountType;
 
       // Check if route requires enterprise account
       if (routeConfig.requiresEnterprise) {
@@ -220,7 +337,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Reset password page requires an authenticated session (from recovery email)
-  if (request.nextUrl.pathname === "/reset-password" && !user) {
+  // For Better Auth, this is handled differently - the token is in the URL
+  if (!USE_BETTER_AUTH && request.nextUrl.pathname === "/reset-password" && !user) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 

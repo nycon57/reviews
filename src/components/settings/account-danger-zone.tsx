@@ -17,7 +17,12 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { AlertTriangle, LogOut, Trash2, Loader2 } from 'lucide-react';
+import {
+  Warning as AlertTriangle,
+  SignOut as LogOut,
+  Trash as Trash2,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { createClient } from '@/lib/supabase/client';
 import { deleteAccount } from '@/lib/auth/profile-actions';
 

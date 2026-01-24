@@ -15,6 +15,19 @@ import {
   type UpdatePasswordInput,
   type AuthResult,
 } from "./schemas";
+import {
+  signUpWithBetterAuth,
+  signInWithBetterAuth,
+  signInWithMagicLinkBetterAuth,
+  resetPasswordBetterAuth,
+  updatePasswordBetterAuth,
+  signOutBetterAuth,
+  getSessionBetterAuth,
+  getUserBetterAuth,
+  getUserWithProfileBetterAuth,
+  resendVerificationEmailBetterAuth,
+  checkAdminAccessBetterAuth,
+} from "./server-actions";
 
 function slugify(text: string): string {
   return text
@@ -286,4 +299,102 @@ export async function checkAdminAccess(): Promise<boolean> {
   const isEnterprise = organization?.account_type === "enterprise";
 
   return isAdmin && isEnterprise;
+}
+
+// =============================================
+// Unified Auth Functions (Feature Flag Based)
+// =============================================
+
+// Feature flag for Better Auth migration
+const USE_BETTER_AUTH = process.env.USE_BETTER_AUTH === "true";
+
+/**
+ * Unified sign up function
+ */
+export async function unifiedSignUp(formData: SignUpInput): Promise<AuthResult> {
+  return USE_BETTER_AUTH ? signUpWithBetterAuth(formData) : signUp(formData);
+}
+
+/**
+ * Unified sign in function
+ */
+export async function unifiedSignIn(formData: SignInInput): Promise<AuthResult> {
+  return USE_BETTER_AUTH ? signInWithBetterAuth(formData) : signIn(formData);
+}
+
+/**
+ * Unified magic link sign in function
+ */
+export async function unifiedSignInWithMagicLink(formData: MagicLinkInput): Promise<AuthResult> {
+  return USE_BETTER_AUTH
+    ? signInWithMagicLinkBetterAuth(formData)
+    : signInWithMagicLink(formData);
+}
+
+/**
+ * Unified password reset request function
+ */
+export async function unifiedResetPassword(formData: ResetPasswordInput): Promise<AuthResult> {
+  return USE_BETTER_AUTH ? resetPasswordBetterAuth(formData) : resetPassword(formData);
+}
+
+/**
+ * Unified password update function
+ */
+export async function unifiedUpdatePassword(
+  formData: UpdatePasswordInput,
+  token?: string
+): Promise<AuthResult> {
+  if (USE_BETTER_AUTH && token) {
+    return updatePasswordBetterAuth(formData, token);
+  }
+  return updatePassword(formData);
+}
+
+/**
+ * Unified sign out function
+ */
+export async function unifiedSignOut(): Promise<void> {
+  return USE_BETTER_AUTH ? signOutBetterAuth() : signOut();
+}
+
+/**
+ * Unified get user function
+ */
+export async function unifiedGetUser() {
+  return USE_BETTER_AUTH ? getUserBetterAuth() : getUser();
+}
+
+/**
+ * Unified get user with profile function
+ */
+export async function unifiedGetUserWithProfile() {
+  return USE_BETTER_AUTH ? getUserWithProfileBetterAuth() : getUserWithProfile();
+}
+
+/**
+ * Unified resend verification email function
+ */
+export async function unifiedResendVerificationEmail(): Promise<AuthResult> {
+  return USE_BETTER_AUTH
+    ? resendVerificationEmailBetterAuth()
+    : resendVerificationEmail();
+}
+
+/**
+ * Unified check admin access function
+ */
+export async function unifiedCheckAdminAccess(): Promise<boolean> {
+  return USE_BETTER_AUTH ? checkAdminAccessBetterAuth() : checkAdminAccess();
+}
+
+/**
+ * Get current session (Better Auth only - for advanced use cases)
+ */
+export async function unifiedGetSession() {
+  if (USE_BETTER_AUTH) {
+    return getSessionBetterAuth();
+  }
+  // Supabase doesn't have a direct session equivalent, return null for compatibility
+  return null;
 }

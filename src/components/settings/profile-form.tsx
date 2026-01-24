@@ -19,15 +19,15 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import {
   User,
-  Loader2,
+  SpinnerGap as Loader2,
   Briefcase,
   Phone,
   Globe,
-  Linkedin,
+  LinkedinLogo as Linkedin,
   Clock,
   FileText,
-  Building2,
-} from 'lucide-react';
+  BuildingOffice as Building2,
+} from "@phosphor-icons/react";
 import { updateProfile, uploadAvatar } from '@/lib/auth/profile-actions';
 import { AvatarUpload } from '@/components/shared/avatar-upload';
 import { updateProfileSchema } from '@/lib/auth/profile-schemas';

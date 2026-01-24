@@ -281,7 +281,7 @@ export async function fetchWeeklyLOMetrics(
       .from("users")
       .select("id", { count: "exact" })
       .eq("organization_id", organizationId)
-      .eq("role", "loan_officer")
+      .eq("role", "user")
       .eq("is_active", true);
 
     // Process survey metrics

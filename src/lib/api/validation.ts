@@ -144,7 +144,7 @@ export type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
 
 export const inviteUserSchema = z.object({
   email: emailSchema,
-  role: z.enum(['admin', 'manager', 'loan_officer']),
+  role: z.enum(['admin', 'manager', 'user']),
   first_name: z.string().max(100).optional(),
   last_name: z.string().max(100).optional(),
 });
@@ -189,7 +189,7 @@ export const loanOfficerFiltersSchema = z.object({
 });
 
 export const userFiltersSchema = z.object({
-  role: z.enum(['admin', 'manager', 'loan_officer']).optional(),
+  role: z.enum(['admin', 'manager', 'user']).optional(),
   is_active: z.enum(['true', 'false']).optional(),
   search: z.string().max(200).optional(),
 });

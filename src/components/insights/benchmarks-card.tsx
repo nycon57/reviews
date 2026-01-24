@@ -2,7 +2,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, BarChart3, Target, Award } from "lucide-react";
+import {
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
+  Minus,
+  ChartBar as BarChart3,
+  Target,
+  Medal as Award,
+} from "@phosphor-icons/react";
 import type { IndustryBenchmark } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 

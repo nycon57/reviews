@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  MessageSquare,
-  ExternalLink,
+  Chats as MessageSquare,
+  ArrowSquareOut as ExternalLink,
   ThumbsUp,
   Minus,
   ThumbsDown,
   Clock,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { AISearchMention } from "@/lib/geo/types";
 import { AI_PLATFORM_INFO } from "@/lib/geo/types";

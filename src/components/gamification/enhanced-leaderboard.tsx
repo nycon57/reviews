@@ -17,15 +17,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy,
   Medal,
-  Award,
+  Medal as Award,
   Star,
-  TrendingUp,
-  TrendingDown,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
   Minus,
-  Download,
-  Filter,
+  DownloadSimple as Download,
+  Funnel as Filter,
   Crown,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import type {
   EnhancedLeaderboardEntry,
   LeaderboardPeriod,

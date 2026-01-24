@@ -18,21 +18,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Mail,
+  SpinnerGap as Loader2,
+  CheckCircle as CheckCircle2,
+  WarningCircle as AlertCircle,
+  Envelope as Mail,
   Clock,
   Globe,
   Moon,
   Lock,
-  Sparkles,
-  BarChart3,
+  Sparkle as Sparkles,
+  ChartBar as BarChart3,
   Trophy,
   Megaphone,
   Gift,
-  MailCheck,
-} from "lucide-react";
+  EnvelopeSimple as MailCheck,
+} from "@phosphor-icons/react";
 import type { EmailPreferences, EmailPreferencesWithToken } from "@/lib/email-preferences/types";
 import {
   EMAIL_CATEGORIES,

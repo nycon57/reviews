@@ -3,7 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, TrendingDown, Minus, Eye, Zap } from "lucide-react";
+import {
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
+  Minus,
+  Eye,
+  Lightning as Zap,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { AIVisibilityScore } from "@/lib/geo/types";
 import { getScoreColor, getScoreLabel } from "@/lib/geo/types";

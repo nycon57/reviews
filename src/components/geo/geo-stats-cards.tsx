@@ -3,13 +3,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Eye,
-  MessageSquare,
-  Quote,
+  Chats as MessageSquare,
+  Quotes as Quote,
   Lightbulb,
-  TrendingUp,
-  TrendingDown,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
   Minus,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { GEODashboardSummary } from "@/lib/geo/types";
 

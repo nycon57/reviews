@@ -3,7 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Rss, ArrowRight } from "lucide-react";
+import {
+  RssSimple as Rss,
+  ArrowRight,
+} from "@phosphor-icons/react";
 import { fadeInUp, staggerChildrenDelayed, blobFloat, blobFloatRotate } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

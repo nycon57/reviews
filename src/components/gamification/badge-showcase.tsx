@@ -4,7 +4,11 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Award, Lock, ChevronRight } from "lucide-react";
+import {
+  Medal as Award,
+  Lock,
+  CaretRight as ChevronRight,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { BadgeIcon } from "./badge-icon";
 import type { BadgeProgress, UserBadge } from "@/lib/gamification/types";

@@ -17,7 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, CheckCircle2, AlertCircle, Star, Building2 } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  CheckCircle as CheckCircle2,
+  WarningCircle as AlertCircle,
+  Star,
+  BuildingOffice as Building2,
+} from "@phosphor-icons/react";
 import { getEXSurveyByToken, submitEXSurveyResponse, PublicEXSurvey } from "@/lib/ex-surveys/public-actions";
 import { EXSurveyAnswer, TenureRange } from "@/types/ex-survey.types";
 

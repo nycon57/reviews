@@ -3,7 +3,13 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Building2, Palette, MapPin, ChevronLeft, Mail } from "lucide-react";
+import {
+  BuildingOffice as Building2,
+  Palette,
+  MapPin,
+  CaretLeft as ChevronLeft,
+  Envelope as Mail,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

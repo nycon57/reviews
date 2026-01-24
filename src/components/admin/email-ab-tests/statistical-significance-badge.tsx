@@ -7,7 +7,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { CheckCircle, AlertCircle, Clock } from "lucide-react";
+import {
+  CheckCircle,
+  WarningCircle as AlertCircle,
+  Clock,
+} from "@phosphor-icons/react";
 
 interface StatisticalSignificanceBadgeProps {
   pValue: number | null;

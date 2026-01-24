@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { getOnboardingStatus } from "@/lib/onboarding/actions";
 import { ProfileSetupClient } from "./profile-setup-client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,12 +54,13 @@ export default async function ProfileSetupPage() {
   }
 
   // Get current organization data
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await unifiedGetUser();
 
   if (!user || !status.organizationId) {
     redirect("/login");
   }
+
+  const supabase = createAdminClient();
 
   // Fetch organization directly
   const { data: orgData } = await supabase

@@ -5,13 +5,13 @@ import { formatDistanceToNow } from 'date-fns';
 import {
   Key,
   Copy,
-  RefreshCw,
-  Trash2,
-  MoreHorizontal,
+  ArrowsClockwise as RefreshCw,
+  Trash as Trash2,
+  DotsThree as MoreHorizontal,
   CheckCircle,
-  AlertCircle,
+  WarningCircle as AlertCircle,
   Clock,
-} from 'lucide-react';
+} from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {

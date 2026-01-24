@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import crypto from "crypto";
 import { z } from "zod";
 import { verifyNotBot } from "@/lib/botid";
@@ -28,16 +29,12 @@ interface ValidatedRequest {
 async function validateTestRequest(
   request: NextRequest
 ): Promise<{ data: ValidatedRequest } | { error: NextResponse }> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const user = await unifiedGetUser();
   if (!user) {
     return { error: NextResponse.json({ error: "Not authenticated" }, { status: 401 }) };
   }
 
+  const supabase = createAdminClient();
   const { data: userData, error: userError } = await supabase
     .from("users")
     .select("organization_id, role")

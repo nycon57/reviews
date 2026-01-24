@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   trackActionStarted,
   trackActionCompleted,
@@ -72,16 +73,12 @@ const updateContextSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     // Verify user is authenticated
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const user = await unifiedGetUser();
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const supabase = createAdminClient();
     // Get user's organization
     const { data: userData, error: userError } = await supabase
       .from("users")

@@ -6,13 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Trophy,
-  Award,
-  TrendingUp,
-  TrendingDown,
+  Medal as Award,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
   Minus,
   Crown,
   Target,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { BadgeIcon } from "./badge-icon";
 import type { GamificationStats } from "@/lib/gamification/types";

@@ -15,14 +15,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowUpDown,
+  ArrowsDownUp as ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  AlertTriangle,
+  Warning as AlertTriangle,
   CheckCircle,
   Eye,
   Star,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import type { LoanOfficerComparison } from "@/lib/dashboard";
 
 interface LOComparisonTableProps {

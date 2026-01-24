@@ -4,7 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Calendar, Clock, ArrowRight, ImageIcon } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ArrowRight,
+  Image as ImageIcon,
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { BlogPostMeta } from "@/types/blog";
 import { Badge } from "@/components/ui/badge";

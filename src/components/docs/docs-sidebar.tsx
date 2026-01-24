@@ -7,23 +7,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Rocket,
   FileText,
-  BarChart3,
-  Settings,
-  Puzzle,
-  HelpCircle,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
+  ChartBar,
+  Gear,
+  PuzzlePiece,
+  Question,
+  CaretDown,
+  CaretRight,
+  type IconProps,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { docSections } from "@/lib/docs/content";
 
-const iconMap: Record<string, React.ElementType> = {
+type PhosphorIcon = React.ComponentType<IconProps>;
+
+const iconMap: Record<string, PhosphorIcon> = {
   Rocket,
   FileText,
-  BarChart3,
-  Settings,
-  Puzzle,
-  HelpCircle,
+  BarChart3: ChartBar,
+  Settings: Gear,
+  Puzzle: PuzzlePiece,
+  HelpCircle: Question,
 };
 
 interface DocsSidebarProps {
@@ -76,12 +79,12 @@ export function DocsSidebar({ className, onNavigate }: DocsSidebarProps) {
                   : "text-repwell-teal-500"
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon size={16} className="shrink-0" />
               <span className="flex-1 text-left">{section.title}</span>
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 shrink-0 text-repwell-teal-400" />
+                <CaretDown size={16} className="shrink-0 text-repwell-teal-400" />
               ) : (
-                <ChevronRight className="h-4 w-4 shrink-0 text-repwell-teal-400" />
+                <CaretRight size={16} className="shrink-0 text-repwell-teal-400" />
               )}
             </button>
 

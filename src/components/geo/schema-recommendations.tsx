@@ -5,16 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Code2,
+  CodeSimple as Code2,
   CheckCircle,
-  AlertCircle,
-  AlertTriangle,
+  WarningCircle as AlertCircle,
+  Warning as AlertTriangle,
   Copy,
   Check,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+  ArrowSquareOut as ExternalLink,
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { SchemaRecommendation } from "@/lib/geo/types";
 import {

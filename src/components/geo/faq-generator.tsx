@@ -5,15 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  HelpCircle,
-  Sparkles,
+  Question as HelpCircle,
+  Sparkle as Sparkles,
   Plus,
-  ChevronDown,
-  ChevronUp,
+  CaretDown as ChevronDown,
+  CaretUp as ChevronUp,
   Copy,
   Check,
-  Mic,
-} from "lucide-react";
+  Microphone as Mic,
+} from "@phosphor-icons/react";
 import type { AIOptimizedFAQ } from "@/lib/geo/types";
 import {
   Collapsible,

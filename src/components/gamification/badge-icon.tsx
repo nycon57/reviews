@@ -4,16 +4,15 @@ import {
   Star,
   Trophy,
   Medal,
-  Award,
   Crown,
   Shield,
   Heart,
-  Flame,
-  TrendingUp,
+  Fire,
+  TrendUp,
   ThumbsUp,
-  MailCheck,
-  type LucideIcon,
-} from "lucide-react";
+  EnvelopeSimple,
+  type IconProps,
+} from "@phosphor-icons/react";
 import {
   Tooltip,
   TooltipContent,
@@ -31,18 +30,20 @@ interface BadgeIconProps {
   className?: string;
 }
 
-const iconMap: Record<string, LucideIcon> = {
+type PhosphorIcon = React.ComponentType<IconProps>;
+
+const iconMap: Record<string, PhosphorIcon> = {
   star: Star,
   trophy: Trophy,
   medal: Medal,
-  award: Award,
+  award: Medal,
   crown: Crown,
   shield: Shield,
   heart: Heart,
-  flame: Flame,
-  "trending-up": TrendingUp,
+  flame: Fire,
+  "trending-up": TrendUp,
   "thumbs-up": ThumbsUp,
-  "mail-check": MailCheck,
+  "mail-check": EnvelopeSimple,
 };
 
 const tierColors: Record<BadgeTier, { bg: string; border: string; icon: string }> = {
@@ -71,19 +72,19 @@ const tierColors: Record<BadgeTier, { bg: string; border: string; icon: string }
 const sizeConfig = {
   sm: {
     container: "h-6 w-6",
-    icon: "h-3 w-3",
+    iconSize: 12,
   },
   md: {
     container: "h-8 w-8",
-    icon: "h-4 w-4",
+    iconSize: 16,
   },
   lg: {
     container: "h-10 w-10",
-    icon: "h-5 w-5",
+    iconSize: 20,
   },
   xl: {
     container: "h-14 w-14",
-    icon: "h-7 w-7",
+    iconSize: 28,
   },
 };
 
@@ -94,7 +95,7 @@ export function BadgeIcon({
   isEarned = true,
   className,
 }: BadgeIconProps) {
-  const Icon = iconMap[badge.icon] || Award;
+  const Icon = iconMap[badge.icon] || Medal;
   const tier = badge.tier || "bronze";
   const colors = tierColors[tier];
   const sizeClasses = sizeConfig[size];
@@ -113,7 +114,7 @@ export function BadgeIcon({
         className
       )}
     >
-      <Icon className={cn(sizeClasses.icon, colors.icon)} />
+      <Icon size={sizeClasses.iconSize} weight="fill" className={colors.icon} />
       {tier === "platinum" && isEarned && (
         <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 opacity-30 blur-sm -z-10" />
       )}

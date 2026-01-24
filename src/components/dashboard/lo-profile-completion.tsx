@@ -3,7 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, ChevronRight } from "lucide-react";
+import {
+  CheckCircle as CheckCircle2,
+  Circle,
+  CaretRight as ChevronRight,
+} from "@phosphor-icons/react";
 import type { ProfileCompletionItem } from "@/lib/dashboard";
 
 interface ProfileCompletionProps {

@@ -4,12 +4,12 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Star,
-  TrendingUp,
-  MessageSquare,
+  TrendUp as TrendingUp,
+  Chats as MessageSquare,
   Users,
   ArrowUpRight,
   ArrowDownRight,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { cardHover, cardTap, staggerContainer, fadeInUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import type { DashboardMetrics } from "@/lib/dashboard";

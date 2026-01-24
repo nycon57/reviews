@@ -5,27 +5,30 @@ import { motion } from "framer-motion";
 import {
   Rocket,
   FileText,
-  BarChart3,
-  Settings,
-  Puzzle,
-  HelpCircle,
+  ChartBar,
+  Gear,
+  PuzzlePiece,
+  Question,
   ArrowRight,
   Book,
-  Video,
-  MessageCircle,
-} from "lucide-react";
+  VideoCamera,
+  ChatCircle,
+  type IconProps,
+} from "@phosphor-icons/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { fadeInUp, staggerContainer, viewportOnce, cardHover } from "@/lib/motion";
 import { docSections } from "@/lib/docs/content";
 
-const iconMap: Record<string, React.ElementType> = {
+type PhosphorIcon = React.ComponentType<IconProps>;
+
+const iconMap: Record<string, PhosphorIcon> = {
   Rocket,
   FileText,
-  BarChart3,
-  Settings,
-  Puzzle,
-  HelpCircle,
+  BarChart3: ChartBar,
+  Settings: Gear,
+  Puzzle: PuzzlePiece,
+  HelpCircle: Question,
 };
 
 const quickStartLinks = [
@@ -40,13 +43,13 @@ const quickStartLinks = [
     title: "Video Tutorials",
     description: "Watch step-by-step video guides",
     href: "/docs/getting-started/introduction",
-    icon: Video,
+    icon: VideoCamera,
   },
   {
     title: "Contact Support",
     description: "Get help from our team",
     href: "mailto:support@repwell.com",
-    icon: MessageCircle,
+    icon: ChatCircle,
   },
 ];
 
@@ -93,7 +96,7 @@ export function DocsLanding() {
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-repwell-teal-300/10">
-                          <link.icon className="h-5 w-5 text-repwell-teal-300" />
+                          <link.icon size={20} weight="duotone" className="text-repwell-teal-300" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
@@ -142,7 +145,7 @@ export function DocsLanding() {
                     <Card className="h-full cursor-pointer group">
                       <CardHeader>
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-sage-100 mb-3">
-                          <Icon className="h-6 w-6 text-repwell-teal-300" />
+                          <Icon size={24} weight="duotone" className="text-repwell-teal-300" />
                         </div>
                         <CardTitle className="group-hover:text-repwell-teal-300 transition-colors">
                           {section.title}
@@ -156,7 +159,7 @@ export function DocsLanding() {
                               key={article.id}
                               className="flex items-center gap-2 text-body-sm text-repwell-teal-400"
                             >
-                              <ArrowRight className="h-3 w-3 text-border" />
+                              <ArrowRight size={12} className="text-border" />
                               {article.title}
                             </li>
                           ))}
@@ -194,14 +197,14 @@ export function DocsLanding() {
             href="mailto:support@repwell.com"
             className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-body-sm font-medium text-repwell-teal-500 transition-colors hover:bg-background"
           >
-            <MessageCircle className="h-4 w-4" />
+            <ChatCircle size={16} />
             Contact Support
           </a>
           <Link
             href="/docs/faq/general"
             className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-6 py-2.5 text-body-sm font-medium text-white transition-colors hover:bg-white/10"
           >
-            <HelpCircle className="h-4 w-4" />
+            <Question size={16} />
             View FAQ
           </Link>
         </div>

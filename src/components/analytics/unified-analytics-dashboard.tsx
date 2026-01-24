@@ -2,25 +2,25 @@
 
 import { useState, useCallback, useEffect, useMemo, memo, useRef } from "react";
 import {
-  Send,
+  PaperPlaneRight as Send,
   Eye,
   CheckCircle,
   ThumbsUp,
   Globe,
   Clock,
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
+  ArrowsClockwise as RefreshCw,
   Calendar,
   Users,
-  BarChart3,
+  ChartBar as BarChart3,
   ArrowRight,
   XCircle,
-  AlertTriangle,
+  Warning as AlertTriangle,
   Star,
-  MessageSquare,
-  Sparkles,
-} from "lucide-react";
+  Chats as MessageSquare,
+  Sparkle as Sparkles,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -98,7 +98,7 @@ interface Props {
   initialReviewSummary: ReviewSummary;
   initialResponseAnalytics: ResponseAnalytics | null;
   loanOfficers: LoanOfficer[];
-  userRole: "admin" | "manager" | "loan_officer";
+  userRole: "admin" | "manager" | "user";
 }
 
 type DateRange = "7d" | "30d" | "90d" | "this_month" | "last_month" | "all";

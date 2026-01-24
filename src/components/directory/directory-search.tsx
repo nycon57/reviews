@@ -15,17 +15,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Search,
+  MagnifyingGlass as Search,
   MapPin,
   Star,
   SlidersHorizontal,
   X,
   Users,
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  GridFour as LayoutGrid,
   List,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
 import {

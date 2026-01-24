@@ -27,17 +27,17 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus,
-  Loader2,
-  Webhook,
+  SpinnerGap as Loader2,
+  Plugs as Webhook,
   Copy,
-  RefreshCw,
-  Trash2,
+  ArrowsClockwise as RefreshCw,
+  Trash as Trash2,
   ToggleLeft,
   ToggleRight,
   Eye,
-  EyeOff,
-  CheckCircle2,
-} from "lucide-react";
+  EyeSlash as EyeOff,
+  CheckCircle as CheckCircle2,
+} from "@phosphor-icons/react";
 import {
   getWebhookConfigs,
   createWebhookConfig,

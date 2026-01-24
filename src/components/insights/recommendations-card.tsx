@@ -8,7 +8,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Lightbulb, AlertTriangle, CheckSquare, TrendingUp } from "lucide-react";
+import {
+  Lightbulb,
+  Warning as AlertTriangle,
+  CheckSquare,
+  TrendUp as TrendingUp,
+} from "@phosphor-icons/react";
 import type { ImprovementRecommendation } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 

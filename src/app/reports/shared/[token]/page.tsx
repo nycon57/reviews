@@ -6,7 +6,11 @@ import { getReportShareByToken, generateReport } from "@/lib/reporting";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, Calendar, Link2 } from "lucide-react";
+import {
+  WarningCircle as AlertCircle,
+  Calendar,
+  Link as Link2,
+} from "@phosphor-icons/react/dist/ssr";
 import type { Metadata } from "next";
 
 // Dynamic import for heavy ReportViewer with recharts

@@ -1,7 +1,11 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
+  Minus,
+} from "@phosphor-icons/react";
 import type { ThemeFrequency } from "@/lib/ai";
 import { THEME_DESCRIPTIONS } from "@/lib/ai";
 import { cn } from "@/lib/utils";

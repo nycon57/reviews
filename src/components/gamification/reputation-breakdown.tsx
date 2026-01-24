@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  TrendingUp,
+  TrendUp as TrendingUp,
   Target,
-  BarChart3,
+  ChartBar as BarChart3,
   Info,
-  ChevronRight,
-  Send,
-} from "lucide-react";
+  CaretRight as ChevronRight,
+  PaperPlaneRight as Send,
+} from "@phosphor-icons/react";
 import {
   Tooltip,
   TooltipContent,

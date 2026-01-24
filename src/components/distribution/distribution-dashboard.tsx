@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Clock,
-  Send,
-  AlertCircle,
-  CheckCircle2,
-  RefreshCw,
-  Mail,
-  Webhook,
-  RotateCcw,
-  Settings,
-} from "lucide-react";
+  PaperPlaneRight as Send,
+  WarningCircle as AlertCircle,
+  CheckCircle as CheckCircle2,
+  ArrowsClockwise as RefreshCw,
+  Envelope as Mail,
+  Plugs as Webhook,
+  ArrowCounterClockwise as RotateCcw,
+  Gear as Settings,
+} from "@phosphor-icons/react";
 import {
   getDistributionQueue,
   getSurveysForDistribution,

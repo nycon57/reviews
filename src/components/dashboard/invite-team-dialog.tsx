@@ -19,7 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UserPlus, Mail, Copy, Check } from "lucide-react";
+import {
+  UserPlus,
+  Envelope as Mail,
+  Copy,
+  Check,
+} from "@phosphor-icons/react";
 import { useToast } from "@/hooks/use-toast";
 
 interface InviteTeamDialogProps {

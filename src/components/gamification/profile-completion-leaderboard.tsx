@@ -12,7 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Crown, Medal, Award, Target, Star, Users } from "lucide-react";
+import {
+  Crown,
+  Medal,
+  Medal as Award,
+  Target,
+  Star,
+  Users,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { getProfileCompletionLeaderboard } from "@/lib/gamification/profile-completion-actions";
 import type { ProfileCompletionLeaderboardEntry } from "@/lib/gamification/profile-completion-types";

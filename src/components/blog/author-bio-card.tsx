@@ -3,7 +3,10 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Twitter, Linkedin } from "lucide-react";
+import {
+  TwitterLogo as Twitter,
+  LinkedinLogo as Linkedin,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface Author {

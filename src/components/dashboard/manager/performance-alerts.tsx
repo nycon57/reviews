@@ -4,7 +4,12 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertTriangle, TrendingDown, Star, ChevronRight } from "lucide-react";
+import {
+  Warning as AlertTriangle,
+  TrendDown as TrendingDown,
+  Star,
+  CaretRight as ChevronRight,
+} from "@phosphor-icons/react";
 import type { LoanOfficerComparison } from "@/lib/dashboard";
 
 interface PerformanceAlertsProps {

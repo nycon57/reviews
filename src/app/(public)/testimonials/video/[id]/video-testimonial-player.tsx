@@ -6,22 +6,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Play,
   Pause,
-  Volume2,
-  VolumeX,
-  Maximize,
-  Share2,
+  SpeakerHigh as Volume2,
+  SpeakerSlash as VolumeX,
+  ArrowsOut as Maximize,
+  ShareNetwork as Share2,
   Code,
   Link,
-  Facebook,
-  Linkedin,
-  Twitter,
+  FacebookLogo as Facebook,
+  LinkedinLogo as Linkedin,
+  TwitterLogo as Twitter,
   Copy,
   Check,
-  Quote,
+  Quotes as Quote,
   User,
-  Building2,
+  BuildingOffice as Building2,
   Clock,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

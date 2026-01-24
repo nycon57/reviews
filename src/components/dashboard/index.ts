@@ -1,4 +1,5 @@
 export { DashboardLayout } from "./dashboard-layout";
+export { DashboardHeader } from "./dashboard-header";
 export { Sidebar } from "./sidebar";
 export { Header } from "./header";
 export { MobileNav, MobileNavTrigger } from "./mobile-nav";

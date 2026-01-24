@@ -3,7 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, RefreshCw, CheckCircle, AlertCircle, Calendar } from "lucide-react";
+import {
+  Sparkle as Sparkles,
+  ArrowsClockwise as RefreshCw,
+  CheckCircle,
+  WarningCircle as AlertCircle,
+  Calendar,
+} from "@phosphor-icons/react";
 import type { AIInsightsSummary } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 import { useState } from "react";

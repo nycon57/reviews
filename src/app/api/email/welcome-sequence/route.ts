@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   startWelcomeSequence,
   getWelcomeSequenceStatus,
@@ -50,10 +50,7 @@ export async function POST(request: NextRequest) {
     const { userId } = parseResult.data;
 
     // Verify authorization - either internal call (webhook) or authenticated admin/manager
-    const supabase = await createClient();
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser();
+    const currentUser = await unifiedGetUser();
 
     // Allow if authenticated user is starting their own sequence
     const isSelf = currentUser?.id === userId;
@@ -146,11 +143,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify the user has access
-    const supabase = await createClient();
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser();
-
+    const currentUser = await unifiedGetUser();
     if (!currentUser) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -239,11 +232,7 @@ export async function PATCH(request: NextRequest) {
     const { sequenceId, action } = parseResult.data;
 
     // Verify authorization
-    const supabase = await createClient();
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser();
-
+    const currentUser = await unifiedGetUser();
     if (!currentUser) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },

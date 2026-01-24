@@ -3,7 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Star, Menu, X } from "lucide-react";
+import {
+  Star,
+  List as Menu,
+  X,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { DocsSidebar } from "@/components/docs/docs-sidebar";
 import { DocsSearch } from "@/components/docs/docs-search";

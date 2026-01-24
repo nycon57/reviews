@@ -3,7 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Globe } from "lucide-react";
+import {
+  Globe,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { AISearchPlatform } from "@/lib/geo/types";
 import { AI_PLATFORM_INFO, getScoreColor } from "@/lib/geo/types";

@@ -1,7 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { CheckCircle, MailX, ArrowLeft } from "lucide-react";
+import {
+  CheckCircle,
+  EnvelopeSimple as MailX,
+  ArrowLeft,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";

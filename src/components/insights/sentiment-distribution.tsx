@@ -1,7 +1,11 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { SmilePlus, Meh, Frown } from "lucide-react";
+import {
+  SmileyWink as SmilePlus,
+  SmileyNervous as Meh,
+  SmileyMeh as Frown,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface SentimentDistributionProps {

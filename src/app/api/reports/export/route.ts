@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { generateReport, exportReportToCSV, generateReportHTML, exportAndRecordReport } from "@/lib/reporting";
 import type { DateRangePreset, ExportFormat } from "@/lib/reporting/types";
 import { verifyNotBot } from "@/lib/botid";
@@ -10,11 +11,7 @@ export async function POST(request: NextRequest) {
     const botResponse = await verifyNotBot();
     if (botResponse) return botResponse;
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = await unifiedGetUser();
     if (!user) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -22,6 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const supabase = createAdminClient();
     // Get user's organization for report branding
     const { data: userData } = await supabase
       .from("users")

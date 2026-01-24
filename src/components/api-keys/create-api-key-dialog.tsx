@@ -4,7 +4,11 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Key, Loader2 } from 'lucide-react';
+import {
+  Plus,
+  Key,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

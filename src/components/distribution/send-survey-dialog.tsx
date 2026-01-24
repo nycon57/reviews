@@ -21,7 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Loader2, Send, Clock } from "lucide-react";
+import {
+  Plus,
+  SpinnerGap as Loader2,
+  PaperPlaneRight as Send,
+  Clock,
+} from "@phosphor-icons/react";
 import {
   createSurveyAndQueue,
   getLoanOfficersForSend,

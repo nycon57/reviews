@@ -9,18 +9,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
-  Search,
+  MagnifyingGlass as Search,
   FileText,
   Star,
-  Settings,
-  BarChart3,
-  Send,
-  LayoutDashboard,
-  TrendingUp,
+  Gear as Settings,
+  ChartBar as BarChart3,
+  PaperPlaneRight as Send,
+  SquaresFour as LayoutDashboard,
+  TrendUp as TrendingUp,
   Bell,
   Users,
-  HelpCircle,
-} from "lucide-react";
+  Question as HelpCircle,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
 interface SearchResult {

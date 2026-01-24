@@ -1,5 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Clock, CheckCircle, FileX } from "lucide-react";
+import {
+  WarningCircle as AlertCircle,
+  Clock,
+  CheckCircle,
+  FileX,
+} from "@phosphor-icons/react/dist/ssr";
 
 interface SurveyErrorProps {
   message: string;

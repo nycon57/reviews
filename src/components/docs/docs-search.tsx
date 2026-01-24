@@ -4,7 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Fuse from "fuse.js";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, FileText, X, ArrowRight } from "lucide-react";
+import {
+  MagnifyingGlass as Search,
+  FileText,
+  X,
+  ArrowRight,
+} from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getAllArticles, type DocArticle } from "@/lib/docs/content";

@@ -21,7 +21,17 @@ import {
   submitVideoTestimonial,
 } from "@/lib/video-testimonials/public-actions";
 import type { PublicVideoTestimonialRequest, RelationshipType } from "@/lib/video-testimonials/types";
-import { Loader2, Video, Shield, FileText, Sparkles, CheckCircle2, XCircle, Upload, AlertCircle } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  VideoCamera as Video,
+  Shield,
+  FileText,
+  Sparkle as Sparkles,
+  CheckCircle as CheckCircle2,
+  XCircle,
+  UploadSimple as Upload,
+  WarningCircle as AlertCircle,
+} from "@phosphor-icons/react";
 import { VideoRecorder } from "@/components/video-testimonials/video-recorder";
 
 interface VideoTestimonialFormProps {

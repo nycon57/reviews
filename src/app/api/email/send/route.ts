@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { z } from "zod";
 import {
   sendSurveyInvitationEmail,
@@ -42,11 +42,7 @@ export async function POST(request: NextRequest) {
     if (botResponse) return botResponse;
 
     // Verify user is authenticated
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = await unifiedGetUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

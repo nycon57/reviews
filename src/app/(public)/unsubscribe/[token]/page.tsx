@@ -5,7 +5,13 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, AlertCircle, MailX, Settings } from "lucide-react";
+import {
+  SpinnerGap as Loader2,
+  CheckCircle as CheckCircle2,
+  WarningCircle as AlertCircle,
+  EnvelopeSimple as MailX,
+  Gear as Settings,
+} from "@phosphor-icons/react";
 import {
   getEmailPreferencesByToken,
   unsubscribeAllByToken,

@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import {
+  Copy,
+  Check,
+  Warning as AlertTriangle,
+  Eye,
+  EyeSlash as EyeOff,
+} from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import {
   Dialog,

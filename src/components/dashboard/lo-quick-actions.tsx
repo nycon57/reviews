@@ -1,7 +1,13 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Star, TrendingUp, Share2, Send, ExternalLink } from "lucide-react";
+import {
+  Star,
+  TrendUp as TrendingUp,
+  ShareNetwork as Share2,
+  PaperPlaneRight as Send,
+  ArrowSquareOut as ExternalLink,
+} from "@phosphor-icons/react";
 
 interface QuickAction {
   icon: React.ReactNode;

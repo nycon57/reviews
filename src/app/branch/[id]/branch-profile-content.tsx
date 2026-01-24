@@ -9,15 +9,15 @@ import {
   Star,
   MapPin,
   Phone,
-  Mail,
+  Envelope as Mail,
   Globe,
   Clock,
   Users,
-  Quote,
-  Building2,
-  ExternalLink,
-  ChevronRight,
-} from "lucide-react";
+  Quotes as Quote,
+  BuildingOffice as Building2,
+  ArrowSquareOut as ExternalLink,
+  CaretRight as ChevronRight,
+} from "@phosphor-icons/react";
 import type {
   PublicBranch,
   PublicBranchLoanOfficer,

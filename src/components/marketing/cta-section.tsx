@@ -5,15 +5,15 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Building2,
+  BuildingOffice as Building2,
   Clock,
   FileText,
   Headphones,
   Lock,
-  Settings2,
+  GearSix as Settings2,
   Shield,
   Users,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { fadeInUp, staggerChildrenDelayed } from "@/lib/motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

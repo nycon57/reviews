@@ -20,21 +20,21 @@ import {
   User,
   Briefcase,
   Link,
-  Share2,
-  CheckCircle2,
+  ShareNetwork as Share2,
+  CheckCircle as CheckCircle2,
   Circle,
-  ChevronDown,
-  ChevronRight,
-  Sparkles,
+  CaretDown as ChevronDown,
+  CaretRight as ChevronRight,
+  Sparkle as Sparkles,
   Trophy,
   Medal,
   Crown,
-  Link2,
-  TrendingUp,
+  Link as Link2,
+  TrendUp as TrendingUp,
   Target,
-  Zap,
+  Lightning as Zap,
   Star,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { getProfileCompletionScore } from "@/lib/gamification/profile-completion-actions";
 import type {

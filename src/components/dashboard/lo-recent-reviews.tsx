@@ -11,7 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Star, Share2, MessageCircle, Filter, Send, Plus } from "lucide-react";
+import {
+  Star,
+  ShareNetwork as Share2,
+  ChatCircle as MessageCircle,
+  Funnel as Filter,
+  PaperPlaneRight as Send,
+  Plus,
+} from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import type { RecentReview } from "@/lib/dashboard";
 import { getLoanOfficerRecentReviews } from "@/lib/dashboard";

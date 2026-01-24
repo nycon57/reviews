@@ -1,5 +1,11 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Clock, CheckCircle, FileX, Ban } from "lucide-react";
+import {
+  WarningCircle as AlertCircle,
+  Clock,
+  CheckCircle,
+  FileX,
+  Prohibit as Ban,
+} from "@phosphor-icons/react/dist/ssr";
 
 interface VideoTestimonialErrorProps {
   message: string;

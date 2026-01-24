@@ -3,7 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronRight, Clock, Tag, ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  CaretRight as ChevronRight,
+  Clock,
+  Tag,
+  ArrowLeft,
+  ArrowRight,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { fadeInUp, staggerContainer } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";

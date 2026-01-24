@@ -9,14 +9,14 @@ import {
   Star,
   MapPin,
   Users,
-  Quote,
-  Building2,
-  ExternalLink,
-  ChevronRight,
+  Quotes as Quote,
+  BuildingOffice as Building2,
+  ArrowSquareOut as ExternalLink,
+  CaretRight as ChevronRight,
   Globe,
   Target,
-  Award,
-} from "lucide-react";
+  Medal as Award,
+} from "@phosphor-icons/react";
 import type {
   PublicOrganization,
   PublicOrgBranch,

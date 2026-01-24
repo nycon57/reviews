@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Crown, TrendingUp, TrendingDown, Minus, Trophy } from "lucide-react";
+import {
+  Crown,
+  TrendUp as TrendingUp,
+  TrendDown as TrendingDown,
+  Minus,
+  Trophy,
+} from "@phosphor-icons/react";
 import { StatisticalSignificanceBadge } from "./statistical-significance-badge";
 import type { ABTestResult, WinningMetric } from "@/lib/email-ab-testing/types";
 

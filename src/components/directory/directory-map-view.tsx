@@ -8,7 +8,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Star, MapPin, Phone, Map } from "lucide-react";
+import {
+  Star,
+  MapPin,
+  Phone,
+  MapTrifold as Map,
+} from "@phosphor-icons/react";
 import type { DirectoryLoanOfficer } from "@/lib/directory/actions";
 
 // Dynamically import map components to avoid SSR issues

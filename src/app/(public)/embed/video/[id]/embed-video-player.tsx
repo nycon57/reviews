@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Play, Pause, Volume2, VolumeX, Maximize, ExternalLink, Building2 } from "lucide-react";
+import {
+  Play,
+  Pause,
+  SpeakerHigh as Volume2,
+  SpeakerSlash as VolumeX,
+  ArrowsOut as Maximize,
+  ArrowSquareOut as ExternalLink,
+  BuildingOffice as Building2,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useVideoPlayer } from "@/hooks/use-video-player";
 import { formatDuration } from "@/lib/video-testimonials/types";

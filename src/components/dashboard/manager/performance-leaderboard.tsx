@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Medal, Award, Star } from "lucide-react";
+import {
+  Trophy,
+  Medal,
+  Medal as Award,
+  Star,
+} from "@phosphor-icons/react";
 import type { LeaderboardEntry } from "@/lib/dashboard";
 
 interface PerformanceLeaderboardProps {

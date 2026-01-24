@@ -15,7 +15,11 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, AlertTriangle, ExternalLink } from 'lucide-react';
+import {
+  SpinnerGap as Loader2,
+  Warning as AlertTriangle,
+  ArrowSquareOut as ExternalLink,
+} from "@phosphor-icons/react";
 import type { NotificationPreferences } from '@/lib/notifications/types';
 import { DEFAULT_NOTIFICATION_PREFERENCES } from '@/lib/notifications/types';
 import {

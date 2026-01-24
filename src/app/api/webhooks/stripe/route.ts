@@ -93,6 +93,24 @@ export async function POST(request: NextRequest) {
     // Continue without organization ID
   }
 
+  // Critical events that should retry on failure (return 500)
+  // These events affect subscription state and billing
+  const criticalEvents = [
+    "checkout.session.completed",
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+    "invoice.paid",
+    "invoice.payment_failed",
+    "payment_method.attached",
+  ];
+
+  // Non-critical events: invoice.upcoming, invoice.finalized, customer.updated,
+  // payment_intent.succeeded, payment_intent.payment_failed, payment_method.detached
+  // These are informational and can fail silently (return 200)
+
+  const isCriticalEvent = criticalEvents.includes(event.type);
+
   try {
     // Process the event
     await handleStripeEvent(event);
@@ -102,7 +120,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Error processing webhook:", error);
+    console.error(`Error processing webhook ${event.type}:`, error);
 
     // Log failed event
     await logBillingEvent(
@@ -111,9 +129,22 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : "Unknown error"
     );
 
-    // Return 200 to prevent Stripe from retrying (we've logged the error)
-    // In production, you might want to return 500 for certain critical errors
-    return NextResponse.json({ received: true, error: "Processing failed" });
+    // Return 500 for critical events to trigger Stripe retry
+    // Return 200 for non-critical events to acknowledge receipt
+    if (isCriticalEvent) {
+      console.error(`Critical webhook ${event.type} failed - triggering retry`);
+      return NextResponse.json(
+        { received: false, error: "Processing failed", event_type: event.type },
+        { status: 500 }
+      );
+    }
+
+    // Non-critical: acknowledge receipt but log the error
+    return NextResponse.json({
+      received: true,
+      error: "Processing failed (non-critical)",
+      event_type: event.type,
+    });
   }
 }
 

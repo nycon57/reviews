@@ -6,7 +6,11 @@ import { motion } from "framer-motion";
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Phone, MapPin } from "lucide-react";
+import {
+  Star,
+  Phone,
+  MapPin,
+} from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import type { DirectoryLoanOfficer } from "@/lib/directory/actions";
 

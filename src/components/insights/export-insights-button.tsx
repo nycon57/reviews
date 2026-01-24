@@ -10,7 +10,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { Download, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
+import {
+  DownloadSimple as Download,
+  FileCode as FileJson,
+  FileXls as FileSpreadsheet,
+  SpinnerGap as Loader2,
+} from "@phosphor-icons/react";
 import type { AIInsightsData } from "@/lib/ai";
 import { useToast } from "@/hooks/use-toast";
 

@@ -4,11 +4,20 @@ import type { NextRequest } from "next/server";
 import { startWelcomeSequence } from "@/lib/email/welcome-sequence-service";
 import { exitReengagementSequencesOnLogin } from "@/lib/email/reengagement-sequence-service";
 
+// Feature flag for Better Auth migration
+const USE_BETTER_AUTH = process.env.NEXT_PUBLIC_USE_BETTER_AUTH === "true";
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const type = searchParams.get("type");
   const next = searchParams.get("next") ?? "/dashboard";
+
+  // When Better Auth is enabled, OAuth callbacks are handled by /api/auth/callback/*
+  // This route is only for legacy Supabase OAuth flows
+  if (USE_BETTER_AUTH) {
+    return NextResponse.redirect(`${origin}/dashboard`);
+  }
 
   if (code) {
     const supabase = await createClient();

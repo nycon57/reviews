@@ -16,19 +16,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import {
-  Menu,
-  Home,
+  List as Menu,
+  House as Home,
   Star,
   FileText,
-  BarChart3,
+  ChartBar as BarChart3,
   Users,
-  Settings,
-  HelpCircle,
-  TrendingUp,
+  Gear as Settings,
+  Question as HelpCircle,
+  TrendUp as TrendingUp,
   Trophy,
-  Send,
-  Mail,
-} from "lucide-react";
+  PaperPlaneRight as Send,
+  Envelope as Mail,
+} from "@phosphor-icons/react";
 
 interface NavItem {
   title: string;

@@ -7,10 +7,10 @@ import {
   Lightbulb,
   ArrowRight,
   CheckCircle,
-  AlertTriangle,
-  AlertCircle,
-  TrendingUp,
-} from "lucide-react";
+  Warning as AlertTriangle,
+  WarningCircle as AlertCircle,
+  TrendUp as TrendingUp,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { OptimizationSuggestion } from "@/lib/geo/types";
 

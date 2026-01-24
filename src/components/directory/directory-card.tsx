@@ -10,10 +10,10 @@ import {
   Star,
   MapPin,
   Phone,
-  Mail,
-  Building2,
-  ExternalLink,
-} from "lucide-react";
+  Envelope as Mail,
+  BuildingOffice as Building2,
+  ArrowSquareOut as ExternalLink,
+} from "@phosphor-icons/react";
 import type { DirectoryLoanOfficer } from "@/lib/directory/actions";
 
 interface DirectoryCardProps {

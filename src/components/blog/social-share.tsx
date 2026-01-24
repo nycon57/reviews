@@ -1,6 +1,12 @@
 "use client";
 
-import { Facebook, Twitter, Linkedin, Link2, Check } from "lucide-react";
+import {
+  FacebookLogo as Facebook,
+  TwitterLogo as Twitter,
+  LinkedinLogo as Linkedin,
+  Link as Link2,
+  Check,
+} from "@phosphor-icons/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {

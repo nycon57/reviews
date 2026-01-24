@@ -6,8 +6,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 
 // Type for announcement row (table not yet in generated types)
 interface AnnouncementRow {
@@ -28,15 +28,12 @@ interface AnnouncementRow {
 export async function GET(request: NextRequest) {
   try {
     // Verify user is authenticated and is admin
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = await unifiedGetUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const supabase = createAdminClient();
     // Check if user is admin
     const { data: userData, error: userError } = await supabase
       .from("users")

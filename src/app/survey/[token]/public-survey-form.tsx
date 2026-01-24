@@ -9,7 +9,14 @@ import { QuestionRenderer } from "@/components/surveys/question-renderer";
 import { submitSurveyResponse } from "@/lib/surveys/public-actions";
 import type { PublicSurvey } from "@/lib/surveys/public-types";
 import type { SurveyAnswer } from "@/types/survey.types";
-import { CheckCircle2, ChevronLeft, ChevronRight, Loader2, Star, ExternalLink } from "lucide-react";
+import {
+  CheckCircle as CheckCircle2,
+  CaretLeft as ChevronLeft,
+  CaretRight as ChevronRight,
+  SpinnerGap as Loader2,
+  Star,
+  ArrowSquareOut as ExternalLink,
+} from "@phosphor-icons/react";
 
 interface PublicSurveyFormProps {
   survey: PublicSurvey;

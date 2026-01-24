@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { UserX, Home } from "lucide-react";
+import {
+  UserMinus as UserX,
+  House as Home,
+} from "@phosphor-icons/react/dist/ssr";
 
 export default function LONotFound() {
   return (

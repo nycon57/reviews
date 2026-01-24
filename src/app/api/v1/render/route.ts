@@ -10,7 +10,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
 import { renderVideo } from "@/lib/remotion/render-service";
 import type { RenderRequest } from "@/lib/remotion/types";
 
@@ -89,13 +90,8 @@ const renderRequestSchema = z.discriminatedUnion("compositionType", [
 export async function POST(request: NextRequest) {
   try {
     // Authenticate user
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
+    const user = await unifiedGetUser();
+    if (!user) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -118,6 +114,7 @@ export async function POST(request: NextRequest) {
 
     const renderRequest = parseResult.data as RenderRequest;
 
+    const supabase = createAdminClient();
     // Verify user has access to organization
     const { data: membership, error: membershipError } = await supabase
       .from("users")

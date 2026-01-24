@@ -4,11 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Users,
   Star,
-  TrendingUp,
-  MessageSquare,
+  TrendUp as TrendingUp,
+  Chats as MessageSquare,
   ArrowUpRight,
   ArrowDownRight,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 import type { TeamMetrics } from "@/lib/dashboard";
 
 interface TeamStatsCardsProps {

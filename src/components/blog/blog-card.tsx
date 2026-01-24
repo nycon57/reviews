@@ -2,7 +2,11 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Calendar, Clock, User } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  User,
+} from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { BlogPostMeta } from "@/types/blog";
 import { fadeInUp } from "@/lib/motion";

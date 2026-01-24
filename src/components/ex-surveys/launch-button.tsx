@@ -14,7 +14,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Play, StopCircle } from "lucide-react";
+import {
+  Play,
+  StopCircle,
+} from "@phosphor-icons/react";
 import { launchEXSurvey, closeEXSurvey } from "@/lib/ex-surveys/actions";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";

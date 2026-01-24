@@ -5,7 +5,12 @@ import { generateLOListingMetadata, getBaseUrl } from "@/lib/seo";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Star, Users, MapPin, ArrowRight } from "lucide-react";
+import {
+  Star,
+  Users,
+  MapPin,
+  ArrowRight,
+} from "@phosphor-icons/react/dist/ssr";
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = getBaseUrl();

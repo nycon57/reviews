@@ -51,9 +51,9 @@ async function handlePost(
     );
   }
 
-  // Create a loan officer if the role is loan_officer
+  // Create a user if the role is user
   // For admin/manager roles, a full auth flow is required
-  if (input.role === 'loan_officer') {
+  if (input.role === 'user') {
     // Check if loan officer with this email already exists
     const { data: existingLO } = await supabase
       .from('loan_officers')

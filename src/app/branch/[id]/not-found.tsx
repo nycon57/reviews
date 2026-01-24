@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Building2, Home } from "lucide-react";
+import {
+  BuildingOffice as Building2,
+  House as Home,
+} from "@phosphor-icons/react/dist/ssr";
 
 export default function BranchNotFound() {
   return (

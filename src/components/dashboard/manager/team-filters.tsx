@@ -8,7 +8,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import {
+  X,
+} from "@phosphor-icons/react";
 import type { FilterOptions } from "@/lib/dashboard";
 
 interface TeamFiltersProps {

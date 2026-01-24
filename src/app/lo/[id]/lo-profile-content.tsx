@@ -7,13 +7,13 @@ import {
   Star,
   MapPin,
   Phone,
-  Mail,
-  Linkedin,
-  ExternalLink,
-  Quote,
-  Building2,
-  Award,
-} from "lucide-react";
+  Envelope as Mail,
+  LinkedinLogo as Linkedin,
+  ArrowSquareOut as ExternalLink,
+  Quotes as Quote,
+  BuildingOffice as Building2,
+  Medal as Award,
+} from "@phosphor-icons/react";
 import Image from "next/image";
 import type { PublicLoanOfficer, PublicReview } from "@/lib/seo/actions";
 import type { Tables } from "@/types/database.types";

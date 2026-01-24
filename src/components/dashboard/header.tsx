@@ -16,17 +16,17 @@ import { NotificationCenter } from "@/components/notifications";
 import { SearchDialog } from "@/components/dashboard/search-dialog";
 import { InviteTeamDialog } from "@/components/dashboard/invite-team-dialog";
 import {
-  Search,
-  LogOut,
+  MagnifyingGlass as Search,
+  SignOut as LogOut,
   User as UserIcon,
-  Settings,
+  Gear as Settings,
   CreditCard,
   UserPlus,
   Command,
-  ExternalLink,
-  PanelLeftClose,
-  PanelLeft,
-} from "lucide-react";
+  ArrowSquareOut as ExternalLink,
+  SidebarSimple as PanelLeftClose,
+  Sidebar as PanelLeft,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/lib/permissions/context";
 
@@ -57,7 +57,7 @@ export function Header({
 }: HeaderProps) {
   const [searchOpen, setSearchOpen] = React.useState(false);
   const [inviteOpen, setInviteOpen] = React.useState(false);
-  const { canInviteTeam } = usePermissions();
+  const { canInviteTeam, userContext } = usePermissions();
 
   // Keyboard shortcut: ⌘K to open search
   React.useEffect(() => {
@@ -155,7 +155,12 @@ export function Header({
 
         {/* User menu */}
         {user && (
-          <UserMenu user={user} onSignOut={onSignOut} />
+          <UserMenu
+            user={user}
+            onSignOut={onSignOut}
+            role={userContext?.role}
+            accountType={userContext?.accountType}
+          />
         )}
       </div>
 
@@ -171,9 +176,23 @@ export function Header({
 interface UserMenuProps {
   user: HeaderUser;
   onSignOut?: () => void;
+  role?: string | null;
+  accountType?: string | null;
 }
 
-function UserMenu({ user, onSignOut }: UserMenuProps) {
+function getUserRoleLabel(role: string | null | undefined, accountType: string | null | undefined): string {
+  if (accountType === "individual") {
+    return "User";
+  }
+  if (accountType === "enterprise") {
+    if (role === "admin") return "Enterprise Admin";
+    if (role === "manager") return "Enterprise Manager";
+    return "Enterprise User";
+  }
+  return "";
+}
+
+function UserMenu({ user, onSignOut, role, accountType }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -197,6 +216,11 @@ function UserMenu({ user, onSignOut }: UserMenuProps) {
             <p className="text-xs leading-none text-repwell-teal-400">
               {user.email}
             </p>
+            {(role || accountType) && (
+              <p className="text-xs leading-none text-repwell-teal-300">
+                {getUserRoleLabel(role, accountType)}
+              </p>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-border" />

@@ -25,7 +25,7 @@ function mapSurveyRow(row: Record<string, unknown>): SurveyResource {
     id: row.id as string,
     organization_id: row.organization_id as string,
     template_id: row.template_id as string,
-    loan_officer_id: row.loan_officer_id as string,
+    user_id: row.user_id as string,
     customer_name: row.customer_name as string,
     customer_email: row.customer_email as string,
     customer_phone: row.customer_phone as string | null,
@@ -76,8 +76,8 @@ async function handleGet(
   if (filters.status) {
     query = query.eq('status', filters.status);
   }
-  if (filters.loan_officer_id) {
-    query = query.eq('loan_officer_id', filters.loan_officer_id);
+  if (filters.user_id) {
+    query = query.eq('user_id', filters.user_id);
   }
   if (filters.template_id) {
     query = query.eq('template_id', filters.template_id);
@@ -134,22 +134,22 @@ async function handlePost(
 
   const input = validation.data;
 
-  // Find loan officer
-  let loanOfficerId = input.loan_officer_id;
-  if (!loanOfficerId && input.loan_officer_email) {
-    const { data: loanOfficer, error: loError } = await supabase
-      .from('loan_officers')
+  // Find user
+  let userId = input.user_id;
+  if (!userId && input.user_email) {
+    const { data: user, error: userError } = await supabase
+      .from('users')
       .select('id')
       .eq('organization_id', context.organizationId)
-      .eq('email', input.loan_officer_email)
+      .eq('email', input.user_email)
       .eq('is_active', true)
       .single();
 
-    if (loError || !loanOfficer) {
-      return apiNotFound('Loan officer', context.requestId);
+    if (userError || !user) {
+      return apiNotFound('User', context.requestId);
     }
 
-    loanOfficerId = loanOfficer.id;
+    userId = user.id;
   }
 
   // Get template
@@ -185,10 +185,10 @@ async function handlePost(
     }
   }
 
-  // Verify loan officer was found
-  if (!loanOfficerId) {
+  // Verify user was found
+  if (!userId) {
     return apiValidationError(
-      [{ field: 'loan_officer_id', message: 'Loan officer not found' }],
+      [{ field: 'user_id', message: 'User not found' }],
       context.requestId
     );
   }
@@ -209,7 +209,7 @@ async function handlePost(
     .insert({
       organization_id: context.organizationId,
       template_id: templateId as string,
-      loan_officer_id: loanOfficerId as string,
+      user_id: userId as string,
       customer_name: input.customer_name,
       customer_email: input.customer_email,
       customer_phone: input.customer_phone,

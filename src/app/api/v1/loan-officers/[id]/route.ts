@@ -47,7 +47,7 @@ async function handleGet(
   const supabase = createAdminClient();
 
   const { data: loanOfficer, error } = await supabase
-    .from('loan_officers')
+    .from('users')
     .select('*')
     .eq('id', id)
     .eq('organization_id', context.organizationId)
@@ -91,7 +91,7 @@ async function handlePatch(
 
   // Check if loan officer exists
   const { data: existing, error: existError } = await supabase
-    .from('loan_officers')
+    .from('users')
     .select('id')
     .eq('id', id)
     .eq('organization_id', context.organizationId)
@@ -127,7 +127,7 @@ async function handlePatch(
 
   // Update loan officer
   const { data: loanOfficer, error: updateError } = await supabase
-    .from('loan_officers')
+    .from('users')
     .update(updateData)
     .eq('id', id)
     .eq('organization_id', context.organizationId)

@@ -104,7 +104,7 @@ const featureCategories = [
       { icon: Users, title: "Team Management", description: "Organize users by branch, region, or role with fine-grained permissions." },
       { icon: Smartphone, title: "Mobile App", description: "Access dashboards and respond to reviews on the go with our mobile app." },
       { icon: Bell, title: "Smart Notifications", description: "Get instant alerts for new reviews, especially negative ones requiring attention." },
-      { icon: Shield, title: "Role-based Access", description: "Control access with Admin, Manager, and Loan Officer roles." },
+      { icon: Shield, title: "Role-based Access", description: "Control access with Admin, Manager, and Team Member roles." },
     ],
     stat: { value: "24/7", label: "mobile access" },
     image: "https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?w=1200&h=800&fit=crop&q=80",

@@ -221,7 +221,7 @@ function MissionSection() {
               variants={fadeInUp}
               className="text-lg text-repwell-teal-400 leading-relaxed mb-4"
             >
-              Every loan officer knows that referrals and reputation drive business. Yet collecting and managing customer feedback has traditionally been fragmented, manual, and time-consuming.
+              Every professional knows that referrals and reputation drive business. Yet collecting and managing customer feedback has traditionally been fragmented, manual, and time-consuming.
             </motion.p>
 
             <motion.p

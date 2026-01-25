@@ -2,7 +2,7 @@
  * Role-Based Feature Onboarding Email Templates
  *
  * Feature discovery sequences tailored to each role:
- * - Loan Officer: 7 emails over 30 days (dashboard, surveys, sharing, responding, video, mobile, Google)
+ * - Team Member: 7 emails over 30 days (dashboard, surveys, sharing, responding, video, mobile, Google)
  * - Manager: 6 emails over 30 days (team dashboard, approvals, leaderboards, reports, coaching, analytics)
  * - Admin: 5 emails over 30 days (settings, users, integrations, billing, compliance)
  *
@@ -256,7 +256,7 @@ function createStatCard(value: string, label: string): string {
 }
 
 // ============================================================================
-// LOAN OFFICER SEQUENCE (7 emails)
+// TEAM MEMBER SEQUENCE (7 emails)
 // ============================================================================
 
 /**
@@ -682,7 +682,7 @@ export function getRoleOnboardingLO6MobileEmail(
         </div>
       </td>
     </tr>
-    ${createTipBox("Speed Matters", "Loan officers who respond to reviews within 1 hour see 35% better client satisfaction scores.")}
+    ${createTipBox("Speed Matters", "Professionals who respond to reviews within 1 hour see 35% better client satisfaction scores.")}
   `;
 
   return {
@@ -832,7 +832,7 @@ export function getRoleOnboardingMgr1TeamDashboardEmail(
           As a manager, you can:
         </h2>
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-          ${createFeatureItem("📊", "Track Team Performance", "See aggregate metrics and individual loan officer stats")}
+          ${createFeatureItem("📊", "Track Team Performance", "See aggregate metrics and individual team member stats")}
           ${createFeatureItem("⚖️", "Review Approvals", "Approve or flag reviews before they go public")}
           ${createFeatureItem("🏆", "View Leaderboards", "Motivate your team with friendly competition")}
         </table>
@@ -1363,7 +1363,7 @@ export function getRoleOnboardingAdmin2UsersEmail(
         </h2>
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
           ${createFeatureItem("📧", "Invite Users", "Send invitations to new team members")}
-          ${createFeatureItem("🎭", "Assign Roles", "Admin, Manager, or Loan Officer permissions")}
+          ${createFeatureItem("🎭", "Assign Roles", "Admin, Manager, or Team Member permissions")}
           ${createFeatureItem("🔐", "Access Control", "Limit what each role can see and do")}
         </table>
       </td>
@@ -1377,7 +1377,7 @@ export function getRoleOnboardingAdmin2UsersEmail(
         </div>
       </td>
     </tr>
-    ${createTipBox("Role Guide", "Loan Officers collect reviews, Managers oversee teams, Admins control settings and billing.")}
+    ${createTipBox("Role Guide", "Team Members collect reviews, Managers oversee teams, Admins control settings and billing.")}
   `;
 
   return {

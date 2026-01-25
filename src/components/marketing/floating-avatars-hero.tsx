@@ -48,7 +48,7 @@ interface FloatingAvatarsHeroProps {
 const defaultAvatars: FloatingAvatar[] = [
   {
     src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
-    alt: "Loan officer",
+    alt: "Professional",
     ringColor: "ring-repwell-teal-300",
     position: "top-20 left-[8%] md:left-[12%]",
     delay: 0,

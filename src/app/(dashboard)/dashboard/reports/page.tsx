@@ -41,19 +41,25 @@ export default async function ReportsPage() {
   const templatesResult = await getReportTemplates();
   const templates = templatesResult.success ? templatesResult.data || [] : [];
 
-  // Get loan officers for filtering
-  const { data: loanOfficers } = await supabase
-    .from("loan_officers")
+  // Get professionals for filtering
+  const { data: usersData } = await supabase
+    .from("users")
     .select("id, full_name, branch")
     .eq("organization_id", profile.organization_id)
     .eq("is_active", true)
+    .not("full_name", "is", null)
     .order("full_name");
+
+  // Filter and ensure proper types
+  const users = (usersData || [])
+    .filter((u): u is typeof u & { full_name: string } => !!u.full_name)
+    .map((user) => ({ id: user.id, full_name: user.full_name, branch: user.branch }));
 
   // Get unique branches
   const branches = Array.from(
     new Set(
-      (loanOfficers || [])
-        .map((lo) => lo.branch)
+      users
+        .map((user) => user.branch)
         .filter((b): b is string => !!b)
     )
   );
@@ -61,7 +67,7 @@ export default async function ReportsPage() {
   return (
     <ReportsDashboard
       templates={templates}
-      loanOfficers={loanOfficers || []}
+      teamMembers={users}
       branches={branches}
     />
   );

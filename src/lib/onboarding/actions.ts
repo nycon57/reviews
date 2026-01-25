@@ -244,9 +244,9 @@ export async function createOnboardingCheckout(): Promise<{
     return { success: false, error: "Enterprise plan requires contacting sales" };
   }
 
-  // Normalize plan ID (map basic→starter, pro→professional for compatibility)
-  const normalizedPlan = selectedPlan === "basic" ? "starter"
-    : selectedPlan === "pro" ? "professional"
+  // Normalize plan ID (map legacy starter→basic, professional→pro for compatibility)
+  const normalizedPlan = selectedPlan === "starter" ? "basic"
+    : selectedPlan === "professional" ? "pro"
     : selectedPlan;
 
   // Get price ID based on plan and billing cycle

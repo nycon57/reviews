@@ -10,7 +10,7 @@ const loanClosedPayloadSchema = z.object({
   event_type: z.literal("loan.closed"),
   data: z.object({
     transaction_id: z.string().min(1),
-    loan_officer_email: z.string().email(),
+    user_email: z.string().email(),
     customer_name: z.string().min(1),
     customer_email: z.string().email(),
     customer_phone: z.string().optional(),
@@ -23,7 +23,7 @@ const loanClosedPayloadSchema = z.object({
 const contactCreatedPayloadSchema = z.object({
   event_type: z.literal("contact.created"),
   data: z.object({
-    loan_officer_email: z.string().email(),
+    user_email: z.string().email(),
     customer_name: z.string().min(1),
     customer_email: z.string().email(),
     customer_phone: z.string().optional(),
@@ -35,8 +35,8 @@ const contactCreatedPayloadSchema = z.object({
 const manualTriggerPayloadSchema = z.object({
   event_type: z.literal("survey.trigger"),
   data: z.object({
-    loan_officer_email: z.string().email().optional(),
-    loan_officer_id: z.string().uuid().optional(),
+    user_email: z.string().email().optional(),
+    user_id: z.string().uuid().optional(),
     customer_name: z.string().min(1),
     customer_email: z.string().email(),
     customer_phone: z.string().optional(),
@@ -54,7 +54,7 @@ const encompassMilestonePayloadSchema = z.object({
   event_type: z.literal("encompass.milestone"),
   milestone: z.string().min(1),
   loan_id: z.string().min(1),
-  loan_officer_email: z.string().email(),
+  user_email: z.string().email(),
   borrower_name: z.string().min(1),
   borrower_email: z.string().email(),
   borrower_phone: z.string().optional(),
@@ -423,8 +423,8 @@ async function processWebhook(
   const organizationId = webhookConfig.organization_id;
 
   // Extract common data based on event type
-  let loanOfficerEmail: string | undefined;
-  let loanOfficerId: string | undefined;
+  let userEmail: string | undefined;
+  let userId: string | undefined;
   let customerName: string;
   let customerEmail: string;
   let customerPhone: string | undefined;
@@ -437,7 +437,7 @@ async function processWebhook(
 
   switch (payload.event_type) {
     case "loan.closed": {
-      loanOfficerEmail = payload.data.loan_officer_email;
+      userEmail = payload.data.user_email;
       customerName = payload.data.customer_name;
       customerEmail = payload.data.customer_email;
       customerPhone = payload.data.customer_phone;
@@ -452,7 +452,7 @@ async function processWebhook(
     }
 
     case "contact.created":
-      loanOfficerEmail = payload.data.loan_officer_email;
+      userEmail = payload.data.user_email;
       customerName = payload.data.customer_name;
       customerEmail = payload.data.customer_email;
       customerPhone = payload.data.customer_phone;
@@ -463,8 +463,8 @@ async function processWebhook(
       break;
 
     case "survey.trigger":
-      loanOfficerEmail = payload.data.loan_officer_email;
-      loanOfficerId = payload.data.loan_officer_id;
+      userEmail = payload.data.user_email;
+      userId = payload.data.user_id;
       customerName = payload.data.customer_name;
       customerEmail = payload.data.customer_email;
       customerPhone = payload.data.customer_phone;
@@ -509,7 +509,7 @@ async function processWebhook(
         );
       }
 
-      loanOfficerEmail = payload.loan_officer_email;
+      userEmail = payload.user_email;
       customerName = payload.borrower_name;
       customerEmail = payload.borrower_email;
       customerPhone = payload.borrower_phone;
@@ -532,27 +532,27 @@ async function processWebhook(
     }
   }
 
-  // Find the loan officer
-  if (!loanOfficerId && loanOfficerEmail) {
-    const { data: loanOfficer, error: loError } = await supabase
-      .from("loan_officers")
+  // Find the user
+  if (!userId && userEmail) {
+    const { data: user, error: userError } = await supabase
+      .from("users")
       .select("id")
       .eq("organization_id", organizationId)
-      .eq("email", loanOfficerEmail)
+      .eq("email", userEmail)
       .eq("is_active", true)
       .single();
 
-    if (loError || !loanOfficer) {
+    if (userError || !user) {
       throw new Error(
-        `Loan officer not found for email: ${loanOfficerEmail}`
+        `User not found for email: ${userEmail}`
       );
     }
 
-    loanOfficerId = loanOfficer.id;
+    userId = user.id;
   }
 
-  if (!loanOfficerId) {
-    throw new Error("Loan officer ID or email is required");
+  if (!userId) {
+    throw new Error("User ID or email is required");
   }
 
   // Get default template if not specified
@@ -590,7 +590,7 @@ async function processWebhook(
     .from("surveys")
     .select("id, status")
     .eq("organization_id", organizationId)
-    .eq("loan_officer_id", loanOfficerId)
+    .eq("user_id", userId)
     .eq("customer_email", customerEmail)
     .neq("status", "expired");
 
@@ -623,7 +623,7 @@ async function processWebhook(
     .insert({
       organization_id: organizationId,
       template_id: templateId,
-      loan_officer_id: loanOfficerId,
+      user_id: userId,
       customer_name: customerName,
       customer_email: customerEmail,
       customer_phone: customerPhone,

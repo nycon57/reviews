@@ -66,19 +66,14 @@ async function getUserContext() {
 
   if (!userData) return null;
 
-  const { data: loData } = await supabase
-    .from("loan_officers")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
+  // The user's id IS their loan officer id in this unified table
   return {
     userId: userData.id,
     organizationId: userData.organization_id!,
     role: userData.role,
     email: userData.email,
     fullName: userData.full_name,
-    loanOfficerId: loData?.id || null,
+    loanOfficerId: userData.id,
   };
 }
 
@@ -156,13 +151,13 @@ export async function checkFirstReviewMilestone(
 
   // Check if user has exactly 1 review (just received first review)
   const supabase = createAdminClient();
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  const { data: userData } = await supabase
+    .from("users")
     .select("total_reviews")
     .eq("id", loanOfficerId)
     .single();
 
-  if (!loData || loData.total_reviews !== 1) {
+  if (!userData || userData.total_reviews !== 1) {
     return { achieved: false, milestoneKey };
   }
 
@@ -194,15 +189,15 @@ export async function checkReviewCountMilestones(
   const results: MilestoneCheckResult[] = [];
 
   const supabase = createAdminClient();
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  const { data: userData } = await supabase
+    .from("users")
     .select("total_reviews")
     .eq("id", loanOfficerId)
     .single();
 
-  if (!loData) return results;
+  if (!userData) return results;
 
-  const totalReviews = loData.total_reviews || 0;
+  const totalReviews = userData.total_reviews || 0;
 
   // Check each milestone threshold
   for (const milestone of REVIEW_MILESTONES) {
@@ -285,20 +280,20 @@ export async function checkRatingImprovementMilestone(
   const supabase = createAdminClient();
 
   // Get current rating
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  const { data: userData } = await supabase
+    .from("users")
     .select("average_rating")
     .eq("id", loanOfficerId)
     .single();
 
-  if (!loData) {
+  if (!userData) {
     return { achieved: false, milestoneKey: "rating_improvement" };
   }
 
   // Get previous rating from reputation history
   const { data: history } = await fromTable(supabase, "reputation_history")
     .select("breakdown")
-    .eq("loan_officer_id", loanOfficerId)
+    .eq("user_id", loanOfficerId)
     .order("recorded_at", { ascending: false })
     .limit(2);
 
@@ -309,7 +304,7 @@ export async function checkRatingImprovementMilestone(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const previousBreakdown = history[1].breakdown as any;
   const previousRating = previousBreakdown?.averageRating?.rating ?? 0;
-  const currentRating = loData.average_rating ?? 0;
+  const currentRating = userData.average_rating ?? 0;
   const improvement = currentRating - previousRating;
 
   if (improvement < RATING_IMPROVEMENT_THRESHOLD) {
@@ -351,20 +346,20 @@ export async function checkNpsImprovementMilestone(
   const supabase = createAdminClient();
 
   // Get current NPS
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  const { data: userData } = await supabase
+    .from("users")
     .select("nps_score")
     .eq("id", loanOfficerId)
     .single();
 
-  if (!loData) {
+  if (!userData) {
     return { achieved: false, milestoneKey: "nps_improvement" };
   }
 
   // Get previous NPS from reputation history
   const { data: history } = await fromTable(supabase, "reputation_history")
     .select("breakdown")
-    .eq("loan_officer_id", loanOfficerId)
+    .eq("user_id", loanOfficerId)
     .order("recorded_at", { ascending: false })
     .limit(2);
 
@@ -375,7 +370,7 @@ export async function checkNpsImprovementMilestone(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const previousBreakdown = history[1].breakdown as any;
   const previousNps = previousBreakdown?.nps?.score ?? 0;
-  const currentNps = loData.nps_score ?? 0;
+  const currentNps = userData.nps_score ?? 0;
   const improvement = currentNps - previousNps;
 
   if (improvement < NPS_IMPROVEMENT_THRESHOLD) {
@@ -457,21 +452,21 @@ export async function checkLeaderboardMilestones(
   const supabase = createAdminClient();
 
   // Get current rank
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  const { data: userData } = await supabase
+    .from("users")
     .select("reputation_score")
     .eq("id", loanOfficerId)
     .single();
 
-  if (!loData) return results;
+  if (!userData) return results;
 
   // Count how many have higher scores
   const { data: higherRanked } = await supabase
-    .from("loan_officers")
+    .from("users")
     .select("id")
     .eq("organization_id", organizationId)
     .eq("is_active", true)
-    .gt("reputation_score", loData.reputation_score || 0);
+    .gt("reputation_score", userData.reputation_score || 0);
 
   const currentRank = (higherRanked?.length || 0) + 1;
 
@@ -635,7 +630,7 @@ export async function checkVideoMilestones(
   const { count } = await supabase
     .from("testimonials")
     .select("*", { count: "exact", head: true })
-    .eq("loan_officer_id", loanOfficerId)
+    .eq("user_id", loanOfficerId)
     .eq("type", "video")
     .eq("status", "approved");
 
@@ -1036,14 +1031,14 @@ export async function getMilestoneStats(userId?: string): Promise<
   // Get loan officer data for next milestone calculations
   if (context.loanOfficerId) {
     const supabase = createAdminClient();
-    const { data: loData } = await supabase
-      .from("loan_officers")
+    const { data: userData } = await supabase
+      .from("users")
       .select("total_reviews")
       .eq("id", context.loanOfficerId)
       .single();
 
-    if (loData) {
-      const currentReviews = loData.total_reviews || 0;
+    if (userData) {
+      const currentReviews = userData.total_reviews || 0;
       const nextReviewMilestone = getNextMilestone(currentReviews, REVIEW_MILESTONES);
       const prevReviewMilestone = getPreviousMilestone(currentReviews, REVIEW_MILESTONES) || 0;
 

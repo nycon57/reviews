@@ -17,35 +17,27 @@ import {
   type ProfileMilestone,
 } from "./profile-completion-types";
 
-// Get user context - parallelized queries for better performance
+// Get user context
 async function getUserContext() {
   const user = await unifiedGetUser();
 
   if (!user) return null;
 
   const supabase = createUntypedAdminClient();
-  // Parallelize independent queries
-  const [userDataResult, loDataResult] = await Promise.all([
-    supabase
-      .from("users")
-      .select("id, organization_id, role")
-      .eq("id", user.id)
-      .single(),
-    supabase
-      .from("loan_officers")
-      .select("id")
-      .eq("user_id", user.id)
-      .single(),
-  ]);
+  const { data: userData } = await supabase
+    .from("users")
+    .select("id, organization_id, role")
+    .eq("id", user.id)
+    .single();
 
-  const userData = userDataResult.data;
   if (!userData) return null;
 
+  // The user's id IS their loan officer id in this unified table
   return {
     userId: userData.id,
     organizationId: userData.organization_id!,
     role: userData.role,
-    loanOfficerId: loDataResult.data?.id || null,
+    loanOfficerId: userData.id,
   };
 }
 
@@ -76,9 +68,9 @@ export async function getProfileCompletionScore(
 
   const supabase = createUntypedAdminClient();
 
-  // Get loan officer profile data
-  const { data: loData, error: loError } = await supabase
-    .from("loan_officers")
+  // Get user profile data
+  const { data: userData, error: userError } = await supabase
+    .from("users")
     .select(`
       id,
       full_name,
@@ -101,8 +93,8 @@ export async function getProfileCompletionScore(
     .eq("id", targetLoId)
     .single();
 
-  if (loError || !loData) {
-    return { success: false, error: "Loan officer not found" };
+  if (userError || !userData) {
+    return { success: false, error: "User not found" };
   }
 
   // Check for social connections (table may not exist yet)
@@ -113,7 +105,7 @@ export async function getProfileCompletionScore(
     const { data: socialConnections } = await (supabase as any)
       .from("social_connections")
       .select("id")
-      .eq("organization_id", loData.organization_id)
+      .eq("organization_id", userData.organization_id)
       .eq("is_active", true)
       .limit(1);
     hasSocialConnection = (socialConnections?.length || 0) > 0;
@@ -125,7 +117,7 @@ export async function getProfileCompletionScore(
   const { data: testimonials } = await supabase
     .from("testimonials")
     .select("id")
-    .eq("loan_officer_id", targetLoId)
+    .eq("user_id", targetLoId)
     .eq("status", "approved")
     .limit(1);
 
@@ -138,7 +130,7 @@ export async function getProfileCompletionScore(
     const { data: socialPosts } = await (supabase as any)
       .from("social_posts")
       .select("id")
-      .eq("organization_id", loData.organization_id)
+      .eq("organization_id", userData.organization_id)
       .eq("status", "published")
       .limit(1);
     hasPublishedPosts = (socialPosts?.length || 0) > 0;
@@ -150,7 +142,7 @@ export async function getProfileCompletionScore(
   const { data: surveys } = await supabase
     .from("surveys")
     .select("status")
-    .eq("loan_officer_id", targetLoId);
+    .eq("user_id", targetLoId);
 
   const totalSent =
     surveys?.filter((s) =>
@@ -161,21 +153,21 @@ export async function getProfileCompletionScore(
 
   // Build completion status map
   const completionMap: Record<string, boolean> = {
-    photo_url: !!loData.photo_url,
-    full_name: !!loData.full_name,
-    email: !!loData.email,
-    phone: !!loData.phone,
-    title: !!loData.title,
-    bio: !!loData.bio && loData.bio.length >= 50,
-    branch: !!loData.branch,
-    region: !!loData.region,
-    address: hasJsonContent(loData.address),
-    nmls_id: !!loData.nmls_id,
-    linkedin_url: !!loData.linkedin_url,
-    zillow_profile_url: !!loData.zillow_profile_url,
-    google_place_id: !!loData.google_place_id,
+    photo_url: !!userData.photo_url,
+    full_name: !!userData.full_name,
+    email: !!userData.email,
+    phone: !!userData.phone,
+    title: !!userData.title,
+    bio: !!userData.bio && userData.bio.length >= 50,
+    branch: !!userData.branch,
+    region: !!userData.region,
+    address: hasJsonContent(userData.address),
+    nmls_id: !!userData.nmls_id,
+    linkedin_url: !!userData.linkedin_url,
+    zillow_profile_url: !!userData.zillow_profile_url,
+    google_place_id: !!userData.google_place_id,
     has_social_connection: hasSocialConnection,
-    has_reviews: (loData.total_reviews || 0) >= 5,
+    has_reviews: (userData.total_reviews || 0) >= 5,
     has_testimonials: hasTestimonials,
     has_published_posts: hasPublishedPosts,
     response_rate_50: responseRate >= 50,
@@ -242,30 +234,30 @@ export async function getProfileCompletionScore(
   // Calculate search rank score (0-850)
   const searchRankScore = calculateSearchRankScore(
     percentage,
-    loData.total_reviews || 0,
-    loData.average_rating || 0,
+    userData.total_reviews || 0,
+    userData.average_rating || 0,
     responseRate
   );
 
-  // Get rank among all loan officers in organization
-  const { data: allLoanOfficers } = await supabase
-    .from("loan_officers")
+  // Get rank among all users in organization
+  const { data: allUsers } = await supabase
+    .from("users")
     .select("id")
-    .eq("organization_id", loData.organization_id)
+    .eq("organization_id", userData.organization_id)
     .eq("is_active", true);
 
   // Calculate rankings based on profile completion
   let rank: number | null = null;
-  if (allLoanOfficers && allLoanOfficers.length > 0) {
+  if (allUsers && allUsers.length > 0) {
     // For now, use a simple rank calculation
     // In production, you might want to cache this or use a view
     const allScores = await Promise.all(
-      allLoanOfficers.map(async (lo) => {
-        if (lo.id === targetLoId) {
-          return { id: lo.id, score: earnedPoints };
+      allUsers.map(async (user) => {
+        if (user.id === targetLoId) {
+          return { id: user.id, score: earnedPoints };
         }
-        const result = await getSimpleProfileScore(lo.id);
-        return { id: lo.id, score: result };
+        const result = await getSimpleProfileScore(user.id);
+        return { id: user.id, score: result };
       })
     );
 
@@ -312,11 +304,11 @@ export async function getProfileCompletionScore(
 }
 
 // Helper to get simple profile score for ranking
-async function getSimpleProfileScore(loanOfficerId: string): Promise<number> {
+async function getSimpleProfileScore(userId: string): Promise<number> {
   const supabase = createUntypedAdminClient();
 
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  const { data: userData } = await supabase
+    .from("users")
     .select(`
       photo_url,
       full_name,
@@ -332,27 +324,27 @@ async function getSimpleProfileScore(loanOfficerId: string): Promise<number> {
       zillow_profile_url,
       google_place_id
     `)
-    .eq("id", loanOfficerId)
+    .eq("id", userId)
     .single();
 
-  if (!loData) return 0;
+  if (!userData) return 0;
 
   let score = 0;
 
   // Simple scoring based on field presence
-  if (loData.photo_url) score += 50;
-  if (loData.full_name) score += 25;
-  if (loData.email) score += 25;
-  if (loData.phone) score += 25;
-  if (loData.title) score += 25;
-  if (loData.bio && loData.bio.length >= 50) score += 75;
-  if (loData.branch) score += 25;
-  if (loData.region) score += 25;
-  if (hasJsonContent(loData.address)) score += 25;
-  if (loData.nmls_id) score += 50;
-  if (loData.linkedin_url) score += 50;
-  if (loData.zillow_profile_url) score += 100;
-  if (loData.google_place_id) score += 100;
+  if (userData.photo_url) score += 50;
+  if (userData.full_name) score += 25;
+  if (userData.email) score += 25;
+  if (userData.phone) score += 25;
+  if (userData.title) score += 25;
+  if (userData.bio && userData.bio.length >= 50) score += 75;
+  if (userData.branch) score += 25;
+  if (userData.region) score += 25;
+  if (hasJsonContent(userData.address)) score += 25;
+  if (userData.nmls_id) score += 50;
+  if (userData.linkedin_url) score += 50;
+  if (userData.zillow_profile_url) score += 100;
+  if (userData.google_place_id) score += 100;
 
   return score;
 }
@@ -399,9 +391,9 @@ export async function getProfileCompletionLeaderboard(
 
   const supabase = createUntypedAdminClient();
 
-  // Get all active loan officers
-  const { data: loanOfficers, error } = await supabase
-    .from("loan_officers")
+  // Get all active users
+  const { data: users, error } = await supabase
+    .from("users")
     .select(`
       id,
       full_name,
@@ -426,37 +418,37 @@ export async function getProfileCompletionLeaderboard(
     .eq("is_active", true);
 
   if (error) {
-    console.error("Error fetching loan officers:", error);
-    return { success: false, error: "Failed to fetch loan officers" };
+    console.error("Error fetching users:", error);
+    return { success: false, error: "Failed to fetch users" };
   }
 
-  // Calculate scores for each loan officer
-  const entries: ProfileCompletionLeaderboardEntry[] = (loanOfficers || []).map(
-    (lo) => {
+  // Calculate scores for each user
+  const entries: ProfileCompletionLeaderboardEntry[] = (users || []).map(
+    (user) => {
       let earnedPoints = 0;
       let completedSections = 0;
 
       // Calculate points based on field completion
-      if (lo.photo_url) earnedPoints += 50;
-      if (lo.full_name) earnedPoints += 25;
-      if (lo.email) earnedPoints += 25;
-      if (lo.phone) earnedPoints += 25;
-      if (lo.title) earnedPoints += 25;
-      if (lo.bio && lo.bio.length >= 50) earnedPoints += 75;
-      if (lo.branch) earnedPoints += 25;
-      if (lo.region) earnedPoints += 25;
-      if (hasJsonContent(lo.address)) earnedPoints += 25;
-      if (lo.nmls_id) earnedPoints += 50;
-      if (lo.linkedin_url) earnedPoints += 50;
-      if (lo.zillow_profile_url) earnedPoints += 100;
-      if (lo.google_place_id) earnedPoints += 100;
+      if (user.photo_url) earnedPoints += 50;
+      if (user.full_name) earnedPoints += 25;
+      if (user.email) earnedPoints += 25;
+      if (user.phone) earnedPoints += 25;
+      if (user.title) earnedPoints += 25;
+      if (user.bio && user.bio.length >= 50) earnedPoints += 75;
+      if (user.branch) earnedPoints += 25;
+      if (user.region) earnedPoints += 25;
+      if (hasJsonContent(user.address)) earnedPoints += 25;
+      if (user.nmls_id) earnedPoints += 50;
+      if (user.linkedin_url) earnedPoints += 50;
+      if (user.zillow_profile_url) earnedPoints += 100;
+      if (user.google_place_id) earnedPoints += 100;
 
       const percentage = Math.round((earnedPoints / MAX_PROFILE_POINTS) * 100);
 
       // Calculate section completion (simplified)
-      const basicInfoComplete = lo.photo_url && lo.full_name && lo.email && lo.phone && lo.title;
-      const professionalComplete = lo.bio && lo.nmls_id && lo.branch && lo.region;
-      const externalComplete = lo.google_place_id && lo.zillow_profile_url && lo.linkedin_url;
+      const basicInfoComplete = user.photo_url && user.full_name && user.email && user.phone && user.title;
+      const professionalComplete = user.bio && user.nmls_id && user.branch && user.region;
+      const externalComplete = user.google_place_id && user.zillow_profile_url && user.linkedin_url;
 
       if (basicInfoComplete) completedSections++;
       if (professionalComplete) completedSections++;
@@ -464,17 +456,17 @@ export async function getProfileCompletionLeaderboard(
 
       const searchRankScore = calculateSearchRankScore(
         percentage,
-        lo.total_reviews || 0,
-        lo.average_rating || 0,
+        user.total_reviews || 0,
+        user.average_rating || 0,
         50 // Default response rate for leaderboard
       );
 
       return {
         rank: 0, // Will be set after sorting
-        id: lo.id,
-        fullName: lo.full_name,
-        photoUrl: lo.photo_url,
-        branch: lo.branch,
+        id: user.id,
+        fullName: user.full_name,
+        photoUrl: user.photo_url,
+        branch: user.branch,
         earnedPoints,
         totalPoints: MAX_PROFILE_POINTS,
         percentage,

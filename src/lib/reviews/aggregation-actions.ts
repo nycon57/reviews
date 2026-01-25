@@ -59,7 +59,7 @@ function mapRowToAggregatedReview(
   return {
     id: row.id as string,
     organizationId: row.organization_id as string,
-    loanOfficerId: row.loan_officer_id as string,
+    loanOfficerId: row.user_id as string,
     source: row.source as string,
     rating: row.rating as number,
     title: row.title as string | null,
@@ -136,7 +136,7 @@ export async function getAggregatedReviews(
       `
       id,
       organization_id,
-      loan_officer_id,
+      user_id,
       source,
       source_review_id,
       source_url,
@@ -165,7 +165,7 @@ export async function getAggregatedReviews(
       synced_at,
       created_at,
       updated_at,
-      loan_officers!inner (
+      users!user_id (
         id,
         full_name,
         email,
@@ -194,9 +194,9 @@ export async function getAggregatedReviews(
     query = query.eq("source", filters.source);
   }
 
-  // Apply loan officer filter
+  // Apply user filter
   if (filters?.loanOfficerId) {
-    query = query.eq("loan_officer_id", filters.loanOfficerId);
+    query = query.eq("user_id", filters.loanOfficerId);
   }
 
   // Apply rating range filters
@@ -243,7 +243,7 @@ export async function getAggregatedReviews(
   }
 
   const reviews: AggregatedReview[] = (data || []).map((row) => {
-    const loanOfficer = row.loan_officers as unknown as {
+    const loanOfficer = row.users as unknown as {
       id: string;
       full_name: string;
       email: string;
@@ -283,7 +283,7 @@ export async function getAggregatedReviewById(
       `
       id,
       organization_id,
-      loan_officer_id,
+      user_id,
       source,
       source_review_id,
       source_url,
@@ -312,7 +312,7 @@ export async function getAggregatedReviewById(
       synced_at,
       created_at,
       updated_at,
-      loan_officers!inner (
+      users!user_id (
         id,
         full_name,
         email,
@@ -334,7 +334,7 @@ export async function getAggregatedReviewById(
     return { success: false, error: "Review not found" };
   }
 
-  const loanOfficer = data.loan_officers as unknown as {
+  const loanOfficer = data.users as unknown as {
     id: string;
     full_name: string;
     email: string;
@@ -563,7 +563,7 @@ export async function exportReviews(
       review_date,
       response_text,
       sentiment_label,
-      loan_officers!inner (
+      users!user_id (
         full_name
       )
     `
@@ -579,7 +579,7 @@ export async function exportReviews(
     query = query.eq("source", filters.source);
   }
   if (filters?.loanOfficerId) {
-    query = query.eq("loan_officer_id", filters.loanOfficerId);
+    query = query.eq("user_id", filters.loanOfficerId);
   }
   if (filters?.minRating) {
     query = query.gte("rating", filters.minRating);
@@ -611,14 +611,14 @@ export async function exportReviews(
   }
 
   const exportData: ReviewExportData[] = (data || []).map((row) => {
-    const lo = row.loan_officers as unknown as { full_name: string };
+    const user = row.users as unknown as { full_name: string };
     return {
       id: row.id,
       source: row.source,
       rating: row.rating,
       customerName: row.customer_name,
       text: row.text,
-      loanOfficerName: lo.full_name,
+      loanOfficerName: user.full_name,
       status: row.status || "pending",
       reviewDate: row.review_date,
       responseText: row.response_text,

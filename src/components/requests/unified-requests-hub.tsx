@@ -15,7 +15,7 @@ import type { VideoTestimonialRequest } from "@/lib/video-testimonials/actions";
 // Types
 // ============================================================================
 
-interface LoanOfficer {
+interface TeamMember {
   id: string;
   fullName: string;
   email: string;
@@ -25,7 +25,7 @@ interface UnifiedRequestsHubProps {
   initialVideoRequests: VideoTestimonialRequest[];
   initialVideoTotal: number;
   initialVideoStats: RequestStats;
-  loanOfficers: LoanOfficer[];
+  teamMembers: TeamMember[];
   userRole: "admin" | "manager" | "user";
   initialTab?: string;
 }
@@ -38,7 +38,7 @@ export function UnifiedRequestsHub({
   initialVideoRequests,
   initialVideoTotal,
   initialVideoStats,
-  loanOfficers,
+  teamMembers,
   userRole,
   initialTab,
 }: UnifiedRequestsHubProps) {
@@ -79,7 +79,7 @@ export function UnifiedRequestsHub({
             initialRequests={initialVideoRequests}
             initialTotal={initialVideoTotal}
             initialStats={initialVideoStats}
-            loanOfficers={loanOfficers}
+            teamMembers={teamMembers}
             userRole={userRole}
           />
         </TabsContent>

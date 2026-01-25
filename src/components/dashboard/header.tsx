@@ -232,7 +232,7 @@ function UserMenu({ user, onSignOut, role, accountType }: UserMenuProps) {
         </DropdownMenuItem>
         {user.loanOfficerId && (
           <DropdownMenuItem asChild className="text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 cursor-pointer">
-            <Link href={`/lo/${user.loanOfficerId}`} target="_blank" className="flex items-center">
+            <Link href={`/pro/${user.loanOfficerId}`} target="_blank" className="flex items-center">
               <ExternalLink className="mr-2 h-4 w-4" />
               <span>View Public Profile</span>
             </Link>

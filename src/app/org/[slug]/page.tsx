@@ -40,7 +40,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const { organization, branches, featuredLoanOfficers, testimonials } = result.data;
+  const { organization, branches, featuredProfessionals, testimonials } = result.data;
   const baseUrl = getBaseUrl();
 
   // Generate structured data schemas
@@ -58,17 +58,17 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
       aggregate_rating: organization.aggregate_rating,
       total_reviews: organization.total_reviews,
       total_branches: organization.total_branches,
-      total_loan_officers: organization.total_loan_officers,
+      total_members: organization.total_members,
     },
     branches.map((b) => ({
       id: b.id,
       name: b.name,
       address: b.address,
     })),
-    featuredLoanOfficers.map((lo) => ({
-      id: lo.id,
-      full_name: lo.full_name,
-      title: lo.title,
+    featuredProfessionals.map((member) => ({
+      id: member.id,
+      full_name: member.full_name,
+      title: member.title,
     })),
     testimonials.map((t) => ({
       id: t.id,
@@ -87,7 +87,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
       <OrganizationProfileContent
         organization={organization}
         branches={branches}
-        featuredLoanOfficers={featuredLoanOfficers}
+        featuredProfessionals={featuredProfessionals}
         testimonials={testimonials}
       />
     </>

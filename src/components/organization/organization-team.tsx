@@ -39,6 +39,7 @@ import {
   type Invitation,
   type CreateInvitation,
 } from "@/lib/organization";
+import { usePermissions } from "@/lib/permissions/context";
 
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },
@@ -53,6 +54,8 @@ export function OrganizationTeam() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const { canInviteTeam } = usePermissions();
+  const showInviteButton = canInviteTeam();
 
   const form = useForm<CreateInvitation>({
     resolver: zodResolver(createInvitationSchema),
@@ -245,18 +248,19 @@ export function OrganizationTeam() {
               Manage your organization's team members and their roles
             </CardDescription>
           </div>
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite Team Member</DialogTitle>
-                <DialogDescription>
-                  Send an invitation to add a new member to your organization.
+          {showInviteButton && (
+            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Invite Member
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite Team Member</DialogTitle>
+                  <DialogDescription>
+                    Send an invitation to add a new member to your organization.
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -322,7 +326,8 @@ export function OrganizationTeam() {
                 </form>
               </Form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          )}
         </CardHeader>
         <CardContent>
           <Table>
@@ -341,7 +346,7 @@ export function OrganizationTeam() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={member.avatar_url || undefined} />
+                        <AvatarImage src={member.photo_url || undefined} />
                         <AvatarFallback>
                           {(member.full_name || member.email)
                             .split(" ")
@@ -499,7 +504,7 @@ export function OrganizationTeam() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={member.avatar_url || undefined} />
+                          <AvatarImage src={member.photo_url || undefined} />
                           <AvatarFallback>
                             {(member.full_name || member.email)
                               .split(" ")

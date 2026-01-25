@@ -36,9 +36,9 @@ export async function getSurveyByToken(
         completed_at,
         opened_at,
         template_id,
-        loan_officer_id,
+        user_id,
         organization_id,
-        loan_officers!inner (
+        users!user_id (
           id,
           full_name,
           photo_url,
@@ -101,7 +101,7 @@ export async function getSurveyByToken(
         .eq("id", survey.id);
     }
 
-    const loanOfficer = survey.loan_officers as unknown as {
+    const loanOfficer = survey.users as unknown as {
       id: string;
       full_name: string;
       photo_url: string | null;
@@ -195,7 +195,7 @@ export async function submitSurveyResponse(
         expires_at,
         completed_at,
         organization_id,
-        loan_officer_id,
+        user_id,
         template_id,
         survey_templates!inner (
           thank_you_config
@@ -281,7 +281,7 @@ export async function submitSurveyResponse(
         .from("reviews")
         .insert({
           organization_id: survey.organization_id,
-          loan_officer_id: survey.loan_officer_id,
+          user_id: survey.user_id,
           source: "internal",
           survey_response_id: response.id,
           rating: overallRating,

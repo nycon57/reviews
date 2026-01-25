@@ -22,8 +22,6 @@ export type EXSurveyType = "engagement" | "pulse" | "exit" | "onboarding" | "cus
 export type EXSurveyFrequency = "once" | "weekly" | "monthly" | "quarterly" | "annual";
 export type EXSurveyStatus = "draft" | "scheduled" | "active" | "closed" | "archived";
 export type TenureRange = "0-6months" | "6-12months" | "1-2years" | "2-5years" | "5-10years" | "10+years";
-export type ActionPlanPriority = "low" | "medium" | "high" | "critical";
-export type ActionPlanStatus = "planned" | "in_progress" | "completed" | "cancelled";
 
 // Department
 export interface Department {
@@ -194,27 +192,6 @@ export interface EXMetricsSnapshot {
   computedAt: string;
 }
 
-// EX Action Plan
-export interface EXActionPlan {
-  id: string;
-  organizationId: string;
-  surveyId?: string;
-  departmentId?: string;
-  title: string;
-  description?: string;
-  theme: string;
-  priority: ActionPlanPriority;
-  status: ActionPlanStatus;
-  ownerUserId?: string;
-  targetDate?: string;
-  completedDate?: string;
-  successMetrics?: Record<string, unknown>;
-  notes?: string;
-  createdBy?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // EX Benchmark
 export interface EXBenchmark {
   id: string;
@@ -249,8 +226,6 @@ export const exSurveyTypeSchema = z.enum(["engagement", "pulse", "exit", "onboar
 export const exSurveyFrequencySchema = z.enum(["once", "weekly", "monthly", "quarterly", "annual"]);
 export const exSurveyStatusSchema = z.enum(["draft", "scheduled", "active", "closed", "archived"]);
 export const tenureRangeSchema = z.enum(["0-6months", "6-12months", "1-2years", "2-5years", "5-10years", "10+years"]);
-export const actionPlanPrioritySchema = z.enum(["low", "medium", "high", "critical"]);
-export const actionPlanStatusSchema = z.enum(["planned", "in_progress", "completed", "cancelled"]);
 
 export const notificationSettingsSchema = z.object({
   sendReminders: z.boolean().optional(),
@@ -324,41 +299,11 @@ export const createEXSurveySchema = z.object({
   }).optional(),
 });
 
-export const createActionPlanSchema = z.object({
-  surveyId: z.string().uuid().optional(),
-  departmentId: z.string().uuid().optional(),
-  title: z.string().min(1, "Title is required").max(200),
-  description: z.string().max(1000).optional(),
-  theme: z.string().min(1, "Theme is required").max(100),
-  priority: actionPlanPrioritySchema.optional().default("medium"),
-  status: actionPlanStatusSchema.optional().default("planned"),
-  ownerUserId: z.string().uuid().optional(),
-  targetDate: z.string().optional(),
-  successMetrics: z.record(z.unknown()).optional(),
-  notes: z.string().max(2000).optional(),
-});
-
-export const updateActionPlanSchema = z.object({
-  id: z.string().uuid(),
-  title: z.string().min(1).max(200).optional(),
-  description: z.string().max(1000).optional(),
-  theme: z.string().min(1).max(100).optional(),
-  priority: actionPlanPrioritySchema.optional(),
-  status: actionPlanStatusSchema.optional(),
-  ownerUserId: z.string().uuid().optional().nullable(),
-  targetDate: z.string().optional().nullable(),
-  completedDate: z.string().optional().nullable(),
-  successMetrics: z.record(z.unknown()).optional(),
-  notes: z.string().max(2000).optional(),
-});
-
 // Input types derived from schemas
 export type CreateDepartmentInput = z.infer<typeof departmentSchema>;
 export type CreateEXSurveyTemplateInput = z.infer<typeof createEXSurveyTemplateSchema>;
 export type UpdateEXSurveyTemplateInput = z.infer<typeof updateEXSurveyTemplateSchema>;
 export type CreateEXSurveyInput = z.infer<typeof createEXSurveySchema>;
-export type CreateActionPlanInput = z.infer<typeof createActionPlanSchema>;
-export type UpdateActionPlanInput = z.infer<typeof updateActionPlanSchema>;
 
 // Default EX Survey Templates
 type DefaultEXTemplateData = Omit<EXSurveyTemplate, "id" | "organizationId" | "createdAt" | "updatedAt" | "createdBy" | "estimatedTimeMinutes">;
@@ -647,6 +592,270 @@ export const DEFAULT_EX_TEMPLATES: Record<string, DefaultEXTemplateData> = {
       reminderDays: [3],
       notifyManagers: false,
     },
+  },
+  IC_CONTRIBUTOR: {
+    name: "Individual Contributor Engagement",
+    description: "Focused survey for individual contributors measuring tools, clarity, growth, and voice",
+    surveyType: "engagement",
+    frequency: "quarterly",
+    isAnonymous: true,
+    isActive: true,
+    isDefault: true,
+    targetRoles: ["user"],
+    questions: [
+      {
+        id: "ic-enps",
+        type: "nps",
+        text: "How likely are you to recommend this company as a great place to work?",
+        description: "On a scale of 0-10, where 0 is not at all likely and 10 is extremely likely",
+        required: true,
+        order: 0,
+      },
+      {
+        id: "ic-tools",
+        type: "rating",
+        text: "I have the tools and resources I need to do my job effectively",
+        required: true,
+        order: 1,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "ic-clarity",
+        type: "rating",
+        text: "I have a clear understanding of my role and responsibilities",
+        required: true,
+        order: 2,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "ic-growth",
+        type: "rating",
+        text: "I have opportunities to grow and develop in my role",
+        required: true,
+        order: 3,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "ic-voice",
+        type: "rating",
+        text: "My ideas and opinions are valued and heard",
+        required: true,
+        order: 4,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "ic-blockers",
+        type: "multiple_choice",
+        text: "What most often prevents you from doing your best work?",
+        description: "Select all that apply",
+        required: false,
+        order: 5,
+        options: ["Unclear priorities", "Inadequate tools/software", "Too many meetings", "Lack of context", "Process friction", "Insufficient training"],
+      },
+      {
+        id: "ic-feedback",
+        type: "text",
+        text: "What one change would make you more effective in your role?",
+        description: "Your feedback is anonymous",
+        required: false,
+        order: 6,
+      },
+    ],
+    branding: {
+      showProgressBar: true,
+      showQuestionNumbers: true,
+    },
+    thankYouConfig: {
+      title: "Thank you for your feedback!",
+      message: "Your input helps us create better working conditions for everyone.",
+    },
+    notificationSettings: {
+      sendReminders: true,
+      reminderDays: [3, 7],
+      notifyManagers: false,
+    },
+    benchmarkCategory: "general",
+  },
+  MANAGER_EXPERIENCE: {
+    name: "Manager & Team Lead Survey",
+    description: "Survey for managers and team leads measuring leadership support, authority, and team health",
+    surveyType: "engagement",
+    frequency: "quarterly",
+    isAnonymous: true,
+    isActive: true,
+    isDefault: true,
+    targetRoles: ["manager", "admin"],
+    questions: [
+      {
+        id: "mgr-enps",
+        type: "nps",
+        text: "How likely are you to recommend this company as a great place to lead a team?",
+        description: "On a scale of 0-10, where 0 is not at all likely and 10 is extremely likely",
+        required: true,
+        order: 0,
+      },
+      {
+        id: "mgr-support",
+        type: "rating",
+        text: "I receive adequate support from my leadership to manage my team effectively",
+        required: true,
+        order: 1,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "mgr-authority",
+        type: "rating",
+        text: "I have the authority to make decisions that affect my team",
+        required: true,
+        order: 2,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "mgr-workload",
+        type: "rating",
+        text: "My workload as a manager is sustainable",
+        required: true,
+        order: 3,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "mgr-team-perf",
+        type: "rating",
+        text: "I have the resources and support needed to help my team perform at their best",
+        required: true,
+        order: 4,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "mgr-challenges",
+        type: "multiple_choice",
+        text: "What are your biggest challenges as a manager?",
+        description: "Select all that apply",
+        required: false,
+        order: 5,
+        options: ["Hiring/recruiting", "Performance management", "Cross-team coordination", "Budget constraints", "Retaining talent", "Communication from leadership"],
+      },
+      {
+        id: "mgr-support-need",
+        type: "single_choice",
+        text: "What type of support would help you most?",
+        required: false,
+        order: 6,
+        options: ["Management training", "Mentorship/coaching", "Better tools/systems", "More headcount", "Clearer expectations"],
+      },
+      {
+        id: "mgr-feedback",
+        type: "text",
+        text: "What would make you more effective as a manager here?",
+        description: "Your feedback is anonymous",
+        required: false,
+        order: 7,
+      },
+    ],
+    branding: {
+      showProgressBar: true,
+      showQuestionNumbers: true,
+    },
+    thankYouConfig: {
+      title: "Thank you for your feedback!",
+      message: "Your leadership insights help us improve the manager experience across the organization.",
+    },
+    notificationSettings: {
+      sendReminders: true,
+      reminderDays: [3, 7],
+      notifyManagers: false,
+    },
+    benchmarkCategory: "managers",
+  },
+  ALL_EMPLOYEES: {
+    name: "Company-Wide Culture Survey",
+    description: "Universal survey for all employees measuring culture, belonging, values, and communication",
+    surveyType: "engagement",
+    frequency: "quarterly",
+    isAnonymous: true,
+    isActive: true,
+    isDefault: true,
+    targetRoles: [],
+    questions: [
+      {
+        id: "all-enps",
+        type: "nps",
+        text: "How likely are you to recommend this company as a great place to work?",
+        description: "On a scale of 0-10, where 0 is not at all likely and 10 is extremely likely",
+        required: true,
+        order: 0,
+      },
+      {
+        id: "all-belonging",
+        type: "rating",
+        text: "I feel a sense of belonging at this company",
+        required: true,
+        order: 1,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "all-communication",
+        type: "rating",
+        text: "Leadership communicates a clear vision and direction",
+        required: true,
+        order: 2,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "all-values",
+        type: "rating",
+        text: "The company lives by its stated values",
+        required: true,
+        order: 3,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "all-pride",
+        type: "rating",
+        text: "I am proud to work for this company",
+        required: true,
+        order: 4,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "all-wellbeing",
+        type: "rating",
+        text: "The company cares about my wellbeing",
+        required: true,
+        order: 5,
+        scale: { min: 1, max: 5, labels: ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"] },
+      },
+      {
+        id: "all-focus",
+        type: "single_choice",
+        text: "What should leadership focus on most in the next quarter?",
+        required: false,
+        order: 6,
+        options: ["Employee growth & development", "Work-life balance", "Compensation & benefits", "Communication & transparency", "Innovation & strategy"],
+      },
+      {
+        id: "all-feedback",
+        type: "text",
+        text: "If you could change one thing about working here, what would it be?",
+        description: "Your feedback is anonymous",
+        required: false,
+        order: 7,
+      },
+    ],
+    branding: {
+      showProgressBar: true,
+      showQuestionNumbers: true,
+    },
+    thankYouConfig: {
+      title: "Thank you for your feedback!",
+      message: "Your voice matters. Results will be shared to drive meaningful change.",
+    },
+    notificationSettings: {
+      sendReminders: true,
+      reminderDays: [3, 7],
+      notifyManagers: false,
+    },
+    benchmarkCategory: "general",
   },
 };
 

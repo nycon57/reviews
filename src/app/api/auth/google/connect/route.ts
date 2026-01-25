@@ -3,9 +3,9 @@ import { initiateGoogleOAuth } from '@/lib/google';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const loanOfficerId = searchParams.get('loan_officer_id') || undefined;
+  const userId = searchParams.get('user_id') || undefined;
 
-  const result = await initiateGoogleOAuth(loanOfficerId);
+  const result = await initiateGoogleOAuth(userId);
 
   if (!result.success) {
     return NextResponse.json(

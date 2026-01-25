@@ -343,7 +343,7 @@ export function DistributionDashboard() {
                         <div className="text-sm text-muted-foreground">
                           {item.survey?.customer_email}
                           {item.survey?.loan_officer && (
-                            <span> - LO: {item.survey.loan_officer.full_name}</span>
+                            <span> - Pro: {item.survey.loan_officer.full_name}</span>
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground">
@@ -396,7 +396,7 @@ export function DistributionDashboard() {
                         <div className="text-sm text-muted-foreground">
                           {survey.customer_email}
                           {survey.loan_officer && (
-                            <span> - LO: {survey.loan_officer.full_name}</span>
+                            <span> - Pro: {survey.loan_officer.full_name}</span>
                           )}
                         </div>
                         <div className="text-xs text-muted-foreground">

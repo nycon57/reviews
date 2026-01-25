@@ -266,7 +266,7 @@ export async function getOrganizationMembers(): Promise<{
   // Get members
   const { data: members, error } = await supabase
     .from("users")
-    .select("id, email, full_name, avatar_url, role, is_active, last_login_at, created_at")
+    .select("id, email, full_name, photo_url, role, is_active, last_login_at, created_at")
     .eq("organization_id", userData.organization_id)
     .order("created_at", { ascending: false });
 
@@ -340,6 +340,58 @@ export async function updateMemberRole(
   const { error } = await supabase
     .from("users")
     .update({ role: newRole, updated_at: new Date().toISOString() })
+    .eq("id", memberId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/organization/team");
+  revalidatePath("/dashboard/team");
+  return { success: true, error: null };
+}
+
+// Update member details (admin only)
+export async function updateMemberDetails(
+  memberId: string,
+  data: { full_name?: string; photo_url?: string }
+): Promise<{ success: boolean; error: string | null }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Get user's organization and role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id || userData.role !== "admin") {
+    return { success: false, error: "Only admins can update member details" };
+  }
+
+  // Verify member belongs to same organization
+  const { data: memberData } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", memberId)
+    .single();
+
+  if (memberData?.organization_id !== userData.organization_id) {
+    return { success: false, error: "Member not found in organization" };
+  }
+
+  // Update member details
+  const { error } = await supabase
+    .from("users")
+    .update({
+      ...data,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", memberId);
 
   if (error) {
@@ -633,7 +685,7 @@ export async function getOrganizationStats(): Promise<{
     const [users, los, reviews, surveys, activeSurveys, pendingReviews] = await Promise.all([
       supabase.from("users").select("id", { count: "exact", head: true })
         .eq("organization_id", userData.organization_id).eq("is_active", true),
-      supabase.from("loan_officers").select("id", { count: "exact", head: true })
+      supabase.from("users").select("id", { count: "exact", head: true })
         .eq("organization_id", userData.organization_id).eq("is_active", true),
       supabase.from("reviews").select("id", { count: "exact", head: true })
         .eq("organization_id", userData.organization_id),
@@ -648,7 +700,7 @@ export async function getOrganizationStats(): Promise<{
     return {
       stats: {
         total_users: users.count || 0,
-        total_loan_officers: los.count || 0,
+        total_members: los.count || 0,
         total_reviews: reviews.count || 0,
         total_surveys: surveys.count || 0,
         active_surveys: activeSurveys.count || 0,

@@ -145,33 +145,33 @@ export default async function ReviewsPage({
     ? videosResult.data?.stats ?? DEFAULT_VIDEO_STATS
     : DEFAULT_VIDEO_STATS;
 
-  // Merge loan officers from both sources (dedupe by id)
-  const reviewLoanOfficers = reviewLoanOfficersResult.success
+  // Merge users from both sources (dedupe by id)
+  const reviewUsers = reviewLoanOfficersResult.success
     ? reviewLoanOfficersResult.data ?? []
     : [];
-  const videoLoanOfficers = videoLoanOfficersResult.success
+  const videoUsers = videoLoanOfficersResult.success
     ? videoLoanOfficersResult.data ?? []
     : [];
 
-  const loanOfficerMap = new Map<string, { id: string; fullName: string; email?: string }>();
-  // Add review loan officers (no email)
-  reviewLoanOfficers.forEach((lo) => {
-    if (!loanOfficerMap.has(lo.id)) {
-      loanOfficerMap.set(lo.id, {
-        id: lo.id,
-        fullName: lo.fullName,
+  const userMap = new Map<string, { id: string; fullName: string; email?: string }>();
+  // Add review users (no email)
+  reviewUsers.forEach((user) => {
+    if (!userMap.has(user.id)) {
+      userMap.set(user.id, {
+        id: user.id,
+        fullName: user.fullName,
       });
     }
   });
-  // Add video loan officers (with email) - override if exists
-  videoLoanOfficers.forEach((lo) => {
-    loanOfficerMap.set(lo.id, {
-      id: lo.id,
-      fullName: lo.fullName,
-      email: lo.email,
+  // Add video users (with email) - override if exists
+  videoUsers.forEach((user) => {
+    userMap.set(user.id, {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
     });
   });
-  const loanOfficers = Array.from(loanOfficerMap.values());
+  const teamMembers = Array.from(userMap.values());
 
   // Determine AI access based on subscription tier
   const subscriptionTier = orgResult.organization?.subscription_tier ?? "free";
@@ -216,7 +216,7 @@ export default async function ReviewsPage({
           initialVideos={initialVideos}
           initialVideosTotal={initialVideosTotal}
           videoStats={videoStats}
-          loanOfficers={loanOfficers}
+          teamMembers={teamMembers}
           userRole={userRole}
           hasAiAccess={hasAiAccess}
           initialReviewId={initialReviewId}

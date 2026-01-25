@@ -395,7 +395,7 @@ export function ReportViewer({ report, className }: ReportViewerProps) {
               </TableHeader>
               <TableBody>
                 {teamComparison.map((member: TeamComparisonRow) => (
-                  <TableRow key={member.loanOfficerId}>
+                  <TableRow key={member.userId}>
                     <TableCell className="font-medium">{member.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">

@@ -7,6 +7,7 @@ export const updateProfileSchema = z.object({
 
   // Professional details
   title: z.string().max(100, "Title must be 100 characters or less").optional().or(z.literal("")),
+  nmlsId: z.string().max(50, "License number must be 50 characters or less").optional().or(z.literal("")),
   bio: z.string().max(500, "Bio must be 500 characters or less").optional().or(z.literal("")),
 
   // Contact info

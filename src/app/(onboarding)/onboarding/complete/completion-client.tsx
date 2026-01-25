@@ -24,7 +24,7 @@ const nextSteps = [
   {
     icon: Users,
     title: "Add your team",
-    description: "Invite loan officers and team members to your organization",
+    description: "Invite professionals and team members to your organization",
     href: "/dashboard/team",
   },
   {

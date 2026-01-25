@@ -95,7 +95,7 @@ export function VideoTestimonialPlayer({
 
   const encodedUrl = encodeURIComponent(pageUrl);
   const encodedTitle = encodeURIComponent(
-    `Watch ${video.customer.displayName}'s testimonial about their experience with ${video.loanOfficer.fullName}`
+    `Watch ${video.customer.displayName}'s testimonial about their experience with ${video.professional.fullName}`
   );
   const socialLinks = {
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
@@ -300,10 +300,10 @@ export function VideoTestimonialPlayer({
             <div className="border-t border-gray-100 pt-6">
               <p className="text-sm text-gray-500 mb-3">Testimonial for</p>
               <div className="flex items-center gap-3">
-                {video.loanOfficer.photoUrl ? (
+                {video.professional.photoUrl ? (
                   <Image
-                    src={video.loanOfficer.photoUrl}
-                    alt={video.loanOfficer.fullName}
+                    src={video.professional.photoUrl}
+                    alt={video.professional.fullName}
                     width={48}
                     height={48}
                     className="rounded-full object-cover"
@@ -314,9 +314,9 @@ export function VideoTestimonialPlayer({
                   </div>
                 )}
                 <div>
-                  <p className="font-medium text-gray-900">{video.loanOfficer.fullName}</p>
-                  {video.loanOfficer.title && (
-                    <p className="text-sm text-gray-500">{video.loanOfficer.title}</p>
+                  <p className="font-medium text-gray-900">{video.professional.fullName}</p>
+                  {video.professional.title && (
+                    <p className="text-sm text-gray-500">{video.professional.title}</p>
                   )}
                 </div>
               </div>

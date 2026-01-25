@@ -128,7 +128,7 @@ async function logEmail(params: {
       subject: params.subject,
       template_name: params.templateName,
       organization_id: params.organizationId,
-      loan_officer_id: params.loanOfficerId,
+      user_id: params.loanOfficerId,
       survey_id: params.surveyId,
       resend_message_id: params.resendMessageId,
       status: params.status,
@@ -349,10 +349,15 @@ export async function sendReviewResponseEmail(
 
   const fromAddress = getFromAddress(data.organizationName);
   const { subject, html } = getReviewResponseToReviewerEmail(data);
-  // Use organization + LO + customer email + response hash for idempotency
+  // Use organization + user + customer email + response hash for idempotency
   // This prevents duplicate emails for the same response to the same customer
-  const responseHash = data.responseText ? data.responseText.slice(0, 50).replace(/\W/g, "") : "default";
-  const idempotencyKey = `review-response-${data.organizationId || "org"}-${data.loanOfficerId || "lo"}-${data.toEmail.toLowerCase()}-${responseHash}`;
+  const responseHash = data.responseText
+    ? Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data.responseText))))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("")
+        .slice(0, 16)
+    : "default";
+  const idempotencyKey = `review-response-${data.organizationId || "org"}-${data.loanOfficerId || "user"}-${data.toEmail.toLowerCase()}-${responseHash}`;
 
   const result = await sendWithReliability({
     to: data.toEmail,
@@ -369,7 +374,7 @@ export async function sendReviewResponseEmail(
         ? [{ name: "organization_id", value: data.organizationId }]
         : []),
       ...(data.loanOfficerId
-        ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+        ? [{ name: "user_id", value: data.loanOfficerId }]
         : []),
     ],
   });
@@ -775,7 +780,7 @@ export async function sendSurveyCompletionThankYouEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -867,7 +872,7 @@ export async function sendSurveyHighRatingFollowUpEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -951,7 +956,7 @@ export async function sendSurveyLowRatingFollowUpEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1038,7 +1043,7 @@ export async function sendSurveyResponseReceivedNotificationEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1123,7 +1128,7 @@ export async function sendReviewPendingApprovalEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1204,7 +1209,7 @@ export async function sendReviewApprovedEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1285,7 +1290,7 @@ export async function sendReviewRejectedEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1365,7 +1370,7 @@ export async function sendReviewResponseSentConfirmationEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1449,7 +1454,7 @@ export async function sendReviewPublishedNotificationEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1530,7 +1535,7 @@ export async function sendReviewResponseReceivedEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1611,7 +1616,7 @@ export async function sendNegativeReviewAlertEnhancedEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1701,7 +1706,7 @@ export async function sendFirstReviewMilestoneEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1788,7 +1793,7 @@ export async function sendReviewCountMilestoneEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1874,7 +1879,7 @@ export async function sendFirst5StarMilestoneEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -1962,7 +1967,7 @@ export async function sendLeaderboardMilestoneEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -2050,7 +2055,7 @@ export async function sendBadgeEarnedMilestoneEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -2138,7 +2143,7 @@ export async function sendStreakMilestoneEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });
@@ -2225,7 +2230,7 @@ export async function sendVideoMilestoneEmail(
           ? [{ name: "organization_id", value: data.organizationId }]
           : []),
         ...(data.loanOfficerId
-          ? [{ name: "loan_officer_id", value: data.loanOfficerId }]
+          ? [{ name: "user_id", value: data.loanOfficerId }]
           : []),
       ],
     });

@@ -7,7 +7,8 @@ export {
   cancelVideoTestimonialRequest,
   resendVideoTestimonialRequest,
   getVideoTestimonialQueue,
-  getLoanOfficersForVideoRequests,
+  getUsersForVideoRequests,
+  getLoanOfficersForVideoRequests, // @deprecated - use getUsersForVideoRequests
   // Queue Management Actions
   getVideoTestimonialQueueStatus,
   pauseVideoTestimonialQueue,

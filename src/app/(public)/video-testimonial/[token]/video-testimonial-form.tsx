@@ -182,7 +182,7 @@ const RELATIONSHIP_OPTIONS = [
 ];
 
 export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
-  const { loanOfficer, organization, promptText } = request;
+  const { professional, organization, promptText } = request;
   const router = useRouter();
 
   // Form state
@@ -669,12 +669,12 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
                 You&apos;re all set, {displayName}!
               </h2>
               <p className="mt-2 font-sans text-sm text-muted-foreground">
-                Record your video testimonial for {loanOfficer.fullName}
+                Record your video testimonial for {professional.fullName}
               </p>
               {promptText && (
                 <div className="mt-4 rounded-lg bg-muted/50 p-4 text-left">
                   <p className="font-sans text-xs font-medium text-muted-foreground">
-                    Prompt from {loanOfficer.fullName}:
+                    Prompt from {professional.fullName}:
                   </p>
                   <p className="mt-1 font-sans text-sm italic text-foreground">
                     &quot;{promptText}&quot;
@@ -728,27 +728,27 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
               Share Your Experience
             </CardTitle>
             <CardDescription className="mt-1.5 font-sans">
-              Record a short video testimonial about working with {loanOfficer.fullName}
+              Record a short video testimonial about working with {professional.fullName}
             </CardDescription>
           </div>
 
           {/* Loan Officer Info */}
           <div className="flex items-center justify-center gap-3 rounded-lg bg-muted/50 p-4">
-            {loanOfficer.photoUrl ? (
+            {professional.photoUrl ? (
               <img
-                src={loanOfficer.photoUrl}
-                alt={loanOfficer.fullName}
+                src={professional.photoUrl}
+                alt={professional.fullName}
                 className="h-14 w-14 rounded-full object-cover ring-2 ring-background"
               />
             ) : (
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-repwell-teal-300/10 text-lg font-semibold text-repwell-teal-300">
-                {loanOfficer.fullName.charAt(0)}
+                {professional.fullName.charAt(0)}
               </div>
             )}
             <div className="text-left">
-              <p className="font-sans font-medium text-repwell-teal-500">{loanOfficer.fullName}</p>
-              {loanOfficer.title && (
-                <p className="font-sans text-sm text-muted-foreground">{loanOfficer.title}</p>
+              <p className="font-sans font-medium text-repwell-teal-500">{professional.fullName}</p>
+              {professional.title && (
+                <p className="font-sans text-sm text-muted-foreground">{professional.title}</p>
               )}
               <p className="font-sans text-xs text-muted-foreground">{organization.name}</p>
             </div>

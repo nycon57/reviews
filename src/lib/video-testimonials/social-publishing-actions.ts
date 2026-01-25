@@ -205,7 +205,7 @@ export async function generateVideoPostPreview(
     .select(`
       id, video_url, thumbnail_url, duration_seconds, ai_generated_text, approval_status,
       video_testimonial_requests!inner (customer_name, source_metadata),
-      loan_officers!inner (full_name, title),
+      users!user_id (full_name, title),
       organizations!inner (name)
     `)
     .eq("id", videoResponseId)
@@ -225,7 +225,7 @@ export async function generateVideoPostPreview(
   type OrgData = { name: string };
 
   const request = video.video_testimonial_requests as unknown as RequestData;
-  const loanOfficer = video.loan_officers as unknown as LOData;
+  const loanOfficer = video.users as unknown as LOData;
   const organization = video.organizations as unknown as OrgData;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";

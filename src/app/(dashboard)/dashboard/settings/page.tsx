@@ -38,6 +38,7 @@ async function SettingsContent() {
       userName={profile?.full_name ?? undefined}
       userAvatarUrl={profile?.avatar_url}
       userTitle={profile?.title}
+      userNmlsId={profile?.nmls_id}
       userBio={profile?.bio}
       userPhone={profile?.phone}
       userPersonalWebsiteUrl={profile?.personal_website_url}

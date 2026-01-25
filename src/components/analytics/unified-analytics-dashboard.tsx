@@ -62,12 +62,12 @@ import { format, subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import type {
   VideoTestimonialFunnelMetrics,
   VideoTestimonialTrendDataPoint,
-  LoanOfficerVideoStats,
+  UserVideoStats,
 } from "@/lib/video-testimonials/analytics-actions";
 import {
   getVideoTestimonialFunnelMetrics,
   getVideoTestimonialTrends,
-  getVideoTestimonialStatsByLoanOfficer,
+  getVideoTestimonialStatsByUser,
 } from "@/lib/video-testimonials/analytics-actions";
 import {
   getResponseAnalytics,
@@ -78,7 +78,7 @@ import {
 // Types
 // ============================================================================
 
-interface LoanOfficer {
+interface TeamMember {
   id: string;
   fullName: string;
   email: string;
@@ -94,10 +94,10 @@ interface ReviewSummary {
 interface Props {
   initialVideoMetrics: VideoTestimonialFunnelMetrics | null;
   initialVideoTrends: VideoTestimonialTrendDataPoint[];
-  initialLoStats: LoanOfficerVideoStats[];
+  initialLoStats: UserVideoStats[];
   initialReviewSummary: ReviewSummary;
   initialResponseAnalytics: ResponseAnalytics | null;
-  loanOfficers: LoanOfficer[];
+  teamMembers: TeamMember[];
   userRole: "admin" | "manager" | "user";
 }
 
@@ -583,7 +583,7 @@ const TrendChart = memo(function TrendChart({
 const TeamPerformanceTable = memo(function TeamPerformanceTable({
   stats,
 }: {
-  stats: LoanOfficerVideoStats[];
+  stats: UserVideoStats[];
 }) {
   if (stats.length === 0) {
     return (
@@ -593,13 +593,13 @@ const TeamPerformanceTable = memo(function TeamPerformanceTable({
             <Users className="h-5 w-5" aria-hidden="true" />
             Team Performance
           </CardTitle>
-          <CardDescription>Video testimonial stats by loan officer</CardDescription>
+          <CardDescription>Video testimonial stats by team member</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
               <p className="text-sm">No team data available</p>
-              <p className="text-xs">Loan officers will appear here once they have video requests</p>
+              <p className="text-xs">Team members will appear here once they have video requests</p>
             </div>
           </div>
         </CardContent>
@@ -614,16 +614,16 @@ const TeamPerformanceTable = memo(function TeamPerformanceTable({
           <Users className="h-5 w-5" aria-hidden="true" />
           Team Performance
         </CardTitle>
-        <CardDescription>Video testimonial stats by loan officer</CardDescription>
+        <CardDescription>Video testimonial stats by team member</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table aria-label="Team performance statistics by loan officer">
+        <Table aria-label="Team performance statistics by team member">
           <caption className="sr-only">
-            Video testimonial statistics by loan officer
+            Video testimonial statistics by team member
           </caption>
           <TableHeader>
             <TableRow>
-              <TableHead>Loan Officer</TableHead>
+              <TableHead>Team Member</TableHead>
               <TableHead className="text-center">Sent</TableHead>
               <TableHead className="text-center">Opened</TableHead>
               <TableHead className="text-center">Completed</TableHead>
@@ -632,23 +632,23 @@ const TeamPerformanceTable = memo(function TeamPerformanceTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {stats.slice(0, 10).map((lo, index) => (
-              <TableRow key={lo.loanOfficerId}>
+            {stats.slice(0, 10).map((member, index) => (
+              <TableRow key={member.userId}>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-medium" aria-hidden="true">
                       {index + 1}
                     </span>
-                    <span className="font-medium">{lo.loanOfficerName}</span>
+                    <span className="font-medium">{member.userName}</span>
                   </div>
                 </TableCell>
-                <TableCell className="text-center">{lo.sent}</TableCell>
-                <TableCell className="text-center">{lo.opened}</TableCell>
-                <TableCell className="text-center">{lo.completed}</TableCell>
-                <TableCell className="text-center">{lo.published}</TableCell>
+                <TableCell className="text-center">{member.sent}</TableCell>
+                <TableCell className="text-center">{member.opened}</TableCell>
+                <TableCell className="text-center">{member.completed}</TableCell>
+                <TableCell className="text-center">{member.published}</TableCell>
                 <TableCell className="text-right">
-                  <Badge variant={lo.conversionRate >= 30 ? "default" : "secondary"}>
-                    {lo.conversionRate}%
+                  <Badge variant={member.conversionRate >= 30 ? "default" : "secondary"}>
+                    {member.conversionRate}%
                   </Badge>
                 </TableCell>
               </TableRow>
@@ -865,12 +865,12 @@ export function UnifiedAnalyticsDashboard({
   initialLoStats,
   initialReviewSummary,
   initialResponseAnalytics,
-  loanOfficers,
+  teamMembers,
   userRole,
 }: Props) {
   const [videoMetrics, setVideoMetrics] = useState<VideoTestimonialFunnelMetrics | null>(initialVideoMetrics);
   const [videoTrends, setVideoTrends] = useState<VideoTestimonialTrendDataPoint[]>(initialVideoTrends);
-  const [loStats, setLoStats] = useState<LoanOfficerVideoStats[]>(initialLoStats);
+  const [loStats, setLoStats] = useState<UserVideoStats[]>(initialLoStats);
   const [reviewSummary, _setReviewSummary] = useState<ReviewSummary>(initialReviewSummary);
   const [responseAnalytics, setResponseAnalytics] = useState<ResponseAnalytics | null>(initialResponseAnalytics);
   const [isLoading, setIsLoading] = useState(false);
@@ -878,7 +878,7 @@ export function UnifiedAnalyticsDashboard({
   // Filter state
   const [dateRange, setDateRange] = useState<DateRange>("30d");
   const [trendPeriod, setTrendPeriod] = useState<TrendPeriod>("daily");
-  const [selectedLoanOfficer, setSelectedLoanOfficer] = useState<string>("all");
+  const [selectedMember, setSelectedMember] = useState<string>("all");
 
   const canViewTeamStats = userRole === "admin" || userRole === "manager";
 
@@ -924,24 +924,24 @@ export function UnifiedAnalyticsDashboard({
     setIsLoading(true);
     try {
       const { startDate, endDate } = getDateRange(dateRange);
-      const loFilter = selectedLoanOfficer !== "all" ? selectedLoanOfficer : undefined;
+      const loFilter = selectedMember !== "all" ? selectedMember : undefined;
 
       const [videoMetricsResult, videoTrendsResult, loStatsResult, responseAnalyticsResult] = await Promise.all([
         getVideoTestimonialFunnelMetrics({
           startDate,
           endDate,
-          loanOfficerId: loFilter,
+          userId: loFilter,
         }),
         getVideoTestimonialTrends({
           startDate,
           endDate,
           period: trendPeriod,
-          loanOfficerId: loFilter,
+          userId: loFilter,
         }),
         canViewTeamStats && !loFilter
-          ? getVideoTestimonialStatsByLoanOfficer({ startDate, endDate })
+          ? getVideoTestimonialStatsByUser({ startDate, endDate })
           : Promise.resolve({ success: true, data: [] }),
-        getResponseAnalytics({ startDate, endDate, loanOfficerId: loFilter }),
+        getResponseAnalytics({ startDate, endDate, userId: loFilter }),
       ]);
 
       if (videoMetricsResult.success && videoMetricsResult.data) {
@@ -969,7 +969,7 @@ export function UnifiedAnalyticsDashboard({
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, trendPeriod, selectedLoanOfficer, canViewTeamStats, getDateRange]);
+  }, [dateRange, trendPeriod, selectedMember, canViewTeamStats, getDateRange]);
 
   // Ref to track if this is the initial render
   const isInitialRender = useRef(true);
@@ -1020,21 +1020,21 @@ export function UnifiedAnalyticsDashboard({
               </Select>
             </div>
 
-            {canViewTeamStats && loanOfficers.length > 0 && (
+            {canViewTeamStats && teamMembers.length > 0 && (
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Select
-                  value={selectedLoanOfficer}
-                  onValueChange={setSelectedLoanOfficer}
+                  value={selectedMember}
+                  onValueChange={setSelectedMember}
                 >
-                  <SelectTrigger className="w-[200px]" aria-label="Filter by loan officer">
-                    <SelectValue placeholder="All loan officers" />
+                  <SelectTrigger className="w-[200px]" aria-label="Filter by team member">
+                    <SelectValue placeholder="All team members" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All loan officers</SelectItem>
-                    {loanOfficers.map((lo) => (
-                      <SelectItem key={lo.id} value={lo.id}>
-                        {lo.fullName}
+                    <SelectItem value="all">All team members</SelectItem>
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.fullName}
                       </SelectItem>
                     ))}
                   </SelectContent>

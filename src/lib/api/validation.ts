@@ -24,8 +24,8 @@ export const paginationSchema = z.object({
 
 export const createSurveySchema = z
   .object({
-    loan_officer_id: uuidSchema.optional(),
-    loan_officer_email: emailSchema.optional(),
+    user_id: uuidSchema.optional(),
+    user_email: emailSchema.optional(),
     template_id: uuidSchema.optional(),
     customer_name: z.string().min(1, 'Customer name is required').max(200),
     customer_email: emailSchema,
@@ -37,10 +37,10 @@ export const createSurveySchema = z
     metadata: z.record(z.unknown()).optional(),
   })
   .refine(
-    (data) => data.loan_officer_id || data.loan_officer_email,
+    (data) => data.user_id || data.user_email,
     {
-      message: 'Either loan_officer_id or loan_officer_email is required',
-      path: ['loan_officer_id'],
+      message: 'Either user_id or user_email is required',
+      path: ['user_id'],
     }
   );
 
@@ -110,10 +110,10 @@ export type UpdateReviewInput = z.infer<typeof updateReviewSchema>;
 export type ReviewResponseInput = z.infer<typeof reviewResponseSchema>;
 
 // ============================================================================
-// Loan Officer Schemas
+// Professional Schemas
 // ============================================================================
 
-export const updateLoanOfficerSchema = z.object({
+export const updateProfessionalSchema = z.object({
   full_name: z.string().min(1).max(200).optional(),
   phone: phoneSchema,
   title: z.string().max(100).optional().nullable(),
@@ -122,7 +122,13 @@ export const updateLoanOfficerSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-export type UpdateLoanOfficerInput = z.infer<typeof updateLoanOfficerSchema>;
+/** @deprecated Use updateProfessionalSchema instead */
+export const updateLoanOfficerSchema = updateProfessionalSchema;
+
+export type UpdateProfessionalInput = z.infer<typeof updateProfessionalSchema>;
+
+/** @deprecated Use UpdateProfessionalInput instead */
+export type UpdateLoanOfficerInput = UpdateProfessionalInput;
 
 // ============================================================================
 // Organization Schemas
@@ -157,7 +163,7 @@ export type InviteUserInput = z.infer<typeof inviteUserSchema>;
 
 export const surveyFiltersSchema = z.object({
   status: z.enum(['pending', 'sent', 'completed', 'expired', 'cancelled']).optional(),
-  loan_officer_id: uuidSchema.optional(),
+  user_id: uuidSchema.optional(),
   template_id: uuidSchema.optional(),
   created_after: dateSchema,
   created_before: dateSchema,
@@ -167,7 +173,7 @@ export const surveyFiltersSchema = z.object({
 export const reviewFiltersSchema = z.object({
   status: z.enum(['pending', 'approved', 'rejected', 'flagged']).optional(),
   platform: z.string().max(50).optional(),
-  loan_officer_id: uuidSchema.optional(),
+  user_id: uuidSchema.optional(),
   branch_id: uuidSchema.optional(),
   min_rating: z.coerce.number().int().min(1).max(5).optional(),
   max_rating: z.coerce.number().int().min(1).max(5).optional(),
@@ -182,11 +188,14 @@ export const branchFiltersSchema = z.object({
   search: z.string().max(200).optional(),
 });
 
-export const loanOfficerFiltersSchema = z.object({
+export const professionalFiltersSchema = z.object({
   is_active: z.enum(['true', 'false']).optional(),
   branch_id: uuidSchema.optional(),
   search: z.string().max(200).optional(),
 });
+
+/** @deprecated Use professionalFiltersSchema instead */
+export const loanOfficerFiltersSchema = professionalFiltersSchema;
 
 export const userFiltersSchema = z.object({
   role: z.enum(['admin', 'manager', 'user']).optional(),

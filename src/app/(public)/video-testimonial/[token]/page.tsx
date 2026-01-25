@@ -20,11 +20,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const { organization, loanOfficer } = result.data;
+  const { organization, professional } = result.data;
 
   return {
     title: `Share Your Experience - ${organization.name}`,
-    description: `Record a video testimonial about your experience with ${loanOfficer.fullName}`,
+    description: `Record a video testimonial about your experience with ${professional.fullName}`,
     robots: {
       index: false,
       follow: false,

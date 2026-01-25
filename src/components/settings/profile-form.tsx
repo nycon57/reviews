@@ -27,6 +27,7 @@ import {
   Clock,
   FileText,
   BuildingOffice as Building2,
+  IdentificationBadge,
 } from "@phosphor-icons/react";
 import { updateProfile, uploadAvatar } from '@/lib/auth/profile-actions';
 import { AvatarUpload } from '@/components/shared/avatar-upload';
@@ -50,6 +51,7 @@ interface ProfileFormProps {
   initialEmail?: string;
   initialAvatarUrl?: string | null;
   initialTitle?: string | null;
+  initialNmlsId?: string | null;
   initialBio?: string | null;
   initialPhone?: string | null;
   initialPersonalWebsiteUrl?: string | null;
@@ -63,6 +65,7 @@ export function ProfileForm({
   initialEmail,
   initialAvatarUrl,
   initialTitle,
+  initialNmlsId,
   initialBio,
   initialPhone,
   initialPersonalWebsiteUrl,
@@ -86,6 +89,7 @@ export function ProfileForm({
     defaultValues: {
       fullName: initialName || '',
       title: initialTitle || '',
+      nmlsId: initialNmlsId || '',
       bio: initialBio || '',
       phone: initialPhone || '',
       personalWebsiteUrl: initialPersonalWebsiteUrl || '',
@@ -225,12 +229,30 @@ export function ProfileForm({
                 </Label>
                 <Input
                   id="title"
-                  placeholder="e.g., Senior Loan Officer"
+                  placeholder="e.g., Senior Professional"
                   {...register('title')}
                 />
                 {errors.title && (
                   <p className="text-xs text-destructive">{errors.title.message}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nmlsId" className="text-sm font-medium flex items-center gap-2">
+                  <IdentificationBadge className="h-3.5 w-3.5 text-muted-foreground" />
+                  License Number
+                </Label>
+                <Input
+                  id="nmlsId"
+                  placeholder="e.g., 123456"
+                  {...register('nmlsId')}
+                />
+                {errors.nmlsId && (
+                  <p className="text-xs text-destructive">{errors.nmlsId.message}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Your professional license or NMLS ID
+                </p>
               </div>
 
               <div className="space-y-2 sm:col-span-2">

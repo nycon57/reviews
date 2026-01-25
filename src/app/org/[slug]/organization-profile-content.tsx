@@ -20,14 +20,14 @@ import {
 import type {
   PublicOrganization,
   PublicOrgBranch,
-  PublicOrgLoanOfficer,
+  PublicOrgProfessional,
   PublicOrgTestimonial,
 } from "@/lib/seo/actions";
 
 interface OrganizationProfileContentProps {
   organization: PublicOrganization;
   branches: PublicOrgBranch[];
-  featuredLoanOfficers: PublicOrgLoanOfficer[];
+  featuredProfessionals: PublicOrgProfessional[];
   testimonials: PublicOrgTestimonial[];
 }
 
@@ -85,7 +85,7 @@ function formatBranchLocation(address: BranchAddress | null, region: string | nu
 export function OrganizationProfileContent({
   organization,
   branches,
-  featuredLoanOfficers,
+  featuredProfessionals,
   testimonials,
 }: OrganizationProfileContentProps) {
   return (
@@ -148,7 +148,7 @@ export function OrganizationProfileContent({
 
                 <Badge variant="outline" className="text-sm px-3 py-1">
                   <Users className="mr-1.5 h-3.5 w-3.5" />
-                  {organization.total_loan_officers} Professionals
+                  {organization.total_members} Professionals
                 </Badge>
               </div>
 
@@ -320,7 +320,7 @@ export function OrganizationProfileContent({
                         {/* Attribution */}
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                           <Link
-                            href={`/lo/${testimonial.loan_officer.id}`}
+                            href={`/pro/${testimonial.loan_officer.id}`}
                             className="flex items-center gap-2 hover:text-primary transition-colors"
                           >
                             <Avatar className="h-5 w-5">
@@ -365,39 +365,39 @@ export function OrganizationProfileContent({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {featuredLoanOfficers.length === 0 ? (
+                {featuredProfessionals.length === 0 ? (
                   <p className="py-4 text-center text-muted-foreground text-sm">
-                    No loan officers listed.
+                    No team members listed.
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {featuredLoanOfficers.slice(0, 6).map((lo) => (
+                    {featuredProfessionals.slice(0, 6).map((member) => (
                       <Link
-                        key={lo.id}
-                        href={`/lo/${lo.id}`}
+                        key={member.id}
+                        href={`/pro/${member.id}`}
                         className="group flex items-center gap-3 rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50"
                       >
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={lo.photo_url || undefined} alt={lo.full_name} />
+                          <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
                           <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                            {getInitials(lo.full_name)}
+                            {getInitials(member.full_name)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                            {lo.full_name}
+                            {member.full_name}
                           </h4>
                           <p className="text-xs text-muted-foreground truncate">
-                            {lo.title || "Loan Officer"}
+                            {member.title || "Professional"}
                           </p>
-                          {lo.average_rating && lo.total_reviews ? (
+                          {member.average_rating && member.total_reviews ? (
                             <div className="mt-0.5 flex items-center gap-1">
                               <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                               <span className="text-xs font-medium">
-                                {Number(lo.average_rating).toFixed(1)}
+                                {Number(member.average_rating).toFixed(1)}
                               </span>
                               <span className="text-xs text-muted-foreground">
-                                ({lo.total_reviews})
+                                ({member.total_reviews})
                               </span>
                             </div>
                           ) : null}
@@ -406,9 +406,9 @@ export function OrganizationProfileContent({
                       </Link>
                     ))}
 
-                    {featuredLoanOfficers.length > 6 && (
+                    {featuredProfessionals.length > 6 && (
                       <p className="text-xs text-center text-muted-foreground pt-2">
-                        +{featuredLoanOfficers.length - 6} more professionals
+                        +{featuredProfessionals.length - 6} more professionals
                       </p>
                     )}
                   </div>
@@ -447,7 +447,7 @@ export function OrganizationProfileContent({
               <CardContent className="pt-6 text-center">
                 <h3 className="font-semibold">Find Your Local Branch</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Connect with an experienced loan officer at one of our locations.
+                  Connect with an experienced professional at one of our locations.
                 </p>
                 {branches.length > 0 && (
                   <Button asChild className="mt-4 w-full">

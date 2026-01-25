@@ -200,8 +200,8 @@ export function OrganizationOverview() {
           icon={<Users className="h-4 w-4 text-primary" />}
         />
         <StatCard
-          title="Loan Officers"
-          value={stats?.total_loan_officers || 0}
+          title="Professionals"
+          value={stats?.total_members || 0}
           description={limits.max_loan_officers === -1 ? "Unlimited" : `of ${limits.max_loan_officers} allowed`}
           icon={<UserCheck className="h-4 w-4 text-primary" />}
         />
@@ -281,8 +281,8 @@ export function OrganizationOverview() {
               max={limits.max_users}
             />
             <UsageBar
-              label="Loan Officers"
-              current={stats?.total_loan_officers || 0}
+              label="Professionals"
+              current={stats?.total_members || 0}
               max={limits.max_loan_officers}
             />
             <UsageBar

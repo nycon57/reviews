@@ -96,18 +96,18 @@ async function getValidAccessToken(connectionId: string): Promise<string | null>
 }
 
 // Generate OAuth state and URL
-export async function initiateGoogleOAuth(loanOfficerId?: string): Promise<ActionResult<{ url: string }>> {
+export async function initiateGoogleOAuth(professionalId?: string): Promise<ActionResult<{ url: string }>> {
   const context = await requireManagerRole();
   if (!context) {
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  // Create state with organization and loan officer info
+  // Create state with organization and professional info
   const state = Buffer.from(
     JSON.stringify({
       organizationId: context.organizationId,
       userId: context.userId,
-      loanOfficerId: loanOfficerId || null,
+      professionalId: professionalId || null,
       timestamp: Date.now(),
     })
   ).toString('base64url');
@@ -125,7 +125,7 @@ export async function handleGoogleOAuthCallback(
   try {
     // Decode state
     const stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
-    const { organizationId, userId: _userId, loanOfficerId } = stateData;
+    const { organizationId, userId: _userId, professionalId } = stateData;
 
     // Validate timestamp (5 minute expiry)
     if (Date.now() - stateData.timestamp > 5 * 60 * 1000) {
@@ -175,7 +175,7 @@ export async function handleGoogleOAuthCallback(
       .from('google_connections')
       .insert({
         organization_id: organizationId,
-        loan_officer_id: loanOfficerId || null,
+        user_id: professionalId || null,
         google_account_id: userInfo.id,
         google_account_email: userInfo.email,
         google_account_name: userInfo.name,
@@ -227,7 +227,7 @@ export async function getGoogleConnections(): Promise<ActionResult<GoogleConnect
   const connections: GoogleConnection[] = (data || []).map((row) => ({
     id: row.id,
     organizationId: row.organization_id,
-    loanOfficerId: row.loan_officer_id,
+    userId: row.user_id,
     googleAccountId: row.google_account_id,
     googleAccountEmail: row.google_account_email,
     googleAccountName: row.google_account_name,
@@ -385,11 +385,11 @@ export async function syncGoogleReviews(
               .eq('id', existingReview.id);
             reviewsUpdated++;
           }
-        } else if (connection.loan_officer_id) {
+        } else if (connection.user_id) {
           // Create new review (only if we have a loan officer assigned)
           const { data: newReview } = await adminClient.from('reviews').insert({
             organization_id: context.organizationId,
-            loan_officer_id: connection.loan_officer_id,
+            user_id: connection.user_id,
             source: 'google',
             source_review_id: googleReview.reviewId,
             source_url: `https://search.google.com/local/reviews?placeid=${connection.location_id}`,
@@ -521,7 +521,7 @@ export async function replyToGoogleReview(
   // Get review and connection info
   const { data: review, error: reviewError } = await adminClient
     .from('reviews')
-    .select('id, source_review_id, loan_officer_id, organization_id')
+    .select('id, source_review_id, user_id, organization_id')
     .eq('id', reviewId)
     .eq('organization_id', context.organizationId)
     .eq('source', 'google')
@@ -531,12 +531,16 @@ export async function replyToGoogleReview(
     return { success: false, error: 'Review not found' };
   }
 
-  // Find active connection for this loan officer
+  if (!review.user_id) {
+    return { success: false, error: 'Review has no assigned user' };
+  }
+
+  // Find active connection for this user
   const { data: connection, error: connError } = await adminClient
     .from('google_connections')
     .select('id, google_account_id, location_id')
     .eq('organization_id', context.organizationId)
-    .eq('loan_officer_id', review.loan_officer_id)
+    .eq('user_id', review.user_id)
     .eq('is_active', true)
     .single();
 
@@ -669,8 +673,8 @@ export async function getAvailableLocations(
   }
 }
 
-// Get loan officers for dropdown
-export async function getLoanOfficersForGoogle(): Promise<
+// Get professionals for dropdown
+export async function getProfessionalsForGoogle(): Promise<
   ActionResult<{ id: string; fullName: string }[]>
 > {
   const context = await requireManagerRole();
@@ -681,21 +685,24 @@ export async function getLoanOfficersForGoogle(): Promise<
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
-    .from('loan_officers')
+    .from('users')
     .select('id, full_name')
     .eq('organization_id', context.organizationId)
     .eq('is_active', true)
     .order('full_name');
 
   if (error) {
-    return { success: false, error: 'Failed to fetch loan officers' };
+    return { success: false, error: 'Failed to fetch professionals' };
   }
 
   return {
     success: true,
-    data: (data || []).map((lo) => ({
-      id: lo.id,
-      fullName: lo.full_name,
+    data: (data || []).map((user) => ({
+      id: user.id,
+      fullName: user.full_name || 'Unknown',
     })),
   };
 }
+
+/** @deprecated Use getProfessionalsForGoogle instead */
+export const getLoanOfficersForGoogle = getProfessionalsForGoogle;

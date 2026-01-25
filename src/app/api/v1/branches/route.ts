@@ -37,7 +37,7 @@ function mapBranchRow(row: Record<string, unknown>): BranchResource {
     is_active: row.is_active as boolean,
     average_rating: row.average_rating as number | null,
     total_reviews: (row.total_reviews as number) || 0,
-    total_loan_officers: (row.total_loan_officers as number) || 0,
+    total_members: (row.total_members as number) || 0,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };

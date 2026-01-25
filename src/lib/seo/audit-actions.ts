@@ -45,7 +45,7 @@ export async function runSEOAudit(): Promise<{
 
     // Get loan officers with their review stats
     const { data: loanOfficers } = await supabase
-      .from("loan_officers")
+      .from("users")
       .select("id, full_name, bio, photo_url, average_rating, total_reviews, nmls_id")
       .eq("organization_id", organizationId)
       .eq("is_active", true);
@@ -92,22 +92,22 @@ export async function runSEOAudit(): Promise<{
     });
 
     // Structured Data Checks
-    const loWithProfiles = loanOfficers?.filter((lo) => lo.full_name) || [];
-    const loWithRatings = loanOfficers?.filter((lo) => lo.average_rating && lo.total_reviews) || [];
-    const loWithPhotos = loanOfficers?.filter((lo) => lo.photo_url) || [];
-    const loWithBios = loanOfficers?.filter((lo) => lo.bio && lo.bio.length > 50) || [];
-    const loWithNMLS = loanOfficers?.filter((lo) => lo.nmls_id) || [];
+    const usersWithProfiles = loanOfficers?.filter((u) => u.full_name) || [];
+    const usersWithRatings = loanOfficers?.filter((u) => u.average_rating && u.total_reviews) || [];
+    const usersWithPhotos = loanOfficers?.filter((u) => u.photo_url) || [];
+    const usersWithBios = loanOfficers?.filter((u) => u.bio && u.bio.length > 50) || [];
+    const usersWithNMLS = loanOfficers?.filter((u) => u.nmls_id) || [];
 
     auditItems.push({
       id: "person_schema",
       category: "structured_data",
       title: "Person Schema (JSON-LD)",
-      description: "Loan officer profiles include Person structured data",
-      status: loWithProfiles.length > 0 ? "pass" : "warning",
+      description: "Team member profiles include Person structured data",
+      status: usersWithProfiles.length > 0 ? "pass" : "warning",
       details:
-        loWithProfiles.length > 0
-          ? `${loWithProfiles.length} loan officer profiles have Person schema`
-          : "No active loan officers found",
+        usersWithProfiles.length > 0
+          ? `${usersWithProfiles.length} team member profiles have Person schema`
+          : "No active team members found",
       priority: "high",
     });
 
@@ -117,14 +117,14 @@ export async function runSEOAudit(): Promise<{
       title: "AggregateRating Schema",
       description: "Profiles with reviews include aggregate rating data",
       status:
-        loWithRatings.length > 0
+        usersWithRatings.length > 0
           ? "pass"
-          : loWithProfiles.length > 0
+          : usersWithProfiles.length > 0
             ? "warning"
             : "not_applicable",
       details:
-        loWithRatings.length > 0
-          ? `${loWithRatings.length} profiles have AggregateRating data`
+        usersWithRatings.length > 0
+          ? `${usersWithRatings.length} profiles have AggregateRating data`
           : "No profiles have reviews yet",
       priority: "high",
     });
@@ -158,14 +158,14 @@ export async function runSEOAudit(): Promise<{
       id: "profile_photos",
       category: "content",
       title: "Profile Photos",
-      description: "Loan officers have profile photos for rich snippets",
+      description: "Team members have profile photos for rich snippets",
       status:
-        loWithPhotos.length === loWithProfiles.length
+        usersWithPhotos.length === usersWithProfiles.length
           ? "pass"
-          : loWithPhotos.length > loWithProfiles.length / 2
+          : usersWithPhotos.length > usersWithProfiles.length / 2
             ? "warning"
             : "fail",
-      details: `${loWithPhotos.length}/${loWithProfiles.length} loan officers have photos`,
+      details: `${usersWithPhotos.length}/${usersWithProfiles.length} team members have photos`,
       priority: "medium",
     });
 
@@ -173,14 +173,14 @@ export async function runSEOAudit(): Promise<{
       id: "profile_bios",
       category: "content",
       title: "Profile Descriptions",
-      description: "Loan officers have meaningful bio/descriptions (50+ chars)",
+      description: "Team members have meaningful bio/descriptions (50+ chars)",
       status:
-        loWithBios.length === loWithProfiles.length
+        usersWithBios.length === usersWithProfiles.length
           ? "pass"
-          : loWithBios.length > loWithProfiles.length / 2
+          : usersWithBios.length > usersWithProfiles.length / 2
             ? "warning"
             : "fail",
-      details: `${loWithBios.length}/${loWithProfiles.length} loan officers have detailed bios`,
+      details: `${usersWithBios.length}/${usersWithProfiles.length} team members have detailed bios`,
       priority: "medium",
     });
 
@@ -188,14 +188,14 @@ export async function runSEOAudit(): Promise<{
       id: "nmls_ids",
       category: "content",
       title: "NMLS Identifiers",
-      description: "Loan officers have NMLS IDs for credibility",
+      description: "Team members have NMLS IDs for credibility",
       status:
-        loWithNMLS.length === loWithProfiles.length
+        usersWithNMLS.length === usersWithProfiles.length
           ? "pass"
-          : loWithNMLS.length > 0
+          : usersWithNMLS.length > 0
             ? "warning"
             : "fail",
-      details: `${loWithNMLS.length}/${loWithProfiles.length} loan officers have NMLS IDs`,
+      details: `${usersWithNMLS.length}/${usersWithProfiles.length} team members have NMLS IDs`,
       priority: "medium",
     });
 

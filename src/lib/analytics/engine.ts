@@ -19,7 +19,7 @@ import type {
   TrendPoint,
   PeriodComparison,
   OrganizationMetrics,
-  LoanOfficerAnalytics,
+  UserAnalytics,
   CachedMetrics,
 } from "./types";
 import {
@@ -57,7 +57,7 @@ async function getUserContext() {
       .eq("id", user.id)
       .single(),
     supabase
-      .from("loan_officers")
+      .from("users")
       .select("id")
       .eq("user_id", user.id)
       .single(),
@@ -97,7 +97,7 @@ export async function getNPSMetrics(
       nps_score,
       submitted_at,
       surveys!inner (
-        loan_officer_id,
+        user_id,
         organization_id
       )
     `)
@@ -114,9 +114,9 @@ export async function getNPSMetrics(
 
   // Filter by loan officer or organization
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { loan_officer_id: string; organization_id: string };
+    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
     if (loanOfficerId) {
-      return survey.loan_officer_id === loanOfficerId;
+      return survey.user_id === loanOfficerId;
     }
     return survey.organization_id === context.organizationId;
   });
@@ -148,7 +148,7 @@ export async function getCSATMetrics(
       overall_rating,
       submitted_at,
       surveys!inner (
-        loan_officer_id,
+        user_id,
         organization_id
       )
     `)
@@ -165,9 +165,9 @@ export async function getCSATMetrics(
 
   // Filter by loan officer or organization
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { loan_officer_id: string; organization_id: string };
+    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
     if (loanOfficerId) {
-      return survey.loan_officer_id === loanOfficerId;
+      return survey.user_id === loanOfficerId;
     }
     return survey.organization_id === context.organizationId;
   });
@@ -201,7 +201,7 @@ export async function getResponseRateMetrics(
     .lte("created_at", range.end.toISOString());
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data, error } = await query;
@@ -245,7 +245,7 @@ export async function getReviewVelocityMetrics(
     .lte("review_date", range.end.toISOString());
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data, error } = await query;
@@ -265,12 +265,12 @@ export async function getReviewVelocityMetrics(
 }
 
 /**
- * Get comprehensive metrics snapshot for a loan officer
+ * Get comprehensive metrics snapshot for a user
  */
-export async function getLoanOfficerAnalytics(
-  loanOfficerId: string,
+export async function getUserAnalytics(
+  userId: string,
   periodType: PeriodType = "monthly"
-): Promise<ActionResult<LoanOfficerAnalytics>> {
+): Promise<ActionResult<UserAnalytics>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
@@ -279,7 +279,7 @@ export async function getLoanOfficerAnalytics(
   // Check authorization
   if (
     context.role === "user" &&
-    loanOfficerId !== context.loanOfficerId
+    userId !== context.loanOfficerId
   ) {
     return { success: false, error: "Unauthorized - Can only view own analytics" };
   }
@@ -288,35 +288,35 @@ export async function getLoanOfficerAnalytics(
   const dateRange = getDateRangeForPeriod(periodType);
 
   // Try to get cached metrics first
-  const cachedResult = await getCachedMetrics(loanOfficerId, periodType);
+  const cachedResult = await getCachedMetrics(userId, periodType);
   if (cachedResult.success && cachedResult.data) {
     const cached = cachedResult.data;
     const cacheAge = Date.now() - new Date(cached.computedAt).getTime();
     const maxAge = CACHE_DURATION_MINUTES * 60 * 1000;
 
     if (cacheAge < maxAge) {
-      // Return cached data with loan officer context
-      const { data: lo } = await supabase
-        .from("loan_officers")
+      // Return cached data with user context
+      const { data: user } = await supabase
+        .from("users")
         .select("average_rating, total_reviews, reputation_score")
-        .eq("id", loanOfficerId)
+        .eq("id", userId)
         .single();
 
       return {
         success: true,
         data: {
-          loanOfficerId,
+          userId,
           nps: cached.metrics.nps,
           csat: cached.metrics.csat,
           responseRate: cached.metrics.responseRate,
           reviewVelocity: cached.metrics.reviewVelocity,
-          averageRating: lo?.average_rating || cached.metrics.averageRating,
-          totalReviews: lo?.total_reviews || cached.metrics.totalReviews,
-          reputationScore: lo?.reputation_score || 0,
+          averageRating: user?.average_rating || cached.metrics.averageRating,
+          totalReviews: user?.total_reviews || cached.metrics.totalReviews,
+          reputationScore: user?.reputation_score || 0,
           rank: null,
           performanceStatus: determinePerformanceStatus(
-            lo?.average_rating || 0,
-            lo?.total_reviews || 0,
+            user?.average_rating || 0,
+            user?.total_reviews || 0,
             cached.metrics.nps.score,
             cached.metrics.responseRate.rate
           ),
@@ -327,25 +327,25 @@ export async function getLoanOfficerAnalytics(
 
   // Fetch fresh data
   const [npsResult, csatResult, responseRateResult, velocityResult] = await Promise.all([
-    getNPSMetrics(loanOfficerId, dateRange),
-    getCSATMetrics(loanOfficerId, dateRange),
-    getResponseRateMetrics(loanOfficerId, dateRange),
-    getReviewVelocityMetrics(loanOfficerId, dateRange),
+    getNPSMetrics(userId, dateRange),
+    getCSATMetrics(userId, dateRange),
+    getResponseRateMetrics(userId, dateRange),
+    getReviewVelocityMetrics(userId, dateRange),
   ]);
 
   if (!npsResult.success || !csatResult.success || !responseRateResult.success || !velocityResult.success) {
     return { success: false, error: "Failed to fetch analytics data" };
   }
 
-  // Get loan officer cached data
-  const { data: lo } = await supabase
-    .from("loan_officers")
+  // Get user cached data
+  const { data: userData } = await supabase
+    .from("users")
     .select("average_rating, total_reviews, reputation_score")
-    .eq("id", loanOfficerId)
+    .eq("id", userId)
     .single();
 
-  const averageRating = lo?.average_rating || 0;
-  const totalReviews = lo?.total_reviews || 0;
+  const averageRating = userData?.average_rating || 0;
+  const totalReviews = userData?.total_reviews || 0;
 
   // Calculate reputation score
   const reputationScore = calculateReputationScore(
@@ -356,8 +356,8 @@ export async function getLoanOfficerAnalytics(
     averageRating
   );
 
-  const analytics: LoanOfficerAnalytics = {
-    loanOfficerId,
+  const analytics: UserAnalytics = {
+    userId,
     nps: npsResult.data!,
     csat: csatResult.data!,
     responseRate: responseRateResult.data!,
@@ -387,10 +387,13 @@ export async function getLoanOfficerAnalytics(
     computedAt: new Date(),
   };
 
-  await cacheMetrics(loanOfficerId, periodType, snapshot);
+  await cacheMetrics(userId, periodType, snapshot);
 
   return { success: true, data: analytics };
 }
+
+/** @deprecated Use getUserAnalytics instead */
+export const getLoanOfficerAnalytics = getUserAnalytics;
 
 /**
  * Get organization-wide analytics
@@ -423,33 +426,33 @@ export async function getOrganizationAnalytics(
     return { success: false, error: "Failed to fetch organization analytics" };
   }
 
-  // Get loan officer counts and aggregate data
-  const { data: loanOfficers } = await supabase
-    .from("loan_officers")
+  // Get user counts and aggregate data
+  const { data: users } = await supabase
+    .from("users")
     .select("id, is_active, average_rating, total_reviews, nps_score, reputation_score")
     .eq("organization_id", context.organizationId);
 
-  const totalLoanOfficers = loanOfficers?.length || 0;
-  const activeLOs = loanOfficers?.filter((lo) => lo.is_active) || [];
-  const activeLoanOfficers = activeLOs.length;
+  const totalMembers = users?.length || 0;
+  const activeUsers = users?.filter((u) => u.is_active) || [];
+  const activeMembers = activeUsers.length;
 
   // Calculate aggregate rating and reviews
-  const totalReviews = loanOfficers?.reduce((sum, lo) => sum + (lo.total_reviews || 0), 0) || 0;
-  const ratingsWithData = activeLOs.filter((lo) => (lo.average_rating || 0) > 0);
+  const totalReviews = users?.reduce((sum, u) => sum + (u.total_reviews || 0), 0) || 0;
+  const ratingsWithData = activeUsers.filter((u) => (u.average_rating || 0) > 0);
   const averageRating = ratingsWithData.length > 0
-    ? ratingsWithData.reduce((sum, lo) => sum + (lo.average_rating || 0), 0) / ratingsWithData.length
+    ? ratingsWithData.reduce((sum, u) => sum + (u.average_rating || 0), 0) / ratingsWithData.length
     : 0;
 
   // Identify top performers and those needing attention
-  const topPerformers = activeLOs
-    .filter((lo) => (lo.reputation_score || 0) >= 70 && (lo.average_rating || 0) >= 4.5)
+  const topPerformers = activeUsers
+    .filter((u) => (u.reputation_score || 0) >= 70 && (u.average_rating || 0) >= 4.5)
     .sort((a, b) => (b.reputation_score || 0) - (a.reputation_score || 0))
     .slice(0, 5)
-    .map((lo) => lo.id);
+    .map((u) => u.id);
 
-  const needsAttention = activeLOs
-    .filter((lo) => (lo.average_rating || 0) < 4.0 || (lo.nps_score || 0) < 30)
-    .map((lo) => lo.id);
+  const needsAttention = activeUsers
+    .filter((u) => (u.average_rating || 0) < 4.0 || (u.nps_score || 0) < 30)
+    .map((u) => u.id);
 
   return {
     success: true,
@@ -460,8 +463,8 @@ export async function getOrganizationAnalytics(
       reviewVelocity: velocityResult.data!,
       averageRating: Math.round(averageRating * 100) / 100,
       totalReviews,
-      totalLoanOfficers,
-      activeLoanOfficers,
+      totalMembers,
+      activeMembers,
       topPerformers,
       needsAttention,
     },
@@ -490,7 +493,7 @@ export async function getNPSTrendData(
       nps_score,
       submitted_at,
       surveys!inner (
-        loan_officer_id,
+        user_id,
         organization_id
       )
     `)
@@ -503,9 +506,9 @@ export async function getNPSTrendData(
   }
 
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { loan_officer_id: string; organization_id: string };
+    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
     if (loanOfficerId) {
-      return survey.loan_officer_id === loanOfficerId;
+      return survey.user_id === loanOfficerId;
     }
     return survey.organization_id === context.organizationId;
   });
@@ -542,7 +545,7 @@ export async function getCSATTrendData(
       overall_rating,
       submitted_at,
       surveys!inner (
-        loan_officer_id,
+        user_id,
         organization_id
       )
     `)
@@ -555,9 +558,9 @@ export async function getCSATTrendData(
   }
 
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { loan_officer_id: string; organization_id: string };
+    const survey = r.surveys as unknown as { user_id: string; organization_id: string };
     if (loanOfficerId) {
-      return survey.loan_officer_id === loanOfficerId;
+      return survey.user_id === loanOfficerId;
     }
     return survey.organization_id === context.organizationId;
   });
@@ -596,7 +599,7 @@ export async function getReviewVelocityTrendData(
     .order("review_date", { ascending: true });
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data, error } = await query;
@@ -734,7 +737,7 @@ async function cacheMetrics(
     .upsert(
       {
         organization_id: context.organizationId,
-        loan_officer_id: loanOfficerId,
+        user_id: loanOfficerId,
         period_type: periodType,
         period_start: metrics.periodStart.toISOString().split("T")[0],
         period_end: metrics.periodEnd.toISOString().split("T")[0],
@@ -742,7 +745,7 @@ async function cacheMetrics(
         computed_at: new Date().toISOString(),
       },
       {
-        onConflict: "organization_id,loan_officer_id,period_type,period_start",
+        onConflict: "organization_id,user_id,period_type,period_start",
         ignoreDuplicates: false,
       }
     );
@@ -775,9 +778,9 @@ async function getCachedMetrics(
     .eq("period_start", dateRange.start.toISOString().split("T")[0]);
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   } else {
-    query = query.is("loan_officer_id", null);
+    query = query.is("user_id", null);
   }
 
   const { data, error } = await query.single();
@@ -796,7 +799,7 @@ async function getCachedMetrics(
     data: {
       id: data.id,
       organizationId: data.organization_id,
-      loanOfficerId: data.loan_officer_id,
+      userId: data.user_id,
       periodType: data.period_type as PeriodType,
       periodStart: new Date(data.period_start),
       periodEnd: new Date(data.period_end),
@@ -825,7 +828,7 @@ export async function invalidateMetricsCache(
     .eq("organization_id", context.organizationId);
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { error } = await query;

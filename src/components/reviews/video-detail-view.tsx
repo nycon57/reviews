@@ -242,9 +242,9 @@ function ActionDialog({
             {actionType === "approve" &&
               "This testimonial will be approved and ready for publishing."}
             {actionType === "reject" &&
-              "This testimonial will be rejected and the loan officer will be notified."}
+              "This testimonial will be rejected and the team member will be notified."}
             {actionType === "request_changes" &&
-              "The loan officer will be notified to make changes to this testimonial."}
+              "The team member will be notified to make changes to this testimonial."}
             {actionType === "publish" &&
               "This testimonial will be published and visible publicly."}
           </DialogDescription>
@@ -253,7 +253,7 @@ function ActionDialog({
         {needsNotes && (
           <div className="space-y-2">
             <Label htmlFor="actionNotes">
-              {actionType === "reject" ? "Rejection Reason" : "Notes for Loan Officer"}
+              {actionType === "reject" ? "Rejection Reason" : "Notes for Team Member"}
               {actionType === "reject" && (
                 <span className="ml-1 text-muted-foreground">(optional)</span>
               )}
@@ -683,12 +683,12 @@ export function VideoDetailView({ video, userRole }: Props) {
                 </CardContent>
               </Card>
 
-              {/* Loan Officer Info */}
+              {/* Professional Info */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-base">
                     <User className="h-4 w-4" />
-                    Loan Officer
+                    Professional
                   </CardTitle>
                 </CardHeader>
                 <CardContent>

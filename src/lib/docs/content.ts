@@ -1066,7 +1066,7 @@ Triggered when a loan closes:
     "customer_email": "customer@email.com",
     "customer_first_name": "John",
     "customer_last_name": "Doe",
-    "loan_officer_email": "lo@company.com",
+    "user_email": "lo@company.com",
     "closed_date": "2024-01-15"
   }
 }
@@ -1256,7 +1256,7 @@ GET /metrics
 
 Query parameters:
 - \`period\`: 7d, 30d, 90d, ytd
-- \`loan_officer_id\`: Filter by LO
+- \`user_id\`: Filter by LO
 
 ### Send Survey
 \`\`\`
@@ -1269,7 +1269,7 @@ Request body:
   "customer_email": "customer@email.com",
   "customer_first_name": "John",
   "customer_last_name": "Doe",
-  "loan_officer_id": "lo_123",
+  "user_id": "lo_123",
   "template_id": "template_abc"
 }
 \`\`\`

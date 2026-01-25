@@ -186,10 +186,10 @@ export function BranchProfileContent({
                   <Badge variant="secondary" className="text-sm">
                     {branch.total_reviews} {branch.total_reviews === 1 ? "Review" : "Reviews"}
                   </Badge>
-                  {branch.total_loan_officers && branch.total_loan_officers > 0 && (
+                  {branch.total_members && branch.total_members > 0 && (
                     <Badge variant="outline" className="text-sm">
                       <Users className="mr-1 h-3 w-3" />
-                      {branch.total_loan_officers} Loan {branch.total_loan_officers === 1 ? "Officer" : "Officers"}
+                      {branch.total_members} {branch.total_members === 1 ? "Professional" : "Professionals"}
                     </Badge>
                   )}
                 </div>
@@ -326,46 +326,46 @@ export function BranchProfileContent({
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl flex items-center gap-2">
                   <Users className="h-5 w-5" />
-                  Our Loan Officers
+                  Our Team
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {loanOfficers.length === 0 ? (
                   <p className="py-8 text-center text-muted-foreground">
-                    No loan officers listed at this branch.
+                    No team members listed at this branch.
                   </p>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {loanOfficers.map((lo) => (
+                    {loanOfficers.map((member) => (
                       <Link
-                        key={lo.id}
-                        href={`/lo/${lo.id}`}
+                        key={member.id}
+                        href={`/pro/${member.id}`}
                         className="group block"
                       >
                         <div className="flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-muted/50">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={lo.photo_url || undefined} alt={lo.full_name} />
+                            <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
                             <AvatarFallback className="bg-primary/10 text-primary">
-                              {getInitials(lo.full_name)}
+                              {getInitials(member.full_name)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-medium truncate group-hover:text-primary transition-colors">
-                              {lo.full_name}
+                              {member.full_name}
                             </h3>
                             <p className="text-sm text-muted-foreground truncate">
-                              {lo.title || "Loan Officer"}
+                              {member.title || "Professional"}
                             </p>
-                            {lo.average_rating && lo.total_reviews ? (
+                            {member.average_rating && member.total_reviews ? (
                               <div className="mt-1 flex items-center gap-2">
                                 <div className="flex items-center gap-1">
                                   <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                   <span className="text-xs font-medium">
-                                    {Number(lo.average_rating).toFixed(1)}
+                                    {Number(member.average_rating).toFixed(1)}
                                   </span>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
-                                  ({lo.total_reviews} {lo.total_reviews === 1 ? "review" : "reviews"})
+                                  ({member.total_reviews} {member.total_reviews === 1 ? "review" : "reviews"})
                                 </span>
                               </div>
                             ) : null}
@@ -435,7 +435,7 @@ export function BranchProfileContent({
                         {/* Link to LO who received this review */}
                         <div className="mt-3 flex items-center gap-2">
                           <Link
-                            href={`/lo/${review.loan_officer.id}`}
+                            href={`/pro/${review.loan_officer.id}`}
                             className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
                           >
                             <Avatar className="h-6 w-6">
@@ -470,9 +470,9 @@ export function BranchProfileContent({
             <Card className="bg-primary/5 border-primary/20">
               <CardContent className="py-6">
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold">Looking for a Loan Officer?</h3>
+                  <h3 className="text-lg font-semibold">Looking for a Professional?</h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Contact one of our experienced loan officers to start your home financing journey.
+                    Contact one of our experienced professionals to start your journey.
                   </p>
                   {branch.phone && (
                     <Button asChild className="mt-4">

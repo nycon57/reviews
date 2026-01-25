@@ -21,16 +21,16 @@ import {
 } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import type { RecentReview } from "@/lib/dashboard";
-import { getLoanOfficerRecentReviews } from "@/lib/dashboard";
+import { getUserRecentReviews } from "@/lib/dashboard";
 
 interface RecentReviewsProps {
   initialReviews: RecentReview[];
-  loanOfficerId?: string;
+  userId?: string;
 }
 
-export function LORecentReviews({
+export function UserRecentReviews({
   initialReviews,
-  loanOfficerId,
+  userId,
 }: RecentReviewsProps) {
   const [reviews, setReviews] = useState(initialReviews);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -39,7 +39,7 @@ export function LORecentReviews({
   const handleFilterChange = (value: string) => {
     setStatusFilter(value);
     startTransition(async () => {
-      const result = await getLoanOfficerRecentReviews(loanOfficerId, 10);
+      const result = await getUserRecentReviews(userId, 10);
       if (result.success && result.data) {
         if (value === "all") {
           setReviews(result.data);

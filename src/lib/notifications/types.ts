@@ -23,7 +23,7 @@ export interface Notification {
   title: string;
   message: string;
   review_id: string | null;
-  loan_officer_id: string | null;
+  target_user_id: string | null;
   metadata: Record<string, unknown>;
   is_read: boolean;
   read_at: string | null;

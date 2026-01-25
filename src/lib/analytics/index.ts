@@ -13,7 +13,7 @@
  * import {
  *   getNPSMetrics,
  *   getCSATMetrics,
- *   getLoanOfficerAnalytics
+ *   getUserAnalytics
  * } from "@/lib/analytics";
  * ```
  */
@@ -30,6 +30,8 @@ export type {
   TrendPoint,
   PeriodComparison,
   OrganizationMetrics,
+  UserAnalytics,
+  /** @deprecated Use UserAnalytics instead */
   LoanOfficerAnalytics,
   CachedMetrics,
 } from "./types";
@@ -57,6 +59,8 @@ export {
   getCSATMetrics,
   getResponseRateMetrics,
   getReviewVelocityMetrics,
+  getUserAnalytics,
+  /** @deprecated Use getUserAnalytics instead */
   getLoanOfficerAnalytics,
   getOrganizationAnalytics,
   getNPSTrendData,

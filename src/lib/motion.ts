@@ -37,6 +37,14 @@ export const transitions = {
   } as Transition,
 };
 
+// Morph spring transition for layout animations (profile card scroll morph)
+export const morphSpring: Transition = {
+  type: "spring",
+  stiffness: 280,
+  damping: 32,
+  mass: 1,
+};
+
 // Fade in animation (opacity 0 → 1)
 export const fadeIn: Variants = {
   hidden: {

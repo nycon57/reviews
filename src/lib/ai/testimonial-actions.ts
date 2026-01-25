@@ -72,10 +72,7 @@ async function getReviewContext(reviewId: string): Promise<TestimonialReviewCont
       sentiment_label,
       themes,
       key_phrases,
-      loan_officer:loan_officers (
-        id,
-        full_name
-      )
+      user_id
     `)
     .eq('id', reviewId)
     .single();
@@ -84,13 +81,26 @@ async function getReviewContext(reviewId: string): Promise<TestimonialReviewCont
     throw new Error('Review not found');
   }
 
+  // Fetch user data separately
+  let userName = 'Team Member';
+  if (review.user_id) {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', review.user_id)
+      .single();
+    if (userData?.full_name) {
+      userName = userData.full_name;
+    }
+  }
+
   return {
     id: review.id,
     text: review.text,
     rating: review.rating,
     customerName: review.customer_name,
     customerLocation: review.customer_location,
-    loanOfficerName: review.loan_officer?.full_name || 'Loan Officer',
+    loanOfficerName: userName,
     source: review.source,
     reviewDate: review.review_date,
     sentimentScore: review.sentiment_score,
@@ -130,7 +140,7 @@ export async function generateTestimonialFromReview(
       .insert({
         organization_id: organizationId,
         review_id: reviewId,
-        loan_officer_id: context.id ? null : null, // Will be set from review relationship
+        user_id: null, // Will be set from review relationship
         format,
         content: generated.content,
         original_quote: generated.originalQuote,
@@ -150,7 +160,7 @@ export async function generateTestimonialFromReview(
 
     return {
       success: true,
-      data: transformTestimonial(testimonial),
+      data: transformTestimonial(testimonial as Record<string, unknown>),
     };
   } catch (error) {
     console.error('Error generating testimonial:', error);
@@ -215,7 +225,7 @@ export async function generateMultipleTestimonialFormats(
 
     return {
       success: true,
-      data: testimonials.map(transformTestimonial),
+      data: testimonials.map((t) => transformTestimonial(t as Record<string, unknown>)),
     };
   } catch (error) {
     console.error('Error generating testimonials:', error);
@@ -321,11 +331,6 @@ export async function getTestimonials(
           customer_name,
           source,
           review_date
-        ),
-        loan_officer:loan_officers (
-          id,
-          full_name,
-          photo_url
         )
       `, { count: 'exact' });
 
@@ -337,7 +342,7 @@ export async function getTestimonials(
       query = query.eq('format', format);
     }
     if (loanOfficerId) {
-      query = query.eq('loan_officer_id', loanOfficerId);
+      query = query.eq('user_id', loanOfficerId);
     }
     if (reviewId) {
       query = query.eq('review_id', reviewId);
@@ -373,10 +378,33 @@ export async function getTestimonials(
       return { success: false, error: 'Failed to fetch testimonials' };
     }
 
+    // Fetch user data for user_ids
+    const userIds: string[] = [];
+    for (const t of data || []) {
+      const userId = (t as { user_id?: string }).user_id;
+      if (userId && !userIds.includes(userId)) {
+        userIds.push(userId);
+      }
+    }
+    const userMap = new Map<string, { id: string; full_name: string | null; photo_url: string | null }>();
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, full_name, photo_url')
+        .in('id', userIds);
+      for (const u of users || []) {
+        userMap.set(u.id, u);
+      }
+    }
+
     return {
       success: true,
       data: {
-        testimonials: (data || []).map(transformTestimonial),
+        testimonials: (data || []).map((t) => {
+          const testimonialUserId = (t as { user_id?: string }).user_id;
+          const user = testimonialUserId ? userMap.get(testimonialUserId) : undefined;
+          return transformTestimonial(t, user);
+        }),
         total: count || 0,
       },
     };
@@ -577,12 +605,10 @@ export async function generateGraphicForTestimonial(
       .from('testimonials')
       .select(`
         content,
+        user_id,
         review:reviews (
           customer_name,
           rating
-        ),
-        loan_officer:loan_officers (
-          full_name
         )
       `)
       .eq('id', testimonialId)
@@ -592,12 +618,23 @@ export async function generateGraphicForTestimonial(
       return { success: false, error: 'Testimonial not found' };
     }
 
+    // Fetch user data separately
+    let userName: string | undefined;
+    if (testimonial.user_id) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', testimonial.user_id)
+        .single();
+      userName = userData?.full_name || undefined;
+    }
+
     // Generate graphic
     const graphic = generateTestimonialGraphic(
       {
         content: testimonial.content,
         customerName: testimonial.review?.customer_name || undefined,
-        loanOfficerName: testimonial.loan_officer?.full_name || undefined,
+        loanOfficerName: userName,
         rating: testimonial.review?.rating || undefined,
       },
       options
@@ -650,9 +687,6 @@ export async function exportTestimonial(
           customer_name,
           rating,
           review_date
-        ),
-        loan_officer:loan_officers (
-          full_name
         )
       `)
       .eq('id', testimonialId)
@@ -662,13 +696,22 @@ export async function exportTestimonial(
       return { success: false, error: 'Testimonial not found' };
     }
 
+    // Fetch user data separately
+    let userName = '';
+    if (options.includeLoanOfficerName && testimonial.user_id) {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('full_name')
+        .eq('id', testimonial.user_id)
+        .single();
+      userName = userData?.full_name || '';
+    }
+
     let content: string;
     const customerName = options.includeCustomerName !== false
       ? testimonial.review?.customer_name || 'Happy Customer'
       : '';
-    const loName = options.includeLoanOfficerName
-      ? testimonial.loan_officer?.full_name || ''
-      : '';
+    const loName = userName;
     const rating = options.includeRating
       ? `${'★'.repeat(testimonial.review?.rating || 5)}${'☆'.repeat(5 - (testimonial.review?.rating || 5))}`
       : '';
@@ -762,10 +805,7 @@ export async function getBestTestimonialCandidates(
         sentiment_label,
         themes,
         key_phrases,
-        loan_officer:loan_officers (
-          id,
-          full_name
-        )
+        user_id
       `)
       .gte('rating', 4)
       .not('text', 'is', null)
@@ -776,6 +816,19 @@ export async function getBestTestimonialCandidates(
 
     if (error) {
       return { success: false, error: 'Failed to fetch reviews' };
+    }
+
+    // Fetch user names for reviews
+    const userIds = [...new Set((reviews || []).map(r => r.user_id).filter((id): id is string => !!id))];
+    const userMap = new Map<string, string>();
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, full_name')
+        .in('id', userIds);
+      for (const u of users || []) {
+        userMap.set(u.id, u.full_name || 'Team Member');
+      }
     }
 
     // Check which reviews already have testimonials
@@ -796,7 +849,7 @@ export async function getBestTestimonialCandidates(
         rating: r.rating,
         customerName: r.customer_name,
         customerLocation: r.customer_location,
-        loanOfficerName: r.loan_officer?.full_name || 'Loan Officer',
+        loanOfficerName: r.user_id ? userMap.get(r.user_id) || 'Team Member' : 'Team Member',
         source: r.source,
         reviewDate: r.review_date,
         sentimentScore: r.sentiment_score,
@@ -862,12 +915,15 @@ export async function getTestimonialTemplates(): Promise<TestimonialActionResult
 }
 
 // Transform database record to Testimonial type
-function transformTestimonial(record: Record<string, unknown>): Testimonial {
+function transformTestimonial(
+  record: Record<string, unknown>,
+  user?: { id: string; full_name: string | null; photo_url: string | null }
+): Testimonial {
   return {
     id: record.id as string,
     organizationId: record.organization_id as string,
     reviewId: record.review_id as string,
-    loanOfficerId: record.loan_officer_id as string | null,
+    loanOfficerId: record.user_id as string | null,
     format: record.format as TestimonialFormat,
     content: record.content as string,
     originalQuote: record.original_quote as string | null,
@@ -892,10 +948,10 @@ function transformTestimonial(record: Record<string, unknown>): Testimonial {
       source: (record.review as Record<string, unknown>).source as string,
       reviewDate: (record.review as Record<string, unknown>).review_date as string,
     } : undefined,
-    loanOfficer: record.loan_officer ? {
-      id: (record.loan_officer as Record<string, unknown>).id as string,
-      fullName: (record.loan_officer as Record<string, unknown>).full_name as string,
-      photoUrl: (record.loan_officer as Record<string, unknown>).photo_url as string | null,
+    loanOfficer: user ? {
+      id: user.id,
+      fullName: user.full_name || 'Professional',
+      photoUrl: user.photo_url,
     } : undefined,
   };
 }

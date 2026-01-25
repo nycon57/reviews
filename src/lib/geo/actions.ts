@@ -69,7 +69,7 @@ export async function calculateVisibilityScore(
 
     if (entityType === 'loan_officer') {
       const { data } = await supabase
-        .from('loan_officers')
+        .from('users')
         .select(`
           *,
           reviews:reviews(count),
@@ -247,7 +247,7 @@ export async function generateOptimizationSuggestions(
 
     // Fetch entity data
     let entityData: Record<string, unknown> | null = null;
-    const table = entityType === 'loan_officer' ? 'loan_officers' : entityType === 'branch' ? 'branches' : 'organizations';
+    const table = (entityType === 'loan_officer' ? 'users' : entityType === 'branch' ? 'branches' : 'organizations') as 'users' | 'branches' | 'organizations';
 
     const { data } = await supabase
       .from(table)
@@ -417,7 +417,7 @@ export async function generateAIOptimizedFAQs(
 
     // Fetch entity data
     let entityData: Record<string, unknown> | null = null;
-    const table = entityType === 'loan_officer' ? 'loan_officers' : entityType === 'branch' ? 'branches' : 'organizations';
+    const table = (entityType === 'loan_officer' ? 'users' : entityType === 'branch' ? 'branches' : 'organizations') as 'users' | 'branches' | 'organizations';
 
     const { data } = await supabase
       .from(table)
@@ -584,7 +584,7 @@ export async function generateSchemaRecommendations(
 
     // Fetch entity data
     let entityData: Record<string, unknown> | null = null;
-    const table = entityType === 'loan_officer' ? 'loan_officers' : entityType === 'branch' ? 'branches' : 'organizations';
+    const table = (entityType === 'loan_officer' ? 'users' : entityType === 'branch' ? 'branches' : 'organizations') as 'users' | 'branches' | 'organizations';
 
     const { data } = await supabase
       .from(table)
@@ -606,7 +606,7 @@ export async function generateSchemaRecommendations(
         "@context": "https://schema.org",
         "@type": "Person",
         "name": entityData.full_name,
-        "jobTitle": entityData.title || "Loan Officer",
+        "jobTitle": entityData.title || "Professional",
         "description": entityData.bio,
         "image": entityData.photo_url,
         "identifier": entityData.nmls_id ? {
@@ -842,25 +842,25 @@ export async function getGEODashboardSummary(): Promise<ActionResult<GEODashboar
 
     // Get loan officers for the organization
     const { data: loanOfficers } = await supabase
-      .from('loan_officers')
+      .from('users')
       .select('id, full_name, average_rating, total_reviews')
       .eq('organization_id', context.organizationId)
       .limit(10);
 
     // Calculate average visibility score
-    const loCount = loanOfficers?.length || 0;
+    const userCount = loanOfficers?.length || 0;
     let totalScore = 0;
 
     if (loanOfficers && loanOfficers.length > 0) {
-      for (const lo of loanOfficers) {
-        const scoreResult = await calculateVisibilityScore('loan_officer', lo.id);
+      for (const user of loanOfficers) {
+        const scoreResult = await calculateVisibilityScore('loan_officer', user.id);
         if (scoreResult.success && scoreResult.data) {
           totalScore += scoreResult.data.overallScore;
         }
       }
     }
 
-    const avgScore = loCount > 0 ? Math.round(totalScore / loCount) : 60;
+    const avgScore = userCount > 0 ? Math.round(totalScore / userCount) : 60;
 
     // Generate suggestions for the first LO
     let suggestions: OptimizationSuggestion[] = [];
@@ -1644,9 +1644,9 @@ export async function getOrganizationEntities(): Promise<ActionResult<{
 
     const supabase = createAdminClient();
 
-    // Get loan officers
-    const { data: loData } = await supabase
-      .from('loan_officers')
+    // Get users
+    const { data: userData } = await supabase
+      .from('users')
       .select('id, full_name, title')
       .eq('organization_id', context.organizationId)
       .eq('is_active', true)
@@ -1669,10 +1669,10 @@ export async function getOrganizationEntities(): Promise<ActionResult<{
     return {
       success: true,
       data: {
-        loanOfficers: (loData || []).map(lo => ({
-          id: lo.id,
-          name: lo.full_name,
-          title: lo.title,
+        loanOfficers: (userData || []).map(user => ({
+          id: user.id,
+          name: user.full_name || 'Unknown',
+          title: user.title,
         })),
         branches: (branchData || []).map(b => ({
           id: b.id,

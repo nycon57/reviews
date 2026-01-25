@@ -29,13 +29,13 @@ import {
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
 import {
-  searchLoanOfficers,
-  type DirectoryLoanOfficer,
+  searchProfessionals,
+  type DirectoryProfessional,
   type SearchFilters,
 } from "@/lib/directory/actions";
 
 interface DirectorySearchProps {
-  initialResults: DirectoryLoanOfficer[];
+  initialResults: DirectoryProfessional[];
   initialCount: number;
   availableStates: { value: string; label: string }[];
 }
@@ -51,7 +51,7 @@ export function DirectorySearch({
   const [isPending, startTransition] = useTransition();
 
   // State
-  const [results, setResults] = useState<DirectoryLoanOfficer[]>(initialResults);
+  const [results, setResults] = useState<DirectoryProfessional[]>(initialResults);
   const [totalCount, setTotalCount] = useState(initialCount);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -104,9 +104,9 @@ export function DirectorySearch({
   const performSearch = useCallback(
     async (filters: SearchFilters, searchPage: number) => {
       startTransition(async () => {
-        const result = await searchLoanOfficers(filters, searchPage, pageSize);
+        const result = await searchProfessionals(filters, searchPage, pageSize);
         if (result.success && result.data) {
-          setResults(result.data.loanOfficers);
+          setResults(result.data.professionals);
           setTotalCount(result.data.totalCount);
         }
       });
@@ -174,7 +174,7 @@ export function DirectorySearch({
   return (
     <div className="space-y-6">
       {/* Map View - Always visible at top */}
-      <DirectoryMapView loanOfficers={results} />
+      <DirectoryMapView professionals={results} />
 
       {/* Search & Filters */}
       <Card>
@@ -420,15 +420,15 @@ export function DirectorySearch({
             ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
             : "flex flex-col gap-4"
         }>
-          {results.map((lo) => (
-            <DirectoryCard key={lo.id} loanOfficer={lo} variant={viewMode} />
+          {results.map((professional) => (
+            <DirectoryCard key={professional.id} professional={professional} variant={viewMode} />
           ))}
         </div>
       ) : (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Users className="h-16 w-16 text-muted-foreground/50" />
-            <h3 className="mt-4 text-lg font-medium">No loan officers found</h3>
+            <h3 className="mt-4 text-lg font-medium">No professionals found</h3>
             <p className="mt-2 text-sm text-muted-foreground text-center max-w-md">
               Try adjusting your search criteria or clearing some filters to see more results.
             </p>

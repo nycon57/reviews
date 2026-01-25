@@ -1183,7 +1183,7 @@ export interface WeeklySummaryLOEmailData extends WeeklySummaryEmailBaseData {
   // Leaderboard position
   leaderboardRank: number | null;
   leaderboardRankChange: number | null;
-  totalLoanOfficers: number;
+  totalMembers: number;
 
   // Top review highlight
   topReview?: {

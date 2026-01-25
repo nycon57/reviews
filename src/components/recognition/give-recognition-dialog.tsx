@@ -34,10 +34,36 @@ import { BADGE_ICONS } from "./constants";
 interface GiveRecognitionDialogProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
+  // Controlled mode props
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  // Preselected user for direct recognition
+  preselectedUser?: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl?: string;
+  };
 }
 
-export function GiveRecognitionDialog({ trigger, onSuccess }: GiveRecognitionDialogProps) {
-  const [open, setOpen] = useState(false);
+export function GiveRecognitionDialog({
+  trigger,
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  preselectedUser,
+}: GiveRecognitionDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+
+  // Support both controlled and uncontrolled modes
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = isControlled ? (v: boolean) => controlledOnOpenChange?.(v) : setInternalOpen;
+
+  // Dev warning for controlled mode without onOpenChange
+  if (process.env.NODE_ENV === "development" && isControlled && !controlledOnOpenChange) {
+    console.warn("GiveRecognitionDialog: `open` prop provided without `onOpenChange`. Dialog may not close properly.");
+  }
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
@@ -70,6 +96,13 @@ export function GiveRecognitionDialog({ trigger, onSuccess }: GiveRecognitionDia
       loadBadges();
     }
   }, [open, badges.length]);
+
+  // Set preselected user when dialog opens
+  useEffect(() => {
+    if (open && preselectedUser && !selectedUser) {
+      setSelectedUser(preselectedUser);
+    }
+  }, [open, preselectedUser, selectedUser]);
 
   const loadBadges = async () => {
     setIsLoadingBadges(true);
@@ -143,14 +176,17 @@ export function GiveRecognitionDialog({ trigger, onSuccess }: GiveRecognitionDia
         if (!newOpen) resetForm();
       }}
     >
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Give Recognition
-          </Button>
-        )}
-      </DialogTrigger>
+      {/* Only render trigger when not in controlled mode */}
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Give Recognition
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Recognize a Colleague</DialogTitle>

@@ -12,15 +12,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   ClipboardText as ClipboardList,
-  Users,
-  Lightning as Zap,
-  SignOut as LogOut,
-  UserPlus,
   Plus,
   FileText,
   ArrowRight,
 } from "@phosphor-icons/react/dist/ssr";
 import { getEXSurveyTemplates, getEXSurveys, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
+import { TemplatesListClient } from "./templates-list-client";
 
 export const metadata = {
   title: "Survey Templates | Employee Experience | RepWell",
@@ -52,25 +49,11 @@ async function checkAccess() {
   return { role: userData.role };
 }
 
-const templateIcons: Record<string, React.ReactNode> = {
-  engagement: <Users className="h-6 w-6" />,
-  pulse: <Zap className="h-6 w-6" />,
-  exit: <LogOut className="h-6 w-6" />,
-  onboarding: <UserPlus className="h-6 w-6" />,
-};
-
-const templateColors: Record<string, string> = {
-  engagement: "bg-blue-100 text-blue-600",
-  pulse: "bg-green-100 text-green-600",
-  exit: "bg-orange-100 text-orange-600",
-  onboarding: "bg-purple-100 text-purple-600",
-};
-
 function TemplatesSkeleton() {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {[...Array(4)].map((_, i) => (
-        <Skeleton key={i} className="h-64 w-full" />
+        <Skeleton key={i} className="h-80 w-full" />
       ))}
     </div>
   );
@@ -85,44 +68,18 @@ async function TemplatesList() {
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <FileText className="h-12 w-12 text-muted-foreground/50" />
         <p className="mt-4 text-muted-foreground">No templates available</p>
+        <Button asChild className="mt-4 bg-repwell-teal-300 hover:bg-repwell-teal-400">
+          <Link href="/dashboard/ex-surveys/templates/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Custom Template
+          </Link>
+        </Button>
       </div>
     );
   }
 
-  return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {templates.map((template) => (
-        <Card key={template.id} className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div className={`rounded-lg p-2 ${templateColors[template.surveyType] || "bg-gray-100 text-gray-600"}`}>
-                {templateIcons[template.surveyType] || <ClipboardList className="h-6 w-6" />}
-              </div>
-              {template.isDefault && (
-                <Badge variant="secondary">Default</Badge>
-              )}
-            </div>
-            <CardTitle className="mt-3">{template.name}</CardTitle>
-            <CardDescription>{template.description}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <span className="capitalize">{template.surveyType} survey</span>
-                <span>{template.questions.length} questions</span>
-              </div>
-              <Button asChild className="w-full">
-                <Link href={`/dashboard/ex-surveys/create?template=${template.id}`}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Use This Template
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
+  // Pass templates to client component for interactive features
+  return <TemplatesListClient templates={templates} />;
 }
 
 function SurveysSkeleton() {
@@ -202,18 +159,28 @@ export default async function EXSurveyTemplatesPage() {
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/ex-surveys">
-            <ArrowLeft className="h-4 w-4" />
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/dashboard/ex-surveys">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="font-display text-2xl font-bold tracking-tight text-repwell-teal-500">
+              Survey Templates
+            </h1>
+            <p className="font-sans text-repwell-teal-400">
+              Choose a template to create your employee experience survey
+            </p>
+          </div>
+        </div>
+        <Button asChild className="bg-repwell-teal-300 hover:bg-repwell-teal-400 text-white">
+          <Link href="/dashboard/ex-surveys/templates/new">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Custom Template
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Survey Templates</h1>
-          <p className="text-muted-foreground">
-            Choose a template to create your employee experience survey
-          </p>
-        </div>
       </div>
 
       {/* Templates */}

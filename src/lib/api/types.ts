@@ -111,7 +111,7 @@ export interface SurveyResource {
   id: string;
   organization_id: string;
   template_id: string;
-  loan_officer_id: string;
+  user_id: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
@@ -130,7 +130,7 @@ export interface SurveyResource {
 export interface ReviewResource {
   id: string;
   organization_id: string;
-  loan_officer_id: string | null;
+  user_id: string | null;
   branch_id: string | null;
   platform: string;
   platform_review_id: string | null;
@@ -169,12 +169,12 @@ export interface BranchResource {
   is_active: boolean;
   average_rating: number | null;
   total_reviews: number;
-  total_loan_officers: number;
+  total_members: number;
   created_at: string;
   updated_at: string;
 }
 
-export interface LoanOfficerResource {
+export interface ProfessionalResource {
   id: string;
   organization_id: string;
   branch_id: string | null;
@@ -192,6 +192,9 @@ export interface LoanOfficerResource {
   created_at: string;
   updated_at: string;
 }
+
+/** @deprecated Use ProfessionalResource instead */
+export type LoanOfficerResource = ProfessionalResource;
 
 export interface OrganizationResource {
   id: string;
@@ -220,8 +223,8 @@ export interface UserResource {
 
 // Input types for creating/updating resources
 export interface CreateSurveyInput {
-  loan_officer_id?: string;
-  loan_officer_email?: string;
+  user_id?: string;
+  user_email?: string;
   template_id?: string;
   customer_name: string;
   customer_email: string;
@@ -281,7 +284,7 @@ export interface ReviewResponseInput {
   response_text: string;
 }
 
-export interface UpdateLoanOfficerInput {
+export interface UpdateProfessionalInput {
   full_name?: string;
   phone?: string;
   title?: string;
@@ -289,6 +292,9 @@ export interface UpdateLoanOfficerInput {
   branch_id?: string;
   is_active?: boolean;
 }
+
+/** @deprecated Use UpdateProfessionalInput instead */
+export type UpdateLoanOfficerInput = UpdateProfessionalInput;
 
 export interface UpdateOrganizationInput {
   name?: string;

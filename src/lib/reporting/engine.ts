@@ -12,7 +12,7 @@ import {
   getCSATMetrics,
   getResponseRateMetrics,
   getReviewVelocityMetrics,
-  getLoanOfficerAnalytics,
+  getUserAnalytics,
   getOrganizationAnalytics,
   getNPSTrendData,
   getCSATTrendData,
@@ -148,10 +148,10 @@ async function generateExecutiveSummary(
   filters?: ReportFilters
 ): Promise<ExecutiveSummary> {
   const [nps, csat, responseRate, velocity] = await Promise.all([
-    getNPSMetrics(filters?.loanOfficerIds?.[0], dateRange),
-    getCSATMetrics(filters?.loanOfficerIds?.[0], dateRange),
-    getResponseRateMetrics(filters?.loanOfficerIds?.[0], dateRange),
-    getReviewVelocityMetrics(filters?.loanOfficerIds?.[0], dateRange),
+    getNPSMetrics(filters?.userIds?.[0], dateRange),
+    getCSATMetrics(filters?.userIds?.[0], dateRange),
+    getResponseRateMetrics(filters?.userIds?.[0], dateRange),
+    getReviewVelocityMetrics(filters?.userIds?.[0], dateRange),
   ]);
 
   const periodLabel = `${format(dateRange.start, "MMM d, yyyy")} - ${format(dateRange.end, "MMM d, yyyy")}`;
@@ -164,8 +164,8 @@ async function generateExecutiveSummary(
   };
 
   const [prevNps, prevCsat] = await Promise.all([
-    getNPSMetrics(filters?.loanOfficerIds?.[0], previousRange),
-    getCSATMetrics(filters?.loanOfficerIds?.[0], previousRange),
+    getNPSMetrics(filters?.userIds?.[0], previousRange),
+    getCSATMetrics(filters?.userIds?.[0], previousRange),
   ]);
 
   return {
@@ -198,9 +198,9 @@ async function generateTeamComparison(
 ): Promise<TeamComparisonRow[]> {
   const supabase = createAdminClient();
 
-  // Get all active loan officers
-  const { data: loanOfficers } = await supabase
-    .from("loan_officers")
+  // Get all active users
+  const { data: users } = await supabase
+    .from("users")
     .select(`
       id,
       full_name,
@@ -215,28 +215,28 @@ async function generateTeamComparison(
     .eq("is_active", true)
     .order("reputation_score", { ascending: false });
 
-  if (!loanOfficers || loanOfficers.length === 0) {
+  if (!users || users.length === 0) {
     return [];
   }
 
   const comparisonData: TeamComparisonRow[] = [];
 
-  for (let i = 0; i < loanOfficers.length; i++) {
-    const lo = loanOfficers[i];
-    const analyticsResult = await getLoanOfficerAnalytics(lo.id, "monthly");
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    const analyticsResult = await getUserAnalytics(user.id, "monthly");
     const analytics = analyticsResult.data;
 
     comparisonData.push({
-      loanOfficerId: lo.id,
-      name: lo.full_name,
-      photoUrl: lo.photo_url,
-      branch: lo.branch,
-      totalReviews: lo.total_reviews || 0,
-      averageRating: lo.average_rating || 0,
-      npsScore: analytics?.nps?.score || lo.nps_score || 0,
+      userId: user.id,
+      name: user.full_name || "Unknown",
+      photoUrl: user.photo_url,
+      branch: user.branch,
+      totalReviews: user.total_reviews || 0,
+      averageRating: user.average_rating || 0,
+      npsScore: analytics?.nps?.score || user.nps_score || 0,
       csatScore: analytics?.csat?.score || 0,
       responseRate: analytics?.responseRate?.rate || 0,
-      reputationScore: lo.reputation_score || 0,
+      reputationScore: user.reputation_score || 0,
       performanceStatus: analytics?.performanceStatus || "good",
       rank: i + 1,
     });
@@ -288,28 +288,28 @@ export async function generateReport(
 
   // Add sections based on config
   if (config.sections.includes("nps_breakdown")) {
-    const npsResult = await getNPSMetrics(filters?.loanOfficerIds?.[0], analyticsDateRange);
+    const npsResult = await getNPSMetrics(filters?.userIds?.[0], analyticsDateRange);
     if (npsResult.success) {
       reportData.npsBreakdown = npsResult.data;
     }
   }
 
   if (config.sections.includes("csat_analysis")) {
-    const csatResult = await getCSATMetrics(filters?.loanOfficerIds?.[0], analyticsDateRange);
+    const csatResult = await getCSATMetrics(filters?.userIds?.[0], analyticsDateRange);
     if (csatResult.success) {
       reportData.csatMetrics = csatResult.data;
     }
   }
 
   if (config.sections.includes("response_rates")) {
-    const responseResult = await getResponseRateMetrics(filters?.loanOfficerIds?.[0], analyticsDateRange);
+    const responseResult = await getResponseRateMetrics(filters?.userIds?.[0], analyticsDateRange);
     if (responseResult.success) {
       reportData.responseRateMetrics = responseResult.data;
     }
   }
 
   if (config.sections.includes("review_velocity")) {
-    const velocityResult = await getReviewVelocityMetrics(filters?.loanOfficerIds?.[0], analyticsDateRange);
+    const velocityResult = await getReviewVelocityMetrics(filters?.userIds?.[0], analyticsDateRange);
     if (velocityResult.success) {
       reportData.reviewVelocityMetrics = velocityResult.data;
     }
@@ -325,10 +325,10 @@ export async function generateReport(
     if (orgResult.success && orgResult.data) {
       if (config.sections.includes("top_performers") && orgResult.data.topPerformers) {
         const topPerformerData = [];
-        for (const loId of orgResult.data.topPerformers.slice(0, 5)) {
-          const loResult = await getLoanOfficerAnalytics(loId, "monthly");
-          if (loResult.success && loResult.data) {
-            topPerformerData.push(loResult.data);
+        for (const userId of orgResult.data.topPerformers.slice(0, 5)) {
+          const userResult = await getUserAnalytics(userId, "monthly");
+          if (userResult.success && userResult.data) {
+            topPerformerData.push(userResult.data);
           }
         }
         reportData.topPerformers = topPerformerData;
@@ -336,10 +336,10 @@ export async function generateReport(
 
       if (config.sections.includes("needs_attention") && orgResult.data.needsAttention) {
         const needsAttentionData = [];
-        for (const loId of orgResult.data.needsAttention.slice(0, 5)) {
-          const loResult = await getLoanOfficerAnalytics(loId, "monthly");
-          if (loResult.success && loResult.data) {
-            needsAttentionData.push(loResult.data);
+        for (const userId of orgResult.data.needsAttention.slice(0, 5)) {
+          const userResult = await getUserAnalytics(userId, "monthly");
+          if (userResult.success && userResult.data) {
+            needsAttentionData.push(userResult.data);
           }
         }
         reportData.needsAttention = needsAttentionData;
@@ -350,9 +350,9 @@ export async function generateReport(
   // Add trends if configured
   if (config.showTrends) {
     const [npsTrend, csatTrend, reviewsTrend] = await Promise.all([
-      getNPSTrendData(filters?.loanOfficerIds?.[0], 6),
-      getCSATTrendData(filters?.loanOfficerIds?.[0], 6),
-      getReviewVelocityTrendData(filters?.loanOfficerIds?.[0], 6),
+      getNPSTrendData(filters?.userIds?.[0], 6),
+      getCSATTrendData(filters?.userIds?.[0], 6),
+      getReviewVelocityTrendData(filters?.userIds?.[0], 6),
     ]);
 
     reportData.trends = {

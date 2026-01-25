@@ -39,11 +39,11 @@ interface TabNavigationSectionProps {
 // Default tabs for RepWell homepage
 const defaultTabs: TabItem[] = [
   {
-    id: "loan-officers",
-    label: "Loan Officers",
+    id: "professionals",
+    label: "Professionals",
     headline: "Personal Reputation Dashboard",
     description:
-      "Individual loan officers get their own dashboard to track reviews, monitor NPS scores, and see how they rank against their peers.",
+      "Individual team members get their own dashboard to track reviews, monitor NPS scores, and see how they rank against their peers.",
     features: [
       "Personal review collection links",
       "Individual NPS and CSAT tracking",
@@ -51,7 +51,7 @@ const defaultTabs: TabItem[] = [
       "Automated review request sequences",
     ],
     imageSrc: "/images/screenshots/lo-dashboard.png",
-    imageAlt: "Loan officer dashboard showing personal metrics",
+    imageAlt: "Professional dashboard showing personal metrics",
   },
   {
     id: "branches",
@@ -62,7 +62,7 @@ const defaultTabs: TabItem[] = [
     features: [
       "Team performance overview",
       "Branch-level NPS trends",
-      "Individual LO comparisons",
+      "Individual team member comparisons",
       "Goal setting and tracking",
     ],
     imageSrc: "/images/screenshots/branch-dashboard.png",

@@ -435,13 +435,13 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
             </Card>
           )}
 
-          {/* Loan Officer Info */}
+          {/* Professional Info */}
           {review.loanOfficer && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <User className="h-4 w-4" />
-                  Loan Officer
+                  Professional
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -454,7 +454,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                         .map((n) => n[0])
                         .join("")
                         .toUpperCase()
-                        .slice(0, 2) || "LO"}
+                        .slice(0, 2) || "TM"}
                     </AvatarFallback>
                   </Avatar>
                   <div>

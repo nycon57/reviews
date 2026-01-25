@@ -19,7 +19,7 @@ interface TrendChartProps {
   type?: "rating" | "nps";
 }
 
-export function LOTrendChart({
+export function UserTrendChart({
   data,
   title,
   color = "hsl(var(--primary))",

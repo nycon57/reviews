@@ -6,8 +6,8 @@ import type { ActionResult } from "@/lib/reviews/types";
 
 // Types for manager dashboard
 export interface TeamMetrics {
-  totalLoanOfficers: number;
-  activeLoanOfficers: number;
+  totalMembers: number;
+  activeMembers: number;
   totalReviews: number;
   averageRating: number;
   teamNPS: number;
@@ -18,7 +18,7 @@ export interface TeamMetrics {
   teamNPSChange: number;
 }
 
-export interface LoanOfficerComparison {
+export interface UserComparison {
   id: string;
   fullName: string;
   email: string;
@@ -92,26 +92,26 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
 
   const supabase = createAdminClient();
 
-  // Get all loan officers for this organization
-  const { data: loanOfficers, error: loError } = await supabase
-    .from("loan_officers")
+  // Get all team members for this organization
+  const { data: teamMembers, error: teamError } = await supabase
+    .from("users")
     .select("id, is_active, average_rating, total_reviews, nps_score")
     .eq("organization_id", context.organizationId);
 
-  if (loError) {
-    console.error("Error fetching loan officers:", loError);
+  if (teamError) {
+    console.error("Error fetching team members:", teamError);
     return { success: false, error: "Failed to fetch team data" };
   }
 
-  const activeLOs = loanOfficers?.filter((lo) => lo.is_active) || [];
-  const totalLoanOfficers = loanOfficers?.length || 0;
-  const activeLoanOfficers = activeLOs.length;
+  const activeMembers = teamMembers?.filter((m) => m.is_active) || [];
+  const totalMemberCount = teamMembers?.length || 0;
+  const activeMemberCount = activeMembers.length;
 
   // Calculate aggregate metrics
-  const totalReviews = loanOfficers?.reduce((sum, lo) => sum + (lo.total_reviews || 0), 0) || 0;
-  const avgRatings = activeLOs.filter((lo) => (lo.average_rating || 0) > 0);
+  const totalReviews = teamMembers?.reduce((sum, m) => sum + (m.total_reviews || 0), 0) || 0;
+  const avgRatings = activeMembers.filter((m) => (m.average_rating || 0) > 0);
   const averageRating = avgRatings.length > 0
-    ? avgRatings.reduce((sum, lo) => sum + (lo.average_rating || 0), 0) / avgRatings.length
+    ? avgRatings.reduce((sum, m) => sum + (m.average_rating || 0), 0) / avgRatings.length
     : 0;
 
   // Calculate team NPS from survey responses
@@ -177,8 +177,8 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
   return {
     success: true,
     data: {
-      totalLoanOfficers,
-      activeLoanOfficers,
+      totalMembers: totalMemberCount,
+      activeMembers: activeMemberCount,
       totalReviews,
       averageRating: Number(averageRating.toFixed(2)),
       teamNPS,
@@ -190,11 +190,11 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
   };
 }
 
-// Get loan officer comparison data with optional filtering
-export async function getLoanOfficerComparison(
+// Get user comparison data with optional filtering
+export async function getUserComparison(
   branch?: string,
   region?: string
-): Promise<ActionResult<LoanOfficerComparison[]>> {
+): Promise<ActionResult<UserComparison[]>> {
   const context = await getManagerContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager access required" };
@@ -204,7 +204,7 @@ export async function getLoanOfficerComparison(
 
   // Build query with optional filters
   let query = supabase
-    .from("loan_officers")
+    .from("users")
     .select(`
       id,
       full_name,
@@ -229,54 +229,56 @@ export async function getLoanOfficerComparison(
     query = query.eq("region", region);
   }
 
-  const { data: loanOfficers, error } = await query;
+  const { data: users, error } = await query;
 
   if (error) {
-    console.error("Error fetching loan officers:", error);
-    return { success: false, error: "Failed to fetch loan officers" };
+    console.error("Error fetching users:", error);
+    return { success: false, error: "Failed to fetch users" };
   }
 
-  // Get reviews from the last 30 days for each LO
+  // Get reviews from the last 30 days for each user
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  const loIds = loanOfficers?.map((lo) => lo.id) || [];
+  const userIds = users?.map((u) => u.id) || [];
 
   const { data: recentReviews } = await supabase
     .from("reviews")
-    .select("loan_officer_id")
-    .in("loan_officer_id", loIds)
+    .select("user_id")
+    .in("user_id", userIds)
     .gte("review_date", thirtyDaysAgo.toISOString());
 
-  // Count reviews per LO
+  // Count reviews per user
   const reviewCounts = new Map<string, number>();
   for (const review of recentReviews || []) {
-    const count = reviewCounts.get(review.loan_officer_id) || 0;
-    reviewCounts.set(review.loan_officer_id, count + 1);
+    if (!review.user_id) continue;
+    const count = reviewCounts.get(review.user_id) || 0;
+    reviewCounts.set(review.user_id, count + 1);
   }
 
-  // Get survey response rates per LO
+  // Get survey response rates per user
   const { data: surveys } = await supabase
     .from("surveys")
-    .select("loan_officer_id, status")
-    .in("loan_officer_id", loIds);
+    .select("user_id, status")
+    .in("user_id", userIds);
 
   const surveyStats = new Map<string, { total: number; completed: number }>();
   for (const survey of surveys || []) {
-    const stats = surveyStats.get(survey.loan_officer_id) || { total: 0, completed: 0 };
+    if (!survey.user_id) continue;
+    const stats = surveyStats.get(survey.user_id) || { total: 0, completed: 0 };
     stats.total += 1;
     if (survey.status === "completed") {
       stats.completed += 1;
     }
-    surveyStats.set(survey.loan_officer_id, stats);
+    surveyStats.set(survey.user_id, stats);
   }
 
-  const comparison: LoanOfficerComparison[] = (loanOfficers || []).map((lo) => {
-    const stats = surveyStats.get(lo.id) || { total: 0, completed: 0 };
+  const comparison: UserComparison[] = (users || []).map((u) => {
+    const stats = surveyStats.get(u.id) || { total: 0, completed: 0 };
     const responseRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
-    const rating = lo.average_rating || 0;
-    const reviews = lo.total_reviews || 0;
-    const nps = lo.nps_score || 0;
+    const rating = u.average_rating || 0;
+    const reviews = u.total_reviews || 0;
+    const nps = u.nps_score || 0;
 
     // Determine performance status
     let performanceStatus: "excellent" | "good" | "needs_attention" | "at_risk" = "good";
@@ -289,19 +291,19 @@ export async function getLoanOfficerComparison(
     }
 
     return {
-      id: lo.id,
-      fullName: lo.full_name,
-      email: lo.email,
-      photoUrl: lo.photo_url,
-      branch: lo.branch,
-      region: lo.region,
+      id: u.id,
+      fullName: u.full_name || 'Unknown',
+      email: u.email,
+      photoUrl: u.photo_url,
+      branch: u.branch,
+      region: u.region,
       totalReviews: reviews,
       averageRating: rating,
       npsScore: nps,
       responseRate,
-      reputationScore: lo.reputation_score || 0,
-      isActive: lo.is_active ?? true,
-      reviewsThisMonth: reviewCounts.get(lo.id) || 0,
+      reputationScore: u.reputation_score || 0,
+      isActive: u.is_active ?? true,
+      reviewsThisMonth: reviewCounts.get(u.id) || 0,
       performanceStatus,
     };
   });
@@ -318,8 +320,8 @@ export async function getFilterOptions(): Promise<ActionResult<FilterOptions>> {
 
   const supabase = createAdminClient();
 
-  const { data: loanOfficers, error } = await supabase
-    .from("loan_officers")
+  const { data: userList, error } = await supabase
+    .from("users")
     .select("branch, region")
     .eq("organization_id", context.organizationId);
 
@@ -331,9 +333,9 @@ export async function getFilterOptions(): Promise<ActionResult<FilterOptions>> {
   const branches = new Set<string>();
   const regions = new Set<string>();
 
-  for (const lo of loanOfficers || []) {
-    if (lo.branch) branches.add(lo.branch);
-    if (lo.region) regions.add(lo.region);
+  for (const u of userList || []) {
+    if (u.branch) branches.add(u.branch);
+    if (u.region) regions.add(u.region);
   }
 
   return {
@@ -364,8 +366,8 @@ export async function getLeaderboard(
       ? "total_reviews"
       : "average_rating";
 
-  const { data: loanOfficers, error } = await supabase
-    .from("loan_officers")
+  const { data: leaderboardUsers, error } = await supabase
+    .from("users")
     .select(`
       id,
       full_name,
@@ -385,29 +387,29 @@ export async function getLeaderboard(
     return { success: false, error: "Failed to fetch leaderboard" };
   }
 
-  const leaderboard: LeaderboardEntry[] = (loanOfficers || []).map((lo, index) => ({
+  const leaderboard: LeaderboardEntry[] = (leaderboardUsers || []).map((u, index) => ({
     rank: index + 1,
-    id: lo.id,
-    fullName: lo.full_name,
-    photoUrl: lo.photo_url,
-    totalReviews: lo.total_reviews || 0,
-    averageRating: lo.average_rating || 0,
-    npsScore: lo.nps_score || 0,
-    reputationScore: lo.reputation_score || 0,
+    id: u.id,
+    fullName: u.full_name || 'Unknown',
+    photoUrl: u.photo_url,
+    totalReviews: u.total_reviews || 0,
+    averageRating: u.average_rating || 0,
+    npsScore: u.nps_score || 0,
+    reputationScore: u.reputation_score || 0,
     change: 0, // Would need historical ranking data to calculate
   }));
 
   return { success: true, data: leaderboard };
 }
 
-// Get loan officers needing attention (low performers)
-export async function getLowPerformers(): Promise<ActionResult<LoanOfficerComparison[]>> {
+// Get users needing attention (low performers)
+export async function getLowPerformers(): Promise<ActionResult<UserComparison[]>> {
   const context = await getManagerContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
-  const comparisonResult = await getLoanOfficerComparison();
+  const comparisonResult = await getUserComparison();
 
   if (!comparisonResult.success || !comparisonResult.data) {
     return comparisonResult;
@@ -415,7 +417,7 @@ export async function getLowPerformers(): Promise<ActionResult<LoanOfficerCompar
 
   // Filter to only show those needing attention or at risk
   const lowPerformers = comparisonResult.data.filter(
-    (lo) => lo.performanceStatus === "needs_attention" || lo.performanceStatus === "at_risk"
+    (u) => u.performanceStatus === "needs_attention" || u.performanceStatus === "at_risk"
   );
 
   return { success: true, data: lowPerformers };

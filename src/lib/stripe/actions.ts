@@ -515,7 +515,7 @@ export async function getBillingOverview(): Promise<{
   // Get usage
   const usage = {
     currentUsers: usageData?.total_users || 0,
-    currentLoanOfficers: usageData?.total_loan_officers || 0,
+    currentMembers: usageData?.total_members || 0,
     surveysThisMonth: usageData?.total_surveys || 0,
     apiCallsToday: 0, // Would need separate tracking
   };

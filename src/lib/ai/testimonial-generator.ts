@@ -62,7 +62,7 @@ REVIEW CONTEXT:
 - Source: ${context.source}
 - Customer: ${context.customerName || 'Anonymous'}
 - Location: ${context.customerLocation || 'Not specified'}
-- Loan Officer: ${context.loanOfficerName}
+- Professional: ${context.loanOfficerName}
 - Review Date: ${context.reviewDate}
 ${sentimentContext}
 ${themesContext}
@@ -71,7 +71,7 @@ ${keyPhrasesContext}
 GUIDELINES:
 1. Maintain the customer's authentic voice and specific details
 2. Focus on emotional impact and concrete outcomes
-3. Highlight what makes this loan officer exceptional
+3. Highlight what makes this professional exceptional
 4. Keep the testimonial genuine - avoid marketing jargon
 5. Include customer attribution when available
 6. Extract the most impactful quote directly from the review
@@ -103,7 +103,7 @@ function getUserPrompt(context: TestimonialReviewContext, format: TestimonialFor
 "${reviewText}"
 
 Customer: ${context.customerName || 'Anonymous'}
-Loan Officer: ${context.loanOfficerName}`;
+Professional: ${context.loanOfficerName}`;
 }
 
 // Generate a single testimonial for a specific format
@@ -193,7 +193,7 @@ function generateFallbackTestimonial(
     case 'headline':
       // Create a simple headline from the review
       if (context.rating === 5) {
-        content = `"${context.loanOfficerName} made our dream home a reality!"`;
+        content = `"${context.loanOfficerName} made it all happen!"`;
       } else {
         content = `"A great experience with ${context.loanOfficerName}!"`;
       }

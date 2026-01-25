@@ -273,7 +273,7 @@ export async function createNotification(
       message: params.message,
       organization_id: params.organizationId,
       review_id: params.reviewId,
-      loan_officer_id: params.loanOfficerId,
+      target_user_id: params.loanOfficerId,
       metadata: params.metadata || {},
       action_url: params.actionUrl,
       priority: params.priority || 0,

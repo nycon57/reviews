@@ -189,11 +189,11 @@ export async function GET(request: NextRequest) {
                 );
                 updated++;
               }
-            } else if (connection.loan_officer_id) {
+            } else if (connection.user_id) {
               // Only create new reviews if we have a loan officer assigned
               inserts.push({
                 organization_id: connection.organization_id,
-                loan_officer_id: connection.loan_officer_id,
+                user_id: connection.user_id,
                 source: 'google',
                 source_review_id: googleReview.reviewId,
                 source_url: `https://search.google.com/local/reviews?placeid=${connection.location_id}`,

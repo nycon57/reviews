@@ -3,7 +3,7 @@
 export interface Review {
   id: string;
   organizationId: string;
-  loanOfficerId: string;
+  loanOfficerId: string | null;
   source: string;
   rating: number;
   title: string | null;

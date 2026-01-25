@@ -41,7 +41,7 @@ const pricingPlans = {
       tier: "Starter",
       price: 49,
       period: "month",
-      description: "Perfect for individual loan officers",
+      description: "Perfect for individual professionals",
       icon: Users,
       features: [
         "Up to 100 survey sends/month",
@@ -99,7 +99,7 @@ const pricingPlans = {
       tier: "Starter",
       price: 39,
       period: "month",
-      description: "Perfect for individual loan officers",
+      description: "Perfect for individual professionals",
       icon: Users,
       features: [
         "Up to 100 survey sends/month",

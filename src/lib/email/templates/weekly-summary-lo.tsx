@@ -63,7 +63,7 @@ export function WeeklySummaryLOEmail({ data }: WeeklySummaryLOEmailProps) {
     // Leaderboard
     leaderboardRank,
     leaderboardRankChange,
-    totalLoanOfficers,
+    totalMembers,
 
     // Top review
     topReview,
@@ -245,7 +245,7 @@ export function WeeklySummaryLOEmail({ data }: WeeklySummaryLOEmailProps) {
                       }}
                     >
                       {" "}
-                      of {totalLoanOfficers}
+                      of {totalMembers}
                     </Text>
                   </Text>
                 </Column>

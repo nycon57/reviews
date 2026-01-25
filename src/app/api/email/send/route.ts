@@ -73,8 +73,8 @@ export async function POST(request: NextRequest) {
           customer_email,
           transaction_type,
           organization_id,
-          loan_officer_id,
-          loan_officers!inner (
+          user_id,
+          users!user_id (
             id,
             full_name,
             photo_url
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const loanOfficer = survey.loan_officers as unknown as {
+      const loanOfficer = survey.users as unknown as {
         id: string;
         full_name: string;
         photo_url: string | null;
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         surveyUrl: `${emailConfig.baseUrl}/survey/${survey.token}`,
         transactionType: survey.transaction_type ?? undefined,
         organizationId: survey.organization_id,
-        loanOfficerId: survey.loan_officer_id,
+        loanOfficerId: survey.user_id ?? undefined,
         surveyId: survey.id,
       });
 
@@ -149,9 +149,9 @@ export async function POST(request: NextRequest) {
           customer_name,
           customer_email,
           organization_id,
-          loan_officer_id,
+          user_id,
           reminder_count,
-          loan_officers!inner (
+          users!user_id (
             full_name
           ),
           organizations!inner (
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const loanOfficer = survey.loan_officers as unknown as {
+      const loanOfficer = survey.users as unknown as {
         full_name: string;
       };
       const organization = survey.organizations as unknown as {
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
         surveyUrl: `${emailConfig.baseUrl}/survey/${survey.token}`,
         reminderNumber,
         organizationId: survey.organization_id,
-        loanOfficerId: survey.loan_officer_id,
+        loanOfficerId: survey.user_id ?? undefined,
         surveyId: survey.id,
       });
 
@@ -217,8 +217,8 @@ export async function POST(request: NextRequest) {
           customer_name,
           review_date,
           organization_id,
-          loan_officer_id,
-          loan_officers!inner (
+          user_id,
+          users!user_id (
             id,
             full_name,
             email,
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const loanOfficer = review.loan_officers as unknown as {
+      const loanOfficer = review.users as unknown as {
         id: string;
         full_name: string;
         email: string;
@@ -261,7 +261,7 @@ export async function POST(request: NextRequest) {
         reviewDate: new Date(review.review_date).toLocaleDateString(),
         dashboardUrl: `${emailConfig.baseUrl}/dashboard/reviews`,
         organizationId: review.organization_id,
-        loanOfficerId: review.loan_officer_id,
+        loanOfficerId: review.user_id ?? undefined,
       });
 
       return NextResponse.json(result);

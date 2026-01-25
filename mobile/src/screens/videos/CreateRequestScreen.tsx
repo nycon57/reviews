@@ -90,7 +90,7 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
     const newErrors: FormErrors = {};
 
     if (!selectedLoanOfficer) {
-      newErrors.loanOfficer = 'Please select a loan officer';
+      newErrors.loanOfficer = 'Please select a professional';
     }
 
     if (!customerName.trim()) {
@@ -114,7 +114,7 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
       setSubmitting(true);
 
       const result = await createVideoTestimonialRequest({
-        loan_officer_id: selectedLoanOfficer,
+        user_id: selectedLoanOfficer,
         customer_name: customerName.trim(),
         customer_email: customerEmail.trim().toLowerCase(),
         customer_phone: customerPhone.trim() || undefined,
@@ -173,10 +173,10 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
             Send a video testimonial request to a customer. They&apos;ll receive an email with a link to record their testimonial.
           </Text>
 
-          {/* Loan Officer Selection */}
+          {/* Professional Selection */}
           <Card style={styles.section}>
             <CardHeader>
-              <CardTitle>Loan Officer</CardTitle>
+              <CardTitle>Professional</CardTitle>
             </CardHeader>
             <CardContent>
               {userLoanOfficerId ? (
@@ -198,7 +198,7 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
                     }}
                     style={styles.picker}
                   >
-                    <Picker.Item label="Select loan officer..." value="" />
+                    <Picker.Item label="Select professional..." value="" />
                     {loanOfficers.map((lo) => (
                       <Picker.Item key={lo.id} label={lo.full_name} value={lo.id} />
                     ))}

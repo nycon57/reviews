@@ -23,16 +23,16 @@ import {
   Eye,
   Star,
 } from "@phosphor-icons/react";
-import type { LoanOfficerComparison } from "@/lib/dashboard";
+import type { UserComparison } from "@/lib/dashboard";
 
-interface LOComparisonTableProps {
-  data: LoanOfficerComparison[];
+interface UserComparisonTableProps {
+  data: UserComparison[];
 }
 
 type SortField = "fullName" | "totalReviews" | "averageRating" | "npsScore" | "responseRate" | "reputationScore";
 type SortDirection = "asc" | "desc";
 
-export function LOComparisonTable({ data }: LOComparisonTableProps) {
+export function UserComparisonTable({ data }: UserComparisonTableProps) {
   const [sortField, setSortField] = useState<SortField>("reputationScore");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
@@ -75,7 +75,7 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
     );
   };
 
-  const getStatusBadge = (status: LoanOfficerComparison["performanceStatus"]) => {
+  const getStatusBadge = (status: UserComparison["performanceStatus"]) => {
     switch (status) {
       case "excellent":
         return (
@@ -125,7 +125,7 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm">No loan officers found</p>
+              <p className="text-sm">No team members found</p>
               <p className="text-xs">Add team members to see their performance</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
         <CardTitle className="flex items-center justify-between">
           <span>Team Performance</span>
           <span className="text-sm font-normal text-muted-foreground">
-            {data.length} loan officer{data.length !== 1 ? "s" : ""}
+            {data.length} team member{data.length !== 1 ? "s" : ""}
           </span>
         </CardTitle>
       </CardHeader>
@@ -156,7 +156,7 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
                     className="-ml-3 h-8 font-medium"
                     onClick={() => handleSort("fullName")}
                   >
-                    Loan Officer
+                    Team Member
                     {getSortIcon("fullName")}
                   </Button>
                 </TableHead>
@@ -209,21 +209,21 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((lo) => (
-                <TableRow key={lo.id}>
+              {sortedData.map((member) => (
+                <TableRow key={member.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={lo.photoUrl || undefined} alt={lo.fullName} />
+                        <AvatarImage src={member.photoUrl || undefined} alt={member.fullName} />
                         <AvatarFallback className="text-xs">
-                          {getInitials(lo.fullName)}
+                          {getInitials(member.fullName)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{lo.fullName}</div>
-                        {(lo.branch || lo.region) && (
+                        <div className="font-medium">{member.fullName}</div>
+                        {(member.branch || member.region) && (
                           <div className="text-xs text-muted-foreground">
-                            {[lo.branch, lo.region].filter(Boolean).join(" - ")}
+                            {[member.branch, member.region].filter(Boolean).join(" - ")}
                           </div>
                         )}
                       </div>
@@ -231,10 +231,10 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex flex-col items-end">
-                      <span className="font-medium">{lo.totalReviews}</span>
-                      {lo.reviewsThisMonth > 0 && (
+                      <span className="font-medium">{member.totalReviews}</span>
+                      {member.reviewsThisMonth > 0 && (
                         <span className="text-xs text-green-600">
-                          +{lo.reviewsThisMonth} this month
+                          +{member.reviewsThisMonth} this month
                         </span>
                       )}
                     </div>
@@ -242,32 +242,32 @@ export function LOComparisonTable({ data }: LOComparisonTableProps) {
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <Star className="h-3 w-3 text-yellow-400" weight="fill" />
-                      <span className="font-medium">{lo.averageRating.toFixed(1)}</span>
+                      <span className="font-medium">{member.averageRating.toFixed(1)}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <span
                       className={`font-medium ${
-                        lo.npsScore >= 50
+                        member.npsScore >= 50
                           ? "text-green-600"
-                          : lo.npsScore >= 0
+                          : member.npsScore >= 0
                             ? "text-yellow-600"
                             : "text-red-600"
                       }`}
                     >
-                      {lo.npsScore > 0 ? "+" : ""}
-                      {lo.npsScore}
+                      {member.npsScore > 0 ? "+" : ""}
+                      {member.npsScore}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="font-medium">{lo.responseRate}%</span>
+                    <span className="font-medium">{member.responseRate}%</span>
                   </TableCell>
                   <TableCell>
-                    {getStatusBadge(lo.performanceStatus)}
+                    {getStatusBadge(member.performanceStatus)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/dashboard/team/${lo.id}`}>
+                      <Link href={`/dashboard/team/${member.id}`}>
                         <Eye className="mr-1 h-3 w-3" />
                         View
                       </Link>

@@ -29,6 +29,9 @@ export {
 // Re-export utilities
 export {
   getProfessionalLabel,
+  getProfessionalLabelWithFallback,
+  DEFAULT_PROFESSIONAL_LABEL,
+  DEFAULT_PROFESSIONAL_LABEL_PLURAL,
   getCustomerLabel,
   getTransactionLabel,
   hasIntegration,

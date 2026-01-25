@@ -45,7 +45,7 @@
 
     /* Accent: repwell-sage-200 (#84a98c) */
     --accent: 133 17% 59%;
-    --accent-foreground: 201 20% 23%;
+    --accent-foreground: 0 0% 100%;
 
     /* Destructive */
     --destructive: 0 72% 51%;

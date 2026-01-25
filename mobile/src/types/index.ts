@@ -42,7 +42,7 @@ export interface Review {
   status: 'pending' | 'approved' | 'rejected';
   customer_name: string;
   customer_email: string | null;
-  loan_officer_id: string;
+  user_id: string;
   created_at: string;
   updated_at: string;
 }
@@ -103,7 +103,7 @@ export interface VideoTestimonialRequest {
   id: string;
   token: string;
   organization_id: string;
-  loan_officer_id: string;
+  user_id: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
@@ -117,14 +117,14 @@ export interface VideoTestimonialRequest {
   reminder_count: number;
   created_at: string;
   // Joined data
-  loan_officer_name?: string;
+  user_name?: string;
 }
 
 export interface VideoTestimonialResponse {
   id: string;
   request_id: string;
   organization_id: string;
-  loan_officer_id: string;
+  user_id: string;
   video_url: string;
   video_path: string;
   thumbnail_url: string | null;
@@ -147,7 +147,7 @@ export interface VideoTestimonialResponse {
   // Joined data
   customer_name: string;
   customer_email: string;
-  loan_officer_name: string;
+  user_name: string;
 }
 
 export interface VideoTestimonialStats {
@@ -167,7 +167,7 @@ export interface LoanOfficer {
 }
 
 export interface CreateVideoRequestInput {
-  loan_officer_id: string;
+  user_id: string;
   customer_name: string;
   customer_email: string;
   customer_phone?: string;

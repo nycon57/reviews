@@ -197,12 +197,12 @@ async function getVideoTestimonialProps(
     .select(`
       *,
       video_testimonial_requests!inner (
-        loan_officer_id,
+        user_id,
         organization_id,
         customer_first_name,
         customer_last_name,
         customer_relationship,
-        loan_officers!inner (
+        users!user_id (
           id,
           full_name,
           title,
@@ -229,10 +229,10 @@ async function getVideoTestimonialProps(
     customer_last_name: string | null;
     customer_relationship: string | null;
     organizations: { id: string; name: string; logo_url: string | null; primary_color?: string };
-    loan_officers: { id: string; full_name: string; title?: string; photo_url: string | null };
+    users: { id: string; full_name: string; title?: string; photo_url: string | null };
   };
   const org = req.organizations;
-  const lo = req.loan_officers;
+  const professional = req.users;
   const customerName = [req.customer_first_name, req.customer_last_name].filter(Boolean).join(" ") || "Valued Customer";
 
   // Parse transcription into caption segments
@@ -250,9 +250,9 @@ async function getVideoTestimonialProps(
       secondaryColor: "#84a98c", // Default brand secondary color
     },
     loanOfficer: {
-      fullName: lo.full_name,
-      title: lo.title || null,
-      photoUrl: lo.photo_url,
+      fullName: professional.full_name,
+      title: professional.title || null,
+      photoUrl: professional.photo_url,
     },
     customer: {
       displayName: customerName,
@@ -340,7 +340,7 @@ async function getLeaderboardCelebrationProps(
   // Fetch leaderboard data based on celebration type
   if (request.celebrationType === "new_leader" && request.userId) {
     const { data: user } = await supabase
-      .from("loan_officers")
+      .from("users")
       .select("id, full_name, photo_url")
       .eq("id", request.userId)
       .single();
@@ -349,7 +349,7 @@ async function getLeaderboardCelebrationProps(
     const { data: stats } = await supabase
       .from("leaderboard_snapshots")
       .select("reputation_score, rank, total_reviews, average_rating")
-      .eq("loan_officer_id", request.userId)
+      .eq("user_id", request.userId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -382,23 +382,35 @@ async function getLeaderboardCelebrationProps(
       .select(`
         reputation_score,
         rank,
-        loan_officers!inner (
-          id,
-          full_name,
-          photo_url
-        )
+        user_id
       `)
       .eq("organization_id", request.organizationId)
       .order("reputation_score", { ascending: false })
       .limit(5);
 
+    // Fetch user data separately
+    const userIds = (entries || []).map(e => e.user_id).filter((id): id is string => !!id);
+    const userMap = new Map<string, { full_name: string | null; photo_url: string | null }>();
+    if (userIds.length > 0) {
+      const { data: users } = await supabase
+        .from("users")
+        .select("id, full_name, photo_url")
+        .in("id", userIds);
+      for (const u of users || []) {
+        userMap.set(u.id, { full_name: u.full_name, photo_url: u.photo_url });
+      }
+    }
+
     const topFive =
-      entries?.map((e, i) => ({
-        name: e.loan_officers.full_name,
-        photoUrl: e.loan_officers.photo_url,
-        score: e.reputation_score,
-        rank: i + 1,
-      })) || [];
+      entries?.map((e, i) => {
+        const user = e.user_id ? userMap.get(e.user_id) : null;
+        return {
+          name: user?.full_name || 'Unknown',
+          photoUrl: user?.photo_url || null,
+          score: e.reputation_score,
+          rank: i + 1,
+        };
+      }) || [];
 
     const winner = topFive[0] || { name: "Unknown", photoUrl: null, score: 0, rank: 1, previousRank: 1, newRank: 1 };
 
@@ -588,13 +600,8 @@ async function getVideoThumbnailProps(
       *,
       video_testimonial_requests!inner (
         customer_name,
-        loan_officer_id,
+        user_id,
         organization_id,
-        loan_officers!inner (
-          id,
-          full_name,
-          photo_url
-        ),
         organizations!inner (
           id,
           name,
@@ -612,7 +619,21 @@ async function getVideoThumbnailProps(
 
   const req = response.video_testimonial_requests;
   const org = req.organizations;
-  const lo = req.loan_officers;
+
+  // Fetch user data separately
+  let userName = "Team Member";
+  let userPhoto: string | null = null;
+  if (req.user_id) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("full_name, photo_url")
+      .eq("id", req.user_id)
+      .single();
+    if (userData) {
+      userName = userData.full_name || "Team Member";
+      userPhoto = userData.photo_url;
+    }
+  }
 
   return {
     customerName: req.customer_name || "Valued Customer",
@@ -627,8 +648,8 @@ async function getVideoThumbnailProps(
       secondaryColor: "#84a98c", // Default brand secondary color
     },
     loanOfficer: {
-      fullName: lo.full_name,
-      photoUrl: lo.photo_url,
+      fullName: userName,
+      photoUrl: userPhoto,
     },
     customerPhotoUrl: response.thumbnail_url,
   };

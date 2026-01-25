@@ -8,7 +8,7 @@ import type {
   CSATMetrics,
   ResponseRateMetrics,
   ReviewVelocityMetrics,
-  LoanOfficerAnalytics,
+  UserAnalytics,
 } from "@/lib/analytics/types";
 
 // Report template types
@@ -41,6 +41,8 @@ export interface ReportDateRange {
 
 // Report filter options
 export interface ReportFilters {
+  userIds?: string[];
+  /** @deprecated Use userIds instead */
   loanOfficerIds?: string[];
   branches?: string[];
   regions?: string[];
@@ -179,7 +181,7 @@ export interface ExecutiveSummary {
 
 // Team comparison data
 export interface TeamComparisonRow {
-  loanOfficerId: string;
+  userId: string;
   name: string;
   photoUrl: string | null;
   branch: string | null;
@@ -207,8 +209,8 @@ export interface GeneratedReport {
   responseRateMetrics?: ResponseRateMetrics;
   reviewVelocityMetrics?: ReviewVelocityMetrics;
   teamComparison?: TeamComparisonRow[];
-  topPerformers?: LoanOfficerAnalytics[];
-  needsAttention?: LoanOfficerAnalytics[];
+  topPerformers?: UserAnalytics[];
+  needsAttention?: UserAnalytics[];
   trends?: {
     nps: { date: string; value: number }[];
     csat: { date: string; value: number }[];

@@ -59,7 +59,7 @@ export default async function RequestsPage({
   const { role } = await checkAccess();
 
   // Fetch video testimonial requests data
-  const [requestsResult, statsResult, loanOfficersResult] = await Promise.all([
+  const [requestsResult, statsResult, usersResult] = await Promise.all([
     getVideoTestimonialRequests({ page: 1, pageSize: 25 }),
     getVideoTestimonialRequestStats(),
     getLoanOfficersForVideoRequests(),
@@ -74,8 +74,8 @@ export default async function RequestsPage({
   const initialVideoStats = statsResult.success && statsResult.data
     ? statsResult.data
     : { total: 0, pending: 0, sent: 0, completed: 0, expired: 0 };
-  const loanOfficers = loanOfficersResult.success
-    ? loanOfficersResult.data ?? []
+  const users = usersResult.success
+    ? usersResult.data ?? []
     : [];
 
   return (
@@ -99,7 +99,7 @@ export default async function RequestsPage({
           initialVideoRequests={initialVideoRequests}
           initialVideoTotal={initialVideoTotal}
           initialVideoStats={initialVideoStats}
-          loanOfficers={loanOfficers}
+          teamMembers={users}
           userRole={role}
           initialTab={params?.tab}
         />

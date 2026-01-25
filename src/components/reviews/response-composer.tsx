@@ -97,7 +97,7 @@ export function ResponseComposer({
     if (template) {
       const variables: Record<string, string> = {
         customer_name: review.customerName || "Valued Customer",
-        loan_officer_name: review.loanOfficer?.fullName || "Your Loan Officer",
+        loan_officer_name: review.loanOfficer?.fullName || "Your Team Member",
       };
       const appliedContent = applyTemplateVariables(template.content, variables);
       setResponseText(appliedContent);

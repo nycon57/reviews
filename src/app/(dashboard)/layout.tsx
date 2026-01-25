@@ -41,7 +41,7 @@ export default async function DashboardRootLayout({
   // Cast to access potentially untyped columns (is_owner, account_type)
   const profile = profileData as {
     full_name?: string | null;
-    avatar_url?: string | null;
+    photo_url?: string | null;
     role?: string | null;
     is_owner?: boolean | null;
     organization_id?: string | null;
@@ -51,13 +51,6 @@ export default async function DashboardRootLayout({
     } | null;
   } | null;
 
-  // Fetch loan officer ID if user is linked to a loan officer record
-  const { data: loanOfficer } = await supabase
-    .from("loan_officers")
-    .select("id")
-    .eq("user_id", authUser.id)
-    .single();
-
   // Handle both Supabase Auth (user_metadata) and Better Auth (name) user structures
   const authUserName =
     (authUser as { name?: string }).name ||
@@ -66,9 +59,9 @@ export default async function DashboardRootLayout({
   const user = {
     name: profile?.full_name || authUserName || "User",
     email: authUser.email || "",
-    avatar: profile?.avatar_url || undefined,
+    avatar: profile?.photo_url || undefined,
     initials: getInitials(profile?.full_name || authUserName || null),
-    loanOfficerId: loanOfficer?.id || undefined,
+    loanOfficerId: authUser.id, // User ID is now the professional ID
   };
 
   // Build user context for permission system

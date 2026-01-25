@@ -99,7 +99,7 @@ export default async function PublicVideoTestimonialPage({ params }: PageProps) 
   const videoSchema = {
     "@context": "https://schema.org",
     "@type": "VideoObject",
-    name: `${video.customer.displayName}'s Experience with ${video.loanOfficer.fullName}`,
+    name: `${video.customer.displayName}'s Experience with ${video.professional.fullName}`,
     description: video.aiGeneratedText || `Video testimonial from ${video.customer.displayName}`,
     thumbnailUrl: video.thumbnailUrl || undefined,
     uploadDate: video.submittedAt,
@@ -124,8 +124,8 @@ export default async function PublicVideoTestimonialPage({ params }: PageProps) 
     },
     about: {
       "@type": "Person",
-      name: video.loanOfficer.fullName,
-      jobTitle: video.loanOfficer.title || "Loan Officer",
+      name: video.professional.fullName,
+      jobTitle: video.professional.title || "Professional",
       worksFor: {
         "@type": "Organization",
         name: video.organization.name,

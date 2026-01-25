@@ -334,9 +334,9 @@ export async function postResponse(
   const { data: review, error: fetchError } = await (supabase as any)
     .from("reviews")
     .select(`
-      id, source, source_review_id, loan_officer_id, customer_name, customer_email,
+      id, source, source_review_id, user_id, customer_name, customer_email,
       sentiment_score, review_date, text,
-      loan_officers!inner(full_name),
+      users!user_id(full_name),
       organizations!inner(name)
     `)
     .eq("id", reviewId)
@@ -379,7 +379,7 @@ export async function postResponse(
   await (supabase as any).from("response_analytics").insert({
     organization_id: context.organizationId,
     review_id: reviewId,
-    loan_officer_id: review.loan_officer_id,
+    user_id: review.user_id,
     response_time_hours: Math.round(responseTimeHours * 100) / 100,
     template_used: options.templateId || null,
     was_ai_suggested: options.wasAISuggested || false,
@@ -430,7 +430,7 @@ export async function postResponse(
       responseText: responseText,
       rating: review.rating || 5,
       organizationId: context.organizationId,
-      loanOfficerId: review.loan_officer_id,
+      loanOfficerId: review.user_id,
     }).catch((err) => {
       // Log error but don't fail the response posting
       console.error("Failed to send review response email:", err);
@@ -449,7 +449,7 @@ export async function postResponse(
 export interface ResponseAnalyticsParams {
   startDate?: string;
   endDate?: string;
-  loanOfficerId?: string;
+  userId?: string;
 }
 
 export async function getResponseAnalytics(
@@ -472,20 +472,20 @@ export async function getResponseAnalytics(
   const supabase = createAdminClient();
 
   // Role-based filtering
-  let loanOfficerIdFilter: string | undefined = params.loanOfficerId;
+  let userIdFilter: string | undefined = params.userId;
 
-  // For loan officers, always filter to their own data
+  // For users, always filter to their own data
   if (context.role === "user") {
-    const { data: loData } = await supabase
-      .from("loan_officers")
+    const { data: userData } = await supabase
+      .from("users")
       .select("id")
-      .eq("user_id", context.userId)
+      .eq("id", context.userId)
       .single();
 
-    if (loData) {
-      loanOfficerIdFilter = loData.id;
+    if (userData) {
+      userIdFilter = userData.id;
     } else {
-      // No loan officer record, return empty analytics
+      // No user record, return empty analytics
       return {
         success: true,
         data: {
@@ -512,7 +512,7 @@ export async function getResponseAnalytics(
 
   if (params.startDate) reviewsQuery = reviewsQuery.gte("review_date", params.startDate);
   if (params.endDate) reviewsQuery = reviewsQuery.lte("review_date", params.endDate);
-  if (loanOfficerIdFilter) reviewsQuery = reviewsQuery.eq("loan_officer_id", loanOfficerIdFilter);
+  if (userIdFilter) reviewsQuery = reviewsQuery.eq("user_id", userIdFilter);
 
   const { data: reviews, count: totalReviews } = await reviewsQuery;
 
@@ -525,7 +525,7 @@ export async function getResponseAnalytics(
 
   if (params.startDate) analyticsQuery = analyticsQuery.gte("created_at", params.startDate);
   if (params.endDate) analyticsQuery = analyticsQuery.lte("created_at", params.endDate);
-  if (loanOfficerIdFilter) analyticsQuery = analyticsQuery.eq("loan_officer_id", loanOfficerIdFilter);
+  if (userIdFilter) analyticsQuery = analyticsQuery.eq("user_id", userIdFilter);
 
   const { data: analytics } = await analyticsQuery;
 
@@ -537,7 +537,7 @@ export async function getResponseAnalytics(
     .eq("organization_id", context.organizationId)
     .eq("response_status", "pending_approval");
 
-  if (loanOfficerIdFilter) pendingQuery = pendingQuery.eq("loan_officer_id", loanOfficerIdFilter);
+  if (userIdFilter) pendingQuery = pendingQuery.eq("user_id", userIdFilter);
 
   const { count: pendingApprovals } = await pendingQuery;
 
@@ -630,7 +630,7 @@ export async function generateAISuggestion(
       sentiment_label,
       themes,
       key_phrases,
-      loan_officers!inner(full_name)
+      users!user_id(full_name)
     `)
     .eq("id", reviewId)
     .eq("organization_id", context.organizationId)
@@ -702,7 +702,7 @@ export async function trackResponseEdit(
       sentiment_label,
       themes,
       key_phrases,
-      loan_officers!inner(full_name)
+      users!user_id(full_name)
     `)
     .eq("id", reviewId)
     .eq("organization_id", context.organizationId)

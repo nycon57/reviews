@@ -12,14 +12,14 @@ import type { Database } from "@/types/database.types";
 const dateRangeSchema = z.object({
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  loanOfficerId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
 }).optional();
 
 const trendsParamsSchema = z.object({
   period: z.enum(["daily", "weekly", "monthly"]).optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  loanOfficerId: z.string().uuid().optional(),
+  userId: z.string().uuid().optional(),
 }).optional();
 
 const loStatsParamsSchema = z.object({
@@ -76,9 +76,9 @@ export interface VideoTestimonialTrendDataPoint {
   conversionRate: number;
 }
 
-export interface LoanOfficerVideoStats {
-  loanOfficerId: string;
-  loanOfficerName: string;
+export interface UserVideoStats {
+  userId: string;
+  userName: string;
   sent: number;
   opened: number;
   completed: number;
@@ -86,6 +86,9 @@ export interface LoanOfficerVideoStats {
   published: number;
   conversionRate: number;
 }
+
+/** @deprecated Use UserVideoStats instead */
+export type LoanOfficerVideoStats = UserVideoStats;
 
 type VideoTestimonialRequestStatus =
   Database["public"]["Enums"]["video_testimonial_request_status"];
@@ -124,7 +127,7 @@ function calculateHoursDifference(
 export async function getVideoTestimonialFunnelMetrics(params?: {
   startDate?: string;
   endDate?: string;
-  loanOfficerId?: string;
+  userId?: string;
 }): Promise<ActionResult<VideoTestimonialFunnelMetrics>> {
   try {
     // Validate input with Zod
@@ -147,17 +150,17 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
       return { success: false, error: "Organization not found" };
     }
 
-    // Role-based filtering - query loan officer ID once
-    let loanOfficerIdFilter: string | undefined = validatedParams?.loanOfficerId;
+    // Role-based filtering - query user ID once
+    let userIdFilter: string | undefined = validatedParams?.userId;
     if (userData.role === "user") {
-      const { data: loData } = await supabase
-        .from("loan_officers")
+      const { data: userRecord } = await supabase
+        .from("users")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
 
-      if (loData) {
-        loanOfficerIdFilter = loData.id;
+      if (userRecord) {
+        userIdFilter = userRecord.id;
       } else {
         return {
           success: true,
@@ -179,8 +182,8 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
     if (validatedParams?.endDate) {
       requestsQuery = requestsQuery.lte("created_at", validatedParams.endDate);
     }
-    if (loanOfficerIdFilter) {
-      requestsQuery = requestsQuery.eq("loan_officer_id", loanOfficerIdFilter);
+    if (userIdFilter) {
+      requestsQuery = requestsQuery.eq("user_id", userIdFilter);
     }
 
     const { data: requests, error: requestsError } = await requestsQuery;
@@ -202,8 +205,8 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
     if (validatedParams?.endDate) {
       responsesQuery = responsesQuery.lte("created_at", validatedParams.endDate);
     }
-    if (loanOfficerIdFilter) {
-      responsesQuery = responsesQuery.eq("loan_officer_id", loanOfficerIdFilter);
+    if (userIdFilter) {
+      responsesQuery = responsesQuery.eq("user_id", userIdFilter);
     }
 
     const { data: responses, error: responsesError } = await responsesQuery;
@@ -300,7 +303,7 @@ export async function getVideoTestimonialTrends(params?: {
   period?: "daily" | "weekly" | "monthly";
   startDate?: string;
   endDate?: string;
-  loanOfficerId?: string;
+  userId?: string;
 }): Promise<ActionResult<VideoTestimonialTrendDataPoint[]>> {
   try {
     // Validate input with Zod
@@ -329,17 +332,17 @@ export async function getVideoTestimonialTrends(params?: {
     defaultStart.setDate(defaultStart.getDate() - 30);
     const startDate = validatedParams?.startDate || defaultStart.toISOString();
 
-    // Role-based filtering - query loan officer ID once
-    let loanOfficerIdFilter: string | undefined = validatedParams?.loanOfficerId;
+    // Role-based filtering - query user ID once
+    let userIdFilter: string | undefined = validatedParams?.userId;
     if (userData.role === "user") {
-      const { data: loData } = await supabase
-        .from("loan_officers")
+      const { data: userRecord } = await supabase
+        .from("users")
         .select("id")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
 
-      if (loData) {
-        loanOfficerIdFilter = loData.id;
+      if (userRecord) {
+        userIdFilter = userRecord.id;
       } else {
         return { success: true, data: [] };
       }
@@ -353,8 +356,8 @@ export async function getVideoTestimonialTrends(params?: {
       .gte("created_at", startDate)
       .lte("created_at", endDate);
 
-    if (loanOfficerIdFilter) {
-      requestsQuery = requestsQuery.eq("loan_officer_id", loanOfficerIdFilter);
+    if (userIdFilter) {
+      requestsQuery = requestsQuery.eq("user_id", userIdFilter);
     }
 
     const { data: requests, error: requestsError } = await requestsQuery;
@@ -372,8 +375,8 @@ export async function getVideoTestimonialTrends(params?: {
       .gte("created_at", startDate)
       .lte("created_at", endDate);
 
-    if (loanOfficerIdFilter) {
-      responsesQuery = responsesQuery.eq("loan_officer_id", loanOfficerIdFilter);
+    if (userIdFilter) {
+      responsesQuery = responsesQuery.eq("user_id", userIdFilter);
     }
 
     const { data: responses, error: responsesError } = await responsesQuery;
@@ -481,14 +484,14 @@ export async function getVideoTestimonialTrends(params?: {
 }
 
 /**
- * Get video testimonial stats per loan officer
+ * Get video testimonial stats per user
  * Useful for leaderboards and team performance views
  */
-export async function getVideoTestimonialStatsByLoanOfficer(params?: {
+export async function getVideoTestimonialStatsByUser(params?: {
   startDate?: string;
   endDate?: string;
   limit?: number;
-}): Promise<ActionResult<LoanOfficerVideoStats[]>> {
+}): Promise<ActionResult<UserVideoStats[]>> {
   try {
     // Validate input with Zod
     const validatedParams = loStatsParamsSchema.parse(params);
@@ -515,22 +518,22 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
       return { success: false, error: "Insufficient permissions" };
     }
 
-    // Get loan officers in the organization
-    const { data: loanOfficers, error: loError } = await supabase
-      .from("loan_officers")
+    // Get users in the organization
+    const { data: users, error: usersError } = await supabase
+      .from("users")
       .select("id, full_name")
       .eq("organization_id", userData.organization_id)
       .eq("is_active", true);
 
-    if (loError) {
-      console.error("Error fetching loan officers:", loError);
-      return { success: false, error: "Failed to fetch loan officers" };
+    if (usersError) {
+      console.error("Error fetching users:", usersError);
+      return { success: false, error: "Failed to fetch users" };
     }
 
     // Fetch ALL requests in bulk (fixes N+1 query issue)
     let requestsQuery = supabase
       .from("video_testimonial_requests")
-      .select("loan_officer_id, status, sent_at, opened_at, submitted_at")
+      .select("user_id, status, sent_at, opened_at, submitted_at")
       .eq("organization_id", userData.organization_id);
 
     if (validatedParams?.startDate) {
@@ -550,7 +553,7 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
     // Fetch ALL responses in bulk (fixes N+1 query issue)
     let responsesQuery = supabase
       .from("video_testimonial_responses")
-      .select("loan_officer_id, approval_status")
+      .select("user_id, approval_status")
       .eq("organization_id", userData.organization_id);
 
     if (validatedParams?.startDate) {
@@ -567,31 +570,31 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
       return { success: false, error: "Failed to fetch response stats" };
     }
 
-    // Group requests by loan officer
-    const requestsByLO = new Map<string, typeof allRequests>();
+    // Group requests by user
+    const requestsByUser = new Map<string, typeof allRequests>();
     for (const req of allRequests || []) {
-      if (!req.loan_officer_id) continue;
-      const existing = requestsByLO.get(req.loan_officer_id) || [];
+      if (!req.user_id) continue;
+      const existing = requestsByUser.get(req.user_id) || [];
       existing.push(req);
-      requestsByLO.set(req.loan_officer_id, existing);
+      requestsByUser.set(req.user_id, existing);
     }
 
-    // Group responses by loan officer
-    const responsesByLO = new Map<string, typeof allResponses>();
+    // Group responses by user
+    const responsesByUser = new Map<string, typeof allResponses>();
     for (const res of allResponses || []) {
-      if (!res.loan_officer_id) continue;
-      const existing = responsesByLO.get(res.loan_officer_id) || [];
+      if (!res.user_id) continue;
+      const existing = responsesByUser.get(res.user_id) || [];
       existing.push(res);
-      responsesByLO.set(res.loan_officer_id, existing);
+      responsesByUser.set(res.user_id, existing);
     }
 
-    // Calculate stats for each loan officer
+    // Calculate stats for each user
     const sentStatuses: VideoTestimonialRequestStatus[] = ["sent", "opened", "recording", "submitted"];
-    const stats: LoanOfficerVideoStats[] = [];
+    const stats: UserVideoStats[] = [];
 
-    for (const lo of loanOfficers || []) {
-      const requests = requestsByLO.get(lo.id) || [];
-      const responses = responsesByLO.get(lo.id) || [];
+    for (const user of users || []) {
+      const requests = requestsByUser.get(user.id) || [];
+      const responses = responsesByUser.get(user.id) || [];
 
       const sent = requests.filter(r => sentStatuses.includes(r.status as VideoTestimonialRequestStatus) || r.sent_at).length;
       const opened = requests.filter(r => r.opened_at || ["opened", "recording", "submitted"].includes(r.status)).length;
@@ -600,8 +603,8 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
       const published = responses.filter(r => r.approval_status === "published").length;
 
       stats.push({
-        loanOfficerId: lo.id,
-        loanOfficerName: lo.full_name,
+        userId: user.id,
+        userName: user.full_name || "Unknown",
         sent,
         opened,
         completed,
@@ -620,10 +623,13 @@ export async function getVideoTestimonialStatsByLoanOfficer(params?: {
 
     return { success: true, data: limitedStats };
   } catch (error) {
-    console.error("Error getting LO stats:", error);
-    return { success: false, error: "Failed to get loan officer stats" };
+    console.error("Error getting user stats:", error);
+    return { success: false, error: "Failed to get user stats" };
   }
 }
+
+/** @deprecated Use getVideoTestimonialStatsByUser instead */
+export const getVideoTestimonialStatsByLoanOfficer = getVideoTestimonialStatsByUser;
 
 // Helper to create empty metrics object
 function createEmptyMetrics(): VideoTestimonialFunnelMetrics {

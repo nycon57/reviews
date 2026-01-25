@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, EmptyState, EmptyStateCard } from "@/components/shared";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import {
-  LOStatsCards,
-  LOTrendChart,
-  LORecentReviews,
-  LOQuickActions,
+  UserStatsCards,
+  UserTrendChart,
+  UserRecentReviews,
+  UserQuickActions,
 } from "@/components/dashboard";
 import {
   GamificationStatsCard,
@@ -16,8 +16,8 @@ import {
   CompactProfileLeaderboard,
 } from "@/components/gamification";
 import {
-  getLoanOfficerMetrics,
-  getLoanOfficerRecentReviews,
+  getUserMetrics,
+  getUserRecentReviews,
   getRatingTrend,
   getNPSTrend,
 } from "@/lib/dashboard";
@@ -35,7 +35,7 @@ function isNewUser(metrics: { totalReviews: number; averageRating: number; npsSc
 
 // Server component for stats cards
 async function DashboardStats() {
-  const result = await getLoanOfficerMetrics();
+  const result = await getUserMetrics();
 
   if (!result.success) {
     // Show empty state for new users instead of error
@@ -67,7 +67,7 @@ async function DashboardStats() {
     );
   }
 
-  return <LOStatsCards metrics={result.data!} />;
+  return <UserStatsCards metrics={result.data!} />;
 }
 
 // Server component for rating trend chart
@@ -89,7 +89,7 @@ async function RatingTrendChart() {
   }
 
   return (
-    <LOTrendChart
+    <UserTrendChart
       data={result.data!}
       title="Rating Trend"
       color="hsl(var(--chart-1))"
@@ -117,7 +117,7 @@ async function NPSTrendChart() {
   }
 
   return (
-    <LOTrendChart
+    <UserTrendChart
       data={result.data!}
       title="NPS Trend"
       color="hsl(var(--chart-2))"
@@ -128,10 +128,10 @@ async function NPSTrendChart() {
 
 // Server component for recent reviews
 async function RecentReviewsList() {
-  const result = await getLoanOfficerRecentReviews(undefined, 5);
+  const result = await getUserRecentReviews(undefined, 5);
 
   // Even if the call fails, show the component with empty state instead of error
-  return <LORecentReviews initialReviews={result.success ? (result.data || []) : []} />;
+  return <UserRecentReviews initialReviews={result.success ? (result.data || []) : []} />;
 }
 
 
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
 
         {/* Sidebar - quick actions and profile completion */}
         <div className="space-y-6">
-          <LOQuickActions />
+          <UserQuickActions />
           <ProfileCompletionCard showMilestones={true} showTips={true} />
           <CompactProfileLeaderboard limit={5} />
         </div>

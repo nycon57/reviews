@@ -27,6 +27,10 @@ export {
   replyToGoogleReview,
   getSyncLogs,
   getAvailableLocations,
+  getProfessionalsForGoogle,
+  /**
+   * @deprecated Use getProfessionalsForGoogle instead
+   */
   getLoanOfficersForGoogle,
 } from "./actions";
 

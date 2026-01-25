@@ -33,7 +33,7 @@ export interface Branch {
   isPublic: boolean;
   averageRating: number | null;
   totalReviews: number;
-  totalLoanOfficers: number;
+  totalMembers: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -73,8 +73,8 @@ export interface BranchFilters {
   search?: string;
 }
 
-export interface BranchWithLoanOfficers extends Branch {
-  loanOfficers: {
+export interface BranchWithTeamMembers extends Branch {
+  teamMembers: {
     id: string;
     fullName: string;
     email: string;

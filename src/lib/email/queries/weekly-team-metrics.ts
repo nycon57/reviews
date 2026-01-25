@@ -187,16 +187,16 @@ export async function fetchWeeklyTeamMetrics(
       // Team reviews this week
       supabase
         .from("reviews")
-        .select("id, rating, loan_officer_id, created_at")
-        .in("loan_officer_id", teamMemberIds)
+        .select("id, rating, user_id, created_at")
+        .in("user_id", teamMemberIds)
         .gte("created_at", thisWeekStart.toISOString())
         .lte("created_at", thisWeekEnd.toISOString()),
 
       // Team reviews last week
       supabase
         .from("reviews")
-        .select("id, rating, loan_officer_id")
-        .in("loan_officer_id", teamMemberIds)
+        .select("id, rating, user_id")
+        .in("user_id", teamMemberIds)
         .gte("created_at", lastWeekStart.toISOString())
         .lte("created_at", lastWeekEnd.toISOString()),
 
@@ -210,7 +210,7 @@ export async function fetchWeeklyTeamMetrics(
       // Leaderboard for top performers
       supabase
         .from("leaderboard_snapshots")
-        .select("loan_officer_id, rank, reputation_score, average_rating, total_reviews")
+        .select("user_id, rank, reputation_score, average_rating, total_reviews")
         .eq("organization_id", organizationId)
         .eq("period_type", "monthly")
         .order("snapshot_date", { ascending: false })
@@ -262,16 +262,16 @@ export async function fetchWeeklyTeamMetrics(
     // Batch fetch last activity dates for all team members (avoid N+1 query)
     const { data: lastActivities } = await supabase
       .from("reviews")
-      .select("loan_officer_id, created_at")
-      .in("loan_officer_id", teamMemberIds)
+      .select("user_id, created_at")
+      .in("user_id", teamMemberIds)
       .order("created_at", { ascending: false });
 
-    // Build a map of loan_officer_id -> last activity date (first occurrence is most recent)
+    // Build a map of user_id -> last activity date (first occurrence is most recent)
     const lastActivityMap = new Map<string, Date>();
     for (const activity of lastActivities || []) {
-      const loId = activity.loan_officer_id as string;
-      if (!lastActivityMap.has(loId)) {
-        lastActivityMap.set(loId, new Date(activity.created_at as string));
+      const odId = activity.user_id as string;
+      if (!lastActivityMap.has(odId)) {
+        lastActivityMap.set(odId, new Date(activity.created_at as string));
       }
     }
 
@@ -280,7 +280,7 @@ export async function fetchWeeklyTeamMetrics(
 
     for (const member of teamMembers || []) {
       const memberReviewsThisWeek = reviewsThisWeek.filter(
-        (r) => r.loan_officer_id === member.id
+        (r) => r.user_id === member.id
       );
       const memberAvgRating =
         memberReviewsThisWeek.length > 0
@@ -383,12 +383,12 @@ export async function fetchWeeklyTeamMetrics(
     const { count: totalReviews } = await supabase
       .from("reviews")
       .select("id", { count: "exact" })
-      .in("loan_officer_id", teamMemberIds);
+      .in("user_id", teamMemberIds);
 
     const { count: respondedReviews } = await supabase
       .from("reviews")
       .select("id", { count: "exact" })
-      .in("loan_officer_id", teamMemberIds)
+      .in("user_id", teamMemberIds)
       .not("response_at", "is", null);
 
     const teamResponseRate =
@@ -488,7 +488,7 @@ export async function hasTeamWeeklyActivity(
   const { count } = await supabase
     .from("reviews")
     .select("id", { count: "exact" })
-    .in("loan_officer_id", teamMemberIds)
+    .in("user_id", teamMemberIds)
     .gte("created_at", thisWeekStart.toISOString())
     .lte("created_at", thisWeekEnd.toISOString());
 

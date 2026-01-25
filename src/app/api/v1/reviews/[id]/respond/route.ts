@@ -16,7 +16,7 @@ function mapReviewRow(row: Record<string, unknown>): ReviewResource {
   return {
     id: row.id as string,
     organization_id: row.organization_id as string,
-    loan_officer_id: row.loan_officer_id as string | null,
+    user_id: row.user_id as string | null,
     branch_id: row.branch_id as string | null,
     platform: row.platform as string,
     platform_review_id: row.platform_review_id as string | null,

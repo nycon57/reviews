@@ -9,7 +9,6 @@ import {
   EXSurveyTemplate,
   EXSurvey,
   EXSurveyResponse,
-  EXActionPlan,
   Department,
   DEFAULT_EX_TEMPLATES,
   EXSurveyType,
@@ -132,6 +131,53 @@ export async function createDepartment(input: {
 
 // ==================== TEMPLATE ACTIONS ====================
 
+export async function getEXSurveyTemplate(id: string): Promise<{ success: boolean; data?: EXSurveyTemplate; error?: string }> {
+  const result = await getUserOrganization();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("ex_survey_templates")
+    .select("*")
+    .eq("id", id)
+    .eq("organization_id", result.organizationId)
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  if (!data) {
+    return { success: false, error: "Template not found" };
+  }
+
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      organizationId: data.organization_id,
+      name: data.name,
+      description: data.description,
+      surveyType: data.survey_type,
+      frequency: data.frequency,
+      isAnonymous: data.is_anonymous,
+      isDefault: data.is_default,
+      isActive: data.is_active,
+      questions: data.questions || [],
+      branding: data.branding,
+      thankYouConfig: data.thank_you_config,
+      targetDepartments: data.target_departments,
+      targetRoles: data.target_roles,
+      notificationSettings: data.notification_settings,
+      benchmarkCategory: data.benchmark_category,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      estimatedTimeMinutes: Math.ceil((data.questions?.length || 0) * 0.5 + 1),
+    },
+  };
+}
+
 export async function getEXSurveyTemplates(): Promise<{ success: boolean; data?: EXSurveyTemplate[]; error?: string }> {
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
@@ -209,15 +255,301 @@ export async function initializeDefaultEXTemplates(): Promise<{ success: boolean
     },
   }));
 
-  const { error } = await supabase.from("ex_survey_templates").insert(templates);
+  const { data, error } = await supabase
+    .from("ex_survey_templates")
+    .insert(templates)
+    .select();
 
-  if (error) {
-    console.error("Failed to initialize EX templates:", error);
-    return { success: false, error: error.message };
+  if (error || !data) {
+    console.error("Failed to initialize EX templates:", {
+      error: error ? JSON.stringify(error, null, 2) : "no error object",
+      hasData: !!data,
+      templateCount: templates.length,
+    });
+    return { success: false, error: error?.message || "Insert failed - no data returned" };
   }
 
   revalidatePath("/dashboard/ex-surveys");
   return { success: true };
+}
+
+export async function createEXSurveyTemplate(input: {
+  name: string;
+  description?: string;
+  surveyType: EXSurveyType;
+  frequency?: "once" | "weekly" | "monthly" | "quarterly" | "annual";
+  isAnonymous?: boolean;
+  questions: EXSurveyTemplate["questions"];
+  branding?: EXSurveyTemplate["branding"];
+  thankYouConfig?: EXSurveyTemplate["thankYouConfig"];
+  targetDepartments?: string[];
+  targetRoles?: string[];
+  notificationSettings?: EXSurveyTemplate["notificationSettings"];
+  benchmarkCategory?: string;
+}): Promise<{ success: boolean; data?: EXSurveyTemplate; error?: string }> {
+  const result = await checkManagerAccess();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("ex_survey_templates")
+    .insert({
+      organization_id: result.organizationId,
+      name: input.name,
+      description: input.description,
+      survey_type: input.surveyType,
+      frequency: input.frequency || "once",
+      is_anonymous: input.isAnonymous ?? true,
+      is_default: false,
+      is_active: true,
+      questions: input.questions,
+      branding: input.branding || {},
+      thank_you_config: input.thankYouConfig || {
+        title: "Thank You!",
+        message: "Your feedback has been submitted successfully.",
+      },
+      target_departments: input.targetDepartments,
+      target_roles: input.targetRoles,
+      notification_settings: input.notificationSettings,
+      benchmark_category: input.benchmarkCategory,
+      created_by: result.userId,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/ex-surveys/templates");
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      organizationId: data.organization_id,
+      name: data.name,
+      description: data.description,
+      surveyType: data.survey_type,
+      frequency: data.frequency,
+      isAnonymous: data.is_anonymous,
+      isDefault: data.is_default,
+      isActive: data.is_active,
+      questions: data.questions || [],
+      branding: data.branding,
+      thankYouConfig: data.thank_you_config,
+      targetDepartments: data.target_departments,
+      targetRoles: data.target_roles,
+      notificationSettings: data.notification_settings,
+      benchmarkCategory: data.benchmark_category,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      estimatedTimeMinutes: Math.ceil((data.questions?.length || 0) * 0.5 + 1),
+    },
+  };
+}
+
+export async function updateEXSurveyTemplate(input: {
+  id: string;
+  name?: string;
+  description?: string;
+  surveyType?: EXSurveyType;
+  frequency?: "once" | "weekly" | "monthly" | "quarterly" | "annual";
+  isAnonymous?: boolean;
+  questions?: EXSurveyTemplate["questions"];
+  branding?: EXSurveyTemplate["branding"];
+  thankYouConfig?: EXSurveyTemplate["thankYouConfig"];
+  targetDepartments?: string[];
+  targetRoles?: string[];
+  notificationSettings?: EXSurveyTemplate["notificationSettings"];
+  benchmarkCategory?: string;
+}): Promise<{ success: boolean; data?: EXSurveyTemplate; error?: string }> {
+  const result = await checkManagerAccess();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = createAdminClient();
+
+  // First check if template exists and is not a default template
+  const { data: existing } = await supabase
+    .from("ex_survey_templates")
+    .select("is_default")
+    .eq("id", input.id)
+    .eq("organization_id", result.organizationId)
+    .single();
+
+  if (!existing) {
+    return { success: false, error: "Template not found" };
+  }
+
+  if (existing.is_default) {
+    return { success: false, error: "Cannot edit default templates. Duplicate it first to customize." };
+  }
+
+  // Build update object
+  const updateData: Record<string, unknown> = {};
+  if (input.name !== undefined) updateData.name = input.name;
+  if (input.description !== undefined) updateData.description = input.description;
+  if (input.surveyType !== undefined) updateData.survey_type = input.surveyType;
+  if (input.frequency !== undefined) updateData.frequency = input.frequency;
+  if (input.isAnonymous !== undefined) updateData.is_anonymous = input.isAnonymous;
+  if (input.questions !== undefined) updateData.questions = input.questions;
+  if (input.branding !== undefined) updateData.branding = input.branding;
+  if (input.thankYouConfig !== undefined) updateData.thank_you_config = input.thankYouConfig;
+  if (input.targetDepartments !== undefined) updateData.target_departments = input.targetDepartments;
+  if (input.targetRoles !== undefined) updateData.target_roles = input.targetRoles;
+  if (input.notificationSettings !== undefined) updateData.notification_settings = input.notificationSettings;
+  if (input.benchmarkCategory !== undefined) updateData.benchmark_category = input.benchmarkCategory;
+
+  const { data, error } = await supabase
+    .from("ex_survey_templates")
+    .update(updateData)
+    .eq("id", input.id)
+    .eq("organization_id", result.organizationId)
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/ex-surveys/templates");
+  revalidatePath(`/dashboard/ex-surveys/templates/${input.id}`);
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      organizationId: data.organization_id,
+      name: data.name,
+      description: data.description,
+      surveyType: data.survey_type,
+      frequency: data.frequency,
+      isAnonymous: data.is_anonymous,
+      isDefault: data.is_default,
+      isActive: data.is_active,
+      questions: data.questions || [],
+      branding: data.branding,
+      thankYouConfig: data.thank_you_config,
+      targetDepartments: data.target_departments,
+      targetRoles: data.target_roles,
+      notificationSettings: data.notification_settings,
+      benchmarkCategory: data.benchmark_category,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      estimatedTimeMinutes: Math.ceil((data.questions?.length || 0) * 0.5 + 1),
+    },
+  };
+}
+
+export async function deleteEXSurveyTemplate(id: string): Promise<{ success: boolean; error?: string }> {
+  const result = await checkManagerAccess();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = createAdminClient();
+
+  // Check if template exists and is not a default
+  const { data: existing } = await supabase
+    .from("ex_survey_templates")
+    .select("is_default")
+    .eq("id", id)
+    .eq("organization_id", result.organizationId)
+    .single();
+
+  if (!existing) {
+    return { success: false, error: "Template not found" };
+  }
+
+  if (existing.is_default) {
+    return { success: false, error: "Cannot delete default templates" };
+  }
+
+  // Soft delete by setting is_active to false
+  const { error } = await supabase
+    .from("ex_survey_templates")
+    .update({ is_active: false })
+    .eq("id", id)
+    .eq("organization_id", result.organizationId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/ex-surveys/templates");
+  return { success: true };
+}
+
+export async function duplicateEXSurveyTemplate(id: string): Promise<{ success: boolean; data?: EXSurveyTemplate; error?: string }> {
+  const result = await checkManagerAccess();
+  if ("error" in result) return { success: false, error: result.error };
+
+  const supabase = createAdminClient();
+
+  // Get the original template
+  const { data: original, error: fetchError } = await supabase
+    .from("ex_survey_templates")
+    .select("*")
+    .eq("id", id)
+    .eq("organization_id", result.organizationId)
+    .single();
+
+  if (fetchError || !original) {
+    return { success: false, error: "Template not found" };
+  }
+
+  // Create a copy with modified name
+  const { data, error } = await supabase
+    .from("ex_survey_templates")
+    .insert({
+      organization_id: result.organizationId,
+      name: `${original.name} (Copy)`,
+      description: original.description,
+      survey_type: original.survey_type,
+      frequency: original.frequency,
+      is_anonymous: original.is_anonymous,
+      is_default: false, // Duplicates are never defaults
+      is_active: true,
+      questions: original.questions,
+      branding: original.branding,
+      thank_you_config: original.thank_you_config,
+      target_departments: original.target_departments,
+      target_roles: original.target_roles,
+      notification_settings: original.notification_settings,
+      benchmark_category: original.benchmark_category,
+      created_by: result.userId,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/ex-surveys/templates");
+  return {
+    success: true,
+    data: {
+      id: data.id,
+      organizationId: data.organization_id,
+      name: data.name,
+      description: data.description,
+      surveyType: data.survey_type,
+      frequency: data.frequency,
+      isAnonymous: data.is_anonymous,
+      isDefault: data.is_default,
+      isActive: data.is_active,
+      questions: data.questions || [],
+      branding: data.branding,
+      thankYouConfig: data.thank_you_config,
+      targetDepartments: data.target_departments,
+      targetRoles: data.target_roles,
+      notificationSettings: data.notification_settings,
+      benchmarkCategory: data.benchmark_category,
+      createdBy: data.created_by,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      estimatedTimeMinutes: Math.ceil((data.questions?.length || 0) * 0.5 + 1),
+    },
+  };
 }
 
 // ==================== SURVEY CAMPAIGN ACTIONS ====================
@@ -562,195 +894,3 @@ export async function getEXMetrics(): Promise<{ success: boolean; data?: { enpsS
   };
 }
 
-// ==================== ACTION PLAN ACTIONS ====================
-
-export async function getActionPlans(): Promise<{ success: boolean; data?: EXActionPlan[]; error?: string }> {
-  const result = await checkManagerAccess();
-  if ("error" in result) return { success: false, error: result.error };
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("ex_action_plans")
-    .select("*")
-    .eq("organization_id", result.organizationId)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return {
-    success: true,
-    data: data?.map((p) => ({
-      id: p.id,
-      organizationId: p.organization_id,
-      surveyId: p.survey_id,
-      departmentId: p.department_id,
-      title: p.title,
-      description: p.description,
-      theme: p.theme,
-      priority: p.priority,
-      status: p.status,
-      ownerUserId: p.owner_user_id,
-      targetDate: p.target_date,
-      completedDate: p.completed_date,
-      successMetrics: p.success_metrics,
-      notes: p.notes,
-      createdBy: p.created_by,
-      createdAt: p.created_at,
-      updatedAt: p.updated_at,
-    })),
-  };
-}
-
-export async function createActionPlan(input: {
-  surveyId?: string;
-  departmentId?: string;
-  title: string;
-  description?: string;
-  theme: string;
-  priority?: "low" | "medium" | "high" | "critical";
-  ownerUserId?: string;
-  targetDate?: string;
-  notes?: string;
-}): Promise<{ success: boolean; data?: EXActionPlan; error?: string }> {
-  const result = await checkManagerAccess();
-  if ("error" in result) return { success: false, error: result.error };
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("ex_action_plans")
-    .insert({
-      organization_id: result.organizationId,
-      survey_id: input.surveyId,
-      department_id: input.departmentId,
-      title: input.title,
-      description: input.description,
-      theme: input.theme,
-      priority: input.priority || "medium",
-      owner_user_id: input.ownerUserId,
-      target_date: input.targetDate,
-      notes: input.notes,
-      created_by: result.userId,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/dashboard/ex-surveys");
-  return {
-    success: true,
-    data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      surveyId: data.survey_id,
-      departmentId: data.department_id,
-      title: data.title,
-      description: data.description,
-      theme: data.theme,
-      priority: data.priority,
-      status: data.status,
-      ownerUserId: data.owner_user_id,
-      targetDate: data.target_date,
-      completedDate: data.completed_date,
-      successMetrics: data.success_metrics,
-      notes: data.notes,
-      createdBy: data.created_by,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    },
-  };
-}
-
-export async function updateActionPlan(input: {
-  id: string;
-  title?: string;
-  description?: string;
-  theme?: string;
-  priority?: "low" | "medium" | "high" | "critical";
-  status?: "planned" | "in_progress" | "completed" | "cancelled";
-  ownerUserId?: string | null;
-  targetDate?: string | null;
-  notes?: string;
-}): Promise<{ success: boolean; data?: EXActionPlan; error?: string }> {
-  const result = await checkManagerAccess();
-  if ("error" in result) return { success: false, error: result.error };
-
-  const supabase = createAdminClient();
-
-  // Build update object with only provided fields
-  const updateData: Record<string, unknown> = {};
-  if (input.title !== undefined) updateData.title = input.title;
-  if (input.description !== undefined) updateData.description = input.description;
-  if (input.theme !== undefined) updateData.theme = input.theme;
-  if (input.priority !== undefined) updateData.priority = input.priority;
-  if (input.status !== undefined) {
-    updateData.status = input.status;
-    if (input.status === "completed") {
-      updateData.completed_date = new Date().toISOString().split("T")[0];
-    }
-  }
-  if (input.ownerUserId !== undefined) updateData.owner_user_id = input.ownerUserId;
-  if (input.targetDate !== undefined) updateData.target_date = input.targetDate;
-  if (input.notes !== undefined) updateData.notes = input.notes;
-
-  const { data, error } = await supabase
-    .from("ex_action_plans")
-    .update(updateData)
-    .eq("id", input.id)
-    .eq("organization_id", result.organizationId)
-    .select()
-    .single();
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/dashboard/ex-surveys");
-  revalidatePath("/dashboard/ex-surveys/action-plans");
-  return {
-    success: true,
-    data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      surveyId: data.survey_id,
-      departmentId: data.department_id,
-      title: data.title,
-      description: data.description,
-      theme: data.theme,
-      priority: data.priority,
-      status: data.status,
-      ownerUserId: data.owner_user_id,
-      targetDate: data.target_date,
-      completedDate: data.completed_date,
-      successMetrics: data.success_metrics,
-      notes: data.notes,
-      createdBy: data.created_by,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    },
-  };
-}
-
-export async function deleteActionPlan(id: string): Promise<{ success: boolean; error?: string }> {
-  const result = await checkManagerAccess();
-  if ("error" in result) return { success: false, error: result.error };
-
-  const supabase = createAdminClient();
-  const { error } = await supabase
-    .from("ex_action_plans")
-    .delete()
-    .eq("id", id)
-    .eq("organization_id", result.organizationId);
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/dashboard/ex-surveys");
-  revalidatePath("/dashboard/ex-surveys/action-plans");
-  return { success: true };
-}

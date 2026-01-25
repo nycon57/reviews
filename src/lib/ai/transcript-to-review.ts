@@ -15,7 +15,7 @@ export interface GeneratedReviewResult {
 export interface TranscriptContext {
   transcription: string;
   customerName?: string;
-  loanOfficerName?: string;
+  professionalName?: string;
   organizationName?: string;
   rating?: number; // 1-5 if captured
 }
@@ -95,8 +95,8 @@ function getUserPrompt(context: TranscriptContext): string {
   if (context.customerName) {
     parts.push(`Customer: ${context.customerName}`);
   }
-  if (context.loanOfficerName) {
-    parts.push(`Loan Officer mentioned: ${context.loanOfficerName}`);
+  if (context.professionalName) {
+    parts.push(`Professional mentioned: ${context.professionalName}`);
   }
   if (context.organizationName) {
     parts.push(`Company: ${context.organizationName}`);

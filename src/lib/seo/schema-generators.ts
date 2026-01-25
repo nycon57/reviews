@@ -51,15 +51,18 @@ export interface SchemaBranch {
 }
 
 /**
- * Minimal loan officer data for branch schema
+ * Minimal professional data for branch schema
  */
-export interface SchemaBranchLoanOfficer {
+export interface SchemaBranchProfessional {
   id: string;
   full_name: string;
   title: string | null;
 }
 
-interface LoanOfficerAddress {
+/** @deprecated Use SchemaBranchProfessional instead */
+export type SchemaBranchLoanOfficer = SchemaBranchProfessional;
+
+interface ProfessionalAddress {
   street?: string;
   city?: string;
   state?: string;
@@ -68,9 +71,9 @@ interface LoanOfficerAddress {
 }
 
 /**
- * Minimal LO data needed for schema generation
+ * Minimal professional data needed for schema generation
  */
-export interface SchemaLoanOfficer {
+export interface SchemaProfessional {
   id: string;
   full_name: string;
   title: string | null;
@@ -85,6 +88,9 @@ export interface SchemaLoanOfficer {
   average_rating: number | null;
   total_reviews: number | null;
 }
+
+/** @deprecated Use SchemaProfessional instead */
+export type SchemaLoanOfficer = SchemaProfessional;
 
 /**
  * Minimal organization data needed for schema generation
@@ -109,17 +115,17 @@ export interface SchemaReview {
 }
 
 /**
- * Generate Person schema with embedded AggregateRating for a Loan Officer profile
+ * Generate Person schema with embedded AggregateRating for a professional profile
  */
 export function generatePersonSchema(
-  loanOfficer: SchemaLoanOfficer,
+  professional: SchemaProfessional,
   organization: SchemaOrganization | null,
   baseUrl: string
 ): PersonWithRatingSchema {
-  const profileUrl = `${baseUrl}/lo/${loanOfficer.id}`;
+  const profileUrl = `${baseUrl}/pro/${professional.id}`;
 
   // Parse address if available
-  const address = loanOfficer.address as LoanOfficerAddress | null;
+  const address = professional.address as ProfessionalAddress | null;
   const postalAddress: PostalAddressSchema | undefined = address
     ? {
         "@type": "PostalAddress",
@@ -133,39 +139,39 @@ export function generatePersonSchema(
 
   // Build sameAs array for social profiles
   const sameAs: string[] = [];
-  if (loanOfficer.linkedin_url) sameAs.push(loanOfficer.linkedin_url);
-  if (loanOfficer.zillow_profile_url) sameAs.push(loanOfficer.zillow_profile_url);
+  if (professional.linkedin_url) sameAs.push(professional.linkedin_url);
+  if (professional.zillow_profile_url) sameAs.push(professional.zillow_profile_url);
 
   // Build identifiers (NMLS ID)
   const identifiers: IdentifierSchema[] = [];
-  if (loanOfficer.nmls_id) {
+  if (professional.nmls_id) {
     identifiers.push({
       "@type": "PropertyValue",
       propertyID: "NMLS",
-      value: loanOfficer.nmls_id,
+      value: professional.nmls_id,
     });
   }
 
   const schema: PersonWithRatingSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: loanOfficer.full_name,
-    jobTitle: loanOfficer.title || "Loan Officer",
-    description: loanOfficer.bio || `${loanOfficer.full_name} is a mortgage professional helping clients with their home financing needs.`,
+    name: professional.full_name,
+    jobTitle: professional.title || "Professional",
+    description: professional.bio || `${professional.full_name} is a professional helping clients with their needs.`,
     url: profileUrl,
   };
 
   // Add optional fields only if they have values
-  if (loanOfficer.photo_url) {
-    schema.image = loanOfficer.photo_url;
+  if (professional.photo_url) {
+    schema.image = professional.photo_url;
   }
 
-  if (loanOfficer.email) {
-    schema.email = loanOfficer.email;
+  if (professional.email) {
+    schema.email = professional.email;
   }
 
-  if (loanOfficer.phone) {
-    schema.telephone = loanOfficer.phone;
+  if (professional.phone) {
+    schema.telephone = professional.phone;
   }
 
   if (organization) {
@@ -189,14 +195,14 @@ export function generatePersonSchema(
   }
 
   // Add aggregate rating if LO has reviews
-  if (loanOfficer.average_rating && loanOfficer.total_reviews && loanOfficer.total_reviews > 0) {
+  if (professional.average_rating && professional.total_reviews && professional.total_reviews > 0) {
     schema.aggregateRating = {
       "@type": "AggregateRating",
-      ratingValue: Number(loanOfficer.average_rating),
+      ratingValue: Number(professional.average_rating),
       bestRating: 5,
       worstRating: 1,
-      ratingCount: loanOfficer.total_reviews,
-      reviewCount: loanOfficer.total_reviews,
+      ratingCount: professional.total_reviews,
+      reviewCount: professional.total_reviews,
     };
   }
 
@@ -207,10 +213,10 @@ export function generatePersonSchema(
  * Generate standalone AggregateRating schema for a Loan Officer
  */
 export function generateAggregateRatingSchema(
-  loanOfficer: SchemaLoanOfficer,
+  professional: SchemaProfessional,
   baseUrl: string
 ): AggregateRatingSchema | null {
-  if (!loanOfficer.average_rating || !loanOfficer.total_reviews || loanOfficer.total_reviews === 0) {
+  if (!professional.average_rating || !professional.total_reviews || professional.total_reviews === 0) {
     return null;
   }
 
@@ -219,15 +225,15 @@ export function generateAggregateRatingSchema(
     "@type": "AggregateRating",
     itemReviewed: {
       "@type": "Person",
-      name: loanOfficer.full_name,
-      url: `${baseUrl}/lo/${loanOfficer.id}`,
-      image: loanOfficer.photo_url || undefined,
+      name: professional.full_name,
+      url: `${baseUrl}/pro/${professional.id}`,
+      image: professional.photo_url || undefined,
     },
-    ratingValue: Number(loanOfficer.average_rating),
+    ratingValue: Number(professional.average_rating),
     bestRating: 5,
     worstRating: 1,
-    ratingCount: loanOfficer.total_reviews,
-    reviewCount: loanOfficer.total_reviews,
+    ratingCount: professional.total_reviews,
+    reviewCount: professional.total_reviews,
   };
 }
 
@@ -236,7 +242,7 @@ export function generateAggregateRatingSchema(
  */
 export function generateReviewSchema(
   review: SchemaReview,
-  loanOfficer: SchemaLoanOfficer,
+  professional: SchemaProfessional,
   organization: SchemaOrganization | null,
   baseUrl: string
 ): ReviewSchema {
@@ -245,8 +251,8 @@ export function generateReviewSchema(
     "@type": "Review",
     itemReviewed: {
       "@type": "Person",
-      name: loanOfficer.full_name,
-      url: `${baseUrl}/lo/${loanOfficer.id}`,
+      name: professional.full_name,
+      url: `${baseUrl}/pro/${professional.id}`,
     },
     author: {
       "@type": "Person",
@@ -275,13 +281,13 @@ export function generateReviewSchema(
  */
 export function generateReviewListSchema(
   reviews: SchemaReview[],
-  loanOfficer: SchemaLoanOfficer,
+  professional: SchemaProfessional,
   organization: SchemaOrganization | null,
   baseUrl: string
 ): ReviewSchema[] {
   return reviews
     .filter((review) => review.is_published && review.status === "approved")
-    .map((review) => generateReviewSchema(review, loanOfficer, organization, baseUrl));
+    .map((review) => generateReviewSchema(review, professional, organization, baseUrl));
 }
 
 /**
@@ -307,7 +313,7 @@ export function generateBreadcrumbSchema(
  * This includes Person schema, AggregateRating, recent Reviews, and Breadcrumbs
  */
 export function generateProfilePageSchema(
-  loanOfficer: SchemaLoanOfficer,
+  professional: SchemaProfessional,
   organization: SchemaOrganization | null,
   reviews: SchemaReview[],
   baseUrl: string
@@ -315,7 +321,7 @@ export function generateProfilePageSchema(
   const schemas: object[] = [];
 
   // Person schema with embedded aggregate rating
-  schemas.push(generatePersonSchema(loanOfficer, organization, baseUrl));
+  schemas.push(generatePersonSchema(professional, organization, baseUrl));
 
   // Individual review schemas (limit to most recent 10 for performance)
   const publishedReviews = reviews
@@ -323,15 +329,15 @@ export function generateProfilePageSchema(
     .slice(0, 10);
 
   for (const review of publishedReviews) {
-    schemas.push(generateReviewSchema(review, loanOfficer, organization, baseUrl));
+    schemas.push(generateReviewSchema(review, professional, organization, baseUrl));
   }
 
   // Breadcrumb schema
   schemas.push(
     generateBreadcrumbSchema([
       { name: "Home", url: baseUrl },
-      { name: "Loan Officers", url: `${baseUrl}/lo` },
-      { name: loanOfficer.full_name, url: `${baseUrl}/lo/${loanOfficer.id}` },
+      { name: "Professionals", url: `${baseUrl}/pro` },
+      { name: professional.full_name, url: `${baseUrl}/pro/${professional.id}` },
     ])
   );
 
@@ -353,7 +359,7 @@ export function serializeSchemas(schemas: object[]): string {
 export function generateLocalBusinessSchema(
   branch: SchemaBranch,
   organization: SchemaOrganization | null,
-  loanOfficers: SchemaBranchLoanOfficer[],
+  professionals: SchemaBranchProfessional[],
   baseUrl: string
 ): LocalBusinessSchema {
   const profileUrl = `${baseUrl}/branch/${branch.id}`;
@@ -435,13 +441,13 @@ export function generateLocalBusinessSchema(
     };
   }
 
-  // Add employees (loan officers)
-  if (loanOfficers.length > 0) {
-    schema.employee = loanOfficers.map((lo) => ({
+  // Add employees (professionals)
+  if (professionals.length > 0) {
+    schema.employee = professionals.map((prof) => ({
       "@type": "Person" as const,
-      name: lo.full_name,
-      jobTitle: lo.title || "Loan Officer",
-      url: `${baseUrl}/lo/${lo.id}`,
+      name: prof.full_name,
+      jobTitle: prof.title || "Professional",
+      url: `${baseUrl}/pro/${prof.id}`,
     }));
   }
 
@@ -511,14 +517,14 @@ export function generateBranchReviewSchema(
 export function generateBranchProfilePageSchema(
   branch: SchemaBranch,
   organization: SchemaOrganization | null,
-  loanOfficers: SchemaBranchLoanOfficer[],
+  professionals: SchemaBranchProfessional[],
   reviews: SchemaReview[],
   baseUrl: string
 ): object[] {
   const schemas: object[] = [];
 
   // LocalBusiness schema with embedded aggregate rating
-  schemas.push(generateLocalBusinessSchema(branch, organization, loanOfficers, baseUrl));
+  schemas.push(generateLocalBusinessSchema(branch, organization, professionals, baseUrl));
 
   // Individual review schemas (limit to most recent 10 for performance)
   const publishedReviews = reviews
@@ -569,7 +575,7 @@ export interface SchemaOrganizationFull {
   aggregate_rating: number | null;
   total_reviews: number;
   total_branches: number;
-  total_loan_officers: number;
+  total_members: number;
 }
 
 /**
@@ -582,13 +588,16 @@ export interface SchemaOrgBranch {
 }
 
 /**
- * Loan officer data for organization schema
+ * Professional data for organization schema
  */
-export interface SchemaOrgLoanOfficer {
+export interface SchemaOrgProfessional {
   id: string;
   full_name: string;
   title: string | null;
 }
+
+/** @deprecated Use SchemaOrgProfessional instead */
+export type SchemaOrgLoanOfficer = SchemaOrgProfessional;
 
 /**
  * Testimonial data for organization schema
@@ -644,7 +653,7 @@ interface OrganizationWithRatingSchema {
 export function generateOrganizationWithRatingSchema(
   org: SchemaOrganizationFull,
   branches: SchemaOrgBranch[],
-  loanOfficers: SchemaOrgLoanOfficer[],
+  professionals: SchemaOrgProfessional[],
   baseUrl: string
 ): OrganizationWithRatingSchema {
   const profileUrl = `${baseUrl}/org/${org.slug}`;
@@ -689,10 +698,10 @@ export function generateOrganizationWithRatingSchema(
   }
 
   // Add number of employees
-  if (org.total_loan_officers > 0) {
+  if (org.total_members > 0) {
     schema.numberOfEmployees = {
       "@type": "QuantitativeValue",
-      value: org.total_loan_officers,
+      value: org.total_members,
     };
   }
 
@@ -727,12 +736,12 @@ export function generateOrganizationWithRatingSchema(
   }
 
   // Add featured employees (limit to first 6 for performance)
-  if (loanOfficers.length > 0) {
-    schema.employee = loanOfficers.slice(0, 6).map((lo) => ({
+  if (professionals.length > 0) {
+    schema.employee = professionals.slice(0, 6).map((prof) => ({
       "@type": "Person",
-      name: lo.full_name,
-      jobTitle: lo.title || "Loan Officer",
-      url: `${baseUrl}/lo/${lo.id}`,
+      name: prof.full_name,
+      jobTitle: prof.title || "Professional",
+      url: `${baseUrl}/pro/${prof.id}`,
     }));
   }
 
@@ -794,14 +803,14 @@ export function generateOrganizationReviewSchema(
 export function generateOrganizationProfilePageSchema(
   org: SchemaOrganizationFull,
   branches: SchemaOrgBranch[],
-  loanOfficers: SchemaOrgLoanOfficer[],
+  professionals: SchemaOrgProfessional[],
   testimonials: SchemaOrgTestimonial[],
   baseUrl: string
 ): object[] {
   const schemas: object[] = [];
 
   // Organization schema with embedded aggregate rating
-  schemas.push(generateOrganizationWithRatingSchema(org, branches, loanOfficers, baseUrl));
+  schemas.push(generateOrganizationWithRatingSchema(org, branches, professionals, baseUrl));
 
   // Individual review schemas (limit to most recent 5 for performance)
   const topTestimonials = testimonials.slice(0, 5);

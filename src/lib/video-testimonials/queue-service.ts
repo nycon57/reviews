@@ -247,7 +247,7 @@ export async function getVideoTestimonialRequestForSending(
       expires_at,
       max_duration_seconds,
       prompt_text,
-      loan_officers!inner (
+      users!user_id (
         id,
         full_name,
         email,
@@ -268,7 +268,7 @@ export async function getVideoTestimonialRequestForSending(
     return null;
   }
 
-  const loanOfficer = request.loan_officers as unknown as {
+  const loanOfficer = request.users as unknown as {
     id: string;
     full_name: string;
     email: string;

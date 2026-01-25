@@ -57,7 +57,7 @@ async function handleGet(
 
   // Build query
   let query = supabase
-    .from('loan_officers')
+    .from('users')
     .select('*', { count: 'exact' })
     .eq('organization_id', context.organizationId)
     .order(sortBy, { ascending: sortOrder === 'asc' })

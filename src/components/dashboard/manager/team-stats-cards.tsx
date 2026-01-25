@@ -19,8 +19,8 @@ export function TeamStatsCards({ metrics }: TeamStatsCardsProps) {
   const stats = [
     {
       title: "Team Members",
-      value: metrics.activeLoanOfficers.toString(),
-      total: metrics.totalLoanOfficers,
+      value: metrics.activeMembers.toString(),
+      total: metrics.totalMembers,
       icon: <Users className="h-4 w-4" />,
       format: "members",
     },

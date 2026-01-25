@@ -50,6 +50,7 @@ interface SettingsTabsProps {
   userName?: string;
   userAvatarUrl?: string | null;
   userTitle?: string | null;
+  userNmlsId?: string | null;
   userBio?: string | null;
   userPhone?: string | null;
   userPersonalWebsiteUrl?: string | null;
@@ -64,6 +65,7 @@ export function SettingsTabs({
   userName,
   userAvatarUrl,
   userTitle,
+  userNmlsId,
   userBio,
   userPhone,
   userPersonalWebsiteUrl,
@@ -121,6 +123,7 @@ export function SettingsTabs({
               userName={userName}
               userAvatarUrl={userAvatarUrl}
               userTitle={userTitle}
+              userNmlsId={userNmlsId}
               userBio={userBio}
               userPhone={userPhone}
               userPersonalWebsiteUrl={userPersonalWebsiteUrl}

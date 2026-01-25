@@ -59,7 +59,7 @@ const SurveySchema = z
     id: z.string().uuid(),
     organization_id: z.string().uuid(),
     template_id: z.string().uuid(),
-    loan_officer_id: z.string().uuid(),
+    user_id: z.string().uuid(),
     customer_name: z.string(),
     customer_email: z.string().email(),
     customer_phone: z.string().nullable(),
@@ -78,11 +78,11 @@ const SurveySchema = z
 
 const CreateSurveySchema = z
   .object({
-    loan_officer_id: z.string().uuid().optional().openapi({
-      description: 'UUID of the loan officer. Required if loan_officer_email is not provided.',
+    user_id: z.string().uuid().optional().openapi({
+      description: 'UUID of the professional. Required if user_email is not provided.',
     }),
-    loan_officer_email: z.string().email().optional().openapi({
-      description: 'Email of the loan officer. Used to look up the loan officer if ID is not provided.',
+    user_email: z.string().email().optional().openapi({
+      description: 'Email of the professional. Used to look up the user if ID is not provided.',
     }),
     template_id: z.string().uuid().optional().openapi({
       description: 'UUID of the survey template. Uses default template if not provided.',
@@ -125,7 +125,7 @@ const ReviewSchema = z
   .object({
     id: z.string().uuid(),
     organization_id: z.string().uuid(),
-    loan_officer_id: z.string().uuid().nullable(),
+    user_id: z.string().uuid().nullable(),
     branch_id: z.string().uuid().nullable(),
     platform: z.string().openapi({ example: 'google' }),
     platform_review_id: z.string().nullable(),
@@ -186,7 +186,7 @@ const BranchSchema = z
     is_active: z.boolean(),
     average_rating: z.number().nullable(),
     total_reviews: z.number().int(),
-    total_loan_officers: z.number().int(),
+    total_members: z.number().int(),
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
   })
@@ -381,7 +381,7 @@ registry.registerPath({
       page: z.coerce.number().int().min(1).default(1).optional(),
       page_size: z.coerce.number().int().min(1).max(100).default(25).optional(),
       status: z.enum(['pending', 'sent', 'completed', 'expired', 'cancelled']).optional(),
-      loan_officer_id: z.string().uuid().optional(),
+      user_id: z.string().uuid().optional(),
       search: z.string().max(200).optional(),
       sort_by: z.enum(['created_at', 'sent_at', 'completed_at', 'customer_name', 'status']).optional(),
       sort_order: z.enum(['asc', 'desc']).optional(),
@@ -497,7 +497,7 @@ registry.registerPath({
       page_size: z.coerce.number().int().min(1).max(100).default(25).optional(),
       status: z.enum(['pending', 'approved', 'rejected', 'flagged']).optional(),
       platform: z.string().max(50).optional(),
-      loan_officer_id: z.string().uuid().optional(),
+      user_id: z.string().uuid().optional(),
       branch_id: z.string().uuid().optional(),
       min_rating: z.coerce.number().int().min(1).max(5).optional(),
       max_rating: z.coerce.number().int().min(1).max(5).optional(),

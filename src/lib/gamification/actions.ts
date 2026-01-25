@@ -40,7 +40,7 @@ interface BadgeRow {
 
 interface UserBadgeRow {
   id: string;
-  loan_officer_id: string;
+  user_id: string;
   badge_id: string;
   earned_at: string | null;
   progress: object | null;
@@ -48,7 +48,7 @@ interface UserBadgeRow {
 }
 
 interface LeaderboardSnapshotRow {
-  loan_officer_id: string;
+  user_id: string;
   rank: number;
 }
 
@@ -77,18 +77,12 @@ async function getUserContext() {
 
   if (!userData) return null;
 
-  // Get associated loan officer if exists
-  const { data: loData } = await supabase
-    .from("loan_officers")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
+  // The user's id IS their loan officer id in this unified table
   return {
     userId: userData.id,
     organizationId: userData.organization_id!,
     role: userData.role,
-    loanOfficerId: loData?.id || null,
+    loanOfficerId: userData.id,
   };
 }
 
@@ -170,7 +164,7 @@ export async function getUserBadges(
       )
     `
     )
-    .eq("loan_officer_id", targetLoId)
+    .eq("user_id", targetLoId)
     .not("earned_at", "is", null)
     .order("earned_at", { ascending: false });
 
@@ -224,24 +218,24 @@ export async function getBadgeProgress(
 
   const supabase = createAdminClient();
 
-  // Get loan officer stats
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  // Get user stats
+  const { data: userData } = await supabase
+    .from("users")
     .select(
       "total_reviews, average_rating, nps_score, reputation_score, organization_id"
     )
     .eq("id", targetLoId)
     .single();
 
-  if (!loData) {
-    return { success: false, error: "Loan officer not found" };
+  if (!userData || !userData.organization_id) {
+    return { success: false, error: "User not found or not associated with an organization" };
   }
 
   // Get survey stats for response rate
   const { data: surveys } = await supabase
     .from("surveys")
     .select("status")
-    .eq("loan_officer_id", targetLoId);
+    .eq("user_id", targetLoId);
 
   const totalSent =
     surveys?.filter((s) =>
@@ -253,11 +247,11 @@ export async function getBadgeProgress(
 
   // Get current rank
   const { data: higherRanked } = await supabase
-    .from("loan_officers")
+    .from("users")
     .select("id")
-    .eq("organization_id", loData.organization_id)
+    .eq("organization_id", userData.organization_id)
     .eq("is_active", true)
-    .gt("reputation_score", loData.reputation_score || 0);
+    .gt("reputation_score", userData.reputation_score || 0);
 
   const currentRank = (higherRanked?.length || 0) + 1;
 
@@ -270,7 +264,7 @@ export async function getBadgeProgress(
   // Get earned badges
   const { data: earnedBadges } = await fromTable(supabase, "user_badges")
     .select("badge_id, earned_at")
-    .eq("loan_officer_id", targetLoId)
+    .eq("user_id", targetLoId)
     .not("earned_at", "is", null);
 
   const earnedMap = new Map(
@@ -286,15 +280,15 @@ export async function getBadgeProgress(
 
     switch (badge.criteria.type) {
       case "review_count":
-        currentValue = loData.total_reviews || 0;
+        currentValue = userData.total_reviews || 0;
         targetValue = badge.criteria.threshold || 1;
         break;
       case "rating_threshold":
-        currentValue = loData.average_rating || 0;
+        currentValue = userData.average_rating || 0;
         targetValue = badge.criteria.rating || 5;
         break;
       case "nps_threshold":
-        currentValue = loData.nps_score || 0;
+        currentValue = userData.nps_score || 0;
         targetValue = badge.criteria.threshold || 60;
         break;
       case "response_rate":
@@ -358,7 +352,7 @@ export async function getEnhancedLeaderboard(
 
   // Build query with optional filters
   let query = supabase
-    .from("loan_officers")
+    .from("users")
     .select(
       `
       id,
@@ -385,7 +379,7 @@ export async function getEnhancedLeaderboard(
     query = query.eq("region", filters.region);
   }
 
-  const { data: loanOfficers, error } = await query;
+  const { data: users, error } = await query;
 
   if (error) {
     console.error("Error fetching leaderboard:", error);
@@ -395,23 +389,23 @@ export async function getEnhancedLeaderboard(
   // Get previous period rankings for comparison
   const previousPeriodKey = getPreviousPeriodKey(filters.period);
   const { data: previousRankings } = await fromTable(supabase, "leaderboard_snapshots")
-    .select("loan_officer_id, rank")
+    .select("user_id, rank")
     .eq("organization_id", context.organizationId)
     .eq("period_type", filters.period)
     .eq("period_key", previousPeriodKey);
 
   const previousRankMap = new Map(
     ((previousRankings || []) as LeaderboardSnapshotRow[]).map(
-      (pr) => [pr.loan_officer_id, pr.rank]
+      (pr) => [pr.user_id, pr.rank]
     )
   );
 
-  // Get badges for all loan officers
-  const loIds = (loanOfficers || []).map((lo) => lo.id);
+  // Get badges for all users
+  const userIds = (users || []).map((user) => user.id);
   const { data: allBadges } = await fromTable(supabase, "user_badges")
     .select(
       `
-      loan_officer_id,
+      user_id,
       earned_at,
       progress,
       badges (
@@ -429,17 +423,17 @@ export async function getEnhancedLeaderboard(
       )
     `
     )
-    .in("loan_officer_id", loIds)
+    .in("user_id", userIds)
     .not("earned_at", "is", null);
 
-  // Group badges by loan officer
-  const badgesByLo = new Map<string, UserBadge[]>();
+  // Group badges by user
+  const badgesByUser = new Map<string, UserBadge[]>();
   for (const ub of (allBadges || []) as UserBadgeRow[]) {
     if (!ub.badges) continue;
-    const list = badgesByLo.get(ub.loan_officer_id) || [];
+    const list = badgesByUser.get(ub.user_id) || [];
     const b = ub.badges;
     list.push({
-      id: ub.loan_officer_id,
+      id: ub.id,
       badge: {
         id: b.id,
         slug: b.slug,
@@ -456,30 +450,30 @@ export async function getEnhancedLeaderboard(
       earnedAt: ub.earned_at ? new Date(ub.earned_at) : null,
       progress: ub.progress as UserBadge["progress"],
     });
-    badgesByLo.set(ub.loan_officer_id, list);
+    badgesByUser.set(ub.user_id, list);
   }
 
   // Build enhanced leaderboard entries
-  const entries: EnhancedLeaderboardEntry[] = (loanOfficers || []).map(
-    (lo, index) => {
+  const entries: EnhancedLeaderboardEntry[] = (users || []).map(
+    (user, index) => {
       const rank = index + 1;
-      const previousRank = previousRankMap.get(lo.id) || null;
+      const previousRank = previousRankMap.get(user.id) || null;
       const rankChange = previousRank ? previousRank - rank : 0;
 
       return {
         rank,
         previousRank,
         rankChange,
-        id: lo.id,
-        fullName: lo.full_name,
-        photoUrl: lo.photo_url,
-        branch: lo.branch,
-        region: lo.region,
-        totalReviews: lo.total_reviews || 0,
-        averageRating: lo.average_rating || 0,
-        npsScore: lo.nps_score || 0,
-        reputationScore: lo.reputation_score || 0,
-        badges: badgesByLo.get(lo.id) || [],
+        id: user.id,
+        fullName: user.full_name || 'Unknown',
+        photoUrl: user.photo_url,
+        branch: user.branch,
+        region: user.region,
+        totalReviews: user.total_reviews || 0,
+        averageRating: user.average_rating || 0,
+        npsScore: user.nps_score || 0,
+        reputationScore: user.reputation_score || 0,
+        badges: badgesByUser.get(user.id) || [],
         streak: 0, // Would need historical data to calculate
       };
     }
@@ -506,15 +500,15 @@ export async function getReputationBreakdown(
 
   const supabase = createAdminClient();
 
-  // Get loan officer stats
-  const { data: loData, error: loError } = await supabase
-    .from("loan_officers")
+  // Get user stats
+  const { data: userData, error: userError } = await supabase
+    .from("users")
     .select("total_reviews, average_rating, nps_score, reputation_score")
     .eq("id", targetLoId)
     .single();
 
-  if (loError || !loData) {
-    return { success: false, error: "Loan officer not found" };
+  if (userError || !userData) {
+    return { success: false, error: "User not found" };
   }
 
   // Get survey stats for CSAT and response rate
@@ -524,34 +518,34 @@ export async function getReputationBreakdown(
       `
       overall_rating,
       surveys!inner (
-        loan_officer_id,
+        user_id,
         status
       )
     `
     )
     .not("overall_rating", "is", null);
 
-  const loResponses = (responses || []).filter((r) => {
+  const userResponses = (responses || []).filter((r) => {
     const survey = r.surveys as unknown as {
-      loan_officer_id: string;
+      user_id: string;
       status: string;
     };
-    return survey.loan_officer_id === targetLoId;
+    return survey.user_id === targetLoId;
   });
 
-  const satisfiedCount = loResponses.filter(
+  const satisfiedCount = userResponses.filter(
     (r) => (r.overall_rating || 0) >= 4
   ).length;
   const csatScore =
-    loResponses.length > 0
-      ? Math.round((satisfiedCount / loResponses.length) * 100)
+    userResponses.length > 0
+      ? Math.round((satisfiedCount / userResponses.length) * 100)
       : 0;
 
   // Get survey stats for response rate
   const { data: surveys } = await supabase
     .from("surveys")
     .select("status")
-    .eq("loan_officer_id", targetLoId);
+    .eq("user_id", targetLoId);
 
   const totalSent =
     surveys?.filter((s) =>
@@ -562,13 +556,13 @@ export async function getReputationBreakdown(
   const responseRate = totalSent > 0 ? Math.round((completed / totalSent) * 100) : 0;
 
   // Calculate breakdown with weights
-  const npsScore = loData.nps_score || 0;
+  const npsScore = userData.nps_score || 0;
   const npsNormalized = (npsScore + 100) / 2;
-  const volumeNormalized = Math.min((loData.total_reviews || 0) * 2, 100);
-  const ratingNormalized = ((loData.average_rating || 0) - 1) * 25;
+  const volumeNormalized = Math.min((userData.total_reviews || 0) * 2, 100);
+  const ratingNormalized = ((userData.average_rating || 0) - 1) * 25;
 
   const breakdown: ReputationBreakdown = {
-    totalScore: loData.reputation_score || 0,
+    totalScore: userData.reputation_score || 0,
     components: {
       nps: {
         score: npsScore,
@@ -587,13 +581,13 @@ export async function getReputationBreakdown(
         contribution: Math.round(responseRate * 0.15),
       },
       reviewVolume: {
-        count: loData.total_reviews || 0,
+        count: userData.total_reviews || 0,
         weight: 0.15,
         normalized: volumeNormalized,
         contribution: Math.round(volumeNormalized * 0.15),
       },
       averageRating: {
-        rating: loData.average_rating || 0,
+        rating: userData.average_rating || 0,
         weight: 0.15,
         normalized: ratingNormalized,
         contribution: Math.round(ratingNormalized * 0.15),
@@ -724,7 +718,7 @@ export async function getReputationHistory(
 
   const { data, error } = await fromTable(supabase, "reputation_history")
     .select("*")
-    .eq("loan_officer_id", targetLoId)
+    .eq("user_id", targetLoId)
     .order("recorded_at", { ascending: false })
     .limit(limit);
 
@@ -764,36 +758,36 @@ export async function getGamificationStats(
 
   const supabase = createAdminClient();
 
-  // Get loan officer data
-  const { data: loData } = await supabase
-    .from("loan_officers")
+  // Get user data
+  const { data: userData } = await supabase
+    .from("users")
     .select("reputation_score, organization_id")
     .eq("id", targetLoId)
     .single();
 
-  if (!loData) {
-    return { success: false, error: "Loan officer not found" };
+  if (!userData || !userData.organization_id) {
+    return { success: false, error: "User not found or not associated with an organization" };
   }
 
   // Get total badges count
   const { count: totalBadges } = await fromTable(supabase, "badges")
     .select("*", { count: "exact", head: true })
-    .or(`is_system.eq.true,organization_id.eq.${loData.organization_id}`)
+    .or(`is_system.eq.true,organization_id.eq.${userData.organization_id}`)
     .eq("is_active", true);
 
   // Get earned badges count
   const { count: earnedBadges } = await fromTable(supabase, "user_badges")
     .select("*", { count: "exact", head: true })
-    .eq("loan_officer_id", targetLoId)
+    .eq("user_id", targetLoId)
     .not("earned_at", "is", null);
 
   // Get current rank
   const { data: higherRanked } = await supabase
-    .from("loan_officers")
+    .from("users")
     .select("id")
-    .eq("organization_id", loData.organization_id)
+    .eq("organization_id", userData.organization_id)
     .eq("is_active", true)
-    .gt("reputation_score", loData.reputation_score || 0);
+    .gt("reputation_score", userData.reputation_score || 0);
 
   const currentRank = (higherRanked?.length || 0) + 1;
 
@@ -802,7 +796,7 @@ export async function getGamificationStats(
 
   const { data: previousSnapshot } = await fromTable(supabase, "leaderboard_snapshots")
     .select("rank")
-    .eq("loan_officer_id", targetLoId)
+    .eq("user_id", targetLoId)
     .eq("period_type", "monthly")
     .eq("period_key", previousPeriodKey)
     .single();
@@ -813,7 +807,7 @@ export async function getGamificationStats(
   // Get reputation trend
   const { data: recentHistory } = await fromTable(supabase, "reputation_history")
     .select("change_amount")
-    .eq("loan_officer_id", targetLoId)
+    .eq("user_id", targetLoId)
     .order("recorded_at", { ascending: false })
     .limit(5);
 
@@ -847,7 +841,7 @@ export async function getGamificationStats(
       currentRank,
       previousRank,
       rankChange,
-      reputationScore: loData.reputation_score || 0,
+      reputationScore: userData.reputation_score || 0,
       reputationTrend,
       nextBadgeProgress,
     },
@@ -873,29 +867,29 @@ export async function saveLeaderboardSnapshot(
   const periodKey = getCurrentPeriodKey(period);
   const snapshotDate = new Date().toISOString().split("T")[0];
 
-  // Get all loan officers ranked
-  const { data: loanOfficers, error: loError } = await supabase
-    .from("loan_officers")
+  // Get all users ranked
+  const { data: users, error: userError } = await supabase
+    .from("users")
     .select("id, total_reviews, average_rating, nps_score, reputation_score")
     .eq("organization_id", context.organizationId)
     .eq("is_active", true)
     .order("reputation_score", { ascending: false });
 
-  if (loError) {
-    return { success: false, error: "Failed to fetch loan officers" };
+  if (userError) {
+    return { success: false, error: "Failed to fetch users" };
   }
 
   // Prepare snapshot records
-  const snapshots = (loanOfficers || []).map((lo, index) => ({
+  const snapshots = (users || []).map((user, index) => ({
     organization_id: context.organizationId,
-    loan_officer_id: lo.id,
+    user_id: user.id,
     period_type: period,
     period_key: periodKey,
     rank: index + 1,
-    reputation_score: lo.reputation_score || 0,
-    total_reviews: lo.total_reviews || 0,
-    average_rating: lo.average_rating || 0,
-    nps_score: lo.nps_score,
+    reputation_score: user.reputation_score || 0,
+    total_reviews: user.total_reviews || 0,
+    average_rating: user.average_rating || 0,
+    nps_score: user.nps_score,
     snapshot_date: snapshotDate,
   }));
 
@@ -903,7 +897,7 @@ export async function saveLeaderboardSnapshot(
   const { error } = await fromTable(supabase, "leaderboard_snapshots").upsert(
     snapshots,
     {
-      onConflict: "organization_id,loan_officer_id,period_type,period_key",
+      onConflict: "organization_id,user_id,period_type,period_key",
     }
   );
 
@@ -978,8 +972,8 @@ export async function checkAndAwardBadges(
   const supabase = createAdminClient();
 
   // Call the database function to check and award badges
-  const { data, error } = await supabase.rpc("check_badges_for_loan_officer", {
-    p_loan_officer_id: targetLoId,
+  const { data, error } = await supabase.rpc("check_badges_for_user", {
+    p_user_id: targetLoId,
   });
 
   if (error) {
@@ -988,8 +982,8 @@ export async function checkAndAwardBadges(
   }
 
   // Extract newly awarded badges
-  const awarded = ((data || []) as Array<{ badge_name: string; newly_earned: boolean }>)
-    .filter((b) => b.newly_earned)
+  const awarded = ((data || []) as Array<{ badge_name: string; awarded: boolean }>)
+    .filter((b) => b.awarded)
     .map((b) => b.badge_name);
 
   return { success: true, data: { awarded } };

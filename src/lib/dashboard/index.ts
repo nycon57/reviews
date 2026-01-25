@@ -1,25 +1,25 @@
-// Loan Officer Dashboard Actions
+// User Dashboard Actions
 export {
-  getLoanOfficerMetrics,
-  getLoanOfficerRecentReviews,
+  getUserMetrics,
+  getUserRecentReviews,
   getRatingTrend,
   getNPSTrend,
-  getLoanOfficerProfile,
+  getUserProfile,
   getProfileCompletion,
-} from "./lo-actions";
+} from "./user-actions";
 
 export type {
-  LoanOfficerProfile,
+  UserProfile,
   DashboardMetrics,
   RecentReview,
   TrendDataPoint,
   ProfileCompletionItem,
-} from "./lo-actions";
+} from "./user-actions";
 
 // Manager Dashboard Actions
 export {
   getTeamMetrics,
-  getLoanOfficerComparison,
+  getUserComparison,
   getFilterOptions,
   getLeaderboard,
   getLowPerformers,
@@ -29,7 +29,7 @@ export {
 
 export type {
   TeamMetrics,
-  LoanOfficerComparison,
+  UserComparison,
   FilterOptions,
   LeaderboardEntry,
 } from "./manager-actions";

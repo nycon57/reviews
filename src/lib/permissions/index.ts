@@ -155,11 +155,14 @@ export function shouldShowUpgradeCTA(ctx: UserContext | null): boolean {
 
 /**
  * Check if user should see the "Invite Team" button
+ * Enterprise users have centralized user management, so hide invite buttons for them
  */
 export function canInviteTeam(ctx: UserContext | null): boolean {
   if (!ctx) return false;
-  // Only enterprise admins can invite team members
-  return ctx.accountType === "enterprise" && ctx.role === "admin";
+  // Enterprise users don't see invite buttons - users are managed externally
+  if (ctx.accountType === "enterprise") return false;
+  // For individual accounts, only owners can invite
+  return ctx.isOwner;
 }
 
 /**

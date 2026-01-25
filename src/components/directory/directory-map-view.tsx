@@ -14,7 +14,7 @@ import {
   Phone,
   MapTrifold as Map,
 } from "@phosphor-icons/react";
-import type { DirectoryLoanOfficer } from "@/lib/directory/actions";
+import type { DirectoryProfessional } from "@/lib/directory/actions";
 
 // Dynamically import map components to avoid SSR issues
 const MapContainer = dynamic(
@@ -41,9 +41,9 @@ const MarkerClusterGroup = dynamic(
 );
 
 interface DirectoryMapViewProps {
-  loanOfficers: DirectoryLoanOfficer[];
-  onSelectOfficer?: (id: string) => void;
-  selectedOfficerId?: string | null;
+  professionals: DirectoryProfessional[];
+  onSelectProfessional?: (id: string) => void;
+  selectedProfessionalId?: string | null;
 }
 
 function getInitials(name: string): string {
@@ -78,10 +78,10 @@ function MapLoadingSkeleton() {
   );
 }
 
-function NoLocationData({ loanOfficers }: { loanOfficers: DirectoryLoanOfficer[] }) {
+function NoLocationData({ professionals }: { professionals: DirectoryProfessional[] }) {
   // Count unique states for the badge display
   const uniqueStates = new Set(
-    loanOfficers.map((lo) => lo.address?.state || lo.region).filter(Boolean)
+    professionals.map((prof) => prof.address?.state || prof.region).filter(Boolean)
   );
 
   return (
@@ -114,7 +114,7 @@ function NoLocationData({ loanOfficers }: { loanOfficers: DirectoryLoanOfficer[]
                   {uniqueStates.size} {uniqueStates.size === 1 ? 'region' : 'regions'}
                 </Badge>
                 <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm">
-                  {loanOfficers.length} {loanOfficers.length === 1 ? 'professional' : 'professionals'}
+                  {professionals.length} {professionals.length === 1 ? 'professional' : 'professionals'}
                 </Badge>
               </div>
             )}
@@ -127,31 +127,31 @@ function NoLocationData({ loanOfficers }: { loanOfficers: DirectoryLoanOfficer[]
 
 // The actual map component that gets rendered on the client
 function InteractiveMap({
-  loanOfficers,
-  onSelectOfficer,
-  selectedOfficerId,
+  professionals,
+  onSelectProfessional,
+  selectedProfessionalId,
 }: DirectoryMapViewProps) {
   const mapRef = useRef<LeafletMap | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
 
   // Filter officers with valid coordinates
-  const officersWithCoords = useMemo(
-    () => loanOfficers.filter((lo) => lo.latitude != null && lo.longitude != null),
-    [loanOfficers]
+  const professionalsWithCoords = useMemo(
+    () => professionals.filter((prof) => prof.latitude != null && prof.longitude != null),
+    [professionals]
   );
 
   // Calculate bounds based on markers
   const bounds = useMemo(() => {
-    if (officersWithCoords.length === 0) return null;
+    if (professionalsWithCoords.length === 0) return null;
 
-    const lats = officersWithCoords.map((lo) => lo.latitude!);
-    const lngs = officersWithCoords.map((lo) => lo.longitude!);
+    const lats = professionalsWithCoords.map((prof) => prof.latitude!);
+    const lngs = professionalsWithCoords.map((prof) => prof.longitude!);
 
     return [
       [Math.min(...lats), Math.min(...lngs)] as [number, number],
       [Math.max(...lats), Math.max(...lngs)] as [number, number],
     ];
-  }, [officersWithCoords]);
+  }, [professionalsWithCoords]);
 
   // Animate to new bounds when markers change
   useEffect(() => {
@@ -255,8 +255,8 @@ function InteractiveMap({
     });
   }, []);
 
-  if (officersWithCoords.length === 0) {
-    return <NoLocationData loanOfficers={loanOfficers} />;
+  if (professionalsWithCoords.length === 0) {
+    return <NoLocationData professionals={professionals} />;
   }
 
   return (
@@ -285,51 +285,51 @@ function InteractiveMap({
             maxClusterRadius={60}
             iconCreateFunction={createClusterIcon}
           >
-            {officersWithCoords.map((lo) => {
-              const isSelected = selectedOfficerId === lo.id;
+            {professionalsWithCoords.map((prof) => {
+              const isSelected = selectedProfessionalId === prof.id;
               const icon = createIcon(isSelected);
 
               return (
                 <Marker
-                  key={lo.id}
-                  position={[lo.latitude!, lo.longitude!]}
+                  key={prof.id}
+                  position={[prof.latitude!, prof.longitude!]}
                   icon={icon}
                   eventHandlers={{
-                    click: () => onSelectOfficer?.(lo.id),
+                    click: () => onSelectProfessional?.(prof.id),
                   }}
                 >
                   <Popup className="repwell-popup" closeButton={true} maxWidth={280}>
                     <div className="p-1">
                       <div className="flex items-start gap-3">
-                        <Link href={`/lo/${lo.id}`}>
+                        <Link href={`/pro/${prof.id}`}>
                           <Avatar className="h-11 w-11 border-2 border-repwell-sage-100">
                             <AvatarImage
-                              src={lo.photo_url || undefined}
-                              alt={lo.full_name}
+                              src={prof.photo_url || undefined}
+                              alt={prof.full_name}
                             />
                             <AvatarFallback className="bg-repwell-teal-300/10 text-repwell-teal-400 font-medium text-sm">
-                              {getInitials(lo.full_name)}
+                              {getInitials(prof.full_name)}
                             </AvatarFallback>
                           </Avatar>
                         </Link>
 
                         <div className="flex-1 min-w-0">
-                          <Link href={`/lo/${lo.id}`}>
+                          <Link href={`/pro/${prof.id}`}>
                             <h4 className="font-semibold text-sm text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
-                              {lo.full_name}
+                              {prof.full_name}
                             </h4>
                           </Link>
-                          {lo.title && (
+                          {prof.title && (
                             <p className="text-xs text-repwell-teal-400 truncate">
-                              {lo.title}
+                              {prof.title}
                             </p>
                           )}
-                          {lo.address?.city && (
+                          {prof.address?.city && (
                             <div className="flex items-center gap-1 text-xs text-repwell-teal-300 mt-0.5">
                               <MapPin className="h-3 w-3 flex-shrink-0" />
                               <span className="truncate">
-                                {lo.address.city}
-                                {lo.address.state ? `, ${lo.address.state}` : ""}
+                                {prof.address.city}
+                                {prof.address.state ? `, ${prof.address.state}` : ""}
                               </span>
                             </div>
                           )}
@@ -337,15 +337,15 @@ function InteractiveMap({
                       </div>
 
                       <div className="mt-2.5 pt-2.5 border-t border-repwell-sage-100 flex items-center justify-between">
-                        {lo.average_rating ? (
+                        {prof.average_rating ? (
                           <div className="flex items-center gap-1">
                             <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                             <span className="font-semibold text-sm text-repwell-teal-500">
-                              {Number(lo.average_rating).toFixed(1)}
+                              {Number(prof.average_rating).toFixed(1)}
                             </span>
-                            {lo.total_reviews !== null && lo.total_reviews > 0 && (
+                            {prof.total_reviews !== null && prof.total_reviews > 0 && (
                               <span className="text-xs text-repwell-teal-300">
-                                ({lo.total_reviews})
+                                ({prof.total_reviews})
                               </span>
                             )}
                           </div>
@@ -354,15 +354,15 @@ function InteractiveMap({
                         )}
 
                         <div className="flex items-center gap-1.5">
-                          {lo.phone && (
+                          {prof.phone && (
                             <Button variant="outline" size="sm" className="h-7 w-7 p-0" asChild>
-                              <a href={`tel:${lo.phone}`} title={`Call ${lo.full_name}`}>
+                              <a href={`tel:${prof.phone}`} title={`Call ${prof.full_name}`}>
                                 <Phone className="h-3 w-3" />
                               </a>
                             </Button>
                           )}
                           <Button size="sm" className="h-7 text-xs px-2.5" asChild>
-                            <Link href={`/lo/${lo.id}`}>View</Link>
+                            <Link href={`/pro/${prof.id}`}>View</Link>
                           </Button>
                         </div>
                       </div>
@@ -378,10 +378,10 @@ function InteractiveMap({
         <div className="absolute top-3 left-3 z-[1000]">
           <Badge className="bg-white/95 backdrop-blur-sm text-repwell-teal-500 shadow-sm">
             <MapPin className="mr-1.5 h-3.5 w-3.5 text-repwell-teal-300" />
-            {officersWithCoords.length} on map
-            {loanOfficers.length > officersWithCoords.length && (
+            {professionalsWithCoords.length} on map
+            {professionals.length > professionalsWithCoords.length && (
               <span className="ml-1 text-repwell-teal-300">
-                ({loanOfficers.length - officersWithCoords.length} pending)
+                ({professionals.length - professionalsWithCoords.length} pending)
               </span>
             )}
           </Badge>

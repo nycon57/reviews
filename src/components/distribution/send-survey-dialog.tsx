@@ -55,7 +55,7 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const [loanOfficers, setLoanOfficers] = useState<LoanOfficer[]>([]);
+  const [teamMembers, setTeamMembers] = useState<LoanOfficer[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const [formData, setFormData] = useState({
@@ -76,7 +76,7 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
       ]);
 
       if (loResult.success && loResult.data) {
-        setLoanOfficers(loResult.data);
+        setTeamMembers(loResult.data);
       }
       if (templateResult.success && templateResult.data) {
         setTemplates(templateResult.data);
@@ -87,7 +87,7 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
 
   function handleOpenChange(newOpen: boolean): void {
     setOpen(newOpen);
-    if (newOpen && loanOfficers.length === 0) {
+    if (newOpen && teamMembers.length === 0) {
       loadOptions();
     }
   }
@@ -98,7 +98,7 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
     if (!formData.loanOfficerId || !formData.templateId) {
       toast({
         title: "Missing fields",
-        description: "Please select a loan officer and template",
+        description: "Please select a team member and template",
         variant: "destructive",
       });
       return;
@@ -186,25 +186,25 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
           ) : (
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="loanOfficer">Loan Officer</Label>
+                <Label htmlFor="loanOfficer">Team Member</Label>
                 <Select
                   value={formData.loanOfficerId}
                   onValueChange={(value) => updateField("loanOfficerId", value)}
                 >
                   <SelectTrigger id="loanOfficer">
-                    <SelectValue placeholder="Select loan officer" />
+                    <SelectValue placeholder="Select team member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {loanOfficers.map((lo) => (
-                      <SelectItem key={lo.id} value={lo.id}>
-                        {lo.fullName}
+                    {teamMembers.map((member) => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.fullName}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {loanOfficers.length === 0 && (
+                {teamMembers.length === 0 && (
                   <p className="text-xs text-muted-foreground">
-                    No active loan officers found
+                    No active team members found
                   </p>
                 )}
               </div>

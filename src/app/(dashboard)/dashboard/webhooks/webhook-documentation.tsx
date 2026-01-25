@@ -171,7 +171,7 @@ export function WebhookDocumentation() {
                     event_type: "loan.closed",
                     data: {
                       transaction_id: "LOAN-2024-001234",
-                      loan_officer_email: "john.doe@company.com",
+                      user_email: "john.doe@company.com",
                       customer_name: "Jane Smith",
                       customer_email: "jane.smith@email.com",
                       customer_phone: "+15551234567",
@@ -196,7 +196,7 @@ export function WebhookDocumentation() {
                 </p>
                 <p>
                   <strong>Required fields:</strong> transaction_id,
-                  loan_officer_email, customer_name, customer_email
+                  user_email, customer_name, customer_email
                 </p>
               </div>
             </TabsContent>
@@ -213,7 +213,7 @@ export function WebhookDocumentation() {
                   {
                     event_type: "contact.created",
                     data: {
-                      loan_officer_email: "john.doe@company.com",
+                      user_email: "john.doe@company.com",
                       customer_name: "Jane Smith",
                       customer_email: "jane.smith@email.com",
                       customer_phone: "+15551234567",
@@ -236,7 +236,7 @@ export function WebhookDocumentation() {
                   <strong>Default delay:</strong> No delay (immediate)
                 </p>
                 <p>
-                  <strong>Required fields:</strong> loan_officer_email,
+                  <strong>Required fields:</strong> user_email,
                   customer_name, customer_email
                 </p>
               </div>
@@ -254,7 +254,7 @@ export function WebhookDocumentation() {
                   {
                     event_type: "survey.trigger",
                     data: {
-                      loan_officer_email: "john.doe@company.com",
+                      user_email: "john.doe@company.com",
                       customer_name: "Jane Smith",
                       customer_email: "jane.smith@email.com",
                       customer_phone: "+15551234567",
@@ -280,7 +280,7 @@ export function WebhookDocumentation() {
                 </p>
                 <p>
                   <strong>Required fields:</strong> customer_name, customer_email,
-                  and either loan_officer_email or loan_officer_id
+                  and either user_email or user_id
                 </p>
               </div>
             </TabsContent>
@@ -302,7 +302,7 @@ export function WebhookDocumentation() {
                     event_type: "encompass.milestone",
                     milestone: "Funded",
                     loan_id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-                    loan_officer_email: "john.doe@company.com",
+                    user_email: "john.doe@company.com",
                     borrower_name: "Jane Smith",
                     borrower_email: "jane.smith@email.com",
                     borrower_phone: "+15551234567",
@@ -329,7 +329,7 @@ export function WebhookDocumentation() {
                 </p>
                 <p>
                   <strong>Required fields:</strong> milestone, loan_id,
-                  loan_officer_email, borrower_name, borrower_email
+                  user_email, borrower_name, borrower_email
                 </p>
                 <p>
                   <strong>Optional fields:</strong> borrower_phone, loan_amount,
@@ -445,7 +445,7 @@ export function WebhookDocumentation() {
                     <td className="p-2 text-muted-foreground">Loan GUID / Loan Number</td>
                   </tr>
                   <tr>
-                    <td className="p-2"><code>loan_officer_email</code></td>
+                    <td className="p-2"><code>user_email</code></td>
                     <td className="p-2 text-muted-foreground">Loan Officer Email Address</td>
                   </tr>
                   <tr>

@@ -14,7 +14,7 @@ import type {
   CreateBranchInput,
   UpdateBranchInput,
   BranchFilters,
-  BranchWithLoanOfficers,
+  BranchWithTeamMembers,
   ActionResult,
   BranchAddress,
 } from './types';
@@ -85,7 +85,7 @@ interface BranchRow {
   is_public: boolean | null;
   average_rating: number | null;
   total_reviews: number | null;
-  total_loan_officers: number | null;
+  total_members: number | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -114,7 +114,7 @@ function mapRowToBranch(row: BranchRow): Branch {
     isPublic: row.is_public ?? true,
     averageRating: row.average_rating,
     totalReviews: row.total_reviews || 0,
-    totalLoanOfficers: row.total_loan_officers || 0,
+    totalMembers: row.total_members || 0,
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
   };
@@ -245,9 +245,9 @@ export async function getBranch(id: string): Promise<ActionResult<Branch>> {
 /**
  * Get a branch with its loan officers
  */
-export async function getBranchWithLoanOfficers(
+export async function getBranchWithTeamMembers(
   id: string
-): Promise<ActionResult<BranchWithLoanOfficers>> {
+): Promise<ActionResult<BranchWithTeamMembers>> {
   try {
     const auth = await requireAccess();
     if (!auth.success) {
@@ -268,38 +268,38 @@ export async function getBranchWithLoanOfficers(
       return { success: false, error: 'Branch not found' };
     }
 
-    // Get loan officers for this branch
-    const { data: loData, error: loError } = await supabase
-      .from('loan_officers')
+    // Get team members for this branch
+    const { data: teamData, error: teamError } = await supabase
+      .from('users')
       .select('id, full_name, email, title, photo_url, average_rating, total_reviews')
       .eq('branch_id', id)
       .eq('is_active', true)
       .order('full_name', { ascending: true });
 
-    if (loError) {
-      console.error('Error fetching loan officers:', loError);
+    if (teamError) {
+      console.error('Error fetching team members:', teamError);
     }
 
     const branch = mapRowToBranch(branchData as unknown as BranchRow);
-    const loanOfficers = (loData || []).map((lo) => ({
-      id: lo.id,
-      fullName: lo.full_name,
-      email: lo.email,
-      title: lo.title,
-      photoUrl: lo.photo_url,
-      averageRating: lo.average_rating,
-      totalReviews: lo.total_reviews || 0,
+    const teamMembers = (teamData || []).map((m) => ({
+      id: m.id,
+      fullName: m.full_name || 'Unknown',
+      email: m.email,
+      title: m.title,
+      photoUrl: m.photo_url,
+      averageRating: m.average_rating,
+      totalReviews: m.total_reviews || 0,
     }));
 
     return {
       success: true,
       data: {
         ...branch,
-        loanOfficers,
+        teamMembers,
       },
     };
   } catch (error) {
-    console.error('Error fetching branch with loan officers:', error);
+    console.error('Error fetching branch with team members:', error);
     return { success: false, error: 'Failed to fetch branch' };
   }
 }
@@ -551,7 +551,7 @@ export async function deleteBranch(id: string): Promise<ActionResult> {
 /**
  * Assign a loan officer to a branch
  */
-export async function assignLoanOfficerToBranch(
+export async function assignUserToBranch(
   loanOfficerId: string,
   branchId: string | null
 ): Promise<ActionResult> {
@@ -584,7 +584,7 @@ export async function assignLoanOfficerToBranch(
 
     // Update loan officer
     const { error } = await supabase
-      .from('loan_officers')
+      .from('users')
       .update({
         branch_id: branchId,
         updated_at: new Date().toISOString(),
@@ -597,9 +597,9 @@ export async function assignLoanOfficerToBranch(
       return { success: false, error: 'Failed to assign loan officer' };
     }
 
-    // Update branch loan officer counts
+    // Update branch member counts
     if (branchId) {
-      await updateBranchLoanOfficerCount(branchId);
+      await updateBranchMemberCount(branchId);
     }
 
     revalidatePath('/dashboard/branches');
@@ -613,13 +613,13 @@ export async function assignLoanOfficerToBranch(
 }
 
 /**
- * Update the total_loan_officers count for a branch
+ * Update the total_members count for a branch
  */
-async function updateBranchLoanOfficerCount(branchId: string): Promise<void> {
+async function updateBranchMemberCount(branchId: string): Promise<void> {
   const adminSupabase = createAdminClient();
 
   const { count } = await adminSupabase
-    .from('loan_officers')
+    .from('users')
     .select('*', { count: 'exact', head: true })
     .eq('branch_id', branchId)
     .eq('is_active', true);
@@ -627,7 +627,7 @@ async function updateBranchLoanOfficerCount(branchId: string): Promise<void> {
   await adminSupabase
     .from('branches')
     .update({
-      total_loan_officers: count || 0,
+      total_members: count || 0,
       updated_at: new Date().toISOString(),
     })
     .eq('id', branchId);

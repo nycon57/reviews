@@ -123,7 +123,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
   useCases: [
     {
       role: "user",
-      label: "Loan Officers",
+      label: "Professionals",
       description: "Build your review profile and generate more referrals",
       benefits: [
         "Automatic survey sending after each closing",
@@ -138,7 +138,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
       description: "Track team review collection and identify top performers",
       benefits: [
         "Team-wide review volume metrics",
-        "Individual LO performance tracking",
+        "Individual team member performance tracking",
         "Automated weekly reports",
         "Coaching insights from review trends",
       ],
@@ -329,7 +329,7 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
   useCases: [
     {
       role: "user",
-      label: "Loan Officers",
+      label: "Professionals",
       description: "Track your personal performance and client satisfaction",
       benefits: [
         "Personal NPS and satisfaction scores",
@@ -526,7 +526,7 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
   useCases: [
     {
       role: "user",
-      label: "Loan Officers",
+      label: "Professionals",
       description: "Understand client feedback and respond quickly",
       benefits: [
         "Instant sentiment on each response",
@@ -721,7 +721,7 @@ export const amplificationFeatureConfig: FeaturePageConfig = {
   useCases: [
     {
       role: "user",
-      label: "Loan Officers",
+      label: "Professionals",
       description: "Build your personal online presence",
       benefits: [
         "Direct routing to your Google profile",
@@ -918,7 +918,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
   useCases: [
     {
       role: "user",
-      label: "Loan Officers",
+      label: "Professionals",
       description: "Personal survey distribution and feedback",
       benefits: [
         "Pre-built mortgage survey templates",
@@ -933,7 +933,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       description: "Team survey management and insights",
       benefits: [
         "Branch-wide survey campaigns",
-        "Response rate tracking by LO",
+        "Response rate tracking by professional",
         "Template management and approval",
         "Aggregate response analysis",
       ],
@@ -1114,7 +1114,7 @@ export const testimonialsFeatureConfig: FeaturePageConfig = {
   useCases: [
     {
       role: "user",
-      label: "Loan Officers",
+      label: "Professionals",
       description: "Build your personal testimonial library",
       benefits: [
         "Easy video testimonial requests",

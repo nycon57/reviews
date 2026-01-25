@@ -44,13 +44,14 @@ async function getAuthenticatedUserContext(): Promise<AuthContext> {
 }
 
 /**
- * Get loan officer ID for the current user (if applicable)
+ * Get user ID for the current user (if they are a professional/loan officer)
+ * Now that loan_officers is consolidated into users, the user ID is the loan officer ID
  */
 async function getLoanOfficerIdForUser(userId: string): Promise<string | null> {
   const { data } = await supabase
-    .from('loan_officers')
+    .from('users')
     .select('id')
-    .eq('user_id', userId)
+    .eq('id', userId)
     .single();
   return data?.id ?? null;
 }
@@ -67,7 +68,7 @@ function transformVideoResponse(
     id: res.id as string,
     request_id: res.request_id as string,
     organization_id: res.organization_id as string,
-    loan_officer_id: res.loan_officer_id as string,
+    user_id: res.user_id as string,
     video_url: res.video_url as string | null,
     video_path: res.video_path as string | null,
     thumbnail_url: res.thumbnail_url as string | null,
@@ -89,7 +90,7 @@ function transformVideoResponse(
     created_at: res.created_at as string,
     customer_name: request.customer_name,
     customer_email: request.customer_email,
-    loan_officer_name: loanOfficer.full_name,
+    user_name: loanOfficer.full_name,
   };
 }
 
@@ -150,7 +151,7 @@ export async function getVideoTestimonialResponses(params?: {
       id,
       request_id,
       organization_id,
-      loan_officer_id,
+      user_id,
       video_url,
       video_path,
       thumbnail_url,
@@ -174,7 +175,7 @@ export async function getVideoTestimonialResponses(params?: {
         customer_name,
         customer_email
       ),
-      loan_officers!inner (
+      users!user_id (
         full_name
       )
     `, { count: 'exact' })
@@ -188,15 +189,15 @@ export async function getVideoTestimonialResponses(params?: {
   }
 
   if (params?.loanOfficerId) {
-    query = query.eq('loan_officer_id', params.loanOfficerId);
+    query = query.eq('user_id', params.loanOfficerId);
   }
 
-  // Role-based filtering for loan officers
+  // Role-based filtering for users
   let loanOfficerId: string | null = null;
   if (auth.role === 'user') {
     loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
     if (loanOfficerId) {
-      query = query.eq('loan_officer_id', loanOfficerId);
+      query = query.eq('user_id', loanOfficerId);
     } else {
       return { responses: [], total: 0, stats: getEmptyStats() };
     }
@@ -215,7 +216,7 @@ export async function getVideoTestimonialResponses(params?: {
       customer_name: string;
       customer_email: string;
     };
-    const loanOfficer = res.loan_officers as unknown as { full_name: string };
+    const loanOfficer = res.users as unknown as { full_name: string };
     return transformVideoResponse(res as unknown as Record<string, unknown>, request, loanOfficer);
   });
 
@@ -242,7 +243,7 @@ async function getVideoStats(
     .eq('organization_id', organizationId);
 
   if (loanOfficerId) {
-    query = query.eq('loan_officer_id', loanOfficerId);
+    query = query.eq('user_id', loanOfficerId);
   }
 
   const { data } = await query;
@@ -292,7 +293,7 @@ export async function getVideoTestimonialResponse(
         customer_name,
         customer_email
       ),
-      loan_officers!inner (
+      users!user_id (
         full_name
       )
     `)
@@ -308,7 +309,7 @@ export async function getVideoTestimonialResponse(
     customer_name: string;
     customer_email: string;
   };
-  const loanOfficer = data.loan_officers as unknown as { full_name: string };
+  const loanOfficer = data.users as unknown as { full_name: string };
 
   return transformVideoResponse(data as unknown as Record<string, unknown>, request, loanOfficer);
 }
@@ -337,7 +338,7 @@ export async function getVideoTestimonialRequests(params?: {
       id,
       token,
       organization_id,
-      loan_officer_id,
+      user_id,
       customer_name,
       customer_email,
       customer_phone,
@@ -350,7 +351,7 @@ export async function getVideoTestimonialRequests(params?: {
       expires_at,
       reminder_count,
       created_at,
-      loan_officers!inner (
+      users!user_id (
         full_name
       )
     `, { count: 'exact' })
@@ -363,14 +364,14 @@ export async function getVideoTestimonialRequests(params?: {
   }
 
   if (params?.loanOfficerId) {
-    query = query.eq('loan_officer_id', params.loanOfficerId);
+    query = query.eq('user_id', params.loanOfficerId);
   }
 
-  // Role-based filtering for loan officers
+  // Role-based filtering for users
   if (auth.role === 'user') {
     const loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
     if (loanOfficerId) {
-      query = query.eq('loan_officer_id', loanOfficerId);
+      query = query.eq('user_id', loanOfficerId);
     } else {
       return { requests: [], total: 0 };
     }
@@ -384,12 +385,12 @@ export async function getVideoTestimonialRequests(params?: {
   }
 
   const requests: VideoTestimonialRequest[] = (data || []).map((req) => {
-    const loanOfficer = req.loan_officers as unknown as { full_name: string };
+    const loanOfficer = req.users as unknown as { full_name: string };
     return {
       id: req.id,
       token: req.token,
       organization_id: req.organization_id,
-      loan_officer_id: req.loan_officer_id,
+      user_id: req.user_id,
       customer_name: req.customer_name,
       customer_email: req.customer_email,
       customer_phone: req.customer_phone,
@@ -402,7 +403,7 @@ export async function getVideoTestimonialRequests(params?: {
       expires_at: req.expires_at,
       reminder_count: req.reminder_count || 0,
       created_at: req.created_at,
-      loan_officer_name: loanOfficer.full_name,
+      user_name: loanOfficer.full_name,
     };
   });
 
@@ -425,7 +426,7 @@ export async function createVideoTestimonialRequest(
     .from('video_testimonial_requests')
     .insert({
       organization_id: auth.organizationId,
-      loan_officer_id: input.loan_officer_id,
+      user_id: input.user_id,
       created_by: auth.userId,
       customer_name: input.customer_name,
       customer_email: input.customer_email,
@@ -538,14 +539,14 @@ export async function getVideoSignedUrl(videoPath: string): Promise<string> {
 }
 
 /**
- * Get loan officers for request creation
+ * Get professionals/users for request creation
  */
 export async function getLoanOfficers(): Promise<LoanOfficer[]> {
   const auth = await getAuthenticatedUserContext();
 
   const { data, error } = await supabase
-    .from('loan_officers')
-    .select('id, full_name, email, user_id')
+    .from('users')
+    .select('id, full_name, email')
     .eq('organization_id', auth.organizationId)
     .eq('is_active', true)
     .order('full_name', { ascending: true });

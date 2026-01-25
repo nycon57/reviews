@@ -1,10 +1,10 @@
 import { Metadata } from "next";
 import { Suspense } from "react";
 import {
-  searchLoanOfficers,
+  searchProfessionals,
   getAvailableStates,
   type SearchFilters,
-  type DirectoryLoanOfficer,
+  type DirectoryProfessional,
 } from "@/lib/directory/actions";
 import { DirectorySearch } from "@/components/directory";
 import { getBaseUrl } from "@/lib/seo";
@@ -13,32 +13,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-  title: "Find a Loan Officer | Mortgage Professional Directory",
+  title: "Find a Professional | RepWell Professional Directory",
   description:
-    "Search our directory of trusted mortgage loan officers. Find professionals by location, rating, and specialty. Read reviews and connect with the right loan officer for your home financing needs.",
+    "Search our directory of trusted professionals. Find experts by location, rating, and specialty. Read reviews and connect with the right professional for your needs.",
   keywords: [
-    "find loan officer",
-    "mortgage professional",
-    "loan officer directory",
-    "mortgage broker near me",
-    "home loan specialist",
-    "refinance expert",
-    "first time home buyer loan officer",
-    "VA loan specialist",
-    "FHA loan expert",
+    "find professional",
+    "professional directory",
+    "expert directory",
+    "professional near me",
+    "specialist",
+    "advisor",
+    "consultant",
   ],
   openGraph: {
-    title: "Find a Loan Officer | Mortgage Professional Directory",
+    title: "Find a Professional | RepWell Professional Directory",
     description:
-      "Search our directory of trusted mortgage loan officers. Find professionals by location, rating, and specialty.",
+      "Search our directory of trusted professionals. Find experts by location, rating, and specialty.",
     type: "website",
     url: `${getBaseUrl()}/directory`,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Find a Loan Officer | Mortgage Professional Directory",
+    title: "Find a Professional | RepWell Professional Directory",
     description:
-      "Search our directory of trusted mortgage loan officers. Find professionals by location, rating, and specialty.",
+      "Search our directory of trusted professionals. Find experts by location, rating, and specialty.",
   },
   alternates: {
     canonical: `${getBaseUrl()}/directory`,
@@ -73,11 +71,11 @@ async function DirectoryContent({ searchParams }: PageProps) {
 
   // Fetch initial data
   const [searchResult, availableStates] = await Promise.all([
-    searchLoanOfficers(filters, page, 20),
+    searchProfessionals(filters, page, 20),
     getAvailableStates(),
   ]);
 
-  const initialResults = searchResult.success ? searchResult.data?.loanOfficers || [] : [];
+  const initialResults = searchResult.success ? searchResult.data?.professionals || [] : [];
   const initialCount = searchResult.success ? searchResult.data?.totalCount || 0 : 0;
 
   return (
@@ -90,37 +88,37 @@ async function DirectoryContent({ searchParams }: PageProps) {
 }
 
 // Generate structured data for the directory page
-function generateDirectorySchema(loanOfficers: DirectoryLoanOfficer[], baseUrl: string) {
+function generateDirectorySchema(professionals: DirectoryProfessional[], baseUrl: string) {
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Mortgage Loan Officer Directory",
+    name: "Professional Directory",
     description:
-      "Search our directory of trusted mortgage loan officers. Find professionals by location, rating, and specialty.",
-    numberOfItems: loanOfficers.length,
-    itemListElement: loanOfficers.slice(0, 10).map((lo, index) => ({
+      "Search our directory of trusted professionals. Find experts by location, rating, and specialty.",
+    numberOfItems: professionals.length,
+    itemListElement: professionals.slice(0, 10).map((professional, index) => ({
       "@type": "ListItem",
       position: index + 1,
       item: {
         "@type": "Person",
-        "@id": `${baseUrl}/lo/${lo.id}`,
-        name: lo.full_name,
-        jobTitle: lo.title || "Loan Officer",
-        url: `${baseUrl}/lo/${lo.id}`,
-        ...(lo.photo_url && { image: lo.photo_url }),
-        ...(lo.email && { email: lo.email }),
-        ...(lo.phone && { telephone: lo.phone }),
-        ...(lo.organization && {
+        "@id": `${baseUrl}/pro/${professional.id}`,
+        name: professional.full_name,
+        jobTitle: professional.title || "Professional",
+        url: `${baseUrl}/pro/${professional.id}`,
+        ...(professional.photo_url && { image: professional.photo_url }),
+        ...(professional.email && { email: professional.email }),
+        ...(professional.phone && { telephone: professional.phone }),
+        ...(professional.organization && {
           worksFor: {
             "@type": "Organization",
-            name: lo.organization.name,
+            name: professional.organization.name,
           },
         }),
-        ...(lo.average_rating && lo.total_reviews && {
+        ...(professional.average_rating && professional.total_reviews && {
           aggregateRating: {
             "@type": "AggregateRating",
-            ratingValue: Number(lo.average_rating).toFixed(1),
-            reviewCount: lo.total_reviews,
+            ratingValue: Number(professional.average_rating).toFixed(1),
+            reviewCount: professional.total_reviews,
             bestRating: 5,
             worstRating: 1,
           },
@@ -133,9 +131,9 @@ function generateDirectorySchema(loanOfficers: DirectoryLoanOfficer[], baseUrl: 
     "@context": "https://schema.org",
     "@type": "WebPage",
     "@id": `${baseUrl}/directory`,
-    name: "Find a Loan Officer | Mortgage Professional Directory",
+    name: "Find a Professional | RepWell Professional Directory",
     description:
-      "Search our directory of trusted mortgage loan officers. Find professionals by location, rating, and specialty.",
+      "Search our directory of trusted professionals. Find experts by location, rating, and specialty.",
     url: `${baseUrl}/directory`,
     isPartOf: {
       "@type": "WebSite",
@@ -196,11 +194,11 @@ export default async function DirectoryPage(props: PageProps) {
     sortOrder: "desc",
   };
   const page = params.page ? parseInt(params.page, 10) : 1;
-  const searchResult = await searchLoanOfficers(filters, page, 20);
-  const loanOfficers = searchResult.success ? searchResult.data?.loanOfficers || [] : [];
+  const searchResult = await searchProfessionals(filters, page, 20);
+  const professionals = searchResult.success ? searchResult.data?.professionals || [] : [];
 
   // Generate structured data
-  const schemas = generateDirectorySchema(loanOfficers, baseUrl);
+  const schemas = generateDirectorySchema(professionals, baseUrl);
 
   return (
     <>
@@ -213,11 +211,11 @@ export default async function DirectoryPage(props: PageProps) {
           <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
             <div className="text-center">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-                Find a Loan Officer
+                Find a Professional
               </h1>
               <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-                Connect with trusted mortgage professionals in your area. Search by location,
-                read reviews, and find the perfect loan officer for your home financing journey.
+                Connect with trusted professionals in your area. Search by location,
+                read reviews, and find the perfect professional for your needs.
               </p>
             </div>
           </div>
@@ -237,24 +235,23 @@ export default async function DirectoryPage(props: PageProps) {
               <div>
                 <h2 className="text-lg font-semibold mb-3">Why Use Our Directory?</h2>
                 <p className="text-sm text-muted-foreground">
-                  Our loan officer directory makes it easy to find and compare mortgage professionals.
-                  Read real customer reviews, see ratings, and contact loan officers directly.
+                  Our professional directory makes it easy to find and compare experts.
+                  Read real customer reviews, see ratings, and contact professionals directly.
                 </p>
               </div>
               <div>
                 <h2 className="text-lg font-semibold mb-3">What to Look For</h2>
                 <p className="text-sm text-muted-foreground">
-                  Consider loan officers with high ratings, experience in your loan type
-                  (FHA, VA, Conventional, Jumbo), and positive customer feedback about
-                  communication and closing times.
+                  Consider professionals with high ratings, experience in your area of need,
+                  and positive customer feedback about communication and service quality.
                 </p>
               </div>
               <div>
                 <h2 className="text-lg font-semibold mb-3">Getting Started</h2>
                 <p className="text-sm text-muted-foreground">
                   Search by your city or state, filter by rating, and browse profiles.
-                  Once you find a loan officer you like, call or email them directly to
-                  start your home financing process.
+                  Once you find a professional you like, call or email them directly to
+                  get started.
                 </p>
               </div>
             </div>

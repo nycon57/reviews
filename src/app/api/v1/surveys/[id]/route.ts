@@ -17,7 +17,7 @@ function mapSurveyRow(row: Record<string, unknown>): SurveyResource {
     id: row.id as string,
     organization_id: row.organization_id as string,
     template_id: row.template_id as string,
-    loan_officer_id: row.loan_officer_id as string,
+    user_id: row.user_id as string,
     customer_name: row.customer_name as string,
     customer_email: row.customer_email as string,
     customer_phone: row.customer_phone as string | null,

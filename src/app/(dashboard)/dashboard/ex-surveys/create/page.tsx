@@ -4,64 +4,48 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ArrowLeft,
-  CalendarBlank as CalendarIcon,
-  SpinnerGap as Loader2,
-  Users,
-  Lightning as Zap,
-  SignOut as LogOut,
-  UserPlus,
-} from "@phosphor-icons/react";
+import { ArrowLeft, SpinnerGap as Loader2 } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { createEXSurvey, getEXSurveyTemplates, getDepartments } from "@/lib/ex-surveys/actions";
+import { createEXSurvey, getEXSurveyTemplates, getDepartments, launchEXSurvey } from "@/lib/ex-surveys/actions";
 import { EXSurveyTemplate, Department } from "@/types/ex-survey.types";
-
-const templateIcons: Record<string, React.ReactNode> = {
-  engagement: <Users className="h-5 w-5" />,
-  pulse: <Zap className="h-5 w-5" />,
-  exit: <LogOut className="h-5 w-5" />,
-  onboarding: <UserPlus className="h-5 w-5" />,
-};
+import {
+  WizardStepIndicator,
+  WizardNavigation,
+  TemplateStep,
+  DetailsAudienceStep,
+  ScheduleStep,
+  ReviewStep,
+  WizardStep,
+  WizardFormData,
+  INITIAL_FORM_DATA,
+  stepVariants,
+  AnimationDirection,
+  isStepValid,
+} from "@/components/ex-surveys/wizard";
 
 export default function CreateEXSurveyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateIdParam = searchParams.get("template");
+  const { toast } = useToast();
 
+  // Data loading state
   const [templates, setTemplates] = useState<EXSurveyTemplate[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(templateIdParam || "");
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(true);
-  const [targetDepartmentId, setTargetDepartmentId] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // Wizard state
+  const [currentStep, setCurrentStep] = useState<WizardStep>(1);
+  const [direction, setDirection] = useState<AnimationDirection>(1);
+  const [formData, setFormData] = useState<WizardFormData>(INITIAL_FORM_DATA);
+  const [submitting, setSubmitting] = useState(false);
 
+  // Load templates and departments
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -73,19 +57,27 @@ export default function CreateEXSurveyPage() {
 
         if (templatesResult.data) {
           setTemplates(templatesResult.data);
+
           // Auto-select template from URL param
           if (templateIdParam) {
             const template = templatesResult.data.find((t) => t.id === templateIdParam);
             if (template) {
-              setName(`${template.name} - ${format(new Date(), "MMM yyyy")}`);
-              setDescription(template.description || "");
+              setFormData((prev) => ({
+                ...prev,
+                templateId: templateIdParam,
+                name: `${template.name} - ${format(new Date(), "MMM yyyy")}`,
+                description: template.description || "",
+              }));
+              // Skip to step 2 if template is pre-selected
+              setCurrentStep(2);
             }
           }
         }
+
         if (depsResult.data) {
           setDepartments(depsResult.data);
         }
-      } catch (err) {
+      } catch {
         setError("Failed to load data");
       } finally {
         setLoading(false);
@@ -94,275 +86,156 @@ export default function CreateEXSurveyPage() {
     loadData();
   }, [templateIdParam]);
 
-  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
+  // Navigation handlers
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setDirection(-1);
+      setCurrentStep((prev) => (prev - 1) as WizardStep);
+    }
+  };
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleNext = () => {
+    if (currentStep < 4 && isStepValid(currentStep, formData)) {
+      setDirection(1);
+      setCurrentStep((prev) => (prev + 1) as WizardStep);
+    }
+  };
+
+  // Submit handler
+  const handleSubmit = async () => {
+    if (!isStepValid(currentStep, formData)) return;
+
     setSubmitting(true);
     setError(null);
 
     try {
+      const selectedTemplate = templates.find((t) => t.id === formData.templateId);
+
       const result = await createEXSurvey({
-        templateId: selectedTemplateId,
-        name,
-        description,
+        templateId: formData.templateId,
+        name: formData.name,
+        description: formData.description || undefined,
         surveyType: selectedTemplate?.surveyType || "engagement",
-        isAnonymous,
-        targetDepartmentId: targetDepartmentId || undefined,
-        endDate: endDate?.toISOString(),
+        isAnonymous: formData.isAnonymous,
+        targetDepartmentId:
+          formData.targetDepartmentId === "__all__" ? undefined : formData.targetDepartmentId,
+        endDate: formData.endDate?.toISOString(),
       });
 
       if (result.success && result.data) {
+        // Launch immediately if requested
+        if (formData.launchImmediately) {
+          const launchResult = await launchEXSurvey(result.data.id);
+          if (!launchResult.success) {
+            // Survey created but launch failed - notify user and still redirect
+            toast({
+              title: "Survey Created (Launch Failed)",
+              description: launchResult.error || "The survey was created but failed to launch. You can launch it manually from the survey page.",
+              variant: "destructive",
+            });
+          }
+        }
+
         router.push(`/dashboard/ex-surveys/${result.data.id}`);
       } else {
         setError(result.error || "Failed to create survey");
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred");
     } finally {
       setSubmitting(false);
     }
-  }
+  };
 
+  // Render current step
+  const renderStep = () => {
+    const stepProps = {
+      formData,
+      setFormData,
+      templates,
+      departments,
+    };
+
+    switch (currentStep) {
+      case 1:
+        return <TemplateStep {...stepProps} />;
+      case 2:
+        return <DetailsAudienceStep {...stepProps} />;
+      case 3:
+        return <ScheduleStep {...stepProps} />;
+      case 4:
+        return <ReviewStep {...stepProps} />;
+      default:
+        return null;
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-repwell-teal-300" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading templates...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 space-y-6">
+    <div className="mx-auto max-w-4xl space-y-8 pb-12">
       {/* Page header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/dashboard/ex-surveys/templates">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Create Survey</h1>
+          <h1 className="font-display text-2xl font-bold text-repwell-teal-500">
+            Create Survey
+          </h1>
           <p className="text-muted-foreground">
-            Configure your employee experience survey
+            Set up a new employee experience survey
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Template selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Survey Template</CardTitle>
-            <CardDescription>
-              Select the type of survey you want to create
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {templates.map((template) => (
-                <button
-                  key={template.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedTemplateId(template.id);
-                    if (!name || name.includes(" - ")) {
-                      setName(`${template.name} - ${format(new Date(), "MMM yyyy")}`);
-                    }
-                    if (!description) {
-                      setDescription(template.description || "");
-                    }
-                  }}
-                  className={cn(
-                    "flex flex-col items-start rounded-lg border p-4 text-left transition-colors hover:bg-muted/50",
-                    selectedTemplateId === template.id && "border-primary bg-primary/5"
-                  )}
-                >
-                  <div className="flex w-full items-start justify-between">
-                    <div className="rounded-lg bg-muted p-2">
-                      {templateIcons[template.surveyType] || <Users className="h-5 w-5" />}
-                    </div>
-                    {selectedTemplateId === template.id && (
-                      <Badge variant="secondary">Selected</Badge>
-                    )}
-                  </div>
-                  <div className="mt-3 font-medium">{template.name}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    {template.questions.length} questions
-                  </div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Step indicator */}
+      <WizardStepIndicator currentStep={currentStep} />
 
-        {/* Survey details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Survey Details</CardTitle>
-            <CardDescription>
-              Configure the basic information for your survey
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Survey Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Q1 2024 Engagement Survey"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description (Optional)</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of the survey purpose"
-                rows={3}
-              />
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <Label htmlFor="anonymous">Anonymous Responses</Label>
-                <p className="text-sm text-muted-foreground">
-                  Responses will not be linked to individual employees
-                </p>
-              </div>
-              <Switch
-                id="anonymous"
-                checked={isAnonymous}
-                onCheckedChange={setIsAnonymous}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Targeting */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Target Audience</CardTitle>
-            <CardDescription>
-              Choose who should receive this survey
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="department">Department (Optional)</Label>
-              <Select value={targetDepartmentId} onValueChange={setTargetDepartmentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All departments" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All departments</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">
-                Leave empty to include all employees
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Schedule */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Schedule</CardTitle>
-            <CardDescription>
-              Set start and end dates for the survey (optional)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="space-y-2">
-                <Label>End Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "PPP") : "Pick a date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Error display */}
-        {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
-            {error}
-          </div>
-        )}
-
-        {/* Submit */}
-        <div className="flex justify-end gap-4">
-          <Button variant="outline" asChild>
-            <Link href="/dashboard/ex-surveys/templates">Cancel</Link>
-          </Button>
-          <Button type="submit" disabled={!selectedTemplateId || !name || submitting}>
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Survey"
-            )}
-          </Button>
+      {/* Error display */}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
         </div>
-      </form>
+      )}
+
+      {/* Step content with animation */}
+      <div className="min-h-[400px]">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            variants={stepVariants}
+            initial="initial"
+            animate="enter"
+            exit="exit"
+          >
+            {renderStep()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Navigation */}
+      <WizardNavigation
+        currentStep={currentStep}
+        formData={formData}
+        onBack={handleBack}
+        onNext={handleNext}
+        onSubmit={handleSubmit}
+        isSubmitting={submitting}
+      />
     </div>
   );
 }

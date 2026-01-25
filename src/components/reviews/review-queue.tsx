@@ -54,6 +54,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 import type { Review, AggregatedReview, AggregatedReviewFilters, ReviewAggregationStats } from "@/lib/reviews/types";
 import {
@@ -79,7 +80,7 @@ import { ReviewDetailModal } from "./review-detail-modal";
 interface ReviewQueueProps {
   initialReviews: Review[];
   initialTotal: number;
-  loanOfficers: { id: string; fullName: string }[];
+  teamMembers: { id: string; fullName: string }[];
   initialStats: {
     pending: number;
     approved: number;
@@ -94,7 +95,7 @@ interface ReviewQueueProps {
 export function ReviewQueue({
   initialReviews,
   initialTotal,
-  loanOfficers,
+  teamMembers,
   initialStats,
   initialAggregatedStats,
   initialReviewId,
@@ -108,16 +109,12 @@ export function ReviewQueue({
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [loanOfficerFilter, setLoanOfficerFilter] = useState<string>("all");
+  const [memberFilter, setMemberFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [startDate, setStartDate] = useState<Date | undefined>();
-  const [endDate, setEndDate] = useState<Date | undefined>();
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [page, setPage] = useState(1);
   const limit = 20;
-
-  // UI State
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -165,24 +162,24 @@ export function ReviewQueue({
   const hasActiveFilters =
     statusFilter !== "all" ||
     sourceFilter !== "all" ||
-    loanOfficerFilter !== "all" ||
+    memberFilter !== "all" ||
     searchQuery ||
-    startDate ||
-    endDate;
+    dateRange?.from ||
+    dateRange?.to;
 
   // Build filters for the aggregated reviews API
   const buildFilters = useCallback((): AggregatedReviewFilters => {
     return {
       status: statusFilter === "all" ? "all" : (statusFilter as AggregatedReviewFilters["status"]),
       source: sourceFilter === "all" ? "all" : (sourceFilter as AggregatedReviewFilters["source"]),
-      loanOfficerId: loanOfficerFilter === "all" ? undefined : loanOfficerFilter,
+      loanOfficerId: memberFilter === "all" ? undefined : memberFilter,
       search: searchQuery || undefined,
-      startDate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
-      endDate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
+      startDate: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined,
+      endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
       page,
       limit,
     };
-  }, [statusFilter, sourceFilter, loanOfficerFilter, searchQuery, startDate, endDate, page]);
+  }, [statusFilter, sourceFilter, memberFilter, searchQuery, dateRange, page]);
 
   const refreshReviews = useCallback(() => {
     startTransition(async () => {
@@ -239,10 +236,9 @@ export function ReviewQueue({
   const clearFilters = () => {
     setStatusFilter("all");
     setSourceFilter("all");
-    setLoanOfficerFilter("all");
+    setMemberFilter("all");
     setSearchQuery("");
-    setStartDate(undefined);
-    setEndDate(undefined);
+    setDateRange(undefined);
     setPage(1);
     setSelectedIds(new Set());
     startTransition(async () => {
@@ -265,7 +261,7 @@ export function ReviewQueue({
           "Rating",
           "Customer Name",
           "Review Text",
-          "Loan Officer",
+          "Professional",
           "Status",
           "Review Date",
           "Response",
@@ -681,27 +677,59 @@ export function ReviewQueue({
                 </SelectContent>
               </Select>
 
-              <Select value={loanOfficerFilter} onValueChange={(v) => { setLoanOfficerFilter(v); handleFilterChange(); }}>
+              <Select value={memberFilter} onValueChange={(v) => { setMemberFilter(v); handleFilterChange(); }}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Loan Officer" />
+                  <SelectValue placeholder="Professional" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Loan Officers</SelectItem>
-                  {loanOfficers.map((lo) => (
-                    <SelectItem key={lo.id} value={lo.id}>
-                      {lo.fullName}
+                  <SelectItem value="all">All Professionals</SelectItem>
+                  {teamMembers.map((professional) => (
+                    <SelectItem key={professional.id} value={professional.id}>
+                      {professional.fullName}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-              >
-                {showAdvancedFilters ? "Hide" : "More"} Filters
-              </Button>
+              {/* Date Range Picker */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-[240px] justify-start text-left font-normal",
+                      !dateRange && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "LLL dd")} – {format(dateRange.to, "LLL dd")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "LLL dd, y")
+                      )
+                    ) : (
+                      "Date range"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={dateRange?.from}
+                    selected={dateRange}
+                    onSelect={(range) => {
+                      setDateRange(range);
+                      if (range?.from && range?.to) {
+                        handleFilterChange();
+                      }
+                    }}
+                    numberOfMonths={2}
+                  />
+                </PopoverContent>
+              </Popover>
 
               {hasActiveFilters && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
@@ -720,50 +748,6 @@ export function ReviewQueue({
                 </Button>
               </div>
             </div>
-
-            {/* Advanced Filters */}
-            {showAdvancedFilters && (
-              <div className="flex flex-wrap gap-4 pt-4 border-t">
-                <div className="space-y-1">
-                  <Label className="text-sm">Start Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[180px] justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {startDate ? format(startDate, "PP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={startDate}
-                        onSelect={(date) => { setStartDate(date); handleFilterChange(); }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-sm">End Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-[180px] justify-start">
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {endDate ? format(endDate, "PP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={endDate}
-                        onSelect={(date) => { setEndDate(date); handleFilterChange(); }}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>
@@ -960,8 +944,8 @@ export function ReviewQueue({
                             </>
                           )}
 
-                          {/* Non-pending mode actions */}
-                          {!isPendingMode && (
+                          {/* Non-pending mode actions (only for non-pending reviews) */}
+                          {!isPendingMode && review.status !== "pending" && (
                             <>
                               <Button
                                 size="sm"

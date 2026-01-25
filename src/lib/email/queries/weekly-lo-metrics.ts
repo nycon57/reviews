@@ -141,7 +141,7 @@ export async function fetchWeeklyLOMetrics(
       supabase
         .from("reviews")
         .select("id, rating, created_at")
-        .eq("loan_officer_id", loanOfficerId)
+        .eq("user_id", loanOfficerId)
         .gte("created_at", thisWeekStart.toISOString())
         .lte("created_at", thisWeekEnd.toISOString()),
 
@@ -149,7 +149,7 @@ export async function fetchWeeklyLOMetrics(
       supabase
         .from("reviews")
         .select("id, rating")
-        .eq("loan_officer_id", loanOfficerId)
+        .eq("user_id", loanOfficerId)
         .gte("created_at", lastWeekStart.toISOString())
         .lte("created_at", lastWeekEnd.toISOString()),
 
@@ -157,7 +157,7 @@ export async function fetchWeeklyLOMetrics(
       supabase
         .from("reviews")
         .select("id, rating, review_text, customer_name")
-        .eq("loan_officer_id", loanOfficerId)
+        .eq("user_id", loanOfficerId)
         .gte("created_at", thisWeekStart.toISOString())
         .lte("created_at", thisWeekEnd.toISOString())
         .order("rating", { ascending: false })
@@ -168,7 +168,7 @@ export async function fetchWeeklyLOMetrics(
       supabase
         .from("reviews")
         .select("id", { count: "exact" })
-        .eq("loan_officer_id", loanOfficerId)
+        .eq("user_id", loanOfficerId)
         .is("response_at", null)
         .not("review_text", "is", null),
 
@@ -176,14 +176,14 @@ export async function fetchWeeklyLOMetrics(
       supabase
         .from("surveys")
         .select("id", { count: "exact" })
-        .eq("loan_officer_id", loanOfficerId)
+        .eq("user_id", loanOfficerId)
         .eq("status", "pending"),
 
       // Leaderboard position
       supabase
         .from("leaderboard_snapshots")
         .select("rank, period_type")
-        .eq("loan_officer_id", loanOfficerId)
+        .eq("user_id", loanOfficerId)
         .eq("organization_id", organizationId)
         .eq("period_type", "monthly")
         .order("snapshot_date", { ascending: false })
@@ -192,8 +192,8 @@ export async function fetchWeeklyLOMetrics(
       // Surveys completed this week (join through surveys to get LO's responses)
       supabase
         .from("survey_responses")
-        .select("id, overall_rating, nps_score, surveys!inner(loan_officer_id)")
-        .eq("surveys.loan_officer_id", loanOfficerId)
+        .select("id, overall_rating, nps_score, surveys!inner(user_id)")
+        .eq("surveys.user_id", loanOfficerId)
         .gte("submitted_at", thisWeekStart.toISOString())
         .lte("submitted_at", thisWeekEnd.toISOString()),
 
@@ -201,7 +201,7 @@ export async function fetchWeeklyLOMetrics(
       supabase
         .from("surveys")
         .select("id", { count: "exact" })
-        .eq("loan_officer_id", loanOfficerId)
+        .eq("user_id", loanOfficerId)
         .gte("created_at", thisWeekStart.toISOString())
         .lte("created_at", thisWeekEnd.toISOString()),
 
@@ -296,12 +296,12 @@ export async function fetchWeeklyLOMetrics(
     const { count: totalReviewsCount } = await supabase
       .from("reviews")
       .select("id", { count: "exact" })
-      .eq("loan_officer_id", loanOfficerId);
+      .eq("user_id", loanOfficerId);
 
     const { count: respondedReviewsCount } = await supabase
       .from("reviews")
       .select("id", { count: "exact" })
-      .eq("loan_officer_id", loanOfficerId)
+      .eq("user_id", loanOfficerId)
       .not("response_at", "is", null);
 
     const responseRate =
@@ -342,7 +342,7 @@ export async function fetchWeeklyLOMetrics(
         // Leaderboard position
         leaderboardRank: currentRank,
         leaderboardRankChange: rankChange,
-        totalLoanOfficers: totalLOs || 0,
+        totalMembers: totalLOs || 0,
 
         // Top review highlight
         topReview,
@@ -378,21 +378,21 @@ export async function hasWeeklyActivity(
     supabase
       .from("reviews")
       .select("id", { count: "exact" })
-      .eq("loan_officer_id", loanOfficerId)
+      .eq("user_id", loanOfficerId)
       .gte("created_at", thisWeekStart.toISOString())
       .lte("created_at", thisWeekEnd.toISOString()),
 
     supabase
       .from("survey_responses")
-      .select("id, surveys!inner(loan_officer_id)", { count: "exact" })
-      .eq("surveys.loan_officer_id", loanOfficerId)
+      .select("id, surveys!inner(user_id)", { count: "exact" })
+      .eq("surveys.user_id", loanOfficerId)
       .gte("submitted_at", thisWeekStart.toISOString())
       .lte("submitted_at", thisWeekEnd.toISOString()),
 
     supabase
       .from("surveys")
       .select("id", { count: "exact" })
-      .eq("loan_officer_id", loanOfficerId)
+      .eq("user_id", loanOfficerId)
       .gte("created_at", thisWeekStart.toISOString())
       .lte("created_at", thisWeekEnd.toISOString()),
   ]);

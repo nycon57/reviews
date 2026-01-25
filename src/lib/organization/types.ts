@@ -126,7 +126,7 @@ export const organizationMemberSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   full_name: z.string().nullable(),
-  avatar_url: z.string().url().nullable(),
+  photo_url: z.string().url().nullable(),
   role: z.enum(["admin", "manager", "user"]),
   is_active: z.boolean(),
   last_login_at: z.string().nullable(),
@@ -137,7 +137,7 @@ export type OrganizationMember = z.infer<typeof organizationMemberSchema>;
 // Organization stats
 export interface OrganizationStats {
   total_users: number;
-  total_loan_officers: number;
+  total_members: number;
   total_reviews: number;
   total_surveys: number;
   active_surveys: number;

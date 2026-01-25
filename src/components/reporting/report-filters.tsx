@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { ReportFilters } from "@/lib/reporting/types";
 
-interface LoanOfficerOption {
+interface TeamMemberOption {
   id: string;
   name: string;
   branch?: string;
@@ -32,7 +32,7 @@ interface LoanOfficerOption {
 interface ReportFiltersProps {
   filters: ReportFilters;
   onFiltersChange: (filters: ReportFilters) => void;
-  loanOfficers?: Array<{ id: string; full_name: string; branch: string | null }>;
+  teamMembers?: Array<{ id: string; full_name: string; branch: string | null }>;
   branches?: string[];
   className?: string;
 }
@@ -47,34 +47,34 @@ const performanceStatuses = [
 export function ReportFiltersPanel({
   filters,
   onFiltersChange,
-  loanOfficers = [],
+  teamMembers = [],
   branches = [],
   className,
 }: ReportFiltersProps) {
   const [open, setOpen] = React.useState(false);
 
-  // Map loan officers to consistent format
-  const mappedLoanOfficers: LoanOfficerOption[] = loanOfficers.map((lo) => ({
-    id: lo.id,
-    name: lo.full_name,
-    branch: lo.branch || undefined,
+  // Map users to consistent format
+  const mappedMembers: TeamMemberOption[] = teamMembers.map((user) => ({
+    id: user.id,
+    name: user.full_name,
+    branch: user.branch || undefined,
   }));
 
   const activeFilterCount = [
-    filters.loanOfficerIds?.length ? 1 : 0,
+    filters.userIds?.length ? 1 : 0,
     filters.branches?.length ? 1 : 0,
     filters.performanceStatus?.length ? 1 : 0,
     filters.minRating ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
-  const handleLoanOfficerToggle = (loId: string, checked: boolean) => {
-    const currentIds = filters.loanOfficerIds || [];
+  const handleUserToggle = (userId: string, checked: boolean) => {
+    const currentIds = filters.userIds || [];
     if (checked) {
-      onFiltersChange({ ...filters, loanOfficerIds: [...currentIds, loId] });
+      onFiltersChange({ ...filters, userIds: [...currentIds, userId] });
     } else {
       onFiltersChange({
         ...filters,
-        loanOfficerIds: currentIds.filter((id) => id !== loId),
+        userIds: currentIds.filter((id) => id !== userId),
       });
     }
   };
@@ -141,27 +141,27 @@ export function ReportFiltersPanel({
               )}
             </div>
 
-            {mappedLoanOfficers.length > 0 && (
+            {mappedMembers.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Loan Officers</Label>
+                <Label className="text-sm font-medium">Team Members</Label>
                 <div className="max-h-32 space-y-2 overflow-y-auto">
-                  {mappedLoanOfficers.map((lo) => (
-                    <div key={lo.id} className="flex items-center gap-2">
+                  {mappedMembers.map((user) => (
+                    <div key={user.id} className="flex items-center gap-2">
                       <Checkbox
-                        id={`lo-${lo.id}`}
-                        checked={filters.loanOfficerIds?.includes(lo.id) || false}
+                        id={`user-${user.id}`}
+                        checked={filters.userIds?.includes(user.id) || false}
                         onCheckedChange={(checked) =>
-                          handleLoanOfficerToggle(lo.id, !!checked)
+                          handleUserToggle(user.id, !!checked)
                         }
                       />
                       <label
-                        htmlFor={`lo-${lo.id}`}
+                        htmlFor={`user-${user.id}`}
                         className="flex-1 cursor-pointer text-sm"
                       >
-                        {lo.name}
-                        {lo.branch && (
+                        {user.name}
+                        {user.branch && (
                           <span className="ml-1 text-muted-foreground">
-                            ({lo.branch})
+                            ({user.branch})
                           </span>
                         )}
                       </label>
@@ -250,16 +250,16 @@ export function ReportFiltersPanel({
       {/* Active filter badges */}
       {activeFilterCount > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
-          {filters.loanOfficerIds?.map((loId) => {
-            const lo = mappedLoanOfficers.find((l) => l.id === loId);
+          {filters.userIds?.map((userId) => {
+            const user = mappedMembers.find((u) => u.id === userId);
             return (
               <Badge
-                key={loId}
+                key={userId}
                 variant="secondary"
                 className="cursor-pointer gap-1"
-                onClick={() => handleLoanOfficerToggle(loId, false)}
+                onClick={() => handleUserToggle(userId, false)}
               >
-                {lo?.name || loId}
+                {user?.name || userId}
                 <X className="h-3 w-3" />
               </Badge>
             );

@@ -16,7 +16,7 @@ export default function LONotFound() {
         </div>
         <h1 className="text-3xl font-bold tracking-tight">Profile Not Found</h1>
         <p className="mt-2 text-muted-foreground">
-          The loan officer profile you&apos;re looking for doesn&apos;t exist or has been removed.
+          The professional profile you&apos;re looking for doesn&apos;t exist or has been removed.
         </p>
         <div className="mt-6">
           <Button asChild>

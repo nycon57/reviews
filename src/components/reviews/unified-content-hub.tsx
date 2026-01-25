@@ -100,7 +100,7 @@ interface ReviewStats {
 // Types
 // ============================================================================
 
-interface LoanOfficer {
+interface TeamMember {
   id: string;
   fullName: string;
   email?: string;
@@ -117,7 +117,7 @@ interface UnifiedContentHubProps {
   initialVideosTotal: number;
   videoStats: VideoLibraryStats;
   // Shared
-  loanOfficers: LoanOfficer[];
+  teamMembers: TeamMember[];
   userRole: "admin" | "manager" | "user";
   hasAiAccess: boolean;
   initialReviewId?: string;
@@ -726,13 +726,13 @@ function VideoTabContent({
   initialVideos,
   initialTotal,
   videoStats,
-  loanOfficers,
+  teamMembers,
   userRole,
 }: {
   initialVideos: VideoTestimonialResponse[];
   initialTotal: number;
   videoStats: VideoLibraryStats;
-  loanOfficers: LoanOfficer[];
+  teamMembers: TeamMember[];
   userRole: "admin" | "manager" | "user";
 }) {
   const router = useRouter();
@@ -748,7 +748,7 @@ function VideoTabContent({
 
   // Filter state
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
-  const [loanOfficerFilter, setLoanOfficerFilter] = useState<string>("all");
+  const [memberFilter, setMemberFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Pagination state
@@ -783,7 +783,7 @@ function VideoTabContent({
     try {
       const result = await getVideoTestimonialResponses({
         approvalStatus: approvalFilter !== "all" ? approvalFilter : undefined,
-        loanOfficerId: loanOfficerFilter !== "all" ? loanOfficerFilter : undefined,
+        loanOfficerId: memberFilter !== "all" ? memberFilter : undefined,
         search: searchQuery.trim() || undefined,
         page,
         pageSize,
@@ -804,7 +804,7 @@ function VideoTabContent({
     } finally {
       setIsLoading(false);
     }
-  }, [approvalFilter, loanOfficerFilter, searchQuery, page]);
+  }, [approvalFilter, memberFilter, searchQuery, page]);
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -1110,20 +1110,20 @@ function VideoTabContent({
           </Select>
           {canManage && (
             <Select
-              value={loanOfficerFilter}
+              value={memberFilter}
               onValueChange={(value) => {
-                setLoanOfficerFilter(value);
+                setMemberFilter(value);
                 setPage(1);
               }}
             >
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All Loan Officers" />
+                <SelectValue placeholder="All Team Members" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Loan Officers</SelectItem>
-                {loanOfficers.map((lo) => (
-                  <SelectItem key={lo.id} value={lo.id}>
-                    {lo.fullName}
+                <SelectItem value="all">All Team Members</SelectItem>
+                {teamMembers.map((member) => (
+                  <SelectItem key={member.id} value={member.id}>
+                    {member.fullName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -1187,7 +1187,7 @@ function VideoTabContent({
           <div className="hidden items-center gap-4 px-3 py-2 text-xs font-medium text-muted-foreground sm:flex">
             {canManage && <div className="w-4" />}
             <div className="w-28">Preview</div>
-            <div className="flex-1">Customer / Loan Officer</div>
+            <div className="flex-1">Customer / Professional</div>
             <div className="w-28">Status</div>
             <div className="hidden w-20 sm:block">Sentiment</div>
             <div className="hidden w-24 text-right md:block">Date</div>
@@ -1319,7 +1319,7 @@ export function UnifiedContentHub({
   initialVideos,
   initialVideosTotal,
   videoStats,
-  loanOfficers,
+  teamMembers,
   userRole,
   hasAiAccess,
   initialReviewId,
@@ -1357,7 +1357,7 @@ export function UnifiedContentHub({
           <ReviewQueue
             initialReviews={initialReviews}
             initialTotal={initialReviewsTotal}
-            loanOfficers={loanOfficers}
+            teamMembers={teamMembers}
             initialStats={reviewStats}
             initialAggregatedStats={aggregatedStats}
             initialReviewId={initialReviewId}
@@ -1370,7 +1370,7 @@ export function UnifiedContentHub({
             initialVideos={initialVideos}
             initialTotal={initialVideosTotal}
             videoStats={videoStats}
-            loanOfficers={loanOfficers}
+            teamMembers={teamMembers}
             userRole={userRole}
           />
         </TabsContent>

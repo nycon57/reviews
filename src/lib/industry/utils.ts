@@ -207,6 +207,26 @@ export function isValidIndustry(value: string): value is IndustryType {
 }
 
 /**
+ * Default fallback label when no industry context is available
+ */
+export const DEFAULT_PROFESSIONAL_LABEL = "Team Member";
+export const DEFAULT_PROFESSIONAL_LABEL_PLURAL = "Team Members";
+
+/**
+ * Get the professional label with a fallback for when industry is unknown
+ * Use this when org/industry context may not be available
+ */
+export function getProfessionalLabelWithFallback(
+  industry?: IndustryType | null,
+  plural = false
+): string {
+  if (!industry) {
+    return plural ? DEFAULT_PROFESSIONAL_LABEL_PLURAL : DEFAULT_PROFESSIONAL_LABEL;
+  }
+  return getProfessionalLabel(industry, plural);
+}
+
+/**
  * Replace template variables in text with industry-specific values
  * Supports: {{professional}}, {{professionals}}, {{customer}}, {{customers}}, {{transaction}}, {{transactions}}
  */

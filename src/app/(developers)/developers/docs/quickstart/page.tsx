@@ -38,7 +38,7 @@ const steps = [
     "template_id": "your-template-id",
     "customer_email": "customer@example.com",
     "customer_name": "John Doe",
-    "loan_officer_id": "your-loan-officer-id"
+    "user_id": "your-user-id"
   }'`,
   },
   {

@@ -5,7 +5,7 @@ import { PricingPageClient } from "./pricing-client";
 export const metadata: Metadata = {
   title: "Pricing | RepWell - Simple, Transparent Plans",
   description:
-    "Choose the RepWell plan that fits your needs. From individual loan officers to enterprise teams, we have a solution for you. Start your free 14-day trial today.",
+    "Choose the RepWell plan that fits your needs. From individual professionals to enterprise teams, we have a solution for you. Start your free 14-day trial today.",
   openGraph: {
     title: "Pricing | RepWell",
     description:

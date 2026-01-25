@@ -731,7 +731,7 @@ async function triggerSurveyForOpportunity(
 
     // Find a loan officer to assign (could be improved with mapping)
     const { data: loanOfficer } = await adminClient
-      .from('loan_officers')
+      .from('users')
       .select('id')
       .eq('organization_id', organizationId)
       .eq('is_active', true)
@@ -752,7 +752,7 @@ async function triggerSurveyForOpportunity(
       .insert({
         organization_id: organizationId,
         template_id: template.id,
-        loan_officer_id: loanOfficer.id,
+        user_id: loanOfficer.id,
         customer_name: contact.Name,
         customer_email: contactEmail,
         customer_phone: contact.Phone || contact.MobilePhone || null,

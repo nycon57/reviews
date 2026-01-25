@@ -4,8 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 
-// Types for loan officer dashboard
-export interface LoanOfficerProfile {
+// Types for user dashboard
+export interface UserProfile {
   id: string;
   fullName: string;
   email: string;
@@ -55,7 +55,7 @@ export interface ProfileCompletionItem {
   completed: boolean;
 }
 
-// Get user context - returns user id, role, organization_id, and linked loan_officer_id
+// Get user context - returns user id, role, and organization_id
 async function getUserContext() {
   const user = await unifiedGetUser();
 
@@ -70,28 +70,22 @@ async function getUserContext() {
     .eq("id", user.id)
     .single();
 
-  if (!userData) {
+  if (!userData || !userData.organization_id) {
     return null;
   }
 
-  // Check if user has a linked loan officer profile
-  const { data: loanOfficer } = await supabase
-    .from("loan_officers")
-    .select("id")
-    .eq("user_id", user.id)
-    .single();
-
+  // The user IS the professional now (unified users table)
   return {
     userId: userData.id,
-    organizationId: userData.organization_id!,
+    organizationId: userData.organization_id,
     role: userData.role,
-    loanOfficerId: loanOfficer?.id || null,
+    professionalId: userData.id, // User ID is now the professional ID
   };
 }
 
-// Get loan officer dashboard metrics
-export async function getLoanOfficerMetrics(
-  loanOfficerId?: string
+// Get user dashboard metrics
+export async function getUserMetrics(
+  userId?: string
 ): Promise<ActionResult<DashboardMetrics>> {
   const context = await getUserContext();
   if (!context) {
@@ -99,15 +93,15 @@ export async function getLoanOfficerMetrics(
   }
 
   const supabase = createAdminClient();
-  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+  const targetUserId = userId || context.professionalId;
 
-  // For loan officers, they can only view their own metrics
-  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
+  // For regular users, they can only view their own metrics
+  if (context.role === "user" && targetUserId !== context.professionalId) {
     return { success: false, error: "Unauthorized - Can only view own metrics" };
   }
 
-  // If no loan officer ID available, return empty metrics
-  if (!targetLoanOfficerId) {
+  // If no user ID available, return empty metrics
+  if (!targetUserId) {
     return {
       success: true,
       data: {
@@ -123,24 +117,24 @@ export async function getLoanOfficerMetrics(
     };
   }
 
-  // Get loan officer data with cached metrics
-  const { data: loanOfficer, error: loError } = await supabase
-    .from("loan_officers")
+  // Get user data with cached metrics
+  const { data: userRecord, error: userError } = await supabase
+    .from("users")
     .select("total_reviews, average_rating, nps_score")
-    .eq("id", targetLoanOfficerId)
+    .eq("id", targetUserId)
     .eq("organization_id", context.organizationId)
     .single();
 
-  if (loError) {
-    console.error("Error fetching loan officer:", loError);
-    return { success: false, error: "Failed to fetch loan officer data" };
+  if (userError) {
+    console.error("Error fetching user:", userError);
+    return { success: false, error: "Failed to fetch user data" };
   }
 
   // Calculate response rate from surveys
   const { data: surveys } = await supabase
     .from("surveys")
     .select("id, status")
-    .eq("loan_officer_id", targetLoanOfficerId);
+    .eq("user_id", targetUserId);
 
   const totalSurveys = surveys?.length || 0;
   const completedSurveys = surveys?.filter((s) => s.status === "completed").length || 0;
@@ -156,14 +150,14 @@ export async function getLoanOfficerMetrics(
   const { data: recentReviews } = await supabase
     .from("reviews")
     .select("rating, review_date")
-    .eq("loan_officer_id", targetLoanOfficerId)
+    .eq("user_id", targetUserId)
     .gte("review_date", thirtyDaysAgo.toISOString());
 
   // Get reviews from 30-60 days ago for comparison
   const { data: previousReviews } = await supabase
     .from("reviews")
     .select("rating, review_date")
-    .eq("loan_officer_id", targetLoanOfficerId)
+    .eq("user_id", targetUserId)
     .gte("review_date", sixtyDaysAgo.toISOString())
     .lt("review_date", thirtyDaysAgo.toISOString());
 
@@ -179,19 +173,19 @@ export async function getLoanOfficerMetrics(
     .select(`
       nps_score,
       surveys!inner (
-        loan_officer_id
+        user_id
       )
     `)
     .not("nps_score", "is", null);
 
   const filteredResponses = surveyResponses?.filter(
     (r) => {
-      const survey = r.surveys as unknown as { loan_officer_id: string };
-      return survey.loan_officer_id === targetLoanOfficerId;
+      const survey = r.surveys as unknown as { user_id: string };
+      return survey.user_id === targetUserId;
     }
   ) || [];
 
-  let npsScore = loanOfficer?.nps_score || 0;
+  let npsScore = userRecord?.nps_score || 0;
   if (filteredResponses.length > 0) {
     const promoters = filteredResponses.filter((r) => (r.nps_score || 0) >= 9).length;
     const detractors = filteredResponses.filter((r) => (r.nps_score || 0) <= 6).length;
@@ -201,8 +195,8 @@ export async function getLoanOfficerMetrics(
   return {
     success: true,
     data: {
-      totalReviews: loanOfficer?.total_reviews || 0,
-      averageRating: loanOfficer?.average_rating || 0,
+      totalReviews: userRecord?.total_reviews || 0,
+      averageRating: userRecord?.average_rating || 0,
       npsScore,
       responseRate,
       totalReviewsChange,
@@ -213,9 +207,9 @@ export async function getLoanOfficerMetrics(
   };
 }
 
-// Get recent reviews for loan officer
-export async function getLoanOfficerRecentReviews(
-  loanOfficerId?: string,
+// Get recent reviews for user
+export async function getUserRecentReviews(
+  userId?: string,
   limit: number = 5
 ): Promise<ActionResult<RecentReview[]>> {
   const context = await getUserContext();
@@ -224,15 +218,15 @@ export async function getLoanOfficerRecentReviews(
   }
 
   const supabase = createAdminClient();
-  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+  const targetUserId = userId || context.professionalId;
 
-  // For loan officers, they can only view their own reviews
-  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
+  // For regular users, they can only view their own reviews
+  if (context.role === "user" && targetUserId !== context.professionalId) {
     return { success: false, error: "Unauthorized - Can only view own reviews" };
   }
 
-  // If no loan officer ID, return empty list
-  if (!targetLoanOfficerId) {
+  // If no user ID, return empty list
+  if (!targetUserId) {
     return { success: true, data: [] };
   }
 
@@ -248,7 +242,7 @@ export async function getLoanOfficerRecentReviews(
       is_published,
       source
     `)
-    .eq("loan_officer_id", targetLoanOfficerId)
+    .eq("user_id", targetUserId)
     .eq("organization_id", context.organizationId)
     .order("review_date", { ascending: false })
     .limit(limit);
@@ -274,7 +268,7 @@ export async function getLoanOfficerRecentReviews(
 
 // Get rating trend data (monthly average)
 export async function getRatingTrend(
-  loanOfficerId?: string,
+  userId?: string,
   months: number = 6
 ): Promise<ActionResult<TrendDataPoint[]>> {
   const context = await getUserContext();
@@ -283,15 +277,15 @@ export async function getRatingTrend(
   }
 
   const supabase = createAdminClient();
-  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+  const targetUserId = userId || context.professionalId;
 
-  // For loan officers, they can only view their own data
-  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
+  // For regular users, they can only view their own data
+  if (context.role === "user" && targetUserId !== context.professionalId) {
     return { success: false, error: "Unauthorized" };
   }
 
-  // If no loan officer ID, return empty data
-  if (!targetLoanOfficerId) {
+  // If no user ID, return empty data
+  if (!targetUserId) {
     return { success: true, data: [] };
   }
 
@@ -302,7 +296,7 @@ export async function getRatingTrend(
   const { data, error } = await supabase
     .from("reviews")
     .select("rating, review_date")
-    .eq("loan_officer_id", targetLoanOfficerId)
+    .eq("user_id", targetUserId)
     .gte("review_date", startDate.toISOString())
     .order("review_date", { ascending: true });
 
@@ -349,7 +343,7 @@ export async function getRatingTrend(
 
 // Get NPS trend data (monthly)
 export async function getNPSTrend(
-  loanOfficerId?: string,
+  userId?: string,
   months: number = 6
 ): Promise<ActionResult<TrendDataPoint[]>> {
   const context = await getUserContext();
@@ -358,15 +352,15 @@ export async function getNPSTrend(
   }
 
   const supabase = createAdminClient();
-  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+  const targetUserId = userId || context.professionalId;
 
-  // For loan officers, they can only view their own data
-  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
+  // For regular users, they can only view their own data
+  if (context.role === "user" && targetUserId !== context.professionalId) {
     return { success: false, error: "Unauthorized" };
   }
 
-  // If no loan officer ID, return empty data
-  if (!targetLoanOfficerId) {
+  // If no user ID, return empty data
+  if (!targetUserId) {
     return { success: true, data: [] };
   }
 
@@ -380,7 +374,7 @@ export async function getNPSTrend(
       nps_score,
       submitted_at,
       surveys!inner (
-        loan_officer_id
+        user_id
       )
     `)
     .not("nps_score", "is", null)
@@ -391,10 +385,10 @@ export async function getNPSTrend(
     return { success: false, error: "Failed to fetch NPS trend" };
   }
 
-  // Filter to only this loan officer's responses
+  // Filter to only this user's responses
   const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { loan_officer_id: string };
-    return survey.loan_officer_id === targetLoanOfficerId;
+    const survey = r.surveys as unknown as { user_id: string };
+    return survey.user_id === targetUserId;
   });
 
   // Group by month and calculate NPS
@@ -449,30 +443,30 @@ export async function getNPSTrend(
   return { success: true, data: trendData };
 }
 
-// Get loan officer profile
-export async function getLoanOfficerProfile(
-  loanOfficerId?: string
-): Promise<ActionResult<LoanOfficerProfile | null>> {
+// Get user profile
+export async function getUserProfile(
+  userId?: string
+): Promise<ActionResult<UserProfile | null>> {
   const context = await getUserContext();
   if (!context) {
     return { success: false, error: "Unauthorized" };
   }
 
   const supabase = createAdminClient();
-  const targetLoanOfficerId = loanOfficerId || context.loanOfficerId;
+  const targetUserId = userId || context.professionalId;
 
-  // For loan officers, they can only view their own profile
-  if (context.role === "user" && targetLoanOfficerId !== context.loanOfficerId) {
+  // For regular users, they can only view their own profile
+  if (context.role === "user" && targetUserId !== context.professionalId) {
     return { success: false, error: "Unauthorized - Can only view own profile" };
   }
 
-  // If no loan officer ID, return null (user is not a loan officer)
-  if (!targetLoanOfficerId) {
+  // If no user ID, return null
+  if (!targetUserId) {
     return { success: true, data: null };
   }
 
   const { data, error } = await supabase
-    .from("loan_officers")
+    .from("users")
     .select(`
       id,
       full_name,
@@ -488,12 +482,12 @@ export async function getLoanOfficerProfile(
       zillow_profile_url,
       google_place_id
     `)
-    .eq("id", targetLoanOfficerId)
+    .eq("id", targetUserId)
     .eq("organization_id", context.organizationId)
     .single();
 
   if (error) {
-    console.error("Error fetching loan officer profile:", error);
+    console.error("Error fetching user profile:", error);
     return { success: false, error: "Failed to fetch profile" };
   }
 
@@ -505,7 +499,7 @@ export async function getLoanOfficerProfile(
     success: true,
     data: {
       id: data.id,
-      fullName: data.full_name,
+      fullName: data.full_name || '',
       email: data.email,
       phone: data.phone,
       photoUrl: data.photo_url,
@@ -523,9 +517,9 @@ export async function getLoanOfficerProfile(
 
 // Calculate profile completion
 export async function getProfileCompletion(
-  loanOfficerId?: string
+  userId?: string
 ): Promise<ActionResult<{ percentage: number; items: ProfileCompletionItem[] }>> {
-  const profileResult = await getLoanOfficerProfile(loanOfficerId);
+  const profileResult = await getUserProfile(userId);
 
   if (!profileResult.success || !profileResult.data) {
     return {

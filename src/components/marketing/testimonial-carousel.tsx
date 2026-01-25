@@ -51,7 +51,7 @@ const defaultTestimonials: Testimonial[] = [
   },
   {
     name: "Emily Rodriguez",
-    role: "Loan Officer",
+    role: "Senior Professional",
     company: "Hometown Home Loans",
     avatar:
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
@@ -86,7 +86,7 @@ const defaultTestimonials: Testimonial[] = [
     avatar:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
     content:
-      "RepWell's leaderboard feature has created healthy competition among our loan officers. Everyone wants to be at the top.",
+      "RepWell's leaderboard feature has created healthy competition among our team members. Everyone wants to be at the top.",
     rating: 5,
   },
 ];

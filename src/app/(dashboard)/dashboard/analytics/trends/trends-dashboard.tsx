@@ -154,21 +154,32 @@ export function TrendsDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Time range selector */}
+      {/* Page header with time range selector */}
       <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <TrendingUp className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Analytics Trends</h1>
+            <p className="text-muted-foreground">
+              Track performance metrics and trends over time
+            </p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           {isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+          <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3m">Last 3 months</SelectItem>
+              <SelectItem value="6m">Last 6 months</SelectItem>
+              <SelectItem value="12m">Last 12 months</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="Select time range" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="3m">Last 3 months</SelectItem>
-            <SelectItem value="6m">Last 6 months</SelectItem>
-            <SelectItem value="12m">Last 12 months</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Stats cards */}

@@ -518,7 +518,7 @@ export function getReviewPendingApprovalEmail(
   };
 }
 
-// Review approved notification email template (sent to loan officers) - refactored with S073 components & share options
+// Review approved notification email template (sent to team members) - refactored with S073 components & share options
 export function getReviewApprovedEmail(data: ReviewApprovedEmailData): {
   subject: string;
   html: string;
@@ -635,7 +635,7 @@ export function getReviewApprovedEmail(data: ReviewApprovedEmailData): {
   };
 }
 
-// Review rejected notification email template (sent to loan officers) - refactored with S073 components
+// Review rejected notification email template (sent to team members) - refactored with S073 components
 export function getReviewRejectedEmail(data: ReviewRejectedEmailData): {
   subject: string;
   html: string;
@@ -1538,7 +1538,7 @@ export function getVideoTestimonialPendingApprovalEmail(
             </tr>
             <tr>
               <td style="padding: 8px 0; border-top: 1px solid #e4e4e7;">
-                <span style="font-size: 14px; color: #71717a;">Loan Officer:</span>
+                <span style="font-size: 14px; color: #71717a;">Team Member:</span>
                 <span style="font-size: 14px; color: #18181b; font-weight: 600; float: right;">${safeLOName}</span>
               </td>
             </tr>
@@ -2020,7 +2020,7 @@ export function getSurveyLowRatingFollowUpEmail(data: {
 
 /**
  * Survey response received notification email
- * Sent to the loan officer when a customer submits a survey response
+ * Sent to the team member when a customer submits a survey response
  */
 export function getSurveyResponseReceivedNotificationEmail(data: {
   loanOfficerName: string;
@@ -2237,7 +2237,7 @@ export function getSurveyResponseReceivedNotificationEmail(data: {
 
 /**
  * Review response sent confirmation email
- * Sent to the customer when the loan officer responds to their review
+ * Sent to the customer when the team member responds to their review
  */
 export function getReviewResponseSentConfirmationEmail(
   data: ReviewResponseSentConfirmationEmailData
@@ -2363,7 +2363,7 @@ export function getReviewResponseSentConfirmationEmail(
 
 /**
  * Review published notification email
- * Sent to the loan officer when their review is posted to an external platform (Google, etc.)
+ * Sent to the team member when their review is posted to an external platform (Google, etc.)
  */
 export function getReviewPublishedNotificationEmail(
   data: ReviewPublishedNotificationEmailData
@@ -2531,7 +2531,7 @@ export function getReviewPublishedNotificationEmail(
 
 /**
  * Review response received notification email
- * Sent to the loan officer when a customer replies to their response
+ * Sent to the team member when a customer replies to their response
  */
 export function getReviewResponseReceivedEmail(
   data: ReviewResponseReceivedEmailData

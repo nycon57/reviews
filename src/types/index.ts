@@ -143,7 +143,11 @@ export interface OrganizationSettings {
   notificationPreferences?: Record<string, boolean>;
 }
 
-export interface LoanOfficer {
+/**
+ * Professional represents a simplified view of a user for public-facing contexts
+ * (directory listings, review attributions, etc.)
+ */
+export interface Professional {
   id: string;
   organizationId: string;
   userId: string | null;
@@ -166,6 +170,9 @@ export interface LoanOfficer {
   isActive: boolean;
   createdAt: string;
 }
+
+/** @deprecated Use Professional instead */
+export type LoanOfficer = Professional;
 
 export interface SurveyTemplate {
   id: string;
@@ -210,8 +217,7 @@ export interface Survey {
   id: string;
   organizationId: string;
   templateId: string;
-  userId: string | null;  // New: references users table
-  loanOfficerId: string;  // Deprecated: kept for migration compatibility
+  userId: string | null;  // References users table
   customerName: string;
   customerEmail: string;
   customerPhone: string | null;
@@ -247,8 +253,7 @@ export interface SurveyResponse {
 export interface Review {
   id: string;
   organizationId: string;
-  userId: string | null;  // New: references users table
-  loanOfficerId: string;  // Deprecated: kept for migration compatibility
+  userId: string | null;  // References users table
   source: ReviewSource;
   sourceReviewId: string | null;
   sourceUrl: string | null;

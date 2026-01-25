@@ -18,7 +18,7 @@ interface StatsCardsProps {
   metrics: DashboardMetrics;
 }
 
-export function LOStatsCards({ metrics }: StatsCardsProps) {
+export function UserStatsCards({ metrics }: StatsCardsProps) {
   const stats = [
     {
       title: "Total Reviews",

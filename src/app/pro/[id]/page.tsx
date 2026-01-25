@@ -7,7 +7,7 @@ import {
   generateProfilePageSchema,
 } from "@/lib/seo";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
-import { LOProfileContent } from "./lo-profile-content";
+import { ProProfileContent } from "./pro-profile-content";
 
 interface PageProps {
   params: Promise<{
@@ -21,8 +21,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!result.success || !result.data) {
     return {
-      title: "Loan Officer Not Found",
-      description: "The requested loan officer profile could not be found.",
+      title: "Professional Not Found",
+      description: "The requested professional profile could not be found.",
       robots: { index: false, follow: false },
     };
   }
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const baseUrl = getBaseUrl();
 
   return generateLOProfileMetadata(
-    result.data.loanOfficer,
+    result.data.professional,
     result.data.organization,
     baseUrl
   );
@@ -44,7 +44,7 @@ export default async function LOProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const { loanOfficer, organization, reviews } = result.data;
+  const { professional, organization, reviews, featuredReviews, businessHours } = result.data;
   const baseUrl = getBaseUrl();
 
   // Add is_published and status for schema filtering
@@ -56,7 +56,7 @@ export default async function LOProfilePage({ params }: PageProps) {
 
   // Generate structured data schemas
   const schemas = generateProfilePageSchema(
-    loanOfficer,
+    professional,
     organization,
     reviewsWithStatus,
     baseUrl
@@ -65,10 +65,12 @@ export default async function LOProfilePage({ params }: PageProps) {
   return (
     <>
       <MultiSchemaStructuredData schemas={schemas} />
-      <LOProfileContent
-        loanOfficer={loanOfficer}
+      <ProProfileContent
+        professional={professional}
         organization={organization}
         reviews={reviews}
+        featuredReviews={featuredReviews}
+        businessHours={businessHours}
       />
     </>
   );

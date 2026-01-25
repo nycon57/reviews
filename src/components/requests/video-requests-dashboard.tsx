@@ -107,7 +107,7 @@ interface Props {
   initialRequests: VideoTestimonialRequest[];
   initialTotal: number;
   initialStats: RequestStats;
-  loanOfficers: LoanOfficer[];
+  teamMembers: LoanOfficer[];
   userRole: "admin" | "manager" | "user";
 }
 
@@ -194,12 +194,12 @@ function StatsCards({ stats }: { stats: RequestStats }) {
 function CreateRequestDialog({
   open,
   onOpenChange,
-  loanOfficers,
+  teamMembers,
   onSuccess,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  loanOfficers: LoanOfficer[];
+  teamMembers: LoanOfficer[];
   onSuccess: () => void;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -351,7 +351,7 @@ function CreateRequestDialog({
 
           <TabsContent value="single" className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label htmlFor="loanOfficer">Loan Officer *</Label>
+              <Label htmlFor="loanOfficer">Team Member *</Label>
               <Select
                 value={singleForm.loanOfficerId}
                 onValueChange={(value) =>
@@ -359,12 +359,12 @@ function CreateRequestDialog({
                 }
               >
                 <SelectTrigger id="loanOfficer">
-                  <SelectValue placeholder="Select loan officer" />
+                  <SelectValue placeholder="Select team member" />
                 </SelectTrigger>
                 <SelectContent>
-                  {loanOfficers.map((lo) => (
-                    <SelectItem key={lo.id} value={lo.id}>
-                      {lo.fullName}
+                  {teamMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.fullName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -499,12 +499,12 @@ def456-uuid, Jane Doe, jane@example.com`}
             <div className="rounded-lg bg-muted/50 p-3">
               <div className="flex items-center gap-2 text-sm">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <span className="font-medium">Loan Officer IDs:</span>
+                <span className="font-medium">Team Member IDs:</span>
               </div>
               <div className="mt-2 max-h-32 overflow-auto">
-                {loanOfficers.map((lo) => (
-                  <div key={lo.id} className="text-xs text-muted-foreground py-0.5">
-                    <code className="bg-white px-1 rounded">{lo.id}</code> - {lo.fullName}
+                {teamMembers.map((member) => (
+                  <div key={member.id} className="text-xs text-muted-foreground py-0.5">
+                    <code className="bg-white px-1 rounded">{member.id}</code> - {member.fullName}
                   </div>
                 ))}
               </div>
@@ -543,7 +543,7 @@ export function VideoTestimonialRequestsDashboard({
   initialRequests,
   initialTotal,
   initialStats,
-  loanOfficers,
+  teamMembers,
   userRole,
 }: Props) {
   const [requests, setRequests] = useState<VideoTestimonialRequest[]>(initialRequests);
@@ -556,7 +556,7 @@ export function VideoTestimonialRequestsDashboard({
   // Filter state
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [loanOfficerFilter, setLoanOfficerFilter] = useState<string>("all");
+  const [memberFilter, setLoanOfficerFilter] = useState<string>("all");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Pagination state
@@ -580,7 +580,7 @@ export function VideoTestimonialRequestsDashboard({
     try {
       const result = await getVideoTestimonialRequests({
         status: statusFilter !== "all" ? statusFilter : undefined,
-        loanOfficerId: loanOfficerFilter !== "all" ? loanOfficerFilter : undefined,
+        loanOfficerId: memberFilter !== "all" ? memberFilter : undefined,
         search: debouncedSearch || undefined,
         page,
         pageSize,
@@ -599,7 +599,7 @@ export function VideoTestimonialRequestsDashboard({
     } finally {
       setIsLoading(false);
     }
-  }, [statusFilter, loanOfficerFilter, debouncedSearch, page]);
+  }, [statusFilter, memberFilter, debouncedSearch, page]);
 
   // Auto-fetch when filters or page changes (fixes race condition)
   useEffect(() => {
@@ -774,20 +774,20 @@ export function VideoTestimonialRequestsDashboard({
             </Select>
             {canManage && (
               <Select
-                value={loanOfficerFilter}
+                value={memberFilter}
                 onValueChange={(value) => {
                   setLoanOfficerFilter(value);
                   setPage(1);
                 }}
               >
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="All Loan Officers" />
+                  <SelectValue placeholder="All Team Members" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Loan Officers</SelectItem>
-                  {loanOfficers.map((lo) => (
-                    <SelectItem key={lo.id} value={lo.id}>
-                      {lo.fullName}
+                  <SelectItem value="all">All Team Members</SelectItem>
+                  {teamMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      {member.fullName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -945,7 +945,7 @@ export function VideoTestimonialRequestsDashboard({
       <CreateRequestDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
-        loanOfficers={loanOfficers}
+        teamMembers={teamMembers}
         onSuccess={fetchRequests}
       />
 

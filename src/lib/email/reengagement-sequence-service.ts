@@ -217,7 +217,7 @@ async function getMissedReviewsCount(
   const { count, error } = await supabase
     .from("reviews")
     .select("*", { count: "exact", head: true })
-    .eq("loan_officer_id", userId)
+    .eq("user_id", userId)
     .gte("created_at", sinceDate);
 
   if (error) {
@@ -249,7 +249,7 @@ async function getUserMetrics(userId: string): Promise<{
   const { count: pendingCount } = await supabase
     .from("reviews")
     .select("*", { count: "exact", head: true })
-    .eq("loan_officer_id", userId)
+    .eq("user_id", userId)
     .is("response", null)
     .gte("rating", 1);
 

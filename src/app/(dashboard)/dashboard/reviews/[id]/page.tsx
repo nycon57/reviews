@@ -66,13 +66,7 @@ async function getVideoTestimonial(id: string, organizationId: string) {
         customer_name,
         customer_email,
         organization_id,
-        loan_officers (
-          id,
-          users (
-            full_name,
-            email
-          )
-        )
+        user_id
       )
     `
     )
@@ -89,11 +83,23 @@ async function getVideoTestimonial(id: string, organizationId: string) {
     customer_name: string;
     customer_email: string;
     organization_id: string;
-    loan_officers: {
-      id: string;
-      users: { full_name: string; email: string };
-    };
+    user_id: string;
   };
+
+  // Fetch user data separately
+  let loanOfficerName = "Unknown";
+  let loanOfficerEmail = "";
+  if (request.user_id) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("full_name, email")
+      .eq("id", request.user_id)
+      .single();
+    if (userData) {
+      loanOfficerName = userData.full_name || "Unknown";
+      loanOfficerEmail = userData.email || "";
+    }
+  }
 
   return {
     id: data.id,
@@ -119,9 +125,9 @@ async function getVideoTestimonial(id: string, organizationId: string) {
     submittedAt: data.created_at,
     customerName: request.customer_name,
     customerEmail: request.customer_email,
-    loanOfficerId: request.loan_officers?.id || "",
-    loanOfficerName: request.loan_officers?.users?.full_name || "Unknown",
-    loanOfficerEmail: request.loan_officers?.users?.email || "",
+    loanOfficerId: request.user_id || "",
+    loanOfficerName,
+    loanOfficerEmail,
     requestId: request.id,
   };
 }
@@ -157,15 +163,7 @@ async function getTextReview(id: string, organizationId: string) {
       synced_at,
       created_at,
       updated_at,
-      loan_officers (
-        id,
-        users (
-          id,
-          full_name,
-          email,
-          avatar_url
-        )
-      )
+      user_id
     `
     )
     .eq("id", id)
@@ -176,8 +174,23 @@ async function getTextReview(id: string, organizationId: string) {
     return null;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const loanOfficerData = data.loan_officers as any;
+  // Fetch user data separately if user_id exists
+  let loanOfficer: { id: string; fullName: string; email: string; photoUrl: string | null } | undefined;
+  if (data.user_id) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("id, full_name, email, avatar_url")
+      .eq("id", data.user_id)
+      .single();
+    if (userData) {
+      loanOfficer = {
+        id: userData.id,
+        fullName: userData.full_name || "Unknown",
+        email: userData.email || "",
+        photoUrl: userData.avatar_url,
+      };
+    }
+  }
 
   return {
     id: data.id,
@@ -204,14 +217,7 @@ async function getTextReview(id: string, organizationId: string) {
     syncedAt: data.synced_at,
     createdAt: data.created_at || new Date().toISOString(),
     updatedAt: data.updated_at || new Date().toISOString(),
-    loanOfficer: loanOfficerData
-      ? {
-          id: loanOfficerData.id,
-          fullName: loanOfficerData.users?.full_name || "Unknown",
-          email: loanOfficerData.users?.email || "",
-          photoUrl: loanOfficerData.users?.avatar_url || null,
-        }
-      : undefined,
+    loanOfficer,
   };
 }
 

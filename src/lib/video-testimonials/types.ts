@@ -96,7 +96,7 @@ export interface PublicVideoTestimonialRequest {
   submittedAt: string | null;
   customerName: string;
   customerEmail: string;
-  loanOfficer: {
+  professional: {
     id: string;
     fullName: string;
     photoUrl: string | null;

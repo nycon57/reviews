@@ -96,15 +96,15 @@ export interface OrganizationMetrics {
   reviewVelocity: ReviewVelocityMetrics;
   averageRating: number;
   totalReviews: number;
-  totalLoanOfficers: number;
-  activeLoanOfficers: number;
-  topPerformers: string[]; // loan officer IDs
-  needsAttention: string[]; // loan officer IDs
+  totalMembers: number;
+  activeMembers: number;
+  topPerformers: string[]; // user IDs
+  needsAttention: string[]; // user IDs
 }
 
-// Loan officer metrics
-export interface LoanOfficerAnalytics {
-  loanOfficerId: string;
+// User analytics metrics
+export interface UserAnalytics {
+  userId: string;
   nps: NPSBreakdown;
   csat: CSATMetrics;
   responseRate: ResponseRateMetrics;
@@ -116,11 +116,14 @@ export interface LoanOfficerAnalytics {
   performanceStatus: "excellent" | "good" | "needs_attention" | "at_risk";
 }
 
+/** @deprecated Use UserAnalytics instead */
+export type LoanOfficerAnalytics = UserAnalytics;
+
 // Cached metrics from database
 export interface CachedMetrics {
   id: string;
   organizationId: string;
-  loanOfficerId: string | null;
+  userId: string | null;
   periodType: PeriodType;
   periodStart: Date;
   periodEnd: Date;

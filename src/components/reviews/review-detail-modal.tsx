@@ -246,12 +246,12 @@ export function ReviewDetailModal({
             </>
           )}
 
-          {/* Loan Officer Info */}
+          {/* Professional Info */}
           <Separator />
           <div className="space-y-3">
             <h4 className="font-medium flex items-center gap-2">
               <User className="h-4 w-4" />
-              Loan Officer
+              Professional
             </h4>
             <div className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
@@ -262,7 +262,7 @@ export function ReviewDetailModal({
                     .map((n) => n[0])
                     .join("")
                     .toUpperCase()
-                    .slice(0, 2) || "LO"}
+                    .slice(0, 2) || "TM"}
                 </AvatarFallback>
               </Avatar>
               <div>

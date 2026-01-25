@@ -41,7 +41,7 @@ async function getUserContext() {
       .eq("id", user.id)
       .single(),
     supabase
-      .from("loan_officers")
+      .from("users")
       .select("id, full_name")
       .eq("user_id", user.id)
       .single(),
@@ -85,7 +85,7 @@ export async function getSentimentTrend(
     .order("review_date", { ascending: true });
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data, error } = await query;
@@ -184,7 +184,7 @@ export async function getThemeFrequencies(
     .gte("review_date", startDate.toISOString());
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data, error } = await query;
@@ -206,7 +206,7 @@ export async function getThemeFrequencies(
     .lt("review_date", startDate.toISOString());
 
   if (loanOfficerId) {
-    prevQuery = prevQuery.eq("loan_officer_id", loanOfficerId);
+    prevQuery = prevQuery.eq("user_id", loanOfficerId);
   }
 
   const { data: prevData } = await prevQuery;
@@ -320,7 +320,7 @@ export async function getTopKeyPhrases(
     .gte("review_date", startDate.toISOString());
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data, error } = await query;
@@ -413,7 +413,7 @@ export async function getSentimentDistribution(
     .gte("review_date", startDate.toISOString());
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data, error } = await query;
@@ -463,7 +463,7 @@ export async function generateAISummary(
     .limit(50);
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data: reviews, error } = await query;
@@ -667,7 +667,7 @@ export async function getImprovementRecommendations(
     .in("sentiment_label", ["negative", "neutral"]);
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data: negativeReviews, error } = await query;
@@ -885,7 +885,7 @@ export async function getIndustryBenchmarks(
     .gte("review_date", startDate.toISOString());
 
   if (loanOfficerId) {
-    query = query.eq("loan_officer_id", loanOfficerId);
+    query = query.eq("user_id", loanOfficerId);
   }
 
   const { data: reviews, error } = await query;
@@ -919,7 +919,7 @@ export async function getIndustryBenchmarks(
       `
       nps_score,
       surveys!inner (
-        loan_officer_id,
+        user_id,
         organization_id
       )
     `
@@ -931,11 +931,11 @@ export async function getIndustryBenchmarks(
 
   const filteredNps = (npsData || []).filter((r) => {
     const survey = r.surveys as unknown as {
-      loan_officer_id: string;
+      user_id: string;
       organization_id: string;
     };
     if (loanOfficerId) {
-      return survey.loan_officer_id === loanOfficerId;
+      return survey.user_id === loanOfficerId;
     }
     return survey.organization_id === context.organizationId;
   });

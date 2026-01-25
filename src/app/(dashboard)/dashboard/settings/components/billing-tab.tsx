@@ -434,8 +434,8 @@ export function BillingTab() {
 
                   <UsageBar
                     label="Users"
-                    current={billingData.usage.currentLoanOfficers}
-                    max={billingData.tier?.limits?.maxLoanOfficers ?? 5}
+                    current={billingData.usage.currentMembers}
+                    max={billingData.tier?.limits?.maxProfessionals ?? 5}
                     icon={<UserCircle weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
                   />
 

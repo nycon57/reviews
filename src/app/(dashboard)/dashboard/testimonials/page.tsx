@@ -41,10 +41,7 @@ async function getTestimonialCandidates() {
       sentiment_label,
       themes,
       key_phrases,
-      loan_officer:loan_officers (
-        id,
-        full_name
-      )
+      user_id
     `)
     .gte("rating", 4)
     .not("text", "is", null)
@@ -56,6 +53,19 @@ async function getTestimonialCandidates() {
   if (error) {
     console.error("Error fetching review candidates:", error);
     return [];
+  }
+
+  // Fetch user names for reviews
+  const userIds = [...new Set((reviews || []).map((r) => r.user_id).filter((id): id is string => !!id))];
+  const userMap = new Map<string, string>();
+  if (userIds.length > 0) {
+    const { data: users } = await supabase
+      .from("users")
+      .select("id, full_name")
+      .in("id", userIds);
+    for (const u of users || []) {
+      userMap.set(u.id, u.full_name || "Professional");
+    }
   }
 
   // Check which reviews already have testimonials
@@ -78,7 +88,7 @@ async function getTestimonialCandidates() {
       text: r.text,
       rating: r.rating,
       customerName: r.customer_name,
-      loanOfficerName: r.loan_officer?.full_name || "Loan Officer",
+      loanOfficerName: r.user_id ? userMap.get(r.user_id) || "Professional" : "Professional",
       source: r.source,
       reviewDate: r.review_date,
       sentimentScore: r.sentiment_score,
@@ -111,11 +121,6 @@ async function getTestimonials() {
         customer_name,
         source,
         review_date
-      ),
-      loan_officer:loan_officers (
-        id,
-        full_name,
-        photo_url
       )
     `,
       { count: "exact" }
@@ -128,47 +133,69 @@ async function getTestimonials() {
     return { testimonials: [], total: 0 };
   }
 
+  // Fetch user data for user_ids
+  const userIds: string[] = [];
+  for (const t of testimonials || []) {
+    const testimonialUserId = (t as { user_id?: string }).user_id;
+    if (testimonialUserId && !userIds.includes(testimonialUserId)) {
+      userIds.push(testimonialUserId);
+    }
+  }
+  const userMap = new Map<string, { id: string; full_name: string | null; photo_url: string | null }>();
+  if (userIds.length > 0) {
+    const { data: users } = await supabase
+      .from("users")
+      .select("id, full_name, photo_url")
+      .in("id", userIds);
+    for (const u of users || []) {
+      userMap.set(u.id, u);
+    }
+  }
+
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    testimonials: (testimonials || []).map((t: any) => ({
-      id: t.id,
-      organizationId: t.organization_id,
-      reviewId: t.review_id,
-      loanOfficerId: t.loan_officer_id,
-      format: t.format as TestimonialFormat,
-      content: t.content,
-      originalQuote: t.original_quote,
-      keyHighlights: t.key_highlights || [],
-      aiGenerated: t.ai_generated ?? true,
-      generationPrompt: t.generation_prompt,
-      status: t.status as TestimonialStatus,
-      approvedAt: t.approved_at,
-      approvedBy: t.approved_by,
-      rejectionReason: t.rejection_reason,
-      publishedAt: t.published_at,
-      publishedPlatforms: t.published_platforms || [],
-      lastExportedAt: t.last_exported_at,
-      exportCount: t.export_count || 0,
-      createdAt: t.created_at,
-      updatedAt: t.updated_at,
-      review: t.review
-        ? {
-            id: t.review.id,
-            rating: t.review.rating,
-            text: t.review.text,
-            customerName: t.review.customer_name,
-            source: t.review.source,
-            reviewDate: t.review.review_date,
-          }
-        : undefined,
-      loanOfficer: t.loan_officer
-        ? {
-            id: t.loan_officer.id,
-            fullName: t.loan_officer.full_name,
-            photoUrl: t.loan_officer.photo_url,
-          }
-        : undefined,
-    })),
+    testimonials: (testimonials || []).map((t: any) => {
+      const user = t.user_id ? userMap.get(t.user_id) : null;
+      return {
+        id: t.id,
+        organizationId: t.organization_id,
+        reviewId: t.review_id,
+        loanOfficerId: t.user_id,
+        format: t.format as TestimonialFormat,
+        content: t.content,
+        originalQuote: t.original_quote,
+        keyHighlights: t.key_highlights || [],
+        aiGenerated: t.ai_generated ?? true,
+        generationPrompt: t.generation_prompt,
+        status: t.status as TestimonialStatus,
+        approvedAt: t.approved_at,
+        approvedBy: t.approved_by,
+        rejectionReason: t.rejection_reason,
+        publishedAt: t.published_at,
+        publishedPlatforms: t.published_platforms || [],
+        lastExportedAt: t.last_exported_at,
+        exportCount: t.export_count || 0,
+        createdAt: t.created_at,
+        updatedAt: t.updated_at,
+        review: t.review
+          ? {
+              id: t.review.id,
+              rating: t.review.rating,
+              text: t.review.text,
+              customerName: t.review.customer_name,
+              source: t.review.source,
+              reviewDate: t.review.review_date,
+            }
+          : undefined,
+        loanOfficer: user
+          ? {
+              id: user.id,
+              fullName: user.full_name || "Professional",
+              photoUrl: user.photo_url,
+            }
+          : undefined,
+      };
+    }),
     total: count || 0,
   };
 }

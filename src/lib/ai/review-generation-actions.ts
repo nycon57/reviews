@@ -170,7 +170,7 @@ export async function generateReviewFromTestimonial(
       organizations: { name: string } | null;
     };
 
-    const loanOfficer = request?.loan_officers;
+    const professional = request?.loan_officers;
     const organization = request?.organizations;
 
     // Perform review generation
@@ -179,8 +179,8 @@ export async function generateReviewFromTestimonial(
       result = await generateReviewFromTranscript({
         transcription: response.transcription,
         customerName: request?.customer_name || undefined,
-        loanOfficerName: loanOfficer
-          ? `${loanOfficer.first_name} ${loanOfficer.last_name}`
+        professionalName: professional
+          ? `${professional.first_name} ${professional.last_name}`
           : undefined,
         organizationName: organization?.name || undefined,
       });

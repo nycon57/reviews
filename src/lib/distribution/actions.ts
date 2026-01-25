@@ -89,19 +89,19 @@ export async function createSurveyAndQueue(
       return { success: false, error: "Organization not found" };
     }
 
-    // Verify loan officer belongs to same organization
-    const { data: loanOfficer, error: loError } = await supabase
-      .from("loan_officers")
+    // Verify target user belongs to same organization
+    const { data: targetUser, error: targetUserError } = await supabase
+      .from("users")
       .select("id, organization_id")
       .eq("id", validated.data.loanOfficerId)
       .single();
 
-    if (loError || !loanOfficer) {
-      return { success: false, error: "Loan officer not found" };
+    if (targetUserError || !targetUser) {
+      return { success: false, error: "User not found" };
     }
 
-    if (loanOfficer.organization_id !== userData.organization_id) {
-      return { success: false, error: "Loan officer not in your organization" };
+    if (targetUser.organization_id !== userData.organization_id) {
+      return { success: false, error: "User not in your organization" };
     }
 
     // Verify template belongs to same organization
@@ -128,7 +128,7 @@ export async function createSurveyAndQueue(
       .from("surveys")
       .select("id, status")
       .eq("organization_id", userData.organization_id)
-      .eq("loan_officer_id", validated.data.loanOfficerId)
+      .eq("user_id", validated.data.loanOfficerId)
       .eq("customer_email", validated.data.customerEmail)
       .neq("status", "expired")
       .neq("status", "completed")
@@ -159,7 +159,7 @@ export async function createSurveyAndQueue(
       .insert({
         organization_id: userData.organization_id,
         template_id: validated.data.templateId,
-        loan_officer_id: validated.data.loanOfficerId,
+        user_id: validated.data.loanOfficerId,
         customer_name: validated.data.customerName,
         customer_email: validated.data.customerEmail,
         customer_phone: validated.data.customerPhone,
@@ -279,7 +279,7 @@ export async function sendSurveyManually(
         expires_at,
         transaction_type,
         organization_id,
-        loan_officers!inner (
+        users!user_id (
           id,
           full_name,
           photo_url
@@ -316,7 +316,7 @@ export async function sendSurveyManually(
       return { success: false, error: rateCheck.reason || "Rate limit exceeded" };
     }
 
-    const loanOfficer = survey.loan_officers as unknown as {
+    const loanOfficer = survey.users as unknown as {
       id: string;
       full_name: string;
       photo_url: string | null;
@@ -471,7 +471,7 @@ export async function getSurveysForDistribution(params?: {
         reminder_count,
         source,
         created_at,
-        loan_officers!inner (
+        users!user_id (
           full_name
         )
       `,
@@ -486,7 +486,7 @@ export async function getSurveysForDistribution(params?: {
     }
 
     if (params?.loanOfficerId) {
-      query = query.eq("loan_officer_id", params.loanOfficerId);
+      query = query.eq("user_id", params.loanOfficerId);
     }
 
     const { data, count, error } = await query;
@@ -496,7 +496,7 @@ export async function getSurveysForDistribution(params?: {
     }
 
     const surveys = (data || []).map((survey) => {
-      const lo = survey.loan_officers as unknown as { full_name: string };
+      const user = survey.users as unknown as { full_name: string };
       return {
         id: survey.id,
         token: survey.token,
@@ -507,7 +507,7 @@ export async function getSurveysForDistribution(params?: {
         completedAt: survey.completed_at,
         expiresAt: survey.expires_at,
         reminderCount: survey.reminder_count || 0,
-        loanOfficerName: lo.full_name,
+        loanOfficerName: user.full_name,
         source: survey.source || "manual",
         createdAt: survey.created_at || "",
       };
@@ -549,7 +549,7 @@ export async function getLoanOfficersForSend(): Promise<
     }
 
     const { data, error } = await supabase
-      .from("loan_officers")
+      .from("users")
       .select("id, full_name, email")
       .eq("organization_id", userData.organization_id)
       .eq("is_active", true)
@@ -559,16 +559,16 @@ export async function getLoanOfficersForSend(): Promise<
       return { success: false, error: error.message };
     }
 
-    const loanOfficers = (data || []).map((lo) => ({
-      id: lo.id,
-      fullName: lo.full_name,
-      email: lo.email,
+    const users = (data || []).map((user) => ({
+      id: user.id,
+      fullName: user.full_name || 'Unknown',
+      email: user.email,
     }));
 
-    return { success: true, data: loanOfficers };
+    return { success: true, data: users };
   } catch (error) {
-    console.error("Error fetching loan officers:", error);
-    return { success: false, error: "Failed to fetch loan officers" };
+    console.error("Error fetching users:", error);
+    return { success: false, error: "Failed to fetch users" };
   }
 }
 
@@ -661,7 +661,7 @@ export async function getDistributionQueue(params?: {
         surveys!inner (
           customer_name,
           customer_email,
-          loan_officers!inner (
+          users!user_id (
             full_name
           )
         )
@@ -686,7 +686,7 @@ export async function getDistributionQueue(params?: {
       const survey = item.surveys as unknown as {
         customer_name: string;
         customer_email: string;
-        loan_officers: { full_name: string };
+        users: { full_name: string };
       };
 
       return {
@@ -700,7 +700,7 @@ export async function getDistributionQueue(params?: {
         errorMessage: item.error_message,
         customerName: survey.customer_name,
         customerEmail: survey.customer_email,
-        loanOfficerName: survey.loan_officers.full_name,
+        loanOfficerName: survey.users.full_name,
       };
     });
 

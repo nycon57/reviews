@@ -105,7 +105,7 @@ export async function getTextApprovalData(
         status,
         customer_name,
         expires_at,
-        loan_officers!inner(
+        users!user_id(
           id,
           full_name,
           google_place_id
@@ -168,7 +168,7 @@ export async function getTextApprovalData(
       return { success: false, error: "Review has already been submitted" };
     }
 
-    const loanOfficer = request.loan_officers as unknown as {
+    const loanOfficer = request.users as unknown as {
       id: string;
       full_name: string;
       google_place_id: string | null;
@@ -343,7 +343,7 @@ export async function regenerateReviewText(
           status,
           expires_at,
           customer_name,
-          loan_officers(full_name),
+          users!user_id(full_name),
           organizations(name)
         )
       `)
@@ -359,7 +359,7 @@ export async function regenerateReviewText(
       status: string;
       expires_at: string | null;
       customer_name: string;
-      loan_officers: { full_name: string } | null;
+      users: { full_name: string } | null;
       organizations: { name: string } | null;
     };
 
@@ -396,7 +396,7 @@ export async function regenerateReviewText(
       result = await generateReviewFromTranscript({
         transcription: response.transcription,
         customerName: request.customer_name || undefined,
-        loanOfficerName: request.loan_officers?.full_name || undefined,
+        professionalName: request.users?.full_name || undefined,
         organizationName: request.organizations?.name || undefined,
       });
     } catch (error) {

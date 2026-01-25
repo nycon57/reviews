@@ -165,7 +165,7 @@ export function CTASection({
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="font-sans text-lg text-white/90 md:text-xl lg:text-2xl"
               >
-                Empower every loan officer with AI-powered reputation tools
+                Empower every team member with AI-powered reputation tools
               </motion.p>
 
               {/* Feature List */}

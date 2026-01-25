@@ -31,7 +31,7 @@ async function getCurrentLoanOfficerId(ctx: AccessContext): Promise<string | und
 
   const supabase = await createClient();
   const { data: loanOfficer } = await supabase
-    .from("loan_officers")
+    .from("users")
     .select("id")
     .eq("user_id", ctx.userId)
     .single();

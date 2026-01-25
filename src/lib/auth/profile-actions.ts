@@ -22,6 +22,7 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
     fullName,
     avatarUrl,
     title,
+    nmlsId,
     bio,
     phone,
     personalWebsiteUrl,
@@ -45,6 +46,7 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
       full_name: fullName,
       avatar_url: avatarUrl || null,
       title: title || null,
+      nmls_id: nmlsId || null,
       bio: bio || null,
       phone: phone || null,
       personal_website_url: personalWebsiteUrl || null,
@@ -177,7 +179,7 @@ export async function uploadAvatar(
 
   // Also sync to loan_officers.photo_url if user has a linked loan officer record
   await supabase
-    .from("loan_officers")
+    .from("users")
     .update({
       photo_url: publicUrl,
       updated_at: new Date().toISOString(),

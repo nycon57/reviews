@@ -35,7 +35,7 @@ import {
   getGoogleConnections,
   disconnectGoogle,
   syncGoogleReviews,
-  getLoanOfficersForGoogle,
+  getProfessionalsForGoogle,
 } from '@/lib/google/actions';
 import type { GoogleConnection } from '@/lib/google/types';
 
@@ -64,10 +64,10 @@ function StatusBadge({ status }: { status: GoogleConnection['syncStatus'] }) {
 
 export function GoogleIntegrationCard() {
   const [connections, setConnections] = useState<GoogleConnection[]>([]);
-  const [loanOfficers, setLoanOfficers] = useState<
+  const [professionals, setProfessionals] = useState<
     { id: string; fullName: string }[]
   >([]);
-  const [selectedLoanOfficer, setSelectedLoanOfficer] = useState<string>('__all__');
+  const [selectedProfessional, setSelectedProfessional] = useState<string>('__all__');
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -98,22 +98,22 @@ export function GoogleIntegrationCard() {
     }
   }, [searchParams, toast, router]);
 
-  // Fetch connections and loan officers
+  // Fetch connections and professionals
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [connectionsResult, losResult] = await Promise.all([
+        const [connectionsResult, professionalsResult] = await Promise.all([
           getGoogleConnections(),
-          getLoanOfficersForGoogle(),
+          getProfessionalsForGoogle(),
         ]);
 
         if (connectionsResult.success && connectionsResult.data) {
           setConnections(connectionsResult.data);
         }
 
-        if (losResult.success && losResult.data) {
-          setLoanOfficers(losResult.data);
+        if (professionalsResult.success && professionalsResult.data) {
+          setProfessionals(professionalsResult.data);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -127,8 +127,8 @@ export function GoogleIntegrationCard() {
 
   const handleConnect = () => {
     // Redirect to OAuth flow
-    const url = selectedLoanOfficer && selectedLoanOfficer !== '__all__'
-      ? `/api/auth/google/connect?loan_officer_id=${selectedLoanOfficer}`
+    const url = selectedProfessional && selectedProfessional !== '__all__'
+      ? `/api/auth/google/connect?user_id=${selectedProfessional}`
       : '/api/auth/google/connect';
     window.location.href = url;
   };
@@ -300,28 +300,28 @@ export function GoogleIntegrationCard() {
             {/* Connect new account */}
             <div className="space-y-4 rounded-lg border border-dashed p-4">
               <div className="space-y-2">
-                <Label htmlFor="loan-officer">
+                <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Connect Google Business Profile
-                </Label>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Optionally assign to a specific loan officer
+                  Optionally assign to a specific team member
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
                 <div className="flex-1 space-y-2">
-                  <Label htmlFor="lo-select">Loan Officer (optional)</Label>
+                  <Label htmlFor="pro-select">Team Member (optional)</Label>
                   <Select
-                    value={selectedLoanOfficer}
-                    onValueChange={setSelectedLoanOfficer}
+                    value={selectedProfessional}
+                    onValueChange={setSelectedProfessional}
                   >
-                    <SelectTrigger id="lo-select">
-                      <SelectValue placeholder="Select loan officer" />
+                    <SelectTrigger id="pro-select">
+                      <SelectValue placeholder="Select team member" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="__all__">Organization-wide</SelectItem>
-                      {loanOfficers.map((lo) => (
-                        <SelectItem key={lo.id} value={lo.id}>
-                          {lo.fullName}
+                      {professionals.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.fullName}
                         </SelectItem>
                       ))}
                     </SelectContent>

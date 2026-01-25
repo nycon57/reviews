@@ -72,7 +72,7 @@ export async function getPendingReviews(params?: {
       `
       id,
       organization_id,
-      loan_officer_id,
+      user_id,
       source,
       rating,
       title,
@@ -87,7 +87,7 @@ export async function getPendingReviews(params?: {
       published_at,
       review_date,
       created_at,
-      loan_officers!inner (
+      users!user_id (
         id,
         full_name,
         email,
@@ -109,7 +109,7 @@ export async function getPendingReviews(params?: {
 
   // Apply filters
   if (params?.loanOfficerId) {
-    query = query.eq("loan_officer_id", params.loanOfficerId);
+    query = query.eq("user_id", params.loanOfficerId);
   }
   if (params?.minRating) {
     query = query.gte("rating", params.minRating);
@@ -129,7 +129,7 @@ export async function getPendingReviews(params?: {
   }
 
   const reviews: Review[] = (data || []).map((row) => {
-    const loanOfficer = row.loan_officers as unknown as {
+    const loanOfficer = row.users as unknown as {
       id: string;
       full_name: string;
       email: string;
@@ -146,7 +146,7 @@ export async function getPendingReviews(params?: {
     return {
       id: row.id,
       organizationId: row.organization_id,
-      loanOfficerId: row.loan_officer_id,
+      loanOfficerId: row.user_id,
       source: row.source,
       rating: row.rating,
       title: row.title,
@@ -208,7 +208,7 @@ export async function getReviews(params?: {
       `
       id,
       organization_id,
-      loan_officer_id,
+      user_id,
       source,
       rating,
       title,
@@ -223,7 +223,7 @@ export async function getReviews(params?: {
       published_at,
       review_date,
       created_at,
-      loan_officers!inner (
+      users!user_id (
         id,
         full_name,
         email,
@@ -249,7 +249,7 @@ export async function getReviews(params?: {
 
   // Apply other filters
   if (params?.loanOfficerId) {
-    query = query.eq("loan_officer_id", params.loanOfficerId);
+    query = query.eq("user_id", params.loanOfficerId);
   }
   if (params?.source) {
     query = query.eq("source", params.source);
@@ -263,7 +263,7 @@ export async function getReviews(params?: {
   }
 
   const reviews: Review[] = (data || []).map((row) => {
-    const loanOfficer = row.loan_officers as unknown as {
+    const loanOfficer = row.users as unknown as {
       id: string;
       full_name: string;
       email: string;
@@ -280,7 +280,7 @@ export async function getReviews(params?: {
     return {
       id: row.id,
       organizationId: row.organization_id,
-      loanOfficerId: row.loan_officer_id,
+      loanOfficerId: row.user_id,
       source: row.source,
       rating: row.rating,
       title: row.title,
@@ -335,7 +335,7 @@ export async function getReviewById(
       `
       id,
       organization_id,
-      loan_officer_id,
+      user_id,
       source,
       rating,
       title,
@@ -350,7 +350,7 @@ export async function getReviewById(
       published_at,
       review_date,
       created_at,
-      loan_officers!inner (
+      users!user_id (
         id,
         full_name,
         email,
@@ -372,7 +372,7 @@ export async function getReviewById(
     return { success: false, error: "Review not found" };
   }
 
-  const loanOfficer = data.loan_officers as unknown as {
+  const loanOfficer = data.users as unknown as {
     id: string;
     full_name: string;
     email: string;
@@ -389,7 +389,7 @@ export async function getReviewById(
   const review: Review = {
     id: data.id,
     organizationId: data.organization_id,
-    loanOfficerId: data.loan_officer_id,
+    loanOfficerId: data.user_id,
     source: data.source,
     rating: data.rating,
     title: data.title,
@@ -887,7 +887,7 @@ export async function getLoanOfficersForFilter(): Promise<
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
-    .from("loan_officers")
+    .from("users")
     .select("id, full_name")
     .eq("organization_id", context.organizationId)
     .eq("is_active", true)
@@ -900,9 +900,9 @@ export async function getLoanOfficersForFilter(): Promise<
 
   return {
     success: true,
-    data: (data || []).map((lo) => ({
-      id: lo.id,
-      fullName: lo.full_name,
+    data: (data || []).map((user) => ({
+      id: user.id,
+      fullName: user.full_name || "Unknown",
     })),
   };
 }

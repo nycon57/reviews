@@ -284,7 +284,7 @@ export function getOrgOnboarding1WelcomeEmail(
         </h2>
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
           ${createSetupItem("&#127912;", "Set up your branding", "Upload your logo and customize colors to match your brand")}
-          ${createSetupItem("&#128101;", "Invite your team", "Add loan officers and managers to start collecting reviews")}
+          ${createSetupItem("&#128101;", "Invite your team", "Add team members and managers to start collecting reviews")}
           ${createSetupItem("&#128279;", "Connect Google Business Profile", "Sync your reviews and respond from one place")}
           ${createSetupItem("&#128179;", "Choose your plan", "Select the plan that fits your team's needs")}
         </table>
@@ -459,7 +459,7 @@ export function getOrgOnboarding3TeamEmail(
             Who can you invite?
           </h3>
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-            ${createSetupItem("&#128119;", "Loan Officers", "Send surveys, collect reviews, and build their reputation")}
+            ${createSetupItem("&#128119;", "Team Members", "Send surveys, collect reviews, and build their reputation")}
             ${createSetupItem("&#128188;", "Managers", "Oversee team performance and approve reviews")}
             ${createSetupItem("&#128736;", "Admins", "Full access to settings, billing, and team management")}
           </table>
@@ -499,7 +499,7 @@ export function getOrgOnboarding3TeamEmail(
     html: wrapInOrgOnboardingEmailTemplate(
       content,
       data.unsubscribeUrl,
-      "Invite your loan officers and managers to start collecting reviews."
+      "Invite your team members and managers to start collecting reviews."
     ),
   };
 }

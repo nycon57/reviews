@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { randomUUID } from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth, type ApiAuthContext } from '@/lib/api-keys/validate';
 import {
@@ -56,7 +57,7 @@ async function handlePost(
   if (input.role === 'user') {
     // Check if loan officer with this email already exists
     const { data: existingLO } = await supabase
-      .from('loan_officers')
+      .from('users')
       .select('id')
       .eq('organization_id', context.organizationId)
       .eq('email', input.email)
@@ -72,32 +73,34 @@ async function handlePost(
     // Build full name from first and last name
     const fullName = [input.first_name, input.last_name].filter(Boolean).join(' ') || 'Unknown';
 
-    // Create the loan officer
-    const { data: loanOfficer, error: loError } = await supabase
-      .from('loan_officers')
+    // Create the user
+    const { data: newUser, error: userError } = await supabase
+      .from('users')
       .insert({
+        id: randomUUID(),
         organization_id: context.organizationId,
         email: input.email,
         full_name: fullName,
+        role: 'user',
         is_active: true,
       })
       .select('id, email, full_name, created_at')
       .single();
 
-    if (loError) {
-      console.error('Error creating loan officer:', loError);
-      return apiInternalError(context.requestId, 'Failed to create loan officer');
+    if (userError) {
+      console.error('Error creating user:', userError);
+      return apiInternalError(context.requestId, 'Failed to create user');
     }
 
     // TODO: Send invitation email via email service
 
     return apiSuccess(
       {
-        id: loanOfficer.id,
-        email: loanOfficer.email,
+        id: newUser.id,
+        email: newUser.email,
         role: input.role,
         status: 'active',
-        created_at: loanOfficer.created_at,
+        created_at: newUser.created_at,
       },
       context.requestId,
       201

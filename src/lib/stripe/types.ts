@@ -46,7 +46,7 @@ export interface PricingTier {
   features: string[];
   limits: {
     maxUsers: number;
-    maxLoanOfficers: number;
+    maxProfessionals: number;
     maxSurveysPerMonth: number;
     maxApiCallsPerDay: number;
   };
@@ -73,7 +73,7 @@ export const PRICING_TIERS: PricingTier[] = [
     ],
     limits: {
       maxUsers: 1,
-      maxLoanOfficers: 1,
+      maxProfessionals: 1,
       maxSurveysPerMonth: 100,
       maxApiCallsPerDay: 100,
     },
@@ -98,7 +98,7 @@ export const PRICING_TIERS: PricingTier[] = [
     ],
     limits: {
       maxUsers: 1,
-      maxLoanOfficers: 1,
+      maxProfessionals: 1,
       maxSurveysPerMonth: 500,
       maxApiCallsPerDay: 1000,
     },
@@ -126,7 +126,7 @@ export const PRICING_TIERS: PricingTier[] = [
     ],
     limits: {
       maxUsers: -1, // Unlimited
-      maxLoanOfficers: -1,
+      maxProfessionals: -1,
       maxSurveysPerMonth: -1,
       maxApiCallsPerDay: -1,
     },
@@ -215,7 +215,7 @@ export interface BillingOverview {
   tier: PricingTier;
   usage: {
     currentUsers: number;
-    currentLoanOfficers: number;
+    currentMembers: number;
     surveysThisMonth: number;
     apiCallsToday: number;
   };

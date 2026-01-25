@@ -49,13 +49,13 @@ import type {
 
 interface ReportsDashboardProps {
   templates: ReportTemplate[];
-  loanOfficers: Array<{ id: string; full_name: string; branch: string | null }>;
+  teamMembers: Array<{ id: string; full_name: string; branch: string | null }>;
   branches: string[];
 }
 
 export function ReportsDashboard({
   templates,
-  loanOfficers,
+  teamMembers,
   branches,
 }: ReportsDashboardProps) {
   const [selectedTemplate, setSelectedTemplate] = React.useState<ReportTemplate | null>(
@@ -249,7 +249,7 @@ export function ReportsDashboard({
                   <ReportFiltersPanel
                     filters={filters}
                     onFiltersChange={handleFiltersChange}
-                    loanOfficers={loanOfficers}
+                    teamMembers={teamMembers}
                     branches={branches}
                   />
                 </div>

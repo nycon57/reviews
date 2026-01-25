@@ -10,10 +10,10 @@ import {
   Star,
   CaretRight as ChevronRight,
 } from "@phosphor-icons/react";
-import type { LoanOfficerComparison } from "@/lib/dashboard";
+import type { UserComparison } from "@/lib/dashboard";
 
 interface PerformanceAlertsProps {
-  data: LoanOfficerComparison[];
+  data: UserComparison[];
 }
 
 export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
@@ -26,20 +26,20 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
       .slice(0, 2);
   };
 
-  const getAlertReason = (lo: LoanOfficerComparison) => {
+  const getAlertReason = (user: UserComparison) => {
     const reasons: string[] = [];
 
-    if (lo.averageRating < 3.5) {
-      reasons.push(`Rating below 3.5 (${lo.averageRating.toFixed(1)})`);
+    if (user.averageRating < 3.5) {
+      reasons.push(`Rating below 3.5 (${user.averageRating.toFixed(1)})`);
     }
-    if (lo.npsScore < 0) {
-      reasons.push(`Negative NPS (${lo.npsScore})`);
+    if (user.npsScore < 0) {
+      reasons.push(`Negative NPS (${user.npsScore})`);
     }
-    if (lo.totalReviews < 5) {
-      reasons.push(`Low review count (${lo.totalReviews})`);
+    if (user.totalReviews < 5) {
+      reasons.push(`Low review count (${user.totalReviews})`);
     }
-    if (lo.responseRate < 30) {
-      reasons.push(`Low response rate (${lo.responseRate}%)`);
+    if (user.responseRate < 30) {
+      reasons.push(`Low response rate (${user.responseRate}%)`);
     }
 
     return reasons.length > 0 ? reasons.join(", ") : "Performance metrics need improvement";
@@ -82,39 +82,39 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {sortedData.slice(0, 5).map((lo) => (
+        {sortedData.slice(0, 5).map((user) => (
           <div
-            key={lo.id}
+            key={user.id}
             className={`rounded-lg border p-3 ${
-              lo.performanceStatus === "at_risk"
+              user.performanceStatus === "at_risk"
                 ? "border-red-200 bg-red-50/50"
                 : "border-amber-200 bg-amber-50/50"
             }`}
           >
             <div className="flex items-start gap-3">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={lo.photoUrl || undefined} alt={lo.fullName} />
-                <AvatarFallback>{getInitials(lo.fullName)}</AvatarFallback>
+                <AvatarImage src={user.photoUrl || undefined} alt={user.fullName} />
+                <AvatarFallback>{getInitials(user.fullName)}</AvatarFallback>
               </Avatar>
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium truncate">{lo.fullName}</span>
+                  <span className="font-medium truncate">{user.fullName}</span>
                   <div className="flex items-center gap-1 text-sm">
                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                    {lo.averageRating.toFixed(1)}
+                    {user.averageRating.toFixed(1)}
                   </div>
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  {getAlertReason(lo)}
+                  {getAlertReason(user)}
                 </p>
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{lo.totalReviews} reviews</span>
-                    <span>NPS: {lo.npsScore}</span>
+                    <span>{user.totalReviews} reviews</span>
+                    <span>NPS: {user.npsScore}</span>
                   </div>
                   <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" asChild>
-                    <Link href={`/dashboard/team/${lo.id}`}>
+                    <Link href={`/dashboard/team/${user.id}`}>
                       View
                       <ChevronRight className="ml-1 h-3 w-3" />
                     </Link>

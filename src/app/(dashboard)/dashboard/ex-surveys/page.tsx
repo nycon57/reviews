@@ -9,14 +9,12 @@ import {
   Plus,
   FileText,
   TrendUp as TrendingUp,
-  Target,
   ClipboardText as ClipboardList,
   ArrowRight,
   CheckCircle as CheckCircle2,
-  Clock,
   ChartBar as BarChart3,
 } from "@phosphor-icons/react/dist/ssr";
-import { getEXSurveys, getEXMetrics, getActionPlans, getEXTrends, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
+import { getEXSurveys, getEXMetrics, getEXTrends, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
 import { interpretENPS } from "@/types/ex-survey.types";
 import { EXMultiMetricChart } from "@/components/ex-surveys";
 import { requireEnterpriseManager } from "@/lib/access";
@@ -42,27 +40,24 @@ function StatCardSkeleton() {
 }
 
 async function EXStatsCards() {
-  const [surveysResult, metricsResult, plansResult] = await Promise.all([
+  const [surveysResult, metricsResult] = await Promise.all([
     getEXSurveys(),
     getEXMetrics(),
-    getActionPlans(),
   ]);
 
   const surveys = surveysResult.data || [];
   const metrics = metricsResult.data;
-  const plans = plansResult.data || [];
 
   const activeSurveys = surveys.filter((s) => s.status === "active").length;
   const totalResponses = surveys.reduce((sum, s) => sum + s.totalResponses, 0);
   const avgResponseRate = surveys.length > 0
     ? surveys.reduce((sum, s) => sum + s.responseRate, 0) / surveys.length
     : 0;
-  const activePlans = plans.filter((p) => p.status === "planned" || p.status === "in_progress").length;
 
   const enpsInterpretation = metrics?.enpsScore !== undefined ? interpretENPS(metrics.enpsScore) : null;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">eNPS Score</CardTitle>
@@ -100,19 +95,6 @@ async function EXStatsCards() {
           <div className="text-2xl font-bold">{activeSurveys}</div>
           <p className="text-xs text-muted-foreground">
             {surveys.length} total surveys
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Action Plans</CardTitle>
-          <Target className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{activePlans}</div>
-          <p className="text-xs text-muted-foreground">
-            {plans.filter((p) => p.status === "completed").length} completed
           </p>
         </CardContent>
       </Card>
@@ -193,64 +175,6 @@ async function TrendChartSection() {
   return <EXMultiMetricChart data={trendData} />;
 }
 
-async function ActionPlansList() {
-  const result = await getActionPlans();
-  const plans = result.data?.filter((p) => p.status !== "completed" && p.status !== "cancelled").slice(0, 5) || [];
-
-  if (plans.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <Target className="h-12 w-12 text-muted-foreground/50" />
-        <p className="mt-4 text-sm text-muted-foreground">No active action plans</p>
-        <p className="text-xs text-muted-foreground">
-          Create action plans from survey insights
-        </p>
-      </div>
-    );
-  }
-
-  const priorityColors: Record<string, string> = {
-    low: "bg-gray-100 text-gray-800",
-    medium: "bg-blue-100 text-blue-800",
-    high: "bg-orange-100 text-orange-800",
-    critical: "bg-red-100 text-red-800",
-  };
-
-  return (
-    <div className="space-y-4">
-      {plans.map((plan) => (
-        <div
-          key={plan.id}
-          className="flex items-start justify-between rounded-lg border p-4"
-        >
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">{plan.title}</span>
-              <Badge variant="secondary" className={priorityColors[plan.priority]}>
-                {plan.priority}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="capitalize">{plan.theme}</span>
-              {plan.targetDate && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Due {new Date(plan.targetDate).toLocaleDateString()}
-                </span>
-              )}
-            </div>
-          </div>
-          {plan.status === "in_progress" && (
-            <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-              In Progress
-            </Badge>
-          )}
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default async function EXSurveysPage() {
   // Check access - requires enterprise account + manager/admin role
   await requireEnterpriseManager();
@@ -292,8 +216,8 @@ export default async function EXSurveysPage() {
       {/* Stats cards */}
       <Suspense
         fallback={
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
               <StatCardSkeleton key={i} />
             ))}
           </div>
@@ -308,65 +232,33 @@ export default async function EXSurveysPage() {
       </Suspense>
 
       {/* Main content */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Recent Surveys */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent Surveys</CardTitle>
-              <CardDescription>Your employee experience surveys</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/ex-surveys/templates">
-                View all
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Suspense
-              fallback={
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-20 w-full" />
-                  ))}
-                </div>
-              }
-            >
-              <RecentSurveysList />
-            </Suspense>
-          </CardContent>
-        </Card>
-
-        {/* Action Plans */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Action Plans</CardTitle>
-              <CardDescription>Improvements in progress</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/dashboard/ex-surveys/action-plans">
-                View all
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <Suspense
-              fallback={
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <Skeleton key={i} className="h-20 w-full" />
-                  ))}
-                </div>
-              }
-            >
-              <ActionPlansList />
-            </Suspense>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Recent Surveys</CardTitle>
+            <CardDescription>Your employee experience surveys</CardDescription>
+          </div>
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/dashboard/ex-surveys/templates">
+              View all
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <Suspense
+            fallback={
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            }
+          >
+            <RecentSurveysList />
+          </Suspense>
+        </CardContent>
+      </Card>
 
       {/* Quick tips */}
       <Card className="bg-muted/50">
@@ -397,9 +289,9 @@ export default async function EXSurveysPage() {
               </p>
             </div>
             <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">4. Act on Insights</div>
+              <div className="font-medium">4. Share Insights</div>
               <p className="mt-1 text-sm text-muted-foreground">
-                Create action plans from feedback
+                Review results and share with your team
               </p>
             </div>
           </div>

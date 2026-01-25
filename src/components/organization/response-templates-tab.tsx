@@ -409,7 +409,7 @@ export function ResponseTemplatesTab() {
             <div className="space-y-2">
               <label className="text-sm font-medium">Template Content</label>
               <Textarea
-                placeholder="Write your template content. Use {{customer_name}} and {{loan_officer_name}} for dynamic values."
+                placeholder="Write your template content. Use {{customer_name}} and {{loan_officer_name}} (professional name) for dynamic values."
                 value={formData.content}
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 rows={8}

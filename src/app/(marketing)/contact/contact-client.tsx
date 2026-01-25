@@ -111,7 +111,7 @@ const faqs = [
   {
     question: "Do you offer custom pricing for larger teams?",
     answer:
-      "Yes, we offer custom enterprise pricing for teams with more than 50 loan officers. Contact our sales team to discuss your specific needs and we'll create a tailored package.",
+      "Yes, we offer custom enterprise pricing for teams with more than 50 team members. Contact our sales team to discuss your specific needs and we'll create a tailored package.",
   },
   {
     question: "Can I migrate my existing reviews from another platform?",

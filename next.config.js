@@ -69,7 +69,19 @@ const nextConfig = {
   },
   // Redirect root to dashboard for authenticated users
   async redirects() {
-    return [];
+    return [
+      // Redirect old /lo/ routes to new /pro/ routes
+      {
+        source: "/lo",
+        destination: "/pro",
+        permanent: true,
+      },
+      {
+        source: "/lo/:id",
+        destination: "/pro/:id",
+        permanent: true,
+      },
+    ];
   },
 };
 

@@ -12,7 +12,7 @@ import {
   MapPin,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import type { DirectoryLoanOfficer } from "@/lib/directory/actions";
+import type { DirectoryProfessional } from "@/lib/directory/actions";
 
 // Create custom pin icon using Repwell brand colors
 const createCustomIcon = (isSelected = false, isHovered = false) => {
@@ -53,19 +53,19 @@ function getInitials(name: string): string {
 }
 
 interface MapMarkerProps {
-  loanOfficer: DirectoryLoanOfficer;
+  professional: DirectoryProfessional;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
 }
 
 export function MapMarker({
-  loanOfficer,
+  professional,
   isSelected = false,
   onSelect,
 }: MapMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  if (!loanOfficer.latitude || !loanOfficer.longitude) {
+  if (!professional.latitude || !professional.longitude) {
     return null;
   }
 
@@ -73,12 +73,12 @@ export function MapMarker({
 
   return (
     <Marker
-      position={[loanOfficer.latitude, loanOfficer.longitude]}
+      position={[professional.latitude, professional.longitude]}
       icon={icon}
       eventHandlers={{
         mouseover: () => setIsHovered(true),
         mouseout: () => setIsHovered(false),
-        click: () => onSelect?.(loanOfficer.id),
+        click: () => onSelect?.(professional.id),
       }}
     >
       <Popup
@@ -87,49 +87,49 @@ export function MapMarker({
         autoPan={true}
         maxWidth={280}
       >
-        <PopupContent loanOfficer={loanOfficer} />
+        <PopupContent professional={professional} />
       </Popup>
     </Marker>
   );
 }
 
 interface PopupContentProps {
-  loanOfficer: DirectoryLoanOfficer;
+  professional: DirectoryProfessional;
 }
 
-function PopupContent({ loanOfficer }: PopupContentProps) {
+function PopupContent({ professional }: PopupContentProps) {
   return (
     <div className="p-2 min-w-[240px]">
       <div className="flex items-start gap-3">
-        <Link href={`/lo/${loanOfficer.id}`}>
+        <Link href={`/pro/${professional.id}`}>
           <Avatar className="h-12 w-12 border-2 border-repwell-sage-100">
             <AvatarImage
-              src={loanOfficer.photo_url || undefined}
-              alt={loanOfficer.full_name}
+              src={professional.photo_url || undefined}
+              alt={professional.full_name}
             />
             <AvatarFallback className="bg-repwell-teal-300/10 text-repwell-teal-400 font-medium">
-              {getInitials(loanOfficer.full_name)}
+              {getInitials(professional.full_name)}
             </AvatarFallback>
           </Avatar>
         </Link>
 
         <div className="flex-1 min-w-0">
-          <Link href={`/lo/${loanOfficer.id}`}>
+          <Link href={`/pro/${professional.id}`}>
             <h4 className="font-semibold text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
-              {loanOfficer.full_name}
+              {professional.full_name}
             </h4>
           </Link>
-          {loanOfficer.title && (
+          {professional.title && (
             <p className="text-xs text-repwell-teal-400 truncate">
-              {loanOfficer.title}
+              {professional.title}
             </p>
           )}
-          {loanOfficer.address?.city && (
+          {professional.address?.city && (
             <div className="flex items-center gap-1 text-xs text-repwell-teal-300 mt-1">
               <MapPin className="h-3 w-3" />
               <span>
-                {loanOfficer.address.city}
-                {loanOfficer.address.state ? `, ${loanOfficer.address.state}` : ""}
+                {professional.address.city}
+                {professional.address.state ? `, ${professional.address.state}` : ""}
               </span>
             </div>
           )}
@@ -137,17 +137,17 @@ function PopupContent({ loanOfficer }: PopupContentProps) {
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        {loanOfficer.average_rating ? (
+        {professional.average_rating ? (
           <div className="flex items-center gap-1.5">
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-semibold text-repwell-teal-500">
-                {Number(loanOfficer.average_rating).toFixed(1)}
+                {Number(professional.average_rating).toFixed(1)}
               </span>
             </div>
-            {loanOfficer.total_reviews !== null && loanOfficer.total_reviews > 0 && (
+            {professional.total_reviews !== null && professional.total_reviews > 0 && (
               <span className="text-xs text-repwell-teal-300">
-                ({loanOfficer.total_reviews} {loanOfficer.total_reviews === 1 ? "review" : "reviews"})
+                ({professional.total_reviews} {professional.total_reviews === 1 ? "review" : "reviews"})
               </span>
             )}
           </div>
@@ -156,20 +156,20 @@ function PopupContent({ loanOfficer }: PopupContentProps) {
         )}
 
         <div className="flex items-center gap-2">
-          {loanOfficer.phone && (
+          {professional.phone && (
             <Button
               variant="outline"
               size="sm"
               className="h-8 w-8 p-0"
               asChild
             >
-              <a href={`tel:${loanOfficer.phone}`} title={`Call ${loanOfficer.full_name}`}>
+              <a href={`tel:${professional.phone}`} title={`Call ${professional.full_name}`}>
                 <Phone className="h-3.5 w-3.5" />
               </a>
             </Button>
           )}
           <Button size="sm" className="h-8" asChild>
-            <Link href={`/lo/${loanOfficer.id}`}>View Profile</Link>
+            <Link href={`/pro/${professional.id}`}>View Profile</Link>
           </Button>
         </div>
       </div>

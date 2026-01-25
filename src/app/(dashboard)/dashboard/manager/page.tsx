@@ -4,13 +4,13 @@ import {
   TeamStatsCards,
   PerformanceLeaderboard,
   PerformanceAlerts,
-  LOTrendChart,
+  UserTrendChart,
 } from "@/components/dashboard";
 import { EnhancedLeaderboard } from "@/components/gamification";
 import { ManagerDashboardClient } from "./manager-dashboard-client";
 import {
   getTeamMetrics,
-  getLoanOfficerComparison,
+  getUserComparison,
   getFilterOptions,
   getLeaderboard,
   getLowPerformers,
@@ -47,7 +47,7 @@ async function TeamRatingTrendChart() {
   }
 
   return (
-    <LOTrendChart
+    <UserTrendChart
       data={result.data}
       title="Team Rating Trend"
       color="hsl(var(--chart-1))"
@@ -81,7 +81,7 @@ async function AlertsSection() {
 // Server component for initial comparison data
 async function getInitialData() {
   const [comparisonResult, filterResult] = await Promise.all([
-    getLoanOfficerComparison(),
+    getUserComparison(),
     getFilterOptions(),
   ]);
 

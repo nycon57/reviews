@@ -227,11 +227,11 @@ export function AdminTrendsDashboard() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Active LOs</p>
-                  <p className="text-xl font-bold">{metrics?.activeLoanOfficers || 0}</p>
+                  <p className="text-xl font-bold">{metrics?.activeMembers || 0}</p>
                 </div>
               </div>
               <span className="text-xs text-muted-foreground">
-                of {metrics?.totalLoanOfficers || 0}
+                of {metrics?.totalMembers || 0}
               </span>
             </div>
           </CardContent>

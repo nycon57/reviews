@@ -80,7 +80,7 @@ async function validateTestRequest(
   }
 
   const { data: loanOfficer } = await supabase
-    .from("loan_officers")
+    .from("users")
     .select("email")
     .eq("organization_id", userData.organization_id)
     .eq("is_active", true)
@@ -104,7 +104,7 @@ function generateSamplePayload(
   loanOfficerEmail: string
 ): Record<string, unknown> {
   const baseData = {
-    loan_officer_email: loanOfficerEmail,
+    user_email: loanOfficerEmail,
     customer_name: "Test Customer",
     customer_email: "test.customer@example.com",
     customer_phone: "+1234567890",

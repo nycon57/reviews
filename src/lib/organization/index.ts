@@ -42,6 +42,7 @@ export {
   updateOrganizationBilling,
   getOrganizationMembers,
   updateMemberRole,
+  updateMemberDetails,
   deactivateMember,
   reactivateMember,
   createInvitation,

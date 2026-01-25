@@ -30,11 +30,11 @@ import {
 } from "@phosphor-icons/react";
 import {
   getTeamMetrics,
-  getLoanOfficerComparison,
+  getUserComparison,
   getLeaderboard,
   getLowPerformers,
   type TeamMetrics,
-  type LoanOfficerComparison,
+  type UserComparison,
   type LeaderboardEntry,
 } from "@/lib/dashboard";
 
@@ -99,8 +99,8 @@ export function AdminAnalyticsDashboard() {
   const [isPending, startTransition] = useTransition();
   const [metrics, setMetrics] = useState<TeamMetrics | null>(null);
   const [topPerformers, setTopPerformers] = useState<LeaderboardEntry[]>([]);
-  const [lowPerformers, setLowPerformers] = useState<LoanOfficerComparison[]>([]);
-  const [allLoanOfficers, setAllLoanOfficers] = useState<LoanOfficerComparison[]>([]);
+  const [lowPerformers, setLowPerformers] = useState<UserComparison[]>([]);
+  const [allUsers, setAllUsers] = useState<UserComparison[]>([]);
 
   const loadData = () => {
     startTransition(async () => {
@@ -108,7 +108,7 @@ export function AdminAnalyticsDashboard() {
         getTeamMetrics(),
         getLeaderboard(5, "reputation"),
         getLowPerformers(),
-        getLoanOfficerComparison(),
+        getUserComparison(),
       ]);
 
       if (metricsResult.success && metricsResult.data) {
@@ -121,7 +121,7 @@ export function AdminAnalyticsDashboard() {
         setLowPerformers(lowResult.data);
       }
       if (allResult.success && allResult.data) {
-        setAllLoanOfficers(allResult.data);
+        setAllUsers(allResult.data);
       }
     });
   };
@@ -131,9 +131,9 @@ export function AdminAnalyticsDashboard() {
   }, []);
 
   // Calculate review distribution by performance status
-  const performanceDistribution = allLoanOfficers.reduce(
-    (acc, lo) => {
-      acc[lo.performanceStatus] = (acc[lo.performanceStatus] || 0) + 1;
+  const performanceDistribution = allUsers.reduce(
+    (acc, user) => {
+      acc[user.performanceStatus] = (acc[user.performanceStatus] || 0) + 1;
       return acc;
     },
     {} as Record<string, number>
@@ -227,11 +227,11 @@ export function AdminAnalyticsDashboard() {
                   <Users className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Active LOs</p>
+                  <p className="text-xs text-muted-foreground">Active Members</p>
                   <p className="text-xl font-bold">
-                    {metrics?.activeLoanOfficers || 0}
+                    {metrics?.activeMembers || 0}
                     <span className="text-sm font-normal text-muted-foreground">
-                      /{metrics?.totalLoanOfficers || 0}
+                      /{metrics?.totalMembers || 0}
                     </span>
                   </p>
                 </div>
@@ -308,21 +308,21 @@ export function AdminAnalyticsDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {topPerformers.slice(0, 5).map((lo, index) => (
-                  <div key={lo.id} className="flex items-center gap-3">
+                {topPerformers.slice(0, 5).map((performer, index) => (
+                  <div key={performer.id} className="flex items-center gap-3">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs font-bold">
                       {index + 1}
                     </span>
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={lo.photoUrl || undefined} alt={lo.fullName} />
+                      <AvatarImage src={performer.photoUrl || undefined} alt={performer.fullName} />
                       <AvatarFallback className="text-xs">
-                        {getInitials(lo.fullName)}
+                        {getInitials(performer.fullName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{lo.fullName}</p>
+                      <p className="text-sm font-medium truncate">{performer.fullName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {lo.averageRating.toFixed(1)} stars / {lo.totalReviews} reviews
+                        {performer.averageRating.toFixed(1)} stars / {performer.totalReviews} reviews
                       </p>
                     </div>
                   </div>
@@ -415,25 +415,25 @@ export function AdminAnalyticsDashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {lowPerformers.slice(0, 5).map((lo) => (
-                  <div key={lo.id} className="flex items-center gap-3">
+                {lowPerformers.slice(0, 5).map((member) => (
+                  <div key={member.id} className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={lo.photoUrl || undefined} alt={lo.fullName} />
+                      <AvatarImage src={member.photoUrl || undefined} alt={member.fullName} />
                       <AvatarFallback className="text-xs">
-                        {getInitials(lo.fullName)}
+                        {getInitials(member.fullName)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{lo.fullName}</p>
+                      <p className="text-sm font-medium truncate">{member.fullName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {lo.averageRating.toFixed(1)} stars / NPS: {lo.npsScore}
+                        {member.averageRating.toFixed(1)} stars / NPS: {member.npsScore}
                       </p>
                     </div>
                     <Badge
                       variant="secondary"
-                      className={getPerformanceColor(lo.performanceStatus)}
+                      className={getPerformanceColor(member.performanceStatus)}
                     >
-                      {lo.performanceStatus === "needs_attention" ? "Attention" : "At Risk"}
+                      {member.performanceStatus === "needs_attention" ? "Attention" : "At Risk"}
                     </Badge>
                   </div>
                 ))}

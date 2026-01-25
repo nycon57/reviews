@@ -65,7 +65,7 @@ async function logEmail(params: {
       subject: params.subject,
       template_name: params.templateName,
       organization_id: params.organizationId,
-      loan_officer_id: params.loanOfficerId,
+      user_id: params.loanOfficerId,
       resend_message_id: params.resendMessageId,
       status: params.status,
       sent_at: params.status === "sent" ? new Date().toISOString() : null,
@@ -254,7 +254,7 @@ export async function sendWeeklyLOSummaries(): Promise<SendWeeklySummaryResult> 
           tags: [
             { name: "template", value: "weekly_summary_lo" },
             { name: "organization_id", value: user.organizationId },
-            { name: "loan_officer_id", value: user.userId },
+            { name: "user_id", value: user.userId },
           ],
         });
 
@@ -448,19 +448,19 @@ export async function sendWeeklyManagerSummaries(): Promise<SendWeeklySummaryRes
 }
 
 /**
- * Send all weekly summary emails (both LO and manager)
+ * Send all weekly summary emails (both user and manager)
  */
 export async function sendAllWeeklySummaries(): Promise<{
-  lo: SendWeeklySummaryResult;
+  user: SendWeeklySummaryResult;
   manager: SendWeeklySummaryResult;
 }> {
-  const [loResult, managerResult] = await Promise.all([
+  const [userResult, managerResult] = await Promise.all([
     sendWeeklyLOSummaries(),
     sendWeeklyManagerSummaries(),
   ]);
 
   return {
-    lo: loResult,
+    user: userResult,
     manager: managerResult,
   };
 }

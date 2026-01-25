@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SPECIALTIES, LANGUAGES, US_STATES } from "./constants";
 
 // Types
-export interface DirectoryLoanOfficer {
+export interface DirectoryProfessional {
   id: string;
   full_name: string;
   title: string | null;
@@ -36,6 +36,9 @@ export interface DirectoryLoanOfficer {
   } | null;
 }
 
+/** @deprecated Use DirectoryProfessional instead */
+export type DirectoryLoanOfficer = DirectoryProfessional;
+
 export interface SearchFilters {
   query?: string;
   city?: string;
@@ -49,7 +52,18 @@ export interface SearchFilters {
 }
 
 export interface DirectorySearchResult {
-  loanOfficers: DirectoryLoanOfficer[];
+  professionals: DirectoryProfessional[];
+  totalCount: number;
+  facets: {
+    states: { value: string; count: number }[];
+    specialties: { value: string; count: number }[];
+    languages: { value: string; count: number }[];
+  };
+}
+
+/** @deprecated Use DirectorySearchResult.professionals instead */
+export interface LegacyDirectorySearchResult {
+  loanOfficers: DirectoryProfessional[];
   totalCount: number;
   facets: {
     states: { value: string; count: number }[];
@@ -59,9 +73,9 @@ export interface DirectorySearchResult {
 }
 
 /**
- * Search loan officers with filters
+ * Search professionals with filters
  */
-export async function searchLoanOfficers(
+export async function searchProfessionals(
   filters: SearchFilters,
   page = 1,
   pageSize = 20
@@ -70,9 +84,9 @@ export async function searchLoanOfficers(
     const supabase = createAdminClient();
     const offset = (page - 1) * pageSize;
 
-    // Build the base query for fetching loan officers
+    // Build the base query for fetching professionals
     let query = supabase
-      .from("loan_officers")
+      .from("users")
       .select(
         `
         id,
@@ -163,43 +177,43 @@ export async function searchLoanOfficers(
         details: error.details,
         hint: error.hint,
       });
-      return { success: false, error: "Failed to search loan officers" };
+      return { success: false, error: "Failed to search professionals" };
     }
 
     // Transform data to match our interface
-    const loanOfficers: DirectoryLoanOfficer[] = (data || []).map((lo) => {
-      const org = lo.organizations as { id: string; name: string; logo_url: string | null } | null;
+    const professionals: DirectoryProfessional[] = (data || []).map((record) => {
+      const org = record.organizations as { id: string; name: string; logo_url: string | null } | null;
       return {
-        id: lo.id,
-        full_name: lo.full_name,
-        title: lo.title,
-        bio: lo.bio,
-        photo_url: lo.photo_url,
-        email: lo.email,
-        phone: lo.phone,
-        branch: lo.branch,
-        branch_id: lo.branch_id,
-        region: lo.region,
-        nmls_id: lo.nmls_id,
-        address: lo.address as DirectoryLoanOfficer["address"],
-        linkedin_url: lo.linkedin_url,
-        average_rating: lo.average_rating,
-        total_reviews: lo.total_reviews,
-        latitude: lo.latitude,
-        longitude: lo.longitude,
+        id: record.id,
+        full_name: record.full_name || 'Unknown',
+        title: record.title,
+        bio: record.bio,
+        photo_url: record.photo_url,
+        email: record.email,
+        phone: record.phone,
+        branch: record.branch,
+        branch_id: record.branch_id,
+        region: record.region,
+        nmls_id: record.nmls_id,
+        address: record.address as DirectoryProfessional["address"],
+        linkedin_url: record.linkedin_url,
+        average_rating: record.average_rating,
+        total_reviews: record.total_reviews,
+        latitude: record.latitude,
+        longitude: record.longitude,
         organization: org,
       };
     });
 
     // Get facets for filtering - states
     const { data: stateData } = await supabase
-      .from("loan_officers")
+      .from("users")
       .select("address")
       .eq("is_active", true);
 
     const stateCounts = new Map<string, number>();
-    (stateData || []).forEach((lo) => {
-      const addr = lo.address as { state?: string } | null;
+    (stateData || []).forEach((record) => {
+      const addr = record.address as { state?: string } | null;
       if (addr?.state) {
         stateCounts.set(addr.state, (stateCounts.get(addr.state) || 0) + 1);
       }
@@ -212,11 +226,11 @@ export async function searchLoanOfficers(
     return {
       success: true,
       data: {
-        loanOfficers,
+        professionals,
         totalCount: count || 0,
         facets: {
           states,
-          // Specialties and languages would come from LO profile settings
+          // Specialties and languages would come from user profile settings
           // For now, we'll return the predefined list
           specialties: SPECIALTIES.map((s) => ({ value: s, count: 0 })),
           languages: LANGUAGES.map((l) => ({ value: l, count: 0 })),
@@ -225,25 +239,28 @@ export async function searchLoanOfficers(
     };
   } catch (error) {
     console.error("Directory search error:", error instanceof Error ? error.message : error);
-    return { success: false, error: "Failed to search loan officers" };
+    return { success: false, error: "Failed to search professionals" };
   }
 }
 
+/** @deprecated Use searchProfessionals instead */
+export const searchLoanOfficers = searchProfessionals;
+
 /**
- * Get unique states with loan officers for the filter dropdown
+ * Get unique states with professionals for the filter dropdown
  */
 export async function getAvailableStates(): Promise<{ value: string; label: string }[]> {
   try {
     const supabase = createAdminClient();
 
     const { data } = await supabase
-      .from("loan_officers")
+      .from("users")
       .select("address")
       .eq("is_active", true);
 
     const stateSet = new Set<string>();
-    (data || []).forEach((lo) => {
-      const addr = lo.address as { state?: string } | null;
+    (data || []).forEach((record) => {
+      const addr = record.address as { state?: string } | null;
       if (addr?.state) {
         stateSet.add(addr.state);
       }
@@ -261,9 +278,9 @@ export async function getAvailableStates(): Promise<{ value: string; label: stri
 }
 
 /**
- * Update a loan officer's coordinates
+ * Update a professional's coordinates
  */
-export async function updateLoanOfficerCoordinates(
+export async function updateUserCoordinates(
   id: string,
   latitude: number,
   longitude: number
@@ -272,7 +289,7 @@ export async function updateLoanOfficerCoordinates(
     const supabase = createAdminClient();
 
     const { error } = await supabase
-      .from("loan_officers")
+      .from("users")
       .update({ latitude, longitude })
       .eq("id", id);
 
@@ -288,11 +305,14 @@ export async function updateLoanOfficerCoordinates(
   }
 }
 
+/** @deprecated Use updateUserCoordinates instead */
+export const updateLoanOfficerCoordinates = updateUserCoordinates;
+
 /**
- * Batch geocode loan officers that don't have coordinates
+ * Batch geocode users that don't have coordinates
  * This is intended for initial data migration
  */
-export async function batchGeocodeLoanOfficers(
+export async function batchGeocodeUsers(
   limit = 10
 ): Promise<{ success: boolean; processed: number; error?: string }> {
   // Import geocoding at runtime to avoid circular dependencies
@@ -301,9 +321,9 @@ export async function batchGeocodeLoanOfficers(
   try {
     const supabase = createAdminClient();
 
-    // Get loan officers without coordinates
-    const { data: officers, error: fetchError } = await supabase
-      .from("loan_officers")
+    // Get users without coordinates
+    const { data: users, error: fetchError } = await supabase
+      .from("users")
       .select("id, address")
       .eq("is_active", true)
       .is("latitude", null)
@@ -311,17 +331,17 @@ export async function batchGeocodeLoanOfficers(
 
     if (fetchError) {
       console.error("Fetch error:", fetchError);
-      return { success: false, processed: 0, error: "Failed to fetch loan officers" };
+      return { success: false, processed: 0, error: "Failed to fetch users" };
     }
 
-    if (!officers?.length) {
+    if (!users?.length) {
       return { success: true, processed: 0 };
     }
 
     let processed = 0;
 
-    for (const officer of officers) {
-      const addr = officer.address as {
+    for (const user of users) {
+      const addr = user.address as {
         street?: string;
         city?: string;
         state?: string;
@@ -339,12 +359,12 @@ export async function batchGeocodeLoanOfficers(
 
       if (result) {
         const { error: updateError } = await supabase
-          .from("loan_officers")
+          .from("users")
           .update({
             latitude: result.latitude,
             longitude: result.longitude,
           })
-          .eq("id", officer.id);
+          .eq("id", user.id);
 
         if (!updateError) {
           processed++;
@@ -358,6 +378,9 @@ export async function batchGeocodeLoanOfficers(
     return { success: true, processed };
   } catch (error) {
     console.error("Batch geocode error:", error instanceof Error ? error.message : error);
-    return { success: false, processed: 0, error: "Failed to geocode loan officers" };
+    return { success: false, processed: 0, error: "Failed to geocode users" };
   }
 }
+
+/** @deprecated Use batchGeocodeUsers instead */
+export const batchGeocodeLoanOfficers = batchGeocodeUsers;

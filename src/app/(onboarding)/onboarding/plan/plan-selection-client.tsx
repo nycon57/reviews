@@ -42,7 +42,7 @@ const plans: PlanOption[] = [
     name: "Basic",
     monthlyPrice: 49,
     yearlyPrice: 39,
-    description: "Perfect for individual loan officers",
+    description: "Perfect for individuals",
     features: [
       "1 user account",
       "Unlimited surveys",

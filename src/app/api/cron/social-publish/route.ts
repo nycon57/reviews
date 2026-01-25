@@ -270,11 +270,11 @@ async function processPublishQueue(
         throw new Error(`No default template for ${platform}`);
       }
 
-      // Get loan officer and organization info
+      // Get user and organization info
       const { data: loanOfficer } = await adminClient
-        .from('loan_officers')
+        .from('users')
         .select('full_name, branch')
-        .eq('id', item.reviews.loan_officer_id)
+        .eq('id', item.reviews.user_id)
         .single();
 
       const { data: org } = await adminClient

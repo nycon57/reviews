@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Star,
@@ -16,7 +17,7 @@ interface QuickAction {
   href: string;
 }
 
-export function LOQuickActions() {
+export function UserQuickActions() {
   const actions: QuickAction[] = [
     {
       icon: <Send className="h-5 w-5" />,
@@ -51,7 +52,7 @@ export function LOQuickActions() {
       </CardHeader>
       <CardContent className="grid gap-2">
         {actions.map((action) => (
-          <a
+          <Link
             key={action.title}
             href={action.href}
             className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -66,7 +67,7 @@ export function LOQuickActions() {
               </div>
             </div>
             <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-          </a>
+          </Link>
         ))}
       </CardContent>
     </Card>

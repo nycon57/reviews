@@ -80,7 +80,7 @@ export const encompassCustomPayloadSchema = z.object({
   event_type: z.literal("encompass.milestone"),
   milestone: z.string().min(1), // "Funded", "Clear to Close", etc.
   loan_id: z.string().min(1),
-  loan_officer_email: z.string().email(),
+  user_email: z.string().email(),
   borrower_name: z.string().min(1),
   borrower_email: z.string().email(),
   borrower_phone: z.string().optional(),
@@ -215,7 +215,7 @@ export function transformCustomEncompassPayload(
     milestone: payload.milestone,
     loanId: payload.loan_id,
     loanNumber: payload.loan_number,
-    loanOfficerEmail: payload.loan_officer_email,
+    loanOfficerEmail: payload.user_email,
     customerName: payload.borrower_name,
     customerEmail: payload.borrower_email,
     customerPhone: payload.borrower_phone,

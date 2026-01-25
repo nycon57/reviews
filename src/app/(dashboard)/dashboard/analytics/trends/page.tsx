@@ -3,9 +3,6 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { ChartSkeleton, CardSkeleton } from "@/components/shared";
-import {
-  TrendUp as TrendingUp,
-} from "@phosphor-icons/react/dist/ssr";
 import { TrendsDashboard } from "./trends-dashboard";
 
 export const metadata = {
@@ -38,21 +35,7 @@ export default async function TrendsPage() {
   await checkAccess();
 
   return (
-    <div className="flex-1 space-y-6">
-      {/* Page header */}
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <TrendingUp className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Analytics Trends</h1>
-          <p className="text-muted-foreground">
-            Track performance metrics and trends over time
-          </p>
-        </div>
-      </div>
-
-      {/* Trends dashboard */}
+    <div className="flex-1">
       <Suspense
         fallback={
           <div className="space-y-6">

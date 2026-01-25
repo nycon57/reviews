@@ -56,7 +56,7 @@ const submitCustomerInfoSchema = z.object({
 // Type Helpers
 // ============================================================================
 
-type LoanOfficerData = { id: string; full_name: string; photo_url: string | null; title: string | null };
+type UserData = { id: string; full_name: string; photo_url: string | null; title: string | null };
 type OrganizationData = { id: string; name: string; logo_url: string | null; primary_color: string | null };
 type RequestSourceMetadata = { customer_display_name?: string; customer_relationship?: string } | null;
 
@@ -82,8 +82,8 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
       .select(`
         id, token, status, max_duration_seconds, prompt_text, expires_at,
         submitted_at, opened_at, customer_name, customer_email,
-        loan_officer_id, organization_id,
-        loan_officers!inner (id, full_name, photo_url, title),
+        user_id, organization_id,
+        users!user_id (id, full_name, photo_url, title),
         organizations!inner (id, name, logo_url, primary_color)
       `)
       .eq("token", token)
@@ -112,7 +112,7 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
         .eq("id", request.id);
     }
 
-    const loanOfficer = request.loan_officers as unknown as LoanOfficerData;
+    const professional = request.users as unknown as UserData;
     const organization = request.organizations as unknown as OrganizationData;
 
     return {
@@ -127,11 +127,11 @@ export const getVideoTestimonialByToken = cache(async function getVideoTestimoni
         submittedAt: request.submitted_at,
         customerName: request.customer_name,
         customerEmail: request.customer_email,
-        loanOfficer: {
-          id: loanOfficer.id,
-          fullName: loanOfficer.full_name,
-          photoUrl: validateSafeUrl(loanOfficer.photo_url),
-          title: loanOfficer.title,
+        professional: {
+          id: professional.id,
+          fullName: professional.full_name,
+          photoUrl: validateSafeUrl(professional.photo_url),
+          title: professional.title,
         },
         organization: {
           id: organization.id,
@@ -232,7 +232,7 @@ export interface PublicVideoTestimonial {
   submittedAt: string;
   publishedAt: string | null;
   customer: { displayName: string; relationship: string | null };
-  loanOfficer: { id: string; fullName: string; photoUrl: string | null; title: string | null };
+  professional: { id: string; fullName: string; photoUrl: string | null; title: string | null };
   organization: { id: string; name: string; logoUrl: string | null; primaryColor: string | null };
 }
 
@@ -258,9 +258,9 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
       .select(`
         id, video_url, video_path, thumbnail_url, duration_seconds, transcription,
         ai_generated_text, key_phrases, sentiment_label, submitted_at, published_at,
-        approval_status, loan_officer_id, organization_id,
+        approval_status, user_id, organization_id,
         video_testimonial_requests!inner (customer_name, source_metadata),
-        loan_officers!inner (id, full_name, photo_url, title),
+        users!user_id (id, full_name, photo_url, title),
         organizations!inner (id, name, logo_url, primary_color)
       `)
       .eq("id", videoId)
@@ -281,7 +281,7 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
     }
 
     const request = video.video_testimonial_requests as unknown as { customer_name: string; source_metadata: RequestSourceMetadata };
-    const loanOfficer = video.loan_officers as unknown as LoanOfficerData;
+    const professional = video.users as unknown as UserData;
     const organization = video.organizations as unknown as OrganizationData;
 
     trackVideoView(videoId).catch(console.error);
@@ -303,11 +303,11 @@ export const getPublicVideoTestimonial = cache(async function getPublicVideoTest
           displayName: request.source_metadata?.customer_display_name || request.customer_name,
           relationship: request.source_metadata?.customer_relationship || null,
         },
-        loanOfficer: {
-          id: loanOfficer.id,
-          fullName: loanOfficer.full_name,
-          photoUrl: validateSafeUrl(loanOfficer.photo_url),
-          title: loanOfficer.title,
+        professional: {
+          id: professional.id,
+          fullName: professional.full_name,
+          photoUrl: validateSafeUrl(professional.photo_url),
+          title: professional.title,
         },
         organization: {
           id: organization.id,
@@ -336,7 +336,7 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
   title: string;
   description: string;
   customerName: string;
-  loanOfficerName: string;
+  professionalName: string;
   organizationName: string;
   thumbnailUrl: string | null;
   durationSeconds: number | null;
@@ -353,7 +353,7 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
       .select(`
         id, thumbnail_url, duration_seconds, ai_generated_text, published_at, approval_status,
         video_testimonial_requests!inner (customer_name, source_metadata),
-        loan_officers!inner (full_name),
+        users!user_id (full_name),
         organizations!inner (name)
       `)
       .eq("id", videoId)
@@ -365,21 +365,21 @@ export const getPublicVideoMetadata = cache(async function getPublicVideoMetadat
     }
 
     const request = video.video_testimonial_requests as unknown as { customer_name: string; source_metadata: { customer_display_name?: string } | null };
-    const loanOfficer = video.loan_officers as unknown as { full_name: string };
+    const professional = video.users as unknown as { full_name: string };
     const organization = video.organizations as unknown as { name: string };
 
     const customerName = request.source_metadata?.customer_display_name || request.customer_name;
     const description = video.ai_generated_text
       ? video.ai_generated_text.substring(0, 155) + (video.ai_generated_text.length > 155 ? "..." : "")
-      : `Watch ${customerName}'s video testimonial about their experience with ${loanOfficer.full_name} at ${organization.name}.`;
+      : `Watch ${customerName}'s video testimonial about their experience with ${professional.full_name} at ${organization.name}.`;
 
     return {
       success: true,
       data: {
-        title: `${customerName}'s Experience with ${loanOfficer.full_name}`,
+        title: `${customerName}'s Experience with ${professional.full_name}`,
         description,
         customerName,
-        loanOfficerName: loanOfficer.full_name,
+        professionalName: professional.full_name,
         organizationName: organization.name,
         thumbnailUrl: validateSafeUrl(video.thumbnail_url),
         durationSeconds: video.duration_seconds,
@@ -624,9 +624,9 @@ export async function submitVideoTestimonial(
     const { data: request, error: requestError } = await supabase
       .from("video_testimonial_requests")
       .select(`
-        id, status, organization_id, loan_officer_id, customer_name,
+        id, status, organization_id, user_id, customer_name,
         expires_at, submitted_at, source_metadata,
-        loan_officers!inner (full_name)
+        users!user_id (full_name)
       `)
       .eq("token", token)
       .single();
@@ -674,7 +674,7 @@ export async function submitVideoTestimonial(
       .insert({
         request_id: request.id,
         organization_id: request.organization_id,
-        loan_officer_id: request.loan_officer_id,
+        user_id: request.user_id,
         video_url: videoUrl,
         video_path: storagePath,
         thumbnail_url: thumbnailUrl,
@@ -745,7 +745,7 @@ export interface AIProcessingJob {
   videoUrl: string;
   durationSeconds: number | null;
   customerName: string;
-  loanOfficerName: string;
+  professionalName: string;
 }
 
 export interface AIProcessingResult {
@@ -764,7 +764,7 @@ export async function processVideoTestimonialAIJob(
   job: AIProcessingJob
 ): Promise<AIProcessingResult> {
   const supabase = createAdminClient();
-  const { responseId, videoUrl, durationSeconds, customerName, loanOfficerName } = job;
+  const { responseId, videoUrl, durationSeconds, customerName, professionalName } = job;
 
   try {
     // Mark as processing
@@ -784,7 +784,7 @@ export async function processVideoTestimonialAIJob(
       const transcriptionResult = await transcribeVideoWithRetry(
         videoUrl,
         durationSeconds,
-        { prompt: `Customer testimonial for ${loanOfficerName}` }
+        { prompt: `Customer testimonial for ${professionalName}` }
       );
 
       transcription = transcriptionResult.text;
@@ -806,7 +806,7 @@ export async function processVideoTestimonialAIJob(
           const reviewResult = await generateReviewFromTranscript({
             transcription,
             customerName,
-            loanOfficerName,
+            professionalName,
           });
 
           generatedReview = reviewResult.text;
@@ -884,7 +884,7 @@ export async function getPendingAIProcessingJobs(
       video_testimonial_requests!inner (
         customer_name,
         source_metadata,
-        loan_officers!inner (full_name)
+        users!user_id (full_name)
       )
     `)
     .eq("transcription_status", "pending")
@@ -900,7 +900,7 @@ export async function getPendingAIProcessingJobs(
     const request = row.video_testimonial_requests as unknown as {
       customer_name: string;
       source_metadata: { customer_display_name?: string } | null;
-      loan_officers: { full_name: string };
+      users: { full_name: string };
     };
 
     return {
@@ -908,7 +908,7 @@ export async function getPendingAIProcessingJobs(
       videoUrl: row.video_url,
       durationSeconds: row.duration_seconds,
       customerName: request.source_metadata?.customer_display_name || request.customer_name,
-      loanOfficerName: request.loan_officers.full_name,
+      professionalName: request.users.full_name,
     };
   });
 }

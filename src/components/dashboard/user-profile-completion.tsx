@@ -15,7 +15,7 @@ interface ProfileCompletionProps {
   items: ProfileCompletionItem[];
 }
 
-export function LOProfileCompletion({
+export function UserProfileCompletion({
   percentage,
   items,
 }: ProfileCompletionProps) {

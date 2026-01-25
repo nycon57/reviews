@@ -28,17 +28,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.95,
     },
     {
-      url: `${baseUrl}/lo`,
+      url: `${baseUrl}/pro`,
       lastModified: now,
       changeFrequency: "daily",
       priority: 0.9,
     },
   ];
 
-  // Dynamic LO profile pages
-  const loIds = await getAllPublicLOIds();
-  const loPages: MetadataRoute.Sitemap = loIds.map((id) => ({
-    url: `${baseUrl}/lo/${id}`,
+  // Dynamic professional profile pages
+  const professionalIds = await getAllPublicLOIds();
+  const professionalPages: MetadataRoute.Sitemap = professionalIds.map((id) => ({
+    url: `${baseUrl}/pro/${id}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
@@ -53,5 +53,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...loPages, ...orgPages];
+  return [...staticPages, ...professionalPages, ...orgPages];
 }

@@ -3,13 +3,12 @@
  */
 
 import type { Metadata } from "next";
-import type { Tables } from "@/types/database.types";
+import type { Tables, Json } from "@/types/database.types";
 
-type LoanOfficer = Tables<"loan_officers">;
 type Branch = Tables<"branches">;
 
 /**
- * Minimal LO data needed for metadata generation
+ * Minimal professional data needed for metadata generation
  */
 interface MetadataLoanOfficer {
   id: string;
@@ -20,7 +19,7 @@ interface MetadataLoanOfficer {
   branch?: string | null;
   region?: string | null;
   nmls_id?: string | null;
-  address?: LoanOfficer["address"];
+  address?: Json | null;
   average_rating: number | null;
   total_reviews: number | null;
 }
@@ -38,7 +37,7 @@ interface MetadataBranch {
   region?: string | null;
   average_rating: number | null;
   total_reviews: number | null;
-  total_loan_officers?: number | null;
+  total_members?: number | null;
 }
 
 interface MetadataOrganization {
@@ -46,18 +45,18 @@ interface MetadataOrganization {
 }
 
 /**
- * Generate metadata for a Loan Officer profile page
+ * Generate metadata for a professional profile page
  */
 export function generateLOProfileMetadata(
   loanOfficer: MetadataLoanOfficer,
   organization: MetadataOrganization | null,
   baseUrl: string
 ): Metadata {
-  const title = `${loanOfficer.full_name} - ${loanOfficer.title || "Loan Officer"} Reviews`;
+  const title = `${loanOfficer.full_name} - ${loanOfficer.title || "Professional"} Reviews`;
   const description =
     loanOfficer.bio ||
-    `Read reviews and ratings for ${loanOfficer.full_name}, ${loanOfficer.title || "Loan Officer"}${organization ? ` at ${organization.name}` : ""}. ${loanOfficer.total_reviews || 0} reviews with ${loanOfficer.average_rating ? `${Number(loanOfficer.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
-  const profileUrl = `${baseUrl}/lo/${loanOfficer.id}`;
+    `Read reviews and ratings for ${loanOfficer.full_name}, ${loanOfficer.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${loanOfficer.total_reviews || 0} reviews with ${loanOfficer.average_rating ? `${Number(loanOfficer.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
+  const profileUrl = `${baseUrl}/pro/${loanOfficer.id}`;
 
   const metadata: Metadata = {
     title,
@@ -107,26 +106,26 @@ export function generateLOProfileMetadata(
 }
 
 /**
- * Generate metadata for the Loan Officers listing page
+ * Generate metadata for the professionals listing page
  */
 export function generateLOListingMetadata(
   organization: MetadataOrganization | null,
   baseUrl: string
 ): Metadata {
   const siteName = organization?.name || "RepWell";
-  const title = `Our Loan Officers - ${siteName}`;
-  const description = `Meet our team of experienced loan officers. Read reviews and ratings to find the right mortgage professional for your needs.`;
+  const title = `Our Professionals - ${siteName}`;
+  const description = `Meet our team of experienced professionals. Read reviews and ratings to find the right team member for your needs.`;
 
   return {
     title,
     description,
     alternates: {
-      canonical: `${baseUrl}/lo`,
+      canonical: `${baseUrl}/pro`,
     },
     openGraph: {
       title,
       description,
-      url: `${baseUrl}/lo`,
+      url: `${baseUrl}/pro`,
       type: "website",
       siteName,
       locale: "en_US",
@@ -225,7 +224,7 @@ export function generateBranchProfileMetadata(
     ? `${branch.name} - ${locationStr} - ${siteName}`
     : `${branch.name} - ${siteName}`;
 
-  const loCount = branch.total_loan_officers || 0;
+  const loCount = branch.total_members || 0;
   const reviewCount = branch.total_reviews || 0;
   const avgRating = branch.average_rating
     ? Number(branch.average_rating).toFixed(1)
@@ -233,7 +232,7 @@ export function generateBranchProfileMetadata(
 
   const description =
     branch.description ||
-    `Visit ${branch.name}${locationStr ? ` in ${locationStr}` : ""}. Meet our team of ${loCount} experienced loan officers. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}.`;
+    `Visit ${branch.name}${locationStr ? ` in ${locationStr}` : ""}. Meet our team of ${loCount} experienced professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}.`;
 
   const profileUrl = `${baseUrl}/branch/${branch.id}`;
 
@@ -297,7 +296,7 @@ interface MetadataOrganizationFull {
   aggregate_rating: number | null;
   total_reviews: number;
   total_branches: number;
-  total_loan_officers: number;
+  total_members: number;
 }
 
 /**
@@ -308,7 +307,7 @@ export function generateOrganizationProfileMetadata(
   baseUrl: string
 ): Metadata {
   const siteName = organization.name;
-  const loCount = organization.total_loan_officers || 0;
+  const loCount = organization.total_members || 0;
   const branchCount = organization.total_branches || 0;
   const reviewCount = organization.total_reviews || 0;
   const avgRating = organization.aggregate_rating
@@ -319,7 +318,7 @@ export function generateOrganizationProfileMetadata(
 
   const description =
     organization.description ||
-    `Explore ${organization.name} with ${branchCount} locations and ${loCount} mortgage professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}. Find your local branch and loan officer.`;
+    `Explore ${organization.name} with ${branchCount} locations and ${loCount} professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}. Find your local branch and team member.`;
 
   const profileUrl = `${baseUrl}/org/${organization.slug}`;
 

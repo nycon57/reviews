@@ -2,18 +2,18 @@
 
 import { useState, useTransition } from "react";
 import {
-  LOComparisonTable,
+  UserComparisonTable,
   TeamFilters,
 } from "@/components/dashboard";
 import {
-  getLoanOfficerComparison,
-  type LoanOfficerComparison,
+  getUserComparison,
+  type UserComparison,
   type FilterOptions,
 } from "@/lib/dashboard";
 import { TableSkeleton } from "@/components/shared";
 
 interface ManagerDashboardClientProps {
-  initialComparison: LoanOfficerComparison[];
+  initialComparison: UserComparison[];
   filterOptions: FilterOptions;
 }
 
@@ -44,7 +44,7 @@ export function ManagerDashboardClient({
 
   const fetchFilteredData = (branch: string, region: string) => {
     startTransition(async () => {
-      const result = await getLoanOfficerComparison(
+      const result = await getUserComparison(
         branch !== "all" ? branch : undefined,
         region !== "all" ? region : undefined
       );
@@ -71,7 +71,7 @@ export function ManagerDashboardClient({
       {isPending ? (
         <TableSkeleton rows={5} />
       ) : (
-        <LOComparisonTable data={comparison} />
+        <UserComparisonTable data={comparison} />
       )}
     </div>
   );

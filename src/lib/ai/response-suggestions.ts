@@ -48,7 +48,7 @@ function getSystemPrompt(tone: ResponseTone, context: ReviewContext): string {
     ? `Key phrases from the review: "${context.keyPhrases.join('", "')}".`
     : '';
 
-  return `You are an expert at writing personalized responses to customer reviews for mortgage loan officers.
+  return `You are an expert at writing personalized responses to customer reviews for professionals.
 Your task is to generate a thoughtful, contextual response to a customer review.
 
 TONE REQUIREMENT: ${TONE_DESCRIPTIONS[tone]}
@@ -159,7 +159,7 @@ function generateFallbackResponse(
 
 Wow, thank you so much for the wonderful review! It was such a pleasure working with you through your mortgage journey. Your kind words really made my day!
 
-I'm thrilled that everything went smoothly and that you had a great experience. If you ever need anything in the future, or if any of your friends or family are looking for a loan officer, I'd be honored to help them out!
+I'm thrilled that everything went smoothly and that you had a great experience. If you ever need anything in the future, or if any of your friends or family could use my services, I'd be honored to help them out!
 
 Thanks again,
 ${loanOfficerName}`;
@@ -169,7 +169,7 @@ ${loanOfficerName}`;
 
 I'm deeply grateful for you taking the time to share your experience. Working with you was truly meaningful to me, and I'm so glad I could be part of such an important milestone in your life.
 
-Your trust means everything, and I'm honored to have been your loan officer. Please don't hesitate to reach out if you ever need anything at all.
+Your trust means everything, and I'm honored to have worked with you. Please don't hesitate to reach out if you ever need anything at all.
 
 With sincere thanks,
 ${loanOfficerName}`;

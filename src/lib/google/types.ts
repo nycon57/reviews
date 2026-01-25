@@ -52,7 +52,9 @@ export interface GoogleReview {
 export interface GoogleConnection {
   id: string;
   organizationId: string;
-  loanOfficerId: string | null;
+  userId: string | null;
+  /** @deprecated Use userId instead */
+  loanOfficerId?: string | null;
   googleAccountId: string;
   googleAccountEmail: string | null;
   googleAccountName: string | null;

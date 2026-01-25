@@ -97,7 +97,7 @@ export function ProfileCompletionLeaderboard({
         <CardContent>
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No loan officers found</p>
+            <p className="text-muted-foreground">No team members found</p>
           </div>
         </CardContent>
       </Card>
@@ -153,7 +153,7 @@ export function ProfileCompletionLeaderboard({
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-16">Rank</TableHead>
-                  <TableHead>Loan Officer</TableHead>
+                  <TableHead>Team Member</TableHead>
                   <TableHead className="w-24 text-right">Points</TableHead>
                   <TableHead className="w-32 text-right">Search Rank</TableHead>
                   <TableHead className="w-32">Progress</TableHead>

@@ -40,7 +40,7 @@ export function ExportInsightsButton({
     rows.push(["AI Insights Report"]);
     rows.push([`Generated: ${new Date().toLocaleDateString()}`]);
     rows.push([`Period: ${new Date(data.periodStart).toLocaleDateString()} - ${new Date(data.periodEnd).toLocaleDateString()}`]);
-    if (loanOfficerName) rows.push([`Loan Officer: ${loanOfficerName}`]);
+    if (loanOfficerName) rows.push([`Professional: ${loanOfficerName}`]);
     rows.push([]);
 
     // Sentiment Distribution

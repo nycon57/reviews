@@ -134,7 +134,7 @@ export function generateCodeSamples(params: CodeSampleParams): Record<CodeLangua
  */
 export const exampleRequestBodies: Record<string, Record<string, unknown>> = {
   "POST /api/v1/surveys": {
-    loan_officer_email: "john.smith@company.com",
+    user_email: "john.smith@company.com",
     customer_name: "Jane Doe",
     customer_email: "jane.doe@example.com",
     customer_phone: "+1 (555) 123-4567",

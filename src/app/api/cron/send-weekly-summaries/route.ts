@@ -1,7 +1,7 @@
 /**
  * Weekly Summary Email Cron Job (S082)
  *
- * This endpoint sends weekly performance summary emails to loan officers and managers.
+ * This endpoint sends weekly performance summary emails to users and managers.
  * Recommended cron schedule: Every Monday at 8:00 AM UTC (adjust for local timezone)
  *
  * Example Vercel cron: "0 8 * * 1" (every Monday at 8:00 AM)
@@ -28,7 +28,7 @@ function verifyCronSecret(request: NextRequest): boolean {
 /**
  * POST /api/cron/send-weekly-summaries
  *
- * Sends weekly summary emails to all eligible loan officers and managers.
+ * Sends weekly summary emails to all eligible users and managers.
  * Call this endpoint weekly (recommended: Monday 8:00 AM local time).
  */
 export async function POST(request: NextRequest) {
@@ -44,27 +44,27 @@ export async function POST(request: NextRequest) {
 
     const results = await sendAllWeeklySummaries();
 
-    const totalSent = results.lo.sent + results.manager.sent;
-    const totalFailed = results.lo.failed + results.manager.failed;
-    const totalSkipped = results.lo.skipped + results.manager.skipped;
-    const allErrors = [...results.lo.errors, ...results.manager.errors];
+    const totalSent = results.user.sent + results.manager.sent;
+    const totalFailed = results.user.failed + results.manager.failed;
+    const totalSkipped = results.user.skipped + results.manager.skipped;
+    const allErrors = [...results.user.errors, ...results.manager.errors];
 
     console.log(
       `[Weekly Summary Cron] Completed - Sent: ${totalSent}, Failed: ${totalFailed}, Skipped: ${totalSkipped}`
     );
 
     return NextResponse.json({
-      success: results.lo.success && results.manager.success,
+      success: results.user.success && results.manager.success,
       summary: {
         totalSent,
         totalFailed,
         totalSkipped,
       },
       details: {
-        loanOfficers: {
-          sent: results.lo.sent,
-          failed: results.lo.failed,
-          skipped: results.lo.skipped,
+        users: {
+          sent: results.user.sent,
+          failed: results.user.failed,
+          skipped: results.user.skipped,
         },
         managers: {
           sent: results.manager.sent,
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     status: "healthy",
     endpoint: "send-weekly-summaries",
-    description: "Weekly performance summary emails for LOs and managers",
+    description: "Weekly performance summary emails for users and managers",
     recommendedSchedule: "Every Monday at 8:00 AM local time",
     timestamp: new Date().toISOString(),
   });

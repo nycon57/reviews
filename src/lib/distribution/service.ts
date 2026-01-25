@@ -128,7 +128,7 @@ export async function getSurveyForSending(
       completed_at,
       expires_at,
       transaction_type,
-      loan_officers!inner (
+      users!user_id (
         id,
         full_name,
         email,
@@ -149,7 +149,7 @@ export async function getSurveyForSending(
     return null;
   }
 
-  const loanOfficer = survey.loan_officers as unknown as {
+  const loanOfficer = survey.users as unknown as {
     id: string;
     full_name: string;
     email: string;

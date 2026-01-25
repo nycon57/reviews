@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/types/database.types";
 
-type LoanOfficer = Tables<"loan_officers">;
+type User = Tables<"users">;
 type Organization = Tables<"organizations">;
 type Branch = Tables<"branches">;
 
@@ -24,10 +24,10 @@ export interface PublicBranch {
   region: string | null;
   average_rating: number | null;
   total_reviews: number | null;
-  total_loan_officers: number | null;
+  total_members: number | null;
 }
 
-export interface PublicBranchLoanOfficer {
+export interface PublicBranchProfessional {
   id: string;
   full_name: string;
   title: string | null;
@@ -38,6 +38,9 @@ export interface PublicBranchLoanOfficer {
   average_rating: number | null;
   total_reviews: number | null;
 }
+
+/** @deprecated Use PublicBranchProfessional instead */
+export type PublicBranchLoanOfficer = PublicBranchProfessional;
 
 export interface PublicBranchReview {
   id: string;
@@ -63,7 +66,18 @@ export interface PublicBranchProfileData {
   reviews: PublicBranchReview[];
 }
 
-export interface PublicLoanOfficer {
+export interface BusinessHours {
+  monday?: { open: string; close: string } | null;
+  tuesday?: { open: string; close: string } | null;
+  wednesday?: { open: string; close: string } | null;
+  thursday?: { open: string; close: string } | null;
+  friday?: { open: string; close: string } | null;
+  saturday?: { open: string; close: string } | null;
+  sunday?: { open: string; close: string } | null;
+}
+
+// Minimal interface for list views
+export interface PublicProfessionalListItem {
   id: string;
   full_name: string;
   title: string | null;
@@ -74,13 +88,33 @@ export interface PublicLoanOfficer {
   branch: string | null;
   region: string | null;
   nmls_id: string | null;
-  address: LoanOfficer["address"];
+  address: User["address"];
   linkedin_url: string | null;
   zillow_profile_url: string | null;
   average_rating: number | null;
   total_reviews: number | null;
   nps_score: number | null;
 }
+
+/** @deprecated Use PublicProfessionalListItem instead */
+export type PublicLoanOfficerListItem = PublicProfessionalListItem;
+
+// Full interface for profile views with customization fields
+export interface PublicProfessional extends PublicProfessionalListItem {
+  branch_id: string | null;
+  // Profile customization fields
+  banner_url: string | null;
+  cta_button_text: string | null;
+  cta_button_url: string | null;
+  video_testimonial_url: string | null;
+  video_thumbnail_url: string | null;
+  accepts_public_reviews: boolean;
+  referral_enabled: boolean;
+  featured_review_ids: string[] | null;
+}
+
+/** @deprecated Use PublicProfessional instead */
+export type PublicLoanOfficer = PublicProfessional;
 
 export interface PublicReview {
   id: string;
@@ -94,24 +128,29 @@ export interface PublicReview {
   response_text: string | null;
 }
 
-export interface PublicLOProfileData {
-  loanOfficer: PublicLoanOfficer;
+export interface PublicProfessionalProfileData {
+  professional: PublicProfessional;
   organization: Pick<Organization, "id" | "name" | "logo_url" | "domain"> | null;
   reviews: PublicReview[];
+  featuredReviews: PublicReview[];
+  businessHours: BusinessHours | null;
 }
 
+/** @deprecated Use PublicProfessionalProfileData instead */
+export type PublicLOProfileData = PublicProfessionalProfileData;
+
 /**
- * Get a public Loan Officer profile by ID
+ * Get a public professional profile by user ID
  */
 export async function getPublicLOProfile(
-  loId: string
+  userId: string
 ): Promise<{ success: boolean; data?: PublicLOProfileData; error?: string }> {
   try {
     const supabase = createAdminClient();
 
-    // Fetch the loan officer
-    const { data: loanOfficer, error: loError } = await supabase
-      .from("loan_officers")
+    // Fetch the user (professional)
+    const { data: user, error: userError } = await supabase
+      .from("users")
       .select(
         `
         id,
@@ -119,9 +158,11 @@ export async function getPublicLOProfile(
         title,
         bio,
         photo_url,
+        avatar_url,
         email,
         phone,
         branch,
+        branch_id,
         region,
         nmls_id,
         address,
@@ -132,39 +173,39 @@ export async function getPublicLOProfile(
         nps_score,
         is_active,
         organization_id,
-        user_id
+        banner_url,
+        cta_button_text,
+        cta_button_url,
+        video_testimonial_url,
+        video_thumbnail_url,
+        accepts_public_reviews,
+        referral_enabled,
+        featured_review_ids
       `
       )
-      .eq("id", loId)
+      .eq("id", userId)
       .eq("is_active", true)
       .single();
 
-    if (loError || !loanOfficer) {
-      return { success: false, error: "Loan officer not found" };
+    if (userError || !user) {
+      return { success: false, error: "Professional not found" };
     }
 
-    // Fetch linked user's avatar as fallback if loan officer has no photo
-    let photoUrl = loanOfficer.photo_url;
-    if (!photoUrl && loanOfficer.user_id) {
-      const { data: linkedUser } = await supabase
-        .from("users")
-        .select("avatar_url")
-        .eq("id", loanOfficer.user_id)
-        .single();
-
-      if (linkedUser?.avatar_url) {
-        photoUrl = linkedUser.avatar_url;
-      }
+    if (!user.organization_id) {
+      return { success: false, error: "Professional not associated with an organization" };
     }
+
+    // Use photo_url or avatar_url as fallback
+    const photoUrl = user.photo_url || user.avatar_url;
 
     // Fetch the organization
     const { data: organization } = await supabase
       .from("organizations")
       .select("id, name, logo_url, domain")
-      .eq("id", loanOfficer.organization_id)
+      .eq("id", user.organization_id)
       .single();
 
-    // Fetch published reviews
+    // Fetch published reviews (user_id references users table)
     const { data: reviews } = await supabase
       .from("reviews")
       .select(
@@ -180,35 +221,91 @@ export async function getPublicLOProfile(
         response_text
       `
       )
-      .eq("loan_officer_id", loId)
+      .eq("user_id", userId)
       .eq("is_published", true)
       .eq("status", "approved")
       .order("review_date", { ascending: false })
       .limit(50);
 
+    // Fetch featured reviews if IDs are specified
+    let featuredReviews: PublicReview[] = [];
+    const featuredIds = user.featured_review_ids as string[] | null;
+    if (featuredIds && featuredIds.length > 0) {
+      const { data: featured } = await supabase
+        .from("reviews")
+        .select(
+          `
+          id,
+          customer_name,
+          customer_location,
+          rating,
+          text,
+          title,
+          review_date,
+          source,
+          response_text
+        `
+        )
+        .in("id", featuredIds)
+        .eq("is_published", true)
+        .eq("status", "approved");
+
+      if (featured) {
+        // Maintain the order specified in featured_review_ids
+        featuredReviews = featuredIds
+          .map((id) => featured.find((r) => r.id === id))
+          .filter((r): r is NonNullable<typeof r> => r !== undefined);
+      }
+    }
+
+    // Fetch business hours from branch if available
+    let businessHours: BusinessHours | null = null;
+    if (user.branch_id) {
+      const { data: branch } = await supabase
+        .from("branches")
+        .select("hours_of_operation")
+        .eq("id", user.branch_id)
+        .single();
+
+      if (branch?.hours_of_operation) {
+        businessHours = branch.hours_of_operation as BusinessHours;
+      }
+    }
+
     return {
       success: true,
       data: {
-        loanOfficer: {
-          id: loanOfficer.id,
-          full_name: loanOfficer.full_name,
-          title: loanOfficer.title,
-          bio: loanOfficer.bio,
+        professional: {
+          id: user.id,
+          full_name: user.full_name || "Unknown",
+          title: user.title,
+          bio: user.bio,
           photo_url: photoUrl,
-          email: loanOfficer.email,
-          phone: loanOfficer.phone,
-          branch: loanOfficer.branch,
-          region: loanOfficer.region,
-          nmls_id: loanOfficer.nmls_id,
-          address: loanOfficer.address,
-          linkedin_url: loanOfficer.linkedin_url,
-          zillow_profile_url: loanOfficer.zillow_profile_url,
-          average_rating: loanOfficer.average_rating,
-          total_reviews: loanOfficer.total_reviews,
-          nps_score: loanOfficer.nps_score,
+          email: user.email,
+          phone: user.phone,
+          branch: user.branch,
+          branch_id: user.branch_id,
+          region: user.region,
+          nmls_id: user.nmls_id,
+          address: user.address,
+          linkedin_url: user.linkedin_url,
+          zillow_profile_url: user.zillow_profile_url,
+          average_rating: user.average_rating,
+          total_reviews: user.total_reviews,
+          nps_score: user.nps_score,
+          banner_url: user.banner_url,
+          cta_button_text: user.cta_button_text,
+          cta_button_url: user.cta_button_url,
+          video_testimonial_url: user.video_testimonial_url,
+          video_thumbnail_url: user.video_thumbnail_url,
+          accepts_public_reviews: user.accepts_public_reviews ?? true,
+          referral_enabled: user.referral_enabled ?? false,
+          featured_review_ids: featuredIds,
         },
         organization: organization || null,
         reviews: reviews || [],
+        featuredReviews,
+        businessHours,
       },
     };
   } catch {
@@ -217,13 +314,13 @@ export async function getPublicLOProfile(
 }
 
 /**
- * Get a list of public Loan Officers for an organization
+ * Get a list of public professionals for an organization
  */
 export async function getPublicLOList(
   organizationSlug?: string
 ): Promise<{
   success: boolean;
-  data?: { loanOfficers: PublicLoanOfficer[]; organization: Pick<Organization, "id" | "name" | "logo_url"> | null };
+  data?: { loanOfficers: PublicLoanOfficerListItem[]; organization: Pick<Organization, "id" | "name" | "logo_url"> | null };
   error?: string;
 }> {
   try {
@@ -246,9 +343,9 @@ export async function getPublicLOList(
       }
     }
 
-    // Build the query
+    // Build the query - fetch users with professional roles
     let query = supabase
-      .from("loan_officers")
+      .from("users")
       .select(
         `
         id,
@@ -256,6 +353,7 @@ export async function getPublicLOList(
         title,
         bio,
         photo_url,
+        avatar_url,
         email,
         phone,
         branch,
@@ -276,33 +374,40 @@ export async function getPublicLOList(
       query = query.eq("organization_id", organizationId);
     }
 
-    const { data: loanOfficers, error } = await query.limit(100);
+    const { data: users, error } = await query.limit(100);
 
     if (error) {
-      return { success: false, error: "Failed to load loan officers" };
+      return { success: false, error: "Failed to load professionals" };
     }
+
+    // Map users to the expected format, using photo_url or avatar_url
+    const professionals = (users || []).map((user) => ({
+      ...user,
+      full_name: user.full_name || "Unknown",
+      photo_url: user.photo_url || user.avatar_url,
+    }));
 
     return {
       success: true,
       data: {
-        loanOfficers: loanOfficers || [],
+        loanOfficers: professionals,
         organization,
       },
     };
   } catch {
-    return { success: false, error: "Failed to load loan officers" };
+    return { success: false, error: "Failed to load professionals" };
   }
 }
 
 /**
- * Get all public LO IDs for sitemap generation
+ * Get all public professional IDs for sitemap generation
  */
 export async function getAllPublicLOIds(): Promise<string[]> {
   try {
     const supabase = createAdminClient();
 
     const { data, error } = await supabase
-      .from("loan_officers")
+      .from("users")
       .select("id")
       .eq("is_active", true);
 
@@ -310,7 +415,7 @@ export async function getAllPublicLOIds(): Promise<string[]> {
       return [];
     }
 
-    return data.map((lo) => lo.id);
+    return data.map((u) => u.id);
   } catch {
     return [];
   }
@@ -365,7 +470,7 @@ export async function getPublicBranchProfile(
         region,
         average_rating,
         total_reviews,
-        total_loan_officers,
+        total_members,
         is_active,
         is_public,
         organization_id
@@ -387,15 +492,16 @@ export async function getPublicBranchProfile(
       .eq("id", branch.organization_id)
       .single();
 
-    // Fetch loan officers at this branch
-    const { data: loanOfficers } = await supabase
-      .from("loan_officers")
+    // Fetch professionals at this branch
+    const { data: branchUsers } = await supabase
+      .from("users")
       .select(
         `
         id,
         full_name,
         title,
         photo_url,
+        avatar_url,
         email,
         phone,
         nmls_id,
@@ -408,12 +514,19 @@ export async function getPublicBranchProfile(
       .order("average_rating", { ascending: false, nullsFirst: false })
       .limit(50);
 
-    // Get loan officer IDs for fetching reviews
-    const loIds = (loanOfficers || []).map((lo) => lo.id);
+    // Map to expected format with photo fallback
+    const professionals = (branchUsers || []).map((user) => ({
+      ...user,
+      full_name: user.full_name || "Unknown",
+      photo_url: user.photo_url || user.avatar_url,
+    }));
 
-    // Fetch recent reviews from all loan officers at this branch
+    // Get user IDs for fetching reviews
+    const userIds = professionals.map((user) => user.id);
+
+    // Fetch recent reviews from all professionals at this branch
     let reviews: PublicBranchReview[] = [];
-    if (loIds.length > 0) {
+    if (userIds.length > 0) {
       const { data: reviewsData } = await supabase
         .from("reviews")
         .select(
@@ -427,21 +540,21 @@ export async function getPublicBranchProfile(
           review_date,
           source,
           response_text,
-          loan_officer_id
+          user_id
         `
         )
-        .in("loan_officer_id", loIds)
+        .in("user_id", userIds)
         .eq("is_published", true)
         .eq("status", "approved")
         .order("review_date", { ascending: false })
         .limit(20);
 
       if (reviewsData) {
-        // Map loan officer info to reviews
-        const loMap = new Map(
-          (loanOfficers || []).map((lo) => [
-            lo.id,
-            { id: lo.id, full_name: lo.full_name, photo_url: lo.photo_url },
+        // Map user info to reviews
+        const userMap = new Map(
+          professionals.map((user) => [
+            user.id,
+            { id: user.id, full_name: user.full_name || "Unknown", photo_url: user.photo_url },
           ])
         );
 
@@ -455,8 +568,8 @@ export async function getPublicBranchProfile(
           review_date: r.review_date,
           source: r.source,
           response_text: r.response_text,
-          loan_officer: loMap.get(r.loan_officer_id) || {
-            id: r.loan_officer_id,
+          loan_officer: (r.user_id ? userMap.get(r.user_id) : undefined) || {
+            id: r.user_id || "",
             full_name: "Unknown",
             photo_url: null,
           },
@@ -484,10 +597,10 @@ export async function getPublicBranchProfile(
           region: branch.region,
           average_rating: branch.average_rating,
           total_reviews: branch.total_reviews,
-          total_loan_officers: branch.total_loan_officers,
+          total_members: branch.total_members,
         },
         organization: organization || null,
-        loanOfficers: loanOfficers || [],
+        loanOfficers: professionals || [],
         reviews,
       },
     };
@@ -545,7 +658,7 @@ export interface PublicOrganization {
   aggregate_rating: number | null;
   total_reviews: number;
   total_branches: number;
-  total_loan_officers: number;
+  total_members: number;
 }
 
 export interface PublicOrgBranch {
@@ -558,10 +671,10 @@ export interface PublicOrgBranch {
   region: string | null;
   average_rating: number | null;
   total_reviews: number | null;
-  total_loan_officers: number | null;
+  total_members: number | null;
 }
 
-export interface PublicOrgLoanOfficer {
+export interface PublicOrgProfessional {
   id: string;
   full_name: string;
   title: string | null;
@@ -570,6 +683,9 @@ export interface PublicOrgLoanOfficer {
   average_rating: number | null;
   total_reviews: number | null;
 }
+
+/** @deprecated Use PublicOrgProfessional instead */
+export type PublicOrgLoanOfficer = PublicOrgProfessional;
 
 export interface PublicOrgTestimonial {
   id: string;
@@ -593,7 +709,7 @@ export interface PublicOrgTestimonial {
 export interface PublicOrganizationProfileData {
   organization: PublicOrganization;
   branches: PublicOrgBranch[];
-  featuredLoanOfficers: PublicOrgLoanOfficer[];
+  featuredProfessionals: PublicOrgProfessional[];
   testimonials: PublicOrgTestimonial[];
 }
 
@@ -654,7 +770,7 @@ export async function getPublicOrganizationProfile(
         region,
         average_rating,
         total_reviews,
-        total_loan_officers
+        total_members
       `
       )
       .eq("organization_id", organization.id)
@@ -662,15 +778,16 @@ export async function getPublicOrganizationProfile(
       .eq("is_public", true)
       .order("name", { ascending: true });
 
-    // Fetch all active loan officers for this organization (top rated)
-    const { data: loanOfficers } = await supabase
-      .from("loan_officers")
+    // Fetch all active professionals for this organization (top rated)
+    const { data: orgUsers } = await supabase
+      .from("users")
       .select(
         `
         id,
         full_name,
         title,
         photo_url,
+        avatar_url,
         branch,
         average_rating,
         total_reviews
@@ -682,9 +799,15 @@ export async function getPublicOrganizationProfile(
       .order("average_rating", { ascending: false, nullsFirst: false })
       .limit(12);
 
+    // Map to expected format with photo fallback
+    const professionals = (orgUsers || []).map((user) => ({
+      ...user,
+      photo_url: user.photo_url || user.avatar_url,
+    }));
+
     // Calculate aggregate stats
     const allBranches = branches || [];
-    const allLoanOfficers = loanOfficers || [];
+    const allProfessionals = professionals || [];
 
     // Count total reviews and calculate weighted average rating
     let totalReviews = 0;
@@ -699,18 +822,18 @@ export async function getPublicOrganizationProfile(
 
     const aggregateRating = totalReviews > 0 ? weightedRatingSum / totalReviews : null;
 
-    // Get total loan officers count
-    const { count: totalLOCount } = await supabase
-      .from("loan_officers")
+    // Get total professionals count
+    const { count: totalProfessionalsCount } = await supabase
+      .from("users")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organization.id)
       .eq("is_active", true);
 
     // Fetch featured testimonials (top-rated reviews with text)
-    const loIds = allLoanOfficers.map((lo) => lo.id);
+    const userIds = allProfessionals.map((user) => user.id);
     let testimonials: PublicOrgTestimonial[] = [];
 
-    if (loIds.length > 0) {
+    if (userIds.length > 0) {
       const { data: reviewsData } = await supabase
         .from("reviews")
         .select(
@@ -722,7 +845,7 @@ export async function getPublicOrganizationProfile(
           text,
           title,
           review_date,
-          loan_officer_id
+          user_id
         `
         )
         .eq("organization_id", organization.id)
@@ -735,11 +858,11 @@ export async function getPublicOrganizationProfile(
         .limit(10);
 
       if (reviewsData) {
-        // Map loan officer and branch info to testimonials
-        const loMap = new Map(
-          allLoanOfficers.map((lo) => [
-            lo.id,
-            { id: lo.id, full_name: lo.full_name, photo_url: lo.photo_url, branch_name: lo.branch },
+        // Map user and branch info to testimonials
+        const userMap = new Map(
+          allProfessionals.map((user) => [
+            user.id,
+            { id: user.id, full_name: user.full_name || "Unknown", photo_url: user.photo_url, branch_name: user.branch },
           ])
         );
 
@@ -749,8 +872,8 @@ export async function getPublicOrganizationProfile(
         );
 
         testimonials = reviewsData.map((r) => {
-          const lo = loMap.get(r.loan_officer_id);
-          const branch = lo?.branch_name ? branchByName.get(lo.branch_name) : null;
+          const user = r.user_id ? userMap.get(r.user_id) : undefined;
+          const branch = user?.branch_name ? branchByName.get(user.branch_name) : null;
           return {
             id: r.id,
             customer_name: r.customer_name,
@@ -759,9 +882,9 @@ export async function getPublicOrganizationProfile(
             text: r.text,
             title: r.title,
             review_date: r.review_date,
-            loan_officer: lo
-              ? { id: lo.id, full_name: lo.full_name, photo_url: lo.photo_url }
-              : { id: r.loan_officer_id, full_name: "Team Member", photo_url: null },
+            loan_officer: user
+              ? { id: user.id, full_name: user.full_name, photo_url: user.photo_url }
+              : { id: r.user_id || "", full_name: "Team Member", photo_url: null },
             branch: branch || null,
           };
         });
@@ -785,7 +908,7 @@ export async function getPublicOrganizationProfile(
           aggregate_rating: aggregateRating,
           total_reviews: totalReviews,
           total_branches: allBranches.length,
-          total_loan_officers: totalLOCount || 0,
+          total_members: totalProfessionalsCount || 0,
         },
         branches: allBranches.map((b) => ({
           id: b.id,
@@ -797,16 +920,16 @@ export async function getPublicOrganizationProfile(
           region: b.region,
           average_rating: b.average_rating,
           total_reviews: b.total_reviews,
-          total_loan_officers: b.total_loan_officers,
+          total_members: b.total_members,
         })),
-        featuredLoanOfficers: allLoanOfficers.map((lo) => ({
-          id: lo.id,
-          full_name: lo.full_name,
-          title: lo.title,
-          photo_url: lo.photo_url,
-          branch_name: lo.branch,
-          average_rating: lo.average_rating,
-          total_reviews: lo.total_reviews,
+        featuredProfessionals: allProfessionals.map((professional) => ({
+          id: professional.id,
+          full_name: professional.full_name || "Unknown",
+          title: professional.title,
+          photo_url: professional.photo_url,
+          branch_name: professional.branch,
+          average_rating: professional.average_rating,
+          total_reviews: professional.total_reviews,
         })),
         testimonials,
       },

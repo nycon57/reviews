@@ -63,8 +63,8 @@ export default async function AnalyticsPage() {
   const [
     videoMetricsResult,
     videoTrendsResult,
-    loStatsResult,
-    loResult,
+    userStatsResult,
+    usersResult,
     responseAnalyticsResult,
   ] = await Promise.all([
     getVideoTestimonialFunnelMetrics(),
@@ -80,8 +80,8 @@ export default async function AnalyticsPage() {
 
   const videoMetrics = videoMetricsResult.success && videoMetricsResult.data ? videoMetricsResult.data : null;
   const videoTrends = videoTrendsResult.success && videoTrendsResult.data ? videoTrendsResult.data : [];
-  const loStats = loStatsResult.success && loStatsResult.data ? loStatsResult.data : [];
-  const loanOfficers = loResult.success && loResult.data ? loResult.data : [];
+  const userStats = userStatsResult.success && userStatsResult.data ? userStatsResult.data : [];
+  const users = usersResult.success && usersResult.data ? usersResult.data : [];
   const responseAnalytics = responseAnalyticsResult.success && responseAnalyticsResult.data
     ? responseAnalyticsResult.data
     : null;
@@ -109,10 +109,10 @@ export default async function AnalyticsPage() {
       <UnifiedAnalyticsDashboard
         initialVideoMetrics={videoMetrics}
         initialVideoTrends={videoTrends}
-        initialLoStats={loStats}
+        initialLoStats={userStats}
         initialReviewSummary={reviewSummary}
         initialResponseAnalytics={responseAnalytics}
-        loanOfficers={loanOfficers}
+        teamMembers={users}
         userRole={userRole}
       />
     </div>

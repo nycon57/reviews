@@ -33,12 +33,16 @@ export {
   updateBranchSchema,
   updateReviewSchema,
   reviewResponseSchema,
+  updateProfessionalSchema,
+  /** @deprecated Use updateProfessionalSchema instead */
   updateLoanOfficerSchema,
   updateOrganizationSchema,
   inviteUserSchema,
   surveyFiltersSchema,
   reviewFiltersSchema,
   branchFiltersSchema,
+  professionalFiltersSchema,
+  /** @deprecated Use professionalFiltersSchema instead */
   loanOfficerFiltersSchema,
   userFiltersSchema,
   // Utilities
@@ -51,6 +55,8 @@ export {
   type UpdateBranchInput,
   type UpdateReviewInput,
   type ReviewResponseInput,
+  type UpdateProfessionalInput,
+  /** @deprecated Use UpdateProfessionalInput instead */
   type UpdateLoanOfficerInput,
   type UpdateOrganizationInput,
   type InviteUserInput,

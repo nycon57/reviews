@@ -59,14 +59,14 @@ interface ReviewAggregationDashboardProps {
   initialReviews: AggregatedReview[];
   initialTotal: number;
   initialStats: ReviewAggregationStats;
-  loanOfficers: { id: string; fullName: string }[];
+  teamMembers: { id: string; fullName: string }[];
 }
 
 export function ReviewAggregationDashboard({
   initialReviews,
   initialTotal,
   initialStats,
-  loanOfficers,
+  teamMembers,
 }: ReviewAggregationDashboardProps) {
   const [reviews, setReviews] = useState(initialReviews);
   const [total, setTotal] = useState(initialTotal);
@@ -76,7 +76,7 @@ export function ReviewAggregationDashboard({
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sourceFilter, setSourceFilter] = useState<string>("all");
-  const [loanOfficerFilter, setLoanOfficerFilter] = useState<string>("all");
+  const [memberFilter, setMemberFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [endDate, setEndDate] = useState<Date | undefined>();
@@ -97,14 +97,14 @@ export function ReviewAggregationDashboard({
     return {
       status: statusFilter === "all" ? "all" : (statusFilter as AggregatedReviewFilters["status"]),
       source: sourceFilter === "all" ? "all" : (sourceFilter as AggregatedReviewFilters["source"]),
-      loanOfficerId: loanOfficerFilter === "all" ? undefined : loanOfficerFilter,
+      loanOfficerId: memberFilter === "all" ? undefined : memberFilter,
       search: searchQuery || undefined,
       startDate: startDate ? format(startDate, "yyyy-MM-dd") : undefined,
       endDate: endDate ? format(endDate, "yyyy-MM-dd") : undefined,
       page,
       limit,
     };
-  }, [statusFilter, sourceFilter, loanOfficerFilter, searchQuery, startDate, endDate, page]);
+  }, [statusFilter, sourceFilter, memberFilter, searchQuery, startDate, endDate, page]);
 
   const refreshReviews = useCallback(() => {
     startTransition(async () => {
@@ -206,7 +206,7 @@ export function ReviewAggregationDashboard({
           "Rating",
           "Customer Name",
           "Review Text",
-          "Loan Officer",
+          "Professional",
           "Status",
           "Review Date",
           "Response",
@@ -250,7 +250,7 @@ export function ReviewAggregationDashboard({
   const clearFilters = () => {
     setStatusFilter("all");
     setSourceFilter("all");
-    setLoanOfficerFilter("all");
+    setMemberFilter("all");
     setSearchQuery("");
     setStartDate(undefined);
     setEndDate(undefined);
@@ -311,7 +311,7 @@ export function ReviewAggregationDashboard({
   const hasActiveFilters =
     statusFilter !== "all" ||
     sourceFilter !== "all" ||
-    loanOfficerFilter !== "all" ||
+    memberFilter !== "all" ||
     searchQuery ||
     startDate ||
     endDate;
@@ -422,15 +422,15 @@ export function ReviewAggregationDashboard({
                 </SelectContent>
               </Select>
 
-              <Select value={loanOfficerFilter} onValueChange={(v) => { setLoanOfficerFilter(v); handleFilterChange(); }}>
+              <Select value={memberFilter} onValueChange={(v) => { setMemberFilter(v); handleFilterChange(); }}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Loan Officer" />
+                  <SelectValue placeholder="Professional" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Loan Officers</SelectItem>
-                  {loanOfficers.map((lo) => (
-                    <SelectItem key={lo.id} value={lo.id}>
-                      {lo.fullName}
+                  <SelectItem value="all">All Professionals</SelectItem>
+                  {teamMembers.map((professional) => (
+                    <SelectItem key={professional.id} value={professional.id}>
+                      {professional.fullName}
                     </SelectItem>
                   ))}
                 </SelectContent>

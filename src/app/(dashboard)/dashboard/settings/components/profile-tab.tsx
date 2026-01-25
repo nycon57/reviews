@@ -22,6 +22,7 @@ interface ProfileTabProps {
   userName?: string;
   userAvatarUrl?: string | null;
   userTitle?: string | null;
+  userNmlsId?: string | null;
   userBio?: string | null;
   userPhone?: string | null;
   userPersonalWebsiteUrl?: string | null;
@@ -60,6 +61,7 @@ export function ProfileTab({
   userName,
   userAvatarUrl,
   userTitle,
+  userNmlsId,
   userBio,
   userPhone,
   userPersonalWebsiteUrl,
@@ -107,6 +109,7 @@ export function ProfileTab({
               initialEmail={userEmail}
               initialAvatarUrl={userAvatarUrl}
               initialTitle={userTitle}
+              initialNmlsId={userNmlsId}
               initialBio={userBio}
               initialPhone={userPhone}
               initialPersonalWebsiteUrl={userPersonalWebsiteUrl}

@@ -10,10 +10,10 @@ export * from './types';
 export {
   getBranches,
   getBranch,
-  getBranchWithLoanOfficers,
+  getBranchWithTeamMembers,
   createBranch,
   updateBranch,
   deleteBranch,
-  assignLoanOfficerToBranch,
+  assignUserToBranch,
   getBranchRegions,
 } from './actions';

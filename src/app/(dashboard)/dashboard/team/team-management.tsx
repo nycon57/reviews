@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +31,12 @@ import {
   ArrowSquareOut as ExternalLink,
   MagnifyingGlass as Search,
   Users,
+  User,
+  Medal as Award,
+  ChartBar as BarChart,
+  DownloadSimple as Download,
+  Pencil,
+  UserGear as UserCog,
 } from "@phosphor-icons/react";
 import {
   getOrganizationMembers,
@@ -44,6 +51,9 @@ import {
   type Invitation,
   type CreateInvitation,
 } from "@/lib/organization";
+import { GiveRecognitionDialog } from "@/components/recognition/give-recognition-dialog";
+import { EditTeamMemberDialog } from "@/components/organization/edit-team-member-dialog";
+import { usePermissions } from "@/lib/permissions/context";
 
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },
@@ -63,8 +73,15 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const router = useRouter();
+  const { canInviteTeam } = usePermissions();
+
+  // Dialog state for role-based actions
+  const [recognitionMember, setRecognitionMember] = useState<OrganizationMember | null>(null);
+  const [editMember, setEditMember] = useState<OrganizationMember | null>(null);
 
   const isAdmin = userRole === "admin";
+  const showInviteButton = canInviteTeam();
 
   const form = useForm<CreateInvitation>({
     resolver: zodResolver(createInvitationSchema),
@@ -217,6 +234,45 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     });
   }
 
+  function downloadMemberReport(member: OrganizationMember) {
+    // Generate CSV with member performance data
+    const rows: string[][] = [];
+    const date = new Date().toISOString().split("T")[0];
+
+    rows.push(["Team Member Performance Report"]);
+    rows.push([`Generated: ${new Date().toLocaleDateString()}`]);
+    rows.push([]);
+    rows.push(["Name", member.full_name || "N/A"]);
+    rows.push(["Email", member.email]);
+    rows.push(["Role", ROLE_LABELS[member.role]?.label || member.role]);
+    rows.push(["Status", member.is_active ? "Active" : "Inactive"]);
+    rows.push(["Joined", new Date(member.created_at).toLocaleDateString()]);
+    rows.push([]);
+    rows.push(["--- Performance Metrics ---"]);
+    rows.push(["(View full analytics at /dashboard/analytics/member/" + member.id + ")"]);
+
+    const csvContent = rows
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    const nameSlug = (member.full_name || "member").toLowerCase().replace(/\s+/g, "-");
+    link.download = `team-member-report-${nameSlug}-${date}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    // Delay revoking to ensure the browser has finished downloading
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+
+    toast({
+      title: "Report downloaded",
+      description: `Performance report for ${member.full_name || "team member"} downloaded`,
+    });
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -257,163 +313,12 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
 
   return (
     <div className="space-y-6">
-      {/* Stats cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                <Users className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{activeMembers.length}</p>
-                <p className="text-xs text-muted-foreground">Active Members</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
-                <Clock className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{invitations.length}</p>
-                <p className="text-xs text-muted-foreground">Pending Invites</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                <Shield className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {activeMembers.filter((m) => m.role === "manager" || m.role === "admin").length}
-                </p>
-                <p className="text-xs text-muted-foreground">Managers/Admins</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                <Star className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">
-                  {activeMembers.filter((m) => m.role === "user").length}
-                </p>
-                <p className="text-xs text-muted-foreground">Users</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Team members */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>
-              {isAdmin
-                ? "Manage your organization's team members and their roles"
-                : "View and manage team member assignments"
-              }
-            </CardDescription>
-          </div>
-          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Invite Member
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite Team Member</DialogTitle>
-                <DialogDescription>
-                  Send an invitation to add a new member to your organization.
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitInvite)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="john@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select role" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {isAdmin && (
-                              <SelectItem value="admin">Admin - Full access</SelectItem>
-                            )}
-                            <SelectItem value="manager">Manager - Team management</SelectItem>
-                            <SelectItem value="user">User - Basic access</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Choose the role that best fits their responsibilities
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isPending}>
-                      {isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Send Invitation
-                        </>
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {/* Search */}
-          <div className="mb-4">
-            <div className="relative">
+        <CardContent className="pt-6">
+          {/* Search and Invite */}
+          <div className="mb-4 flex items-center gap-4">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search team members..."
@@ -422,6 +327,88 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                 className="pl-9"
               />
             </div>
+            {showInviteButton && (
+              <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Invite Member
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Invite Team Member</DialogTitle>
+                    <DialogDescription>
+                      Send an invitation to add a new member to your organization.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmitInvite)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="john@example.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="role"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Role</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select role" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {isAdmin && (
+                                  <SelectItem value="admin">Admin - Full access</SelectItem>
+                                )}
+                                <SelectItem value="manager">Manager - Team management</SelectItem>
+                                <SelectItem value="user">User - Basic access</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Choose the role that best fits their responsibilities
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <DialogFooter>
+                        <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={isPending}>
+                          {isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            <>
+                              <Mail className="mr-2 h-4 w-4" />
+                              Send Invitation
+                            </>
+                          )}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </Form>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           <Table>
@@ -440,7 +427,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={member.avatar_url || undefined} />
+                        <AvatarImage src={member.photo_url || undefined} />
                         <AvatarFallback>
                           {(member.full_name || member.email)
                             .split(" ")
@@ -487,30 +474,71 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        {/* Manager-level actions (available to managers and admins) */}
+                        <DropdownMenuItem onClick={() => router.push(`/pro/${member.id}`)}>
+                          <User className="mr-2 h-4 w-4" />
+                          View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setRecognitionMember(member)}>
+                          <Award className="mr-2 h-4 w-4" />
+                          Give Recognition
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => router.push(`/dashboard/analytics/member/${member.id}`)}>
+                          <BarChart className="mr-2 h-4 w-4" />
+                          See Analytics
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => downloadMemberReport(member)}>
+                          <Download className="mr-2 h-4 w-4" />
+                          Download Report
+                        </DropdownMenuItem>
+
+                        {/* Admin-only actions */}
                         {isAdmin && (
                           <>
-                            <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "admin")}>
-                              <Shield className="mr-2 h-4 w-4" />
-                              Make Admin
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "manager")}>
-                              <Shield className="mr-2 h-4 w-4" />
-                              Make Manager
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "user")}>
-                              <Shield className="mr-2 h-4 w-4" />
-                              Make User
-                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => setEditMember(member)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit Team Member
+                            </DropdownMenuItem>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <UserCog className="mr-2 h-4 w-4" />
+                                Change Role
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem
+                                  onClick={() => handleUpdateRole(member.id, "admin")}
+                                  disabled={member.role === "admin"}
+                                >
+                                  <Shield className="mr-2 h-4 w-4" />
+                                  Make Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleUpdateRole(member.id, "manager")}
+                                  disabled={member.role === "manager"}
+                                >
+                                  <Shield className="mr-2 h-4 w-4" />
+                                  Make Manager
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleUpdateRole(member.id, "user")}
+                                  disabled={member.role === "user"}
+                                >
+                                  <Shield className="mr-2 h-4 w-4" />
+                                  Make User
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDeactivate(member.id)}
+                            >
+                              <UserX className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </DropdownMenuItem>
                           </>
                         )}
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleDeactivate(member.id)}
-                        >
-                          <UserX className="mr-2 h-4 w-4" />
-                          Deactivate
-                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -612,7 +640,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={member.avatar_url || undefined} />
+                          <AvatarImage src={member.photo_url || undefined} />
                           <AvatarFallback>
                             {(member.full_name || member.email)
                               .split(" ")
@@ -650,6 +678,47 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {/* Recognition Dialog */}
+      <GiveRecognitionDialog
+        open={!!recognitionMember}
+        onOpenChange={(open) => !open && setRecognitionMember(null)}
+        preselectedUser={
+          recognitionMember
+            ? {
+                id: recognitionMember.id,
+                name: recognitionMember.full_name || recognitionMember.email,
+                email: recognitionMember.email,
+                avatarUrl: recognitionMember.photo_url || undefined,
+              }
+            : undefined
+        }
+        onSuccess={() => {
+          const memberName = recognitionMember?.full_name || "team member";
+          setRecognitionMember(null);
+          toast({
+            title: "Recognition sent",
+            description: `Recognition sent to ${memberName}`,
+          });
+        }}
+      />
+
+      {/* Edit Team Member Dialog (Admin only) */}
+      {editMember && isAdmin && (
+        <EditTeamMemberDialog
+          member={editMember}
+          open={!!editMember}
+          onOpenChange={(open) => !open && setEditMember(null)}
+          onSuccess={() => {
+            setEditMember(null);
+            refreshData();
+            toast({
+              title: "Member updated",
+              description: "Team member has been updated successfully.",
+            });
+          }}
+        />
       )}
     </div>
   );

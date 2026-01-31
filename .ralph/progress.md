@@ -8880,3 +8880,56 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The codebase uses createUntypedAdminClient for tables not in generated types
 ---
 
+
+## [2026-01-31] - S099: SMS Templates & Merge Field System
+Thread: 
+Run: 20260131-145111-24714 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6bea3fd [Pass 1/3] feat(S099): Add SMS template management system with merge fields
+- Post-commit status: clean (only pre-existing uncommitted files remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/templates/__tests__/ -> PASS (39 tests, 2 files)
+  - Command: npm run build -> PASS
+  - Command: npm run lint (template files only) -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/lib/sms/templates/actions.ts (new - CRUD server actions)
+  - src/lib/sms/templates/default-templates.ts (new - 3 default templates)
+  - src/lib/sms/templates/index.ts (new - barrel exports)
+  - src/lib/sms/templates/merge-engine.ts (new - merge field substitution engine)
+  - src/lib/sms/templates/schemas.ts (new - Zod validation schemas)
+  - src/lib/sms/templates/validators.ts (new - RESPA, opt-out, length, merge field validation)
+  - src/lib/sms/templates/__tests__/merge-engine.test.ts (new - 16 tests)
+  - src/lib/sms/templates/__tests__/validators.test.ts (new - 23 tests)
+- What was implemented:
+  - 3 default templates: Review Request, Follow-Up Reminder, Thank You
+  - Merge field engine supporting 9 fields: first_name, last_name, lo_name, lo_first_name, company_name, review_link, video_link, branch_name, closing_date
+  - renderTemplate() resolves merge fields, auto-appends opt-out, returns segment info
+  - renderTemplatePreview() with sample data for previews
+  - Template body validation: max 480 chars, RESPA prohibited patterns (11 patterns), opt-out language check, merge field syntax validation
+  - CRUD server actions: createSmsTemplate, updateSmsTemplate, archiveSmsTemplate, getSmsTemplate, listSmsTemplates, previewSmsTemplate, renderSmsTemplate, seedDefaultTemplates
+  - Zod schemas for all operations
+  - Locked template permissions (admin-only edit)
+  - Default template protection (cannot be archived)
+  - 39 unit tests covering merge engine and validators
+- **Learnings for future iterations:**
+  - Existing SmsService.resolveMergeFields is basic (only borrower_name); the new merge-engine.ts provides full 9-field support
+  - RESPA prohibited patterns should use word boundary anchors (\b) to avoid false positives
+  - Auto-append opt-out language at render time rather than forcing it in template body
+  - createUntypedAdminClient is the pattern for SMS tables since they aren't in generated types yet
+---

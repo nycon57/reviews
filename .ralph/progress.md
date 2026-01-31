@@ -9193,3 +9193,51 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Status webhook should return 200 even for missing messages to prevent Twilio retry loops
   - maybeSingle() is preferred over single() when row may not exist (avoids PGRST116 errors)
 ---
+
+## [2026-01-31] - S101: Twilio Webhook Handlers (Delivery Status & Inbound SMS)
+Thread:
+Run: 20260131-145111-24714 (iteration 9)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-9.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-9.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 546f0ab [Pass 2/3] fix(S101): Security and quality improvements for Twilio webhooks
+- Post-commit status: clean (S101 files committed; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (parallel agents for bug detection, Next.js patterns, consistency audit)
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: yes (route segment config, error handling patterns, webhook consistency)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (S101 files only) -> PASS (0 errors)
+- Files changed:
+  - src/app/api/webhooks/twilio/status/route.ts (fixed)
+  - src/app/api/webhooks/twilio/inbound/route.ts (fixed)
+  - supabase/migrations/20260131000003_sms_daily_stat_increment_rpc.sql (new)
+- Pass 2 Fixes:
+  - [CRITICAL] Fixed race conditions in daily stats using atomic RPC (increment_sms_daily_stat) with ON CONFLICT
+  - [CRITICAL] Added status hierarchy check to prevent out-of-order webhook regression (e.g., "sent" overwriting "delivered")
+  - [CRITICAL] Added idempotency check for duplicate terminal status webhooks
+  - [HIGH] Added try-catch wrappers to both routes to prevent unhandled 500s triggering Twilio retries
+  - [HIGH] Changed DB error responses from 500 to 200 to prevent Twilio retry loops
+  - [HIGH] Added error handling to all database operations (consent, stats, conversations)
+  - [HIGH] Fixed consent race condition with retry on unique constraint violation (23505)
+  - [MEDIUM] Added dynamic = 'force-dynamic' route segment config to prevent caching
+  - [MEDIUM] Removed PII (phone numbers) from warning log messages
+  - [LOW] Added fallback path for atomic stats when RPC doesn't exist yet
+- **Learnings for future iterations:**
+  - Read-then-write patterns are always a race condition in webhooks — use atomic SQL (ON CONFLICT DO UPDATE)
+  - Twilio sends webhooks out of order under load — always validate status progression
+  - Webhook routes should almost always return 200 to prevent retry storms
+  - format() with %I is safe for column names in PL/pgSQL (identifier quoting)
+  - Supabase untyped client needs explicit casting for dynamic column access: (existing as unknown as Record<string, unknown>)
+---

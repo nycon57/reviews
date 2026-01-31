@@ -8822,3 +8822,61 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Composite indexes serve queries on their leftmost prefix columns, making single-column indexes on the first column redundant
   - Table COMMENT strings should be terse — they appear in pg_description and tooling tooltips
 ---
+
+## 2026-01-31 13:17 - S097: Twilio SDK Integration & Service Layer
+Thread:
+Run: 20260131-121547-37293 (iteration 9)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-9.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-9.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6d4bc64 [Pass 1/3] feat(S097): Add Twilio SDK integration and SMS service layer
+- Post-commit status: clean (staged files only)
+- Skills invoked:
+  - /feature-dev: yes (attempted, not available as standalone)
+  - /code-review: no (Pass 2)
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: no (no Next.js pages)
+  - /supabase-postgres-best-practices: no (no schema changes)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/__tests__/ -> PASS (50 tests, 3 files)
+  - Command: npm run build -> PASS
+  - Command: npx eslint src/lib/sms/ -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/lib/sms/types.ts (new - row types, enums, Zod schemas)
+  - src/lib/sms/constants.ts (new - GSM-7 charset, rate limits, Twilio error map)
+  - src/lib/sms/phone-utils.ts (new - toE164, formatForDisplay, maskPhone, getAreaCode)
+  - src/lib/sms/segment-calculator.ts (new - GSM-7/UCS-2 segment calculation)
+  - src/lib/sms/twilio-client.ts (new - TwilioService class, singleton factory, credential resolution, retry logic)
+  - src/lib/sms/rate-limiter.ts (new - per-number and per-org rate limiting)
+  - src/lib/sms/sms-service.ts (new - SmsService with full send pipeline, custom errors)
+  - src/lib/sms/index.ts (new - barrel export)
+  - src/lib/sms/__tests__/phone-utils.test.ts (new - 21 tests)
+  - src/lib/sms/__tests__/segment-calculator.test.ts (new - 21 tests)
+  - src/lib/sms/__tests__/sms-service.test.ts (new - 8 tests)
+  - vitest.config.ts (new - vitest config with path alias)
+  - package.json (twilio dependency added)
+  - package-lock.json (updated)
+- Implemented:
+  - TwilioService: singleton client factory, credential resolution (org DB + env fallback), sendSms, getMessageStatus, listPhoneNumbers, searchAvailableNumbers, purchasePhoneNumber, releasePhoneNumber, validateCredentials, retry with exponential backoff
+  - SmsService: sendReviewRequest and sendCustomMessage with full pipeline (consent check, quiet hours, template resolution, merge fields, segment calc, rate limiting, Twilio send, DB persist, credit deduction)
+  - Custom errors: ConsentRequiredError, QuietHoursError, InsufficientCreditsError, RateLimitError
+  - Segment calculator: GSM-7 vs UCS-2 detection, extension char handling
+  - Phone utils: E.164 normalization, display formatting, masking
+  - Rate limiter: per-number (1/hour) and per-org (200/min) limits using DB queries
+  - Twilio error mapping: 15+ error codes to user-friendly messages
+  - Zod schemas for all inputs
+- **Learnings for future iterations:**
+  - Twilio SDK types require careful casting for message creation params; avoid Record<string, unknown>
+  - GSM-7 basic charset includes some accented characters (é, è, ù, etc.) - test accordingly
+  - No existing vitest config existed; created one with path aliases
+  - The codebase uses createUntypedAdminClient for tables not in generated types
+---
+

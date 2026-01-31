@@ -356,13 +356,14 @@ export class SmsService {
 
   /**
    * Checks credit balance and throws InsufficientCreditsError if the org
-   * has zero remaining credits and overage is not allowed.
+   * cannot cover the required segments (no remaining credits and overage
+   * is not allowed).
    */
-  private async requireCredits(_segments: number): Promise<void> {
+  private async requireCredits(segments: number): Promise<void> {
     const creditService = new CreditService(this.organizationId);
     const balance = await creditService.checkBalance();
 
-    if (balance.remaining <= 0 && !balance.overageAllowed) {
+    if (balance.remaining < segments && !balance.overageAllowed) {
       throw new CreditInsufficientError(this.organizationId);
     }
   }

@@ -96,12 +96,6 @@ export const getCreditBalanceSchema = z.object({
   organizationId: z.string().uuid(),
 });
 
-export const getCreditUsageReportSchema = z.object({
-  organizationId: z.string().uuid(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
-});
-
 export const creditAlertCheckSchema = z.object({
   organizationId: z.string().uuid(),
 });

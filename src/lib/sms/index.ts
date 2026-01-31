@@ -82,7 +82,6 @@ export {
   getCurrentPeriodUsageSchema,
   purchaseCreditPackSchema,
   getCreditBalanceSchema,
-  getCreditUsageReportSchema,
   creditAlertCheckSchema,
 } from "./credits";
 export type {

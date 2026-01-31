@@ -5,7 +5,7 @@ import { CreditService } from "./credit-service";
 import {
   purchaseCreditPackSchema,
   getCreditBalanceSchema,
-  getCreditUsageReportSchema,
+  getUsageHistorySchema,
   creditAlertCheckSchema,
 } from "./types";
 import type {
@@ -74,13 +74,13 @@ export async function purchaseCreditPack(
 // ── getCreditUsageReport ────────────────────────────────────────────────
 
 export async function getCreditUsageReport(
-  input: { organizationId: string; startDate: string; endDate: string }
+  input: { organizationId: string }
 ): Promise<ActionResult<CreditUsageReport>> {
   try {
     const user = await unifiedGetUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const parsed = getCreditUsageReportSchema.parse(input);
+    const parsed = getCreditBalanceSchema.parse(input);
     const service = new CreditService(parsed.organizationId);
 
     const [balance, currentPeriod, monthlySummary] = await Promise.all([
@@ -135,8 +135,9 @@ export async function getUsageHistory(
     const user = await unifiedGetUser();
     if (!user) return { success: false, error: "Unauthorized" };
 
-    const service = new CreditService(input.organizationId);
-    const history = await service.getUsageHistory(input.months ?? 6);
+    const parsed = getUsageHistorySchema.parse(input);
+    const service = new CreditService(parsed.organizationId);
+    const history = await service.getUsageHistory(parsed.months);
 
     return { success: true, data: history };
   } catch (error) {

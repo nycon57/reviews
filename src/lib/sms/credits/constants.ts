@@ -49,14 +49,14 @@ export const SMS_CREDIT_TIERS: Record<SubscriptionTier, SmsCreditTier> = {
 export interface CreditPack {
   id: string;
   credits: number;
-  pricecents: number;
+  priceCents: number;
   label: string;
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: "pack_100", credits: 100, pricecents: 500, label: "100 credits" },
-  { id: "pack_500", credits: 500, pricecents: 2000, label: "500 credits" },
-  { id: "pack_1000", credits: 1000, pricecents: 3500, label: "1,000 credits" },
+  { id: "pack_100", credits: 100, priceCents: 500, label: "100 credits" },
+  { id: "pack_500", credits: 500, priceCents: 2000, label: "500 credits" },
+  { id: "pack_1000", credits: 1000, priceCents: 3500, label: "1,000 credits" },
 ];
 
 // ── Usage alert thresholds ──────────────────────────────────────────────

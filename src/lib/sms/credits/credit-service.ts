@@ -275,7 +275,7 @@ export class CreditService {
     // Find current period
     const { data: existingCredits } = await supabase
       .from("sms_credits")
-      .select("id, included_credits")
+      .select("id, included_credits, used_credits")
       .eq("organization_id", this.organizationId)
       .lte("period_start", today)
       .gte("period_end", today)
@@ -284,16 +284,7 @@ export class CreditService {
     const credits = existingCredits ?? (await this.createCurrentPeriod());
 
     const newIncluded = credits.included_credits + pack.credits;
-
-    // Recalculate overage based on new included amount
-    const { data: updated } = await supabase
-      .from("sms_credits")
-      .select("used_credits")
-      .eq("id", credits.id)
-      .single();
-
-    const usedCredits = updated?.used_credits ?? 0;
-    const newOverage = Math.max(0, usedCredits - newIncluded);
+    const newOverage = Math.max(0, credits.used_credits - newIncluded);
 
     const { error } = await supabase
       .from("sms_credits")

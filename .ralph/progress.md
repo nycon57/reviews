@@ -8732,3 +8732,93 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Lookup objects are cleaner than nested ternaries and comply with common linting rules
   - Template helper extraction (support footers, plan comparison tables) is high-leverage for HTML email codebases
 ---
+
+## [2026-01-31] - S096: SMS Database Schema & Migrations
+Thread: 
+Run: 20260131-121547-37293 (iteration 7)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-7.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-7.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4a2e785 [Pass 1/3] feat(S096): Add SMS channel database schema and migrations
+- Post-commit status: clean (only S096 files committed; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no (unavailable)
+  - /code-review: no
+  - /vercel-react-best-practices: no (not applicable - no React code)
+  - /next-best-practices: no (not applicable - no Next.js code)
+  - /supabase-postgres-best-practices: yes
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (not applicable - no UI)
+  - /web-design-guidelines: no (not applicable - no UI)
+  - /writing-clearly-and-concisely: no (Pass 1)
+  - /agent-browser: no (not applicable - no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (8 pre-existing errors, 0 from S096)
+  - Command: Supabase migration apply -> PASS
+- Files changed:
+  - supabase/migrations/20260131000001_sms_channel_schema.sql (new - 615 lines)
+  - supabase/seed.sql (added SMS seed data)
+  - src/types/database.types.ts (regenerated with SMS tables + exported DatabaseWithoutInternals)
+- What was implemented:
+  - 9 enums: sms_number_type, sms_number_status, sms_consent_status, sms_consent_method, sms_direction, sms_message_status, sms_template_category, sms_template_status, sms_conversation_status, sms_registration_status
+  - 9 tables: sms_phone_numbers, sms_consent, sms_templates, sms_short_links, sms_messages, sms_conversations, sms_daily_stats, sms_settings, sms_credits
+  - RLS policies on all 9 tables with org-level isolation
+  - sms_messages has role-based RLS: admins/managers see all, loan officers see only their own
+  - sms_settings restricted to admin-only for writes
+  - Indexes on all specified columns (org_id+created_at, to_number, twilio_sid, short_code, etc.)
+  - Partial indexes for performance (e.g., scheduled messages, active conversations, opted-in consent)
+  - pgcrypto encrypt/decrypt helper functions for Twilio auth tokens
+  - Seed data: 1 sms_settings record + 3 default sms_templates (review_request, follow_up, thank_you)
+  - TypeScript types auto-generated from live schema
+- **Learnings for future iterations:**
+  - supabase gen types writes to stdout; stderr CLI version warnings leak into the file - pipe stderr to /dev/null
+  - DatabaseWithoutInternals type needs to be re-exported after regeneration
+  - Migrations in supabase/migrations/ are gitignored - use git add -f
+  - The unique constraint on sms_daily_stats uses (organization_id, loan_officer_id, date) with nullable loan_officer_id - Postgres treats NULLs as distinct in unique constraints, so org-level stats (NULL loan_officer_id) won't conflict
+---
+
+## [2026-01-31] - S096: SMS Database Schema & Migrations
+Thread: 
+Run: 20260131-121547-37293 (iteration 8)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-8.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-8.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: aecb31a [Pass 3/3] refactor(S096): Remove redundant indexes and tighten comments
+- Post-commit status: clean (only S096 files committed; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no (not applicable for polish pass)
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React code)
+  - /next-best-practices: no (no Next.js code)
+  - /supabase-postgres-best-practices: yes
+  - /code-simplifier: yes (applied to migration SQL)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: yes (tightened all table/function comments)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (8 pre-existing errors, 0 from S096)
+- Files changed:
+  - supabase/migrations/20260131000001_sms_channel_schema.sql (polished)
+- What was implemented:
+  - Removed 4 redundant indexes that duplicated unique constraints or were covered by composite index leftmost prefixes:
+    - idx_sms_consent_org_phone (duplicates sms_consent_org_phone_unique)
+    - idx_sms_short_links_short_code (duplicates sms_short_links_code_unique)
+    - idx_sms_credits_org (covered by idx_sms_credits_org_period leftmost prefix)
+    - idx_sms_conversations_org_phone (duplicates sms_conversations_org_phone_unique)
+  - Tightened all table and function COMMENT strings for conciseness
+  - Clarified inline comments (deferred FK, LO abbreviation, redundancy notes)
+  - Shortened file header comment block
+- **Learnings for future iterations:**
+  - Unique constraints create implicit B-tree indexes; explicit indexes on the same columns waste space
+  - Composite indexes serve queries on their leftmost prefix columns, making single-column indexes on the first column redundant
+  - Table COMMENT strings should be terse — they appear in pg_description and tooling tooltips
+---

@@ -9012,3 +9012,95 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Shared constants should be exported from their canonical source to avoid duplication
   - Early return pattern is cleaner than mutable array accumulation for single-issue validators
 ---
+
+## [2026-01-31] - S100: Link Shortening & Click Tracking
+Thread: 
+Run: 20260131-145111-24714 (iteration 4)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: db2513f [Pass 1/3] feat(S100): Add link shortening & click tracking service
+- Post-commit status: clean (S100 files committed; other stories have uncommitted changes)
+- Skills invoked:
+  - /feature-dev: no (explored manually due to clear requirements)
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no issues in S100 files; pre-existing warnings in other files)
+- Files changed:
+  - src/lib/sms/short-links/code-generator.ts (new)
+  - src/lib/sms/short-links/types.ts (new)
+  - src/lib/sms/short-links/service.ts (new)
+  - src/lib/sms/short-links/actions.ts (new)
+  - src/lib/sms/short-links/index.ts (new)
+  - src/lib/sms/index.ts (modified - added short-links exports)
+  - src/app/r/[shortCode]/route.ts (new - redirect API route)
+  - src/app/r/expired/page.tsx (new - branded expired page)
+  - supabase/migrations/20260131000002_sms_short_link_click_rpc.sql (new)
+- Implementation:
+  - ShortLinkService with createShortLink, resolveShortLink, recordClick, getClickStats
+  - 6-char alphanumeric code generator using Node.js crypto with collision detection (5 attempts max)
+  - GET /r/[shortCode] route: validates format, rate limits (10/min/code), resolves, records click async, 302 redirects
+  - Expired links redirect to /r/expired branded page
+  - Atomic click counting via Postgres RPC (increment_short_link_click)
+  - createLinksForTemplate action for template merge integration (review_link, video_link)
+  - Short link URLs use app domain: https://app.repwell.com/r/{shortCode}
+  - Default 30-day expiry (configurable per link)
+- **Learnings for future iterations:**
+  - sms_short_links table already exists from S096 migration - no new migration needed for schema
+  - Only needed RPC function migration for atomic click increment
+  - supabase/migrations is gitignored - need -f flag to add
+  - crypto.getRandomValues triggers no-undef lint error; use node:crypto randomBytes instead
+  - setInterval in route files causes serverless issues; use lazy cleanup pattern
+---
+
+## [2026-01-31] - S100: Link Shortening & Click Tracking
+Thread:
+Run: 20260131-145111-24714 (iteration 5)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-5.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-5.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: c026d59 [Pass 2/3] fix(S100): Security and quality improvements for link shortening
+- Post-commit status: clean (S100 files committed; other stories have uncommitted changes)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: yes (reviewed expired page)
+  - /next-best-practices: yes (reviewed route handler)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no issues in S100 files)
+- Files changed:
+  - src/lib/sms/short-links/service.ts (added URL validation for destination URLs)
+  - src/lib/sms/short-links/actions.ts (added Zod validation schemas for all server actions)
+  - src/app/r/[shortCode]/route.ts (fixed rate limiter: IP-based, capped map size)
+- Pass 2 Fixes:
+  - HIGH: Added destination URL validation (blocks non-HTTP protocols) to prevent open redirect / protocol injection
+  - MEDIUM: Fixed rate limiter to key on client IP address instead of short code (was blocking legitimate users)
+  - MEDIUM: Added Zod validation schemas to all 3 server actions (createShortLink, getShortLinkStats, createLinksForTemplate)
+  - LOW: Added hard cap (10k entries) on rate limiter map to prevent unbounded memory growth
+- **Learnings for future iterations:**
+  - Rate limiters should almost always key on IP, not resource ID
+  - Server actions must validate inputs with Zod at the boundary, even when called from trusted code
+  - URL validation (protocol check) is essential for any redirect service
+---

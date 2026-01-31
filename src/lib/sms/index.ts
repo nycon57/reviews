@@ -53,6 +53,15 @@ export {
   purchasePhoneNumberSchema,
 } from "./types";
 
+// Webhook validation
+export {
+  validateTwilioSignature,
+  buildWebhookUrl,
+  OPT_OUT_KEYWORDS,
+  OPT_IN_KEYWORDS,
+  HELP_KEYWORDS,
+} from "./webhook-validation";
+
 // Short links
 export { ShortLinkService } from "./short-links/service";
 export type {

@@ -8683,3 +8683,52 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Date formatting functions that fall back to raw strings need HTML escaping for email safety
   - Zod `.refine()` is the right pattern for cross-field validation on schemas
 ---
+
+## 2026-01-31 - S087: Subscription Lifecycle Emails
+Thread: 
+Run: 20260131-121547-37293 (iteration 6)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-6.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-6.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 1080648 [Pass 3/3] refactor(S087): Polish subscription lifecycle emails for clarity and maintainability
+- Post-commit status: clean (S087 changes only; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (via agent)
+  - /frontend-design: no (not a UI story)
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (via agent)
+  - /agent-browser: no (not a UI story)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (8 pre-existing errors, 0 in S087 files)
+  - Command: npx eslint src/lib/email/subscription-service.ts src/lib/email/subscription-templates.ts src/app/api/cron/process-subscription-lifecycle/route.ts -> PASS (0 errors)
+- Files changed:
+  - src/lib/email/subscription-service.ts
+  - src/lib/email/subscription-templates.ts
+- What was implemented:
+  - Extracted `prepareEmailContext()` helper to eliminate duplicated auth/notification/unsubscribe checks across 9 send functions (~100 lines saved)
+  - Extracted `createSupportFooter()` to deduplicate 9 identical footer blocks in email templates
+  - Extracted `getDayRange()`, `getFirstName()`, `displayPlanName()` helpers
+  - Replaced nested ternaries in `createFeatureList` with lookup objects
+  - Added `EmailContent` named return type for template functions
+  - Consolidated `logEmail` calls in `sendEmail` using spread of shared base params
+  - Fixed grammatically broken sentence in plan-change-scheduled email body
+  - Improved feature descriptions: removed jargon, made descriptions more specific
+  - Tightened offboarding checklist copy
+  - Standardized all support footer text to consistent "Questions?" pattern
+  - Removed wordy/filler text from preheaders and body copy
+  - Net reduction: 147 lines removed (194 added, 341 removed)
+- **Learnings for future iterations:**
+  - When 9+ functions share identical preamble logic, extract it early to avoid compounding duplication
+  - User-facing copy reviews catch real issues (grammatically broken interpolations) that type checks miss
+  - Lookup objects are cleaner than nested ternaries and comply with common linting rules
+  - Template helper extraction (support footers, plan comparison tables) is high-leverage for HTML email codebases
+---

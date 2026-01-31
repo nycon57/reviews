@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ChatTeardropDots,
@@ -74,6 +75,7 @@ type ConnectionStatus = 'connected' | 'disconnected' | 'checking' | 'unknown';
 
 export function SmsTab() {
   const { toast } = useToast();
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   // Settings state
@@ -256,8 +258,38 @@ export function SmsTab() {
     );
   }
 
+  const registrationIncomplete =
+    settings &&
+    settings.registration_status !== 'fully_registered' &&
+    settings.twilio_account_sid;
+
   return (
     <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-8">
+      {/* 10DLC Registration Warning */}
+      {registrationIncomplete && (
+        <motion.div variants={fadeInUp}>
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
+            <Warning weight="fill" className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">
+                Complete 10DLC registration to send messages
+              </p>
+              <p className="text-xs text-amber-700 mt-1">
+                A2P 10DLC registration is required by carriers before you can send SMS messages. Messages will be blocked until registration is complete.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/dashboard/settings?tab=sms-registration')}
+              className="text-amber-700 border-amber-300 hover:bg-amber-100 flex-shrink-0"
+            >
+              Register Now
+            </Button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header */}
       <motion.div variants={fadeInUp}>
         <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">

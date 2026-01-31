@@ -52,3 +52,12 @@ export {
   sendCustomMessageSchema,
   purchasePhoneNumberSchema,
 } from "./types";
+
+// Short links
+export { ShortLinkService } from "./short-links/service";
+export { generateUniqueShortCode } from "./short-links/code-generator";
+export type {
+  SmsShortLink,
+  CreateShortLinkInput,
+  ShortLinkClickStats,
+} from "./short-links/types";

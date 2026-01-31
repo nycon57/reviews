@@ -31,14 +31,7 @@ import {
   purchasePhoneNumber,
 } from '@/lib/sms/settings/actions';
 import type { AvailablePhoneNumber } from '@/lib/sms/types';
-
-function formatPhoneNumber(e164: string): string {
-  const digits = e164.replace(/^\+1/, '');
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-  return e164;
-}
+import { formatPhoneNumber } from '@/lib/sms/format';
 
 interface AddPhoneNumberDialogProps {
   open: boolean;

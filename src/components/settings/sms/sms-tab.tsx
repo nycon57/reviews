@@ -62,19 +62,12 @@ import {
   getWebhookUrls,
 } from '@/lib/sms/settings/actions';
 import type { SmsSettings, SmsPhoneNumber } from '@/lib/sms/types';
+import { formatPhoneNumber } from '@/lib/sms/format';
 import { AddPhoneNumberDialog } from './add-phone-number-dialog';
 
 function maskValue(value: string, showLast = 4): string {
   if (value.length <= showLast) return value;
   return '•'.repeat(value.length - showLast) + value.slice(-showLast);
-}
-
-function formatPhoneNumber(e164: string): string {
-  const digits = e164.replace(/^\+1/, '');
-  if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-  }
-  return e164;
 }
 
 type ConnectionStatus = 'connected' | 'disconnected' | 'checking' | 'unknown';
@@ -146,14 +139,7 @@ export function SmsTab() {
     loadData();
   }, [loadData]);
 
-  // Check connection on load if credentials exist
-  useEffect(() => {
-    if (settings?.twilio_account_sid) {
-      checkConnection();
-    }
-  }, [settings?.twilio_account_sid]); // checkConnection is stable, intentionally omitted
-
-  async function checkConnection() {
+  const checkConnection = useCallback(async () => {
     setConnectionStatus('checking');
     const result = await testTwilioConnection();
     if (result.success && result.data?.connected) {
@@ -161,7 +147,14 @@ export function SmsTab() {
     } else {
       setConnectionStatus('disconnected');
     }
-  }
+  }, []);
+
+  // Check connection on load if credentials exist
+  useEffect(() => {
+    if (settings?.twilio_account_sid) {
+      checkConnection();
+    }
+  }, [settings?.twilio_account_sid, checkConnection]);
 
   async function handleSaveCredentials() {
     setIsSaving(true);
@@ -412,6 +405,7 @@ export function SmsTab() {
                         <button
                           type="button"
                           onClick={() => setShowAuthToken(!showAuthToken)}
+                          aria-label={showAuthToken ? 'Hide auth token' : 'Show auth token'}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-repwell-teal-400 transition-colors"
                         >
                           {showAuthToken ? (
@@ -581,18 +575,14 @@ export function SmsTab() {
                               </TableCell>
                               <TableCell>
                                 <div className="flex items-center gap-1.5">
-                                  {num.capabilities && typeof num.capabilities === 'object' && (
-                                    <>
-                                      {(num.capabilities as Record<string, boolean>).sms && (
-                                        <Badge variant="secondary" className="text-xs">SMS</Badge>
-                                      )}
-                                      {(num.capabilities as Record<string, boolean>).mms && (
-                                        <Badge variant="secondary" className="text-xs">MMS</Badge>
-                                      )}
-                                      {(num.capabilities as Record<string, boolean>).voice && (
-                                        <Badge variant="secondary" className="text-xs">Voice</Badge>
-                                      )}
-                                    </>
+                                  {num.capabilities?.sms && (
+                                    <Badge variant="secondary" className="text-xs">SMS</Badge>
+                                  )}
+                                  {num.capabilities?.mms && (
+                                    <Badge variant="secondary" className="text-xs">MMS</Badge>
+                                  )}
+                                  {num.capabilities?.voice && (
+                                    <Badge variant="secondary" className="text-xs">Voice</Badge>
                                   )}
                                 </div>
                               </TableCell>
@@ -604,6 +594,7 @@ export function SmsTab() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => setReleaseTarget(num)}
+                                  aria-label={`Release ${formatPhoneNumber(num.phone_number)}`}
                                   className="text-muted-foreground hover:text-red-500 h-8 w-8 p-0"
                                 >
                                   <Trash className="h-4 w-4" />

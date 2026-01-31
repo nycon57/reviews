@@ -230,7 +230,16 @@ export async function purchasePhoneNumber(
         organization_id: auth.organizationId,
         phone_number: parsed.data.phoneNumber,
         twilio_sid: twilioNumber.sid,
-        number_type: parsed.data.phoneNumber.startsWith("+18") ? "toll_free" : "local",
+        number_type: twilioNumber.phoneNumber?.startsWith("+1800") ||
+          twilioNumber.phoneNumber?.startsWith("+1888") ||
+          twilioNumber.phoneNumber?.startsWith("+1877") ||
+          twilioNumber.phoneNumber?.startsWith("+1866") ||
+          twilioNumber.phoneNumber?.startsWith("+1855") ||
+          twilioNumber.phoneNumber?.startsWith("+1844") ||
+          twilioNumber.phoneNumber?.startsWith("+1833") ||
+          twilioNumber.phoneNumber?.startsWith("+1822")
+            ? "toll_free"
+            : "local",
         status: "active",
         capabilities: {
           sms: Boolean(twilioNumber.capabilities?.sms),
@@ -294,7 +303,8 @@ export async function releasePhoneNumber(
       status: "released",
       updated_at: new Date().toISOString(),
     })
-    .eq("id", parsed.data.phoneNumberId);
+    .eq("id", parsed.data.phoneNumberId)
+    .eq("organization_id", auth.organizationId);
 
   if (updateError) {
     return { success: false, error: "Failed to update phone number status" };

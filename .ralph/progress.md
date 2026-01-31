@@ -9340,3 +9340,48 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Re-exporting error classes from submodules requires aliased import for instanceof checks in the same file
   - Aligning SMS credit periods with subscription billing periods avoids confusing users about overlapping dates
 ---
+
+## [2026-01-31] - S102: SMS Credits System & Usage Tracking
+Thread: 
+Run: 20260131-145111-24714 (iteration 12)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-12.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-12.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: ac6d79a [Pass 2/3] fix(S102): Security and quality improvements for SMS credits system
+- Post-commit status: clean (S102 files only; other files remain from prior work)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: no (no React components in S102)
+  - /next-best-practices: no (no Next.js pages in S102)
+  - /supabase-postgres-best-practices: yes (reviewed query patterns)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors/warnings in S102 files)
+- Files changed:
+  - src/lib/sms/credits/actions.ts
+  - src/lib/sms/credits/constants.ts
+  - src/lib/sms/credits/credit-service.ts
+  - src/lib/sms/credits/index.ts
+  - src/lib/sms/credits/types.ts
+  - src/lib/sms/index.ts
+  - src/lib/sms/sms-service.ts
+- What was implemented:
+  - Fixed requireCredits to properly check segments against remaining balance (was ignoring param)
+  - Removed unused startDate/endDate from getCreditUsageReport action and schema
+  - Eliminated race condition in purchaseCreditPack by consolidating two separate DB reads into one
+  - Fixed pricecents naming to priceCents for camelCase consistency
+  - Added missing Zod schema validation to getUsageHistory action
+- **Learnings for future iterations:**
+  - Always verify function params are actually used, not prefixed with _
+  - Zod schemas defined but not used in actions indicate validation gaps
+  - Separate read-then-update patterns create race windows; consolidate when possible
+---

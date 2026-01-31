@@ -8933,3 +8933,40 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Auto-append opt-out language at render time rather than forcing it in template body
   - createUntypedAdminClient is the pattern for SMS tables since they aren't in generated types yet
 ---
+
+## [2026-01-31] - S099: SMS Templates & Merge Field System
+Thread:
+Run: 20260131-145111-24714 (iteration 2)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: ecd4642 [Pass 2/3] fix(S099): Add schema validation to previewSmsTemplate action
+- Post-commit status: clean (only pre-existing uncommitted files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: no (no React components in S099)
+  - /next-best-practices: yes (server actions reviewed)
+  - /supabase-postgres-best-practices: yes (query patterns reviewed)
+  - /code-simplifier: no
+  - /frontend-design: no (no UI in S099)
+  - /web-design-guidelines: no (no UI in S099)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/templates/__tests__/ -> PASS (39 tests, 2 files)
+  - Command: npm run build -> PASS
+  - Command: npx eslint src/lib/sms/templates/ --max-warnings 0 -> PASS
+- Files changed:
+  - src/lib/sms/templates/actions.ts (added schema validation to previewSmsTemplate)
+- What was implemented:
+  - Added renderTemplatePreviewSchema import and validation to previewSmsTemplate action
+  - Ensures input is validated before processing, consistent with all other CRUD actions
+  - No other issues found: RESPA patterns use \b word boundaries correctly, multi-tenant org_id scoping is proper, auth checks are in place, test coverage is comprehensive
+- **Learnings for future iterations:**
+  - All server actions should validate input through Zod schemas before processing, even for simple read-only operations
+  - The Pass 1 implementation was high quality; only one validation gap found
+---

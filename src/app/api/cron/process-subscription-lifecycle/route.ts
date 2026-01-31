@@ -6,16 +6,15 @@ import {
   processCancellationFeedbackRequests,
 } from "@/lib/email/subscription-service";
 
-const cronParamsSchema = z.object({
-  batch_size: z.coerce
-    .number()
-    .int()
-    .min(1, "Batch size must be at least 1")
-    .max(100, "Batch size cannot exceed 100")
-    .default(50),
-  renewals_only: z.coerce.boolean().default(false),
-  feedback_only: z.coerce.boolean().default(false),
-});
+const cronParamsSchema = z
+  .object({
+    renewals_only: z.coerce.boolean().default(false),
+    feedback_only: z.coerce.boolean().default(false),
+  })
+  .refine(
+    (data) => !(data.renewals_only && data.feedback_only),
+    { message: "Cannot set both renewals_only and feedback_only to true" }
+  );
 
 function verifyCronSecret(request: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
@@ -70,7 +69,6 @@ export async function POST(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const parseResult = cronParamsSchema.safeParse({
-      batch_size: url.searchParams.get("batch_size") ?? undefined,
       renewals_only: url.searchParams.get("renewals_only") ?? undefined,
       feedback_only: url.searchParams.get("feedback_only") ?? undefined,
     });

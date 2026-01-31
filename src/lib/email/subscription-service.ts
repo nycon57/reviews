@@ -152,6 +152,13 @@ const DEFAULT_FEEDBACK_OPTIONS = [
 
 const SUPPORT_EMAIL = "support@repwell.ai";
 
+const PLAN_DISPLAY_NAMES: Record<string, string> = {
+  free: "Free",
+  starter: "Starter",
+  professional: "Professional",
+  enterprise: "Enterprise",
+};
+
 function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
@@ -316,11 +323,16 @@ export function mapStripeInvoice(
   }
 
   const lineItems: InvoiceLineItem[] =
-    invoice.lines?.data?.map((line: { description?: string; quantity?: number; amount?: number }) => ({
-      description: line.description || "Subscription",
-      quantity: line.quantity || 1,
-      amount: line.amount || 0,
-    })) || [];
+    invoice.lines?.data?.map((line: { description?: string; quantity?: number; amount?: number; price?: { unit_amount?: number } }) => {
+      const quantity = line.quantity || 1;
+      const amount = line.amount || 0;
+      return {
+        description: line.description || "Subscription",
+        quantity,
+        unitPrice: line.price?.unit_amount ?? (quantity > 0 ? Math.round(amount / quantity) : amount),
+        amount,
+      };
+    }) || [];
 
   return {
     invoiceId: invoice.id,
@@ -422,12 +434,7 @@ export async function sendSubscriptionUpgradeEmail(params: {
   const featureDiff = getPlanFeatureDiff(params.previousPlan, params.newPlan);
 
   // Map plan keys to display names
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionUpgradeConfirmationEmailData = {
     toEmail: user.email,
@@ -503,12 +510,7 @@ export async function sendSubscriptionDowngradeEmail(params: {
   const urls = buildBaseUrls(params.organizationId);
   const featureDiff = getPlanFeatureDiff(params.previousPlan, params.newPlan);
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionDowngradeConfirmationEmailData = {
     toEmail: user.email,
@@ -586,12 +588,7 @@ export async function sendSubscriptionRenewalReminderEmail(params: {
   const renewalDate = new Date(params.renewalDate);
   const daysTillRenewal = daysBetween(new Date(), renewalDate);
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionRenewalReminderEmailData = {
     toEmail: user.email,
@@ -661,12 +658,7 @@ export async function sendSubscriptionRenewedEmail(params: {
 
   const urls = buildBaseUrls(params.organizationId);
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionRenewedEmailData = {
     toEmail: user.email,
@@ -730,12 +722,7 @@ export async function sendSubscriptionCancelledEmail(params: {
   const endDate = new Date(params.effectiveEndDate);
   const daysRemaining = daysBetween(new Date(), endDate);
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   // Build action URLs with base URL
   const offboardingChecklist = DEFAULT_OFFBOARDING_CHECKLIST.map((item) => ({
@@ -811,12 +798,7 @@ export async function sendSubscriptionCancellationFeedbackEmail(params: {
 
   const urls = buildBaseUrls(params.organizationId);
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionCancellationFeedbackEmailData = {
     toEmail: user.email,
@@ -885,12 +867,7 @@ export async function sendSubscriptionPlanChangeScheduledEmail(params: {
   const scheduledDate = new Date(params.scheduledDate);
   const daysUntilChange = daysBetween(new Date(), scheduledDate);
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const featureDiff = getPlanFeatureDiff(
     params.currentPlan,
@@ -964,12 +941,7 @@ export async function sendSubscriptionInvoiceAvailableEmail(params: {
 
   const urls = buildBaseUrls(params.organizationId);
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionInvoiceAvailableEmailData = {
     toEmail: user.email,
@@ -1039,12 +1011,7 @@ export async function sendSubscriptionPriceIncreaseNoticeEmail(params: {
     (priceIncreaseAmount / params.currentPrice) * 100
   );
 
-  const planNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
-    enterprise: "Enterprise",
-  };
+  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionPriceIncreaseNoticeEmailData = {
     toEmail: user.email,
@@ -1209,7 +1176,7 @@ export async function processRenewalReminders(): Promise<{
         .eq("template_name", "subscription_renewal_reminder")
         .gte("sent_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (existingEmail) {
         continue; // Already sent reminder recently
@@ -1287,7 +1254,7 @@ export async function processCancellationFeedbackRequests(): Promise<{
         .eq("organization_id", org.id)
         .eq("template_name", "subscription_cancellation_feedback")
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (existingEmail) {
         continue; // Already sent feedback request

@@ -224,7 +224,7 @@ function formatDate(dateString: string): string {
       year: "numeric",
     });
   } catch {
-    return dateString;
+    return escapeHtml(dateString);
   }
 }
 
@@ -237,7 +237,7 @@ function formatShortDate(dateString: string): string {
       year: "numeric",
     });
   } catch {
-    return dateString;
+    return escapeHtml(dateString);
   }
 }
 

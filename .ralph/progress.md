@@ -9524,3 +9524,53 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Always scope DB updates by organization_id even after a scoped fetch (defense-in-depth)
   - Extract utilities early to prevent cross-component duplication
 ---
+
+## [2026-01-31] - S104: 10DLC Registration Wizard
+Thread:
+Run: 20260131-164553-16216 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: bc700c2 [Pass 1/3] feat(S104): Add 10DLC Registration Wizard for A2P compliance
+- Post-commit status: other files remain modified (pre-existing changes from other stories)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none (Pass 1 focused on core implementation)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (8 pre-existing errors, 0 new)
+- Files changed:
+  - src/components/settings/sms/brand-registration-form.tsx (new)
+  - src/components/settings/sms/campaign-registration-form.tsx (new)
+  - src/components/settings/sms/registration-status-dashboard.tsx (new)
+  - src/components/settings/sms/registration-tab.tsx (new)
+  - src/components/settings/sms/registration-wizard.tsx (new)
+  - src/components/settings/sms/sms-tab.tsx (modified - added warning banner + useRouter fix)
+  - src/app/(dashboard)/dashboard/settings/components/settings-tabs.tsx (modified - added 10DLC tab)
+  - src/lib/sms/registration/schemas.ts (new)
+  - src/lib/sms/registration/actions.ts (new)
+  - src/lib/sms/registration/twilio-a2p.ts (new)
+  - src/app/api/cron/check-sms-registration/route.ts (new)
+  - supabase/migrations/20260131000004_sms_registration_failure_columns.sql (new, not committed - gitignored)
+- Implemented full 10DLC registration wizard with 3 steps: Brand Registration, Campaign Registration, Verification Status
+- Server actions for brand/campaign submission via Twilio Messaging API
+- Cron job for hourly status polling of pending registrations
+- Warning banner on SMS tab when registration is incomplete
+- Pre-filled defaults for keywords and campaign description
+- **Learnings for future iterations:**
+  - supabase/migrations is gitignored - migration files created but not committed
+  - Generated DB types don't include new columns until db:types is run; use createUntypedAdminClient as workaround
+  - useRouter must be called before any early returns in React components
+  - Existing lint errors (8) are all pre-existing in remotion/ and other files
+---

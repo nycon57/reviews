@@ -8970,3 +8970,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - All server actions should validate input through Zod schemas before processing, even for simple read-only operations
   - The Pass 1 implementation was high quality; only one validation gap found
 ---
+
+## [2026-01-31] - S099: SMS Templates & Merge Field System
+Thread:
+Run: 20260131-145111-24714 (iteration 3)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d9e4836 [Pass 3/3] refactor(S099): Simplify merge engine and validators
+- Post-commit status: clean (only pre-existing uncommitted files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components in S099)
+  - /next-best-practices: no (no new Next.js code)
+  - /supabase-postgres-best-practices: no (no schema changes)
+  - /code-simplifier: yes
+  - /frontend-design: no (no UI in S099)
+  - /web-design-guidelines: no (no UI in S099)
+  - /writing-clearly-and-concisely: yes (reviewed all error messages and user-facing text)
+  - /agent-browser: no (no UI in S099)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/templates/__tests__/ -> PASS (39 tests, 2 files)
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from S099 files)
+- Files changed:
+  - src/lib/sms/templates/merge-engine.ts (simplified extractMergeFields, validateMergeFields, renderTemplate; exported OPT_OUT_PATTERN)
+  - src/lib/sms/templates/validators.ts (imported shared OPT_OUT_PATTERN; simplified checkBodyLength to early returns)
+- What was implemented:
+  - Consolidated duplicate OPT_OUT_PATTERN into single export from merge-engine.ts
+  - Replaced manual while/exec regex loops with matchAll in extractMergeFields and validateMergeFields
+  - Removed unnecessary new RegExp() wrapper in renderTemplate
+  - Simplified checkBodyLength to use direct early returns instead of mutable array
+  - Reviewed all user-facing error messages for clarity — all are concise and actionable
+  - All 39 tests pass with no regressions
+- **Learnings for future iterations:**
+  - matchAll with Array.from is cleaner than manual while/exec loops for regex extraction
+  - Shared constants should be exported from their canonical source to avoid duplication
+  - Early return pattern is cleaner than mutable array accumulation for single-issue validators
+---

@@ -9574,3 +9574,90 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - useRouter must be called before any early returns in React components
   - Existing lint errors (8) are all pre-existing in remotion/ and other files
 ---
+
+## [2026-01-31] - S104: 10DLC Registration Wizard
+Thread:
+Run: 20260131-164553-16216 (iteration 2)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: c4efcd1 [Pass 2/3] fix(S104): Security and quality improvements for 10DLC Registration Wizard
+- Post-commit status: other files remain modified (pre-existing changes from other stories)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review of all Pass 1 files)
+  - /vercel-react-best-practices: yes (reviewed React components)
+  - /next-best-practices: yes (reviewed cron route)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (8 pre-existing errors, 0 new)
+- Files changed:
+  - src/lib/sms/registration/twilio-a2p.ts (fix URLSearchParams bug, extract deriveRegistrationUpdate)
+  - src/lib/sms/registration/actions.ts (use shared deriveRegistrationUpdate)
+  - src/app/api/cron/check-sms-registration/route.ts (use shared deriveRegistrationUpdate)
+  - src/components/settings/sms/registration-wizard.tsx (fix rejected logic, add ARIA)
+- Fixes applied:
+  - URLSearchParams spread syntax bug: replaced object constructor with explicit .set() calls
+  - Rejected state logic: rejected status now routes to step 1 for re-submission instead of step 3
+  - Duplicated status transition logic extracted into shared deriveRegistrationUpdate() function
+  - Added aria-label, aria-current, and role="group" to wizard step navigation
+- **Learnings for future iterations:**
+  - URLSearchParams constructor only accepts string[][] or Record<string,string>, not spreads
+  - Status transition logic was duplicated across actions.ts and cron route - always extract early
+  - Accessibility attributes (aria-label, aria-current, role) should be added during Pass 1
+---
+
+## [2026-01-31] - S104: 10DLC Registration Wizard
+Thread:
+Run: 20260131-164553-16216 (iteration 3)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 1503fac [Pass 3/3] refactor(S104): Polish 10DLC Registration Wizard for clarity and remove dead code
+- Post-commit status: other files remain modified (pre-existing changes from other stories)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (reviewed, no changes needed)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (8 pre-existing errors, 0 new)
+- Files changed:
+  - src/components/settings/sms/registration-wizard.tsx (simplified determineActiveStep, removed fragment wrappers)
+  - src/components/settings/sms/registration-status-dashboard.tsx (merged duplicate switch cases)
+  - src/lib/sms/registration/actions.ts (removed redundant type assertions)
+  - src/lib/sms/registration/twilio-a2p.ts (simplified JSDoc, removed obvious comments)
+  - src/lib/sms/registration/schemas.ts (removed decorative section banners)
+  - src/app/api/cron/check-sms-registration/route.ts (removed duplicate registration_status assignment)
+- Simplifications applied:
+  - determineActiveStep: 8 if-statements reduced to 3 using includes()
+  - isStepAccessible: replaced includes() with !== for single-value check
+  - Removed unnecessary React fragment wrappers in step content
+  - Merged duplicate switch cases in getStatusDisplay
+  - Removed redundant `as string` / `as string | null` type assertions
+  - Removed all decorative section banner comments from schemas
+  - Removed duplicate registration_status assignment in cron route
+- **Learnings for future iterations:**
+  - Code simplification in Pass 3 catches patterns that accumulate across Passes 1-2
+  - Decorative section banners add noise; clear naming makes them unnecessary
+  - Type assertions with untyped Supabase client are redundant when nullish coalescing is used
+---

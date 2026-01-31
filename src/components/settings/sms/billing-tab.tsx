@@ -13,15 +13,12 @@ import {
   getCurrentPeriodUsage,
   getMonthlyUsageSummary,
 } from '@/lib/sms/credits/billing-actions';
+import { formatCents } from '@/lib/sms/credits/format';
 import type { CreditBalance, CurrentPeriodUsage, MonthlyUsageSummary } from '@/lib/sms/credits/types';
 import { CreditBalanceCard, UsageAlertBanner } from './credit-balance-card';
 import { UsageChart, UsageTable } from './usage-chart';
 import { CreditPacksSection } from './credit-packs-section';
 import { OverageSettings } from './overage-settings';
-
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
 
 export function SmsBillingTab() {
   const { toast } = useToast();

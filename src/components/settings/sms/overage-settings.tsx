@@ -10,15 +10,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { fadeInUp } from '@/lib/motion/variants';
+import { formatCents } from '@/lib/sms/credits/format';
 import type { CreditBalance, CurrentPeriodUsage } from '@/lib/sms/credits/types';
 
 interface OverageSettingsProps {
   balance: CreditBalance;
   usage: CurrentPeriodUsage;
-}
-
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export function OverageSettings({ balance, usage }: OverageSettingsProps) {

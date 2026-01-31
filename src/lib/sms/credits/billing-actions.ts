@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { unifiedGetUserWithProfile } from "@/lib/auth/actions";
 import { CreditService } from "./credit-service";
 import { CREDIT_PACKS } from "./constants";
@@ -9,6 +10,8 @@ import type {
   MonthlyUsageSummary,
 } from "./types";
 import { revalidatePath } from "next/cache";
+
+const packIdSchema = z.enum(["pack_100", "pack_500", "pack_1000"]);
 
 type ActionResult<T = void> =
   | { success: true; data?: T }
@@ -74,30 +77,19 @@ export async function purchaseCreditPack(
   const auth = await requireAdminOrManager();
   if ("error" in auth) return { success: false, error: auth.error };
 
-  const pack = CREDIT_PACKS.find((p) => p.id === packId);
+  const parsed = packIdSchema.safeParse(packId);
+  if (!parsed.success) return { success: false, error: "Invalid credit pack" };
+
+  const pack = CREDIT_PACKS.find((p) => p.id === parsed.data);
   if (!pack) return { success: false, error: "Invalid credit pack" };
 
   try {
     const service = new CreditService(auth.organizationId);
-    const result = await service.purchaseCreditPack(packId);
+    const result = await service.purchaseCreditPack(parsed.data);
     revalidatePath("/dashboard/settings");
     return { success: true, data: result };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to purchase credit pack";
     return { success: false, error: message };
   }
-}
-
-export async function toggleOverageAllowed(
-  allowed: boolean
-): Promise<ActionResult> {
-  const auth = await requireAdminOrManager();
-  if ("error" in auth) return { success: false, error: auth.error };
-
-  // Overage is controlled by the subscription tier, not a toggle.
-  // This action is a placeholder for future customization at the org level.
-  // For now we return success since overage is determined by tier config.
-  void allowed;
-  revalidatePath("/dashboard/settings");
-  return { success: true };
 }

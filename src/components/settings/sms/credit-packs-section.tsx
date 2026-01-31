@@ -13,15 +13,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { fadeInUp } from '@/lib/motion/variants';
+import { formatCents } from '@/lib/sms/credits/format';
 import { CREDIT_PACKS, type CreditPack } from '@/lib/sms/credits/constants';
 import { purchaseCreditPack } from '@/lib/sms/credits/billing-actions';
 
 interface CreditPacksSectionProps {
   onPurchased: () => void;
-}
-
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 function perCreditCost(pack: CreditPack): string {

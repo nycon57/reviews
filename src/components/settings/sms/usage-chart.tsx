@@ -20,6 +20,7 @@ import {
   Legend,
 } from 'recharts';
 import { fadeInUp } from '@/lib/motion/variants';
+import { formatCents } from '@/lib/sms/credits/format';
 import type { DailyUsageStat } from '@/lib/sms/credits/types';
 
 interface UsageChartProps {
@@ -31,10 +32,6 @@ interface UsageChartProps {
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartProps) {
@@ -68,16 +65,15 @@ export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartPro
 
   const handleExportCsv = useCallback(() => {
     const headers = ['Date', 'Sent', 'Delivered', 'Failed', 'Segments', 'Cost'];
-    const rows = dailyStats.map((d) => [
+    const rows: string[][] = dailyStats.map((d) => [
       d.date,
-      d.sent,
-      d.delivered,
-      d.failed,
-      d.segments,
+      String(d.sent),
+      String(d.delivered),
+      String(d.failed),
+      String(d.segments),
       formatCents(d.costCents),
     ]);
 
-    // Add totals row
     const totals = dailyStats.reduce(
       (acc, d) => ({
         sent: acc.sent + d.sent,
@@ -89,7 +85,7 @@ export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartPro
       { sent: 0, delivered: 0, failed: 0, segments: 0, costCents: 0 }
     );
 
-    rows.push(['TOTAL', totals.sent, totals.delivered, totals.failed, totals.segments, formatCents(totals.costCents)] as unknown as string[]);
+    rows.push(['TOTAL', String(totals.sent), String(totals.delivered), String(totals.failed), String(totals.segments), formatCents(totals.costCents)]);
 
     const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

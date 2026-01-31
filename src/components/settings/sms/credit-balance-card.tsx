@@ -8,8 +8,10 @@ import {
   Warning,
   ArrowUp,
 } from '@phosphor-icons/react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fadeInUp } from '@/lib/motion/variants';
+import { formatCents } from '@/lib/sms/credits/format';
 import type { CreditBalance, CurrentPeriodUsage } from '@/lib/sms/credits/types';
 import type { AlertLevel } from '@/lib/sms/credits/constants';
 
@@ -40,7 +42,7 @@ function CircularProgress({
     exceeded: 'stroke-red-500',
   }[alertLevel];
 
-  const bgColor = {
+  const percentageColor = {
     none: 'text-repwell-sage-200',
     warning: 'text-amber-500',
     critical: 'text-orange-500',
@@ -48,8 +50,8 @@ function CircularProgress({
   }[alertLevel];
 
   return (
-    <div className="relative w-36 h-36 mx-auto">
-      <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+    <div className="relative w-36 h-36 mx-auto" role="img" aria-label={`${Math.round(percentage)}% of SMS credits used`}>
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
         <circle
           cx="60"
           cy="60"
@@ -74,17 +76,13 @@ function CircularProgress({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-2xl font-bold tabular-nums ${bgColor}`}>
+        <span className={`text-2xl font-bold tabular-nums ${percentageColor}`}>
           {Math.round(percentage)}%
         </span>
         <span className="text-xs text-repwell-teal-300">used</span>
       </div>
     </div>
   );
-}
-
-function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
 }
 
 export function CreditBalanceCard({ balance, usage }: CreditBalanceCardProps) {
@@ -152,10 +150,10 @@ export function CreditBalanceCard({ balance, usage }: CreditBalanceCardProps) {
             <div className="space-y-0.5">
               <div className="flex items-center gap-1.5 text-xs text-repwell-teal-300">
                 <TrendUp weight="bold" className="h-3 w-3" />
-                Est. cost this period
+                Overage charges
               </div>
               <p className="text-sm font-semibold text-repwell-teal-500 tabular-nums">
-                {formatCents(balance.overageCostCents)}
+                {balance.overageCostCents > 0 ? formatCents(balance.overageCostCents) : 'None'}
               </p>
             </div>
             <div className="space-y-0.5">
@@ -210,12 +208,13 @@ export function UsageAlertBanner({ alertLevel, onBuyCredits }: { alertLevel: Ale
           <p className="text-sm font-semibold text-repwell-teal-500">{config.title}</p>
           <p className="text-sm text-repwell-teal-400 mt-0.5">{config.text}</p>
         </div>
-        <button
+        <Button
           onClick={onBuyCredits}
-          className={`text-xs font-medium text-white px-3 py-1.5 rounded-lg flex-shrink-0 transition-colors ${config.btn}`}
+          size="sm"
+          className={`text-xs font-medium text-white flex-shrink-0 ${config.btn}`}
         >
           Buy credits
-        </button>
+        </Button>
       </div>
     </motion.div>
   );

@@ -1,14 +1,40 @@
 "use server";
 
+import { z } from "zod";
 import { ShortLinkService } from "./service";
-import type { CreateShortLinkInput, ShortLinkClickStats } from "./types";
+import type { ShortLinkClickStats } from "./types";
+
+const createShortLinkSchema = z.object({
+  organizationId: z.string().uuid(),
+  destinationUrl: z.string().url(),
+  metadata: z
+    .object({
+      borrowerPhone: z.string().optional(),
+      loanOfficerId: z.string().uuid().optional(),
+      messageId: z.string().uuid().optional(),
+      expiresInDays: z.number().int().positive().max(365).optional(),
+    })
+    .optional(),
+});
+
+const shortLinkIdSchema = z.string().uuid();
+
+const createLinksForTemplateSchema = z.object({
+  organizationId: z.string().uuid(),
+  borrowerPhone: z.string().optional(),
+  loanOfficerId: z.string().uuid().optional(),
+  messageId: z.string().uuid().optional(),
+  reviewUrl: z.string().url().optional(),
+  videoUrl: z.string().url().optional(),
+});
 
 /**
  * Create a short link for a destination URL.
  * Returns the full short URL ready for use in SMS messages.
  */
-export async function createShortLink(input: CreateShortLinkInput) {
-  return ShortLinkService.createShortLink(input);
+export async function createShortLink(input: z.infer<typeof createShortLinkSchema>) {
+  const validated = createShortLinkSchema.parse(input);
+  return ShortLinkService.createShortLink(validated);
 }
 
 /**
@@ -17,7 +43,8 @@ export async function createShortLink(input: CreateShortLinkInput) {
 export async function getShortLinkStats(
   shortLinkId: string
 ): Promise<ShortLinkClickStats | null> {
-  return ShortLinkService.getClickStats(shortLinkId);
+  const id = shortLinkIdSchema.parse(shortLinkId);
+  return ShortLinkService.getClickStats(id);
 }
 
 /**
@@ -27,42 +54,36 @@ export async function getShortLinkStats(
  *
  * Call this before renderTemplate when sending real SMS messages.
  */
-export async function createLinksForTemplate(opts: {
-  organizationId: string;
-  borrowerPhone?: string;
-  loanOfficerId?: string;
-  messageId?: string;
-  reviewUrl?: string;
-  videoUrl?: string;
-}): Promise<{
+export async function createLinksForTemplate(opts: z.infer<typeof createLinksForTemplateSchema>): Promise<{
   reviewLink?: string;
   videoLink?: string;
   shortLinkIds: string[];
 }> {
+  const validated = createLinksForTemplateSchema.parse(opts);
   const shortLinkIds: string[] = [];
   let reviewLink: string | undefined;
   let videoLink: string | undefined;
 
   const metadata = {
-    borrowerPhone: opts.borrowerPhone,
-    loanOfficerId: opts.loanOfficerId,
-    messageId: opts.messageId,
+    borrowerPhone: validated.borrowerPhone,
+    loanOfficerId: validated.loanOfficerId,
+    messageId: validated.messageId,
   };
 
-  if (opts.reviewUrl) {
+  if (validated.reviewUrl) {
     const { shortLink, shortUrl } = await ShortLinkService.createShortLink({
-      organizationId: opts.organizationId,
-      destinationUrl: opts.reviewUrl,
+      organizationId: validated.organizationId,
+      destinationUrl: validated.reviewUrl,
       metadata,
     });
     reviewLink = shortUrl;
     shortLinkIds.push(shortLink.id);
   }
 
-  if (opts.videoUrl) {
+  if (validated.videoUrl) {
     const { shortLink, shortUrl } = await ShortLinkService.createShortLink({
-      organizationId: opts.organizationId,
-      destinationUrl: opts.videoUrl,
+      organizationId: validated.organizationId,
+      destinationUrl: validated.videoUrl,
       metadata,
     });
     videoLink = shortUrl;

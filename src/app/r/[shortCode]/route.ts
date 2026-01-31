@@ -1,13 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ShortLinkService } from "@/lib/sms/short-links/service";
 
-// In-memory rate limiter: Map<shortCode, { count, windowStart }>
+// In-memory rate limiter keyed by IP address
 const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
-const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_MAX = 30; // per IP per window
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const MAX_MAP_SIZE = 10_000; // cap to prevent unbounded memory growth
 let lastCleanup = Date.now();
 
-function isRateLimited(shortCode: string): boolean {
+function getClientIp(request: NextRequest): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+function isRateLimited(ip: string): boolean {
   const now = Date.now();
 
   // Lazy cleanup of stale entries every 5 minutes
@@ -20,19 +29,21 @@ function isRateLimited(shortCode: string): boolean {
     lastCleanup = now;
   }
 
-  const entry = rateLimitMap.get(shortCode);
+  // Hard cap: evict oldest entries if map exceeds max size
+  if (rateLimitMap.size >= MAX_MAP_SIZE) {
+    const firstKey = rateLimitMap.keys().next().value;
+    if (firstKey !== undefined) rateLimitMap.delete(firstKey);
+  }
+
+  const entry = rateLimitMap.get(ip);
 
   if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
-    rateLimitMap.set(shortCode, { count: 1, windowStart: now });
+    rateLimitMap.set(ip, { count: 1, windowStart: now });
     return false;
   }
 
   entry.count++;
-  if (entry.count > RATE_LIMIT_MAX) {
-    return true;
-  }
-
-  return false;
+  return entry.count > RATE_LIMIT_MAX;
 }
 
 /**
@@ -50,8 +61,9 @@ export async function GET(
     return NextResponse.json({ error: "Invalid link" }, { status: 400 });
   }
 
-  // Rate limiting
-  if (isRateLimited(shortCode)) {
+  // Rate limiting per IP
+  const clientIp = getClientIp(request);
+  if (isRateLimited(clientIp)) {
     return NextResponse.json(
       { error: "Too many requests" },
       {

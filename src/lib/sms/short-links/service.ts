@@ -8,6 +8,20 @@ import type {
 
 const DEFAULT_EXPIRY_DAYS = 30;
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.repwell.com";
+const ALLOWED_PROTOCOLS = ["http:", "https:"];
+
+/** Validate that a destination URL uses an allowed protocol. */
+function validateDestinationUrl(url: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("Invalid destination URL");
+  }
+  if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
+    throw new Error(`Disallowed URL protocol: ${parsed.protocol}`);
+  }
+}
 
 /**
  * ShortLinkService handles creation, resolution, click tracking,
@@ -21,6 +35,8 @@ export const ShortLinkService = {
   async createShortLink(
     input: CreateShortLinkInput
   ): Promise<{ shortLink: SmsShortLink; shortUrl: string }> {
+    validateDestinationUrl(input.destinationUrl);
+
     const supabase = createUntypedAdminClient();
     const shortCode = await generateUniqueShortCode();
 

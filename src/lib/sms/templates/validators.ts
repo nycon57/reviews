@@ -1,5 +1,5 @@
 import { calculateSegments } from "../segment-calculator";
-import { validateMergeFields } from "./merge-engine";
+import { validateMergeFields, OPT_OUT_PATTERN } from "./merge-engine";
 
 // ── Constants ─────────────────────────────────────────────────────────
 
@@ -20,9 +20,6 @@ export const RESPA_PROHIBITED_PATTERNS: readonly RegExp[] = [
   /\bkickback\b/i,
   /\breferral\s*fee\b/i,
 ];
-
-/** Opt-out language pattern */
-const OPT_OUT_PATTERN = /reply\s+stop/i;
 
 // ── Types ─────────────────────────────────────────────────────────────
 
@@ -87,28 +84,25 @@ export function checkOptOutLanguage(body: string): ValidationIssue[] {
  * Validate template body length against the 480-character (3 segment) limit.
  */
 export function checkBodyLength(body: string): ValidationIssue[] {
-  const issues: ValidationIssue[] = [];
-
   if (body.length === 0) {
-    issues.push({
+    return [{
       field: "body",
       code: "BODY_EMPTY",
       message: "Template body is required.",
       severity: "error",
-    });
-    return issues;
+    }];
   }
 
   if (body.length > MAX_TEMPLATE_BODY_LENGTH) {
-    issues.push({
+    return [{
       field: "body",
       code: "BODY_TOO_LONG",
       message: `Template body exceeds ${MAX_TEMPLATE_BODY_LENGTH} characters (${body.length} characters). Max 3 SMS segments.`,
       severity: "error",
-    });
+    }];
   }
 
-  return issues;
+  return [];
 }
 
 /**

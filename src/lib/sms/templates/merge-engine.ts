@@ -39,9 +39,6 @@ export const SAMPLE_MERGE_DATA: Record<MergeFieldKey, string> = {
 /** Matches valid merge field syntax: {{field_name}} */
 const MERGE_FIELD_REGEX = /\{\{([a-z_]+)\}\}/g;
 
-/** Matches malformed merge field syntax (mismatched braces, spaces, etc.) */
-const MALFORMED_FIELD_REGEX = /\{\{[^}]*\s[^}]*\}\}/g;
-
 // ── Types ─────────────────────────────────────────────────────────────
 
 export interface RenderResult {
@@ -68,22 +65,14 @@ export interface MergeFieldValidation {
 
 // ── Core functions ────────────────────────────────────────────────────
 
-const OPT_OUT_PATTERN = /reply\s+stop/i;
+export const OPT_OUT_PATTERN = /reply\s+stop/i;
 const OPT_OUT_SUFFIX = " Reply STOP to opt out.";
 
 /**
  * Extract all merge field names from a template body.
  */
 export function extractMergeFields(body: string): string[] {
-  const fields: string[] = [];
-  const regex = new RegExp(MERGE_FIELD_REGEX.source, "g");
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(body)) !== null) {
-    if (!fields.includes(match[1])) {
-      fields.push(match[1]);
-    }
-  }
-  return fields;
+  return [...new Set(Array.from(body.matchAll(MERGE_FIELD_REGEX), (m) => m[1]))];
 }
 
 /**
@@ -94,13 +83,10 @@ export function validateMergeFields(body: string): MergeFieldValidation {
   const fields = extractMergeFields(body);
   const supported = new Set<string>(SUPPORTED_MERGE_FIELDS);
   const unsupportedFields = fields.filter((f) => !supported.has(f));
-
-  const malformedPatterns: string[] = [];
-  const malformedRegex = new RegExp(MALFORMED_FIELD_REGEX.source, "g");
-  let malformed: RegExpExecArray | null;
-  while ((malformed = malformedRegex.exec(body)) !== null) {
-    malformedPatterns.push(malformed[0]);
-  }
+  const malformedPatterns = Array.from(
+    body.matchAll(/\{\{[^}]*\s[^}]*\}\}/g),
+    (m) => m[0]
+  );
 
   return {
     valid: unsupportedFields.length === 0 && malformedPatterns.length === 0,
@@ -124,7 +110,7 @@ export function renderTemplate(
 
   // Replace merge fields with context values
   let rendered = body.replace(
-    new RegExp(MERGE_FIELD_REGEX.source, "g"),
+    MERGE_FIELD_REGEX,
     (fullMatch, fieldName: string) => {
       const value = context[fieldName as MergeFieldKey];
       if (value === undefined || value === "") {

@@ -110,7 +110,7 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className={!enabled ? 'opacity-50 pointer-events-none' : ''}>
+        <fieldset disabled={!enabled} className={`border-0 p-0 m-0 ${!enabled ? 'opacity-50' : ''}`} aria-disabled={!enabled}>
           {/* Time Range */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -193,7 +193,7 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
             TCPA default: 9:00 PM to 8:00 AM local time. Messages queued during quiet hours will be sent
             when quiet hours end.
           </p>
-        </div>
+        </fieldset>
 
         {/* Save Button */}
         {isDirty && (

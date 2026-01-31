@@ -175,54 +175,80 @@ export async function getComplianceReport(
 
   const supabase = createAdminClient();
 
-  // Get daily stats for the date range
-  const { data: dailyStats, error } = await supabase
-    .from("sms_daily_stats")
-    .select("date, sent, opted_out")
-    .eq("organization_id", auth.organizationId)
-    .gte("date", parsed.data.startDate)
-    .lte("date", parsed.data.endDate)
-    .order("date", { ascending: true });
+  // Fetch opt-in events, opt-out events, and daily send stats in parallel
+  const [optInResult, optOutResult, statsResult] = await Promise.all([
+    supabase
+      .from("sms_consent")
+      .select("opted_in_at")
+      .eq("organization_id", auth.organizationId)
+      .gte("opted_in_at", parsed.data.startDate)
+      .lte("opted_in_at", parsed.data.endDate + "T23:59:59Z"),
+    supabase
+      .from("sms_consent")
+      .select("opted_out_at")
+      .eq("organization_id", auth.organizationId)
+      .eq("status", "opted_out")
+      .gte("opted_out_at", parsed.data.startDate)
+      .lte("opted_out_at", parsed.data.endDate + "T23:59:59Z"),
+    supabase
+      .from("sms_daily_stats")
+      .select("date, sent")
+      .eq("organization_id", auth.organizationId)
+      .gte("date", parsed.data.startDate)
+      .lte("date", parsed.data.endDate)
+      .order("date", { ascending: true }),
+  ]);
 
-  if (error) {
+  if (optInResult.error || optOutResult.error || statsResult.error) {
     return { success: false, error: "Failed to load compliance report" };
   }
 
-  // Get total consent counts for compliance rate
-  const { count: totalOptedIn } = await supabase
-    .from("sms_consent")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", auth.organizationId)
-    .eq("status", "opted_in");
-
-  const { count: totalContacts } = await supabase
-    .from("sms_consent")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", auth.organizationId);
-
-  const baseRate =
-    totalContacts && totalContacts > 0
-      ? ((totalOptedIn ?? 0) / totalContacts) * 100
-      : 100;
-
-  // Aggregate by date (combine loan officer rows)
-  const dateMap = new Map<string, { sent: number; optedOut: number }>();
-  for (const row of dailyStats ?? []) {
-    const existing = dateMap.get(row.date) ?? { sent: 0, optedOut: 0 };
-    existing.sent += row.sent;
-    existing.optedOut += row.opted_out;
-    dateMap.set(row.date, existing);
+  // Group opt-in events by date
+  const optInByDate = new Map<string, number>();
+  for (const row of optInResult.data ?? []) {
+    if (!row.opted_in_at) continue;
+    const date = new Date(row.opted_in_at).toISOString().split("T")[0];
+    optInByDate.set(date, (optInByDate.get(date) ?? 0) + 1);
   }
 
+  // Group opt-out events by date
+  const optOutByDate = new Map<string, number>();
+  for (const row of optOutResult.data ?? []) {
+    if (!row.opted_out_at) continue;
+    const date = new Date(row.opted_out_at).toISOString().split("T")[0];
+    optOutByDate.set(date, (optOutByDate.get(date) ?? 0) + 1);
+  }
+
+  // Get daily send totals (aggregate loan officer rows)
+  const sentByDate = new Map<string, number>();
+  for (const row of statsResult.data ?? []) {
+    sentByDate.set(row.date, (sentByDate.get(row.date) ?? 0) + row.sent);
+  }
+
+  // Collect all dates that have any activity
+  const allDates = new Set([
+    ...optInByDate.keys(),
+    ...optOutByDate.keys(),
+    ...sentByDate.keys(),
+  ]);
+  const sortedDates = Array.from(allDates).sort();
+
   const report: ComplianceReportRow[] = [];
-  for (const [date, stats] of dateMap) {
-    const optedIn = Math.max(0, stats.sent - stats.optedOut);
+  for (const date of sortedDates) {
+    const optedIn = optInByDate.get(date) ?? 0;
+    const optedOut = optOutByDate.get(date) ?? 0;
+    const sent = sentByDate.get(date) ?? 0;
+    // Daily compliance rate: percentage of sends to opted-in contacts
+    // (100% if no opt-outs occurred that day, scaled by opt-out ratio)
+    const complianceRate = sent > 0
+      ? Math.round(((sent - optedOut) / sent) * 1000) / 10
+      : 100;
     report.push({
       date,
       optedIn,
-      optedOut: stats.optedOut,
-      netChange: optedIn - stats.optedOut,
-      complianceRate: Math.round(baseRate * 10) / 10,
+      optedOut,
+      netChange: optedIn - optedOut,
+      complianceRate: Math.max(0, complianceRate),
     });
   }
 
@@ -246,29 +272,32 @@ export async function getComplianceHealthScore(): Promise<
   const auth = await requireAdminOrManager();
   if ("error" in auth) return { success: false, error: auth.error };
 
-  // Use untyped client to access new columns
-  const supabase = createUntypedAdminClient();
-  const { data: rawSettings, error } = await supabase
-    .from("sms_settings")
-    .select("*")
-    .eq("organization_id", auth.organizationId)
-    .single();
+  // Fetch settings and recent stats in parallel
+  const untypedSupabase = createUntypedAdminClient();
+  const typedSupabase = createAdminClient();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+  const [settingsResult, statsResult] = await Promise.all([
+    untypedSupabase
+      .from("sms_settings")
+      .select("*")
+      .eq("organization_id", auth.organizationId)
+      .single(),
+    typedSupabase
+      .from("sms_daily_stats")
+      .select("sent, opted_out")
+      .eq("organization_id", auth.organizationId)
+      .gte("date", thirtyDaysAgo.toISOString().split("T")[0]),
+  ]);
+
+  const { data: rawSettings, error } = settingsResult;
   if (error && error.code !== "PGRST116") {
     return { success: false, error: "Failed to load settings" };
   }
 
   const settings = rawSettings as SmsSettings | null;
-
-  // Get opt-out rate from last 30 days
-  const typedSupabase = createAdminClient();
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const { data: recentStats } = await typedSupabase
-    .from("sms_daily_stats")
-    .select("sent, opted_out")
-    .eq("organization_id", auth.organizationId)
-    .gte("date", thirtyDaysAgo.toISOString().split("T")[0]);
+  const { data: recentStats } = statsResult;
 
   const totalSent = (recentStats ?? []).reduce((sum, r) => sum + r.sent, 0);
   const totalOptedOut = (recentStats ?? []).reduce(
@@ -336,7 +365,7 @@ export async function exportOptOutReport(
       ? new Date(row.opted_in_at).toISOString().split("T")[0]
       : "";
     const method = row.consent_method ?? "unknown";
-    return `${optOutDate},${maskedPhone},${method},${optInDate},N/A`;
+    return `${csvEscape(optOutDate)},${csvEscape(maskedPhone)},${csvEscape(method)},${csvEscape(optInDate)},N/A`;
   });
 
   return { success: true, data: [headers, ...rows].join("\n") };
@@ -345,4 +374,15 @@ export async function exportOptOutReport(
 function maskPhone(phone: string): string {
   const last4 = phone.slice(-4);
   return `XXX-XXX-${last4}`;
+}
+
+/** Escape a value for safe CSV output (prevents formula injection). */
+function csvEscape(value: string): string {
+  // Wrap in quotes and escape existing quotes
+  const escaped = value.replace(/"/g, '""');
+  // Prefix with single quote if starts with formula character
+  if (/^[=+\-@\t\r]/.test(escaped)) {
+    return `"'${escaped}"`;
+  }
+  return `"${escaped}"`;
 }

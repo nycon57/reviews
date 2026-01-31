@@ -23,13 +23,20 @@ export const saveOptOutSettingsSchema = z.object({
     .max(320, "Response must be 320 characters or fewer"),
 });
 
-export const saveDoubleOptInSchema = z.object({
-  doubleOptInEnabled: z.boolean(),
-  doubleOptInMessage: z
-    .string()
-    .min(1, "Confirmation message is required")
-    .max(320, "Message must be 320 characters or fewer"),
-});
+export const saveDoubleOptInSchema = z
+  .object({
+    doubleOptInEnabled: z.boolean(),
+    doubleOptInMessage: z
+      .string()
+      .max(320, "Message must be 320 characters or fewer"),
+  })
+  .refine(
+    (data) => !data.doubleOptInEnabled || data.doubleOptInMessage.length > 0,
+    {
+      message: "Confirmation message is required when enabled",
+      path: ["doubleOptInMessage"],
+    }
+  );
 
 export const saveConsentLanguageSchema = z.object({
   consentLanguageText: z

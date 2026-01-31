@@ -171,7 +171,7 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className={!doubleOptInEnabled ? 'opacity-50 pointer-events-none' : ''}>
+          <fieldset disabled={!doubleOptInEnabled} className={`border-0 p-0 m-0 ${!doubleOptInEnabled ? 'opacity-50' : ''}`} aria-disabled={!doubleOptInEnabled}>
             <Label className="text-sm font-medium text-repwell-teal-500">
               Confirmation message
             </Label>
@@ -202,7 +202,7 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
                 </div>
               </div>
             )}
-          </div>
+          </fieldset>
 
           {isOptInDirty && (
             <div className="flex items-center gap-3 pt-2 border-t border-border/50">

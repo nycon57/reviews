@@ -36,14 +36,6 @@ export const SMS_CREDIT_TIERS: Record<SubscriptionTier, SmsCreditTier> = {
   },
 };
 
-// "Business" maps to the "professional" tier but with higher credits.
-// The PRD specifies Professional=100, Business=500, Enterprise=2000.
-// Since we use a 4-tier system (free/starter/professional/enterprise),
-// we treat "starter" as the "Business" tier for SMS purposes when
-// the org has SMS enabled. This constant is used only for credit-pack
-// descriptions shown in UI (S106); the authoritative allocation comes
-// from the tier mapping above.
-
 // ── Credit packs ────────────────────────────────────────────────────────
 
 export interface CreditPack {
@@ -69,7 +61,3 @@ export const ALERT_THRESHOLDS = {
   exceeded: 1.0,
 } as const;
 
-// ── Billing period ──────────────────────────────────────────────────────
-
-/** Default billing period length in days (monthly) */
-export const DEFAULT_BILLING_PERIOD_DAYS = 30;

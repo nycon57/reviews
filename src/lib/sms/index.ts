@@ -76,7 +76,6 @@ export {
   SMS_CREDIT_TIERS,
   CREDIT_PACKS,
   ALERT_THRESHOLDS,
-  checkBalanceSchema,
   deductCreditSchema,
   getUsageHistorySchema,
   getCurrentPeriodUsageSchema,

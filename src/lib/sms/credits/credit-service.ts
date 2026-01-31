@@ -393,8 +393,10 @@ export class CreditService {
 // ── Error class ─────────────────────────────────────────────────────────
 
 export class InsufficientCreditsError extends Error {
+  public readonly organizationId: string;
   constructor(organizationId: string) {
-    super(`Insufficient SMS credits for organization ${organizationId}`);
+    super("Not enough SMS credits to send this message. Purchase a credit pack or wait for your next billing period.");
     this.name = "InsufficientCreditsError";
+    this.organizationId = organizationId;
   }
 }

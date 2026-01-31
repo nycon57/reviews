@@ -33,7 +33,6 @@ export class QuietHoursError extends Error {
   }
 }
 
-// Re-export from credits module for backward compatibility
 export { InsufficientCreditsError } from "./credits/credit-service";
 
 export class RateLimitError extends Error {

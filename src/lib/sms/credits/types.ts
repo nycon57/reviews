@@ -69,10 +69,6 @@ export interface CreditUsageReport {
 
 // ── Zod schemas ─────────────────────────────────────────────────────────
 
-export const checkBalanceSchema = z.object({
-  organizationId: z.string().uuid(),
-});
-
 export const deductCreditSchema = z.object({
   organizationId: z.string().uuid(),
   segments: z.number().int().positive(),

@@ -217,6 +217,54 @@ export {
   renderVideoCustomerThankYouEmail,
 } from "./templates/index";
 
+// Subscription lifecycle email service (S087)
+export {
+  sendSubscriptionUpgradeEmail,
+  sendSubscriptionDowngradeEmail,
+  sendSubscriptionRenewalReminderEmail,
+  sendSubscriptionRenewedEmail,
+  sendSubscriptionCancelledEmail,
+  sendSubscriptionCancellationFeedbackEmail,
+  sendSubscriptionPlanChangeScheduledEmail,
+  sendSubscriptionInvoiceAvailableEmail,
+  sendSubscriptionPriceIncreaseNoticeEmail,
+  processRenewalReminders,
+  processCancellationFeedbackRequests,
+  mapStripePaymentMethod,
+  mapStripeInvoice,
+} from "./subscription-service";
+
+// Subscription lifecycle email templates (S087)
+export {
+  getSubscriptionUpgradeConfirmationEmail,
+  getSubscriptionDowngradeConfirmationEmail,
+  getSubscriptionRenewalReminderEmail,
+  getSubscriptionRenewedEmail,
+  getSubscriptionCancelledEmail,
+  getSubscriptionCancellationFeedbackEmail,
+  getSubscriptionPlanChangeScheduledEmail,
+  getSubscriptionInvoiceAvailableEmail,
+  getSubscriptionPriceIncreaseNoticeEmail,
+  SUBSCRIPTION_SUBJECT_LINES,
+} from "./subscription-templates";
+
+// Subscription lifecycle email types (S087)
+export type {
+  SubscriptionUpgradeConfirmationEmailData,
+  SubscriptionDowngradeConfirmationEmailData,
+  SubscriptionRenewalReminderEmailData,
+  SubscriptionRenewedEmailData,
+  SubscriptionCancelledEmailData,
+  SubscriptionCancellationFeedbackEmailData,
+  SubscriptionPlanChangeScheduledEmailData,
+  SubscriptionInvoiceAvailableEmailData,
+  SubscriptionPriceIncreaseNoticeEmailData,
+  SubscriptionInvoiceDetails,
+  InvoiceLineItem,
+  PaymentMethodSummary,
+  PlanFeature,
+} from "./types";
+
 // Email utility functions
 export { formatDuration } from "./utils";
 

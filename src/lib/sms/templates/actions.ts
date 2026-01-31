@@ -10,6 +10,7 @@ import {
   archiveSmsTemplateSchema,
   getSmsTemplateSchema,
   listSmsTemplatesSchema,
+  renderTemplatePreviewSchema,
   type CreateSmsTemplateInput,
   type UpdateSmsTemplateInput,
   type ListSmsTemplatesInput,
@@ -316,14 +317,19 @@ export async function previewSmsTemplate(
     return { success: false, error: "Unauthorized" };
   }
 
+  const parsed = renderTemplatePreviewSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.errors[0].message };
+  }
+
   let body: string;
 
-  if (input.id) {
+  if (parsed.data.id) {
     const supabase = createUntypedAdminClient();
     const { data } = await supabase
       .from("sms_templates")
       .select("body")
-      .eq("id", input.id)
+      .eq("id", parsed.data.id)
       .eq("organization_id", context.organization_id)
       .single();
 
@@ -331,8 +337,8 @@ export async function previewSmsTemplate(
       return { success: false, error: "Template not found" };
     }
     body = data.body;
-  } else if (input.body) {
-    body = input.body;
+  } else if (parsed.data.body) {
+    body = parsed.data.body;
   } else {
     return { success: false, error: "Either template ID or body text is required" };
   }

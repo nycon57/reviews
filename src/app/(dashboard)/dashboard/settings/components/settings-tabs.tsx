@@ -9,6 +9,7 @@ import {
   Key,
   Bell,
   CreditCard,
+  ChatTeardropDots,
 } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { ProfileTab } from './profile-tab';
@@ -16,11 +17,12 @@ import { IntegrationsTab } from './integrations-tab';
 import { ApiTab } from './api-tab';
 import { NotificationsTab } from './notifications-tab';
 import { BillingTab } from './billing-tab';
+import { SmsTab } from '@/components/settings/sms/sms-tab';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing';
+type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'sms';
 
-const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing'];
+const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'sms'];
 
 function isSettingsTab(value: string | null): value is SettingsTab {
   return value !== null && VALID_TABS.includes(value as SettingsTab);
@@ -32,6 +34,7 @@ const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
   { value: 'integrations', label: 'Integrations', icon: Link2 },
   { value: 'api', label: 'API', icon: Key },
   { value: 'notifications', label: 'Notifications', icon: Bell },
+  { value: 'sms', label: 'SMS', icon: ChatTeardropDots },
 ];
 
 function TabSkeleton() {
@@ -57,6 +60,10 @@ interface SettingsTabsProps {
   userLinkedinUrl?: string | null;
   userZillowProfileUrl?: string | null;
   userTimezone?: string | null;
+  userSlug?: string | null;
+  userBannerUrl?: string | null;
+  userId?: string;
+  userRole?: string | null;
 }
 
 export function SettingsTabs({
@@ -72,6 +79,10 @@ export function SettingsTabs({
   userLinkedinUrl,
   userZillowProfileUrl,
   userTimezone,
+  userSlug,
+  userBannerUrl,
+  userId,
+  userRole,
 }: SettingsTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -130,6 +141,10 @@ export function SettingsTabs({
               userLinkedinUrl={userLinkedinUrl}
               userZillowProfileUrl={userZillowProfileUrl}
               userTimezone={userTimezone}
+              userSlug={userSlug}
+              userBannerUrl={userBannerUrl}
+              userId={userId}
+              isAdmin={userRole === 'admin'}
             />
           </Suspense>
         </TabsContent>
@@ -155,6 +170,12 @@ export function SettingsTabs({
         <TabsContent value="notifications" className="m-0 animate-fade-in">
           <Suspense fallback={<TabSkeleton />}>
             <NotificationsTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="sms" className="m-0 animate-fade-in">
+          <Suspense fallback={<TabSkeleton />}>
+            <SmsTab />
           </Suspense>
         </TabsContent>
       </div>

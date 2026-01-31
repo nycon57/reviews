@@ -11,6 +11,7 @@ import {
   CreditCard,
   ChatTeardropDots,
   ShieldCheck,
+  Scales,
 } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { ProfileTab } from './profile-tab';
@@ -20,11 +21,12 @@ import { NotificationsTab } from './notifications-tab';
 import { BillingTab } from './billing-tab';
 import { SmsTab } from '@/components/settings/sms/sms-tab';
 import { RegistrationTab } from '@/components/settings/sms/registration-tab';
+import { ComplianceTab } from '@/components/settings/sms/compliance-tab';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'sms' | 'sms-registration';
+type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'sms' | 'sms-registration' | 'sms-compliance';
 
-const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'sms', 'sms-registration'];
+const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'sms', 'sms-registration', 'sms-compliance'];
 
 function isSettingsTab(value: string | null): value is SettingsTab {
   return value !== null && VALID_TABS.includes(value as SettingsTab);
@@ -38,6 +40,7 @@ const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
   { value: 'notifications', label: 'Notifications', icon: Bell },
   { value: 'sms', label: 'SMS', icon: ChatTeardropDots },
   { value: 'sms-registration', label: '10DLC', icon: ShieldCheck },
+  { value: 'sms-compliance', label: 'Compliance', icon: Scales },
 ];
 
 function TabSkeleton() {
@@ -185,6 +188,12 @@ export function SettingsTabs({
         <TabsContent value="sms-registration" className="m-0 animate-fade-in">
           <Suspense fallback={<TabSkeleton />}>
             <RegistrationTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="sms-compliance" className="m-0 animate-fade-in">
+          <Suspense fallback={<TabSkeleton />}>
+            <ComplianceTab />
           </Suspense>
         </TabsContent>
       </div>

@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUserWithProfile } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import {
@@ -36,7 +36,8 @@ export async function getSmsSettings(): Promise<ActionResult<SmsSettings | null>
   const auth = await requireAdminOrManager();
   if ("error" in auth) return { success: false, error: auth.error };
 
-  const supabase = createAdminClient();
+  // Use untyped client to include new compliance columns not yet in generated types
+  const supabase = createUntypedAdminClient();
   const { data, error } = await supabase
     .from("sms_settings")
     .select("*")

@@ -104,6 +104,10 @@ export interface SmsSettings {
   auto_follow_up_enabled: boolean;
   auto_follow_up_delay_hours: number;
   auto_follow_up_template_id: string | null;
+  stop_response: string;
+  help_response: string;
+  double_opt_in_message: string;
+  consent_language_text: string;
   created_at: string;
   updated_at: string;
 }

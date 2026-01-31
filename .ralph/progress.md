@@ -9481,3 +9481,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Design system gradient pattern: `from-repwell-sage-200 to-repwell-teal-300` for hero cards
   - Settings tab pattern: 2-col grid (lg:col-span-2 + sticky sidebar), motion variants, Suspense boundaries
 ---
+
+## [2026-01-31] - S103: SMS Settings UI - Twilio Setup & Phone Numbers
+Thread:
+Run: 20260131-145111-24714 (iteration 15)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-15.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-15.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4889945 [Pass 2/3] fix(S103): Security and quality improvements for SMS Settings UI
+- Post-commit status: clean (S103 files committed)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: yes (reviewed React patterns)
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: yes (accessibility fixes)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors from S103 files)
+- Files changed:
+  - src/components/settings/sms/sms-tab.tsx (accessibility, type safety, dedup)
+  - src/components/settings/sms/add-phone-number-dialog.tsx (dedup formatPhoneNumber)
+  - src/lib/sms/settings/actions.ts (security: toll-free detection, org scoping)
+  - src/lib/sms/format.ts (new - shared phone formatting utility)
+- What was fixed:
+  - Fixed unreliable toll-free number detection (was checking +18 prefix, now checks all known toll-free prefixes)
+  - Added organization_id to releasePhoneNumber update query for defense-in-depth
+  - Extracted duplicate formatPhoneNumber into shared src/lib/sms/format.ts
+  - Removed unsafe `as Record<string, boolean>` type casts for capabilities
+  - Added aria-labels to eye toggle and delete buttons (WCAG 2.1 AA)
+  - Fixed checkConnection stale closure with useCallback
+- **Learnings for future iterations:**
+  - Toll-free prefixes: 800, 888, 877, 866, 855, 844, 833, 822
+  - Always scope DB updates by organization_id even after a scoped fetch (defense-in-depth)
+  - Extract utilities early to prevent cross-component duplication
+---

@@ -29,46 +29,33 @@ async function requireAdminOrManager(): Promise<
   return { organizationId: profile.organization_id, userId: profile.id };
 }
 
-export async function getCreditBalance(): Promise<ActionResult<CreditBalance>> {
+async function withCreditService<T>(
+  fn: (service: CreditService) => Promise<T>,
+  fallbackError: string
+): Promise<ActionResult<T>> {
   const auth = await requireAdminOrManager();
   if ("error" in auth) return { success: false, error: auth.error };
 
   try {
     const service = new CreditService(auth.organizationId);
-    const balance = await service.checkBalance();
-    return { success: true, data: balance };
+    const data = await fn(service);
+    return { success: true, data };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load credit balance";
+    const message = err instanceof Error ? err.message : fallbackError;
     return { success: false, error: message };
   }
+}
+
+export async function getCreditBalance(): Promise<ActionResult<CreditBalance>> {
+  return withCreditService((s) => s.checkBalance(), "Failed to load credit balance");
 }
 
 export async function getCurrentPeriodUsage(): Promise<ActionResult<CurrentPeriodUsage>> {
-  const auth = await requireAdminOrManager();
-  if ("error" in auth) return { success: false, error: auth.error };
-
-  try {
-    const service = new CreditService(auth.organizationId);
-    const usage = await service.getCurrentPeriodUsage();
-    return { success: true, data: usage };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load usage data";
-    return { success: false, error: message };
-  }
+  return withCreditService((s) => s.getCurrentPeriodUsage(), "Failed to load usage data");
 }
 
 export async function getMonthlyUsageSummary(): Promise<ActionResult<MonthlyUsageSummary>> {
-  const auth = await requireAdminOrManager();
-  if ("error" in auth) return { success: false, error: auth.error };
-
-  try {
-    const service = new CreditService(auth.organizationId);
-    const summary = await service.getMonthlyUsageSummary();
-    return { success: true, data: summary };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load usage summary";
-    return { success: false, error: message };
-  }
+  return withCreditService((s) => s.getMonthlyUsageSummary(), "Failed to load usage summary");
 }
 
 export async function purchaseCreditPack(

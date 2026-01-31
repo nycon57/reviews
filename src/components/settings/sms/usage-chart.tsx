@@ -20,7 +20,7 @@ import {
   Legend,
 } from 'recharts';
 import { fadeInUp } from '@/lib/motion/variants';
-import { formatCents } from '@/lib/sms/credits/format';
+import { formatCents, sumDailyStats } from '@/lib/sms/credits/format';
 import type { DailyUsageStat } from '@/lib/sms/credits/types';
 
 interface UsageChartProps {
@@ -36,31 +36,20 @@ function formatDate(dateStr: string): string {
 
 export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartProps) {
   const chartData = useMemo(() => {
-    const result: Array<{
-      date: string;
-      rawDate: string;
-      sent: number;
-      delivered: number;
-      failed: number;
-      segments: number;
-      cumulative: number;
-      costCents: number;
-    }> = [];
-    dailyStats.reduce((acc, d) => {
-      const cum = acc + d.segments;
-      result.push({
+    let cumulative = 0;
+    return dailyStats.map((d) => {
+      cumulative += d.segments;
+      return {
         date: formatDate(d.date),
         rawDate: d.date,
         sent: d.sent,
         delivered: d.delivered,
         failed: d.failed,
         segments: d.segments,
-        cumulative: cum,
+        cumulative,
         costCents: d.costCents,
-      });
-      return cum;
-    }, 0);
-    return result;
+      };
+    });
   }, [dailyStats]);
 
   const handleExportCsv = useCallback(() => {
@@ -74,17 +63,7 @@ export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartPro
       formatCents(d.costCents),
     ]);
 
-    const totals = dailyStats.reduce(
-      (acc, d) => ({
-        sent: acc.sent + d.sent,
-        delivered: acc.delivered + d.delivered,
-        failed: acc.failed + d.failed,
-        segments: acc.segments + d.segments,
-        costCents: acc.costCents + d.costCents,
-      }),
-      { sent: 0, delivered: 0, failed: 0, segments: 0, costCents: 0 }
-    );
-
+    const totals = sumDailyStats(dailyStats);
     rows.push(['TOTAL', String(totals.sent), String(totals.delivered), String(totals.failed), String(totals.segments), formatCents(totals.costCents)]);
 
     const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -209,20 +188,7 @@ export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartPro
 export function UsageTable({ dailyStats }: { dailyStats: DailyUsageStat[] }) {
   const [showAll, setShowAll] = useState(false);
 
-  const totals = useMemo(
-    () =>
-      dailyStats.reduce(
-        (acc, d) => ({
-          sent: acc.sent + d.sent,
-          delivered: acc.delivered + d.delivered,
-          failed: acc.failed + d.failed,
-          segments: acc.segments + d.segments,
-          costCents: acc.costCents + d.costCents,
-        }),
-        { sent: 0, delivered: 0, failed: 0, segments: 0, costCents: 0 }
-      ),
-    [dailyStats]
-  );
+  const totals = useMemo(() => sumDailyStats(dailyStats), [dailyStats]);
 
   const displayData = showAll ? dailyStats : dailyStats.slice(-10);
 

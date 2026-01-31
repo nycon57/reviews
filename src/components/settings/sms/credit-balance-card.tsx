@@ -35,18 +35,11 @@ function CircularProgress({
   const percentage = Math.min((used / safeTotal) * 100, 100);
   const offset = circumference - (percentage / 100) * circumference;
 
-  const strokeColor = {
-    none: 'stroke-repwell-sage-200',
-    warning: 'stroke-amber-400',
-    critical: 'stroke-orange-500',
-    exceeded: 'stroke-red-500',
-  }[alertLevel];
-
-  const percentageColor = {
-    none: 'text-repwell-sage-200',
-    warning: 'text-amber-500',
-    critical: 'text-orange-500',
-    exceeded: 'text-red-500',
+  const alertColors = {
+    none: { stroke: 'stroke-repwell-sage-200', text: 'text-repwell-sage-200' },
+    warning: { stroke: 'stroke-amber-400', text: 'text-amber-500' },
+    critical: { stroke: 'stroke-orange-500', text: 'text-orange-500' },
+    exceeded: { stroke: 'stroke-red-500', text: 'text-red-500' },
   }[alertLevel];
 
   return (
@@ -68,7 +61,7 @@ function CircularProgress({
           fill="none"
           strokeWidth="8"
           strokeLinecap="round"
-          className={strokeColor}
+          className={alertColors.stroke}
           initial={{ strokeDashoffset: circumference }}
           animate={{ strokeDashoffset: offset }}
           transition={{ duration: 1, ease: [0.25, 0.1, 0.25, 1] }}
@@ -76,7 +69,7 @@ function CircularProgress({
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-2xl font-bold tabular-nums ${percentageColor}`}>
+        <span className={`text-2xl font-bold tabular-nums ${alertColors.text}`}>
           {Math.round(percentage)}%
         </span>
         <span className="text-xs text-repwell-teal-300">used</span>

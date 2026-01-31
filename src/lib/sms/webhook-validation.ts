@@ -17,7 +17,7 @@ export function validateTwilioSignature(
 
   const authToken = process.env[ENV_TWILIO_AUTH_TOKEN];
   if (!authToken) {
-    console.error("[SMS Webhook] TWILIO_AUTH_TOKEN is not configured");
+    console.error(`[SMS Webhook] ${ENV_TWILIO_AUTH_TOKEN} is not configured`);
     return false;
   }
 
@@ -30,16 +30,14 @@ export function validateTwilioSignature(
  * Falls back to the request URL if headers are unavailable.
  */
 export function buildWebhookUrl(request: Request): string {
+  const url = new URL(request.url);
   const forwardedProto = request.headers.get("x-forwarded-proto");
   const host = request.headers.get("host");
 
   if (forwardedProto && host) {
-    const url = new URL(request.url);
     return `${forwardedProto}://${host}${url.pathname}`;
   }
 
-  // Fallback: use the full request URL (path only, no query)
-  const url = new URL(request.url);
   return `${url.origin}${url.pathname}`;
 }
 

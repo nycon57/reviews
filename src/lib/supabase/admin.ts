@@ -19,6 +19,9 @@ export function createAdminClient() {
   });
 }
 
+/** Convenience alias for the return type of createUntypedAdminClient */
+export type UntypedSupabaseClient = ReturnType<typeof createUntypedAdminClient>;
+
 // Untyped admin client for new tables not yet in the generated types
 // This is used for tables like notifications that are added via migrations
 export function createUntypedAdminClient() {

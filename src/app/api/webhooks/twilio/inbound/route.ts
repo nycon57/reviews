@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import type { UntypedSupabaseClient } from "@/lib/supabase/admin";
 import {
   validateTwilioSignature,
   buildWebhookUrl,
@@ -7,6 +8,7 @@ import {
   OPT_IN_KEYWORDS,
   HELP_KEYWORDS,
 } from "@/lib/sms/webhook-validation";
+import { incrementDailyStat } from "@/lib/sms/daily-stats";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +25,7 @@ export const dynamic = "force-dynamic";
  *
  * @see https://www.twilio.com/docs/messaging/guides/how-to-receive-and-reply
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const formData = await request.formData();
     const params = Object.fromEntries(formData.entries()) as Record<
@@ -31,7 +33,6 @@ export async function POST(request: NextRequest) {
       string
     >;
 
-    // Validate Twilio signature
     const signature = request.headers.get("x-twilio-signature");
     const webhookUrl = buildWebhookUrl(request);
 
@@ -43,8 +44,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const from = params.From; // Sender's phone number (E.164)
-    const to = params.To; // Our Twilio number (E.164)
+    const from = params.From;
+    const to = params.To;
     const body = params.Body ?? "";
     const messageSid = params.MessageSid;
 
@@ -57,7 +58,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = createUntypedAdminClient();
 
-    // Resolve which organization owns the receiving number
     const { data: phoneRecord } = await supabase
       .from("sms_phone_numbers")
       .select("organization_id")
@@ -67,13 +67,22 @@ export async function POST(request: NextRequest) {
 
     if (!phoneRecord) {
       console.warn(
-        "[SMS Inbound Webhook] No org found for receiving number"
+        `[SMS Inbound Webhook] No org found for receiving number: ${to}`
       );
       return twimlResponse("");
     }
 
     const organizationId = phoneRecord.organization_id;
     const normalizedBody = body.trim().toLowerCase();
+
+    // Log every inbound message regardless of keyword type
+    await logInboundMessage(supabase, {
+      organizationId,
+      from,
+      to,
+      body,
+      messageSid,
+    });
 
     // Handle STOP/opt-out keywords
     if (OPT_OUT_KEYWORDS.has(normalizedBody)) {
@@ -83,19 +92,10 @@ export async function POST(request: NextRequest) {
         from,
         "opted_out"
       );
-
-      await logInboundMessage(supabase, {
-        organizationId,
-        from,
-        to,
-        body,
-        messageSid,
-      });
-      await safeIncrementDailyStat(supabase, organizationId, "opted_out");
+      await incrementDailyStat(supabase, organizationId, null, todayDate(), "opted_out");
 
       if (!consentOk) {
-        // Consent update failed — still reply with opt-out confirmation
-        // per TCPA: always honor STOP even if DB fails
+        // Per TCPA: always honor STOP even if DB fails
         console.error(
           "[SMS Inbound Webhook] Consent update failed for opt-out, still sending confirmation"
         );
@@ -114,17 +114,9 @@ export async function POST(request: NextRequest) {
         "opted_in"
       );
 
-      await logInboundMessage(supabase, {
-        organizationId,
-        from,
-        to,
-        body,
-        messageSid,
-      });
-
       if (!consentOk) {
         console.error(
-          "[SMS Inbound Webhook] Consent update failed for opt-in"
+          "[SMS Inbound Webhook] Consent update failed for opt-in, still sending confirmation"
         );
       }
       return twimlResponse(
@@ -134,54 +126,44 @@ export async function POST(request: NextRequest) {
 
     // Handle HELP keyword
     if (HELP_KEYWORDS.has(normalizedBody)) {
-      await logInboundMessage(supabase, {
-        organizationId,
-        from,
-        to,
-        body,
-        messageSid,
-      });
       return twimlResponse(
-        "Reply STOP to unsubscribe or START to resubscribe. For support, visit our website."
+        "Reply STOP to unsubscribe or START to resubscribe. For support, contact your loan officer directly."
       );
     }
 
-    // Regular inbound message — log and update conversation
-    await logInboundMessage(supabase, {
-      organizationId,
-      from,
-      to,
-      body,
-      messageSid,
-    });
-
+    // Regular inbound message -- update conversation and stats
     await upsertConversation(supabase, organizationId, from);
-    await safeIncrementDailyStat(supabase, organizationId, "replied");
+    await incrementDailyStat(supabase, organizationId, null, todayDate(), "replied");
 
     return twimlResponse("");
   } catch (error) {
     console.error("[SMS Inbound Webhook] Unexpected error:", error);
-    // Return empty TwiML to prevent Twilio retry loops
     return twimlResponse("");
   }
 }
 
-// ── Consent management (upsert pattern for race safety) ─────────────
+// ── Helpers ──────────────────────────────────────────────────────────────
+
+function todayDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// ── Consent management ──────────────────────────────────────────────────
 
 /**
- * Upsert consent record using insert-on-conflict pattern.
- * Returns true if the operation succeeded.
+ * Upsert consent record. Returns true on success.
+ * Uses select-then-insert with retry on unique constraint race.
  */
 async function upsertConsent(
-  supabase: ReturnType<typeof createUntypedAdminClient>,
+  supabase: UntypedSupabaseClient,
   organizationId: string,
   phone: string,
   status: "opted_in" | "opted_out"
 ): Promise<boolean> {
   const now = new Date().toISOString();
-  const timestampField = status === "opted_out" ? "opted_out_at" : "opted_in_at";
+  const timestampField =
+    status === "opted_out" ? "opted_out_at" : "opted_in_at";
 
-  // Try update first (most common case for returning users)
   const { data: existing, error: selectError } = await supabase
     .from("sms_consent")
     .select("id")
@@ -190,7 +172,10 @@ async function upsertConsent(
     .maybeSingle();
 
   if (selectError) {
-    console.error("[SMS Inbound Webhook] Consent select failed:", selectError.message);
+    console.error(
+      "[SMS Inbound Webhook] Consent select failed:",
+      selectError.message
+    );
     return false;
   }
 
@@ -205,13 +190,15 @@ async function upsertConsent(
       .eq("id", existing.id);
 
     if (error) {
-      console.error("[SMS Inbound Webhook] Consent update failed:", error.message);
+      console.error(
+        "[SMS Inbound Webhook] Consent update failed:",
+        error.message
+      );
       return false;
     }
     return true;
   }
 
-  // Insert new record, handle concurrent insert race
   const { error: insertError } = await supabase.from("sms_consent").insert({
     organization_id: organizationId,
     phone_number: phone,
@@ -220,19 +207,21 @@ async function upsertConsent(
     [timestampField]: now,
   });
 
-  if (insertError) {
-    // Unique constraint violation — another request inserted first, retry as update
-    if (insertError.code === "23505") {
-      return upsertConsent(supabase, organizationId, phone, status);
-    }
-    console.error("[SMS Inbound Webhook] Consent insert failed:", insertError.message);
-    return false;
+  if (!insertError) return true;
+
+  // 23505 = unique constraint violation -- retry as update
+  if (insertError.code === "23505") {
+    return upsertConsent(supabase, organizationId, phone, status);
   }
 
-  return true;
+  console.error(
+    "[SMS Inbound Webhook] Consent insert failed:",
+    insertError.message
+  );
+  return false;
 }
 
-// ── Message logging ───────────────────────────────────────────────────
+// ── Message logging ─────────────────────────────────────────────────────
 
 interface InboundMessageParams {
   organizationId: string;
@@ -243,7 +232,7 @@ interface InboundMessageParams {
 }
 
 async function logInboundMessage(
-  supabase: ReturnType<typeof createUntypedAdminClient>,
+  supabase: UntypedSupabaseClient,
   params: InboundMessageParams
 ): Promise<void> {
   const { error } = await supabase.from("sms_messages").insert({
@@ -266,10 +255,10 @@ async function logInboundMessage(
   }
 }
 
-// ── Conversation tracking ─────────────────────────────────────────────
+// ── Conversation tracking ───────────────────────────────────────────────
 
 async function upsertConversation(
-  supabase: ReturnType<typeof createUntypedAdminClient>,
+  supabase: UntypedSupabaseClient,
   organizationId: string,
   borrowerPhone: string
 ): Promise<void> {
@@ -302,132 +291,45 @@ async function upsertConversation(
         error.message
       );
     }
-  } else {
-    const { error } = await supabase.from("sms_conversations").insert({
+    return;
+  }
+
+  const { error: insertError } = await supabase
+    .from("sms_conversations")
+    .insert({
       organization_id: organizationId,
       borrower_phone: borrowerPhone,
       last_message_at: now,
       status: "active",
     });
 
-    if (error) {
-      // Handle concurrent insert — if duplicate, just update instead
-      if (error.code === "23505") {
-        const { error: retryError } = await supabase
-          .from("sms_conversations")
-          .update({ last_message_at: now, status: "active" })
-          .eq("organization_id", organizationId)
-          .eq("borrower_phone", borrowerPhone);
+  if (!insertError) return;
 
-        if (retryError) {
-          console.error(
-            "[SMS Inbound Webhook] Conversation retry update failed:",
-            retryError.message
-          );
-        }
-        return;
-      }
+  // 23505 = concurrent insert race -- retry as update
+  if (insertError.code === "23505") {
+    const { error: retryError } = await supabase
+      .from("sms_conversations")
+      .update({ last_message_at: now, status: "active" })
+      .eq("organization_id", organizationId)
+      .eq("borrower_phone", borrowerPhone);
+
+    if (retryError) {
       console.error(
-        "[SMS Inbound Webhook] Conversation insert failed:",
-        error.message
+        "[SMS Inbound Webhook] Conversation retry update failed:",
+        retryError.message
       );
     }
-  }
-}
-
-// ── Daily stats ───────────────────────────────────────────────────────
-
-async function safeIncrementDailyStat(
-  supabase: ReturnType<typeof createUntypedAdminClient>,
-  organizationId: string,
-  column: "replied" | "opted_out"
-): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10);
-
-  // Try atomic RPC first
-  const { error: rpcError } = await supabase.rpc("increment_sms_daily_stat", {
-    p_organization_id: organizationId,
-    p_loan_officer_id: null,
-    p_date: today,
-    p_column_name: column,
-  });
-
-  if (rpcError) {
-    // Fallback if RPC doesn't exist
-    if (rpcError.code === "42883") {
-      await fallbackIncrementStat(supabase, organizationId, today, column);
-      return;
-    }
-    console.error(
-      "[SMS Inbound Webhook] Stats RPC failed:",
-      rpcError.message
-    );
-  }
-}
-
-async function fallbackIncrementStat(
-  supabase: ReturnType<typeof createUntypedAdminClient>,
-  organizationId: string,
-  date: string,
-  column: string
-): Promise<void> {
-  const { data: existing, error: selectError } = await supabase
-    .from("sms_daily_stats")
-    .select("id, replied, opted_out")
-    .eq("organization_id", organizationId)
-    .is("loan_officer_id", null)
-    .eq("date", date)
-    .maybeSingle();
-
-  if (selectError) {
-    console.error(
-      "[SMS Inbound Webhook] Stats select failed:",
-      selectError.message
-    );
     return;
   }
 
-  if (existing) {
-    const record = existing as unknown as Record<string, unknown>;
-    const currentValue = (record[column] as number) ?? 0;
-    const { error } = await supabase
-      .from("sms_daily_stats")
-      .update({ [column]: currentValue + 1 })
-      .eq("id", existing.id);
-
-    if (error) {
-      console.error(
-        "[SMS Inbound Webhook] Stats update failed:",
-        error.message
-      );
-    }
-  } else {
-    const { error } = await supabase.from("sms_daily_stats").insert({
-      organization_id: organizationId,
-      loan_officer_id: null,
-      date,
-      [column]: 1,
-    });
-
-    if (error) {
-      if (error.code === "23505") {
-        await fallbackIncrementStat(supabase, organizationId, date, column);
-        return;
-      }
-      console.error(
-        "[SMS Inbound Webhook] Stats insert failed:",
-        error.message
-      );
-    }
-  }
+  console.error(
+    "[SMS Inbound Webhook] Conversation insert failed:",
+    insertError.message
+  );
 }
 
-// ── TwiML response helper ─────────────────────────────────────────────
+// ── TwiML response ──────────────────────────────────────────────────────
 
-/**
- * Return a TwiML XML response. Twilio expects XML content-type.
- * If message is empty, returns an empty <Response/> (no auto-reply).
- */
 function twimlResponse(message: string): NextResponse {
   const xml = message
     ? `<?xml version="1.0" encoding="UTF-8"?><Response><Message>${escapeXml(message)}</Message></Response>`
@@ -439,7 +341,6 @@ function twimlResponse(message: string): NextResponse {
   });
 }
 
-/** Escape special XML characters to prevent injection */
 function escapeXml(text: string): string {
   return text
     .replace(/&/g, "&amp;")

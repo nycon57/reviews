@@ -8529,3 +8529,113 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Array.find() with nullish coalescing is more idiomatic than explicit for loops for finding first match
   - Build errors in unrelated files (auth) shouldn't block S095 completion since those changes predate this pass
 ---
+
+## [2026-01-31] - S073: Email Design System Foundation
+Thread: Verification pass
+Run: 20260131-121547-37293 (iteration 1)
+Pass: 3+/3 - Verification (all 3 passes previously completed)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (no S073 changes needed — all 3 passes previously completed: d14c884, 903b8c0, 3ec9352)
+- Post-commit status: pre-existing uncommitted changes from other stories
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint src/lib/email/components/ src/lib/email/theme.ts -> PASS (0 errors)
+  - All 12 core S073 files verified present
+- Files changed: none
+- S073 already fully complete across 3 prior passes. All email design system components (theme, layout, typography, header, footer, button, card, stats, CTA, social-proof, utilities) intact and building clean.
+- **Learnings for future iterations:**
+  - When a story has completed all 3 passes, verification pass just confirms integrity
+  - Pre-existing uncommitted changes from other stories should not be committed under S073
+---
+
+## [2026-01-31] - S081: Milestone & Achievement Email Notifications
+Thread:
+Run: 20260131-121547-37293 (iteration 2)
+Pass: Verification - Story already complete (3/3 passes done on 2026-01-21)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (story already complete, no new changes needed)
+- Post-commit status: pre-existing uncommitted changes from other stories
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - All 13 milestone template files present and intact
+  - Git history shows 4 commits for S081 (37c4185, 40be7c8, 2aeca44, 3d7d717)
+- Files changed:
+  - (none - verification only)
+- S081 already fully complete across 3 prior passes. All milestone email templates (first-review, review-count, first-5star, rating-improvement, nps-improvement, streak, leaderboard, badge-earned, profile-completion, video) intact and building clean.
+- **Learnings for future iterations:**
+  - When a story has completed all 3 passes, verification pass just confirms integrity
+  - Pre-existing uncommitted changes from other stories should not be committed under S081
+---
+
+## 2026-01-31 - S087: Subscription Lifecycle Emails
+Thread:
+Run: 20260131-121547-37293 (iteration 4)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e27cfea [Pass 1/3] feat(S087): Add subscription lifecycle cron route and email exports
+- Post-commit status: clean (S087 changes only; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors; 8 pre-existing errors in unrelated files)
+- Files changed:
+  - src/app/api/cron/process-subscription-lifecycle/route.ts (new)
+  - src/lib/email/index.ts (modified)
+- What was implemented:
+  - S087 subscription lifecycle emails were already fully implemented in prior work:
+    - subscription-service.ts: 9 email sending functions + 2 cron processors + Stripe mapping helpers
+    - subscription-templates.ts: 9 HTML email templates with security, A/B subjects, design system
+    - types.ts: All 9 data interfaces + supporting types
+    - Stripe webhook (route.ts): All events wired (subscription.updated/deleted, invoice.paid/finalized/upcoming)
+  - Pass 1 added the missing pieces:
+    - Created cron route `/api/cron/process-subscription-lifecycle` for daily processing of renewal reminders (14-day advance) and cancellation feedback (2 days post-cancel)
+    - Exported all subscription service functions, templates, and types from email/index.ts barrel file
+- **Learnings for future iterations:**
+  - S087 was mostly implemented before this pass; only the cron route and exports were missing
+  - When staging commits with many pre-existing unstaged changes, use targeted `git add` with specific file paths
+  - The [id] -> [slug] rename in pro/ causes git to track renames; be careful not to accidentally stage those
+---

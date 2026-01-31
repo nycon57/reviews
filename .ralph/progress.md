@@ -9385,3 +9385,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Zod schemas defined but not used in actions indicate validation gaps
   - Separate read-then-update patterns create race windows; consolidate when possible
 ---
+
+## [2026-01-31] - S102: SMS Credits System & Usage Tracking
+Thread: 
+Run: 20260131-145111-24714 (iteration 13)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-13.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-13.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e04da84 [Pass 3/3] refactor(S102): Polish SMS credits system for clarity and remove dead code
+- Post-commit status: clean (S102 files only; other files remain from prior work)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components in S102)
+  - /next-best-practices: no (no Next.js pages in S102)
+  - /supabase-postgres-best-practices: no (no schema changes)
+  - /code-simplifier: yes (manual pass - removed dead code, duplicate schemas, tightened comments)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: yes (improved InsufficientCreditsError message, removed misleading comments)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors/warnings in S102 files)
+- Files changed:
+  - src/lib/sms/credits/constants.ts (removed dead Business-tier comment, unused DEFAULT_BILLING_PERIOD_DAYS)
+  - src/lib/sms/credits/credit-service.ts (improved error message, added organizationId as public readonly property)
+  - src/lib/sms/credits/index.ts (removed duplicate checkBalanceSchema export, DEFAULT_BILLING_PERIOD_DAYS export)
+  - src/lib/sms/credits/types.ts (removed duplicate checkBalanceSchema definition)
+  - src/lib/sms/index.ts (removed checkBalanceSchema re-export)
+  - src/lib/sms/sms-service.ts (removed misleading backward-compat comment)
+- What was implemented:
+  - Removed duplicate checkBalanceSchema (identical to getCreditBalanceSchema)
+  - Removed unused DEFAULT_BILLING_PERIOD_DAYS constant (code uses calendar month, not 30 days)
+  - Removed misleading "backward compatibility" comment on InsufficientCreditsError re-export
+  - Removed wordy Business-tier mapping comment that referenced unreferenced constant
+  - Improved InsufficientCreditsError: user-friendly message instead of exposing org ID; org ID preserved as readonly property for programmatic access
+- **Learnings for future iterations:**
+  - When schemas share identical shapes, consolidate early to prevent confusion
+  - Error messages in user-visible paths should be actionable, not internal identifiers
+  - Constants defined but never imported are dead code — verify with grep before keeping
+---

@@ -9150,3 +9150,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Promise.all is a simple win when creating multiple independent resources
   - Internal implementation functions should not be exported from barrel files
 ---
+
+## [2026-01-31] - S101: Twilio Webhook Handlers (Delivery Status & Inbound SMS)
+Thread: 
+Run: 20260131-145111-24714 (iteration 7)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-7.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-7.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 798fdc0 [Pass 1/3] feat(S101): Add Twilio webhook handlers for delivery status & inbound SMS
+- Post-commit status: clean (S101 files committed; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: yes (route handler patterns)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (S101 files only) -> PASS (0 errors)
+- Files changed:
+  - src/lib/sms/webhook-validation.ts (new)
+  - src/lib/sms/index.ts (updated exports)
+  - src/app/api/webhooks/twilio/status/route.ts (new)
+  - src/app/api/webhooks/twilio/inbound/route.ts (new)
+- What was implemented:
+  - Twilio signature validation utility (validateTwilioSignature, buildWebhookUrl)
+  - Delivery status webhook: updates sms_messages status by twilio_sid, sets delivered_at/error fields, increments sms_daily_stats
+  - Inbound SMS webhook: STOP/START/HELP keyword handling for TCPA compliance, consent record upsert, inbound message logging, conversation upsert, daily stats increment, TwiML XML responses with XML escaping
+  - OPT_OUT_KEYWORDS, OPT_IN_KEYWORDS, HELP_KEYWORDS constants exported from shared module
+- **Learnings for future iterations:**
+  - createUntypedAdminClient returns untyped Supabase client — dynamic column access needs explicit casting
+  - Twilio webhooks use form-encoded POST (not JSON) — use request.formData()
+  - TwiML responses must be Content-Type: text/xml
+  - Status webhook should return 200 even for missing messages to prevent Twilio retry loops
+  - maybeSingle() is preferred over single() when row may not exist (avoids PGRST116 errors)
+---

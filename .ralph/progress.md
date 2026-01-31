@@ -9241,3 +9241,102 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - format() with %I is safe for column names in PL/pgSQL (identifier quoting)
   - Supabase untyped client needs explicit casting for dynamic column access: (existing as unknown as Record<string, unknown>)
 ---
+
+## [2026-01-31] - S101: Twilio Webhook Handlers (Delivery Status & Inbound SMS)
+Thread:
+Run: 20260131-145111-24714 (iteration 10)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-10.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-10.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e110b6e [Pass 3/3] refactor(S101): Polish Twilio webhook handlers for clarity and maintainability
+- Post-commit status: clean (S101 files committed; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: no (no new route patterns)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (deduplicated fallbackIncrementStat, added UntypedSupabaseClient alias, consolidated logInboundMessage calls)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (fixed log tag consistency, improved HELP reply text, symmetric error logs)
+  - /agent-browser: no (not a UI story)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S101 files) -> PASS (0 errors)
+- Files changed:
+  - src/app/api/webhooks/twilio/status/route.ts (simplified: removed ~100 lines of duplicated stats code)
+  - src/app/api/webhooks/twilio/inbound/route.ts (simplified: deduplicated logInboundMessage calls, improved log messages)
+  - src/lib/sms/webhook-validation.ts (interpolated env var constant in error log, hoisted URL construction)
+  - src/lib/sms/daily-stats.ts (new: shared daily stats incrementer extracted from both routes)
+  - src/lib/supabase/admin.ts (added UntypedSupabaseClient type alias)
+- What was implemented (Pass 3 polish):
+  - Extracted duplicated fallbackIncrementStat from both route files into shared src/lib/sms/daily-stats.ts (~155 lines removed)
+  - Added UntypedSupabaseClient type alias to eliminate 7+ verbose ReturnType<> annotations
+  - Consolidated 4 identical logInboundMessage call sites into 1 unconditional call
+  - Fixed HELP auto-reply: replaced vague "visit our website" with actionable "contact your loan officer directly"
+  - Made opt-in error log symmetric with opt-out ("still sending confirmation")
+  - Added receiving phone number to "no org found" warning for debugging
+  - Interpolated ENV_TWILIO_AUTH_TOKEN constant in error message to prevent stale log if constant changes
+  - Changed "doesn't exist yet" phrasing to "is unavailable" for accuracy
+- **Learnings for future iterations:**
+  - Barrel exports are not needed for internal-only utilities (daily-stats.ts imported directly)
+  - Code simplifier agents excel at finding cross-file duplication patterns
+  - Writing clarity reviews catch asymmetric log messages that are easy to miss manually
+---
+
+## [2026-01-31] - S102: SMS Credits System & Usage Tracking
+Thread:
+Run: 20260131-145111-24714 (iteration 11)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-11.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-145111-24714-iter-11.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5d572c8 [Pass 1/3] feat(S102): Add SMS credits system with usage tracking and tiered pricing
+- Post-commit status: clean (S102 files only; other files remain from prior work)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors/warnings in S102 files)
+- Files changed:
+  - src/lib/sms/credits/constants.ts (new - tiered pricing, credit packs, alert thresholds)
+  - src/lib/sms/credits/types.ts (new - CreditBalance, UsageHistory, Zod schemas)
+  - src/lib/sms/credits/credit-service.ts (new - CreditService class with all methods)
+  - src/lib/sms/credits/actions.ts (new - server actions: getCreditBalance, purchaseCreditPack, getCreditUsageReport, checkCreditAlerts, getUsageHistory)
+  - src/lib/sms/credits/index.ts (new - barrel export)
+  - src/lib/sms/index.ts (modified - added credits module exports)
+  - src/lib/sms/sms-service.ts (modified - integrated credit check before send, delegated deduction to CreditService)
+- What was implemented:
+  - CreditService class with methods: checkBalance, deductCredit, getUsageHistory, getCurrentPeriodUsage, getMonthlyUsageSummary, checkAlertLevel, purchaseCreditPack
+  - Credit check enforced before every SMS send - throws InsufficientCreditsError if balance zero and overage not allowed
+  - Credits deducted by segment count (1 credit = 1 segment)
+  - Overage tracking: when used_credits exceeds included_credits, overage_credits increments
+  - Credit period auto-creation: aligns with subscription billing period or defaults to calendar month
+  - Tiered pricing: Professional (100 credits, $0.03 overage), Enterprise (2000 credits, $0.02 overage), free/starter (0 credits, no SMS)
+  - Credit pack purchase: 100/$5, 500/$20, 1000/$35 packs add to current period included_credits
+  - Usage alerts: warning at 75%, critical at 90%, exceeded at 100%
+  - Monthly usage summary with total sent, segments, cost, and average cost per review
+  - No credit rollover (each period starts fresh)
+  - Zod schemas for all credit operations
+  - Optimistic concurrency control on deductCredit to prevent double-spend
+  - Server actions with auth checks and admin-only purchase restriction
+- **Learnings for future iterations:**
+  - Supabase untyped client returns nullable data even with upsert - use `?? fallback` pattern
+  - Re-exporting error classes from submodules requires aliased import for instanceof checks in the same file
+  - Aligning SMS credit periods with subscription billing periods avoids confusing users about overlapping dates
+---

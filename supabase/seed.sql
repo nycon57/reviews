@@ -108,16 +108,36 @@ VALUES
   ('11111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'monthly', '2026-01-01', '2026-01-31', '{"total_reviews": 3, "average_rating": 4.67, "nps_score": 67, "response_rate": 0.60}'),
   ('11111111-1111-1111-1111-111111111111', 'cccccccc-cccc-cccc-cccc-cccccccccccc', 'monthly', '2026-01-01', '2026-01-31', '{"total_reviews": 5, "average_rating": 4.90, "nps_score": 85, "response_rate": 0.75}');
 
+-- SMS Settings (sample config for Acme Mortgage)
+INSERT INTO sms_settings (id, organization_id, quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone, use_recipient_timezone, monthly_message_limit, double_opt_in_enabled, registration_status, brand_name, auto_follow_up_enabled, auto_follow_up_delay_hours)
+VALUES
+  ('ee000001-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', true, '21:00', '08:00', 'America/New_York', false, 1000, false, 'not_started', 'Acme Mortgage', true, 72);
+
+-- SMS Templates (3 default templates for Acme Mortgage)
+INSERT INTO sms_templates (id, organization_id, name, category, body, merge_fields, is_locked, is_default, status)
+VALUES
+  ('ee000002-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Review Request', 'review_request',
+   'Hi {{first_name}}, thanks for working with {{lo_name}} at {{company_name}}! We''d love your feedback. Share your experience here: {{review_link}} Reply STOP to opt out.',
+   '["first_name", "lo_name", "company_name", "review_link"]', true, true, 'active'),
+  ('ee000002-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'Follow-Up Reminder', 'follow_up',
+   'Hi {{first_name}}, just a friendly reminder from {{company_name}}. We''d really appreciate your feedback on your recent experience with {{lo_name}}: {{review_link}} Reply STOP to opt out.',
+   '["first_name", "lo_name", "company_name", "review_link"]', true, true, 'active'),
+  ('ee000002-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'Thank You', 'thank_you',
+   'Thank you, {{first_name}}! Your review of {{lo_name}} at {{company_name}} means a lot to us. We appreciate your trust. Reply STOP to opt out.',
+   '["first_name", "lo_name", "company_name"]', true, true, 'active');
+
 -- Verify seed data
 DO $$
 DECLARE
   org_count INT;
   lo_count INT;
   review_count INT;
+  sms_template_count INT;
 BEGIN
   SELECT COUNT(*) INTO org_count FROM organizations;
   SELECT COUNT(*) INTO lo_count FROM loan_officers;
   SELECT COUNT(*) INTO review_count FROM reviews;
+  SELECT COUNT(*) INTO sms_template_count FROM sms_templates;
 
-  RAISE NOTICE 'Seed complete: % organizations, % loan officers, % reviews', org_count, lo_count, review_count;
+  RAISE NOTICE 'Seed complete: % organizations, % loan officers, % reviews, % sms templates', org_count, lo_count, review_count, sms_template_count;
 END $$;

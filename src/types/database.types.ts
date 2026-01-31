@@ -329,6 +329,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_public: boolean | null
+          latitude: number | null
+          longitude: number | null
           manager_email: string | null
           manager_name: string | null
           name: string
@@ -355,6 +357,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_public?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           manager_email?: string | null
           manager_name?: string | null
           name: string
@@ -381,6 +385,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_public?: boolean | null
+          latitude?: number | null
+          longitude?: number | null
           manager_email?: string | null
           manager_name?: string | null
           name?: string
@@ -3928,6 +3934,604 @@ export type Database = {
           },
         ]
       }
+      sms_consent: {
+        Row: {
+          consent_ip: unknown
+          consent_language: string | null
+          consent_method:
+            | Database["public"]["Enums"]["sms_consent_method"]
+            | null
+          consent_source: string | null
+          created_at: string
+          id: string
+          opted_in_at: string | null
+          opted_out_at: string | null
+          organization_id: string
+          phone_number: string
+          status: Database["public"]["Enums"]["sms_consent_status"]
+          updated_at: string
+        }
+        Insert: {
+          consent_ip?: unknown
+          consent_language?: string | null
+          consent_method?:
+            | Database["public"]["Enums"]["sms_consent_method"]
+            | null
+          consent_source?: string | null
+          created_at?: string
+          id?: string
+          opted_in_at?: string | null
+          opted_out_at?: string | null
+          organization_id: string
+          phone_number: string
+          status?: Database["public"]["Enums"]["sms_consent_status"]
+          updated_at?: string
+        }
+        Update: {
+          consent_ip?: unknown
+          consent_language?: string | null
+          consent_method?:
+            | Database["public"]["Enums"]["sms_consent_method"]
+            | null
+          consent_source?: string | null
+          created_at?: string
+          id?: string
+          opted_in_at?: string | null
+          opted_out_at?: string | null
+          organization_id?: string
+          phone_number?: string
+          status?: Database["public"]["Enums"]["sms_consent_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_consent_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_conversations: {
+        Row: {
+          assigned_lo_id: string | null
+          borrower_phone: string
+          created_at: string
+          id: string
+          last_message_at: string | null
+          organization_id: string
+          status: Database["public"]["Enums"]["sms_conversation_status"]
+          updated_at: string
+        }
+        Insert: {
+          assigned_lo_id?: string | null
+          borrower_phone: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          organization_id: string
+          status?: Database["public"]["Enums"]["sms_conversation_status"]
+          updated_at?: string
+        }
+        Update: {
+          assigned_lo_id?: string | null
+          borrower_phone?: string
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          organization_id?: string
+          status?: Database["public"]["Enums"]["sms_conversation_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_conversations_assigned_lo_id_fkey"
+            columns: ["assigned_lo_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_conversations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_credits: {
+        Row: {
+          created_at: string
+          id: string
+          included_credits: number
+          organization_id: string
+          overage_credits: number
+          overage_rate_cents: number
+          period_end: string
+          period_start: string
+          updated_at: string
+          used_credits: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          included_credits?: number
+          organization_id: string
+          overage_credits?: number
+          overage_rate_cents?: number
+          period_end: string
+          period_start: string
+          updated_at?: string
+          used_credits?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          included_credits?: number
+          organization_id?: string
+          overage_credits?: number
+          overage_rate_cents?: number
+          period_end?: string
+          period_start?: string
+          updated_at?: string
+          used_credits?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_credits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_daily_stats: {
+        Row: {
+          clicked: number
+          date: string
+          delivered: number
+          failed: number
+          id: string
+          loan_officer_id: string | null
+          opted_out: number
+          organization_id: string
+          replied: number
+          reviews_generated: number
+          segments_used: number
+          sent: number
+          total_cost_cents: number
+        }
+        Insert: {
+          clicked?: number
+          date: string
+          delivered?: number
+          failed?: number
+          id?: string
+          loan_officer_id?: string | null
+          opted_out?: number
+          organization_id: string
+          replied?: number
+          reviews_generated?: number
+          segments_used?: number
+          sent?: number
+          total_cost_cents?: number
+        }
+        Update: {
+          clicked?: number
+          date?: string
+          delivered?: number
+          failed?: number
+          id?: string
+          loan_officer_id?: string | null
+          opted_out?: number
+          organization_id?: string
+          replied?: number
+          reviews_generated?: number
+          segments_used?: number
+          sent?: number
+          total_cost_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_daily_stats_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_daily_stats_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_messages: {
+        Row: {
+          body: string
+          borrower_id: string | null
+          campaign_id: string | null
+          cost_cents: number
+          created_at: string
+          delivered_at: string | null
+          direction: Database["public"]["Enums"]["sms_direction"]
+          error_code: string | null
+          error_message: string | null
+          flow_execution_id: string | null
+          from_number: string
+          id: string
+          loan_officer_id: string | null
+          organization_id: string
+          scheduled_at: string | null
+          segments: number
+          sent_at: string | null
+          short_link_id: string | null
+          status: Database["public"]["Enums"]["sms_message_status"]
+          template_id: string | null
+          to_number: string
+          twilio_sid: string | null
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          borrower_id?: string | null
+          campaign_id?: string | null
+          cost_cents?: number
+          created_at?: string
+          delivered_at?: string | null
+          direction?: Database["public"]["Enums"]["sms_direction"]
+          error_code?: string | null
+          error_message?: string | null
+          flow_execution_id?: string | null
+          from_number: string
+          id?: string
+          loan_officer_id?: string | null
+          organization_id: string
+          scheduled_at?: string | null
+          segments?: number
+          sent_at?: string | null
+          short_link_id?: string | null
+          status?: Database["public"]["Enums"]["sms_message_status"]
+          template_id?: string | null
+          to_number: string
+          twilio_sid?: string | null
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          borrower_id?: string | null
+          campaign_id?: string | null
+          cost_cents?: number
+          created_at?: string
+          delivered_at?: string | null
+          direction?: Database["public"]["Enums"]["sms_direction"]
+          error_code?: string | null
+          error_message?: string | null
+          flow_execution_id?: string | null
+          from_number?: string
+          id?: string
+          loan_officer_id?: string | null
+          organization_id?: string
+          scheduled_at?: string | null
+          segments?: number
+          sent_at?: string | null
+          short_link_id?: string | null
+          status?: Database["public"]["Enums"]["sms_message_status"]
+          template_id?: string | null
+          to_number?: string
+          twilio_sid?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_messages_borrower_id_fkey"
+            columns: ["borrower_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_short_link_id_fkey"
+            columns: ["short_link_id"]
+            isOneToOne: false
+            referencedRelation: "sms_short_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_messages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_phone_numbers: {
+        Row: {
+          capabilities: Json | null
+          created_at: string
+          id: string
+          messaging_service_sid: string | null
+          monthly_cost_cents: number
+          number_type: Database["public"]["Enums"]["sms_number_type"]
+          organization_id: string
+          phone_number: string
+          status: Database["public"]["Enums"]["sms_number_status"]
+          twilio_sid: string | null
+          updated_at: string
+        }
+        Insert: {
+          capabilities?: Json | null
+          created_at?: string
+          id?: string
+          messaging_service_sid?: string | null
+          monthly_cost_cents?: number
+          number_type?: Database["public"]["Enums"]["sms_number_type"]
+          organization_id: string
+          phone_number: string
+          status?: Database["public"]["Enums"]["sms_number_status"]
+          twilio_sid?: string | null
+          updated_at?: string
+        }
+        Update: {
+          capabilities?: Json | null
+          created_at?: string
+          id?: string
+          messaging_service_sid?: string | null
+          monthly_cost_cents?: number
+          number_type?: Database["public"]["Enums"]["sms_number_type"]
+          organization_id?: string
+          phone_number?: string
+          status?: Database["public"]["Enums"]["sms_number_status"]
+          twilio_sid?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_phone_numbers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_settings: {
+        Row: {
+          a2p_brand_id: string | null
+          a2p_campaign_id: string | null
+          auto_follow_up_delay_hours: number
+          auto_follow_up_enabled: boolean
+          auto_follow_up_template_id: string | null
+          brand_name: string | null
+          created_at: string
+          default_from_number: string | null
+          double_opt_in_enabled: boolean
+          id: string
+          messaging_service_sid: string | null
+          monthly_message_limit: number
+          organization_id: string
+          quiet_hours_enabled: boolean
+          quiet_hours_end: string
+          quiet_hours_start: string
+          quiet_hours_timezone: string
+          registration_status: Database["public"]["Enums"]["sms_registration_status"]
+          twilio_account_sid: string | null
+          twilio_auth_token_encrypted: string | null
+          updated_at: string
+          use_recipient_timezone: boolean
+        }
+        Insert: {
+          a2p_brand_id?: string | null
+          a2p_campaign_id?: string | null
+          auto_follow_up_delay_hours?: number
+          auto_follow_up_enabled?: boolean
+          auto_follow_up_template_id?: string | null
+          brand_name?: string | null
+          created_at?: string
+          default_from_number?: string | null
+          double_opt_in_enabled?: boolean
+          id?: string
+          messaging_service_sid?: string | null
+          monthly_message_limit?: number
+          organization_id: string
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          quiet_hours_timezone?: string
+          registration_status?: Database["public"]["Enums"]["sms_registration_status"]
+          twilio_account_sid?: string | null
+          twilio_auth_token_encrypted?: string | null
+          updated_at?: string
+          use_recipient_timezone?: boolean
+        }
+        Update: {
+          a2p_brand_id?: string | null
+          a2p_campaign_id?: string | null
+          auto_follow_up_delay_hours?: number
+          auto_follow_up_enabled?: boolean
+          auto_follow_up_template_id?: string | null
+          brand_name?: string | null
+          created_at?: string
+          default_from_number?: string | null
+          double_opt_in_enabled?: boolean
+          id?: string
+          messaging_service_sid?: string | null
+          monthly_message_limit?: number
+          organization_id?: string
+          quiet_hours_enabled?: boolean
+          quiet_hours_end?: string
+          quiet_hours_start?: string
+          quiet_hours_timezone?: string
+          registration_status?: Database["public"]["Enums"]["sms_registration_status"]
+          twilio_account_sid?: string | null
+          twilio_auth_token_encrypted?: string | null
+          updated_at?: string
+          use_recipient_timezone?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_settings_auto_follow_up_template_id_fkey"
+            columns: ["auto_follow_up_template_id"]
+            isOneToOne: false
+            referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_short_links: {
+        Row: {
+          borrower_phone: string | null
+          click_count: number
+          created_at: string
+          destination_url: string
+          expires_at: string | null
+          first_clicked_at: string | null
+          id: string
+          last_clicked_at: string | null
+          loan_officer_id: string | null
+          message_id: string | null
+          organization_id: string
+          short_code: string
+        }
+        Insert: {
+          borrower_phone?: string | null
+          click_count?: number
+          created_at?: string
+          destination_url: string
+          expires_at?: string | null
+          first_clicked_at?: string | null
+          id?: string
+          last_clicked_at?: string | null
+          loan_officer_id?: string | null
+          message_id?: string | null
+          organization_id: string
+          short_code: string
+        }
+        Update: {
+          borrower_phone?: string | null
+          click_count?: number
+          created_at?: string
+          destination_url?: string
+          expires_at?: string | null
+          first_clicked_at?: string | null
+          id?: string
+          last_clicked_at?: string | null
+          loan_officer_id?: string | null
+          message_id?: string | null
+          organization_id?: string
+          short_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_sms_short_links_message"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "sms_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_short_links_loan_officer_id_fkey"
+            columns: ["loan_officer_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_short_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_templates: {
+        Row: {
+          body: string
+          category: Database["public"]["Enums"]["sms_template_category"]
+          created_at: string
+          created_by: string | null
+          id: string
+          is_default: boolean
+          is_locked: boolean
+          merge_fields: Json | null
+          name: string
+          organization_id: string
+          status: Database["public"]["Enums"]["sms_template_status"]
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          category?: Database["public"]["Enums"]["sms_template_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          is_locked?: boolean
+          merge_fields?: Json | null
+          name: string
+          organization_id: string
+          status?: Database["public"]["Enums"]["sms_template_status"]
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          category?: Database["public"]["Enums"]["sms_template_category"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default?: boolean
+          is_locked?: boolean
+          merge_fields?: Json | null
+          name?: string
+          organization_id?: string
+          status?: Database["public"]["Enums"]["sms_template_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       survey_distribution_queue: {
         Row: {
           created_at: string | null
@@ -4658,6 +5262,7 @@ export type Database = {
           region: string | null
           reputation_score: number | null
           role: string
+          slug: string | null
           timezone: string | null
           title: string | null
           total_reviews: number | null
@@ -4708,6 +5313,7 @@ export type Database = {
           region?: string | null
           reputation_score?: number | null
           role: string
+          slug?: string | null
           timezone?: string | null
           title?: string | null
           total_reviews?: number | null
@@ -4758,6 +5364,7 @@ export type Database = {
           region?: string | null
           reputation_score?: number | null
           role?: string
+          slug?: string | null
           timezone?: string | null
           title?: string | null
           total_reviews?: number | null
@@ -5333,6 +5940,14 @@ export type Database = {
       }
       cleanup_expired_auth_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limit_windows: { Args: never; Returns: number }
+      decrypt_sms_token: {
+        Args: { p_encrypted: string; p_key: string }
+        Returns: string
+      }
+      encrypt_sms_token: {
+        Args: { p_key: string; p_token: string }
+        Returns: string
+      }
       get_current_user_id: { Args: never; Returns: string }
       get_pending_distribution_items: {
         Args: { p_limit?: number }
@@ -5401,6 +6016,39 @@ export type Database = {
       }
     }
     Enums: {
+      sms_consent_method:
+        | "web_form"
+        | "sms_keyword"
+        | "api"
+        | "import"
+        | "verbal"
+      sms_consent_status: "opted_in" | "opted_out" | "pending"
+      sms_conversation_status: "active" | "closed" | "archived"
+      sms_direction: "outbound" | "inbound"
+      sms_message_status:
+        | "queued"
+        | "sent"
+        | "delivered"
+        | "undelivered"
+        | "failed"
+        | "received"
+      sms_number_status: "active" | "pending" | "released"
+      sms_number_type: "local" | "toll_free" | "short_code"
+      sms_registration_status:
+        | "not_started"
+        | "brand_pending"
+        | "brand_approved"
+        | "campaign_pending"
+        | "campaign_approved"
+        | "fully_registered"
+        | "rejected"
+      sms_template_category:
+        | "review_request"
+        | "follow_up"
+        | "thank_you"
+        | "video_request"
+        | "custom"
+      sms_template_status: "active" | "archived"
       testimonial_format: "short" | "medium" | "long" | "social" | "headline"
       testimonial_status: "draft" | "approved" | "rejected" | "published"
       video_testimonial_approval_status:
@@ -5544,6 +6192,43 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      sms_consent_method: [
+        "web_form",
+        "sms_keyword",
+        "api",
+        "import",
+        "verbal",
+      ],
+      sms_consent_status: ["opted_in", "opted_out", "pending"],
+      sms_conversation_status: ["active", "closed", "archived"],
+      sms_direction: ["outbound", "inbound"],
+      sms_message_status: [
+        "queued",
+        "sent",
+        "delivered",
+        "undelivered",
+        "failed",
+        "received",
+      ],
+      sms_number_status: ["active", "pending", "released"],
+      sms_number_type: ["local", "toll_free", "short_code"],
+      sms_registration_status: [
+        "not_started",
+        "brand_pending",
+        "brand_approved",
+        "campaign_pending",
+        "campaign_approved",
+        "fully_registered",
+        "rejected",
+      ],
+      sms_template_category: [
+        "review_request",
+        "follow_up",
+        "thank_you",
+        "video_request",
+        "custom",
+      ],
+      sms_template_status: ["active", "archived"],
       testimonial_format: ["short", "medium", "long", "social", "headline"],
       testimonial_status: ["draft", "approved", "rejected", "published"],
       video_testimonial_approval_status: [
@@ -5564,4 +6249,4 @@ export const Constants = {
       ],
     },
   },
-} as const;
+} as const

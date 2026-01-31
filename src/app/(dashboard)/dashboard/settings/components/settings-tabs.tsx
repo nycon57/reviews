@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Scales,
   CurrencyDollar,
+  FileText,
 } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { ProfileTab } from './profile-tab';
@@ -24,11 +25,12 @@ import { SmsTab } from '@/components/settings/sms/sms-tab';
 import { RegistrationTab } from '@/components/settings/sms/registration-tab';
 import { ComplianceTab } from '@/components/settings/sms/compliance-tab';
 import { SmsBillingTab } from '@/components/settings/sms/billing-tab';
+import { SmsTemplatesTab } from '@/components/settings/sms/templates-tab';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'sms' | 'sms-registration' | 'sms-compliance' | 'sms-billing';
+type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'sms' | 'sms-registration' | 'sms-compliance' | 'sms-billing' | 'sms-templates';
 
-const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'sms', 'sms-registration', 'sms-compliance', 'sms-billing'];
+const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'sms', 'sms-registration', 'sms-compliance', 'sms-billing', 'sms-templates'];
 
 function isSettingsTab(value: string | null): value is SettingsTab {
   return value !== null && VALID_TABS.includes(value as SettingsTab);
@@ -44,6 +46,7 @@ const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
   { value: 'sms-registration', label: '10DLC', icon: ShieldCheck },
   { value: 'sms-compliance', label: 'Compliance', icon: Scales },
   { value: 'sms-billing', label: 'SMS Billing', icon: CurrencyDollar },
+  { value: 'sms-templates', label: 'Templates', icon: FileText },
 ];
 
 function TabSkeleton() {
@@ -203,6 +206,12 @@ export function SettingsTabs({
         <TabsContent value="sms-billing" className="m-0 animate-fade-in">
           <Suspense fallback={<TabSkeleton />}>
             <SmsBillingTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="sms-templates" className="m-0 animate-fade-in">
+          <Suspense fallback={<TabSkeleton />}>
+            <SmsTemplatesTab />
           </Suspense>
         </TabsContent>
       </div>

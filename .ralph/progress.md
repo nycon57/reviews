@@ -9661,3 +9661,205 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Decorative section banners add noise; clear naming makes them unnecessary
   - Type assertions with untyped Supabase client are redundant when nullish coalescing is used
 ---
+
+## [2026-01-31 17:20] - S105: SMS Compliance & Quiet Hours Settings UI
+Thread: 
+Run: 20260131-164553-16216 (iteration 4)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: c2861ac [Pass 1/3] feat(S105): Add SMS Compliance & Quiet Hours Settings UI
+- Post-commit status: staged files clean, other uncommitted changes remain from prior stories
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none (Pass 1 - skills deferred to Pass 2/3)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (new files) -> PASS (0 errors, 0 warnings on S105 files)
+- Files changed:
+  - src/components/settings/sms/compliance-tab.tsx (new)
+  - src/components/settings/sms/quiet-hours-form.tsx (new)
+  - src/components/settings/sms/opt-out-settings-form.tsx (new)
+  - src/components/settings/sms/consent-language-form.tsx (new)
+  - src/components/settings/sms/compliance-report.tsx (new)
+  - src/lib/sms/compliance/actions.ts (new)
+  - src/lib/sms/compliance/schemas.ts (new)
+  - src/lib/sms/types.ts (modified - added compliance columns)
+  - src/lib/sms/settings/actions.ts (modified - use untyped client for new columns)
+  - src/app/(dashboard)/dashboard/settings/components/settings-tabs.tsx (modified - added Compliance tab)
+  - supabase/migrations/20260131000005_add_sms_compliance_columns.sql (new, gitignored)
+- What was implemented:
+  - Full Compliance tab added to Settings with sections: Quiet Hours, Opt-Out Settings, Double Opt-In, Consent Language, Compliance Report
+  - Quiet hours: time pickers, timezone selector, recipient timezone toggle, TCPA defaults
+  - Opt-out: STOP/HELP auto-response editors with character count, merge field support
+  - Double opt-in: toggle + confirmation message editor with live preview
+  - Consent language: textarea editor with form preview showing how it renders
+  - Compliance report: date range picker, daily metrics table (opt-in/out/net/rate), CSV export with masked phones
+  - Compliance health score: weighted percentage sidebar (quiet hours, 10DLC, consent, opt-out rate, double opt-in)
+  - TCPA/CAN-SPAM/RESPA info cards
+  - Database migration adding stop_response, help_response, double_opt_in_message, consent_language_text to sms_settings
+  - Server actions with Zod validation for all settings
+  - Dirty state tracking with unsaved changes warning per section
+- **Learnings for future iterations:**
+  - Used createUntypedAdminClient for new columns not yet in generated database types
+  - Existing sms_settings table already had quiet_hours_* and double_opt_in_enabled columns
+  - supabase/migrations is gitignored, migration applied via MCP plugin
+  - Design system color scheme: repwell-teal-300/400/500, repwell-sage-100/200
+  - Motion variants from src/lib/motion/variants.ts (fadeInUp, staggerContainer)
+---
+
+## [2026-01-31 22:45] - S105: SMS Compliance & Quiet Hours Settings UI
+Thread:
+Run: 20260131-164553-16216 (iteration 5)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-5.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-164553-16216-iter-5.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 7367060 [Pass 2/3] fix(S105): Security and quality improvements for SMS Compliance UI
+- Post-commit status: clean (S105 files)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (subagent)
+  - /vercel-react-best-practices: yes
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint src/components/settings/sms/ src/lib/sms/compliance/ -> PASS (0 errors)
+- Files changed:
+  - src/components/settings/sms/quiet-hours-form.tsx (fieldset accessibility fix)
+  - src/components/settings/sms/opt-out-settings-form.tsx (fieldset accessibility fix)
+  - src/lib/sms/compliance/actions.ts (parallel queries, correct opt-in calc, daily compliance rate, CSV escape)
+  - src/lib/sms/compliance/schemas.ts (conditional double opt-in validation)
+- What was implemented:
+  - Fixed 4 issues from code review:
+    1. Parallelized sequential DB queries using Promise.all (getComplianceReport, getComplianceHealthScore)
+    2. Fixed incorrect opt-in calculation: now queries actual sms_consent opt-in events by date instead of deriving from sent count
+    3. Fixed static compliance rate: now computes daily rate from sends vs opt-outs per day
+    4. Fixed double opt-in schema: message only required when doubleOptInEnabled is true (z.refine)
+  - Accessibility improvement: replaced opacity-50/pointer-events-none with native fieldset disabled for keyboard/screen reader support
+  - Security: added CSV injection protection (csvEscape) for exported compliance reports
+- **Learnings for future iterations:**
+  - sms_daily_stats.sent tracks messages sent, not opt-in events — use sms_consent table for actual consent metrics
+  - fieldset disabled natively prevents interaction for all child form controls without needing pointer-events-none
+  - CSV exports need formula-character escaping to prevent injection (=, +, -, @, tab, CR)
+  - z.refine allows conditional validation that z.object alone cannot express
+---
+
+## [2026-01-31T18:20:00Z] - S106: SMS Credits & Billing Settings UI
+Thread: 
+Run: 20260131-181324-57745 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 671cf63 [Pass 1/3] feat(S106): Add SMS Credits & Billing Settings UI
+- Post-commit status: clean (only S106 files staged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none (Pass 1 focused on core implementation)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in new files)
+- Files changed:
+  - src/lib/sms/credits/billing-actions.ts (new - server actions for credit balance, usage, purchase)
+  - src/components/settings/sms/billing-tab.tsx (new - main billing tab component)
+  - src/components/settings/sms/credit-balance-card.tsx (new - circular progress + alert banners)
+  - src/components/settings/sms/usage-chart.tsx (new - Recharts ComposedChart + daily table + CSV export)
+  - src/components/settings/sms/credit-packs-section.tsx (new - 3 credit pack cards with purchase flow)
+  - src/components/settings/sms/overage-settings.tsx (new - overage status, rates, projected costs)
+  - src/app/(dashboard)/dashboard/settings/components/settings-tabs.tsx (modified - added sms-billing tab)
+- What was implemented:
+  - Billing tab with sections: Current Balance, Usage History, Credit Packs, Overage Settings
+  - Circular progress showing used/included credits with color-coded alert levels
+  - Usage alert banners at 75%/90%/100% thresholds with buy credits CTA
+  - Usage history chart: bars for delivered/failed, cumulative credit line overlay
+  - Daily breakdown table with totals row and show all/less toggle
+  - CSV export of daily usage data
+  - Credit packs section: 3 purchase cards (100/$5, 500/$20, 1000/$35) with best value badge
+  - Overage settings: allowed/blocked status, rate display, projected overage using 7-day rolling average
+  - Cost-per-review metric card
+  - Responsive design following Repwell design system (motion variants, color tokens, spacing)
+- **Learnings for future iterations:**
+  - React Compiler flags `let` mutations inside useMemo - use reduce with accumulator pattern instead
+  - Existing SMS tabs use client-side data fetching with useState + server actions pattern
+  - Credit service already has all business logic; billing-actions.ts is a thin auth wrapper
+  - Design system tokens: repwell-teal-300-500 for text, repwell-sage-100-200 for backgrounds
+---
+
+## [2026-01-31T18:35:00Z] - S106: SMS Credits & Billing Settings UI
+Thread:
+Run: 20260131-181324-57745 (iteration 2)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 03710f8 [Pass 2/3] fix(S106): Security and quality improvements for SMS Credits & Billing UI
+- Post-commit status: clean (only S106 files staged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual thorough review)
+  - /vercel-react-best-practices: yes (reviewed component patterns)
+  - /next-best-practices: yes (verified server action patterns)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: yes (accessibility audit)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in S106 files)
+- Files changed:
+  - src/lib/sms/credits/format.ts (new - shared formatCents utility)
+  - src/lib/sms/credits/billing-actions.ts (added Zod validation, removed dead toggleOverageAllowed)
+  - src/components/settings/sms/billing-tab.tsx (use shared formatCents)
+  - src/components/settings/sms/credit-balance-card.tsx (accessibility, Button component, label fix, naming)
+  - src/components/settings/sms/credit-packs-section.tsx (use shared formatCents)
+  - src/components/settings/sms/overage-settings.tsx (use shared formatCents)
+  - src/components/settings/sms/usage-chart.tsx (use shared formatCents, fix type assertion)
+- Pass 2 Fixes:
+  - Extracted shared formatCents to eliminate duplication across 5 files
+  - Added Zod validation (packIdSchema) for purchaseCreditPack server action input
+  - Replaced raw `<button>` with ShadCN `Button` in UsageAlertBanner for consistency
+  - Added aria-label to CircularProgress SVG for screen reader accessibility
+  - Fixed misleading "Est. cost this period" label to "Overage charges"
+  - Renamed bgColor variable to percentageColor for clarity
+  - Removed unsafe `as unknown as string[]` type assertion in CSV export
+  - Removed unused toggleOverageAllowed dead code
+- **Learnings for future iterations:**
+  - formatCents is common enough to warrant a shared utility from the start
+  - Always use ShadCN Button instead of raw button elements for consistency
+  - SVG-based visualizations need aria-label on the container for screen readers
+  - Server action inputs should always be Zod-validated, even simple string params
+---

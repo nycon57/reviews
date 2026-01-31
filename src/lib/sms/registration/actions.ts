@@ -65,13 +65,13 @@ export async function getRegistrationStatus(): Promise<
   return {
     success: true,
     data: {
-      registrationStatus: (data?.registration_status as string) ?? "not_started",
-      brandId: (data?.a2p_brand_id as string | null) ?? null,
-      campaignId: (data?.a2p_campaign_id as string | null) ?? null,
-      brandName: (data?.brand_name as string | null) ?? null,
-      messagingServiceSid: (data?.messaging_service_sid as string | null) ?? null,
-      brandFailureReason: (data?.brand_failure_reason as string | null) ?? null,
-      campaignFailureReason: (data?.campaign_failure_reason as string | null) ?? null,
+      registrationStatus: data?.registration_status ?? "not_started",
+      brandId: data?.a2p_brand_id ?? null,
+      campaignId: data?.a2p_campaign_id ?? null,
+      brandName: data?.brand_name ?? null,
+      messagingServiceSid: data?.messaging_service_sid ?? null,
+      brandFailureReason: data?.brand_failure_reason ?? null,
+      campaignFailureReason: data?.campaign_failure_reason ?? null,
     },
   };
 }
@@ -133,7 +133,6 @@ export async function registerCampaign(
     return { success: false, error: parsed.error.errors[0].message };
   }
 
-  // Get brand ID and messaging service SID
   const supabase = createUntypedAdminClient();
   const { data: settings, error: fetchError } = await supabase
     .from("sms_settings")
@@ -223,8 +222,8 @@ export async function refreshRegistrationStatus(): Promise<ActionResult> {
     );
 
     const { updateFields } = deriveRegistrationUpdate(
-      settings.registration_status as string,
-      settings.a2p_campaign_id as string | null,
+      settings.registration_status,
+      settings.a2p_campaign_id,
       status
     );
 

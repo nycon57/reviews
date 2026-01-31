@@ -45,13 +45,10 @@ interface RegistrationState {
 
 function determineActiveStep(state: RegistrationState): WizardStep {
   const { registrationStatus } = state;
-  if (registrationStatus === 'not_started') return 1;
-  if (registrationStatus === 'brand_pending') return 3;
   if (registrationStatus === 'brand_approved') return 2;
-  if (registrationStatus === 'campaign_pending') return 3;
-  if (registrationStatus === 'campaign_approved') return 3;
-  if (registrationStatus === 'fully_registered') return 3;
-  if (registrationStatus === 'rejected') return 1; // Allow re-submission from step 1
+  if (['brand_pending', 'campaign_pending', 'campaign_approved', 'fully_registered'].includes(registrationStatus)) {
+    return 3;
+  }
   return 1;
 }
 
@@ -73,7 +70,7 @@ function isStepAccessible(step: WizardStep, state: RegistrationState): boolean {
   const { registrationStatus } = state;
   if (step === 1) return true;
   if (step === 2) return registrationStatus === 'brand_approved';
-  if (step === 3) return !['not_started'].includes(registrationStatus);
+  if (step === 3) return registrationStatus !== 'not_started';
   return false;
 }
 
@@ -258,70 +255,66 @@ export function RegistrationWizard() {
           </CardHeader>
           <CardContent>
             {currentStep === 1 && (
-              <>
-                {state.registrationStatus !== 'not_started' && state.registrationStatus !== 'rejected' ? (
-                  <div className="space-y-4">
-                    <div className="rounded-lg bg-repwell-sage-200/10 border border-repwell-sage-200/30 p-4">
-                      <p className="text-sm text-repwell-sage-200 font-medium">
-                        Brand registration already submitted.
-                      </p>
-                      <p className="text-xs text-repwell-teal-300 mt-1">
-                        Brand: {state.brandName || 'N/A'} ({state.brandId})
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentStep(determineActiveStep(state))}
-                      className="text-repwell-teal-300"
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Go to current step
-                    </Button>
+              state.registrationStatus !== 'not_started' && state.registrationStatus !== 'rejected' ? (
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-repwell-sage-200/10 border border-repwell-sage-200/30 p-4">
+                    <p className="text-sm text-repwell-sage-200 font-medium">
+                      Brand registration already submitted.
+                    </p>
+                    <p className="text-xs text-repwell-teal-300 mt-1">
+                      Brand: {state.brandName || 'N/A'} ({state.brandId})
+                    </p>
                   </div>
-                ) : (
-                  <BrandRegistrationForm
-                    onSubmit={handleBrandSubmit}
-                    isSubmitting={isSubmitting}
-                  />
-                )}
-              </>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentStep(determineActiveStep(state))}
+                    className="text-repwell-teal-300"
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Go to current step
+                  </Button>
+                </div>
+              ) : (
+                <BrandRegistrationForm
+                  onSubmit={handleBrandSubmit}
+                  isSubmitting={isSubmitting}
+                />
+              )
             )}
 
             {currentStep === 2 && (
-              <>
-                {state.registrationStatus !== 'brand_approved' ? (
-                  <div className="space-y-4">
-                    {['campaign_pending', 'campaign_approved', 'fully_registered'].includes(
-                      state.registrationStatus
-                    ) ? (
-                      <div className="rounded-lg bg-repwell-sage-200/10 border border-repwell-sage-200/30 p-4">
-                        <p className="text-sm text-repwell-sage-200 font-medium">
-                          Campaign registration already submitted.
-                        </p>
-                        <p className="text-xs text-repwell-teal-300 mt-1">
-                          Campaign ID: {state.campaignId}
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
-                        <p className="text-sm text-amber-800 font-medium">
-                          Waiting for brand approval
-                        </p>
-                        <p className="text-xs text-amber-700 mt-1">
-                          Campaign registration will be available after your brand is approved.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <CampaignRegistrationForm
-                    onSubmit={handleCampaignSubmit}
-                    isSubmitting={isSubmitting}
-                    brandName={state.brandName}
-                  />
-                )}
-              </>
+              state.registrationStatus !== 'brand_approved' ? (
+                <div className="space-y-4">
+                  {['campaign_pending', 'campaign_approved', 'fully_registered'].includes(
+                    state.registrationStatus
+                  ) ? (
+                    <div className="rounded-lg bg-repwell-sage-200/10 border border-repwell-sage-200/30 p-4">
+                      <p className="text-sm text-repwell-sage-200 font-medium">
+                        Campaign registration already submitted.
+                      </p>
+                      <p className="text-xs text-repwell-teal-300 mt-1">
+                        Campaign ID: {state.campaignId}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                      <p className="text-sm text-amber-800 font-medium">
+                        Waiting for brand approval
+                      </p>
+                      <p className="text-xs text-amber-700 mt-1">
+                        Campaign registration will be available after your brand is approved.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <CampaignRegistrationForm
+                  onSubmit={handleCampaignSubmit}
+                  isSubmitting={isSubmitting}
+                  brandName={state.brandName}
+                />
+              )
             )}
 
             {currentStep === 3 && (

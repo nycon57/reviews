@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// ── Brand Registration ────────────────────────────────────────────────
-
 export const brandRegistrationSchema = z.object({
   legalCompanyName: z
     .string()
@@ -38,8 +36,6 @@ export const brandRegistrationSchema = z.object({
 
 export type BrandRegistrationInput = z.infer<typeof brandRegistrationSchema>;
 
-// ── Campaign Registration ─────────────────────────────────────────────
-
 export const campaignRegistrationSchema = z.object({
   campaignDescription: z
     .string()
@@ -67,8 +63,6 @@ export const campaignRegistrationSchema = z.object({
 
 export type CampaignRegistrationInput = z.infer<typeof campaignRegistrationSchema>;
 
-// ── Industry verticals for 10DLC ──────────────────────────────────────
-
 export const INDUSTRY_VERTICALS = [
   { value: "REAL_ESTATE", label: "Real Estate" },
   { value: "FINANCIAL", label: "Financial Services" },
@@ -87,8 +81,6 @@ export const INDUSTRY_VERTICALS = [
   { value: "OTHER", label: "Other" },
 ] as const;
 
-// ── Subscriber opt-in methods ─────────────────────────────────────────
-
 export const OPT_IN_METHODS = [
   { value: "VERBAL", label: "Verbal consent" },
   { value: "WEB_FORM", label: "Website form or signup" },
@@ -97,8 +89,6 @@ export const OPT_IN_METHODS = [
   { value: "QR_CODE", label: "QR code" },
   { value: "OTHER", label: "Other" },
 ] as const;
-
-// ── Default keywords ──────────────────────────────────────────────────
 
 export const DEFAULT_OPT_OUT_KEYWORDS = "STOP, CANCEL, END, QUIT, UNSUBSCRIBE";
 export const DEFAULT_HELP_KEYWORDS = "HELP, INFO";

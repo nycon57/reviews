@@ -1,8 +1,6 @@
 import { resolveCredentials } from "../twilio-client";
 import type { BrandRegistrationInput, CampaignRegistrationInput } from "./schemas";
 
-// ── Types ──────────────────────────────────────────────────────────────
-
 export interface BrandRegistrationResult {
   brandId: string;
   status: string;
@@ -20,17 +18,8 @@ export interface RegistrationStatusResult {
   campaignFailureReason: string | null;
 }
 
-// ── Twilio A2P 10DLC API wrapper ───────────────────────────────────────
-
 /**
- * Submit brand registration to Twilio's Trust Hub / Regulatory Compliance API.
- *
- * Twilio A2P 10DLC brand registration steps:
- * 1. Create a Customer Profile (Trust Product)
- * 2. Attach end-user and supporting docs
- * 3. Submit for evaluation
- *
- * This wrapper uses Twilio's Messaging API for brand/campaign registration.
+ * Submit brand registration to Twilio via the A2P Brand Registration API.
  */
 export async function submitBrandRegistration(
   organizationId: string,
@@ -40,10 +29,7 @@ export async function submitBrandRegistration(
   const baseUrl = `https://messaging.twilio.com/v1`;
   const auth = Buffer.from(`${credentials.accountSid}:${credentials.authToken}`).toString("base64");
 
-  // Normalize EIN: strip hyphen
   const ein = input.einTaxId.replace("-", "");
-
-  // Register the brand via Twilio A2P Brand Registration API
   const brandBody = new URLSearchParams();
   brandBody.set("CustomerProfileBundleSid", "");
   brandBody.set("A2PProfileBundleSid", "");
@@ -159,7 +145,6 @@ export async function checkRegistrationStatus(
   let campaignStatus: string | null = null;
   let campaignFailureReason: string | null = null;
 
-  // Check brand status
   if (brandId) {
     try {
       const brandResponse = await fetch(`${baseUrl}/a2p/BrandRegistrations/${brandId}`, {
@@ -175,7 +160,6 @@ export async function checkRegistrationStatus(
     }
   }
 
-  // Check campaign status
   if (campaignId && messagingServiceSid) {
     try {
       const campaignResponse = await fetch(

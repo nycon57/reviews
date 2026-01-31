@@ -25,7 +25,6 @@ export async function GET(request: NextRequest) {
 
   const supabase = createUntypedAdminClient();
 
-  // Find all orgs with pending registrations
   const { data: pendingOrgs, error: fetchError } = await supabase
     .from('sms_settings')
     .select('organization_id, a2p_brand_id, a2p_campaign_id, messaging_service_sid, registration_status')
@@ -64,7 +63,6 @@ export async function GET(request: NextRequest) {
 
       const updated = newStatus !== org.registration_status;
       if (updated) {
-        updateFields.registration_status = newStatus;
         await supabase
           .from('sms_settings')
           .update(updateFields)

@@ -29,11 +29,6 @@ function getStatusDisplay(status: string): {
 } {
   switch (status) {
     case 'fully_registered':
-      return {
-        label: 'Approved',
-        color: 'bg-repwell-sage-200/20 text-repwell-sage-200 border border-repwell-sage-200/30',
-        icon: <CheckCircle weight="fill" className="h-4 w-4" />,
-      };
     case 'brand_approved':
     case 'campaign_approved':
       return {
@@ -67,7 +62,6 @@ function getBrandStatus(registrationStatus: string): string {
   if (registrationStatus === 'not_started') return 'not_started';
   if (registrationStatus === 'brand_pending') return 'brand_pending';
   if (registrationStatus === 'rejected') return 'rejected';
-  // brand_approved, campaign_pending, campaign_approved, fully_registered all mean brand is approved
   return 'brand_approved';
 }
 

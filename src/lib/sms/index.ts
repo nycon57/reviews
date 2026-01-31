@@ -69,3 +69,30 @@ export type {
   CreateShortLinkInput,
   ShortLinkClickStats,
 } from "./short-links/types";
+
+// Credits system
+export {
+  CreditService,
+  SMS_CREDIT_TIERS,
+  CREDIT_PACKS,
+  ALERT_THRESHOLDS,
+  checkBalanceSchema,
+  deductCreditSchema,
+  getUsageHistorySchema,
+  getCurrentPeriodUsageSchema,
+  purchaseCreditPackSchema,
+  getCreditBalanceSchema,
+  getCreditUsageReportSchema,
+  creditAlertCheckSchema,
+} from "./credits";
+export type {
+  CreditBalance,
+  UsageHistoryEntry,
+  CurrentPeriodUsage,
+  DailyUsageStat,
+  MonthlyUsageSummary,
+  CreditUsageReport,
+  SmsCreditTier,
+  CreditPack,
+  AlertLevel,
+} from "./credits";

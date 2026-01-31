@@ -3,6 +3,10 @@ import { TwilioService, mapTwilioError } from "./twilio-client";
 import { toE164, maskPhone } from "./phone-utils";
 import { calculateSegments } from "./segment-calculator";
 import { checkRateLimits } from "./rate-limiter";
+import {
+  CreditService,
+  InsufficientCreditsError as CreditInsufficientError,
+} from "./credits/credit-service";
 import type {
   SmsSendResult,
   SmsLogEntry,
@@ -29,12 +33,8 @@ export class QuietHoursError extends Error {
   }
 }
 
-export class InsufficientCreditsError extends Error {
-  constructor(organizationId: string) {
-    super(`Insufficient SMS credits for organization ${organizationId}`);
-    this.name = "InsufficientCreditsError";
-  }
-}
+// Re-export from credits module for backward compatibility
+export { InsufficientCreditsError } from "./credits/credit-service";
 
 export class RateLimitError extends Error {
   public retryAfter?: string;
@@ -100,6 +100,9 @@ export class SmsService {
       if (!rateCheck.allowed) {
         throw new RateLimitError(rateCheck.reason ?? "Rate limit exceeded", rateCheck.retryAfter);
       }
+
+      // 6b. Check credit balance before sending
+      await this.requireCredits(segmentInfo.segments);
 
       // 7. Resolve from number
       const fromNumber = await this.resolveFromNumber();
@@ -168,6 +171,9 @@ export class SmsService {
       if (!rateCheck.allowed) {
         throw new RateLimitError(rateCheck.reason ?? "Rate limit exceeded", rateCheck.retryAfter);
       }
+
+      // Check credit balance before sending
+      await this.requireCredits(segmentInfo.segments);
 
       const fromNumber = await this.resolveFromNumber();
 
@@ -348,36 +354,22 @@ export class SmsService {
     return data.id;
   }
 
-  private async deductCredits(segments: number): Promise<void> {
-    const supabase = createUntypedAdminClient();
-    const today = new Date().toISOString().slice(0, 10);
+  /**
+   * Checks credit balance and throws InsufficientCreditsError if the org
+   * has zero remaining credits and overage is not allowed.
+   */
+  private async requireCredits(_segments: number): Promise<void> {
+    const creditService = new CreditService(this.organizationId);
+    const balance = await creditService.checkBalance();
 
-    // Find the current billing period
-    const { data: credits } = await supabase
-      .from("sms_credits")
-      .select("id, used_credits, included_credits, overage_credits")
-      .eq("organization_id", this.organizationId)
-      .lte("period_start", today)
-      .gte("period_end", today)
-      .single();
-
-    if (!credits) {
-      // No credit period found; log and continue (don't block the send)
-      console.warn(`[SMS] No credit period found for org ${this.organizationId}`);
-      return;
+    if (balance.remaining <= 0 && !balance.overageAllowed) {
+      throw new CreditInsufficientError(this.organizationId);
     }
+  }
 
-    const newUsed = credits.used_credits + segments;
-    const overage = Math.max(0, newUsed - credits.included_credits);
-    const newOverage = credits.overage_credits + Math.max(0, overage - credits.overage_credits);
-
-    await supabase
-      .from("sms_credits")
-      .update({
-        used_credits: newUsed,
-        overage_credits: newOverage,
-      })
-      .eq("id", credits.id);
+  private async deductCredits(segments: number): Promise<void> {
+    const creditService = new CreditService(this.organizationId);
+    await creditService.deductCredit(segments);
   }
 
   // ── Error handling ─────────────────────────────────────────────────
@@ -393,7 +385,7 @@ export class SmsService {
       this.log({ organization_id: this.organizationId, message_id: null, status: "queued", duration_ms, error_code: "QUIET_HOURS" });
       return { success: false, error: error.message, errorCode: "QUIET_HOURS" };
     }
-    if (error instanceof InsufficientCreditsError) {
+    if (error instanceof CreditInsufficientError) {
       this.log({ organization_id: this.organizationId, message_id: null, status: "failed", duration_ms, error_code: "NO_CREDITS" });
       return { success: false, error: error.message, errorCode: "NO_CREDITS" };
     }

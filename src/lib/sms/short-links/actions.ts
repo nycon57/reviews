@@ -28,18 +28,13 @@ const createLinksForTemplateSchema = z.object({
   videoUrl: z.string().url().optional(),
 });
 
-/**
- * Create a short link for a destination URL.
- * Returns the full short URL ready for use in SMS messages.
- */
+/** Create a short link for a destination URL. */
 export async function createShortLink(input: z.infer<typeof createShortLinkSchema>) {
   const validated = createShortLinkSchema.parse(input);
   return ShortLinkService.createShortLink(validated);
 }
 
-/**
- * Get click statistics for a short link.
- */
+/** Get click statistics for a short link. */
 export async function getShortLinkStats(
   shortLinkId: string
 ): Promise<ShortLinkClickStats | null> {
@@ -48,10 +43,7 @@ export async function getShortLinkStats(
 }
 
 /**
- * Create short links for review_link and/or video_link merge fields
- * when rendering an SMS template. Returns a merge context with the
- * generated short URLs replacing the original destination URLs.
- *
+ * Create short links for review_link and/or video_link merge fields.
  * Call this before renderTemplate when sending real SMS messages.
  */
 export async function createLinksForTemplate(opts: z.infer<typeof createLinksForTemplateSchema>): Promise<{
@@ -61,8 +53,6 @@ export async function createLinksForTemplate(opts: z.infer<typeof createLinksFor
 }> {
   const validated = createLinksForTemplateSchema.parse(opts);
   const shortLinkIds: string[] = [];
-  let reviewLink: string | undefined;
-  let videoLink: string | undefined;
 
   const metadata = {
     borrowerPhone: validated.borrowerPhone,
@@ -70,25 +60,21 @@ export async function createLinksForTemplate(opts: z.infer<typeof createLinksFor
     messageId: validated.messageId,
   };
 
-  if (validated.reviewUrl) {
+  async function shorten(destinationUrl: string | undefined): Promise<string | undefined> {
+    if (!destinationUrl) return undefined;
     const { shortLink, shortUrl } = await ShortLinkService.createShortLink({
       organizationId: validated.organizationId,
-      destinationUrl: validated.reviewUrl,
+      destinationUrl,
       metadata,
     });
-    reviewLink = shortUrl;
     shortLinkIds.push(shortLink.id);
+    return shortUrl;
   }
 
-  if (validated.videoUrl) {
-    const { shortLink, shortUrl } = await ShortLinkService.createShortLink({
-      organizationId: validated.organizationId,
-      destinationUrl: validated.videoUrl,
-      metadata,
-    });
-    videoLink = shortUrl;
-    shortLinkIds.push(shortLink.id);
-  }
+  const [reviewLink, videoLink] = await Promise.all([
+    shorten(validated.reviewUrl),
+    shorten(validated.videoUrl),
+  ]);
 
   return { reviewLink, videoLink, shortLinkIds };
 }

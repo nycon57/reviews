@@ -8,9 +8,7 @@ import type {
 
 const DEFAULT_EXPIRY_DAYS = 30;
 const APP_DOMAIN = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.repwell.com";
-const ALLOWED_PROTOCOLS = ["http:", "https:"];
 
-/** Validate that a destination URL uses an allowed protocol. */
 function validateDestinationUrl(url: string): void {
   let parsed: URL;
   try {
@@ -18,7 +16,7 @@ function validateDestinationUrl(url: string): void {
   } catch {
     throw new Error("Invalid destination URL");
   }
-  if (!ALLOWED_PROTOCOLS.includes(parsed.protocol)) {
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`Disallowed URL protocol: ${parsed.protocol}`);
   }
 }
@@ -28,10 +26,7 @@ function validateDestinationUrl(url: string): void {
  * and analytics for SMS short links.
  */
 export const ShortLinkService = {
-  /**
-   * Create a short link for a destination URL.
-   * Returns the full short URL (e.g., https://app.repwell.com/r/abc123).
-   */
+  /** Create a short link and return the full short URL. */
   async createShortLink(
     input: CreateShortLinkInput
   ): Promise<{ shortLink: SmsShortLink; shortUrl: string }> {
@@ -68,10 +63,7 @@ export const ShortLinkService = {
     return { shortLink: data as SmsShortLink, shortUrl };
   },
 
-  /**
-   * Resolve a short code to its short link record.
-   * Returns null if the code does not exist.
-   */
+  /** Resolve a short code to its short link record, or null if not found. */
   async resolveShortLink(shortCode: string): Promise<SmsShortLink | null> {
     const supabase = createUntypedAdminClient();
 
@@ -89,10 +81,7 @@ export const ShortLinkService = {
     return (data as SmsShortLink) ?? null;
   },
 
-  /**
-   * Record a click on a short link. Uses atomic SQL increment for
-   * concurrency safety. Captures user-agent and referrer.
-   */
+  /** Record a click using an atomic SQL increment, with a non-atomic fallback. */
   async recordClick(
     shortCode: string,
     headers: { userAgent?: string; referrer?: string }
@@ -100,7 +89,6 @@ export const ShortLinkService = {
     const supabase = createUntypedAdminClient();
     const now = new Date().toISOString();
 
-    // Atomic increment of click_count + update timestamps
     const { error } = await supabase.rpc("increment_short_link_click", {
       p_short_code: shortCode,
       p_now: now,
@@ -108,7 +96,6 @@ export const ShortLinkService = {
 
     if (error) {
       console.error("[ShortLink] RPC increment failed, using fallback:", error.message);
-      // Fallback: update last_clicked_at only (click_count won't be atomic)
       const { error: updateError } = await supabase
         .from("sms_short_links")
         .update({ last_clicked_at: now })
@@ -119,7 +106,6 @@ export const ShortLinkService = {
       }
     }
 
-    // Log click details for analytics (user-agent, referrer)
     if (headers.userAgent || headers.referrer) {
       console.info("[ShortLink] Click recorded", {
         shortCode,
@@ -129,9 +115,7 @@ export const ShortLinkService = {
     }
   },
 
-  /**
-   * Get click statistics for a short link by its ID.
-   */
+  /** Get click statistics for a short link by its ID. */
   async getClickStats(shortLinkId: string): Promise<ShortLinkClickStats | null> {
     const supabase = createUntypedAdminClient();
 
@@ -146,9 +130,6 @@ export const ShortLinkService = {
     }
 
     const link = data as SmsShortLink;
-    const isExpired = link.expires_at
-      ? new Date(link.expires_at) < new Date()
-      : false;
 
     return {
       shortLinkId: link.id,
@@ -159,21 +140,17 @@ export const ShortLinkService = {
       lastClickedAt: link.last_clicked_at,
       createdAt: link.created_at,
       expiresAt: link.expires_at,
-      isExpired,
+      isExpired: ShortLinkService.isExpired(link),
     };
   },
 
-  /**
-   * Check if a short link is expired.
-   */
+  /** Check if a short link is expired. */
   isExpired(link: SmsShortLink): boolean {
     if (!link.expires_at) return false;
     return new Date(link.expires_at) < new Date();
   },
 
-  /**
-   * Build the full short URL from a short code.
-   */
+  /** Build the full short URL from a short code. */
   buildShortUrl(shortCode: string): string {
     return `${APP_DOMAIN}/r/${shortCode}`;
   },

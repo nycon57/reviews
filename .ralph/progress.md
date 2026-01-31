@@ -9863,3 +9863,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - SVG-based visualizations need aria-label on the container for screen readers
   - Server action inputs should always be Zod-validated, even simple string params
 ---
+
+## [2026-01-31T18:45:00Z] - S106: SMS Credits & Billing Settings UI
+Thread: 
+Run: 20260131-181324-57745 (iteration 3)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9ec9c7e [Pass 3/3] refactor(S106): Simplify SMS billing code for clarity and maintainability
+- Post-commit status: clean (only S106 files staged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (reviewed all user-facing text, found it clean)
+  - /agent-browser: no
+  - Other skills: /stripe-best-practices (not needed this pass)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in S106 files, 9 pre-existing errors in other files)
+- Files changed:
+  - src/components/settings/sms/credit-balance-card.tsx
+  - src/components/settings/sms/usage-chart.tsx
+  - src/lib/sms/credits/billing-actions.ts
+  - src/lib/sms/credits/format.ts
+- What was implemented:
+  - Extracted withCreditService helper to deduplicate 3 billing action functions into one-liners
+  - Consolidated two parallel alertLevel color lookup maps into single alertColors map
+  - Replaced reduce-with-side-effect chartData computation with clearer map pattern
+  - Extracted shared sumDailyStats utility to eliminate duplicated totals reduction in usage-chart
+  - Net reduction of 32 lines while preserving all functionality
+- **Learnings for future iterations:**
+  - The reduce-with-side-effect pattern (pushing to external array while accumulating) obscures intent; prefer map with running variable
+  - Parallel lookup maps keyed by the same enum should be consolidated into a single map returning an object
+  - Server action boilerplate (auth + try/catch + service instantiation) is a common duplication target for helper extraction
+---

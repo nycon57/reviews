@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUntypedAdminClient } from '@/lib/supabase/admin';
-import { checkRegistrationStatus } from '@/lib/sms/registration/twilio-a2p';
+import { checkRegistrationStatus, deriveRegistrationUpdate } from '@/lib/sms/registration/twilio-a2p';
 
 /**
  * Cron job: Check 10DLC registration status for all pending organizations.
@@ -56,28 +56,11 @@ export async function GET(request: NextRequest) {
         org.messaging_service_sid
       );
 
-      let newStatus = org.registration_status;
-      const updateFields: Record<string, unknown> = {
-        updated_at: new Date().toISOString(),
-      };
-
-      if (status.brandStatus === 'approved' || status.brandStatus === 'APPROVED') {
-        if (status.campaignStatus === 'VERIFIED' || status.campaignStatus === 'approved') {
-          newStatus = 'fully_registered';
-        } else if (org.a2p_campaign_id) {
-          if (status.campaignStatus === 'FAILED' || status.campaignStatus === 'rejected') {
-            newStatus = 'rejected';
-            updateFields.campaign_failure_reason = status.campaignFailureReason;
-          } else {
-            newStatus = 'campaign_pending';
-          }
-        } else {
-          newStatus = 'brand_approved';
-        }
-      } else if (status.brandStatus === 'FAILED' || status.brandStatus === 'rejected') {
-        newStatus = 'rejected';
-        updateFields.brand_failure_reason = status.brandFailureReason;
-      }
+      const { newStatus, updateFields } = deriveRegistrationUpdate(
+        org.registration_status,
+        org.a2p_campaign_id,
+        status
+      );
 
       const updated = newStatus !== org.registration_status;
       if (updated) {

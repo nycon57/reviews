@@ -51,14 +51,14 @@ function determineActiveStep(state: RegistrationState): WizardStep {
   if (registrationStatus === 'campaign_pending') return 3;
   if (registrationStatus === 'campaign_approved') return 3;
   if (registrationStatus === 'fully_registered') return 3;
-  if (registrationStatus === 'rejected') return 3;
+  if (registrationStatus === 'rejected') return 1; // Allow re-submission from step 1
   return 1;
 }
 
 function isStepComplete(step: WizardStep, state: RegistrationState): boolean {
   const { registrationStatus } = state;
   if (step === 1) {
-    return !['not_started'].includes(registrationStatus);
+    return !['not_started', 'rejected'].includes(registrationStatus);
   }
   if (step === 2) {
     return ['campaign_pending', 'campaign_approved', 'fully_registered'].includes(registrationStatus);
@@ -182,7 +182,7 @@ export function RegistrationWizard() {
 
       {/* Progress Indicator */}
       <motion.div variants={fadeInUp}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" role="group" aria-label="Registration steps">
           {STEPS.map((s, index) => {
             const StepIcon = s.icon;
             const complete = isStepComplete(s.step, state);
@@ -194,6 +194,8 @@ export function RegistrationWizard() {
                 <button
                   onClick={() => accessible && setCurrentStep(s.step)}
                   disabled={!accessible}
+                  aria-label={`Step ${s.step}: ${s.label}${complete ? ' (completed)' : active ? ' (current)' : ''}`}
+                  aria-current={active ? 'step' : undefined}
                   className={`flex items-center gap-2.5 px-4 py-3 rounded-lg transition-all w-full text-left ${
                     active
                       ? 'bg-repwell-teal-300/10 border border-repwell-teal-300/30 text-repwell-teal-500'

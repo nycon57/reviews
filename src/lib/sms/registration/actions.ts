@@ -13,6 +13,7 @@ import {
   submitBrandRegistration,
   submitCampaignRegistration,
   checkRegistrationStatus,
+  deriveRegistrationUpdate,
 } from "./twilio-a2p";
 
 type ActionResult<T = void> =
@@ -221,31 +222,11 @@ export async function refreshRegistrationStatus(): Promise<ActionResult> {
       settings.messaging_service_sid
     );
 
-    // Determine the new registration_status enum value
-    let newStatus = settings.registration_status;
-    const updateFields: Record<string, unknown> = {
-      updated_at: new Date().toISOString(),
-    };
-
-    if (status.brandStatus === "approved" || status.brandStatus === "APPROVED") {
-      if (status.campaignStatus === "VERIFIED" || status.campaignStatus === "approved") {
-        newStatus = "fully_registered";
-      } else if (settings.a2p_campaign_id) {
-        if (status.campaignStatus === "FAILED" || status.campaignStatus === "rejected") {
-          newStatus = "rejected";
-          updateFields.campaign_failure_reason = status.campaignFailureReason;
-        } else {
-          newStatus = "campaign_pending";
-        }
-      } else {
-        newStatus = "brand_approved";
-      }
-    } else if (status.brandStatus === "FAILED" || status.brandStatus === "rejected") {
-      newStatus = "rejected";
-      updateFields.brand_failure_reason = status.brandFailureReason;
-    }
-
-    updateFields.registration_status = newStatus;
+    const { updateFields } = deriveRegistrationUpdate(
+      settings.registration_status as string,
+      settings.a2p_campaign_id as string | null,
+      status
+    );
 
     const { error: updateError } = await supabase
       .from("sms_settings")

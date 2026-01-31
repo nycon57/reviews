@@ -44,22 +44,23 @@ export async function submitBrandRegistration(
   const ein = input.einTaxId.replace("-", "");
 
   // Register the brand via Twilio A2P Brand Registration API
-  const brandBody = new URLSearchParams({
-    CustomerProfileBundleSid: "", // Twilio will auto-create if needed
-    A2PProfileBundleSid: "",
-    BrandType: input.companyType === "non_profit" ? "NON_PROFIT" : input.companyType.toUpperCase(),
-    CompanyName: input.legalCompanyName,
-    Ein: ein,
-    EinIssuingCountry: input.country,
-    Street: input.street,
-    City: input.city,
-    State: input.state,
-    PostalCode: input.postalCode,
-    Country: input.country,
-    WebsiteUrl: input.websiteUrl,
-    Vertical: input.vertical,
-    ...(input.stockTicker ? { StockTicker: input.stockTicker } : {}),
-  });
+  const brandBody = new URLSearchParams();
+  brandBody.set("CustomerProfileBundleSid", "");
+  brandBody.set("A2PProfileBundleSid", "");
+  brandBody.set("BrandType", input.companyType === "non_profit" ? "NON_PROFIT" : input.companyType.toUpperCase());
+  brandBody.set("CompanyName", input.legalCompanyName);
+  brandBody.set("Ein", ein);
+  brandBody.set("EinIssuingCountry", input.country);
+  brandBody.set("Street", input.street);
+  brandBody.set("City", input.city);
+  brandBody.set("State", input.state);
+  brandBody.set("PostalCode", input.postalCode);
+  brandBody.set("Country", input.country);
+  brandBody.set("WebsiteUrl", input.websiteUrl);
+  brandBody.set("Vertical", input.vertical);
+  if (input.stockTicker) {
+    brandBody.set("StockTicker", input.stockTicker);
+  }
 
   const response = await fetch(`${baseUrl}/a2p/BrandRegistrations`, {
     method: "POST",
@@ -192,4 +193,39 @@ export async function checkRegistrationStatus(
   }
 
   return { brandStatus, brandFailureReason, campaignStatus, campaignFailureReason };
+}
+
+/**
+ * Derive the new registration_status and any update fields from a Twilio status check result.
+ */
+export function deriveRegistrationUpdate(
+  currentStatus: string,
+  campaignId: string | null,
+  statusResult: RegistrationStatusResult
+): { newStatus: string; updateFields: Record<string, unknown> } {
+  let newStatus = currentStatus;
+  const updateFields: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (statusResult.brandStatus === "approved" || statusResult.brandStatus === "APPROVED") {
+    if (statusResult.campaignStatus === "VERIFIED" || statusResult.campaignStatus === "approved") {
+      newStatus = "fully_registered";
+    } else if (campaignId) {
+      if (statusResult.campaignStatus === "FAILED" || statusResult.campaignStatus === "rejected") {
+        newStatus = "rejected";
+        updateFields.campaign_failure_reason = statusResult.campaignFailureReason;
+      } else {
+        newStatus = "campaign_pending";
+      }
+    } else {
+      newStatus = "brand_approved";
+    }
+  } else if (statusResult.brandStatus === "FAILED" || statusResult.brandStatus === "rejected") {
+    newStatus = "rejected";
+    updateFields.brand_failure_reason = statusResult.brandFailureReason;
+  }
+
+  updateFields.registration_status = newStatus;
+  return { newStatus, updateFields };
 }

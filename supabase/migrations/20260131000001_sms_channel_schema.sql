@@ -1,9 +1,8 @@
--- SMS Channel Database Schema & Migrations (S096)
--- Creates all tables, enums, indexes, RLS policies for the SMS channel.
--- Phone numbers stored in E.164 format. Consent records are append-only (no hard deletes).
--- Twilio auth tokens encrypted at rest via pgcrypto.
+-- SMS Channel Schema (S096)
+-- Tables, enums, indexes, and RLS for the SMS channel.
+-- Phone numbers: E.164 format. Consent records: append-only.
+-- Twilio auth tokens: encrypted via pgcrypto.
 
--- Ensure pgcrypto is available for credential encryption
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 ------------------------------------------------------------------------
@@ -88,7 +87,7 @@ CREATE TRIGGER update_sms_phone_numbers_updated_at
   BEFORE UPDATE ON sms_phone_numbers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-COMMENT ON TABLE sms_phone_numbers IS 'Twilio phone numbers provisioned per organization';
+COMMENT ON TABLE sms_phone_numbers IS 'Twilio phone numbers provisioned per org';
 
 ------------------------------------------------------------------------
 -- 2. sms_consent
@@ -110,7 +109,7 @@ CREATE TABLE sms_consent (
   CONSTRAINT sms_consent_org_phone_unique UNIQUE (organization_id, phone_number)
 );
 
-CREATE INDEX idx_sms_consent_org_phone ON sms_consent(organization_id, phone_number);
+-- Unique constraint already covers (organization_id, phone_number) lookups
 CREATE INDEX idx_sms_consent_status ON sms_consent(status) WHERE status = 'opted_in';
 
 ALTER TABLE sms_consent ENABLE ROW LEVEL SECURITY;
@@ -146,7 +145,7 @@ CREATE TRIGGER update_sms_consent_updated_at
   BEFORE UPDATE ON sms_consent
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-COMMENT ON TABLE sms_consent IS 'TCPA consent tracking per phone number per org. No hard deletes.';
+COMMENT ON TABLE sms_consent IS 'TCPA consent per phone number per org (append-only)';
 
 ------------------------------------------------------------------------
 -- 3. sms_templates
@@ -204,7 +203,7 @@ CREATE TRIGGER update_sms_templates_updated_at
   BEFORE UPDATE ON sms_templates
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-COMMENT ON TABLE sms_templates IS 'Reusable SMS message templates with merge field support';
+COMMENT ON TABLE sms_templates IS 'Reusable SMS templates with merge field support';
 
 ------------------------------------------------------------------------
 -- 4. sms_short_links
@@ -217,7 +216,7 @@ CREATE TABLE sms_short_links (
   destination_url TEXT NOT NULL,
   borrower_phone TEXT,
   loan_officer_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  message_id UUID, -- FK added after sms_messages is created
+  message_id UUID, -- FK added after sms_messages table
   click_count INTEGER NOT NULL DEFAULT 0,
   first_clicked_at TIMESTAMPTZ,
   last_clicked_at TIMESTAMPTZ,
@@ -226,7 +225,7 @@ CREATE TABLE sms_short_links (
   CONSTRAINT sms_short_links_code_unique UNIQUE (short_code)
 );
 
-CREATE INDEX idx_sms_short_links_short_code ON sms_short_links(short_code);
+-- Unique constraint already covers short_code lookups
 CREATE INDEX idx_sms_short_links_org ON sms_short_links(organization_id);
 
 ALTER TABLE sms_short_links ENABLE ROW LEVEL SECURITY;
@@ -258,7 +257,7 @@ CREATE POLICY "Service role full access on sms_short_links"
   ON sms_short_links FOR ALL TO service_role
   USING (true) WITH CHECK (true);
 
-COMMENT ON TABLE sms_short_links IS 'Shortened URLs for SMS with click tracking and attribution';
+COMMENT ON TABLE sms_short_links IS 'Shortened URLs for SMS with click tracking';
 
 ------------------------------------------------------------------------
 -- 5. sms_messages
@@ -299,7 +298,7 @@ CREATE INDEX idx_sms_messages_scheduled ON sms_messages(scheduled_at)
 
 ALTER TABLE sms_messages ENABLE ROW LEVEL SECURITY;
 
--- Admins/managers see all org messages; regular users see only their own
+-- Admins/managers see all org messages; LOs see only their own
 CREATE POLICY "Admins and managers can view all org messages"
   ON sms_messages FOR SELECT TO authenticated
   USING (
@@ -341,9 +340,9 @@ CREATE TRIGGER update_sms_messages_updated_at
   BEFORE UPDATE ON sms_messages
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-COMMENT ON TABLE sms_messages IS 'All outbound and inbound SMS messages with delivery tracking';
+COMMENT ON TABLE sms_messages IS 'Outbound and inbound SMS with delivery tracking';
 
--- Add FK from sms_short_links.message_id to sms_messages now that both tables exist
+-- Deferred FK: sms_short_links.message_id -> sms_messages (circular dependency)
 ALTER TABLE sms_short_links
   ADD CONSTRAINT fk_sms_short_links_message
   FOREIGN KEY (message_id) REFERENCES sms_messages(id) ON DELETE SET NULL;
@@ -364,7 +363,7 @@ CREATE TABLE sms_conversations (
   CONSTRAINT sms_conversations_org_phone_unique UNIQUE (organization_id, borrower_phone)
 );
 
-CREATE INDEX idx_sms_conversations_org_phone ON sms_conversations(organization_id, borrower_phone);
+-- Unique constraint already covers (organization_id, borrower_phone) lookups
 CREATE INDEX idx_sms_conversations_org_last_msg ON sms_conversations(organization_id, last_message_at DESC)
   WHERE status = 'active';
 
@@ -401,7 +400,7 @@ CREATE TRIGGER update_sms_conversations_updated_at
   BEFORE UPDATE ON sms_conversations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-COMMENT ON TABLE sms_conversations IS 'Two-way SMS conversation threads per borrower phone';
+COMMENT ON TABLE sms_conversations IS 'Two-way SMS threads per borrower phone';
 
 ------------------------------------------------------------------------
 -- 7. sms_daily_stats (materialized aggregation)
@@ -455,7 +454,7 @@ CREATE POLICY "Service role full access on sms_daily_stats"
   ON sms_daily_stats FOR ALL TO service_role
   USING (true) WITH CHECK (true);
 
-COMMENT ON TABLE sms_daily_stats IS 'Pre-aggregated daily SMS stats per org and loan officer';
+COMMENT ON TABLE sms_daily_stats IS 'Pre-aggregated daily SMS stats per org/LO';
 
 ------------------------------------------------------------------------
 -- 8. sms_settings
@@ -534,8 +533,8 @@ CREATE TRIGGER update_sms_settings_updated_at
   BEFORE UPDATE ON sms_settings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-COMMENT ON TABLE sms_settings IS 'Per-org SMS configuration including Twilio creds, quiet hours, 10DLC registration';
-COMMENT ON COLUMN sms_settings.twilio_auth_token_encrypted IS 'Twilio auth token encrypted via pgcrypto pgp_sym_encrypt';
+COMMENT ON TABLE sms_settings IS 'Per-org SMS config: Twilio creds, quiet hours, 10DLC registration';
+COMMENT ON COLUMN sms_settings.twilio_auth_token_encrypted IS 'Encrypted via pgp_sym_encrypt';
 
 ------------------------------------------------------------------------
 -- 9. sms_credits
@@ -555,7 +554,7 @@ CREATE TABLE sms_credits (
   CONSTRAINT sms_credits_org_period_unique UNIQUE (organization_id, period_start)
 );
 
-CREATE INDEX idx_sms_credits_org ON sms_credits(organization_id);
+-- Composite index covers organization_id-only lookups via leftmost prefix
 CREATE INDEX idx_sms_credits_org_period ON sms_credits(organization_id, period_start DESC);
 
 ALTER TABLE sms_credits ENABLE ROW LEVEL SECURITY;
@@ -591,7 +590,7 @@ CREATE TRIGGER update_sms_credits_updated_at
   BEFORE UPDATE ON sms_credits
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
-COMMENT ON TABLE sms_credits IS 'SMS credit allocation and usage per billing period';
+COMMENT ON TABLE sms_credits IS 'SMS credit allocation and usage per billing period per org';
 
 ------------------------------------------------------------------------
 -- Helper: encrypt/decrypt Twilio auth token
@@ -611,5 +610,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION encrypt_sms_token IS 'Encrypts a Twilio auth token using pgcrypto symmetric encryption';
-COMMENT ON FUNCTION decrypt_sms_token IS 'Decrypts a Twilio auth token using pgcrypto symmetric encryption';
+COMMENT ON FUNCTION encrypt_sms_token IS 'Encrypt a Twilio auth token via pgcrypto symmetric encryption';
+COMMENT ON FUNCTION decrypt_sms_token IS 'Decrypt a Twilio auth token via pgcrypto symmetric encryption';

@@ -90,24 +90,24 @@ const PLAN_FEATURES: Record<string, FeatureDefinition[]> = {
     { name: "Automated Campaigns", description: "Schedule recurring survey campaigns" },
     { name: "Review Monitoring", description: "Monitor Google reviews automatically" },
     { name: "Basic Reporting", description: "Weekly email reports" },
-    { name: "Up to 3 Team Members", description: "Invite your team to collaborate" },
+    { name: "Up to 3 Team Members", description: "Collaborate on reviews and responses" },
   ],
   professional: [
-    { name: "Everything in Starter", description: "All Starter features included" },
-    { name: "Video Testimonials", description: "Collect video testimonials from customers" },
-    { name: "AI-Powered Insights", description: "Sentiment analysis and key phrase extraction" },
-    { name: "Google Business Sync", description: "Two-way sync with Google Business Profile" },
-    { name: "Advanced Analytics", description: "Detailed dashboards and trend analysis" },
-    { name: "Up to 10 Team Members", description: "Larger team collaboration" },
+    { name: "Everything in Starter", description: "Plus the features below" },
+    { name: "Video Testimonials", description: "Collect and share video testimonials" },
+    { name: "AI-Powered Insights", description: "Understand what customers feel and why" },
+    { name: "Google Business Sync", description: "Automatically sync reviews with Google Business Profile" },
+    { name: "Advanced Analytics", description: "Dashboards with performance trends over time" },
+    { name: "Up to 10 Team Members", description: "Invite up to 10 team members" },
     { name: "Priority Support", description: "Get help faster when you need it" },
   ],
   enterprise: [
-    { name: "Everything in Professional", description: "All Professional features included" },
+    { name: "Everything in Professional", description: "Plus the features below" },
     { name: "Unlimited Team Members", description: "No limits on your team size" },
     { name: "Custom Branding", description: "White-label surveys and emails" },
     { name: "API Access", description: "Integrate with your existing tools" },
-    { name: "Dedicated Account Manager", description: "Personal support contact" },
-    { name: "Custom Integrations", description: "Build custom workflows" },
+    { name: "Dedicated Account Manager", description: "Your own dedicated support contact" },
+    { name: "Custom Integrations", description: "Connect to your CRM, LOS, and other tools" },
     { name: "SLA Guarantee", description: "99.9% uptime commitment" },
   ],
 };
@@ -116,7 +116,7 @@ const PLAN_FEATURES: Record<string, FeatureDefinition[]> = {
 const DEFAULT_OFFBOARDING_CHECKLIST = [
   {
     title: "Export your reviews",
-    description: "Download all your collected reviews before your access ends.",
+    description: "Download your reviews before access ends.",
     actionUrl: "/dashboard/settings/export",
   },
   {
@@ -126,12 +126,12 @@ const DEFAULT_OFFBOARDING_CHECKLIST = [
   },
   {
     title: "Save video testimonials",
-    description: "Download any video testimonials you've collected.",
+    description: "Download your video testimonials.",
     actionUrl: "/dashboard/testimonials",
   },
   {
     title: "Update integrations",
-    description: "Disconnect any connected services that rely on RepWell.",
+    description: "Disconnect services linked to RepWell.",
     actionUrl: "/dashboard/settings/integrations",
   },
 ];
@@ -165,9 +165,57 @@ function addDays(date: Date, days: number): Date {
   return result;
 }
 
+/** Returns whole days between two dates, rounding up partial days. */
 function daysBetween(date1: Date, date2: Date): number {
   const diffTime = Math.abs(date2.getTime() - date1.getTime());
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}
+
+function getFirstName(fullName: string | null): string {
+  return fullName?.split(" ")[0] || "there";
+}
+
+function displayPlanName(planKey: string): string {
+  return PLAN_DISPLAY_NAMES[planKey] || planKey;
+}
+
+/** Returns start (00:00:00) and end (23:59:59) of the given date. */
+function getDayRange(date: Date): { start: Date; end: Date } {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(date);
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
+}
+
+/**
+ * Validates that a user can receive emails (notification prefs + unsubscribe status).
+ * Returns the user/org context on success, or a SendEmailResult error.
+ */
+async function prepareEmailContext(
+  organizationId: string
+): Promise<
+  | { ok: true; user: UserInfo; organization: OrganizationInfo; urls: ReturnType<typeof buildBaseUrls> }
+  | { ok: false; result: SendEmailResult }
+> {
+  const userOrg = await getUserAndOrganization(organizationId);
+  if (!userOrg) {
+    return { ok: false, result: { success: false, error: "User or organization not found" } };
+  }
+
+  const { user, organization } = userOrg;
+
+  if (user.receive_notifications === false) {
+    return { ok: false, result: { success: false, error: "User has disabled notifications" } };
+  }
+
+  const unsubscribed = await isEmailUnsubscribed(user.email);
+  if (unsubscribed) {
+    return { ok: false, result: { success: false, error: "Email is unsubscribed" } };
+  }
+
+  const urls = buildBaseUrls(organizationId);
+  return { ok: true, user, organization, urls };
 }
 
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
@@ -412,37 +460,19 @@ export async function sendSubscriptionUpgradeEmail(params: {
   invoiceDetails?: SubscriptionInvoiceDetails;
   paymentMethod?: PaymentMethodSummary;
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  // Check notification preferences
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  // Check unsubscribe status
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
+  const { user, organization, urls } = ctx;
   const featureDiff = getPlanFeatureDiff(params.previousPlan, params.newPlan);
-
-  // Map plan keys to display names
-  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionUpgradeConfirmationEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    previousPlanName: planNames[params.previousPlan] || params.previousPlan,
-    newPlanName: planNames[params.newPlan] || params.newPlan,
+    previousPlanName: displayPlanName(params.previousPlan),
+    newPlanName: displayPlanName(params.newPlan),
     previousPrice: params.previousPrice,
     newPrice: params.newPrice,
     currency: params.currency,
@@ -491,34 +521,19 @@ export async function sendSubscriptionDowngradeEmail(params: {
   nextBillingAmount: number;
   creditAmount?: number;
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
+  const { user, organization, urls } = ctx;
   const featureDiff = getPlanFeatureDiff(params.previousPlan, params.newPlan);
-
-  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionDowngradeConfirmationEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    previousPlanName: planNames[params.previousPlan] || params.previousPlan,
-    newPlanName: planNames[params.newPlan] || params.newPlan,
+    previousPlanName: displayPlanName(params.previousPlan),
+    newPlanName: displayPlanName(params.newPlan),
     previousPrice: params.previousPrice,
     newPrice: params.newPrice,
     currency: params.currency,
@@ -568,34 +583,19 @@ export async function sendSubscriptionRenewalReminderEmail(params: {
     teamMembers: number;
   };
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
+  const { user, organization, urls } = ctx;
   const renewalDate = new Date(params.renewalDate);
   const daysTillRenewal = daysBetween(new Date(), renewalDate);
-
-  const planNames = PLAN_DISPLAY_NAMES;
 
   const emailData: SubscriptionRenewalReminderEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    planName: planNames[params.planName] || params.planName,
+    planName: displayPlanName(params.planName),
     renewalDate: params.renewalDate,
     renewalAmount: params.renewalAmount,
     currency: params.currency,
@@ -640,32 +640,17 @@ export async function sendSubscriptionRenewedEmail(params: {
   nextBillingAmount: number;
   paymentMethod?: PaymentMethodSummary;
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
-
-  const planNames = PLAN_DISPLAY_NAMES;
+  const { user, organization, urls } = ctx;
 
   const emailData: SubscriptionRenewedEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    planName: planNames[params.planName] || params.planName,
+    planName: displayPlanName(params.planName),
     renewedDate: params.renewedDate,
     amountPaid: params.amountPaid,
     currency: params.currency,
@@ -702,29 +687,13 @@ export async function sendSubscriptionCancelledEmail(params: {
   planName: string;
   effectiveEndDate: string;
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
+  const { user, organization, urls } = ctx;
   const endDate = new Date(params.effectiveEndDate);
   const daysRemaining = daysBetween(new Date(), endDate);
 
-  const planNames = PLAN_DISPLAY_NAMES;
-
-  // Build action URLs with base URL
   const offboardingChecklist = DEFAULT_OFFBOARDING_CHECKLIST.map((item) => ({
     ...item,
     actionUrl: item.actionUrl
@@ -735,9 +704,9 @@ export async function sendSubscriptionCancelledEmail(params: {
   const emailData: SubscriptionCancelledEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    planName: planNames[params.planName] || params.planName,
+    planName: displayPlanName(params.planName),
     cancellationDate: new Date().toISOString(),
     effectiveEndDate: params.effectiveEndDate,
     daysRemaining: Math.max(0, daysRemaining),
@@ -780,32 +749,17 @@ export async function sendSubscriptionCancellationFeedbackEmail(params: {
     reactivateUrl: string;
   };
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
-
-  const planNames = PLAN_DISPLAY_NAMES;
+  const { user, organization, urls } = ctx;
 
   const emailData: SubscriptionCancellationFeedbackEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    planName: planNames[params.planName] || params.planName,
+    planName: displayPlanName(params.planName),
     cancellationDate: params.cancellationDate,
     effectiveEndDate: params.effectiveEndDate,
     feedbackUrl: `${urls.baseUrl}/feedback/cancellation`,
@@ -847,40 +801,21 @@ export async function sendSubscriptionPlanChangeScheduledEmail(params: {
   scheduledDate: string;
   changeType: "upgrade" | "downgrade";
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
+  const { user, organization, urls } = ctx;
   const scheduledDate = new Date(params.scheduledDate);
   const daysUntilChange = daysBetween(new Date(), scheduledDate);
-
-  const planNames = PLAN_DISPLAY_NAMES;
-
-  const featureDiff = getPlanFeatureDiff(
-    params.currentPlan,
-    params.scheduledPlan
-  );
+  const featureDiff = getPlanFeatureDiff(params.currentPlan, params.scheduledPlan);
 
   const emailData: SubscriptionPlanChangeScheduledEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    currentPlanName: planNames[params.currentPlan] || params.currentPlan,
-    scheduledPlanName: planNames[params.scheduledPlan] || params.scheduledPlan,
+    currentPlanName: displayPlanName(params.currentPlan),
+    scheduledPlanName: displayPlanName(params.scheduledPlan),
     currentPrice: params.currentPrice,
     scheduledPrice: params.scheduledPrice,
     currency: params.currency,
@@ -923,32 +858,17 @@ export async function sendSubscriptionInvoiceAvailableEmail(params: {
   paymentMethod?: PaymentMethodSummary;
   payNowUrl?: string;
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
-
-  const planNames = PLAN_DISPLAY_NAMES;
+  const { user, organization, urls } = ctx;
 
   const emailData: SubscriptionInvoiceAvailableEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    planName: planNames[params.planName] || params.planName,
+    planName: displayPlanName(params.planName),
     invoiceDetails: params.invoiceDetails,
     billingPeriod: params.billingPeriod,
     paymentMethod: params.paymentMethod,
@@ -987,23 +907,10 @@ export async function sendSubscriptionPriceIncreaseNoticeEmail(params: {
   reason?: string;
   newFeatures?: string[];
 }): Promise<SendEmailResult> {
-  const userOrg = await getUserAndOrganization(params.organizationId);
-  if (!userOrg) {
-    return { success: false, error: "User or organization not found" };
-  }
+  const ctx = await prepareEmailContext(params.organizationId);
+  if (!ctx.ok) return ctx.result;
 
-  const { user, organization } = userOrg;
-
-  if (user.receive_notifications === false) {
-    return { success: false, error: "User has disabled notifications" };
-  }
-
-  const unsubscribed = await isEmailUnsubscribed(user.email);
-  if (unsubscribed) {
-    return { success: false, error: "Email is unsubscribed" };
-  }
-
-  const urls = buildBaseUrls(params.organizationId);
+  const { user, organization, urls } = ctx;
   const effectiveDate = new Date(params.effectiveDate);
   const daysUntilIncrease = daysBetween(new Date(), effectiveDate);
   const priceIncreaseAmount = params.newPrice - params.currentPrice;
@@ -1011,14 +918,12 @@ export async function sendSubscriptionPriceIncreaseNoticeEmail(params: {
     (priceIncreaseAmount / params.currentPrice) * 100
   );
 
-  const planNames = PLAN_DISPLAY_NAMES;
-
   const emailData: SubscriptionPriceIncreaseNoticeEmailData = {
     toEmail: user.email,
     toName: user.full_name || undefined,
-    firstName: user.full_name?.split(" ")[0] || "there",
+    firstName: getFirstName(user.full_name),
     organizationName: organization.name,
-    planName: planNames[params.planName] || params.planName,
+    planName: displayPlanName(params.planName),
     currentPrice: params.currentPrice,
     newPrice: params.newPrice,
     priceIncreaseAmount,
@@ -1065,6 +970,16 @@ async function sendEmail(params: {
 }): Promise<SendEmailResult> {
   const resend = getResendClient();
 
+  const baseLogParams = {
+    toEmail: params.to,
+    toName: params.user.full_name || undefined,
+    fromEmail: emailConfig.defaultFromEmail,
+    subject: params.subject,
+    templateName: params.templateName,
+    organizationId: params.organizationId,
+    userId: params.user.id,
+  };
+
   try {
     const response = await resend.emails.send({
       from: getFromAddress(),
@@ -1079,50 +994,20 @@ async function sendEmail(params: {
     });
 
     if (response.error) {
-      await logEmail({
-        toEmail: params.to,
-        toName: params.user.full_name || undefined,
-        fromEmail: emailConfig.defaultFromEmail,
-        subject: params.subject,
-        templateName: params.templateName,
-        organizationId: params.organizationId,
-        userId: params.user.id,
-        status: "failed",
-        errorMessage: response.error.message,
-      });
-
+      await logEmail({ ...baseLogParams, status: "failed", errorMessage: response.error.message });
       return { success: false, error: response.error.message };
     }
 
     const emailId = await logEmail({
-      toEmail: params.to,
-      toName: params.user.full_name || undefined,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject: params.subject,
-      templateName: params.templateName,
-      organizationId: params.organizationId,
-      userId: params.user.id,
+      ...baseLogParams,
       resendMessageId: response.data?.id,
       status: "sent",
     });
 
     return { success: true, emailId: emailId || response.data?.id };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-
-    await logEmail({
-      toEmail: params.to,
-      toName: params.user.full_name || undefined,
-      fromEmail: emailConfig.defaultFromEmail,
-      subject: params.subject,
-      templateName: params.templateName,
-      organizationId: params.organizationId,
-      userId: params.user.id,
-      status: "failed",
-      errorMessage,
-    });
-
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    await logEmail({ ...baseLogParams, status: "failed", errorMessage });
     return { success: false, error: errorMessage };
   }
 }
@@ -1145,17 +1030,14 @@ export async function processRenewalReminders(): Promise<{
 
   // Find organizations with annual subscriptions renewing in 14 days
   const targetDate = addDays(new Date(), 14);
-  const targetDateStart = new Date(targetDate);
-  targetDateStart.setHours(0, 0, 0, 0);
-  const targetDateEnd = new Date(targetDate);
-  targetDateEnd.setHours(23, 59, 59, 999);
+  const { start, end } = getDayRange(targetDate);
 
   const { data: orgs, error } = await supabase
     .from("organizations")
     .select("id, subscription_tier, subscription_ends_at")
     .eq("subscription_status", "active")
-    .gte("subscription_ends_at", targetDateStart.toISOString())
-    .lte("subscription_ends_at", targetDateEnd.toISOString());
+    .gte("subscription_ends_at", start.toISOString())
+    .lte("subscription_ends_at", end.toISOString());
 
   if (error) {
     result.errors.push(`Failed to fetch organizations: ${error.message}`);
@@ -1224,17 +1106,14 @@ export async function processCancellationFeedbackRequests(): Promise<{
 
   // Find organizations cancelled 2 days ago
   const targetDate = addDays(new Date(), -2);
-  const targetDateStart = new Date(targetDate);
-  targetDateStart.setHours(0, 0, 0, 0);
-  const targetDateEnd = new Date(targetDate);
-  targetDateEnd.setHours(23, 59, 59, 999);
+  const { start, end } = getDayRange(targetDate);
 
   const { data: orgs, error } = await supabase
     .from("organizations")
     .select("id, subscription_tier, subscription_cancelled_at, subscription_ends_at")
     .eq("subscription_status", "cancelled")
-    .gte("subscription_cancelled_at", targetDateStart.toISOString())
-    .lte("subscription_cancelled_at", targetDateEnd.toISOString());
+    .gte("subscription_cancelled_at", start.toISOString())
+    .lte("subscription_cancelled_at", end.toISOString());
 
   if (error) {
     result.errors.push(`Failed to fetch organizations: ${error.message}`);

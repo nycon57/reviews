@@ -37,6 +37,15 @@ import { emailConfig } from "./client";
 import { colors } from "./theme";
 
 // ============================================================================
+// Types
+// ============================================================================
+
+interface EmailContent {
+  subject: string;
+  html: string;
+}
+
+// ============================================================================
 // Security Helper Functions
 // ============================================================================
 
@@ -268,6 +277,18 @@ function createBillingCycleLabel(cycle: "monthly" | "yearly"): string {
   return cycle === "yearly" ? "per year" : "per month";
 }
 
+function createSupportFooter(supportEmail: string): string {
+  return `
+    <tr>
+      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
+        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
+          Questions? Reply to this email or contact <a href="mailto:${escapeHtml(supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(supportEmail)}</a>
+        </p>
+      </td>
+    </tr>
+  `;
+}
+
 function createInvoiceSummary(invoice: SubscriptionInvoiceDetails): string {
   const lineItemsHtml = invoice.lineItems
     .map(
@@ -339,19 +360,20 @@ function createFeatureList(
   features: PlanFeature[],
   type: "gained" | "lost" | "keeping"
 ): string {
-  const icon =
-    type === "gained"
-      ? `<span style="color: ${colors.accent.success};">&#10003;</span>`
-      : type === "lost"
-        ? `<span style="color: ${colors.accent.error};">&#10007;</span>`
-        : `<span style="color: ${colors.primary};">&#10003;</span>`;
+  const iconMap = {
+    gained: `<span style="color: ${colors.accent.success};">&#10003;</span>`,
+    lost: `<span style="color: ${colors.accent.error};">&#10007;</span>`,
+    keeping: `<span style="color: ${colors.primary};">&#10003;</span>`,
+  };
 
-  const bgColor =
-    type === "gained"
-      ? `${colors.accent.success}10`
-      : type === "lost"
-        ? `${colors.accent.error}10`
-        : colors.background.subtle;
+  const bgColorMap = {
+    gained: `${colors.accent.success}10`,
+    lost: `${colors.accent.error}10`,
+    keeping: colors.background.subtle,
+  };
+
+  const icon = iconMap[type];
+  const bgColor = bgColorMap[type];
 
   return features
     .map(
@@ -400,7 +422,7 @@ function createNextBillingBox(
 
 export function getSubscriptionUpgradeConfirmationEmail(
   data: SubscriptionUpgradeConfirmationEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(
     SUBSCRIPTION_SUBJECT_LINES.upgrade.A(data.newPlanName)
   );
@@ -458,7 +480,7 @@ export function getSubscriptionUpgradeConfirmationEmail(
           Welcome to ${escapeHtml(data.newPlanName)}!
         </h1>
         <p style="margin: 0; font-size: 16px; color: ${colors.text.secondary};">
-          ${escapeHtml(data.firstName)}, your upgrade is complete and you now have access to all the new features.
+          ${escapeHtml(data.firstName)}, you now have access to all your new features.
         </p>
       </td>
     </tr>
@@ -526,13 +548,7 @@ export function getSubscriptionUpgradeConfirmationEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          Questions about your new plan? Reply to this email or contact <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {
@@ -540,7 +556,7 @@ export function getSubscriptionUpgradeConfirmationEmail(
     html: wrapInSubscriptionEmailTemplate(
       content,
       data.unsubscribeUrl,
-      `Your upgrade to ${data.newPlanName} is complete. Explore your new features!`
+      `Your upgrade to ${data.newPlanName} is complete.`
     ),
   };
 }
@@ -551,7 +567,7 @@ export function getSubscriptionUpgradeConfirmationEmail(
 
 export function getSubscriptionDowngradeConfirmationEmail(
   data: SubscriptionDowngradeConfirmationEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(
     SUBSCRIPTION_SUBJECT_LINES.downgrade.A(data.newPlanName)
   );
@@ -566,7 +582,7 @@ export function getSubscriptionDowngradeConfirmationEmail(
     <tr>
       <td style="padding: 0 40px 24px 40px;">
         <div style="font-size: 14px; font-weight: 600; color: ${colors.text.primary}; margin-bottom: 12px;">
-          Features you'll lose access to:
+          Features you'll lose:
         </div>
         ${createFeatureList(data.featuresLosing, "lost")}
       </td>
@@ -674,7 +690,7 @@ export function getSubscriptionDowngradeConfirmationEmail(
       <td style="padding: 0 40px 24px 40px;">
         <div style="background-color: ${colors.primaryLight}15; border: 1px solid ${colors.primary}; border-radius: 8px; padding: 16px 20px; text-align: center;">
           <p style="margin: 0 0 12px 0; font-size: 14px; color: ${colors.text.secondary};">
-            Changed your mind? You can upgrade back anytime.
+            Changed your mind? You can upgrade anytime.
           </p>
           ${createButton("Upgrade Plan", data.upgradeUrl, "secondary")}
         </div>
@@ -690,13 +706,7 @@ export function getSubscriptionDowngradeConfirmationEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          Questions? Reply to this email or contact <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {
@@ -715,7 +725,7 @@ export function getSubscriptionDowngradeConfirmationEmail(
 
 export function getSubscriptionRenewalReminderEmail(
   data: SubscriptionRenewalReminderEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(
     SUBSCRIPTION_SUBJECT_LINES.renewalReminder.A(data.daysTillRenewal)
   );
@@ -777,7 +787,7 @@ export function getSubscriptionRenewalReminderEmail(
           Your subscription is renewing soon
         </h1>
         <p style="margin: 0; font-size: 16px; color: ${colors.text.secondary};">
-          ${escapeHtml(data.firstName)}, here's a heads up about your upcoming ${escapeHtml(data.planName)} renewal.
+          ${escapeHtml(data.firstName)}, here are your ${escapeHtml(data.planName)} renewal details.
         </p>
       </td>
     </tr>
@@ -821,13 +831,7 @@ export function getSubscriptionRenewalReminderEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          Questions about your renewal? Reply to this email or contact <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {
@@ -846,7 +850,7 @@ export function getSubscriptionRenewalReminderEmail(
 
 export function getSubscriptionRenewedEmail(
   data: SubscriptionRenewedEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(SUBSCRIPTION_SUBJECT_LINES.renewed.A());
 
   const content = `
@@ -896,13 +900,7 @@ export function getSubscriptionRenewedEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          Questions? Reply to this email or contact <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {
@@ -910,7 +908,7 @@ export function getSubscriptionRenewedEmail(
     html: wrapInSubscriptionEmailTemplate(
       content,
       data.unsubscribeUrl,
-      `Your ${data.planName} subscription has been renewed. Thank you for being a customer!`
+      `Your ${data.planName} subscription has been renewed. Here's your receipt.`
     ),
   };
 }
@@ -921,7 +919,7 @@ export function getSubscriptionRenewedEmail(
 
 export function getSubscriptionCancelledEmail(
   data: SubscriptionCancelledEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(SUBSCRIPTION_SUBJECT_LINES.cancelled.B());
 
   const offboardingHtml = data.offboardingChecklist
@@ -1001,7 +999,7 @@ export function getSubscriptionCancelledEmail(
       <td style="padding: 0 40px 24px 40px;">
         <div style="background-color: ${colors.primaryLight}15; border: 1px solid ${colors.primary}; border-radius: 8px; padding: 16px 20px; text-align: center;">
           <p style="margin: 0 0 12px 0; font-size: 14px; color: ${colors.text.secondary};">
-            Changed your mind? You can reactivate your subscription anytime before ${formatShortDate(data.effectiveEndDate)}.
+            Changed your mind? Reactivate anytime before ${formatShortDate(data.effectiveEndDate)}.
           </p>
           ${createButton("Reactivate Subscription", data.reactivateUrl, "primary")}
         </div>
@@ -1014,13 +1012,7 @@ export function getSubscriptionCancelledEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          If you have any questions or need help, we're here: <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {
@@ -1039,7 +1031,7 @@ export function getSubscriptionCancelledEmail(
 
 export function getSubscriptionCancellationFeedbackEmail(
   data: SubscriptionCancellationFeedbackEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(
     SUBSCRIPTION_SUBJECT_LINES.cancellationFeedback.A(data.firstName)
   );
@@ -1061,7 +1053,7 @@ export function getSubscriptionCancellationFeedbackEmail(
       <td style="padding: 0 40px 24px 40px;">
         <div style="background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%); border-radius: 12px; padding: 20px 24px; text-align: center;">
           <div style="font-size: 12px; color: ${colors.text.inverseMuted}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
-            Wait! Before you go...
+            Special offer
           </div>
           <div style="font-size: 20px; font-weight: 700; color: ${colors.text.inverse}; margin-bottom: 8px;">
             Get ${data.specialOfferDetails.discountPercent}% off your next billing period
@@ -1091,7 +1083,7 @@ export function getSubscriptionCancellationFeedbackEmail(
           We'd love your feedback
         </h1>
         <p style="margin: 0; font-size: 16px; color: ${colors.text.secondary};">
-          ${escapeHtml(data.firstName)}, your input helps us improve RepWell for everyone.
+          ${escapeHtml(data.firstName)}, your feedback helps us improve RepWell.
         </p>
       </td>
     </tr>
@@ -1124,7 +1116,7 @@ export function getSubscriptionCancellationFeedbackEmail(
     html: wrapInSubscriptionEmailTemplate(
       content,
       data.unsubscribeUrl,
-      `Quick question - why did you cancel? Your feedback helps us improve.`
+      `Quick question -- what made you cancel?`
     ),
   };
 }
@@ -1135,7 +1127,7 @@ export function getSubscriptionCancellationFeedbackEmail(
 
 export function getSubscriptionPlanChangeScheduledEmail(
   data: SubscriptionPlanChangeScheduledEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(
     SUBSCRIPTION_SUBJECT_LINES.planChangeScheduled.A(
       data.scheduledPlanName,
@@ -1177,7 +1169,7 @@ export function getSubscriptionPlanChangeScheduledEmail(
           Your plan change is scheduled
         </h1>
         <p style="margin: 0; font-size: 16px; color: ${colors.text.secondary};">
-          ${escapeHtml(data.firstName)}, your ${changeTypeLabel.toLowerCase()} ${escapeHtml(data.scheduledPlanName)} will take effect in ${data.daysUntilChange} days.
+          ${escapeHtml(data.firstName)}, your change to ${escapeHtml(data.scheduledPlanName)} takes effect in ${data.daysUntilChange} days.
         </p>
       </td>
     </tr>
@@ -1236,7 +1228,7 @@ export function getSubscriptionPlanChangeScheduledEmail(
     <tr>
       <td style="padding: 0 40px 32px 40px; text-align: center;">
         <p style="margin: 0 0 12px 0; font-size: 14px; color: ${colors.text.secondary};">
-          Changed your mind? You can cancel this scheduled change.
+          Changed your mind?
         </p>
         ${createButton("Cancel Scheduled Change", data.cancelChangeUrl, "secondary")}
         <div style="margin-top: 12px;">
@@ -1245,13 +1237,7 @@ export function getSubscriptionPlanChangeScheduledEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          Questions? Reply to this email or contact <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {
@@ -1270,7 +1256,7 @@ export function getSubscriptionPlanChangeScheduledEmail(
 
 export function getSubscriptionInvoiceAvailableEmail(
   data: SubscriptionInvoiceAvailableEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(
     SUBSCRIPTION_SUBJECT_LINES.invoiceAvailable.A(
       data.invoiceDetails.invoiceNumber || data.invoiceDetails.invoiceId
@@ -1336,13 +1322,7 @@ export function getSubscriptionInvoiceAvailableEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          Questions about this invoice? Reply to this email or contact <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {
@@ -1361,7 +1341,7 @@ export function getSubscriptionInvoiceAvailableEmail(
 
 export function getSubscriptionPriceIncreaseNoticeEmail(
   data: SubscriptionPriceIncreaseNoticeEmailData
-): { subject: string; html: string } {
+): EmailContent {
   const subject = sanitizeSubject(
     SUBSCRIPTION_SUBJECT_LINES.priceIncrease.A(data.daysUntilIncrease)
   );
@@ -1530,13 +1510,7 @@ export function getSubscriptionPriceIncreaseNoticeEmail(
       </td>
     </tr>
     <!-- Support Note -->
-    <tr>
-      <td style="padding: 24px 40px; background-color: ${colors.background.subtle}; border-top: 1px solid ${colors.border.subtle};">
-        <p style="margin: 0; font-size: 14px; color: ${colors.text.secondary}; text-align: center; line-height: 1.6;">
-          Questions about this change? Reply to this email or contact <a href="mailto:${escapeHtml(data.supportEmail)}" style="color: ${colors.primary}; text-decoration: underline;">${escapeHtml(data.supportEmail)}</a>
-        </p>
-      </td>
-    </tr>
+    ${createSupportFooter(data.supportEmail)}
   `;
 
   return {

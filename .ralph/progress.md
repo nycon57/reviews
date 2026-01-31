@@ -8639,3 +8639,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - When staging commits with many pre-existing unstaged changes, use targeted `git add` with specific file paths
   - The [id] -> [slug] rename in pro/ causes git to track renames; be careful not to accidentally stage those
 ---
+
+## 2026-01-31 - S087: Subscription Lifecycle Emails
+Thread:
+Run: 20260131-121547-37293 (iteration 5)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-5.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-121547-37293-iter-5.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 61ec82c [Pass 2/3] fix(S087): Address code review findings for subscription lifecycle emails
+- Post-commit status: clean (S087 changes only; pre-existing unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes
+  - /vercel-react-best-practices: no
+  - /next-best-practices: yes (reviewed cron route)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors; 8 pre-existing errors in unrelated files)
+- Files changed:
+  - src/app/api/cron/process-subscription-lifecycle/route.ts (modified)
+  - src/lib/email/subscription-service.ts (modified)
+  - src/lib/email/subscription-templates.ts (modified)
+- What was implemented:
+  - Code review identified 6 issues across S087 files; all fixed:
+    1. Removed unused `batch_size` param from cron route schema (dead code)
+    2. Added Zod `.refine()` to reject conflicting `renewals_only` + `feedback_only` flags
+    3. Changed `.single()` to `.maybeSingle()` in both deduplication queries (prevented PGRST116 errors on first run)
+    4. Added missing `unitPrice` field to `InvoiceLineItem` mapping in `mapStripeInvoice`
+    5. Extracted duplicated `planNames` Record to shared `PLAN_DISPLAY_NAMES` constant (removed 9 duplications)
+    6. Added `escapeHtml()` to date formatting catch blocks for XSS defense-in-depth
+- **Learnings for future iterations:**
+  - `.single()` in Supabase throws when no rows match; always use `.maybeSingle()` for existence checks
+  - Stripe invoice line items have `price.unit_amount` for per-unit pricing
+  - Date formatting functions that fall back to raw strings need HTML escaping for email safety
+  - Zod `.refine()` is the right pattern for cross-field validation on schemas
+---

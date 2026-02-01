@@ -16,7 +16,7 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
     background: var(--rw-bg, #fff);
     border: 1px solid var(--rw-border, #e5e7eb);
     border-radius: var(--rw-radius, 8px);
-    cursor: pointer;
+    cursor: default;
     text-decoration: none;
     color: inherit;
     transition: box-shadow 0.2s ease, transform 0.15s ease;
@@ -25,7 +25,11 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
     line-height: 1;
   }
 
-  .rw-srb:hover {
+  a.rw-srb {
+    cursor: pointer;
+  }
+
+  a.rw-srb:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
   }

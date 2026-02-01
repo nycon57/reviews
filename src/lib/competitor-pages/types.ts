@@ -111,12 +111,22 @@ export interface PricingTab {
 // Section 4: Transition
 // ---------------------------------------------------------------------------
 
+/** Single bullet item in the transition section */
+export interface TransitionBullet {
+  /** Icon name (Lucide) — defaults to checkmark if omitted */
+  icon?: string;
+  /** Bullet text */
+  text: string;
+}
+
 /** Smooth transition / divider section between major blocks */
 export interface TransitionSection {
   /** Headline text */
   headline: string;
   /** Supporting body text */
   body: string;
+  /** Bullet list of items customers keep when switching */
+  bullets?: TransitionBullet[];
   /** Optional background style hint */
   variant?: "gradient" | "dark" | "light";
 }

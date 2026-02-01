@@ -15,6 +15,7 @@ export type {
   LogoBarItem,
   PricingComparisonRow,
   PricingTab,
+  TransitionBullet,
   TransitionSection,
   TestimonialCard,
   DifferentiatorCard,

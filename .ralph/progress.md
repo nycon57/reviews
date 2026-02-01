@@ -14552,3 +14552,56 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Fixed public-api.test.ts: subdomain matching now requires explicit *.example.com wildcard
   - Build, lint, and all domain-validation tests pass (43/43)
 ---
+
+## [2026-02-01] - S144: CDN Deployment for embed.js & Static Assets
+Thread: 
+Run: 20260201-152717-15849 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-152717-15849-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-152717-15849-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d66f63a [Pass 1/3] feat(S144): CDN deployment for embed.js & static assets
+- Post-commit status: clean (only progress.md pending)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build:embed -> artifacts generated (budget check fails: 15399 vs 15360 bytes, pre-existing)
+  - Command: npm run build -> PASS
+  - Command: npx eslint src/app/api/embed/health/route.ts scripts/build-embed.ts scripts/deploy-embed.ts -> PASS (0 errors)
+- Files changed:
+  - scripts/build-embed.ts (rewritten: content-hash, manifest, versioned copy, pre-compressed .gz/.br, CSS minify plugin)
+  - scripts/deploy-embed.ts (new: deploy/verify script)
+  - src/app/api/embed/health/route.ts (new: CDN health check endpoint)
+  - .github/workflows/deploy-embed.yml (new: CI/CD with size budget gate)
+  - next.config.js (CDN cache headers, CORS, source map blocking, rewrites)
+  - package.json (deploy:embed, verify:embed scripts, prebuild hook)
+  - .gitignore (exclude embed build output)
+- What was implemented:
+  - Full CDN deployment infrastructure for embed.js using Vercel Edge Network
+  - Build pipeline: TypeScript → esbuild → content-hash → manifest → versioned rollback copy
+  - Content-hashed filenames (embed.{hash}.min.js) with stable /embed/v1/embed.min.js URL
+  - Version manifest at /embed/v1/manifest.json tracking current + 10 previous versions
+  - Gzip and Brotli pre-compressed files written alongside bundles
+  - CDN headers: immutable cache for hashed files, 24h cache for stable URL, CORS for all embed paths
+  - Source maps generated but blocked from public access (rewrites to 404, X-Robots-Tag: noindex)
+  - Health check endpoint at /api/embed/health returning version, hash, size, build timestamp
+  - GitHub Actions workflow triggers on src/embed/** changes with size budget enforcement and PR comments
+  - Versioned rollback copies at /embed/v1/{version}/embed.min.js
+  - prebuild npm hook ensures embed is rebuilt before every next build
+- **Learnings for future iterations:**
+  - Existing embed bundle is 39 bytes over 15KB gzipped budget (15399 vs 15360) — pre-existing issue
+  - Pre-commit hooks auto-add improvements (prebuild script, source map blocking, CSS minification)
+  - Budget check moved after manifest generation so artifacts exist even when budget fails
+  - Note: prior commit e8cae03 (labeled S142 Pass 3/3) included S144 file scaffolding — hooks bundled changes
+---

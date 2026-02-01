@@ -13964,3 +13964,56 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Always add Vary: Origin when CORS headers use specific origins for CDN correctness
   - Supabase ilike patterns need wildcard escaping at the application layer
 ---
+
+## [2026-02-01 13:30] - S135: embed.js Core Script (Shadow DOM, Lazy Loading, Rendering)
+Thread: N/A
+Run: 20260201-132102-30454 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-132102-30454-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-132102-30454-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 51a5fbe [Pass 3/3] refactor(S135): Extract shared DOM helpers, fix double skeleton bug, remove dead code
+- Post-commit status: clean (remaining unstaged files from other stories)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (reviewed user-facing text, all clear)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/ -> PASS (57/57 tests)
+  - Command: npx tsx scripts/build-embed.ts -> PASS (7.6 KB gzipped, within 15 KB budget)
+  - Command: npm run lint -> PASS (0 errors in S135 files; 5 pre-existing errors in other files)
+  - Command: npm run build -> FAIL (pre-existing Next.js Turbopack ENOENT bug, not related to S135)
+- Files changed:
+  - src/embed/core/dom-helpers.ts (new - shared DOM construction helpers)
+  - src/embed/core/renderer.ts (modified - use shared helpers from dom-helpers.ts)
+  - src/embed/index.ts (modified - fix double skeleton bug in loadWidget)
+  - src/embed/widgets/lo-review/index.ts (modified - use shared applyTheme)
+  - src/embed/widgets/lo-review/template.ts (modified - use shared helpers, fix KeyboardEvent type)
+  - src/embed/widgets/lo-review/styles.ts (modified by simplifier)
+  - src/components/widgets/preview/lo-review-preview.tsx (fix NMLS URL: COMPANY -> INDIVIDUAL)
+  - scripts/build-embed.ts (remove unused devResult variable)
+  - public/embed.js, public/embed.min.js (rebuilt bundles)
+- What was implemented:
+  - Extracted 8 shared helper functions from renderer.ts and lo-review/template.ts into new dom-helpers.ts module (el, text, starSVG, getInitials, truncateText, formatAbsoluteDate, formatRelativeDate, applyTheme)
+  - Fixed double skeleton bug: initializeWidget rendered skeleton, then loadWidget rendered a second one on intersection
+  - Fixed refresh() to show skeleton after clearing shadow DOM content
+  - Removed unused devResult variable from build script
+  - Fixed NMLS URL entity type from COMPANY to INDIVIDUAL in preview component
+  - Standardized txt() to text() naming across codebase
+  - Fixed KeyboardEvent type annotation in lo-review template
+- **Learnings for future iterations:**
+  - Code simplifier agent effectively identified duplicated helpers across renderer.ts and lo-review/template.ts
+  - Double skeleton bug was subtle — skeleton rendered in initializeWidget (for immediate perceived speed) AND again in loadWidget (on intersection)
+  - NMLS Consumer Access URL for loan officers should use INDIVIDUAL entity type, not COMPANY
+  - Build remains at 7.6 KB gzipped after refactoring — shared module doesn't increase bundle size due to esbuild tree shaking
+  - Pre-existing Turbopack ENOENT _ssgManifest.js bug blocks full build verification; compilation and TypeScript checks pass
+---

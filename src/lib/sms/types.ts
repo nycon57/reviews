@@ -202,6 +202,8 @@ export interface SmsSendResult {
   messageId?: string;
   twilioSid?: string;
   segments?: number;
+  /** Set when the message was queued for delivery after quiet hours */
+  scheduledAt?: string;
   error?: string;
   errorCode?: string;
 }
@@ -213,6 +215,46 @@ export interface SmsLogEntry {
   duration_ms: number;
   error_code?: string;
   segments?: number;
+}
+
+// ── Consent types ─────────────────────────────────────────────────────
+
+/** A single consent event for audit purposes. Never deleted. */
+export interface ConsentRecord {
+  id: string;
+  organizationId: string;
+  phoneNumber: string;
+  status: SmsConsentStatus;
+  method: SmsConsentMethod | null;
+  consentLanguage: string | null;
+  consentSource: string | null;
+  consentIp: string | null;
+  optedInAt: string | null;
+  optedOutAt: string | null;
+  createdAt: string;
+}
+
+export interface RecordConsentInput {
+  orgId: string;
+  phone: string;
+  method: SmsConsentMethod;
+  source?: string;
+  language?: string;
+  ip?: string;
+}
+
+export interface RevokeConsentInput {
+  orgId: string;
+  phone: string;
+  reason?: string;
+}
+
+export interface ConsentReportRow {
+  date: string;
+  optedIn: number;
+  optedOut: number;
+  netChange: number;
+  totalConsented: number;
 }
 
 // ── Zod schemas ────────────────────────────────────────────────────────

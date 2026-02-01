@@ -1,12 +1,14 @@
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { TwilioService, mapTwilioError } from "./twilio-client";
-import { toE164, maskPhone } from "./phone-utils";
+import { toE164 } from "./phone-utils";
 import { calculateSegments } from "./segment-calculator";
 import { checkRateLimits } from "./rate-limiter";
 import {
   CreditService,
   InsufficientCreditsError,
 } from "./credits/credit-service";
+import { ConsentService, ConsentRequiredError } from "./consent-service";
+import { QuietHoursEngine, QuietHoursError } from "./quiet-hours";
 import type {
   SmsSendResult,
   SmsLogEntry,
@@ -15,24 +17,10 @@ import type {
   SmsMessage,
 } from "./types";
 
-// ── Custom errors ──────────────────────────────────────────────────────
+// ── Re-export errors for consumers ────────────────────────────────────
 
-export class ConsentRequiredError extends Error {
-  constructor(phone: string) {
-    super(`Consent not recorded for ${maskPhone(phone)}`);
-    this.name = "ConsentRequiredError";
-  }
-}
-
-export class QuietHoursError extends Error {
-  public nextValidTime: string;
-  constructor(nextValidTime: string) {
-    super(`Quiet hours active. Next valid send time: ${nextValidTime}`);
-    this.name = "QuietHoursError";
-    this.nextValidTime = nextValidTime;
-  }
-}
-
+export { ConsentRequiredError } from "./consent-service";
+export { QuietHoursError } from "./quiet-hours";
 export { InsufficientCreditsError };
 
 export class RateLimitError extends Error {
@@ -50,11 +38,15 @@ export class SmsService {
   private organizationId: string;
   private twilioService: TwilioService;
   private creditService: CreditService;
+  private consentService: ConsentService;
+  private quietHoursEngine: QuietHoursEngine;
 
   private constructor(organizationId: string, twilioService: TwilioService) {
     this.organizationId = organizationId;
     this.twilioService = twilioService;
     this.creditService = new CreditService(organizationId);
+    this.consentService = new ConsentService();
+    this.quietHoursEngine = new QuietHoursEngine();
   }
 
   static async forOrganization(organizationId: string): Promise<SmsService> {
@@ -67,6 +59,9 @@ export class SmsService {
    * Full pipeline: validate consent -> check quiet hours -> resolve template
    *   -> calculate segments -> check rate limits -> send via Twilio
    *   -> persist to sms_messages -> deduct credits.
+   *
+   * Messages blocked by quiet hours are queued with scheduled_at set to
+   * the next valid send window.
    */
   async sendReviewRequest(input: SendReviewRequestInput): Promise<SmsSendResult> {
     const startMs = Date.now();
@@ -76,11 +71,14 @@ export class SmsService {
     }
 
     try {
-      // 1. Validate consent
-      await this.requireConsent(normalizedPhone);
+      // 1. Validate consent (mandatory per TCPA)
+      await this.consentService.requireConsent(this.organizationId, normalizedPhone);
 
-      // 2. Check quiet hours
-      await this.checkQuietHours();
+      // 2. Check quiet hours (queues if blocked)
+      const quietResult = await this.quietHoursEngine.check(
+        this.organizationId,
+        normalizedPhone
+      );
 
       // 3. Resolve template
       const template = await this.resolveTemplate(input.templateId);
@@ -95,6 +93,20 @@ export class SmsService {
 
       // 5. Calculate segments
       const segmentInfo = calculateSegments(body);
+
+      // If quiet hours are active, queue the message instead of sending
+      if (quietResult.blocked && quietResult.nextValidTime) {
+        return this.queueMessage({
+          loanOfficerId: input.loanOfficerId,
+          borrowerId: input.borrowerId,
+          phone: normalizedPhone,
+          body,
+          templateId: input.templateId,
+          segments: segmentInfo.segments,
+          scheduledAt: quietResult.nextValidTime,
+          startMs,
+        });
+      }
 
       // 6. Check rate limits
       const rateCheck = await checkRateLimits(normalizedPhone, this.organizationId);
@@ -163,17 +175,32 @@ export class SmsService {
     }
 
     try {
-      await this.requireConsent(normalizedPhone);
-      await this.checkQuietHours();
+      await this.consentService.requireConsent(this.organizationId, normalizedPhone);
+
+      const quietResult = await this.quietHoursEngine.check(
+        this.organizationId,
+        normalizedPhone
+      );
 
       const segmentInfo = calculateSegments(input.body);
+
+      // Queue if in quiet hours
+      if (quietResult.blocked && quietResult.nextValidTime) {
+        return this.queueMessage({
+          loanOfficerId: input.loanOfficerId,
+          phone: normalizedPhone,
+          body: input.body,
+          segments: segmentInfo.segments,
+          scheduledAt: quietResult.nextValidTime,
+          startMs,
+        });
+      }
 
       const rateCheck = await checkRateLimits(normalizedPhone, this.organizationId);
       if (!rateCheck.allowed) {
         throw new RateLimitError(rateCheck.reason ?? "Rate limit exceeded", rateCheck.retryAfter);
       }
 
-      // Check credit balance before sending
       await this.requireCredits(segmentInfo.segments);
 
       const fromNumber = await this.resolveFromNumber();
@@ -219,62 +246,50 @@ export class SmsService {
 
   // ── Pipeline steps ─────────────────────────────────────────────────
 
-  private async requireConsent(phone: string): Promise<void> {
-    const supabase = createUntypedAdminClient();
-    const { data } = await supabase
-      .from("sms_consent")
-      .select("status")
-      .eq("organization_id", this.organizationId)
-      .eq("phone_number", phone)
-      .single();
+  /**
+   * Queue a message for delivery after quiet hours end.
+   * Persists the message with status "queued" and scheduled_at set to
+   * the next valid send window.
+   */
+  private async queueMessage(opts: {
+    loanOfficerId: string;
+    borrowerId?: string;
+    phone: string;
+    body: string;
+    templateId?: string;
+    segments: number;
+    scheduledAt: string;
+    startMs: number;
+  }): Promise<SmsSendResult> {
+    const fromNumber = await this.resolveFromNumber();
 
-    if (!data || data.status !== "opted_in") {
-      throw new ConsentRequiredError(phone);
-    }
-  }
-
-  private async checkQuietHours(): Promise<void> {
-    const supabase = createUntypedAdminClient();
-    const { data: settings } = await supabase
-      .from("sms_settings")
-      .select("quiet_hours_enabled, quiet_hours_start, quiet_hours_end, quiet_hours_timezone")
-      .eq("organization_id", this.organizationId)
-      .single();
-
-    if (!settings?.quiet_hours_enabled) return;
-
-    const now = new Date();
-    // Resolve current time in the org's configured timezone
-    const timeStr = now.toLocaleTimeString("en-US", {
-      hour12: false,
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: settings.quiet_hours_timezone,
+    const messageId = await this.persistMessage({
+      loan_officer_id: opts.loanOfficerId,
+      borrower_id: opts.borrowerId,
+      direction: "outbound",
+      from_number: fromNumber,
+      to_number: opts.phone,
+      body: opts.body,
+      template_id: opts.templateId,
+      status: "queued",
+      segments: opts.segments,
+      scheduled_at: opts.scheduledAt,
     });
 
-    const currentMinutes = timeToMinutes(timeStr);
-    const startMinutes = timeToMinutes(settings.quiet_hours_start);
-    const endMinutes = timeToMinutes(settings.quiet_hours_end);
+    this.log({
+      organization_id: this.organizationId,
+      message_id: messageId,
+      status: "queued",
+      duration_ms: Date.now() - opts.startMs,
+      segments: opts.segments,
+    });
 
-    const inQuietHours =
-      startMinutes > endMinutes
-        ? currentMinutes >= startMinutes || currentMinutes < endMinutes // overnight window (e.g., 21:00-08:00)
-        : currentMinutes >= startMinutes && currentMinutes < endMinutes;
-
-    if (inQuietHours) {
-      // Calculate next valid send time
-      const nextValid = new Date(now);
-      if (startMinutes > endMinutes) {
-        // Overnight: next valid is the end time today or tomorrow
-        nextValid.setHours(Math.floor(endMinutes / 60), endMinutes % 60, 0, 0);
-        if (currentMinutes >= startMinutes) {
-          nextValid.setDate(nextValid.getDate() + 1);
-        }
-      } else {
-        nextValid.setHours(Math.floor(endMinutes / 60), endMinutes % 60, 0, 0);
-      }
-      throw new QuietHoursError(nextValid.toISOString());
-    }
+    return {
+      success: true,
+      messageId,
+      segments: opts.segments,
+      scheduledAt: opts.scheduledAt,
+    };
   }
 
   private async resolveTemplate(
@@ -355,11 +370,6 @@ export class SmsService {
     return data.id;
   }
 
-  /**
-   * Checks credit balance and throws InsufficientCreditsError if the org
-   * cannot cover the required segments (no remaining credits and overage
-   * is not allowed).
-   */
   private async requireCredits(segments: number): Promise<void> {
     const balance = await this.creditService.checkBalance();
 
@@ -401,9 +411,6 @@ export class SmsService {
     return { success: false, error: userMessage, errorCode: String(twilioCode ?? "UNKNOWN") };
   }
 
-  /**
-   * Structured log entry. No PII is included (phone numbers are masked upstream).
-   */
   private log(entry: SmsLogEntry): void {
     console.log(
       JSON.stringify({
@@ -413,11 +420,4 @@ export class SmsService {
       })
     );
   }
-}
-
-// ── Utilities ──────────────────────────────────────────────────────────
-
-function timeToMinutes(timeStr: string): number {
-  const [hours, minutes] = timeStr.split(":").map(Number);
-  return hours * 60 + minutes;
 }

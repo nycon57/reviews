@@ -4,10 +4,8 @@ import type { UntypedSupabaseClient } from "@/lib/supabase/admin";
 import {
   validateTwilioSignature,
   buildWebhookUrl,
-  OPT_OUT_KEYWORDS,
-  OPT_IN_KEYWORDS,
-  HELP_KEYWORDS,
 } from "@/lib/sms/webhook-validation";
+import { KeywordHandler } from "@/lib/sms/keyword-handler";
 import { incrementDailyStat } from "@/lib/sms/daily-stats";
 
 export const dynamic = "force-dynamic";
@@ -18,12 +16,11 @@ export const dynamic = "force-dynamic";
  * Receives incoming SMS messages from Twilio. Handles:
  * 1. STOP/UNSUBSCRIBE keywords -> update consent to opted_out
  * 2. START/YES keywords -> update consent to opted_in
- * 3. HELP keyword -> reply with help text
- * 4. Regular messages -> log to sms_messages, update/create conversation
+ * 3. HELP keyword -> reply with configurable help text
+ * 4. YES keyword -> confirm double opt-in if pending
+ * 5. Regular messages -> log to sms_messages, update/create conversation
  *
  * Returns TwiML responses for keyword-triggered auto-replies.
- *
- * @see https://www.twilio.com/docs/messaging/guides/how-to-receive-and-reply
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -73,7 +70,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const organizationId = phoneRecord.organization_id;
-    const normalizedBody = body.trim().toLowerCase();
 
     // Log every inbound message regardless of keyword type
     await logInboundMessage(supabase, {
@@ -84,51 +80,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       messageSid,
     });
 
-    // Handle STOP/opt-out keywords
-    if (OPT_OUT_KEYWORDS.has(normalizedBody)) {
-      const consentOk = await upsertConsent(
-        supabase,
-        organizationId,
-        from,
-        "opted_out"
-      );
-      await incrementDailyStat(supabase, organizationId, null, todayDate(), "opted_out");
+    // Process keywords via the KeywordHandler
+    const keywordHandler = new KeywordHandler(supabase);
+    const result = await keywordHandler.processKeyword(
+      organizationId,
+      from,
+      body
+    );
 
-      if (!consentOk) {
-        // Per TCPA: always honor STOP even if DB fails
-        console.error(
-          "[SMS Inbound Webhook] Consent update failed for opt-out, still sending confirmation"
-        );
+    if (result.type !== "none") {
+      // Track opt-out events in daily stats
+      if (result.type === "opt_out") {
+        await incrementDailyStat(supabase, organizationId, null, todayDate(), "opted_out");
       }
-      return twimlResponse(
-        "You have been unsubscribed. Reply START to resubscribe."
-      );
-    }
 
-    // Handle START/opt-in keywords
-    if (OPT_IN_KEYWORDS.has(normalizedBody)) {
-      const consentOk = await upsertConsent(
-        supabase,
-        organizationId,
-        from,
-        "opted_in"
-      );
-
-      if (!consentOk) {
-        console.error(
-          "[SMS Inbound Webhook] Consent update failed for opt-in, still sending confirmation"
-        );
-      }
-      return twimlResponse(
-        "You have been resubscribed. Reply STOP to unsubscribe."
-      );
-    }
-
-    // Handle HELP keyword
-    if (HELP_KEYWORDS.has(normalizedBody)) {
-      return twimlResponse(
-        "Reply STOP to unsubscribe or START to resubscribe. For support, contact your loan officer directly."
-      );
+      return twimlResponse(result.response);
     }
 
     // Regular inbound message -- update conversation and stats
@@ -146,79 +112,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
 function todayDate(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-// ── Consent management ──────────────────────────────────────────────────
-
-/**
- * Upsert consent record. Returns true on success.
- * Uses select-then-insert with retry on unique constraint race.
- */
-async function upsertConsent(
-  supabase: UntypedSupabaseClient,
-  organizationId: string,
-  phone: string,
-  status: "opted_in" | "opted_out"
-): Promise<boolean> {
-  const now = new Date().toISOString();
-  const timestampField =
-    status === "opted_out" ? "opted_out_at" : "opted_in_at";
-
-  const { data: existing, error: selectError } = await supabase
-    .from("sms_consent")
-    .select("id")
-    .eq("organization_id", organizationId)
-    .eq("phone_number", phone)
-    .maybeSingle();
-
-  if (selectError) {
-    console.error(
-      "[SMS Inbound Webhook] Consent select failed:",
-      selectError.message
-    );
-    return false;
-  }
-
-  if (existing) {
-    const { error } = await supabase
-      .from("sms_consent")
-      .update({
-        status,
-        consent_method: "sms_keyword",
-        [timestampField]: now,
-      })
-      .eq("id", existing.id);
-
-    if (error) {
-      console.error(
-        "[SMS Inbound Webhook] Consent update failed:",
-        error.message
-      );
-      return false;
-    }
-    return true;
-  }
-
-  const { error: insertError } = await supabase.from("sms_consent").insert({
-    organization_id: organizationId,
-    phone_number: phone,
-    status,
-    consent_method: "sms_keyword",
-    [timestampField]: now,
-  });
-
-  if (!insertError) return true;
-
-  // 23505 = unique constraint violation -- retry as update
-  if (insertError.code === "23505") {
-    return upsertConsent(supabase, organizationId, phone, status);
-  }
-
-  console.error(
-    "[SMS Inbound Webhook] Consent insert failed:",
-    insertError.message
-  );
-  return false;
 }
 
 // ── Message logging ─────────────────────────────────────────────────────

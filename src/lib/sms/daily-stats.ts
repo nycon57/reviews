@@ -7,6 +7,8 @@ const VALID_STAT_COLUMNS = new Set([
   "segments_used",
   "total_cost_cents",
   "reviews_generated",
+  "opted_out",
+  "replied",
 ]);
 
 /**

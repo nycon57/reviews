@@ -53,6 +53,26 @@ export {
   purchasePhoneNumberSchema,
 } from "./types";
 
+// Consent service
+export { ConsentService } from "./consent-service";
+export type {
+  ConsentRecord,
+  RecordConsentInput,
+  RevokeConsentInput,
+  ConsentReportRow,
+} from "./types";
+
+// Quiet hours engine
+export { QuietHoursEngine } from "./quiet-hours";
+export type { QuietHoursConfig, QuietHoursCheckResult } from "./quiet-hours";
+
+// Keyword handler
+export { KeywordHandler } from "./keyword-handler";
+export type { KeywordType, KeywordResult } from "./keyword-handler";
+
+// Timezone lookup
+export { getTimezoneForPhone, TCPA_DEFAULT_QUIET_START, TCPA_DEFAULT_QUIET_END } from "./timezone-lookup";
+
 // Webhook validation
 export {
   validateTwilioSignature,

@@ -14017,3 +14017,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Build remains at 7.6 KB gzipped after refactoring — shared module doesn't increase bundle size due to esbuild tree shaking
   - Pre-existing Turbopack ENOENT _ssgManifest.js bug blocks full build verification; compilation and TypeScript checks pass
 ---
+
+## 2026-02-01 13:30 - S136: LO Review Widget
+Thread: 
+Run: 20260201-132605-52318 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-132605-52318-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-132605-52318-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (all identified issues already fixed by S135 Pass 3 commit 51a5fbe)
+- Post-commit status: clean (no S136 changes needed)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer subagent)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/lo-review.test.ts -> PASS (22/22 tests)
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S136 files) -> PASS (0 errors)
+- Files changed:
+  - (none — all issues pre-fixed by S135 Pass 3)
+- What was reviewed:
+  - Code review identified 3 issues: NMLS URL using /COMPANY/ instead of /INDIVIDUAL/, cursor:pointer on all review text instead of truncated-only, unbounded columns config
+  - All 3 issues were already fixed by overlapping S135 Pass 3 commit (51a5fbe) which refactored shared DOM helpers and touched S136 files
+  - XSS protection verified: all DOM construction uses safe createElement/textContent
+  - Accessibility verified: ARIA roles, labels, keyboard nav all correct
+  - CSS scoping verified: Shadow DOM encapsulation, no style leakage
+  - Performance verified: lazy loading on images, efficient DOM construction
+- **Learnings for future iterations:**
+  - Overlapping stories (S135/S136) can fix each other's issues during refactoring passes
+  - Always check git history before attempting fixes — another agent may have already addressed issues
+  - The code-reviewer subagent correctly identifies real bugs but may not account for concurrent fixes
+---

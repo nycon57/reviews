@@ -15144,3 +15144,52 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Next.js build has a pre-existing pages-manifest issue unrelated to widget work
   - The trackClick import was unused in template.ts (only used in player.ts) - cleaned up
 ---
+
+## [2026-02-01 16:40] - S148: Video Testimonial Widget
+Thread: 
+Run: 20260201-163753-68125 (iteration 1)
+Pass: 1/3 - Implementation (continued from prior crashed run)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-163753-68125-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-163753-68125-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: c606e4d docs: Add S148 progress entry for Pass 1/3 implementation (includes S148 data layer changes)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint -> PASS (7 pre-existing errors in unrelated files)
+  - Command: npm run build (embed) -> PASS (22.8 KB gzipped, within 25 KB budget)
+  - Command: npm run build (next) -> PASS
+- Files changed:
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts (added video testimonials data fetching)
+  - src/lib/widgets/public-queries.ts (added getVideoTestimonials query, video event types)
+  - src/embed/widgets/video-testimonial/player.ts (added video_complete tracking)
+  - src/embed/__tests__/video-testimonial.test.ts (fixed TypeScript type errors)
+  - src/components/widgets/preview/video-testimonial-preview.tsx (fixed React compiler warning)
+  - src/embed/index.ts (verified video-testimonial import present)
+- What was implemented:
+  - Added getVideoTestimonials query to fetch approved video testimonials from video_testimonial_responses table
+  - Wired video testimonials data into /api/v1/widgets/[widgetId]/config for video_testimonial widget type
+  - Added video_pause, video_complete, video_progress to server-side event type validation
+  - Added video_complete event tracking on video ended in embed player
+  - Fixed React compiler error in preview (setState in effect → useMemo for derived state)
+  - Fixed TypeScript cast issue in test file (Element → HTMLElement for dataset access)
+  - Prior crashed run had already implemented: embed widget files (index, template, styles, player, transcript), preview component, types, test suite
+- **Learnings for future iterations:**
+  - Prior crashed runs leave partially committed code — always verify git status against file contents
+  - The S148 embed files were committed in c7fdec6 but data layer was missing
+  - Video testimonials use video_testimonial_responses table with inner join to requests for customer info
+  - React compiler requires derived state use useMemo instead of useState+useEffect patterns
+---

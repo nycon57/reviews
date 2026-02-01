@@ -22,26 +22,12 @@ import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
 import { gzipSync } from "zlib";
 import { execFileSync } from "child_process";
+import type { EmbedManifest } from "../src/lib/widgets/manifest-types";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const MANIFEST_PATH = resolve(ROOT, "public/embed/v1/manifest.json");
 const MAX_GZIP_BYTES = 15 * 1024; // 15KB
-
-interface ManifestEntry {
-  version: string;
-  hash: string;
-  filename: string;
-  size: number;
-  gzipSize: number;
-  brotliSize: number;
-  buildTimestamp: string;
-}
-
-interface Manifest {
-  current: ManifestEntry;
-  previous: ManifestEntry[];
-}
 
 function verify(): boolean {
   console.log("Verifying embed build...\n");
@@ -51,7 +37,7 @@ function verify(): boolean {
     return false;
   }
 
-  const manifest: Manifest = JSON.parse(
+  const manifest: EmbedManifest = JSON.parse(
     readFileSync(MANIFEST_PATH, "utf-8")
   );
   const { current } = manifest;

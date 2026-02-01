@@ -1,65 +1,55 @@
 import { NextResponse } from "next/server";
-import { readFileSync, existsSync } from "fs";
-import { resolve } from "path";
-
-interface ManifestEntry {
-  version: string;
-  hash: string;
-  filename: string;
-  size: number;
-  gzipSize: number;
-  brotliSize: number;
-  buildTimestamp: string;
-}
-
-interface Manifest {
-  current: ManifestEntry;
-  previous: ManifestEntry[];
-}
+import type { EmbedManifest } from "@/lib/widgets/manifest-types";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+} as const;
+
 /**
  * CDN health check endpoint.
- * Returns 200 with current embed version info, or 503 if manifest is missing.
+ * Fetches the manifest and verifies the embed script is reachable via HTTP,
+ * ensuring the CDN is actually serving the files (not just checking disk).
  */
-export async function GET() {
-  const manifestPath = resolve(process.cwd(), "public/embed/v1/manifest.json");
-
-  if (!existsSync(manifestPath)) {
-    return NextResponse.json(
-      {
-        status: "unavailable",
-        error: "Embed manifest not found. Run npm run build:embed first.",
-      },
-      {
-        status: 503,
-        headers: {
-          "Cache-Control": "no-cache",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
-  }
+export async function GET(request: Request) {
+  const origin = new URL(request.url).origin;
+  const manifestUrl = `${origin}/embed/v1/manifest.json`;
 
   try {
-    const manifest: Manifest = JSON.parse(
-      readFileSync(manifestPath, "utf-8")
-    );
+    const manifestRes = await fetch(manifestUrl, {
+      next: { revalidate: 0 },
+    });
+
+    if (!manifestRes.ok) {
+      return NextResponse.json(
+        {
+          status: "unavailable",
+          error: "Embed manifest not reachable from CDN.",
+        },
+        {
+          status: 503,
+          headers: { "Cache-Control": "no-cache", ...CORS_HEADERS },
+        }
+      );
+    }
+
+    const manifest: EmbedManifest = await manifestRes.json();
     const { current } = manifest;
 
-    // Verify the actual file exists
-    const embedPath = resolve(
-      process.cwd(),
-      "public/embed/v1",
-      current.filename
-    );
-    const fileExists = existsSync(embedPath);
+    // Verify the hashed embed file is reachable via CDN
+    const embedUrl = `${origin}/embed/v1/${current.filename}`;
+    const embedRes = await fetch(embedUrl, {
+      method: "HEAD",
+      next: { revalidate: 0 },
+    });
+
+    const fileReachable = embedRes.ok;
 
     return NextResponse.json(
       {
-        status: fileExists ? "healthy" : "degraded",
+        status: fileReachable ? "healthy" : "degraded",
         version: current.version,
         hash: current.hash,
         filename: current.filename,
@@ -68,25 +58,22 @@ export async function GET() {
         brotliSize: current.brotliSize,
         buildTimestamp: current.buildTimestamp,
         previousVersions: manifest.previous.length,
-        fileExists,
+        cdnReachable: fileReachable,
       },
       {
-        status: fileExists ? 200 : 503,
+        status: fileReachable ? 200 : 503,
         headers: {
           "Cache-Control": "public, max-age=30, s-maxage=30",
-          "Access-Control-Allow-Origin": "*",
+          ...CORS_HEADERS,
         },
       }
     );
   } catch {
     return NextResponse.json(
-      { status: "error", error: "Failed to read embed manifest." },
+      { status: "error", error: "Failed to verify embed CDN health." },
       {
         status: 500,
-        headers: {
-          "Cache-Control": "no-cache",
-          "Access-Control-Allow-Origin": "*",
-        },
+        headers: { "Cache-Control": "no-cache", ...CORS_HEADERS },
       }
     );
   }

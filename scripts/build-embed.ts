@@ -25,6 +25,10 @@ import {
 import { gzipSync, brotliCompressSync, constants } from "zlib";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import type {
+  ManifestEntry,
+  EmbedManifest,
+} from "../src/lib/widgets/manifest-types";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -77,20 +81,6 @@ const common: BuildOptions = {
   plugins: [cssMinifyPlugin],
 };
 
-interface ManifestEntry {
-  version: string;
-  hash: string;
-  filename: string;
-  size: number;
-  gzipSize: number;
-  brotliSize: number;
-  buildTimestamp: string;
-}
-
-interface Manifest {
-  current: ManifestEntry;
-  previous: ManifestEntry[];
-}
 
 function contentHash(buf: Buffer): string {
   return createHash("sha256").update(buf).digest("hex").slice(0, 12);
@@ -147,7 +137,8 @@ async function main() {
   const gzipSize = gzipBuf.length;
   const brotliSize = brotliBuf.length;
 
-  // Write pre-compressed files for CDN serving
+  // Write pre-compressed files for size verification and non-Vercel deployments.
+  // On Vercel, Edge Network applies gzip/brotli automatically.
   writeFileSync(resolve(OUT_DIR, `${hashedFilename}.gz`), gzipBuf);
   writeFileSync(resolve(OUT_DIR, `${hashedFilename}.br`), brotliBuf);
   writeFileSync(resolve(OUT_DIR, "embed.min.js.gz"), gzipBuf);
@@ -172,7 +163,7 @@ async function main() {
 
   // Load existing manifest to preserve version history
   const manifestPath = resolve(OUT_DIR, "manifest.json");
-  let manifest: Manifest;
+  let manifest: EmbedManifest;
   if (existsSync(manifestPath)) {
     try {
       const existing = JSON.parse(readFileSync(manifestPath, "utf-8"));

@@ -46,3 +46,6 @@ export {
   generateFAQPageSchema,
   generateFAQPageJsonLd,
 } from "./schema-generators";
+
+// Competitor page configs
+export { experienceComConfig } from "./configs/experience-com";

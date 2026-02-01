@@ -36,7 +36,7 @@ async function main() {
   console.log("Building embed.js...\n");
 
   // Unminified build
-  const devResult = await build({
+  await build({
     ...common,
     outfile: resolve(OUT_DIR, "embed.js"),
     minify: false,

@@ -66,9 +66,6 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     if (controller.signal.aborted) return;
     instance.config = config;
 
-    // Show skeleton immediately
-    renderSkeleton(instance.shadowRoot);
-
     // Fetch reviews
     const limit = config.config?.filters?.maxReviews ?? 10;
     const data = await fetchReviews(apiBase, instance.widgetId, controller.signal, limit);
@@ -186,6 +183,7 @@ function refresh(widgetId: string): void {
       instance.config = null;
       instance.reviews = [];
 
+      renderSkeleton(instance.shadowRoot);
       loadWidget(instance, apiBase);
     }
   }

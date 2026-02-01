@@ -116,7 +116,8 @@ export const LO_REVIEW_STYLES = /* css */ `
 
   .rw-lo-review__date { font-size: 12px; color: #9ca3af; }
   .rw-lo-review__stars { display: flex; gap: 2px; margin-bottom: 8px; }
-  .rw-lo-review__text { font-size: 14px; line-height: 1.6; color: #374151; cursor: pointer; }
+  .rw-lo-review__text { font-size: 14px; line-height: 1.6; color: #374151; }
+  .rw-lo-review__text--truncated { cursor: pointer; }
 
   .rw-lo-review__text--truncated::after {
     content: " Read more";

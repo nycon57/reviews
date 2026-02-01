@@ -20,7 +20,6 @@ import {
   writeFileSync,
   mkdirSync,
   existsSync,
-  readdirSync,
   copyFileSync,
 } from "fs";
 import { gzipSync, brotliCompressSync, constants } from "zlib";

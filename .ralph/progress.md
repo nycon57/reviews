@@ -10143,3 +10143,89 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Use direct module imports for client components instead of barrel @/lib/sms
   - Avoid creating duplicate utility functions with different names (formatPhoneNumber vs formatForDisplay)
 ---
+
+## [2026-01-31 22:52] - S097: Twilio SDK Integration & Service Layer
+Thread: 
+Run: 20260131-225231-38731 (iteration 1)
+Pass: Completion verification (all 3/3 passes already done)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-225231-38731-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-225231-38731-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (all 3 passes already committed: 6d4bc64, 5e17121, 0f4caf5)
+- Post-commit status: clean (no S097 changes pending)
+- Skills invoked:
+  - /feature-dev: no (done in prior passes)
+  - /code-review: no (done in Pass 2)
+  - /vercel-react-best-practices: no (not applicable - server-side code)
+  - /next-best-practices: no (not applicable)
+  - /supabase-postgres-best-practices: no (done in prior passes)
+  - /code-simplifier: no (done in Pass 3)
+  - /frontend-design: no (not applicable)
+  - /web-design-guidelines: no (not applicable)
+  - /writing-clearly-and-concisely: no (done in Pass 3)
+  - /agent-browser: no (not applicable)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (9 pre-existing errors in unrelated files, 0 in S097 files)
+- Files changed: none (this run is completion verification only)
+- Previous run stalled after Pass 3/3 without emitting completion signal. Verified all 3 passes complete, build/lint clean, emitting COMPLETE.
+- **Learnings for future iterations:**
+  - Story can stall after final pass if completion signal not emitted promptly
+  - Always emit completion signal immediately after final pass verification
+---
+
+## 2026-01-31T23:06 - S098: SMS Consent Management & TCPA Compliance Engine
+Thread:
+Run: 20260131-225231-38731 (iteration 2)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-225231-38731-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-225231-38731-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: be02296 [Pass 1/3] feat(S098): SMS Consent Management & TCPA Compliance Engine
+- Post-commit status: clean (S098 files committed; pre-existing changes remain unstaged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/__tests__/ -> PASS (176 tests, 6 files)
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (9 pre-existing errors in unrelated files, 0 in S098 files)
+- Files changed:
+  - src/lib/sms/consent-service.ts (new - ConsentService class)
+  - src/lib/sms/quiet-hours.ts (new - QuietHoursEngine)
+  - src/lib/sms/keyword-handler.ts (new - KeywordHandler)
+  - src/lib/sms/timezone-lookup.ts (new - 300+ area code→timezone map)
+  - src/lib/sms/sms-service.ts (refactored to use ConsentService, QuietHoursEngine, queue on quiet hours)
+  - src/lib/sms/types.ts (added ConsentRecord, RecordConsentInput, RevokeConsentInput, ConsentReportRow, scheduledAt)
+  - src/lib/sms/index.ts (new exports for consent, quiet hours, keyword, timezone)
+  - src/lib/sms/daily-stats.ts (added opted_out, replied to valid columns)
+  - src/app/api/webhooks/twilio/inbound/route.ts (uses KeywordHandler with configurable responses)
+  - src/lib/sms/__tests__/consent-service.test.ts (new - 22 tests)
+  - src/lib/sms/__tests__/quiet-hours.test.ts (new - 59 tests)
+  - src/lib/sms/__tests__/keyword-handler.test.ts (new - 45 tests)
+- Implementation summary:
+  - ConsentService: recordConsent, revokeConsent, checkConsent, getConsentHistory, initiateDoubleOptIn, confirmDoubleOptIn, getConsentReport
+  - QuietHoursEngine: TCPA 8AM-9PM default, overnight window handling, recipient timezone via area code lookup, message queuing with scheduled_at
+  - KeywordHandler: STOP/STOPALL/UNSUBSCRIBE/CANCEL/END/QUIT opt-out, START/UNSTOP opt-in, HELP with configurable responses, YES for double opt-in confirmation
+  - All keyword handling is case-insensitive with whitespace trimming
+  - Messages blocked by quiet hours are queued with scheduled_at instead of just throwing errors
+  - Consent records are never deleted (audit trail preserved)
+  - 126 new compliance tests added (176 total SMS tests)
+- **Learnings for future iterations:**
+  - "yes" keyword in OPT_IN_KEYWORDS set requires careful ordering in classify function — must check for "yes" specifically before general opt-in check
+  - daily-stats.ts VALID_STAT_COLUMNS was missing "opted_out" and "replied" — webhook was calling incrementDailyStat with these but they were silently rejected
+  - KeywordHandler constructor creates Supabase client — unit tests for pure classification logic need standalone function extraction
+  - Pre-existing lint errors (9) in unrelated remotion files — not introduced by S098
+---

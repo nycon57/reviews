@@ -11454,3 +11454,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - (0).toFixed(n) is a cleaner idiom than manually assembling "0.000" strings
   - JSDoc should describe what a component IS, not what the whole section contains
 ---
+
+## [2026-02-01] - S117: Pricing Tabs & Smooth Transition Sub-Components (Sections 3-4)
+Thread: 
+Run: 20260201-070818-24849 (iteration 3)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-070818-24849-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-070818-24849-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b5dad49 [Pass 1/3] feat(S117): Implement pricing tabs & smooth transition sections
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors)
+- Files changed:
+  - src/components/competitor-pages/sections/pricing-tabs-section.tsx
+  - src/components/competitor-pages/sections/smooth-transition-section.tsx
+  - src/lib/competitor-pages/types.ts
+  - src/lib/competitor-pages/index.ts
+- What was implemented:
+  - PricingTabsSection: Full rewrite using ShadCN Tabs (Radix) for ARIA-compliant keyboard navigation. 3-tab pricing comparison with animated content transitions. Each tab renders headline, body, comparison table with checkmark/x-mark boolean indicators and text value support, plus CTA button. Pills variant tabs with animated underline.
+  - SmoothTransitionSection: Full rewrite with headline, body text, and optional bullet list of items customers keep when switching. Each bullet has Phosphor CheckCircle duotone icon. Supports dark/light/gradient variants with appropriate color contrast.
+  - TransitionSection type: Added TransitionBullet interface and optional bullets array field. Exported TransitionBullet from barrel.
+- **Learnings for future iterations:**
+  - Phosphor Icons used via @phosphor-icons/react (not lucide-react) - use /dist/ssr path for server components
+  - ShadCN Tabs component has pills, underline, and default variants already configured with repwell theme colors
+  - animate-fade-in-up already defined in tailwind.config.ts for tab content transitions
+  - All 12 lint errors are pre-existing (crypto, TextEncoder globals + React Compiler warnings)
+---

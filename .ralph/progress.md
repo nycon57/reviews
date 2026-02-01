@@ -10349,3 +10349,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - QuietHoursError.scheduledAt was never read externally — redundant with nextValidTime
   - Sequential DB queries on hot paths should always be parallelized with Promise.all
 ---
+
+## [2026-02-01 00:10] - S105: SMS Compliance & Quiet Hours Settings UI
+Thread: 
+Run: 20260201-000239-45634 (iteration 2)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-000239-45634-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-000239-45634-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e108ca6 [Pass 3/3] refactor(S105): Polish SMS Compliance UI — simplify score logic, tighten copy, remove redundancy
+- Post-commit status: clean (S105 files)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (subagent)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (subagent)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (manual review)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S105 files) -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/components/settings/sms/compliance-tab.tsx (consolidated scoreLevel helper, tightened info card copy)
+  - src/components/settings/sms/consent-language-form.tsx (removed useEffect dirty check — derived directly)
+  - src/components/settings/sms/opt-out-settings-form.tsx (removed redundant aria-disabled on fieldset)
+  - src/components/settings/sms/quiet-hours-form.tsx (removed redundant aria-disabled on fieldset)
+  - src/lib/sms/compliance/actions.ts (consolidated untyped-client comments, clarified compliance rate formula)
+- What was implemented:
+  - Pass 3 polish: simplified code, tightened copy, removed redundancy
+  - compliance-tab.tsx: merged getScoreColor/getScoreBg into single scoreLevel function. Shortened TCPA/CAN-SPAM/RESPA card descriptions (removed redundant full-name expansions since titles already provide context).
+  - consent-language-form.tsx: replaced useEffect+useState dirty-tracking with direct derivation (`const isDirty = ...`), removed unused useEffect import.
+  - quiet-hours-form.tsx & opt-out-settings-form.tsx: removed redundant aria-disabled attribute (native disabled on fieldset already communicates state to assistive technology).
+  - actions.ts: consolidated 3 duplicate "untyped client" comments into single top-of-file note. Clarified compliance rate comment.
+- **Learnings for future iterations:**
+  - Derived state (`const isDirty = a !== b`) is simpler than useEffect-based dirty tracking for single-value comparisons
+  - Native HTML fieldset disabled already sets aria-disabled — no need to duplicate
+  - When multiple functions share the same workaround, document it once at the top rather than repeating inline comments
+---

@@ -10229,3 +10229,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - KeywordHandler constructor creates Supabase client — unit tests for pure classification logic need standalone function extraction
   - Pre-existing lint errors (9) in unrelated remotion files — not introduced by S098
 ---
+
+## 2026-01-31T23:14 - S098: SMS Consent Management & TCPA Compliance Engine
+Thread:
+Run: 20260131-225231-38731 (iteration 3)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-225231-38731-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-225231-38731-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 70a469f [Pass 2/3] fix(S098): Harden consent service race conditions & cleanup keyword handler
+- Post-commit status: clean (S098 files committed; pre-existing changes remain unstaged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review of all S098 files)
+  - /vercel-react-best-practices: no (no React components in S098)
+  - /next-best-practices: yes (reviewed webhook route)
+  - /supabase-postgres-best-practices: yes (reviewed query patterns)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (no UI in S098)
+  - /web-design-guidelines: no (no UI in S098)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (no UI in S098)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/__tests__/ -> PASS (176 tests, 6 files)
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (9 pre-existing errors in unrelated files, 0 in S098 files)
+- Files changed:
+  - src/lib/sms/consent-service.ts (fixed recursive retry → single-retry pattern, null safety)
+  - src/lib/sms/keyword-handler.ts (removed unused param, dropped unnecessary async)
+- Issues found and fixed:
+  - **Security:** Recursive retry on unique constraint (23505) in recordConsent and initiateDoubleOptIn could cause infinite recursion. Replaced with single select+update retry.
+  - **Null safety:** initiateDoubleOptIn fetched existing opted_in record without checking for null data — added error guard.
+  - **Code quality:** handleHelp had unused organizationId parameter and unnecessary async keyword — removed both.
+- **Learnings for future iterations:**
+  - Recursive retries on DB constraint errors must always have depth limits or be replaced with single-retry patterns
+  - When methods only need settings (not DB calls), avoid async to keep intent clear
+  - The QuietHoursError path in handleSendError is technically unreachable now that quiet hours are checked proactively, but kept as defensive code
+---

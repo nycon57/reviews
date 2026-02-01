@@ -40,3 +40,9 @@ export type {
   // Root config
   CompetitorPageConfig,
 } from "./types";
+
+// Schema generators
+export {
+  generateFAQPageSchema,
+  generateFAQPageJsonLd,
+} from "./schema-generators";

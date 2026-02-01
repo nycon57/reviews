@@ -203,6 +203,8 @@ export function RatingComparisonSection({
 }: RatingComparisonSectionProps) {
   const { ref: sectionRef, isVisible } = useScrollReveal();
 
+  if (!config.repwell || !config.competitor) return null;
+
   return (
     <div ref={sectionRef}>
       {/* Section header */}

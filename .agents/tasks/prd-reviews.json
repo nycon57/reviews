@@ -5270,7 +5270,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -5291,9 +5291,7 @@
           "Handle N/A scores with a muted badge rather than hiding the row"
         ]
       },
-      "updatedAt": "2026-02-01T14:08:47.534914+00:00",
-      "startedAt": "2026-02-01T14:08:47.534770+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-01T14:13:47.715491+00:00"
     },
     {
       "id": "S122",
@@ -5318,7 +5316,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5341,7 +5339,10 @@
           "Case study metrics use a MetricDelta sub-component showing before, after, and % change",
           "FAQ answers rendered with dangerouslySetInnerHTML or a markdown renderer for rich content"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T14:18:53.345496+00:00",
+      "startedAt": "2026-02-01T14:18:53.345270+00:00",
+      "completedAt": null
     },
     {
       "id": "S123",

@@ -305,6 +305,8 @@ export interface CaseStudyMetric {
   before: string;
   /** After value (e.g. "85/month") */
   after: string;
+  /** Percentage change (e.g. "+608%") — displayed in green */
+  percentageChange?: string;
 }
 
 /** Case study entry */

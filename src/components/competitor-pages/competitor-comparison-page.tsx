@@ -3,6 +3,7 @@ import type {
   CompetitorPageConfig,
   TransitionSection,
 } from "@/lib/competitor-pages";
+import { generateFAQPageJsonLd } from "@/lib/competitor-pages";
 import type { SectionBackground } from "./section-wrapper";
 import { SectionWrapper } from "./section-wrapper";
 import { SectionSkeleton } from "./section-skeleton";
@@ -158,8 +159,18 @@ export function CompetitorComparisonPage({
   config,
   showScrollProgress = true,
 }: CompetitorComparisonPageProps) {
+  const faqJsonLd = generateFAQPageJsonLd(config.faq);
+
   return (
     <>
+      {/* FAQPage JSON-LD structured data for Google rich results */}
+      <script
+        type="application/ld+json"
+        // Safe: content is generated from static config data, not user input
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: faqJsonLd }}
+      />
+
       {showScrollProgress && <ScrollProgress />}
 
       {/* Section 1: Hero */}

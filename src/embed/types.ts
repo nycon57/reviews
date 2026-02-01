@@ -91,12 +91,27 @@ export interface WidgetBanner {
   animation?: "slide" | "fade" | "none";
 }
 
+export interface WidgetBadge {
+  placement?: "inline" | "floating";
+  floatPosition?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  floatOffsetX?: number;
+  floatOffsetY?: number;
+  floatZIndex?: number;
+  floatAnimation?: "fade" | "slide" | "none";
+  width?: string;
+  height?: string;
+  clickUrl?: string;
+  showName?: boolean;
+  refreshInterval?: "never" | "1hr" | "6hr" | "24hr";
+}
+
 export interface WidgetConfigJson {
   theme?: WidgetTheme;
   content?: WidgetContent;
   filters?: WidgetFilters;
   carousel?: WidgetCarousel;
   banner?: WidgetBanner;
+  badge?: WidgetBadge;
   seo?: { title?: string; description?: string; keywords?: string[] };
 }
 

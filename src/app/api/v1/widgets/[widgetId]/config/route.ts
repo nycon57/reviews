@@ -13,6 +13,8 @@ const CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=60";
 const LO_PROFILE_WIDGET_TYPES = new Set(["lo_review"]);
 /** Widget types that require an organization-level profile. */
 const ORG_PROFILE_WIDGET_TYPES = new Set(["company_review"]);
+/** Widget types that resolve profile based on entity_type (org or LO). */
+const ENTITY_AWARE_WIDGET_TYPES = new Set(["star_rating_badge"]);
 
 export async function GET(
   request: NextRequest,
@@ -37,6 +39,13 @@ export async function GET(
     entityProfile = await getEntityProfile(widget.entity_id);
   } else if (ORG_PROFILE_WIDGET_TYPES.has(widget.widget_type)) {
     entityProfile = await getOrganizationProfile(widget.organization_id);
+  } else if (ENTITY_AWARE_WIDGET_TYPES.has(widget.widget_type)) {
+    // Resolve profile based on entity_type: LO gets user profile, org gets org profile
+    if (widget.entity_type === "user" && widget.entity_id) {
+      entityProfile = await getEntityProfile(widget.entity_id);
+    } else {
+      entityProfile = await getOrganizationProfile(widget.organization_id);
+    }
   }
 
   // Strip internal fields from public response

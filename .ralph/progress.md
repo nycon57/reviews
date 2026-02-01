@@ -15694,3 +15694,58 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Close button handlers should be added at a single level (container), not duplicated in sub-components
   - Scroll listeners should self-remove after one-shot triggers fire
 ---
+
+### S152 — Advanced Filtering (Loan Type, Keyword, Date Range) — Pass 1/3
+- Date: 2026-02-01
+- Pass: 1 (Implementation)
+- Commit: e194005 [Pass 1/3] feat(S152): Advanced filtering with loan type, keyword, date range
+- Skills invoked:
+  - feature-dev: feature architecture and implementation
+  - vercel-react-best-practices: component patterns
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit -> PASS (0 errors)
+  - Command: npx tsx scripts/build-embed.ts -> PASS (32.4KB gzipped, within 34KB budget)
+  - Command: npm run lint -> PASS (no new errors from S152 files)
+  - Command: npm run test -> 5 pre-existing failures (FTHB badge text mismatch from prior stories)
+  - Command: npm run build -> next build ENOENT transient filesystem error (not code-related)
+- Files changed (22 files):
+  - src/embed/types.ts (ActiveFilters interface, dateRange field, WidgetInstance.activeFilters)
+  - src/embed/index.ts (activeFilters init, setInstanceForRoot call)
+  - src/embed/widgets/registry.ts (WeakMap instance lookup: setInstanceForRoot/getInstanceForRoot)
+  - src/embed/core/api-client.ts (ActiveFilters type for fetchReviews filter params)
+  - src/embed/widgets/shared/filter-controls.ts (NEW: interactive filter toolbar DOM builder)
+  - src/embed/widgets/shared/filter-engine.ts (NEW: filter state management, re-fetch, event tracking)
+  - src/embed/widgets/shared/filter-styles.ts (NEW: CSS for filter controls in Shadow DOM)
+  - src/embed/widgets/lo-review/index.ts (filter controls integration)
+  - src/embed/widgets/lo-review/template.ts (instance param, filter controls wiring)
+  - src/embed/widgets/company-review/index.ts (filter controls integration)
+  - src/embed/widgets/company-review/template.ts (instance param, buildFilterControls in review list)
+  - src/embed/widgets/branch-review/index.ts (filter controls integration)
+  - src/embed/widgets/branch-review/template.ts (instance param)
+  - src/embed/widgets/review-wall/index.ts (filter controls integration)
+  - src/embed/widgets/review-carousel/index.ts (filter controls integration)
+  - src/app/api/v1/widgets/[widgetId]/reviews/route.ts (interactive filter query params, dateRange presets)
+  - src/lib/widgets/public-queries.ts (dateRange preset resolution)
+  - src/lib/widgets/schemas.ts (dateRange preset enum in Zod schema)
+  - src/lib/widgets/actions.ts (filter-related server actions)
+  - src/components/widgets/widget-builder-sidebar.tsx (filter tab: loan types, showFilters toggle, dateRange presets)
+  - scripts/build-embed.ts (embed budget 32KB -> 34KB)
+  - supabase/migrations/20260201000006_review_advanced_filters.sql (metadata JSONB + tsvector migration)
+- What was implemented:
+  - Interactive filter controls: rating star buttons (All/5★/4★+/3★+), sort dropdown (newest/oldest/highest/lowest), source dropdown, loan type pills (Purchase/Refinance/VA/FHA/Jumbo/USDA/Conventional), date range dropdown (All Time/Last 30 Days/Last 90 Days/Last Year), keyword search with debounce
+  - Filter engine: manages ActiveFilters state on WidgetInstance, aborts in-flight requests, re-fetches via API with filter params, tracks filter_change events
+  - Server-side filtering: API route accepts minRating/sortOrder/sources/loanTypes/keywords/dateRange query params, merges with config-level defaults
+  - PostgreSQL full-text search for keyword filtering via tsvector column
+  - JSONB metadata field for loan type filtering
+  - DateRange presets (last_30d/last_90d/last_year/all_time) computed to date ranges server-side
+  - Empty state with "No reviews match your filters" and Reset Filters button
+  - Wired into all 5 review widget types (lo-review, company-review, branch-review, review-wall, review-carousel) when config.content.showFilters is true
+  - Widget Builder filter tab with Show Interactive Filters toggle, loan type multi-select, dateRange preset selector
+  - AND logic for combined filters, filter state resets on page reload
+- **Learnings for future iterations:**
+  - WeakMap(ShadowRoot → WidgetInstance) avoids changing WidgetRenderer type signature while providing instance access
+  - Embed filter styles need separate injection via data attribute check to avoid duplicates
+  - Debounce (400ms) on keyword search prevents excessive API calls
+  - Filter engine uses single AbortController pattern to cancel in-flight requests on rapid filter changes
+---

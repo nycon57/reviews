@@ -300,3 +300,43 @@
     margin: 2cm;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Logo Bar - Infinite scroll animation (S116)
+   --------------------------------------------------------------------------- */
+
+@keyframes logo-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.logo-bar-scroll {
+  animation: logo-scroll 30s linear infinite;
+}
+
+.logo-bar-mask {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-bar-scroll {
+    animation: none;
+  }
+}

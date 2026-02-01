@@ -13347,3 +13347,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Always index FK columns in PostgreSQL (not auto-indexed like MySQL)
   - Self-referencing FKs with ON DELETE SET NULL especially need indexes to avoid full table scans
 ---
+
+## [2026-02-01] - S132: Widget Database Schema & Migrations
+Thread:
+Run: 20260201-120019-78226 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-120019-78226-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-120019-78226-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 20982dd [Pass 3/3] fix(S132): Use codebase RLS helpers in widget policies
+- Post-commit status: clean (pre-existing .agents/tasks/prd-reviews.json, .ralph/USER_ACTION_REQUIRED.md, .ralph/activity.log not from this story)
+- Skills invoked:
+  - /feature-dev: no (polish pass)
+  - /code-review: yes (manual review of RLS policies against codebase patterns)
+  - /vercel-react-best-practices: no (no React code)
+  - /next-best-practices: no (no Next.js code)
+  - /supabase-postgres-best-practices: yes
+  - /code-simplifier: yes (reviewed SQL for clarity)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: yes (reviewed SQL comments)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (12 pre-existing errors, 0 from this story)
+  - Command: Supabase MCP apply_migration (widget_rls_fixes) -> PASS
+- Files changed:
+  - supabase/migrations/20260201000005_widget_rls_fixes.sql (new)
+- What was implemented:
+  - Replaced inline RLS subqueries with get_user_organization_id() and user_has_role() helpers across all 3 widget tables
+  - widget_configs: 2 policies replaced (SELECT for org members, ALL for admin/manager)
+  - widget_events: 1 policy replaced (SELECT via join to widget_configs)
+  - social_proof_graphics: 2 policies replaced (SELECT for org members, ALL for admin/manager)
+  - Consistency with codebase pattern (20+ other tables use these helpers)
+  - Performance improvement: SECURITY DEFINER + STABLE functions are cached per-statement
+- **Learnings for future iterations:**
+  - Always use get_user_organization_id() and user_has_role() helpers for RLS policies, never inline subqueries
+  - Check existing migration patterns before writing new RLS policies
+  - Pass 2 missed this issue because it focused on indexes; RLS helper consistency should be a standard check
+---

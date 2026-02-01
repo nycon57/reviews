@@ -71,8 +71,7 @@ function buildStars(
 
 function buildCloseButton(
   ctx: BannerContext,
-  container: HTMLElement,
-  onClose?: () => void
+  container: HTMLElement
 ): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.className = "rw-spb-close";
@@ -86,7 +85,6 @@ function buildCloseButton(
       ctx.spb.frequency ?? "every_visit"
     );
     trackClick(ctx.apiBase, ctx.config.widget_id, "banner_dismiss");
-    onClose?.();
   });
   return btn;
 }
@@ -133,12 +131,17 @@ function buildNotificationCard(
   return card;
 }
 
-function buildNotification(ctx: BannerContext): HTMLElement {
+interface NotificationResult {
+  element: HTMLElement;
+  stopRotation: () => void;
+}
+
+function buildNotification(ctx: BannerContext): NotificationResult {
   const wrapper = el("div");
   wrapper.style.position = "relative";
 
   const reviews = ctx.reviews.slice(0, 10); // cap rotation pool
-  if (reviews.length === 0) return wrapper;
+  if (reviews.length === 0) return { element: wrapper, stopRotation: () => {} };
 
   const filledColor =
     ctx.config.config?.theme?.colors?.starFilled ?? "#f59e0b";
@@ -147,11 +150,16 @@ function buildNotification(ctx: BannerContext): HTMLElement {
   let currentCard = buildNotificationCard(reviews[0], filledColor);
   wrapper.appendChild(currentCard);
 
-  if (ctx.spb.dismissable !== false) {
-    wrapper.appendChild(buildCloseButton(ctx, wrapper.closest(".rw-spb") as HTMLElement ?? wrapper));
-  }
+  // Click tracking for notification cards
+  wrapper.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement)?.closest(".rw-spb-close")) return;
+    trackClick(ctx.apiBase, ctx.config.widget_id, "banner_click", {
+      mode: "notification",
+    });
+  });
 
-  // Auto-rotate reviews
+  // Auto-rotate reviews (store intervalId for cleanup)
+  let intervalId: ReturnType<typeof setInterval> | null = null;
   if (reviews.length > 1) {
     const interval = ctx.spb.interval ?? 5000;
     const rotate = () => {
@@ -163,10 +171,18 @@ function buildNotification(ctx: BannerContext): HTMLElement {
         currentCard = newCard;
       }, 250);
     };
-    setInterval(rotate, interval);
+    intervalId = setInterval(rotate, interval);
   }
 
-  return wrapper;
+  return {
+    element: wrapper,
+    stopRotation: () => {
+      if (intervalId !== null) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+    },
+  };
 }
 
 // ── Counter Bar ───────────────────────────────────────────────────────
@@ -210,11 +226,6 @@ function buildCounterBar(ctx: BannerContext): HTMLElement {
       });
     });
     bar.appendChild(cta);
-  }
-
-  // Close button
-  if (ctx.spb.dismissable !== false) {
-    bar.appendChild(buildCloseButton(ctx, bar));
   }
 
   return bar;
@@ -268,18 +279,14 @@ function buildFloatingBadge(ctx: BannerContext): HTMLElement {
     badge.classList.remove("rw-spb-badge--hover")
   );
 
-  badge.addEventListener("click", () => {
+  badge.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement)?.closest(".rw-spb-close")) return;
     trackClick(ctx.apiBase, ctx.config.widget_id, "banner_click", {
       mode: "floating_badge",
     });
   });
 
-  // Close button (if dismissable)
-  if (ctx.spb.dismissable !== false) {
-    badge.style.position = "relative";
-    badge.appendChild(buildCloseButton(ctx, badge.closest(".rw-spb") as HTMLElement ?? badge));
-  }
-
+  badge.style.position = "relative";
   return badge;
 }
 
@@ -314,10 +321,14 @@ export function buildSocialProofBannerDOM(
   container.style.setProperty("--rw-spb-z", String(zIndex));
 
   // Build mode-specific content
+  let stopRotation: (() => void) | null = null;
   switch (mode) {
-    case "notification":
-      container.appendChild(buildNotification(ctx));
+    case "notification": {
+      const result = buildNotification(ctx);
+      container.appendChild(result.element);
+      stopRotation = result.stopRotation;
       break;
+    }
     case "counter_bar":
       container.appendChild(buildCounterBar(ctx));
       break;
@@ -326,15 +337,9 @@ export function buildSocialProofBannerDOM(
       break;
   }
 
-  // Fix close button to target the container
-  const closeBtn = container.querySelector(".rw-spb-close");
-  if (closeBtn) {
-    closeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      container.classList.remove("rw-spb--visible");
-      recordDismissed(widgetId, frequency);
-      trackClick(apiBase, widgetId, "banner_dismiss");
-    });
+  // Add close button targeting the outer container (single handler, correct target)
+  if (spb.dismissable !== false) {
+    container.appendChild(buildCloseButton(ctx, container));
   }
 
   hostRoot.appendChild(container);
@@ -352,6 +357,7 @@ export function buildSocialProofBannerDOM(
   return {
     cleanup: () => {
       trigger.destroy();
+      stopRotation?.();
       container.remove();
     },
   };

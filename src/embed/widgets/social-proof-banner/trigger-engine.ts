@@ -46,11 +46,13 @@ export function registerTrigger(
         const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
         if (scrollHeight <= 0) {
           fire();
+          window.removeEventListener("scroll", handler);
           return;
         }
         const pct = (window.scrollY / scrollHeight) * 100;
         if (pct >= threshold) {
           fire();
+          window.removeEventListener("scroll", handler);
         }
       };
       window.addEventListener("scroll", handler, { passive: true });

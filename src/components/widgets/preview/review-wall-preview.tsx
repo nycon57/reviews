@@ -207,7 +207,7 @@ function WallReviewCard({
     cardStyle === "bordered" && "border border-gray-200 bg-white",
     cardStyle === "shadow" && "bg-white shadow-sm hover:shadow-md",
     cardStyle === "flat" && "bg-gray-50",
-    featured && "border-l-[3px] border-l-[var(--rw-accent,#52796f)] scale-[1.02]",
+    featured && "border-l-[3px] border-l-[#52796f]",
   ]
     .filter(Boolean)
     .join(" ");

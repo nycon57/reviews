@@ -168,14 +168,13 @@ export function buildReviewWallDOM(
 
   let visibleCount = Math.min(perPage, reviews.length);
 
-  const renderCards = (): void => {
-    while (grid.firstChild) grid.firstChild.remove();
-
-    const visible = reviews.slice(0, visibleCount);
-    for (const review of visible) {
+  /** Append cards starting from `fromIndex` up to `visibleCount`. */
+  const appendCards = (fromIndex: number): void => {
+    for (let i = fromIndex; i < visibleCount; i++) {
+      const review = reviews[i];
       const cardWrapper = el("div", "rw-wall__card");
 
-      // Featured card emphasis: accent border + subtle scale
+      // Featured card emphasis: accent border + gradient background
       if (featuredOnly || (review.rating === 5 && review.text && review.text.length > 100)) {
         cardWrapper.classList.add("rw-wall__card--featured");
       }
@@ -197,11 +196,16 @@ export function buildReviewWallDOM(
         });
       });
 
+      // Animate cards added after initial render
+      if (fromIndex > 0) {
+        cardWrapper.classList.add("rw-wall__card--new");
+      }
+
       grid.appendChild(cardWrapper);
     }
   };
 
-  renderCards();
+  appendCards(0);
   wrapper.appendChild(grid);
 
   // Scroll depth tracking
@@ -222,13 +226,7 @@ export function buildReviewWallDOM(
           visibleCount + perPage,
           reviews.length,
         );
-        renderCards();
-
-        // Animate new cards
-        const cards = grid.querySelectorAll(".rw-wall__card");
-        for (let i = prevCount; i < cards.length; i++) {
-          cards[i].classList.add("rw-wall__card--new");
-        }
+        appendCards(prevCount);
 
         if (visibleCount >= reviews.length) {
           loadMoreBtn.style.display = "none";
@@ -246,13 +244,7 @@ export function buildReviewWallDOM(
           visibleCount + perPage,
           reviews.length,
         );
-        renderCards();
-
-        // Animate new cards
-        const cards = grid.querySelectorAll(".rw-wall__card");
-        for (let i = prevCount; i < cards.length; i++) {
-          cards[i].classList.add("rw-wall__card--new");
-        }
+        appendCards(prevCount);
       });
     }
   }

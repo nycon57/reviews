@@ -41,7 +41,6 @@ export const REVIEW_WALL_STYLES = /* css */ `
 
   .rw-wall__card--featured {
     border-left: 3px solid var(--rw-accent, var(--rw-primary, #52796f));
-    transform: scale(1.02);
   }
 
   .rw-wall__card--featured .rw-co-review {

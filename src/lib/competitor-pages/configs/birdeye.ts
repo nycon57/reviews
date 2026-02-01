@@ -6,6 +6,10 @@ import type { CompetitorPageConfig } from "../types";
  * Positioning: Birdeye = general-purpose review platform that serves restaurants,
  * healthcare, auto dealers, etc. — not built for mortgage. RepWell = mortgage-native
  * with LO profiles, NMLS compliance, LOS integrations, and post-close automation.
+ *
+ * Competitor data last verified: 2026-02-01
+ * Sources: Birdeye pricing page, G2 product page, Capterra listing, Birdeye docs.
+ * Review cadence: Quarterly — next review due 2026-05-01.
  */
 export const birdeyeConfig: CompetitorPageConfig = {
   slug: "birdeye-alternative",
@@ -924,42 +928,45 @@ export const birdeyeConfig: CompetitorPageConfig = {
       ],
     },
     {
-      category: "Mortgage-Specific",
+      category: "Team & Engagement",
       features: [
         { name: "Loan officer profiles", repwell: true, competitor: false },
         { name: "NMLS number display", repwell: true, competitor: false },
-        { name: "LOS integrations (Encompass, Byte)", repwell: true, competitor: false },
-        {
-          name: "Post-close automation",
-          repwell: true,
-          competitor: false,
-        },
-        {
-          name: "Compliance-safe AI responses",
-          repwell: true,
-          competitor: false,
-        },
-        { name: "Loan officer leaderboards", repwell: true, competitor: false },
-      ],
-    },
-    {
-      category: "Team & Engagement",
-      features: [
         {
           name: "Team leaderboards",
           repwell: true,
           competitor: false,
         },
         { name: "Gamification & badges", repwell: true, competitor: false },
-        { name: "Performance contests", repwell: true, competitor: false },
-        { name: "Social media publishing", repwell: true, competitor: true },
         {
-          name: "Testimonial collection",
+          name: "Performance contests",
+          repwell: true,
+          competitor: false,
+        },
+        { name: "Social media publishing", repwell: true, competitor: true },
+      ],
+    },
+    {
+      category: "Testimonials",
+      features: [
+        {
+          name: "Written testimonial collection",
           repwell: true,
           competitor: "Limited",
         },
         {
           name: "Video testimonial collection",
+          repwell: true,
+          competitor: false,
+        },
+        {
+          name: "Approval workflow",
+          repwell: true,
+          competitor: false,
+        },
+        { name: "Website testimonial widget", repwell: true, competitor: false },
+        {
+          name: "Social publishing from testimonials",
           repwell: true,
           competitor: false,
         },

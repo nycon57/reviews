@@ -14605,3 +14605,101 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Budget check moved after manifest generation so artifacts exist even when budget fails
   - Note: prior commit e8cae03 (labeled S142 Pass 3/3) included S144 file scaffolding — hooks bundled changes
 ---
+
+## [2026-02-01 15:40] - S144: CDN Deployment for embed.js & Static Assets
+Thread: 
+Run: 20260201-153219-27600 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-153219-27600-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-153219-27600-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cdf1bd3 [Pass 1/3] fix(S144): Fix esbuild Plugin type in CSS minification plugin
+- Post-commit status: clean (only prd-reviews.json and activity.log remain, pre-existing)
+- Skills invoked:
+  - /feature-dev: no (story was mostly pre-implemented)
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components modified)
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build:embed -> PASS (14.3 KB gzipped, within 15 KB budget)
+  - Command: npm run build -> PASS (TypeScript + Next.js compilation)
+  - Command: npm run lint (on changed files) -> PASS
+  - Command: npm run verify:embed -> PASS
+- Files changed:
+  - scripts/build-embed.ts (fix Plugin type annotations)
+- What was implemented:
+  - Most S144 acceptance criteria were already implemented by prior stories (S142, S143):
+    - prebuild hook in package.json
+    - CDN health check endpoint at /api/embed/health
+    - GitHub Actions workflow at .github/workflows/deploy-embed.yml
+    - Cache-Control, CORS headers in next.config.js
+    - Source map protection via rewrites to /404
+    - Content-hashed filenames with manifest.json
+    - Pre-compressed .gz and .br files
+    - Rollback via versioned directories
+  - This pass fixed the cssMinifyPlugin TypeScript type error that prevented `npm run build` from succeeding:
+    - Import `Plugin` type from esbuild
+    - Use proper Plugin interface instead of inline type annotations
+    - Return `null` instead of `undefined` for non-matching files
+    - Use `as const` for loader return value
+  - Bundle size reduced from 15.0 KB to 14.3 KB gzipped (now within budget)
+- **Learnings for future iterations:**
+  - S144 was largely pre-implemented across S142/S143 commits
+  - The cssMinifyPlugin was added but had TypeScript type incompatibilities with esbuild's Plugin interface
+  - The `return undefined` vs `return null` distinction matters for esbuild plugin callbacks
+  - Pre-compressed files (.gz/.br) were already being generated in committed code
+---
+
+## [2026-02-01] - S144: CDN Deployment for embed.js & Static Assets
+Thread:
+Run: 20260201-153722-38207 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-153722-38207-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-153722-38207-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 640fead [Pass 2/3] fix(S144): Health check uses HTTP fetch, extract shared manifest types
+- Post-commit status: clean (only prd-reviews.json and activity.log remain, pre-existing)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual thorough review of all S144 code)
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: yes (reviewed API route patterns)
+  - /supabase-postgres-best-practices: no (no DB changes)
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint scripts/build-embed.ts scripts/deploy-embed.ts src/app/api/embed/health/route.ts src/lib/widgets/manifest-types.ts -> PASS (0 errors)
+  - Command: npm run lint -> PASS (7 pre-existing errors, 0 from S144 files)
+- Files changed:
+  - scripts/build-embed.ts (use shared types, clarify pre-compressed file purpose)
+  - scripts/deploy-embed.ts (use shared types)
+  - src/app/api/embed/health/route.ts (rewrite: HTTP fetch instead of filesystem reads)
+  - src/lib/widgets/manifest-types.ts (new: shared ManifestEntry/EmbedManifest types)
+- What was implemented:
+  - Fixed health check endpoint to use HTTP fetch for manifest.json and embed file
+    instead of filesystem reads (fs.readFileSync/existsSync). On Vercel serverless,
+    public/ directory files are CDN-served static assets not available on disk.
+  - Extracted ManifestEntry and EmbedManifest interfaces into shared module
+    (src/lib/widgets/manifest-types.ts), eliminating triple duplication across
+    build-embed.ts, deploy-embed.ts, and health/route.ts.
+  - Added clarifying comment that pre-compressed .gz/.br files serve as size
+    verification artifacts; Vercel Edge applies compression automatically.
+- **Learnings for future iterations:**
+  - Vercel serverless functions cannot read from public/ directory via filesystem
+  - Health checks should verify CDN serving via HTTP, not just file existence
+  - Shared types across build scripts and API routes prevent drift
+---

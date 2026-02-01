@@ -15304,3 +15304,58 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The _onVideoCreated callback pattern is cleaner than polling for lazy-loaded elements
   - Previous crashes on S148 were likely due to excessive tool loading — keep pass 3 focused
 ---
+
+## [2026-02-01] - S149: Review Wall Widget (Masonry Grid)
+Thread:
+Run: 20260201-165301-36491 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-165301-36491-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-165301-36491-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f866c56 [Pass 1/3] feat(S149): Review Wall Widget with masonry grid layout
+- Post-commit status: clean (only prd-reviews.json and USER_ACTION_REQUIRED.md remain — external)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no (scheduled for Pass 2/3)
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (7 pre-existing errors, 0 new)
+- Files changed:
+  - src/embed/widgets/review-wall/index.ts (new)
+  - src/embed/widgets/review-wall/styles.ts (new)
+  - src/embed/widgets/review-wall/template.ts (new)
+  - src/components/widgets/preview/review-wall-preview.tsx (new)
+  - src/components/widgets/widget-preview.tsx (modified — added ReviewWallPreview import and case)
+  - src/embed/index.ts (modified — added review-wall import)
+  - src/embed/types.ts (modified — added WidgetWall interface and wall to WidgetConfigJson)
+  - src/lib/widgets/schemas.ts (modified — added wallSchema and wall to widgetConfigJsonSchema)
+- What was implemented:
+  - CSS-only masonry grid layout using CSS columns (column-count, column-gap, break-inside: avoid)
+  - Flex-wrap fallback for browsers without CSS columns via @supports
+  - Configurable column count 2-5 with responsive breakpoints (tablet 2-3, mobile 1)
+  - Review cards with variable height (no truncation by default, optional via config)
+  - Cards include: star rating, reviewer name, review text, date, source label, loan type tag, avatar
+  - Featured card emphasis with accent border and subtle scale for 5-star reviews with substantial text
+  - Load more button and infinite scroll modes (configurable via config.wall.loadMore)
+  - Scroll depth tracking at 25/50/75/100% via IntersectionObserver
+  - Event tracking: impression (via existing), click_review, scroll_depth
+  - Empty state when no reviews
+  - Dashboard preview with live column count slider control
+  - Zod validation schema for wall configuration
+  - Widget registered in embed entry point
+- **Learnings for future iterations:**
+  - CSS columns provide zero-JS layout cost for masonry — column-count + break-inside: avoid
+  - Reusing buildReviewCard from company-review template minimizes bundle size
+  - Preview components mirror embed.js rendering patterns using React
+  - Linter auto-applies featured card class addition that was left as comment
+---

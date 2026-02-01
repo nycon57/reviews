@@ -4,11 +4,12 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import {
   getVideoTestimonialFunnelMetrics,
   getVideoTestimonialTrends,
-  getVideoTestimonialStatsByLoanOfficer,
+  getVideoTestimonialStatsByUser,
 } from "@/lib/video-testimonials/analytics-actions";
-import { getLoanOfficersForVideoRequests } from "@/lib/video-testimonials/actions";
+import { getUsersForVideoRequests } from "@/lib/video-testimonials/actions";
 import { getResponseAnalytics } from "@/lib/reviews/response-actions";
 import { UnifiedAnalyticsDashboard } from "@/components/analytics";
+import { AnalyticsTabsWrapper } from "@/components/analytics/analytics-tabs-wrapper";
 
 export const metadata = {
   title: "Analytics | RepWell",
@@ -70,10 +71,10 @@ export default async function AnalyticsPage() {
     getVideoTestimonialFunnelMetrics(),
     getVideoTestimonialTrends({ period: "daily" }),
     userRole !== "user"
-      ? getVideoTestimonialStatsByLoanOfficer()
+      ? getVideoTestimonialStatsByUser()
       : Promise.resolve({ success: true, data: [] }),
     userRole !== "user"
-      ? getLoanOfficersForVideoRequests()
+      ? getUsersForVideoRequests()
       : Promise.resolve({ success: true, data: [] }),
     getResponseAnalytics(),
   ]);
@@ -106,15 +107,17 @@ export default async function AnalyticsPage() {
         </p>
       </div>
 
-      <UnifiedAnalyticsDashboard
-        initialVideoMetrics={videoMetrics}
-        initialVideoTrends={videoTrends}
-        initialLoStats={userStats}
-        initialReviewSummary={reviewSummary}
-        initialResponseAnalytics={responseAnalytics}
-        teamMembers={users}
-        userRole={userRole}
-      />
+      <AnalyticsTabsWrapper teamMembers={users} userRole={userRole}>
+        <UnifiedAnalyticsDashboard
+          initialVideoMetrics={videoMetrics}
+          initialVideoTrends={videoTrends}
+          initialLoStats={userStats}
+          initialReviewSummary={reviewSummary}
+          initialResponseAnalytics={responseAnalytics}
+          teamMembers={users}
+          userRole={userRole}
+        />
+      </AnalyticsTabsWrapper>
     </div>
   );
 }

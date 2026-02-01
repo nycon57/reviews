@@ -12897,3 +12897,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The `startsWith` vs `===` comparison for slug matching is functionally equivalent with current data but `===` is semantically correct
   - Build infrastructure (botid module, Turbopack lock files) can have transient failures — always retry after clearing .next
 ---
+
+## [2026-02-01] - S129: SocialSurvey, Total Expert & Trustpilot Page Configurations
+Thread: 
+Run: 20260201-110449-31534 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-110449-31534-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-110449-31534-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f43d5ca [Pass 1/3] feat(S129): Add SocialSurvey, Total Expert & Trustpilot competitor page configs
+- Post-commit status: other pre-existing unstaged changes remain
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /copywriting (content approach), /competitor-alternatives (positioning strategy)
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors; pre-existing warnings only)
+- Files changed:
+  - src/lib/competitor-pages/configs/socialsurvey.ts (new)
+  - src/lib/competitor-pages/configs/total-expert.ts (new)
+  - src/lib/competitor-pages/configs/trustpilot.ts (new)
+  - src/lib/competitor-pages/index.ts (updated exports)
+- Implemented 3 complete CompetitorPageConfig data files:
+  - SocialSurvey: sunset/acquired positioning, migration urgency, 8 FAQs, 3 testimonials, 4 case studies, 12 social proof cards
+  - Total Expert: CRM-first vs review-first positioning, 8 FAQs, 3 testimonials, 4 case studies, 15 social proof cards
+  - Trustpilot: B2C consumer vs B2B mortgage positioning, 10 FAQs, 3 testimonials, 4 case studies, 16 social proof cards
+  - All configs pass TypeScript type-check against CompetitorPageConfig
+  - All configs have fully populated sections (no empty arrays)
+  - Each has unique hero stats, pricing comparisons, migration steps
+- **Learnings for future iterations:**
+  - Linter auto-reformats files on save; Write tool may report success but file is modified immediately after
+  - Index barrel file was auto-updated by linter — check before manual edit
+  - Pre-existing unstaged changes in workspace (next.config.js, other component files) — stage only story-specific files
+---

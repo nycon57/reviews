@@ -28,6 +28,7 @@ import "./widgets/review-carousel";
 import "./widgets/video-testimonial";
 import "./widgets/review-wall";
 import "./widgets/nps-score-badge";
+import "./widgets/social-proof-banner";
 
 // ── Resolve API base URL from the script tag ────────────────────────
 

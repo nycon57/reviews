@@ -134,6 +134,20 @@ export interface WidgetNps {
   periodText?: string;
 }
 
+export interface WidgetSocialProofBanner {
+  displayMode?: "notification" | "counter_bar" | "floating_badge";
+  placement?: "top-left" | "top-right" | "bottom-left" | "bottom-right" | "top-bar" | "bottom-bar";
+  trigger?: "immediate" | "scroll" | "time" | "exit_intent";
+  triggerValue?: number; // scroll %, or delay ms
+  frequency?: "every_visit" | "once_per_session" | "once_per_day" | "once_per_week";
+  dismissable?: boolean;
+  animation?: "slide" | "fade" | "bounce";
+  interval?: number; // rotation interval for notification popup (ms)
+  zIndex?: number;
+  ctaText?: string;
+  ctaUrl?: string;
+}
+
 export interface VideoTestimonial {
   id: string;
   video_url: string;
@@ -161,6 +175,7 @@ export interface WidgetConfigJson {
   video?: WidgetVideo;
   wall?: WidgetWall;
   nps?: WidgetNps;
+  socialProofBanner?: WidgetSocialProofBanner;
   seo?: { title?: string; description?: string; keywords?: string[] };
 }
 

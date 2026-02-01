@@ -68,13 +68,13 @@ function verify(): boolean {
   }
 
   // Check versioned rollback copy
-  const versionDir = resolve(
+  const versionedFile = resolve(
     ROOT,
     "public/embed/v1",
     current.version,
     "embed.min.js"
   );
-  if (!existsSync(versionDir)) {
+  if (!existsSync(versionedFile)) {
     console.warn(
       `WARN: Versioned rollback copy missing at /embed/v1/${current.version}/embed.min.js`
     );

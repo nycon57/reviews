@@ -49,7 +49,7 @@ const cssMinifyPlugin: Plugin = {
       if (!src.includes("/* css */")) return null;
       const minified = src.replace(
         /\/\* css \*\/\s*`([\s\S]*?)`/g,
-        (_match: string, css: string) => {
+        (_, css: string) => {
           const min = css
             .replace(/\/\*[\s\S]*?\*\//g, "")
             .replace(/\s*\n\s*/g, " ")
@@ -63,7 +63,7 @@ const cssMinifyPlugin: Plugin = {
           return `\`${min}\``;
         }
       );
-      return { contents: minified, loader: "ts" as const };
+      return { contents: minified, loader: "ts" };
     });
   },
 };
@@ -75,12 +75,10 @@ const common: BuildOptions = {
   platform: "browser",
   format: "iife",
   metafile: true,
-  external: [],
   treeShaking: true,
   legalComments: "none",
   plugins: [cssMinifyPlugin],
 };
-
 
 function contentHash(buf: Buffer): string {
   return createHash("sha256").update(buf).digest("hex").slice(0, 12);

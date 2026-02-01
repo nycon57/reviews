@@ -1,5 +1,9 @@
 import dynamic from "next/dynamic";
-import type { CompetitorPageConfig } from "@/lib/competitor-pages";
+import type {
+  CompetitorPageConfig,
+  TransitionSection,
+} from "@/lib/competitor-pages";
+import type { SectionBackground } from "./section-wrapper";
 import { SectionWrapper } from "./section-wrapper";
 import { SectionSkeleton } from "./section-skeleton";
 import { ScrollProgress } from "./scroll-progress";
@@ -121,9 +125,19 @@ const FooterCTASection = dynamic(
   { loading: () => <SectionSkeleton height="sm" /> },
 );
 
-// ---------------------------------------------------------------------------
-// Section background pattern: alternating white / subtle / muted / accent
-// ---------------------------------------------------------------------------
+/** Maps a TransitionSection variant to the corresponding SectionWrapper background. */
+function getTransitionBackground(
+  variant: TransitionSection["variant"],
+): SectionBackground {
+  switch (variant) {
+    case "dark":
+      return "dark";
+    case "gradient":
+      return "gradient";
+    default:
+      return "muted";
+  }
+}
 
 interface CompetitorComparisonPageProps {
   config: CompetitorPageConfig;
@@ -169,13 +183,7 @@ export function CompetitorComparisonPage({
       {/* Section 4: Smooth Transition */}
       <SectionWrapper
         id="transition"
-        background={
-          config.transitionSection.variant === "dark"
-            ? "dark"
-            : config.transitionSection.variant === "gradient"
-              ? "gradient"
-              : "muted"
-        }
+        background={getTransitionBackground(config.transitionSection.variant)}
       >
         <SmoothTransitionSection config={config.transitionSection} />
       </SectionWrapper>

@@ -9,20 +9,11 @@ import { Star, User } from "@phosphor-icons/react";
 // Platform icon mapping — small badge showing review source
 // ---------------------------------------------------------------------------
 
-const platformLabels: Record<string, string> = {
-  G2: "G2",
-  Capterra: "Capterra",
-  Trustpilot: "Trustpilot",
-  Google: "Google",
-  "Software Advice": "Software Advice",
-};
-
 function PlatformBadge({ platform }: { platform: string }) {
-  const label = platformLabels[platform] ?? platform;
 
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-repwell-teal-300/15 bg-repwell-teal-300/5 px-2 py-0.5 font-sans text-[10px] font-medium text-repwell-teal-300">
-      {label}
+      {platform}
     </span>
   );
 }
@@ -57,13 +48,25 @@ function StarRating({ rating }: { rating: number }) {
 // Date formatter
 // ---------------------------------------------------------------------------
 
+const MONTH_ABBR = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
 function formatReviewDate(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-  });
+  return `${MONTH_ABBR[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -86,7 +89,9 @@ function ReviewCard({ card, index, isVisible }: ReviewCardProps) {
         isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
       )}
       style={{
-        transitionDelay: isVisible ? `${index * 80 + 200}ms` : "0ms",
+        transitionDelay: isVisible
+          ? `${Math.min(index * 80, 600) + 200}ms`
+          : "0ms",
       }}
     >
       {/* Rating + platform */}

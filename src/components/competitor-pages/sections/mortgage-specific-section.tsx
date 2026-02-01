@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import {
   House,
   Buildings,
@@ -135,39 +135,11 @@ function StatCallout({ value, label }: { value: string; label: string }) {
 export function MortgageSpecificSection({
   features,
   headline = "Built for Mortgage Professionals",
-  description = "RepWell is purpose-built for the unique compliance, workflow, and reputation needs of the mortgage industry.",
+  description = "Purpose-built for the compliance, workflow, and reputation needs unique to mortgage.",
   cta,
   stat,
 }: MortgageSpecificSectionProps) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (prefersReducedMotion) {
-      const id = requestAnimationFrame(() => setIsVisible(true));
-      return () => cancelAnimationFrame(id);
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const { ref: sectionRef, isVisible } = useScrollReveal();
 
   if (features.length === 0) return null;
 

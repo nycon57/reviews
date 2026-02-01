@@ -11,6 +11,8 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
     align-items: center;
     gap: 8px;
     padding: 8px 14px;
+    min-width: 200px;
+    height: 48px;
     background: var(--rw-bg, #fff);
     border: 1px solid var(--rw-border, #e5e7eb);
     border-radius: var(--rw-radius, 8px);
@@ -102,7 +104,7 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
 
   .rw-srb__count {
     font-size: 11px;
-    color: #6b7280;
+    color: var(--rw-text-muted, #6b7280);
     white-space: nowrap;
     line-height: 1.2;
   }

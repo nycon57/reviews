@@ -23,16 +23,13 @@ function partialStar(
   const pair = el("span", "rw-srb__star-pair");
   pair.setAttribute("aria-hidden", "true");
 
-  // Empty star (background layer)
+  // Empty star (background layer) — starSVG(false) already sets rw-star--empty
   const empty = starSVG(false, filledColor, emptyColor);
-  empty.classList.add("rw-star--empty");
-  empty.classList.remove("rw-star--filled");
   pair.appendChild(empty);
 
-  // Filled star clipped to the fraction
+  // Filled star clipped to the fraction — swap class to rw-star--partial for CSS targeting
   const filled = starSVG(true, filledColor, emptyColor);
-  filled.classList.add("rw-star--partial");
-  filled.classList.remove("rw-star--filled", "rw-star--empty");
+  filled.classList.replace("rw-star--filled", "rw-star--partial");
   filled.style.clipPath = `inset(0 ${((1 - fraction) * 100).toFixed(1)}% 0 0)`;
   pair.appendChild(filled);
 
@@ -49,11 +46,7 @@ function buildStarsRow(
   emptyColor: string
 ): HTMLElement {
   const row = el("div", "rw-srb__stars");
-  row.setAttribute("role", "img");
-  row.setAttribute(
-    "aria-label",
-    `${rating.toFixed(1)} out of 5 stars`
-  );
+  row.setAttribute("aria-hidden", "true");
 
   const fullCount = Math.floor(rating);
   const fraction = rating - fullCount;
@@ -72,6 +65,21 @@ function buildStarsRow(
   }
 
   return row;
+}
+
+// ── URL Sanitization ─────────────────────────────────────────────────
+
+/** Only allow http/https URLs to prevent javascript: and data: injection. */
+function sanitizeUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return parsed.href;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 // ── Floating Mode Setup ─────────────────────────────────────────────
@@ -144,13 +152,13 @@ export function buildStarRatingBadgeDOM(
   }
 
   // Build the badge as a link or div
-  const clickUrl = badge?.clickUrl;
+  const safeUrl = badge?.clickUrl ? sanitizeUrl(badge.clickUrl) : null;
   let container: HTMLElement;
 
-  if (clickUrl) {
+  if (safeUrl) {
     const link = document.createElement("a");
     link.className = "rw-srb";
-    link.href = clickUrl;
+    link.href = safeUrl;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.addEventListener("click", () => {

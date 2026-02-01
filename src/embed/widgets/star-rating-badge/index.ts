@@ -18,6 +18,10 @@ function renderStarRatingBadgeWidget(
   _reviews: PublicReview[],
   apiBase: string
 ): void {
+  // Badge is compact — reset the default 280px minHeight set during skeleton
+  const host = root.host as HTMLElement;
+  host.style.minHeight = "";
+
   applyTheme(root, config.config?.theme?.colors, config.config?.theme?.layout);
 
   const style = document.createElement("style");

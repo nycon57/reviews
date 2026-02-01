@@ -96,8 +96,7 @@ function StarsRow({
   return (
     <div
       className="flex items-center gap-px"
-      role="img"
-      aria-label={`${rating.toFixed(1)} out of 5 stars`}
+      aria-hidden="true"
     >
       {Array.from({ length: 5 }, (_, i) => {
         if (i < fullCount) {
@@ -173,8 +172,8 @@ function Badge({
     boxShadow: isFloating
       ? "0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08)"
       : undefined,
-    width: badge.width,
-    height: badge.height,
+    minWidth: badge.width ?? "200px",
+    height: badge.height ?? "48px",
     maxWidth: "100%",
     boxSizing: "border-box",
     fontFamily:

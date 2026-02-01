@@ -11415,3 +11415,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - bg-background-subtle is used in codebase but not defined in tailwind.config.ts — it works via ShadCN CSS variable convention
   - Always check parent composition before flagging "missing" structural elements as design system violations
 ---
+## 2026-02-01 07:30 - S116: Hero Section & Logo Bar Sub-Components (Sections 1-2)
+Thread:
+Run: 20260201-070818-24849 (iteration 2)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-070818-24849-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-070818-24849-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 535a172 [Pass 3/3] refactor(S116): Simplify stat parser and fix JSDoc accuracy
+- Post-commit status: clean (only prd-reviews.json and USER_ACTION_REQUIRED.md remain)
+- Skills invoked:
+  - /feature-dev: no (Pass 1)
+  - /code-review: no (Pass 2)
+  - /vercel-react-best-practices: no (Pass 2)
+  - /next-best-practices: no (Pass 2)
+  - /supabase-postgres-best-practices: no (not applicable)
+  - /code-simplifier: yes
+  - /frontend-design: no (design system audit done manually)
+  - /web-design-guidelines: no (Pass 2)
+  - /writing-clearly-and-concisely: yes (manual review — minimal hardcoded text)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S116 files) -> PASS (0 errors)
+- Files changed:
+  - src/components/competitor-pages/sections/hero-section.tsx
+  - src/components/competitor-pages/sections/stat-count-up.tsx
+- What was implemented:
+  - Code simplifier: replaced manual zero-string construction with (0).toFixed() for internal consistency
+  - Removed inaccurate "microtask" comment (requestAnimationFrame is a macrotask, not microtask)
+  - Fixed HeroSection JSDoc to not mention trust indicator (that's the logo bar, a separate component)
+  - Final design system compliance audit confirmed all specs met
+  - All acceptance criteria verified: badge, H1, dual CTAs, hero stat, trust indicator, scrolling logo bar
+- **Learnings for future iterations:**
+  - Pass 3 polish is most effective when Passes 1-2 were thorough — minimal changes needed
+  - (0).toFixed(n) is a cleaner idiom than manually assembling "0.000" strings
+  - JSDoc should describe what a component IS, not what the whole section contains
+---

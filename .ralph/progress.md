@@ -10698,3 +10698,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - When two functions query the same table with identical filters, merge them early to save a DB round-trip
   - The summary and funnel data share identical aggregation columns (sent, delivered, reviews_generated), making them natural candidates for consolidation
 ---
+
+## [2026-02-01 02:10:00] - S110: SMS in Campaign Sequencer & Flow Builder
+Thread:
+Run: 20260201-014749-63894 (iteration 3)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 68030e6 [Pass 1/3] feat(S110): Add SMS channel to campaign sequencer & flow builder
+- Post-commit status: clean (staged files only)
+- Skills invoked:
+  - /feature-dev: no (architecture explored manually)
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: no (no pages/routes)
+  - /supabase-postgres-best-practices: no (no schema changes)
+  - /code-simplifier: no
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /vercel-composition-patterns (referenced for architecture)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors in S110 files)
+- Files changed:
+  - src/lib/email/orchestration/types.ts (extended with ChannelType, SmsTemplateConfig, SmartChannelConfig, SmsOrchestratedContext, ChannelSendResult, new trigger events, new exit reasons)
+  - src/lib/email/orchestration/channel-router.ts (NEW - SMS send node, channel routing, smart selection, fallback logic)
+  - src/lib/email/orchestration/sms-triggers.ts (NEW - inbound SMS trigger node, opt-in/opt-out handlers, delivery tracking)
+  - src/lib/email/orchestration/index.ts (updated exports for all new channel types and functions)
+- What was implemented:
+  - SMS send node: routes sequence steps through SmsService pipeline (consent, quiet hours, credits, rate limits)
+  - SMS trigger node: handles sms_received, sms_opt_in, sms_opt_out, sms_delivered, sms_failed events
+  - Conditional channel switching: ChannelConfig with fallbackChannel on SequenceStep
+  - Smart channel selection: 4 strategies (prefer_sms, prefer_email, best_available, round_robin)
+  - SMS eligibility checks: phone number, consent, credits
+  - Channel router: main entry point that resolves channel and executes with fallback
+- **Learnings for future iterations:**
+  - The orchestration engine uses `(supabase.from as any)("table")` pattern for tables not in generated types
+  - ConsentService.checkConsent() returns boolean (not status object)
+  - SmsService.forOrganization() is async factory pattern
+  - The executor's emailSender callback pattern maps cleanly to multi-channel via routeStepToChannel
+---

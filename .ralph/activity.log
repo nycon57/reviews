@@ -1337,3 +1337,8 @@ S026: Progress log updated. Story verification complete.
 [2026-02-01 12:31:05] S134: Starting Pass 1/3 - Public Widget API Endpoints implementation
 [2026-02-01 12:31:15] S133: Starting Pass 2/3 - Quality Review of Dashboard Widget CRUD API & Server Actions
 [2026-02-01 12:31:47] S133 Pass 2: Quality review complete - code already type-safe from Pass 1 linter fixes. No additional changes needed.
+[2026-02-01 12:35:37] ITERATION 1 start (mode=build story=S135)
+[2026-02-01 12:37:37] S135: Starting Pass 1/3 - embed.js Core Script implementation
+[2026-02-01 12:40:39] ITERATION 1 start (mode=build story=S135)
+[2026-02-01 12:41:14] S135: Starting Pass 1 - embed.js Core Script implementation
+[2026-02-01 12:41:28] S133: Starting Pass 3/3 - Polish & Finalize of Dashboard Widget CRUD API & Server Actions

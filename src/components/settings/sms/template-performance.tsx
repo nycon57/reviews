@@ -95,6 +95,16 @@ function MetricCard({
   );
 }
 
+// ── Formatters ───────────────────────────────────────────────────────
+
+function formatPercent(v: number): string {
+  return `${(v * 100).toFixed(1)}%`;
+}
+
+function formatNumber(v: number): string {
+  return v.toLocaleString();
+}
+
 // ── Performance Panel ─────────────────────────────────────────────────
 
 interface TemplatePerformancePanelProps {
@@ -164,9 +174,6 @@ export function TemplatePerformancePanel({
     [templates, template.id]
   );
 
-  const fmtPct = (v: number) => `${(v * 100).toFixed(1)}%`;
-  const fmtNum = (v: number) => v.toLocaleString();
-
   if (isLoading) {
     return (
       <Card className="animate-pulse">
@@ -201,26 +208,26 @@ export function TemplatePerformancePanel({
             <MetricCard
               icon={PaperPlaneTilt}
               label="Total Sends"
-              value={fmtNum(metrics.total_sends)}
+              value={formatNumber(metrics.total_sends)}
               trend={trendSends}
             />
             <MetricCard
               icon={CheckCircle}
               label="Delivery Rate"
-              value={fmtPct(metrics.delivery_rate)}
-              subtitle={`${fmtNum(metrics.delivered_count)} delivered`}
+              value={formatPercent(metrics.delivery_rate)}
+              subtitle={`${formatNumber(metrics.delivered_count)} delivered`}
             />
             <MetricCard
               icon={CursorClick}
               label="Click Rate"
-              value={fmtPct(metrics.click_rate)}
-              subtitle={`${fmtNum(metrics.click_count)} clicks`}
+              value={formatPercent(metrics.click_rate)}
+              subtitle={`${formatNumber(metrics.click_count)} clicks`}
             />
             <MetricCard
               icon={TrendUp}
               label="Conversion Rate"
-              value={fmtPct(metrics.conversion_rate)}
-              subtitle={`${fmtNum(metrics.conversion_count)} conversions`}
+              value={formatPercent(metrics.conversion_rate)}
+              subtitle={`${formatNumber(metrics.conversion_count)} conversions`}
             />
           </div>
 
@@ -261,10 +268,10 @@ export function TemplatePerformancePanel({
               {compareMetrics && (
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: 'Sends', a: metrics.total_sends, b: compareMetrics.total_sends, fmt: fmtNum },
-                    { label: 'Delivery', a: metrics.delivery_rate, b: compareMetrics.delivery_rate, fmt: fmtPct },
-                    { label: 'Clicks', a: metrics.click_rate, b: compareMetrics.click_rate, fmt: fmtPct },
-                    { label: 'Conversion', a: metrics.conversion_rate, b: compareMetrics.conversion_rate, fmt: fmtPct },
+                    { label: 'Sends', a: metrics.total_sends, b: compareMetrics.total_sends, fmt: formatNumber },
+                    { label: 'Delivery', a: metrics.delivery_rate, b: compareMetrics.delivery_rate, fmt: formatPercent },
+                    { label: 'Clicks', a: metrics.click_rate, b: compareMetrics.click_rate, fmt: formatPercent },
+                    { label: 'Conversion', a: metrics.conversion_rate, b: compareMetrics.conversion_rate, fmt: formatPercent },
                   ].map((m) => (
                     <div
                       key={m.label}

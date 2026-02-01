@@ -73,7 +73,7 @@ export function MergeFieldToolbar({
                 className="h-7 px-2 text-xs font-mono border-dashed hover:border-repwell-teal-300 hover:text-repwell-teal-400"
                 onClick={() => insertField(field)}
               >
-                {`{{${MERGE_FIELD_LABELS[field] || field}}}`}
+                {`{{${MERGE_FIELD_LABELS[field] ?? field}}}`}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs">

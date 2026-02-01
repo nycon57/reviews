@@ -12,6 +12,7 @@ import {
   FileText,
   MagnifyingGlass,
   FunnelSimple,
+  DotsThree,
 } from '@phosphor-icons/react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -60,7 +61,6 @@ import { getAllTemplatePerformance } from '@/lib/sms/templates/performance-actio
 import type { SmsTemplate, SmsTemplateCategory } from '@/lib/sms/types';
 import { TemplateEditorDialog } from './template-editor-dialog';
 import { TemplatePerformancePanel } from './template-performance';
-import { DotsThree } from '@phosphor-icons/react';
 
 // ── Category display helpers ──────────────────────────────────────────
 
@@ -80,11 +80,11 @@ const CATEGORY_COLORS: Record<SmsTemplateCategory, string> = {
   custom: 'bg-gray-50 text-gray-700 border-gray-200',
 };
 
-function truncate(text: string, max: number) {
+function truncate(text: string, max: number): string {
   return text.length > max ? text.slice(0, max) + '...' : text;
 }
 
-function formatDate(dateStr: string | null) {
+function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('en-US', {
     month: 'short',
@@ -170,15 +170,15 @@ export function SmsTemplatesTab() {
 
   // ── Actions ───────────────────────────────────────────────────────
 
-  const handleCreate = useCallback(() => {
+  function handleCreate() {
     setEditingTemplate(null);
     setEditorOpen(true);
-  }, []);
+  }
 
-  const handleEdit = useCallback((template: SmsTemplate) => {
+  function handleEdit(template: SmsTemplate) {
     setEditingTemplate(template);
     setEditorOpen(true);
-  }, []);
+  }
 
   const handleDuplicate = useCallback(
     (template: SmsTemplate) => {

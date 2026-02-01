@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useTransition } from 'react';
+import { useState, useRef, useCallback, useMemo, useTransition } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -61,6 +61,12 @@ export function TemplateEditorDialog({
   );
   const [body, setBody] = useState(template?.body ?? '');
 
+  const dialogTitle = useMemo(() => {
+    if (isReadOnly) return 'View Template';
+    if (isEditing) return 'Edit Template';
+    return 'Create Template';
+  }, [isReadOnly, isEditing]);
+
   // Reset form when dialog opens with a (possibly different) template
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
@@ -73,10 +79,6 @@ export function TemplateEditorDialog({
     },
     [template, onOpenChange]
   );
-
-  const handleMergeFieldInsert = useCallback((newValue: string) => {
-    setBody(newValue);
-  }, []);
 
   const handleSave = useCallback(() => {
     if (!name.trim()) {
@@ -115,11 +117,7 @@ export function TemplateEditorDialog({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-repwell-teal-500">
-            {isReadOnly
-              ? 'View Template'
-              : isEditing
-                ? 'Edit Template'
-                : 'Create Template'}
+            {dialogTitle}
           </DialogTitle>
         </DialogHeader>
 
@@ -164,7 +162,7 @@ export function TemplateEditorDialog({
             {!isReadOnly && (
               <MergeFieldToolbar
                 textareaRef={textareaRef}
-                onInsert={handleMergeFieldInsert}
+                onInsert={setBody}
               />
             )}
 

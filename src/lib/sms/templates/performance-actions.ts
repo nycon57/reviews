@@ -99,12 +99,10 @@ export async function getTemplatePerformance(
   // Until that column exists, report 0 to avoid showing misleading data.
   const conversionCount = 0;
 
-  const lastUsedAt = allMessages.length > 0
-    ? allMessages
-        .filter((m) => m.sent_at)
-        .sort((a, b) => new Date(b.sent_at!).getTime() - new Date(a.sent_at!).getTime())[0]
-        ?.sent_at ?? null
-    : null;
+  const lastUsedAt = allMessages.reduce<string | null>((latest, m) => {
+    if (!m.sent_at) return latest;
+    return !latest || m.sent_at > latest ? m.sent_at : latest;
+  }, null);
 
   return {
     success: true,

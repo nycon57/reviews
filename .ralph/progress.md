@@ -15652,3 +15652,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Embed bundle grew from ~26KB to ~27KB gzipped with the new widget; budget bumped to 32KB
   - Banner widget uses a separate body-level Shadow DOM host for proper fixed positioning (pattern differs from inline widgets)
 ---
+
+## [2026-02-01 17:34:00] - S151: Social Proof Banner Widget
+Thread: 
+Run: 20260201-173359-54369 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-173359-54369-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-173359-54369-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 3a07dae [Pass 2/3] fix(S151): Memory leaks, double handlers, scroll cleanup in Social Proof Banner
+- Post-commit status: clean (dirty files from crashed run cleaned)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors from S151 files)
+  - Command: npx tsx scripts/build-embed.ts -> PASS (within 32KB budget)
+- Files changed:
+  - src/embed/widgets/social-proof-banner/template.ts (fixed memory leak, double handlers, click tracking)
+  - src/embed/widgets/social-proof-banner/trigger-engine.ts (scroll handler cleanup after firing)
+- What was implemented:
+  - Fixed memory leak: rotation setInterval now tracked and cleared on widget destroy
+  - Fixed double close handler: single close button with correct container targeting (was adding handlers in both sub-component and parent builder)
+  - Fixed scroll trigger: remove listener after firing to prevent stale handlers
+  - Added click tracking for notification mode (was missing)
+  - Cleaned up dirty files from previous crashed runs that added unrelated filter-engine code
+- **Learnings for future iterations:**
+  - Crashed runs can leave dirty uncommitted files that break subsequent builds — always check git status thoroughly
+  - setInterval in embed widgets MUST be tracked and cleaned up via the widget's cleanup function
+  - Close button handlers should be added at a single level (container), not duplicated in sub-components
+  - Scroll listeners should self-remove after one-shot triggers fire
+---

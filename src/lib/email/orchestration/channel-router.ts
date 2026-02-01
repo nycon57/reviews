@@ -1,15 +1,5 @@
 "use server";
 
-/**
- * Campaign Sequencer — Channel Router
- *
- * Routes sequence steps to the correct delivery channel (email or SMS).
- * Handles:
- * - SMS send node: sends via SmsService with consent/quiet-hours checks
- * - Channel fallback: falls back to email if SMS is unavailable
- * - Smart channel selection: picks the best channel per recipient state
- */
-
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SmsService } from "@/lib/sms/sms-service";
 import { ConsentService } from "@/lib/sms/consent-service";
@@ -24,9 +14,7 @@ import type {
   EmailContext,
 } from "./types";
 
-// ============================================================================
-// SMS Eligibility Checks
-// ============================================================================
+// SMS Eligibility
 
 interface SmsEligibility {
   eligible: boolean;
@@ -34,10 +22,7 @@ interface SmsEligibility {
   phone?: string;
 }
 
-/**
- * Check whether a user is eligible to receive SMS for a given organization.
- * Validates phone number, consent status, and credit balance.
- */
+/** Validates phone number, consent status, and credit balance for SMS eligibility. */
 export async function checkSmsEligibility(
   userId: string,
   organizationId: string,
@@ -45,7 +30,6 @@ export async function checkSmsEligibility(
 ): Promise<SmsEligibility> {
   const supabase = createAdminClient();
 
-  // 1. Check if user has a phone number
   const { data: user } = await supabase
     .from("users")
     .select("phone")
@@ -57,7 +41,6 @@ export async function checkSmsEligibility(
     return { eligible: false, reason: "no_phone_number" };
   }
 
-  // 2 & 3. Check consent and credits in parallel (both depend only on phone/org)
   const checkConsent = requirements?.requireConsent !== false;
   const checkCredits = requirements?.requireCredits !== false;
 
@@ -91,13 +74,8 @@ export async function checkSmsEligibility(
   return { eligible: true, phone };
 }
 
-// ============================================================================
 // Smart Channel Selection
-// ============================================================================
 
-/**
- * Determine the best channel based on the smart channel config and user state.
- */
 export async function selectChannel(
   userId: string,
   organizationId: string,
@@ -118,7 +96,6 @@ export async function selectChannel(
       return { channel: "email" };
 
     case "prefer_email":
-      // Use email by default; only use SMS if step has no email template
       if (step.template.name) {
         return { channel: "email" };
       }
@@ -128,8 +105,6 @@ export async function selectChannel(
       return { channel: "email" };
 
     case "best_available": {
-      // Pick the channel with the best historical engagement for this user.
-      // If we can't determine, prefer the channel that has all requirements met.
       if (smsEligibility.eligible) {
         const engagement = await getUserChannelEngagement(userId, organizationId);
         if (engagement.smsConversionRate > engagement.emailOpenRate) {
@@ -140,7 +115,6 @@ export async function selectChannel(
     }
 
     case "round_robin": {
-      // Alternate channels step-by-step. Odd steps → email, even → SMS.
       const preferSms = step.step % 2 === 0;
       if (preferSms && smsEligibility.eligible) {
         return { channel: "sms", phone: smsEligibility.phone };
@@ -153,17 +127,13 @@ export async function selectChannel(
   }
 }
 
-/**
- * Get basic engagement metrics per channel for a user.
- * Used by the "best_available" smart channel strategy.
- */
+/** Get basic engagement metrics per channel, used by the "best_available" strategy. */
 async function getUserChannelEngagement(
   userId: string,
   organizationId: string
 ): Promise<{ emailOpenRate: number; smsConversionRate: number }> {
   const supabase = createAdminClient();
 
-  // SMS: check delivery rate from recent outbound messages
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: smsStats } = await (supabase.from as any)("sms_messages")
     .select("status")
@@ -177,22 +147,15 @@ async function getUserChannelEngagement(
     (m: { status: string }) => m.status === "delivered"
   ).length ?? 0;
 
-  // Without real open-tracking data we can't compute a true email open rate.
-  // Return 0 so "best_available" prefers SMS when delivery data exists.
+  // No open-tracking data yet; return 0 so "best_available" prefers SMS when delivery data exists.
   return {
     emailOpenRate: 0,
     smsConversionRate: smsTotal > 0 ? smsDelivered / smsTotal : 0,
   };
 }
 
-// ============================================================================
 // SMS Send Node
-// ============================================================================
 
-/**
- * Send an SMS through the orchestration engine.
- * Wraps SmsService with sequence-aware context.
- */
 export async function sendSequenceSms(
   ctx: SmsOrchestratedContext
 ): Promise<ChannelSendResult> {
@@ -239,20 +202,12 @@ export async function sendSequenceSms(
   }
 }
 
-// ============================================================================
-// Channel Router (Main Entry Point)
-// ============================================================================
+// Channel Router
 
 /**
  * Route a sequence step to the correct channel and execute it.
- *
- * Resolution order:
- * 1. If step has smartChannel config → auto-select channel
- * 2. If step has channelConfig → use specified channel
- * 3. Default → email
- *
- * If the primary channel fails and a fallback is configured, the fallback
- * channel is attempted automatically.
+ * Resolution: smartChannel > channelConfig > email (default).
+ * Falls back to the configured fallback channel on failure.
  */
 export async function routeStepToChannel(
   sequence: SequenceRecord,
@@ -261,7 +216,6 @@ export async function routeStepToChannel(
 ): Promise<ChannelSendResult> {
   const supabase = createAdminClient();
 
-  // Get user data (with phone)
   const { data: user } = await supabase
     .from("users")
     .select("id, email, full_name, phone")
@@ -272,7 +226,6 @@ export async function routeStepToChannel(
     return { success: false, channel: "email", error: "User not found" };
   }
 
-  // Determine channel
   let targetChannel: ChannelType = "email";
   let userPhone = user.phone as string | null;
   const channelConfig = step.channelConfig;
@@ -290,7 +243,6 @@ export async function routeStepToChannel(
     targetChannel = channelConfig.channel;
   }
 
-  // Attempt primary channel
   const primaryResult = await executeChannelSend(
     targetChannel,
     sequence,
@@ -304,7 +256,6 @@ export async function routeStepToChannel(
     return primaryResult;
   }
 
-  // Attempt fallback if configured
   const fallbackChannel = channelConfig?.fallbackChannel;
   if (fallbackChannel && fallbackChannel !== targetChannel) {
     const fallbackResult = await executeChannelSend(
@@ -325,9 +276,6 @@ export async function routeStepToChannel(
   return primaryResult;
 }
 
-/**
- * Execute a send on a specific channel.
- */
 async function executeChannelSend(
   channel: ChannelType,
   sequence: SequenceRecord,
@@ -337,8 +285,7 @@ async function executeChannelSend(
   channelConfig?: ChannelConfig
 ): Promise<ChannelSendResult> {
   if (channel === "sms") {
-    const smsTemplate =
-      channelConfig?.smsTemplate ?? step.channelConfig?.smsTemplate;
+    const smsTemplate = channelConfig?.smsTemplate;
 
     if (!smsTemplate) {
       return {
@@ -358,7 +305,6 @@ async function executeChannelSend(
     });
   }
 
-  // Email channel (default)
   const emailCtx: EmailContext = {
     sequence,
     step,

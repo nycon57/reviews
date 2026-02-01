@@ -1,15 +1,5 @@
 "use server";
 
-/**
- * Campaign Sequencer — Inbound SMS Trigger Node
- *
- * Handles inbound SMS events that can trigger or affect campaign sequences:
- * - sms_received: Start a sequence when a user sends an SMS
- * - sms_opt_in: Start a sequence when a user opts in to SMS
- * - sms_opt_out: Exit active sequences when a user opts out
- * - sms_delivered / sms_failed: Track delivery for conditional logic
- */
-
 import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   TriggerEvent,
@@ -21,22 +11,16 @@ import type {
 import { handleEventTrigger } from "./triggers";
 import { updateSequenceStatus } from "./executor";
 
-// ============================================================================
-// Inbound SMS Event Types
-// ============================================================================
+// Event Types
 
 export interface InboundSmsEvent {
-  /** The organization receiving the SMS */
   organizationId: string;
   /** Sender phone number (E.164) */
   fromPhone: string;
   /** Recipient phone number (E.164) */
   toPhone: string;
-  /** Message body */
   body: string;
-  /** Twilio message SID */
   twilioSid?: string;
-  /** Matched keyword (if any) */
   keyword?: string;
 }
 
@@ -55,22 +39,44 @@ export interface SmsDeliveryEvent {
   errorCode?: string;
 }
 
-// ============================================================================
-// SMS Trigger Handlers
-// ============================================================================
+// Helpers
 
-/**
- * Handle an inbound SMS message. Looks up the sender, then dispatches
- * an "sms_received" event to all registered sequences.
- */
+/** Resolve a user ID from a phone number. Returns undefined if no user found. */
+async function resolveUserIdByPhone(phone: string): Promise<string | undefined> {
+  const supabase = createAdminClient();
+  const { data: user } = await supabase
+    .from("users")
+    .select("id")
+    .eq("phone", phone)
+    .maybeSingle();
+  return user?.id;
+}
+
+/** Dispatch a trigger event to all sequence definitions and collect results. */
+async function dispatchToDefinitions(
+  event: TriggerEvent,
+  context: TriggerContext,
+  definitions: Map<SequenceType, SequenceDefinition>
+): Promise<Map<SequenceType, StartSequenceResult>> {
+  const results = new Map<SequenceType, StartSequenceResult>();
+
+  for (const [type, definition] of definitions) {
+    const result = await handleEventTrigger(definition, event, context);
+    results.set(type, result);
+  }
+
+  return results;
+}
+
+// SMS Trigger Handlers
+
+/** Handle an inbound SMS message by dispatching "sms_received" to all registered sequences. */
 export async function handleInboundSmsTrigger(
   event: InboundSmsEvent,
   sequenceDefinitions: Map<SequenceType, SequenceDefinition>
 ): Promise<Map<SequenceType, StartSequenceResult>> {
   const supabase = createAdminClient();
-  const results = new Map<SequenceType, StartSequenceResult>();
 
-  // Resolve user from phone number
   const { data: user } = await supabase
     .from("users")
     .select("id, organization_id")
@@ -78,8 +84,7 @@ export async function handleInboundSmsTrigger(
     .maybeSingle();
 
   if (!user) {
-    // Unknown sender — can't trigger a user-scoped sequence
-    return results;
+    return new Map();
   }
 
   const context: TriggerContext = {
@@ -99,37 +104,16 @@ export async function handleInboundSmsTrigger(
     },
   };
 
-  for (const [type, definition] of sequenceDefinitions) {
-    const result = await handleEventTrigger(definition, "sms_received", context);
-    results.set(type, result);
-  }
-
-  return results;
+  return dispatchToDefinitions("sms_received", context, sequenceDefinitions);
 }
 
-/**
- * Handle an SMS opt-in event. Dispatches "sms_opt_in" to trigger
- * welcome or onboarding sequences.
- */
+/** Handle an SMS opt-in event by dispatching "sms_opt_in" to trigger welcome/onboarding sequences. */
 export async function handleSmsOptInTrigger(
   event: SmsConsentEvent,
   sequenceDefinitions: Map<SequenceType, SequenceDefinition>
 ): Promise<Map<SequenceType, StartSequenceResult>> {
-  const results = new Map<SequenceType, StartSequenceResult>();
-
-  // Resolve user if not provided
-  let userId = event.userId;
-  if (!userId) {
-    const supabase = createAdminClient();
-    const { data: user } = await supabase
-      .from("users")
-      .select("id")
-      .eq("phone", event.phone)
-      .maybeSingle();
-    userId = user?.id;
-  }
-
-  if (!userId) return results;
+  const userId = event.userId ?? (await resolveUserIdByPhone(event.phone));
+  if (!userId) return new Map();
 
   const context: TriggerContext = {
     userId,
@@ -144,38 +128,18 @@ export async function handleSmsOptInTrigger(
     },
   };
 
-  for (const [type, definition] of sequenceDefinitions) {
-    const result = await handleEventTrigger(definition, "sms_opt_in", context);
-    results.set(type, result);
-  }
-
-  return results;
+  return dispatchToDefinitions("sms_opt_in", context, sequenceDefinitions);
 }
 
-/**
- * Handle an SMS opt-out event. Exits all active sequences that contain
- * SMS steps for the user, since we can no longer send them SMS.
- */
+/** Exit all active sequences with SMS steps when a user opts out of SMS. */
 export async function handleSmsOptOutTrigger(
   event: SmsConsentEvent
 ): Promise<{ exited: number }> {
   const supabase = createAdminClient();
-  let exitedCount = 0;
 
-  // Resolve user if not provided
-  let userId = event.userId;
-  if (!userId) {
-    const { data: user } = await supabase
-      .from("users")
-      .select("id")
-      .eq("phone", event.phone)
-      .maybeSingle();
-    userId = user?.id;
-  }
-
+  const userId = event.userId ?? (await resolveUserIdByPhone(event.phone));
   if (!userId) return { exited: 0 };
 
-  // Find all active sequences for this user in this organization
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: sequences } = await (supabase.from as any)("email_sequences")
     .select("id, metadata")
@@ -185,19 +149,12 @@ export async function handleSmsOptOutTrigger(
 
   if (!sequences || sequences.length === 0) return { exited: 0 };
 
-  // Exit sequences that have SMS channel steps
-  for (const seq of sequences) {
-    // Check if sequence metadata indicates SMS usage
-    const meta = seq.metadata as Record<string, unknown> | null;
-    const hasSmsSteps = meta?.hasSmsChannelSteps === true;
+  let exitedCount = 0;
 
-    if (hasSmsSteps) {
-      await updateSequenceStatus(
-        seq.id,
-        "exited",
-        "sms_consent_revoked",
-        undefined
-      );
+  for (const seq of sequences) {
+    const meta = seq.metadata as Record<string, unknown> | null;
+    if (meta?.hasSmsChannelSteps === true) {
+      await updateSequenceStatus(seq.id, "exited", "sms_consent_revoked");
       exitedCount++;
     }
   }
@@ -205,16 +162,12 @@ export async function handleSmsOptOutTrigger(
   return { exited: exitedCount };
 }
 
-/**
- * Handle SMS delivery status updates. Updates sequence metadata
- * so conditional branches can check delivery outcomes.
- */
+/** Update sequence metadata with SMS delivery status for conditional branch evaluation. */
 export async function handleSmsDeliveryEvent(
   event: SmsDeliveryEvent
 ): Promise<void> {
   const supabase = createAdminClient();
 
-  // Find the SMS message to get the flow_execution_id
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: message } = await (supabase.from as any)("sms_messages")
     .select("flow_execution_id, campaign_id")
@@ -223,7 +176,6 @@ export async function handleSmsDeliveryEvent(
 
   if (!message?.flow_execution_id) return;
 
-  // Update the sequence record metadata with delivery status
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: sequence } = await (supabase.from as any)("email_sequences")
     .select("id, metadata")

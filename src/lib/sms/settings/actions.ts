@@ -103,7 +103,6 @@ export async function saveTwilioCredentials(
     return { success: false, error: "Server configuration error: encryption key not set" };
   }
 
-  // Encrypt the auth token
   const { data: encrypted, error: encryptError } = await supabase.rpc("encrypt_sms_token", {
     p_token: authToken,
     p_key: encryptionKey,
@@ -113,7 +112,6 @@ export async function saveTwilioCredentials(
     return { success: false, error: "Failed to securely store credentials" };
   }
 
-  // Upsert sms_settings
   const { error: upsertError } = await supabase
     .from("sms_settings")
     .upsert(
@@ -224,23 +222,16 @@ export async function purchasePhoneNumber(
       statusCallbackUrl
     );
 
-    // Store in database
+    const tollFreePrefixes = ["+1800", "+1888", "+1877", "+1866", "+1855", "+1844", "+1833", "+1822"];
+    const isTollFree = tollFreePrefixes.some((prefix) => twilioNumber.phoneNumber?.startsWith(prefix));
+
     const { error: insertError } = await supabase
       .from("sms_phone_numbers")
       .insert({
         organization_id: auth.organizationId,
         phone_number: parsed.data.phoneNumber,
         twilio_sid: twilioNumber.sid,
-        number_type: twilioNumber.phoneNumber?.startsWith("+1800") ||
-          twilioNumber.phoneNumber?.startsWith("+1888") ||
-          twilioNumber.phoneNumber?.startsWith("+1877") ||
-          twilioNumber.phoneNumber?.startsWith("+1866") ||
-          twilioNumber.phoneNumber?.startsWith("+1855") ||
-          twilioNumber.phoneNumber?.startsWith("+1844") ||
-          twilioNumber.phoneNumber?.startsWith("+1833") ||
-          twilioNumber.phoneNumber?.startsWith("+1822")
-            ? "toll_free"
-            : "local",
+        number_type: isTollFree ? "toll_free" : "local",
         status: "active",
         capabilities: {
           sms: Boolean(twilioNumber.capabilities?.sms),
@@ -275,7 +266,6 @@ export async function releasePhoneNumber(
 
   const supabase = createAdminClient();
 
-  // Get the phone number record
   const { data: phoneRecord, error: fetchError } = await supabase
     .from("sms_phone_numbers")
     .select("*")
@@ -287,7 +277,6 @@ export async function releasePhoneNumber(
     return { success: false, error: "Phone number not found" };
   }
 
-  // Release from Twilio if we have a SID
   if (phoneRecord.twilio_sid) {
     try {
       const service = await TwilioService.forOrganization(auth.organizationId);
@@ -297,7 +286,6 @@ export async function releasePhoneNumber(
     }
   }
 
-  // Mark as released in database
   const { error: updateError } = await supabase
     .from("sms_phone_numbers")
     .update({

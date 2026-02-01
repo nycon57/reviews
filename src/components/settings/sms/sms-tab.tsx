@@ -73,18 +73,38 @@ function maskValue(value: string, showLast = 4): string {
 
 type ConnectionStatus = 'connected' | 'disconnected' | 'checking' | 'unknown';
 
+function getConnectionHeading(status: ConnectionStatus, hasCredentials: boolean): string {
+  switch (status) {
+    case 'connected':
+      return 'Active & Ready';
+    case 'disconnected':
+      return 'Connection Failed';
+    default:
+      return hasCredentials ? 'Verifying...' : 'Not Configured';
+  }
+}
+
+function getPhoneNumberStatusClass(status: string): string {
+  switch (status) {
+    case 'active':
+      return 'bg-repwell-sage-200/20 text-repwell-sage-200 border border-repwell-sage-200/30';
+    case 'pending':
+      return 'bg-amber-50 text-amber-600 border border-amber-200';
+    default:
+      return 'bg-gray-50 text-gray-500 border border-gray-200';
+  }
+}
+
 export function SmsTab() {
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Settings state
   const [settings, setSettings] = useState<SmsSettings | null>(null);
   const [phoneNumbers, setPhoneNumbers] = useState<SmsPhoneNumber[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('unknown');
   const [webhookUrls, setWebhookUrls] = useState<{ statusCallback: string; inboundSms: string } | null>(null);
 
-  // Form state
   const [accountSid, setAccountSid] = useState('');
   const [authToken, setAuthToken] = useState('');
   const [messagingServiceSid, setMessagingServiceSid] = useState('');
@@ -92,18 +112,13 @@ export function SmsTab() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Credential editing
   const [isEditing, setIsEditing] = useState(false);
   const hasExistingCredentials = Boolean(settings?.twilio_account_sid);
 
-  // Release dialog
   const [releaseTarget, setReleaseTarget] = useState<SmsPhoneNumber | null>(null);
   const [isReleasing, setIsReleasing] = useState(false);
 
-  // Clipboard
   const [copiedField, setCopiedField] = useState<string | null>(null);
-
-  // Add phone number dialog
   const [showAddNumber, setShowAddNumber] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -151,7 +166,6 @@ export function SmsTab() {
     }
   }, []);
 
-  // Check connection on load if credentials exist
   useEffect(() => {
     if (settings?.twilio_account_sid) {
       checkConnection();
@@ -317,13 +331,7 @@ export function SmsTab() {
                       <div>
                         <p className="text-sm font-medium text-white/80">Twilio Connection</p>
                         <h3 className="text-2xl font-bold">
-                          {connectionStatus === 'connected'
-                            ? 'Active & Ready'
-                            : connectionStatus === 'disconnected'
-                              ? 'Connection Failed'
-                              : hasExistingCredentials
-                                ? 'Verifying...'
-                                : 'Not Configured'}
+                          {getConnectionHeading(connectionStatus, hasExistingCredentials)}
                         </h3>
                       </div>
                     </div>
@@ -593,15 +601,7 @@ export function SmsTab() {
                                 </Badge>
                               </TableCell>
                               <TableCell>
-                                <Badge
-                                  className={
-                                    num.status === 'active'
-                                      ? 'bg-repwell-sage-200/20 text-repwell-sage-200 border border-repwell-sage-200/30'
-                                      : num.status === 'pending'
-                                        ? 'bg-amber-50 text-amber-600 border border-amber-200'
-                                        : 'bg-gray-50 text-gray-500 border border-gray-200'
-                                  }
-                                >
+                                <Badge className={getPhoneNumberStatusClass(num.status)}>
                                   {num.status}
                                 </Badge>
                               </TableCell>
@@ -779,8 +779,6 @@ export function SmsTab() {
     </motion.div>
   );
 }
-
-// ── Sub-components ────────────────────────────────────────────────────
 
 function WebhookUrlRow({
   label,

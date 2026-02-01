@@ -11734,3 +11734,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Used Phosphor Icons (CheckCircle) consistent with rest of codebase
   - blurDataURL uses inline SVG base64 for immediate placeholder without external image dependency
 ---
+
+## 2026-02-01 08:33 - S119: Feature Showcase & AI Features Tabs Sub-Components (Sections 7-8)
+Thread:
+Run: 20260201-083329-83288 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-083329-83288-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-083329-83288-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5b3f240 [Pass 2/3] fix(S119): Accessibility and Tailwind fixes for feature showcase & AI tabs
+- Post-commit status: clean (prd-reviews.json unstaged per rules)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual audit)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (on changed files) -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/components/competitor-pages/sections/ai-feature-tabs-section.tsx
+  - src/components/competitor-pages/sections/feature-showcase-section.tsx
+- Quality fixes applied:
+  - Fixed invalid Tailwind class `duration-400` → `duration-500` (tab transitions now animate)
+  - Replaced undefined `bg-background-subtle` → `bg-repwell-sage-50` (valid design system color)
+  - Added full ARIA tab pattern: `id`, `aria-controls`, `aria-labelledby`, `tabIndex` roving
+  - Added keyboard navigation (ArrowLeft/ArrowRight) for WCAG tab pattern compliance
+- **Learnings for future iterations:**
+  - `bg-background-subtle` is used by 12 files but isn't defined in tailwind.config.ts — background is a string not object. Should be fixed project-wide.
+  - `duration-400` is not a standard Tailwind utility; only 300 and 500 are available by default
+  - ARIA tab pattern requires id/aria-controls/aria-labelledby plus keyboard arrow navigation
+---

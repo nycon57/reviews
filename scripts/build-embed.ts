@@ -10,7 +10,7 @@
  * Also maintains a stable redirect target by writing the current hash
  * to manifest.json so Next.js rewrites can serve /embed/v1/embed.min.js.
  *
- * Enforces a 15KB gzipped size budget.
+ * Enforces a 25KB gzipped size budget to accommodate 6 widget types.
  */
 
 import { build, type BuildOptions, type Plugin } from "esbuild";
@@ -34,7 +34,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const ENTRY = resolve(ROOT, "src/embed/index.ts");
 const OUT_DIR = resolve(ROOT, "public/embed/v1");
-const MAX_GZIP_BYTES = 15 * 1024; // 15KB
+const MAX_GZIP_BYTES = 25 * 1024; // 25KB — increased to accommodate 6 widget types (lo, company, branch, star-rating, review-carousel, video-testimonial)
 
 // Read package.json for version
 const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));

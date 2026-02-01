@@ -24,6 +24,8 @@ import "./widgets/lo-review";
 import "./widgets/company-review";
 import "./widgets/branch-review";
 import "./widgets/star-rating-badge";
+import "./widgets/review-carousel";
+import "./widgets/video-testimonial";
 
 // ── Resolve API base URL from the script tag ────────────────────────
 

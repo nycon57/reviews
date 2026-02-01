@@ -11495,3 +11495,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - animate-fade-in-up already defined in tailwind.config.ts for tab content transitions
   - All 12 lint errors are pre-existing (crypto, TextEncoder globals + React Compiler warnings)
 ---
+
+## [2026-02-01] - S117: Pricing Tabs & Smooth Transition Sub-Components (Sections 3-4)
+Thread:
+Run: 20260201-074821-93844 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-074821-93844-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-074821-93844-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9517357 [Pass 2/3] fix(S117): Fix logic bug, accessibility, and design system compliance
+- Post-commit status: clean (except pre-existing .agents/tasks/prd-reviews.json and .ralph/USER_ACTION_REQUIRED.md)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes
+  - /vercel-react-best-practices: yes (via code-reviewer agent)
+  - /next-best-practices: yes (via code-reviewer agent)
+  - /supabase-postgres-best-practices: no (not applicable)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (Pass 3)
+  - /web-design-guidelines: yes (accessibility audit)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (Pass 3)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors, 12 pre-existing)
+- Files changed:
+  - src/components/competitor-pages/sections/pricing-tabs-section.tsx
+  - src/components/competitor-pages/sections/smooth-transition-section.tsx
+  - src/lib/competitor-pages/types.ts
+- What was implemented:
+  - Fixed critical logic bug: ComparisonValue had redundant nested ternary where inner `value ? Check : X` was dead code (always true). Simplified to single conditional with `const Icon = value ? Check : X`.
+  - Fixed styling bug: Boolean icons were styled by variant (repwell vs competitor) instead of by value (included vs not). Now green for included, red for not included regardless of column.
+  - Added accessibility: `role="img"` + `aria-label` on boolean comparison icons, `aria-hidden="true"` on decorative icon elements.
+  - Design system compliance: CTA button aligned to spec (px-6 py-3 text-sm instead of px-8 py-3.5 text-base). Card padding made responsive (lg:p-8).
+  - Removed unused `icon` field from TransitionBullet type to avoid misleading API contract.
+  - Fixed potential React key collision in bullet list by using index-based keys.
+- **Learnings for future iterations:**
+  - ComparisonValue was styling based on variant (repwell/competitor) rather than value (true/false) — semantic intent should drive styling
+  - Boolean icon indicators need explicit ARIA labels since screen readers can't interpret visual Check/X icons
+  - Design system specifies px-6 py-3 text-sm for primary buttons, not the larger px-8 py-3.5 text-base
+  - Type definitions should match implementation — unused optional fields create false API contracts
+---

@@ -5224,7 +5224,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -5245,9 +5245,7 @@
           "Use ShadCN Card components for mortgage feature cards"
         ]
       },
-      "updatedAt": "2026-02-01T13:48:37.828031+00:00",
-      "startedAt": "2026-02-01T13:48:37.827804+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-01T13:58:40.449831+00:00"
     },
     {
       "id": "S121",
@@ -5272,7 +5270,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -5292,7 +5290,10 @@
           "Green/red color coding follows design system semantic colors",
           "Handle N/A scores with a muted badge rather than hiding the row"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T14:03:45.165331+00:00",
+      "startedAt": "2026-02-01T14:03:45.165155+00:00",
+      "completedAt": null
     },
     {
       "id": "S122",

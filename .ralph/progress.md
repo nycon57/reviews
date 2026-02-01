@@ -11895,3 +11895,56 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Other competitor-page sections (hero, testimonials, etc.) could also adopt this hook to reduce duplication
   - Pre-existing 12 lint errors are all in unrelated files (remotion, crypto globals)
 ---
+
+## 2026-02-01 - S121: Migration Steps & Rating Comparison Sub-Components (Sections 11-12)
+Thread: 
+Run: 20260201-085842-91189 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-085842-91189-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-085842-91189-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: (pending - will update after commit)
+- Post-commit status: (pending)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from S121 files; 12 pre-existing errors in unrelated files)
+- Files changed:
+  - src/components/competitor-pages/sections/migration-steps-section.tsx
+  - src/components/competitor-pages/sections/rating-comparison-section.tsx
+- Implemented full migration steps section (Section 11):
+  - Horizontal stepper layout on desktop, vertical on mobile
+  - Numbered step badges with staggered animations
+  - Visual connector lines between steps
+  - Contract buyout callout with Lightning icon
+  - Timeline indicator badge with Clock icon
+  - CTA button to start migration
+  - Scroll-triggered entrance animations via useScrollReveal
+  - Accessible: aria-labels on step numbers, aria-hidden on decorative elements
+- Implemented full rating comparison section (Section 12):
+  - Side-by-side cards for RepWell vs Competitor across G2, Capterra, Trustpilot
+  - Star visualizations with half-star support
+  - Numeric scores with color coding (green for winner)
+  - Trophy icon for winner indicator
+  - Review count display for G2
+  - Graceful N/A handling for missing platform data
+  - Screen reader text for winner announcements
+  - Scroll-triggered entrance animations
+- **Learnings for future iterations:**
+  - Phosphor icons (Clock, ArrowRight, Lightning, Star, Trophy, Minus) are available and match the design system
+  - The existing pattern of useScrollReveal + cn() + transitionDelay staggering works well for consistent animations
+  - Half-star rendering uses clip overflow technique
+  - Pre-existing lint errors remain at 12 (unrelated to S121)
+---

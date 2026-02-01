@@ -46,7 +46,7 @@ export const experienceComConfig: CompetitorPageConfig = {
       "Stop overpaying for enterprise complexity. RepWell gives mortgage teams the review management they need — with transparent pricing, faster setup, and support that actually responds.",
     primaryCta: { label: "Start Free Trial", href: "/signup" },
     secondaryCta: { label: "See Pricing", href: "/pricing" },
-    stat: { value: "60%", label: "average cost savings vs Experience.com" },
+    stat: { value: "60%", label: "avg. cost savings reported by switchers" },
   },
 
   // ---------------------------------------------------------------------------
@@ -414,7 +414,7 @@ export const experienceComConfig: CompetitorPageConfig = {
     description:
       "Experience.com serves dozens of industries. RepWell is purpose-built for mortgage and financial services, so every feature fits how your team actually works.",
     cta: { label: "See Mortgage Features", href: "/features/mortgage" },
-    stat: { value: "500+", label: "mortgage companies trust RepWell" },
+    stat: { value: "500+", label: "mortgage companies use RepWell" },
   },
 
   // ---------------------------------------------------------------------------
@@ -663,7 +663,7 @@ export const experienceComConfig: CompetitorPageConfig = {
         question:
           "What if my team found Experience.com too complicated — is RepWell easier?",
         answer:
-          "Simplicity is a core design principle. RepWell's interface is built so loan officers can request reviews, view their stats, and respond to feedback without training. Our average LO adoption rate is over 85%, compared to the industry average of around 40% for enterprise platforms.",
+          "Simplicity is a core design principle. RepWell's interface is built so loan officers can request reviews, view their stats, and respond to feedback without training. Our customers report an average LO adoption rate of over 85%, compared to approximately 40% for enterprise platforms based on industry surveys.",
       },
     ],
   },
@@ -738,7 +738,7 @@ export const experienceComConfig: CompetitorPageConfig = {
       author: "Carlos M.",
       role: "Sales Manager",
       company: "Premier Mortgage Partners",
-      rating: 5,
+      rating: 4,
       platform: "Capterra",
       date: "2025-10-05",
     },
@@ -778,7 +778,7 @@ export const experienceComConfig: CompetitorPageConfig = {
       author: "Kevin O.",
       role: "Marketing VP",
       company: "First Choice Lending",
-      rating: 5,
+      rating: 4,
       platform: "Capterra",
       date: "2025-09-22",
     },

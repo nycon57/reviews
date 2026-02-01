@@ -5316,7 +5316,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5340,9 +5340,7 @@
           "FAQ answers rendered with dangerouslySetInnerHTML or a markdown renderer for rich content"
         ]
       },
-      "updatedAt": "2026-02-01T14:18:53.345496+00:00",
-      "startedAt": "2026-02-01T14:18:53.345270+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-01T14:28:55.869226+00:00"
     },
     {
       "id": "S123",
@@ -5367,7 +5365,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5388,7 +5386,8 @@
           "Footer gradient uses CSS background: linear-gradient with brand tokens",
           "Trust badge icons from lucide-react icon library"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T14:44:03.209070+00:00"
     },
     {
       "id": "S124",
@@ -5418,7 +5417,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run type-check passes",
         "All config fields populated (no empty arrays or placeholder text)"
@@ -5436,7 +5435,8 @@
           "Testimonial tone: relief at switching, cost savings, better support",
           "FAQ should address contract concerns since Experience.com uses long-term contracts"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T14:59:10.615039+00:00"
     },
     {
       "id": "S125",
@@ -5466,7 +5466,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run type-check passes",
         "All config fields populated"
@@ -5484,7 +5484,10 @@
           "Testimonial tone: frustration with generic platform, delight with mortgage-specific features",
           "FAQ should address feature gaps for mortgage use cases"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T14:59:13.208400+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-01T14:59:13.208700+00:00"
     },
     {
       "id": "S126",

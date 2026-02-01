@@ -12365,3 +12365,60 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Competitor claims should use qualifying language where exact data isn't publicly available
   - Config already passes all acceptance criteria from Pass 1
 ---
+
+## 2026-02-01 - S125: Birdeye Competitor Page Configuration & Content
+Thread:
+Run: 20260201-095913-61056 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-095913-61056-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-095913-61056-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6d448f7 [Pass 1/3] feat(S125): Add Birdeye competitor page configuration
+- Commit: 3d7331c [Pass 1/3] chore(S125): Export Birdeye config from competitor-pages index
+- Post-commit status: clean (except PRD timestamp change, not our edit)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none (config-only story, no UI/React/DB work)
+- Verification:
+  - Command: npx tsc --noEmit -> PASS
+  - Command: npx eslint src/lib/competitor-pages/configs/birdeye.ts -> PASS
+  - Command: npm run build -> FAIL (pre-existing ENOENT tmp file issue, not related to changes)
+  - Command: npm run lint -> PASS (no new errors; all 13 errors pre-existing in remotion/)
+- Files changed:
+  - src/lib/competitor-pages/configs/birdeye.ts (new)
+  - src/lib/competitor-pages/index.ts (added export)
+- Implemented complete CompetitorPageConfig for Birdeye with all 16 sections:
+  - SEO: title targets "Birdeye Alternative", description highlights mortgage-specific advantage
+  - Hero: H1 "Birdeye vs RepWell", subhead about general vs mortgage-specific
+  - 3 pricing tabs comparing per-location vs per-user pricing models
+  - Transition section with Birdeye-specific migration benefits (CSV export)
+  - 3 testimonials mentioning Birdeye by name, focusing on mortgage industry fit
+  - 3 differentiators: mortgage-native features, LOS integrations, compliance
+  - 8 feature cards emphasizing features Birdeye lacks for mortgage
+  - 3 AI capability tabs with mortgage-specific AI advantages
+  - 15 integration logos (LOS, CRM, Reviews, Social, Communication, Automation)
+  - 6 mortgage-specific features with section config
+  - 5 migration steps specific to Birdeye data export/import
+  - Rating comparison with Birdeye G2/Capterra scores
+  - 4 case studies about switching from generic to mortgage-specific
+  - 13 FAQs (5 standard + 8 Birdeye-specific)
+  - 16 social proof cards
+  - Footer CTA about upgrading from generic to mortgage-native
+  - Full feature comparison table with 6 categories including Mortgage-Specific
+- Positioning angle: Birdeye = generic platform serving 50+ industries equally (restaurants, healthcare, auto) vs RepWell = purpose-built for mortgage with LO profiles, NMLS compliance, LOS integrations, post-close automation
+- **Learnings for future iterations:**
+  - Birdeye uses per-location pricing model which is a key differentiator vs RepWell's per-user model
+  - S125 (Birdeye) follows same pattern as S124 (Experience.com) but different positioning angle (generic vs mortgage-native)
+  - Build error is pre-existing infrastructure issue with Next.js tmp files, not related to config changes
+  - Added Mortgage-Specific category to feature comparison table to emphasize Birdeye's lack of mortgage features
+---

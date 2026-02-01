@@ -36,11 +36,10 @@ function HeroHeadline({
 }
 
 /**
- * Section 1: Hero with badge, H1, dual CTAs, hero stat, and trust indicator.
+ * Section 1: Hero with badge, H1, dual CTAs, and hero stat.
  *
- * Server Component — the animated stat counter is delegated to the
- * StatCountUp client component. Background uses a subtle gradient
- * per the design system.
+ * Server Component -- the animated stat counter is delegated to the
+ * StatCountUp client component.
  */
 export function HeroSection({ config, competitorName }: HeroSectionProps) {
   return (

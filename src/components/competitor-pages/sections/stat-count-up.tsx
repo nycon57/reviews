@@ -16,9 +16,8 @@ function parseStatValue(value: string) {
 
   const target = parseFloat(match[1]);
   const suffix = value.slice(match[0].length);
-  const isDecimal = match[0].includes(".");
-  const decimalPlaces = isDecimal ? match[0].split(".")[1].length : 0;
-  const zero = `0${isDecimal ? "." + "0".repeat(decimalPlaces) : ""}${suffix}`;
+  const decimalPlaces = match[0].includes(".") ? match[0].split(".")[1].length : 0;
+  const zero = `${(0).toFixed(decimalPlaces)}${suffix}`;
 
   return { target, suffix, decimalPlaces, zero };
 }
@@ -39,7 +38,6 @@ export function StatCountUp({ value, label }: StatCountUpProps) {
     if (!el || !parsed) return;
 
     // Respect reduced motion: skip animation, show final value immediately
-    // via a microtask to satisfy the React Compiler (no sync setState in effect)
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;

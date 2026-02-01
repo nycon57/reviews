@@ -82,7 +82,6 @@ function getEventIcon(type: SmsAuditEventType) {
     case 'keyword_response':
       return <ChatCircle className="h-3.5 w-3.5" />;
     case 'quiet_hours_blocked':
-      return <Warning className="h-3.5 w-3.5" />;
     case 'rate_limited':
       return <Warning className="h-3.5 w-3.5" />;
     case 'credit_deducted':
@@ -211,7 +210,7 @@ export function AuditLogViewer() {
               Compliance Audit Log
             </CardTitle>
             <CardDescription>
-              Immutable record of all SMS compliance events. Retained for 5 years minimum.
+              Append-only record of all SMS compliance events, retained for at least 5 years.
             </CardDescription>
           </div>
           <div className="flex gap-2">
@@ -315,7 +314,7 @@ export function AuditLogViewer() {
               {page?.entries.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
-                    No audit log entries found for the selected filters.
+                    No entries match the selected filters.
                   </TableCell>
                 </TableRow>
               )}

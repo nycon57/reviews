@@ -278,14 +278,20 @@ function buildComplianceEmailBody(
   monthLabel: string,
   report: OrgComplianceReport
 ): string {
-  const registrationLabel =
-    report.registrationStatus === "approved"
-      ? "Approved"
-      : report.registrationStatus === "pending"
-        ? "Pending"
-        : report.registrationStatus === "rejected"
-          ? "REJECTED — Action Required"
-          : "Not Registered";
+  let registrationLabel: string;
+  switch (report.registrationStatus) {
+    case "approved":
+      registrationLabel = "Approved";
+      break;
+    case "pending":
+      registrationLabel = "Pending";
+      break;
+    case "rejected":
+      registrationLabel = "REJECTED — Action Required";
+      break;
+    default:
+      registrationLabel = "Not Registered";
+  }
 
   return `SMS Compliance Summary — ${monthLabel}
 Organization: ${orgName}
@@ -305,7 +311,7 @@ COMPLIANCE
   Quiet Hours Blocked: ${report.quietHoursBlocked}
   A2P/10DLC Registration: ${registrationLabel}
 
-${report.optOutRate > 5 ? "⚠ Your opt-out rate exceeds 5%. Review your messaging strategy to reduce unsubscribes.\n" : ""}${report.registrationStatus === "rejected" ? "⚠ Your A2P/10DLC registration was rejected. Re-submit in SMS Settings to continue sending.\n" : ""}
-This is an automated compliance report. View full details in your RepWell dashboard under Settings > SMS > Compliance.
+${report.optOutRate > 5 ? "⚠ Opt-out rate exceeds 5%. Review your messaging strategy to reduce unsubscribes.\n" : ""}${report.registrationStatus === "rejected" ? "⚠ A2P/10DLC registration was rejected. Re-submit in Settings > SMS to resume sending.\n" : ""}
+This report is generated automatically. View details in RepWell under Settings > SMS > Compliance.
 `;
 }

@@ -139,9 +139,7 @@ export function BrandedDomainSetup() {
       </CardHeader>
       <CardContent className="space-y-6">
         {domain ? (
-          <>
-            {/* Current domain status */}
-            <div className="rounded-lg border p-4 space-y-3">
+          <div className="rounded-lg border p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Globe className="h-5 w-5 text-muted-foreground" />
@@ -238,11 +236,8 @@ export function BrandedDomainSetup() {
                 </AlertDialog>
               </div>
             </div>
-          </>
         ) : (
-          <>
-            {/* Add new domain */}
-            <div className="space-y-3">
+          <div className="space-y-3">
               <Label htmlFor="branded-domain">Custom Short Link Domain</Label>
               <div className="flex gap-2">
                 <Input
@@ -265,7 +260,6 @@ export function BrandedDomainSetup() {
                 CNAME record pointing to our servers.
               </p>
             </div>
-          </>
         )}
       </CardContent>
     </Card>

@@ -12465,3 +12465,41 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Stats should cite their source or use qualifying language ("reported by", "based on")
   - Pass 3 changes may get bundled with concurrent story commits; note the commit hash regardless
 ---
+
+## 2026-02-01 10:10 - S125: Birdeye Competitor Page Configuration & Content
+Thread:
+Run: 20260201-100415-82586 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-100415-82586-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-100415-82586-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 752fb0f [Pass 2/3] fix(S125): Quality review fixes for Birdeye competitor config
+- Post-commit status: clean (except PRD timestamp change, not our edit)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer subagent)
+  - /vercel-react-best-practices: no (data-only story)
+  - /next-best-practices: no (data-only story)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no (will run Pass 3)
+  - /frontend-design: no (data-only story)
+  - /web-design-guidelines: no (data-only story)
+  - /writing-clearly-and-concisely: no (will run Pass 3)
+  - /agent-browser: no (data-only story)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no errors in competitor-pages files)
+- Files changed:
+  - src/lib/competitor-pages/configs/birdeye.ts
+- What was implemented:
+  - Aligned feature comparison categories with Experience.com config for cross-page consistency
+  - Replaced "Mortgage-Specific" category with "Team & Engagement" + "Testimonials" (matching experience-com.ts pattern)
+  - Moved LO profiles and NMLS display into Team & Engagement; created Testimonials category with written/video/approval/widget/social features
+  - Added competitor data verification date and quarterly review cadence in doc comment
+- **Learnings for future iterations:**
+  - Feature comparison categories must be consistent across all competitor configs for cross-page comparison
+  - Competitor claims need source documentation and verification dates
+  - Mortgage-specific features are better distributed across standard categories than in a standalone category
+---

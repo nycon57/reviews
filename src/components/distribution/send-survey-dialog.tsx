@@ -20,20 +20,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus,
   SpinnerGap as Loader2,
   PaperPlaneRight as Send,
   Clock,
+  Envelope,
+  ChatText,
 } from "@phosphor-icons/react";
 import {
   createSurveyAndQueue,
-  getLoanOfficersForSend,
+  getUsersForSend,
   getActiveTemplatesForSend,
 } from "@/lib/distribution";
+import { SmsSendTab } from "./sms-send-tab";
 
-interface LoanOfficer {
+interface TeamMember {
   id: string;
   fullName: string;
   email: string;
@@ -53,9 +57,10 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("email");
   const { toast } = useToast();
 
-  const [teamMembers, setTeamMembers] = useState<LoanOfficer[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
 
   const [formData, setFormData] = useState({
@@ -70,13 +75,13 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
   function loadOptions(): void {
     startTransition(async () => {
       setIsLoading(true);
-      const [loResult, templateResult] = await Promise.all([
-        getLoanOfficersForSend(),
+      const [usersResult, templateResult] = await Promise.all([
+        getUsersForSend(),
         getActiveTemplatesForSend(),
       ]);
 
-      if (loResult.success && loResult.data) {
-        setTeamMembers(loResult.data);
+      if (usersResult.success && usersResult.data) {
+        setTeamMembers(usersResult.data);
       }
       if (templateResult.success && templateResult.data) {
         setTemplates(templateResult.data);
@@ -161,152 +166,189 @@ export function SendSurveyDialog({ onSuccess }: SendSurveyDialogProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }
 
+  function handleSmsSuccess() {
+    setOpen(false);
+    onSuccess?.();
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          Send Survey
+          Send Review Request
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Send Survey Request</DialogTitle>
-            <DialogDescription>
-              Send a survey invitation to a customer. They will receive an email
-              with a link to complete the survey.
-            </DialogDescription>
-          </DialogHeader>
+      <DialogContent className="sm:max-w-[540px] max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Send Review Request</DialogTitle>
+          <DialogDescription>
+            Send a review request to a borrower via email or SMS.
+          </DialogDescription>
+        </DialogHeader>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="loanOfficer">Team Member</Label>
-                <Select
-                  value={formData.loanOfficerId}
-                  onValueChange={(value) => updateField("loanOfficerId", value)}
-                >
-                  <SelectTrigger id="loanOfficer">
-                    <SelectValue placeholder="Select team member" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teamMembers.map((member) => (
-                      <SelectItem key={member.id} value={member.id}>
-                        {member.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {teamMembers.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    No active team members found
-                  </p>
-                )}
-              </div>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full">
+            <TabsTrigger value="email" className="flex-1">
+              <Envelope className="mr-2 h-4 w-4" />
+              Email
+            </TabsTrigger>
+            <TabsTrigger value="sms" className="flex-1">
+              <ChatText className="mr-2 h-4 w-4" />
+              SMS
+            </TabsTrigger>
+          </TabsList>
 
-              <div className="grid gap-2">
-                <Label htmlFor="template">Survey Template</Label>
-                <Select
-                  value={formData.templateId}
-                  onValueChange={(value) => updateField("templateId", value)}
-                >
-                  <SelectTrigger id="template">
-                    <SelectValue placeholder="Select template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.id} value={template.id}>
-                        {template.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {templates.length === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    No active templates found. Create one in Surveys.
-                  </p>
-                )}
-              </div>
+          <TabsContent value="email">
+            <form onSubmit={handleSubmit}>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="grid gap-4 py-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="loanOfficer">Team Member</Label>
+                    <Select
+                      value={formData.loanOfficerId}
+                      onValueChange={(value) =>
+                        updateField("loanOfficerId", value)
+                      }
+                    >
+                      <SelectTrigger id="loanOfficer">
+                        <SelectValue placeholder="Select team member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teamMembers.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.fullName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {teamMembers.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        No active team members found
+                      </p>
+                    )}
+                  </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="customerName">Customer Name</Label>
-                <Input
-                  id="customerName"
-                  placeholder="John Smith"
-                  value={formData.customerName}
-                  onChange={(e) => updateField("customerName", e.target.value)}
-                />
-              </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="template">Survey Template</Label>
+                    <Select
+                      value={formData.templateId}
+                      onValueChange={(value) =>
+                        updateField("templateId", value)
+                      }
+                    >
+                      <SelectTrigger id="template">
+                        <SelectValue placeholder="Select template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {templates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {templates.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        No active templates found. Create one in Surveys.
+                      </p>
+                    )}
+                  </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="customerEmail">Customer Email</Label>
-                <Input
-                  id="customerEmail"
-                  type="email"
-                  placeholder="john@example.com"
-                  value={formData.customerEmail}
-                  onChange={(e) => updateField("customerEmail", e.target.value)}
-                />
-              </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="customerName">Customer Name</Label>
+                    <Input
+                      id="customerName"
+                      placeholder="John Smith"
+                      value={formData.customerName}
+                      onChange={(e) =>
+                        updateField("customerName", e.target.value)
+                      }
+                    />
+                  </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="customerPhone">
-                  Customer Phone{" "}
-                  <span className="text-muted-foreground">(optional)</span>
-                </Label>
-                <Input
-                  id="customerPhone"
-                  type="tel"
-                  placeholder="(555) 123-4567"
-                  value={formData.customerPhone}
-                  onChange={(e) => updateField("customerPhone", e.target.value)}
-                />
-              </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="customerEmail">Customer Email</Label>
+                    <Input
+                      id="customerEmail"
+                      type="email"
+                      placeholder="john@example.com"
+                      value={formData.customerEmail}
+                      onChange={(e) =>
+                        updateField("customerEmail", e.target.value)
+                      }
+                    />
+                  </div>
 
-              <div className="flex items-center gap-4 pt-2">
+                  <div className="grid gap-2">
+                    <Label htmlFor="customerPhone">
+                      Customer Phone{" "}
+                      <span className="text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Input
+                      id="customerPhone"
+                      type="tel"
+                      placeholder="(555) 123-4567"
+                      value={formData.customerPhone}
+                      onChange={(e) =>
+                        updateField("customerPhone", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-2">
+                    <Button
+                      type="button"
+                      variant={formData.sendImmediately ? "default" : "outline"}
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => updateField("sendImmediately", true)}
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      Send Now
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={
+                        formData.sendImmediately ? "outline" : "default"
+                      }
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => updateField("sendImmediately", false)}
+                    >
+                      <Clock className="mr-2 h-4 w-4" />
+                      Queue for Later
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <DialogFooter className="mt-4">
                 <Button
                   type="button"
-                  variant={formData.sendImmediately ? "default" : "outline"}
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => updateField("sendImmediately", true)}
+                  variant="outline"
+                  onClick={() => setOpen(false)}
                 >
-                  <Send className="mr-2 h-4 w-4" />
-                  Send Now
+                  Cancel
                 </Button>
-                <Button
-                  type="button"
-                  variant={formData.sendImmediately ? "outline" : "default"}
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => updateField("sendImmediately", false)}
-                >
-                  <Clock className="mr-2 h-4 w-4" />
-                  Queue for Later
+                <Button type="submit" disabled={isPending || isLoading}>
+                  {isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {formData.sendImmediately ? "Send Survey" : "Queue Survey"}
                 </Button>
-              </div>
-            </div>
-          )}
+              </DialogFooter>
+            </form>
+          </TabsContent>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isPending || isLoading}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {formData.sendImmediately ? "Send Survey" : "Queue Survey"}
-            </Button>
-          </DialogFooter>
-        </form>
+          <TabsContent value="sms">
+            <SmsSendTab onSuccess={handleSmsSuccess} />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

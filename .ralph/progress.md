@@ -12326,3 +12326,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - All copy positions Experience.com as expensive enterprise with opaque pricing, complex setup, long contracts
   - S125 (Birdeye) will follow same pattern but different positioning angle (generic vs mortgage-native)
 ---
+
+## 2026-02-01 09:55 - S124: Experience.com Competitor Page Configuration & Content
+Thread:
+Run: 20260201-094907-16825 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-094907-16825-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-094907-16825-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cb41ad6 [Pass 2/3] fix(S124): Quality review fixes for Experience.com competitor config
+- Post-commit status: clean (only unrelated modified files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /copywriting (review), /competitor-alternatives (review)
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no errors in competitor-pages files)
+- Files changed:
+  - src/lib/competitor-pages/configs/experience-com.ts
+- What was implemented:
+  - Added ogImage field to SEO config for social sharing previews
+  - Added "(reported)" qualifier to competitor setup fee claim for factual defensibility
+  - Code review confirmed all 16 sections fully populated with no placeholders
+  - All acceptance criteria verified via programmatic count check
+- **Learnings for future iterations:**
+  - ogImage is optional in the type but important for marketing pages
+  - Competitor claims should use qualifying language where exact data isn't publicly available
+  - Config already passes all acceptance criteria from Pass 1
+---

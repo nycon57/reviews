@@ -12991,3 +12991,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - content-visibility:auto is a powerful CSS optimization for long pages with many below-fold sections
   - Direct DOM manipulation for scroll progress eliminates unnecessary React re-renders
 ---
+
+## [2026-02-01] - S130: Performance Optimization & Core Web Vitals
+Thread: 
+Run: 20260201-112500-21810 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-112500-21810-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-112500-21810-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 1b7c37d [Pass 1/3] perf(S130): Optimize image sizes and font preloading for competitor pages
+- Post-commit status: clean (S130 changes committed; S131 AB test changes remain unstaged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /seo-audit (applied principles), /next-best-practices (applied principles)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (12 pre-existing errors, 0 from S130 files)
+- Files changed:
+  - next.config.js (deviceSizes, imageSizes optimization)
+  - src/app/(marketing)/compare/[slug]/page.tsx (font preload, preconnect cleanup)
+- What was implemented:
+  - Tighter image size breakpoints in next.config.js for competitor page assets
+  - Display font preload for hero heading (LCP optimization)
+  - Removed unnecessary Google Fonts preconnects (fonts self-hosted via next/font)
+  - Added crossOrigin to Unsplash preconnect
+  - NOTE: Core optimizations (framer-motion removal, ScrollProgress direct DOM, content-visibility:auto, 
+    estimatedHeight per section, logo bar height fix, force-static, dynamicParams=false, revalidate=false,
+    cache headers, lazy loading) were already committed in prior runs (commits 0594235, 158fcee)
+- **Learnings for future iterations:**
+  - Prior S129 pass committed many S130 optimizations; always check git log before implementing
+  - The page architecture is already well-optimized with dynamic imports, content-visibility, and static generation
+  - deviceSizes/imageSizes in next.config.js is a low-effort high-impact optimization for pages with many small images
+  - Font preloading for the LCP heading font directly improves Lighthouse LCP scores
+---

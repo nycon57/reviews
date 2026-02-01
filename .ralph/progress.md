@@ -10951,3 +10951,62 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The new src/lib/cron/verify-secret.ts can be adopted by all other cron routes in a future cleanup story
   - CreditBalance type from credits/types.ts is a superset of what cost-alerts needs — no need for local interfaces
 ---
+
+## 2026-02-01 - S112: Two-Way SMS Conversation UI
+Thread:
+Run: 20260201-035300-1103 (iteration 2)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-035300-1103-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-035300-1103-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 7d3b4ee [Pass 1/3] feat(S112): Two-Way SMS Conversation UI — full messaging page
+- Post-commit status: clean (only prd-reviews.json modified, which is managed by loop)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (12 errors + 76 warnings all pre-existing, none from S112)
+- Files changed:
+  - src/app/(dashboard)/dashboard/messages/page.tsx (new - Messages page with Suspense skeleton)
+  - src/components/messages/messages-view.tsx (new - main orchestrator: conversation selection, polling, keyboard nav, mobile toggle)
+  - src/components/messages/conversation-list.tsx (new - searchable, filterable conversation list with unread badges)
+  - src/components/messages/conversation-detail.tsx (new - chat thread, status/assignment management, message bubbles with delivery icons)
+  - src/components/messages/reply-composer.tsx (new - textarea with segment counter, Enter to send, inline errors)
+  - src/components/messages/empty-state.tsx (new - no-conversations, no-selection, no-search-results states)
+  - src/components/messages/index.ts (new - barrel export)
+  - src/lib/sms/messages/actions.ts (new - server actions: getConversations, getConversationMessages, sendReply, markConversationRead, updateConversationStatus, reassignConversation, getTeamMembers, getTotalUnreadCount)
+  - src/lib/sms/messages/schemas.ts (new - Zod schemas for all message actions)
+  - src/lib/permissions/index.ts (modified - added VIEW_MESSAGES permission)
+  - src/components/dashboard/sidebar.tsx (modified - added Messages nav item with ChatCircle icon)
+  - src/app/api/webhooks/twilio/inbound/route.ts (modified - increment unread_count on inbound messages)
+  - supabase/migrations/20260201000002_sms_conversation_ui.sql (new - unread_count column, indexes, increment_conversation_unread RPC)
+- What was implemented:
+  - Full two-way SMS conversation UI with conversation list (left panel) and message detail (right panel)
+  - Conversation list: phone number display, unread count badges, last message preview, relative timestamps, assigned LO avatar
+  - Status filter tabs (Active/Closed/Archived/All) and phone number search
+  - Chat bubble layout: outbound (teal, right-aligned), inbound (gray, left-aligned) with delivery status icons (check/double-check/clock/alert)
+  - Reply composer with character/segment counter, Unicode detection, Enter to send (Shift+Enter for newline)
+  - Sends via SmsService (consent, quiet hours, credit checks), inline error display on failure
+  - Conversation management: close/archive/reopen via dropdown, reassign to team member (admin/manager only)
+  - Polling every 15 seconds for new messages + toast notifications on new inbound
+  - Mobile responsive: conversation list and detail as separate views with slide navigation
+  - Keyboard shortcuts: Up/Down to navigate conversations, Escape to deselect, Enter to send
+  - Empty states: no conversations, no selection, no search results
+  - Database: unread_count column on sms_conversations with atomic increment RPC
+- **Learnings for future iterations:**
+  - Messages are linked to conversations via phone number match (not FK), which is how the inbound webhook creates them
+  - The "use server" directive requires all exported functions to be async — pure utility functions must live in separate files
+  - Supabase JS client doesn't support SQL increment natively — need RPC function for atomic counter updates
+  - supabase/migrations/ is gitignored — use `git add -f` to force-add migration files
+---

@@ -155,18 +155,14 @@ function buildVideoItem(
       item.appendChild(transcriptEl);
     }
 
-    // Connect transcript to video once video is loaded
-    const playerWrap = player as HTMLElement & { _getVideo: () => HTMLVideoElement | null };
-    // Poll for video availability (set after user clicks play)
-    const checkInterval = setInterval(() => {
-      const vid = playerWrap._getVideo();
-      if (vid) {
-        connectToVideo(vid);
-        clearInterval(checkInterval);
-      }
-    }, 500);
-    // Stop polling after 60s to prevent leaks
-    setTimeout(() => clearInterval(checkInterval), 60_000);
+    // Connect transcript to video when it is created (including after retry)
+    const playerWrap = player as HTMLElement & {
+      _getVideo: () => HTMLVideoElement | null;
+      _onVideoCreated?: (v: HTMLVideoElement) => void;
+    };
+    playerWrap._onVideoCreated = (vid: HTMLVideoElement) => {
+      connectToVideo(vid);
+    };
   }
 
   if (isSide && sidePanel) {

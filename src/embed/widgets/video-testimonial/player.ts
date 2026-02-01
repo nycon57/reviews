@@ -240,6 +240,10 @@ export function buildVideoPlayer(
       // Insert before controls but after poster
       wrap.insertBefore(video, controls);
       videoLoaded = true;
+
+      // Notify transcript (or other listeners) that a new video element exists
+      const extWrap = wrap as HTMLElement & { _onVideoCreated?: (v: HTMLVideoElement) => void };
+      extWrap._onVideoCreated?.(video);
     }
 
     if (video) {
@@ -319,8 +323,12 @@ export function buildVideoPlayer(
     }
   });
 
-  // Expose video element reference for transcript sync
-  (wrap as HTMLElement & { _getVideo: () => HTMLVideoElement | null })._getVideo = () => video;
+  // Expose video element reference and callback for transcript sync
+  const extWrap = wrap as HTMLElement & {
+    _getVideo: () => HTMLVideoElement | null;
+    _onVideoCreated?: (v: HTMLVideoElement) => void;
+  };
+  extWrap._getVideo = () => video;
 
   return wrap;
 }

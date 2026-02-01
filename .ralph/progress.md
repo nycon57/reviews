@@ -14244,3 +14244,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Widget auto-refresh uses setTimeout (not setInterval) to avoid memory leaks if destroyed
   - Entity-aware widget types need both org and LO profile resolution paths in the config route
 ---
+
+## [2026-02-01] - S138: Star Rating Badge Widget
+Thread:
+Run: 20260201-135117-63618 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-135117-63618-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-135117-63618-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 14e8187 [Pass 2/3] fix(S138): Quality improvements for Star Rating Badge Widget
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors)
+  - Command: npx eslint src/embed/widgets/star-rating-badge/ src/components/widgets/preview/star-rating-badge-preview.tsx -> PASS (clean)
+- Files changed:
+  - src/embed/widgets/star-rating-badge/index.ts (reset host minHeight for compact badge)
+  - src/embed/widgets/star-rating-badge/styles.ts (add default 200px x 48px dimensions)
+  - src/embed/widgets/star-rating-badge/template.ts (fix redundant classList ops, fix nested role="img")
+  - src/components/widgets/preview/star-rating-badge-preview.tsx (default dimensions, fix nested role="img")
+- What was implemented:
+  - Added default 200px min-width x 48px height to badge CSS (acceptance criteria)
+  - Reset host element minHeight from 280px skeleton default for compact badge
+  - Fixed accessibility: removed nested role="img" on stars row (badge container already provides complete ARIA label)
+  - Cleaned up redundant classList add/remove operations in partialStar helper
+- **Learnings for future iterations:**
+  - Compact widgets need to reset the skeleton minHeight (280px) set by the embed framework
+  - Avoid nested role="img" — the outermost container should provide the complete accessible label
+  - classList.replace() is cleaner than add/remove pairs for swapping classes
+---

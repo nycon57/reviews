@@ -13,7 +13,7 @@
  * Enforces a 15KB gzipped size budget.
  */
 
-import { build, type BuildOptions } from "esbuild";
+import { build, type BuildOptions, type Plugin } from "esbuild";
 import { createHash } from "crypto";
 import {
   readFileSync,
@@ -37,30 +37,29 @@ const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));
 const EMBED_VERSION = pkg.version || "0.1.0";
 
 /** Strip CSS comments and collapse whitespace in template literal strings. */
-const cssMinifyPlugin = {
+const cssMinifyPlugin: Plugin = {
   name: "css-minify-strings",
-  setup(build: { onLoad: (opts: { filter: RegExp }, cb: (args: { path: string }) => Promise<{ contents: string; loader: string } | undefined>) => void }) {
-    build.onLoad({ filter: /\.ts$/ }, async (args: { path: string }) => {
+  setup(pluginBuild) {
+    pluginBuild.onLoad({ filter: /\.ts$/ }, async (args) => {
       const src = readFileSync(args.path, "utf-8");
-      if (!src.includes("/* css */")) return undefined;
-      // Collapse multi-line CSS string whitespace
+      if (!src.includes("/* css */")) return null;
       const minified = src.replace(
         /\/\* css \*\/\s*`([\s\S]*?)`/g,
         (_match: string, css: string) => {
           const min = css
-            .replace(/\/\*[\s\S]*?\*\//g, "")    // strip CSS comments
-            .replace(/\s*\n\s*/g, " ")             // collapse newlines
-            .replace(/\s{2,}/g, " ")               // collapse spaces
-            .replace(/;\s*}/g, "}")                 // remove trailing semicolons
-            .replace(/\s*{\s*/g, "{")              // collapse around braces
+            .replace(/\/\*[\s\S]*?\*\//g, "")
+            .replace(/\s*\n\s*/g, " ")
+            .replace(/\s{2,}/g, " ")
+            .replace(/;\s*}/g, "}")
+            .replace(/\s*{\s*/g, "{")
             .replace(/\s*}\s*/g, "}")
-            .replace(/:\s+/g, ":")                 // collapse after colons
-            .replace(/,\s+/g, ",")                // collapse after commas
+            .replace(/:\s+/g, ":")
+            .replace(/,\s+/g, ",")
             .trim();
           return `\`${min}\``;
         }
       );
-      return { contents: minified, loader: "ts" };
+      return { contents: minified, loader: "ts" as const };
     });
   },
 };

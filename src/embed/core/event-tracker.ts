@@ -4,6 +4,7 @@
  */
 
 import { sendEvent } from "./api-client";
+import { canSendEvent } from "./session-rate-limiter";
 
 let sessionId: string | null = null;
 
@@ -17,7 +18,10 @@ function getSessionId(): string {
   return sessionId;
 }
 
+export { getSessionId };
+
 export function trackImpression(apiBase: string, widgetId: string): void {
+  if (!canSendEvent(widgetId)) return;
   sendEvent(apiBase, widgetId, "impression", { session_id: getSessionId() });
 }
 
@@ -27,6 +31,7 @@ export function trackClick(
   eventType: string,
   metadata?: Record<string, unknown>
 ): void {
+  if (!canSendEvent(widgetId)) return;
   sendEvent(apiBase, widgetId, eventType, {
     ...metadata,
     session_id: getSessionId(),

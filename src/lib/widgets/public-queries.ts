@@ -4,6 +4,7 @@ import type { WidgetConfigJson } from "./schemas";
 
 /** Public-safe subset of widget_configs (no internal fields). */
 export interface PublicWidgetConfig {
+  id: string;
   widget_id: string;
   widget_type: string;
   entity_type: string;
@@ -16,6 +17,7 @@ export interface PublicWidgetConfig {
   status: string;
   version: number | null;
   organization_id: string;
+  ab_test_config: unknown;
 }
 
 export interface PublicReview {
@@ -75,7 +77,7 @@ export async function getPublicWidgetConfig(
   let query = supabase
     .from("widget_configs")
     .select(
-      "widget_id, widget_type, entity_type, entity_id, name, config, allowed_domains, enable_structured_data, structured_data_type, status, version, organization_id"
+      "id, widget_id, widget_type, entity_type, entity_id, name, config, allowed_domains, enable_structured_data, structured_data_type, status, version, organization_id, ab_test_config"
     )
     .eq("widget_id", widgetId);
 
@@ -558,7 +560,7 @@ const WIDGET_EVENT_TYPES = [
   "impression", "click_review", "click_cta", "click_write_review",
   "video_play", "video_pause", "video_complete", "video_progress",
   "scroll_depth", "banner_dismiss", "banner_click",
-  "carousel_navigate", "filter_change",
+  "carousel_navigate", "filter_change", "conversion",
 ] as const;
 
 export type WidgetEventType = (typeof WIDGET_EVENT_TYPES)[number];

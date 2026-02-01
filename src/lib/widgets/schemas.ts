@@ -205,6 +205,12 @@ export const npsSchema = z
   })
   .optional();
 
+export const analyticsConfigSchema = z
+  .object({
+    conversionUrl: z.string().max(500).optional(),
+  })
+  .optional();
+
 export const widgetConfigJsonSchema = z.object({
   theme: themeSchema,
   content: contentSchema,
@@ -215,6 +221,7 @@ export const widgetConfigJsonSchema = z.object({
   wall: wallSchema,
   nps: npsSchema,
   seo: seoSchema,
+  analytics: analyticsConfigSchema,
 });
 
 export type WidgetConfigJson = z.infer<typeof widgetConfigJsonSchema>;

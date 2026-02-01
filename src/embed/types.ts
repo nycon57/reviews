@@ -165,6 +165,11 @@ export interface VideoTranscriptSegment {
   text: string;
 }
 
+export interface WidgetAnalyticsConfig {
+  /** URL pattern for conversion attribution (glob-style with * wildcards). */
+  conversionUrl?: string;
+}
+
 export interface WidgetConfigJson {
   theme?: WidgetTheme;
   content?: WidgetContent;
@@ -177,6 +182,7 @@ export interface WidgetConfigJson {
   nps?: WidgetNps;
   socialProofBanner?: WidgetSocialProofBanner;
   seo?: { title?: string; description?: string; keywords?: string[] };
+  analytics?: WidgetAnalyticsConfig;
 }
 
 export interface PublicWidgetConfig {
@@ -195,6 +201,12 @@ export interface PublicWidgetConfig {
   video_testimonials?: VideoTestimonial[] | null;
   /** NPS data (only for nps_score_badge widget type) */
   nps_data?: NpsData | null;
+  /** A/B test config (only when parent widget has an active test) */
+  ab_test?: {
+    enabled: boolean;
+    splitPercent: number;
+    variantWidgetSlug: string;
+  } | null;
 }
 
 export interface NpsData {
@@ -316,6 +328,10 @@ export interface WidgetInstance {
   reviews: PublicReview[];
   abortController: AbortController | null;
   activeFilters: ActiveFilters;
+  /** Cleanup for scroll depth tracking observer. */
+  _scrollCleanup?: (() => void) | null;
+  /** Cleanup for conversion attribution listener. */
+  _conversionCleanup?: (() => void) | null;
 }
 
 // ── Global API ────────────────────────────────────────────────────────

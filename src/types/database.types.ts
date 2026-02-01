@@ -5992,6 +5992,7 @@ export type Database = {
       }
       widget_configs: {
         Row: {
+          ab_test_config: Json | null
           ab_test_group: string | null
           allowed_domains: string[] | null
           config: Json
@@ -6012,6 +6013,7 @@ export type Database = {
           widget_type: Database["public"]["Enums"]["widget_type"]
         }
         Insert: {
+          ab_test_config?: Json | null
           ab_test_group?: string | null
           allowed_domains?: string[] | null
           config?: Json
@@ -6032,6 +6034,7 @@ export type Database = {
           widget_type: Database["public"]["Enums"]["widget_type"]
         }
         Update: {
+          ab_test_config?: Json | null
           ab_test_group?: string | null
           allowed_domains?: string[] | null
           config?: Json

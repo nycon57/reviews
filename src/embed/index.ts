@@ -16,7 +16,10 @@ import { renderSkeleton, removeSkeleton } from "./core/skeleton";
 import { renderWidget, renderError } from "./core/renderer";
 import { fetchConfig, fetchReviews } from "./core/api-client";
 import { trackImpression } from "./core/event-tracker";
+import { attachScrollDepthTracking } from "./core/scroll-tracker";
+import { setupConversionTracking } from "./core/conversion-tracker";
 import { DomainNotAllowedError, fetchWithDomainCheck } from "./core/domain-check";
+import { resolveAbVariant } from "./core/ab-resolver";
 import { injectStructuredData, removeStructuredData } from "./seo/structured-data";
 import { setInstanceForRoot } from "./widgets/registry";
 
@@ -77,32 +80,64 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
       fetchConfig(apiBase, instance.widgetId, controller.signal)
     );
     if (controller.signal.aborted) return;
-    instance.config = config;
 
-    // Fetch reviews (apply active filters if set by interactive controls)
-    const limit = config.config?.filters?.maxReviews ?? 10;
-    const data = await fetchWithDomainCheck(instance.widgetId, () =>
-      fetchReviews(apiBase, instance.widgetId, controller.signal, limit, undefined, instance.activeFilters)
+    // Resolve A/B variant: may redirect to variant widget slug
+    const resolvedWidgetId = resolveAbVariant(instance.widgetId, config.ab_test);
+    let finalConfig = config;
+
+    if (resolvedWidgetId !== instance.widgetId) {
+      // Visitor assigned to variant B — fetch variant config
+      finalConfig = await fetchWithDomainCheck(resolvedWidgetId, () =>
+        fetchConfig(apiBase, resolvedWidgetId, controller.signal)
+      );
+      if (controller.signal.aborted) return;
+    }
+
+    instance.config = finalConfig;
+
+    // Fetch reviews for the resolved widget
+    const limit = finalConfig.config?.filters?.maxReviews ?? 10;
+    const data = await fetchWithDomainCheck(resolvedWidgetId, () =>
+      fetchReviews(apiBase, resolvedWidgetId, controller.signal, limit, undefined, instance.activeFilters)
     );
     if (controller.signal.aborted) return;
     instance.reviews = data.reviews;
 
     // Load Google Font inside Shadow DOM if a non-system font is selected
-    loadGoogleFontInShadow(instance.shadowRoot, config.config?.theme?.typography?.fontFamily);
+    loadGoogleFontInShadow(instance.shadowRoot, finalConfig.config?.theme?.typography?.fontFamily);
 
     // Register instance so widget renderers can access it for interactive filters
     setInstanceForRoot(instance.shadowRoot, instance);
 
     // Replace skeleton with rendered widget
     removeSkeleton(instance.shadowRoot);
-    renderWidget(instance.shadowRoot, config, data.reviews, apiBase);
+    renderWidget(instance.shadowRoot, finalConfig, data.reviews, apiBase);
     instance.state = WidgetState.Rendered;
 
     // Inject JSON-LD structured data into host page <head>
-    injectStructuredData(config, data.reviews, config.entity_profile);
+    injectStructuredData(finalConfig, data.reviews, finalConfig.entity_profile);
 
-    // Track impression
-    trackImpression(apiBase, instance.widgetId);
+    // Track impression for the resolved widget (so A and B are tracked separately)
+    trackImpression(apiBase, resolvedWidgetId);
+
+    // Attach scroll depth tracking for long widgets (Review Wall, etc.)
+    const scrollCleanup = attachScrollDepthTracking(
+      instance.shadowRoot.host as HTMLElement,
+      apiBase,
+      resolvedWidgetId,
+    );
+    instance._scrollCleanup = scrollCleanup;
+
+    // Set up conversion attribution if configured
+    const analyticsConfig = finalConfig.config?.analytics;
+    if (analyticsConfig?.conversionUrl) {
+      const conversionCleanup = setupConversionTracking(
+        apiBase,
+        resolvedWidgetId,
+        analyticsConfig.conversionUrl,
+      );
+      instance._conversionCleanup = conversionCleanup;
+    }
   } catch (err) {
     if (controller.signal.aborted) return;
 
@@ -162,6 +197,10 @@ function initializeWidget(element: HTMLElement, widgetId: string, apiBase: strin
 function destroyInstance(instance: WidgetInstance): void {
   // Abort any in-flight requests
   instance.abortController?.abort();
+
+  // Clean up scroll depth and conversion tracking
+  instance._scrollCleanup?.();
+  instance._conversionCleanup?.();
 
   // Stop observing
   unobserve(instance.element);

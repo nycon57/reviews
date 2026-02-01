@@ -2,7 +2,8 @@
 
 import { useReducer, useCallback, useTransition, useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Save, ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Save, ArrowLeft, Loader2, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,9 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import { WidgetBuilderSidebar } from "./widget-builder-sidebar";
 import { WidgetPreview } from "./widget-preview";
 import { EmbedCodePanel } from "./embed-code-panel";
+import { CreateTestDialog } from "./ab-test/create-test-dialog";
 import { createWidget, updateWidget } from "@/lib/widgets/actions";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetConfig, WidgetType, WidgetEntityType, WidgetStatus } from "@/lib/widgets/types";
+import type { AbTestConfig } from "@/lib/widgets/ab-testing";
 import { THEME_PRESETS } from "./theme-preset-selector";
 
 // ── State management ──────────────────────────────────────────────────
@@ -162,6 +165,14 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
   const [isPending, startTransition] = useTransition();
   const [state, dispatch] = useReducer(builderReducer, widget, getInitialState);
   const [mobileTab, setMobileTab] = useState<"settings" | "preview" | "embed">("settings");
+  const [showCreateTest, setShowCreateTest] = useState(false);
+
+  // Determine A/B test state from widget data
+  const abTestConfig = widget?.ab_test_config as AbTestConfig | null;
+  const hasActiveTest = abTestConfig?.enabled && abTestConfig.status === "running";
+  const hasAnyTest = !!abTestConfig;
+  const isVariant = !!widget?.parent_widget_id;
+  const canCreateTest = !!state.dbId && !isVariant && !hasActiveTest;
 
   // Debounced config changes for live preview
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -275,6 +286,43 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
           {state.isDirty && (
             <span className="text-xs text-amber-500 font-medium">Unsaved changes</span>
           )}
+          {hasActiveTest && state.dbId && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              asChild
+            >
+              <Link href={`/dashboard/widgets/${state.dbId}/ab-test`}>
+                <FlaskConical size={14} />
+                View A/B Test
+              </Link>
+            </Button>
+          )}
+          {hasAnyTest && !hasActiveTest && state.dbId && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-muted-foreground"
+              asChild
+            >
+              <Link href={`/dashboard/widgets/${state.dbId}/ab-test`}>
+                <FlaskConical size={14} />
+                Past Tests
+              </Link>
+            </Button>
+          )}
+          {canCreateTest && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowCreateTest(true)}
+            >
+              <FlaskConical size={14} />
+              A/B Test
+            </Button>
+          )}
           <Button
             size="sm"
             onClick={handleSave}
@@ -322,6 +370,16 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
           {mobileTab === "embed" && <EmbedCodePanel widgetId={state.widgetId} />}
         </div>
       </div>
+
+      {/* A/B Test creation dialog */}
+      {widget && canCreateTest && (
+        <CreateTestDialog
+          widget={widget}
+          open={showCreateTest}
+          onOpenChange={setShowCreateTest}
+          onCreated={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

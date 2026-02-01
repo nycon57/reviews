@@ -6896,7 +6896,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6927,9 +6927,7 @@
           "Trigger engine is event-driven: registers listeners on init, fires show event once trigger condition met"
         ]
       },
-      "startedAt": "2026-02-01T22:23:16.366248+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-01T22:23:16.366420+00:00"
+      "updatedAt": "2026-02-01T23:33:31.346576+00:00"
     },
     {
       "id": "S152",
@@ -6952,7 +6950,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6982,7 +6980,8 @@
           "Interactive filter controls are shared components used across all widget types",
           "Filter state managed within embed.js widget instance state, triggering re-fetch on change"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T23:38:34.337716+00:00"
     },
     {
       "id": "S153",
@@ -7005,7 +7004,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7041,7 +7040,8 @@
           "Variant as separate widget_configs row simplifies API (embed.js fetches variant config just like any widget)",
           "Parent widget config stores ab_test metadata: {enabled, splitPercent, variantWidgetId, startedAt}"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T23:43:37.832797+00:00"
     },
     {
       "id": "S154",
@@ -7065,7 +7065,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7098,7 +7098,10 @@
           "Tracking pixel approach avoids CORS issues on conversion page and works even if embed.js isn't on conversion page",
           "Event rate limiting enforced both client-side (embed.js) and server-side (API) to prevent abuse"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T23:48:42.647955+00:00",
+      "startedAt": "2026-02-01T23:48:42.647795+00:00",
+      "completedAt": null
     },
     {
       "id": "S155",

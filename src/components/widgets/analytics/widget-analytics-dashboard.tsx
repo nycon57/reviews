@@ -20,6 +20,7 @@ import { ImpressionsChart } from "./impressions-chart";
 import { WidgetAnalyticsTable } from "./widget-analytics-table";
 import { WidgetDetailAnalyticsPanel } from "./widget-detail-analytics";
 import { CsvExport } from "./csv-export";
+import { AbTestList } from "@/components/widgets/ab-test/ab-test-list";
 
 import {
   getWidgetAnalyticsSummary,
@@ -210,6 +211,9 @@ export function WidgetAnalyticsDashboard() {
             isLoading={isLoading}
             onSelectWidget={handleSelectWidget}
           />
+
+          {/* A/B Tests list */}
+          <AbTestList />
         </>
       )}
     </div>

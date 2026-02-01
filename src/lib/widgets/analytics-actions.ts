@@ -35,12 +35,44 @@ export interface WidgetTableRow {
   status: string;
 }
 
+export interface ScrollDepthData {
+  threshold: number;
+  visitors: number;
+  percentage: number;
+}
+
+export interface VideoAnalyticsData {
+  totalImpressions: number;
+  totalPlays: number;
+  totalCompletes: number;
+  playRate: number;
+  completionRate: number;
+  averageWatchDuration: number;
+  milestones: { milestone: number; count: number }[];
+}
+
+export interface ConversionFunnelData {
+  impressions: number;
+  clicks: number;
+  conversions: number;
+  impressionToClickRate: number;
+  clickToConversionRate: number;
+  overallConversionRate: number;
+}
+
+export interface EnhancedAnalytics {
+  scrollDepth: ScrollDepthData[];
+  video: VideoAnalyticsData;
+  conversions: ConversionFunnelData;
+}
+
 export interface WidgetDetailAnalytics {
   daily: DailyMetric[];
   eventBreakdown: { eventType: string; count: number }[];
   topPageUrls: { url: string; count: number }[];
   topReferrers: { referrer: string; count: number }[];
   geographicBreakdown: { ipHash: string; count: number }[];
+  enhanced?: EnhancedAnalytics;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────

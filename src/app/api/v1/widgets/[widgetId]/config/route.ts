@@ -1,5 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getPublicWidgetConfig, getEntityProfile, getOrganizationProfile, getBranchProfile, getVideoTestimonials, getNpsData } from "@/lib/widgets/public-queries";
+import {
+  getPublicWidgetConfig,
+  getEntityProfile,
+  getOrganizationProfile,
+  getBranchProfile,
+  getVideoTestimonials,
+  getNpsData,
+} from "@/lib/widgets/public-queries";
+import { getPublicAbTestConfig } from "@/lib/widgets/ab-testing";
 import {
   resolveAllowedOrigin,
   buildCorsHeaders,
@@ -91,13 +99,32 @@ export async function GET(
     npsData = await getNpsData(widget.organization_id);
   }
 
+  // Resolve A/B test config if widget has an active test
+  let abTest = null;
+  if (widget.ab_test_config) {
+    const abCfg = widget.ab_test_config as {
+      enabled?: boolean;
+      status?: string;
+    };
+    if (abCfg.enabled && abCfg.status === "running") {
+      abTest = await getPublicAbTestConfig(widget.id);
+    }
+  }
+
   // Strip internal fields from public response
-  const { allowed_domains: _ad, organization_id: _oid, ...publicWidget } = widget;
+  const {
+    allowed_domains: _ad,
+    organization_id: _oid,
+    id: _id,
+    ab_test_config: _abc,
+    ...publicWidget
+  } = widget;
   const body = {
     ...publicWidget,
     entity_profile: entityProfile,
     ...(videoTestimonials ? { video_testimonials: videoTestimonials } : {}),
     ...(npsData ? { nps_data: npsData } : {}),
+    ...(abTest ? { ab_test: abTest } : {}),
   };
   const response = NextResponse.json(body);
   return withCorsAndCache(response, allowedOrigin, CACHE_CONTROL);

@@ -4,12 +4,14 @@ import type {
   CompetitorPageConfig,
   TransitionSection,
 } from "@/lib/competitor-pages";
+import { getPageABTestConfig } from "@/lib/ab-testing";
 
 import type { SectionBackground } from "./section-wrapper";
 import { SectionWrapper } from "./section-wrapper";
 import { SectionSkeleton } from "./section-skeleton";
 import { ScrollProgress } from "./scroll-progress";
 import { SwitchingFromProvider } from "./switching-from-provider";
+import { ABTestProvider } from "./ab-test-provider";
 
 // ---------------------------------------------------------------------------
 // Above-the-fold sections (eagerly imported for fast LCP)
@@ -169,10 +171,13 @@ export function CompetitorComparisonPage({
   config,
   showScrollProgress = true,
 }: CompetitorComparisonPageProps) {
+  const abTestConfig = getPageABTestConfig(config.slug) ?? null;
+
   return (
     <Suspense fallback={null}>
       <SwitchingFromProvider>
-      {showScrollProgress && <ScrollProgress />}
+        <ABTestProvider config={abTestConfig} slug={config.slug}>
+          {showScrollProgress && <ScrollProgress />}
 
       {/* Section 1: Hero */}
       <SectionWrapper id="hero" background="white">
@@ -279,6 +284,7 @@ export function CompetitorComparisonPage({
       <SectionWrapper id="footer-cta" background="gradient" lazyRender estimatedHeight="350px">
         <FooterCTASection config={config.footerCta} />
       </SectionWrapper>
+        </ABTestProvider>
       </SwitchingFromProvider>
     </Suspense>
   );

@@ -4668,7 +4668,7 @@
       ],
       "priority": "P1",
       "estimate": "XL",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "SMS steps execute correctly in campaign sequences",
         "Flow Builder SMS nodes connect and execute properly",
@@ -4709,9 +4709,9 @@
           "Campaign SMS execution respects all consent, quiet hours, and credit checks per message"
         ]
       },
-      "startedAt": "2026-02-01T07:07:09.415283+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-01T07:07:09.415454+00:00"
+      "updatedAt": "2026-02-01T07:58:27.883700+00:00",
+      "startedAt": "2026-02-01T07:57:56.588608+00:00",
+      "completedAt": "2026-02-01T07:58:27.883853+00:00"
     },
     {
       "id": "S111",
@@ -4734,7 +4734,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "CRM webhook triggers SMS correctly with proper delay",
         "Scheduled sends execute within 1 minute of scheduled time",
@@ -4774,7 +4774,10 @@
           "Follow-up eligibility check: message.status = 'delivered' AND no click on short_link AND no follow-up already sent",
           "Cost alerts use a separate notification preferences table to track which thresholds have been sent this period"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T08:55:50.579075+00:00",
+      "startedAt": "2026-02-01T08:53:00.508395+00:00",
+      "completedAt": "2026-02-01T08:55:50.579239+00:00"
     },
     {
       "id": "S112",
@@ -4798,7 +4801,7 @@
       ],
       "priority": "P1",
       "estimate": "XL",
-      "status": "open",
+      "status": "done",
       "gates": [
         "Conversations display all messages in correct chronological order",
         "Replies send successfully and appear in thread immediately",
@@ -4836,7 +4839,10 @@
           "Messages are loaded with cursor-based pagination (load more on scroll up)",
           "Borrower name resolution: join with borrower/contact table if phone matches, otherwise show formatted phone number"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T08:55:52.657350+00:00",
+      "completedAt": "2026-02-01T09:09:51.527148+00:00",
+      "updatedAt": "2026-02-01T09:09:51.526859+00:00"
     },
     {
       "id": "S113",
@@ -4859,7 +4865,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "Per-LO numbers route correctly for outbound and inbound messages",
         "Branded short domains resolve and redirect correctly",
@@ -4907,7 +4913,8 @@
           "Audit log uses append-only table with no UPDATE/DELETE permissions, even for admin",
           "Monthly compliance report uses Resend email with PDF attachment generated server-side"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T10:43:08.635898+00:00"
     },
     {
       "id": "S114",
@@ -4935,7 +4942,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "npm run type-check passes",
         "npm run build passes"
@@ -4952,7 +4959,10 @@
           "Include competitorSlug field for URL generation and analytics tracking",
           "Use branded types for URLs and image paths where helpful"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T10:49:09.940552+00:00",
+      "completedAt": "2026-02-01T10:56:27.706610+00:00",
+      "updatedAt": "2026-02-01T10:56:27.706433+00:00"
     },
     {
       "id": "S115",
@@ -4975,7 +4985,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -4996,7 +5006,10 @@
           "Use CSS scroll-margin-top for anchor links to account for sticky header",
           "Section wrapper standardizes spacing so individual sections don't manage their own padding"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T11:37:59.616511+00:00",
+      "startedAt": "2026-02-01T11:32:16.454391+00:00",
+      "completedAt": "2026-02-01T11:37:59.616894+00:00"
     },
     {
       "id": "S116",
@@ -5022,7 +5035,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5043,7 +5056,10 @@
           "Use priority prop on hero images for LCP optimization",
           "Stat count-up is extracted into a separate 'use client' component (e.g., StatCountUp) that imports framer-motion useInView + animate; the Hero Server Component passes stat counts/text as props to StatCountUp so no client hooks are used inside the server component"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T12:22:43.335467+00:00",
+      "startedAt": "2026-02-01T12:16:30.465633+00:00",
+      "completedAt": "2026-02-01T12:22:43.335623+00:00"
     },
     {
       "id": "S117",
@@ -5067,7 +5083,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5088,7 +5104,10 @@
           "Smooth transition is server component (static content)",
           "Comparison rows use a reusable ComparisonRow sub-component"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T13:01:39.764254+00:00",
+      "startedAt": "2026-02-01T12:55:19.825563+00:00",
+      "completedAt": "2026-02-01T13:01:39.764411+00:00"
     },
     {
       "id": "S118",
@@ -5112,7 +5131,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -5132,7 +5151,10 @@
           "Competitor name highlighting uses a utility function that wraps matched text in <strong>",
           "Mobile carousel uses CSS scroll-snap for lightweight swiping"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T13:13:24.655938+00:00",
+      "startedAt": "2026-02-01T13:13:24.655784+00:00",
+      "completedAt": null
     },
     {
       "id": "S119",

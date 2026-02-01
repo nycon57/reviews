@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import Image from "next/image";
 import { Star, User, CaretLeft, CaretRight } from "@phosphor-icons/react";
 import type { TestimonialCard } from "@/lib/competitor-pages";
 import { cn } from "@/lib/utils";
@@ -80,11 +81,12 @@ function TestimonialCardItem({
 
       <div className="mt-6 flex items-center gap-3 border-t border-border/50 pt-4">
         {testimonial.avatarUrl ? (
-          <img
+          <Image
             src={testimonial.avatarUrl}
-            alt={`${testimonial.author}`}
+            alt={testimonial.author}
+            width={40}
+            height={40}
             className="h-10 w-10 rounded-full object-cover"
-            loading="lazy"
           />
         ) : (
           <span
@@ -147,8 +149,12 @@ export function TestimonialsSection({
   const scroll = useCallback((direction: "left" | "right") => {
     const el = scrollRef.current;
     if (!el) return;
-    const cardWidth = el.firstElementChild?.getBoundingClientRect().width ?? 300;
-    const gap = 24; // gap-6 = 1.5rem = 24px
+    const children = Array.from(el.children) as HTMLElement[];
+    const cardWidth = children[0]?.getBoundingClientRect().width ?? 300;
+    const gap =
+      children.length >= 2
+        ? children[1].offsetLeft - (children[0].offsetLeft + children[0].offsetWidth)
+        : 24;
     el.scrollBy({
       left: direction === "left" ? -(cardWidth + gap) : cardWidth + gap,
       behavior: "smooth",
@@ -165,12 +171,12 @@ export function TestimonialsSection({
         </h2>
 
         {/* Mobile carousel nav (hidden on desktop where grid is used) */}
-        <div className="flex gap-2 md:hidden" aria-label="Carousel navigation">
+        <div className="flex gap-2 md:hidden" role="group" aria-label="Carousel navigation">
           <button
             type="button"
             onClick={() => scroll("left")}
             disabled={!canScrollLeft}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-repwell-teal-400 shadow-sm transition-colors duration-200 hover:bg-repwell-sage-100/50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-repwell-teal-400 shadow-sm transition-colors duration-200 hover:bg-repwell-sage-100/50 focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Previous testimonial"
           >
             <CaretLeft weight="bold" className="h-4 w-4" aria-hidden="true" />
@@ -179,7 +185,7 @@ export function TestimonialsSection({
             type="button"
             onClick={() => scroll("right")}
             disabled={!canScrollRight}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-repwell-teal-400 shadow-sm transition-colors duration-200 hover:bg-repwell-sage-100/50 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-repwell-teal-400 shadow-sm transition-colors duration-200 hover:bg-repwell-sage-100/50 focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
             aria-label="Next testimonial"
           >
             <CaretRight weight="bold" className="h-4 w-4" aria-hidden="true" />
@@ -189,8 +195,8 @@ export function TestimonialsSection({
 
       {/* Desktop: 3-col grid */}
       <div className="mt-10 hidden gap-8 md:grid md:grid-cols-3">
-        {testimonials.map((t) => (
-          <TestimonialCardItem key={t.author} testimonial={t} />
+        {testimonials.map((t, i) => (
+          <TestimonialCardItem key={`${t.author}-${i}`} testimonial={t} />
         ))}
       </div>
 
@@ -201,9 +207,9 @@ export function TestimonialsSection({
         role="region"
         aria-label="Testimonials carousel"
       >
-        {testimonials.map((t) => (
+        {testimonials.map((t, i) => (
           <TestimonialCardItem
-            key={t.author}
+            key={`${t.author}-${i}`}
             testimonial={t}
             className="w-[85vw] max-w-[340px] flex-shrink-0 snap-center"
           />

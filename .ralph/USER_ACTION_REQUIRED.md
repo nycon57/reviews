@@ -99,3 +99,12 @@ All 20 requested stories (S006-S022, S026, S031, S032) have been implemented. Th
 - Alert and notification system
 
 Good morning!
+
+## [2026-02-01 05:43:08] BLOCKED: S113: Enterprise SMS Features & Compliance Audit
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: stalled (no activity for 900s)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---

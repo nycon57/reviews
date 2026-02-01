@@ -63,13 +63,15 @@ function DifferentiatorIcon({ name }: { name: string }) {
   );
 }
 
-/** Visual comparison bar showing RepWell advantage. */
+/** Visual comparison bar showing RepWell advantage (illustrative, not data-driven). */
 function ComparisonMetric({
   repwellValue,
   competitorValue,
+  competitorName,
 }: {
   repwellValue: string;
   competitorValue: string;
+  competitorName: string;
 }) {
   return (
     <div className="mt-4 space-y-2.5">
@@ -92,7 +94,7 @@ function ComparisonMetric({
       <div>
         <div className="mb-1 flex items-center justify-between">
           <span className="font-sans text-xs font-semibold text-repwell-teal-400/70">
-            Competitor
+            {competitorName}
           </span>
           <span className="font-sans text-xs font-medium text-repwell-teal-300">
             {competitorValue}
@@ -114,15 +116,17 @@ function DifferentiatorCardItem({
   card,
   index,
   isVisible,
+  competitorName,
 }: {
   card: DifferentiatorCard;
   index: number;
   isVisible: boolean;
+  competitorName: string;
 }) {
   return (
     <article
       className={cn(
-        "rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-500 hover:shadow-md hover:-translate-y-1 lg:p-8",
+        "rounded-xl border border-border bg-white p-6 shadow-sm transition-[transform,box-shadow,opacity] duration-500 hover:shadow-md hover:-translate-y-1 lg:p-8",
         isVisible
           ? "translate-y-0 opacity-100"
           : "translate-y-6 opacity-0",
@@ -144,6 +148,7 @@ function DifferentiatorCardItem({
       <ComparisonMetric
         repwellValue={card.repwellValue}
         competitorValue={card.competitorValue}
+        competitorName={competitorName}
       />
     </article>
   );
@@ -211,10 +216,11 @@ export function DifferentiatorsSection({
       <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {differentiators.map((d, i) => (
           <DifferentiatorCardItem
-            key={d.title}
+            key={`${d.title}-${i}`}
             card={d}
             index={i}
             isVisible={isVisible}
+            competitorName={competitorName}
           />
         ))}
       </div>

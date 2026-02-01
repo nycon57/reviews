@@ -93,12 +93,16 @@ export default async function CompareSlugPage({
 
   return (
     <>
-      {/* Preconnect + dns-prefetch hints for external domains */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link rel="preconnect" href="https://images.unsplash.com" />
-      <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-      <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+      {/* Preload display font for hero heading (LCP element) */}
+      <link
+        rel="preload"
+        href="/fonts/Erstoria.woff2"
+        as="font"
+        type="font/woff2"
+        crossOrigin="anonymous"
+      />
+      {/* Preconnect + dns-prefetch for image CDN (fonts are self-hosted via next/font) */}
+      <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
       <link rel="dns-prefetch" href="https://images.unsplash.com" />
       {/* FAQPage JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
       <script

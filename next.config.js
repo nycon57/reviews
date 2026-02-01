@@ -53,6 +53,9 @@ const nextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    // Tighter image sizes for competitor pages (logos 120px, avatars 40px, cards ~400px)
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [40, 64, 96, 120, 256, 384],
     remotePatterns: [
       {
         protocol: "https",

@@ -162,7 +162,7 @@ export function CompetitorComparisonPage({
   showScrollProgress = true,
 }: CompetitorComparisonPageProps) {
   return (
-    <Suspense>
+    <Suspense fallback={null}>
       <SwitchingFromProvider>
       {showScrollProgress && <ScrollProgress />}
 

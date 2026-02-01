@@ -25,7 +25,8 @@ const COOKIE_MAX_AGE_DAYS = 30;
 
 function setCookie(name: string, value: string, days: number): void {
   const maxAge = days * 24 * 60 * 60;
-  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAge};SameSite=Lax`;
+  const secure = window.location.protocol === "https:" ? ";Secure" : "";
+  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${maxAge};SameSite=Lax${secure}`;
 }
 
 function getCookie(name: string): string | null {

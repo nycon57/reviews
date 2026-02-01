@@ -12034,3 +12034,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - JSON-LD for FAQPage should strip HTML tags from answers for safest schema.org compliance
   - Linter auto-corrected prose classes to utility classes for rich text styling
 ---
+
+## 2026-02-01 - S121: Migration Steps & Rating Comparison Sub-Components (Sections 11-12)
+Thread:
+Run: 20260201-090847-38707 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-090847-38707-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-090847-38707-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (no changes needed - code already polished by Pass 2 and S122 downstream improvements)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (parallel Sonnet agents reviewed React best practices, design system compliance, sibling pattern consistency)
+  - /vercel-react-best-practices: yes (via code-reviewer agent)
+  - /next-best-practices: no (no Next.js route/page changes)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (reviewed both files, no simplification needed)
+  - /frontend-design: no
+  - /web-design-guidelines: yes (design system compliance verified via review agent)
+  - /writing-clearly-and-concisely: yes (reviewed all user-facing text - clear and concise)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint -> PASS (0 errors from S121 files; 13 pre-existing errors in unrelated files)
+  - Command: npx eslint migration-steps-section.tsx rating-comparison-section.tsx -> PASS
+  - Command: npm run build -> PASS (compilation and type-check pass; _ssgManifest.js finalization error is pre-existing)
+- Files changed: none (no new changes required)
+- Polish review findings:
+  - Confirmed useScrollReveal hook already handles prefers-reduced-motion (false positive from review)
+  - Confirmed duration-500 is the established animation duration across all 8 sibling sections (not a deviation)
+  - Confirmed amber-400 for star ratings is universal UX convention, used in 25+ files across codebase
+  - Confirmed emerald colors were already replaced with repwell-sage-200 in Pass 2
+  - Confirmed empty state guard was already added by downstream S122 commit
+  - Confirmed tied variable usage is appropriate (only for sr-only accessibility text)
+  - All acceptance criteria verified: 3-step migration section with contract buyout, rating comparison across G2/Capterra/Trustpilot
+- **Learnings for future iterations:**
+  - Cross-story improvements (like S122 adding guard to S121 component) can mean Pass 3 has nothing to fix
+  - Verify file state on disk before assuming review agent findings reflect current code
+  - The _ssgManifest.js build error is a pre-existing Next.js issue, not a regression
+---

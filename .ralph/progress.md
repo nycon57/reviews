@@ -13388,3 +13388,56 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Check existing migration patterns before writing new RLS policies
   - Pass 2 missed this issue because it focused on indexes; RLS helper consistency should be a standard check
 ---
+
+## [2026-02-01 12:30] - S133: Dashboard Widget CRUD API & Server Actions
+Thread: 
+Run: 20260201-120521-2062 (iteration 2)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-120521-2062-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-120521-2062-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 06b1b5b [Pass 1/3] feat(S133): Implement Dashboard Widget CRUD API & Server Actions
+- Post-commit status: clean (only prd-reviews.json and USER_ACTION_REQUIRED.md remain, not story files)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components in this story)
+  - /next-best-practices: no (server actions only, no pages/routes)
+  - /supabase-postgres-best-practices: no (schema from S132, actions use admin client)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (Pass 1)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/widgets/__tests__/ -> PASS (51 tests, 2 files)
+  - Command: npm run type-check -> PASS (0 errors)
+  - Command: npm run lint -> PASS (no new errors from widget files)
+  - Command: npm run build -> FAIL (transient ENOENT Turbopack filesystem issue, not code-related)
+- Files changed:
+  - src/lib/widgets/schemas.ts (Zod schemas for widget config JSONB, action inputs)
+  - src/lib/widgets/types.ts (WidgetConfig types, ActionResult<T>, PaginatedResult)
+  - src/lib/widgets/actions.ts (6 server actions: create, update, delete, list, get, duplicate)
+  - src/lib/widgets/index.ts (barrel exports)
+  - src/lib/widgets/__tests__/schemas.test.ts (30 schema validation tests)
+  - src/lib/widgets/__tests__/actions.test.ts (21 action tests with mocked Supabase)
+- What was implemented:
+  - Full CRUD server actions for widget_configs table
+  - Zod validation for entire config JSONB structure (theme, content, filters, carousel, banner, seo)
+  - Color validation (hex/rgb), CSS value validation, range constraints (maxReviews 1-100)
+  - Auth guard: verifies org membership + admin/manager role
+  - Slug generation for public widget_id
+  - Deep merge for JSONB config updates with version increment
+  - Soft-delete with A/B test variant protection
+  - Paginated listing with type/status/entity/search filters
+  - UUID and slug resolution for getWidget
+  - Deep clone for duplicateWidget with (Copy) suffix
+  - Discriminated union ActionResult<T> response pattern
+- **Learnings for future iterations:**
+  - Supabase query builder chain must apply filters before .order().range()
+  - z.input<> is needed for function parameters when schema has .default() transforms
+  - Admin client returns string|null for organization_id; use concrete AuthedContext type to avoid TS narrowing issues
+  - Next.js build has transient Turbopack ENOENT issues; type-check is reliable alternative verification
+---

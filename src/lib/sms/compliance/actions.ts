@@ -357,7 +357,7 @@ export async function exportOptOutReport(
   // Build CSV with masked phone numbers
   const headers = "Date,Phone (Masked),Opt-Out Method,Original Opt-In Date,Messages Received";
   const rows = (optOuts ?? []).map((row) => {
-    const maskedPhone = maskPhone(row.phone_number);
+    const maskedPhone = maskPhoneForExport(row.phone_number);
     const optOutDate = row.opted_out_at
       ? new Date(row.opted_out_at).toISOString().split("T")[0]
       : "";
@@ -371,9 +371,9 @@ export async function exportOptOutReport(
   return { success: true, data: [headers, ...rows].join("\n") };
 }
 
-function maskPhone(phone: string): string {
-  const last4 = phone.slice(-4);
-  return `XXX-XXX-${last4}`;
+/** Mask phone for CSV export, preserving last 4 digits for identification. */
+function maskPhoneForExport(phone: string): string {
+  return `XXX-XXX-${phone.slice(-4)}`;
 }
 
 /** Escape a value for safe CSV output (prevents formula injection). */

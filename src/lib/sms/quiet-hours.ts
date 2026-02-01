@@ -28,12 +28,10 @@ export interface QuietHoursCheckResult {
 
 export class QuietHoursError extends Error {
   public nextValidTime: string;
-  public scheduledAt: string;
   constructor(nextValidTime: string) {
     super(`Quiet hours active. Next valid send time: ${nextValidTime}`);
     this.name = "QuietHoursError";
     this.nextValidTime = nextValidTime;
-    this.scheduledAt = nextValidTime;
   }
 }
 
@@ -163,8 +161,7 @@ export function checkTimeAgainstQuietHours(
     now,
     endMinutes,
     currentMinutes,
-    startMinutes,
-    timezone
+    startMinutes
   );
 
   return { blocked: true, nextValidTime, resolvedTimezone: timezone };
@@ -219,30 +216,11 @@ function calculateNextValidTime(
   now: Date,
   endMinutes: number,
   currentMinutes: number,
-  startMinutes: number,
-  timezone: string
+  startMinutes: number
 ): string {
-  // Create a date for the end of quiet hours
-  const dateStr = now.toLocaleDateString("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-
-  // Parse the local date parts
-  const [month, day, year] = dateStr.split("/").map(Number);
-  const endHour = Math.floor(endMinutes / 60);
-  const endMinute = endMinutes % 60;
-
-  // Build a date string in the timezone
-  const targetDateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}:00`;
-
-  // For overnight windows, if current time is after start, the end time is tomorrow
   const isOvernight = startMinutes > endMinutes;
   const needsNextDay = isOvernight && currentMinutes >= startMinutes;
 
-  // Use a simple approach: calculate offset from now
   let minutesUntilEnd: number;
   if (needsNextDay) {
     // Minutes until midnight + minutes from midnight to end

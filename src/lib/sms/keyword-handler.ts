@@ -188,20 +188,20 @@ export class KeywordHandler {
   private async getOrgSettings(
     organizationId: string
   ): Promise<OrgKeywordSettings> {
-    const { data } = await this.supabase
-      .from("sms_settings")
-      .select(
-        "stop_response, help_response, double_opt_in_enabled, double_opt_in_message, brand_name"
-      )
-      .eq("organization_id", organizationId)
-      .maybeSingle();
-
-    // Also fetch org name for HELP message
-    const { data: org } = await this.supabase
-      .from("organizations")
-      .select("name")
-      .eq("id", organizationId)
-      .maybeSingle();
+    const [{ data }, { data: org }] = await Promise.all([
+      this.supabase
+        .from("sms_settings")
+        .select(
+          "stop_response, help_response, double_opt_in_enabled, double_opt_in_message, brand_name"
+        )
+        .eq("organization_id", organizationId)
+        .maybeSingle(),
+      this.supabase
+        .from("organizations")
+        .select("name")
+        .eq("id", organizationId)
+        .maybeSingle(),
+    ]);
 
     return {
       stopResponse: data?.stop_response || DEFAULT_STOP_RESPONSE,

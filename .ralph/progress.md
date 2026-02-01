@@ -13641,3 +13641,68 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Files written via Write tool get deleted by concurrent processes - use bash heredoc + immediate git add/commit to persist
   - cors.ts was previously committed and removed by S133's pass 3 cleanup - needed to recreate
 ---
+
+## [2026-02-01 13:05] - S135: embed.js Core Script (Shadow DOM, Lazy Loading, Rendering)
+Thread: 
+Run: 20260201-124542-77112 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-124542-77112-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-124542-77112-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: bbec3d3 [Pass 1/3] fix(S135): Fix TypeScript errors and add widget registry for embed.js
+- Prior commit: b96c9eb [Pass 1/3] feat(S135): Implement embed.js core script with Shadow DOM, lazy loading, and rendering
+- Post-commit status: clean (S136 untracked files remain from parallel run)
+- Skills invoked:
+  - /feature-dev: no (code already implemented by parallel run)
+  - /code-review: no
+  - /vercel-react-best-practices: no (vanilla TS, no React)
+  - /next-best-practices: no (standalone embed script)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/embed.test.ts -> PASS (22 tests)
+  - Command: npm run build:embed -> PASS (4.8KB gzipped, within 15KB budget)
+  - Command: npm run build -> PASS
+  - Command: npm run lint (embed files only) -> PASS (0 embed-specific issues)
+  - Command: npx tsc --noEmit -> PASS (0 errors)
+- Files changed:
+  - src/embed/__tests__/embed.test.ts (TS cast fix)
+  - src/embed/types.ts (additive type extensions)
+  - src/embed/widgets/registry.ts (new: widget type registry)
+  - eslint.config.mjs (browser globals for embed)
+  - package.json (build:embed script, esbuild/jsdom deps)
+  - package-lock.json
+  - public/embed.js, public/embed.min.js + source maps (rebuilt)
+- What was implemented:
+  - Core embed script already existed from parallel S135 run (b96c9eb)
+  - This run fixed TypeScript errors (IntersectionObserverEntry cast through unknown)
+  - Added widget type registry for extensible renderer dispatch
+  - Added ESLint browser globals needed by embed script types
+  - Added esbuild/jsdom dev dependencies for embed build pipeline
+  - Rebuilt bundle output (4.8KB gzipped, well within 15KB budget)
+  - Verified all 22 unit tests pass, build passes, TS clean
+- Acceptance criteria status:
+  - embed.js compiled from TypeScript to ES2018 target: PASS
+  - Final bundle < 15KB gzipped: PASS (4.8KB)
+  - Discovers [data-repwell-widget] elements: PASS (discovery.ts)
+  - IntersectionObserver lazy loading (200px rootMargin): PASS (lazy-loader.ts)
+  - Shadow DOM encapsulation: PASS (shadow-dom.ts)
+  - Loading sequence (discover -> shadow -> observe -> fetch -> skeleton -> render): PASS
+  - CSS-only shimmer skeleton: PASS (skeleton.ts + base.ts)
+  - Multiple widgets per page: PASS (instances Map)
+  - CLS contribution 0 (fixed-height skeleton): PASS (280px minHeight)
+  - Error handling with graceful fallback: PASS (renderError)
+  - Global RepWell namespace (init/refresh/destroy): PASS
+  - Build script outputs embed.js + embed.min.js + source maps: PASS
+- **Learnings for future iterations:**
+  - Parallel Ralph runs can modify embed files mid-session (S136 added widgets/lo-review imports)
+  - Must re-read files before editing when concurrent agents are running
+  - Turbopack build has intermittent ENOENT errors on this machine - clean .next helps
+  - The `as unknown as` pattern needed for partial IntersectionObserverEntry mocks in tests
+---

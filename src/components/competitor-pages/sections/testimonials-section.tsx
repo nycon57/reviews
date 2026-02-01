@@ -109,6 +109,17 @@ function TestimonialCardItem({
   );
 }
 
+/** Circular carousel navigation button. */
+function CarouselButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-repwell-teal-400 shadow-sm transition-colors duration-200 hover:bg-repwell-sage-100/50 focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
+    />
+  );
+}
+
 /**
  * Section 5: Customer testimonials carousel.
  *
@@ -172,24 +183,12 @@ export function TestimonialsSection({
 
         {/* Mobile carousel nav (hidden on desktop where grid is used) */}
         <div className="flex gap-2 md:hidden" role="group" aria-label="Carousel navigation">
-          <button
-            type="button"
-            onClick={() => scroll("left")}
-            disabled={!canScrollLeft}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-repwell-teal-400 shadow-sm transition-colors duration-200 hover:bg-repwell-sage-100/50 focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Previous testimonial"
-          >
+          <CarouselButton onClick={() => scroll("left")} disabled={!canScrollLeft} aria-label="Previous testimonial">
             <CaretLeft weight="bold" className="h-4 w-4" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={() => scroll("right")}
-            disabled={!canScrollRight}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-white text-repwell-teal-400 shadow-sm transition-colors duration-200 hover:bg-repwell-sage-100/50 focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            aria-label="Next testimonial"
-          >
+          </CarouselButton>
+          <CarouselButton onClick={() => scroll("right")} disabled={!canScrollRight} aria-label="Next testimonial">
             <CaretRight weight="bold" className="h-4 w-4" aria-hidden="true" />
-          </button>
+          </CarouselButton>
         </div>
       </div>
 

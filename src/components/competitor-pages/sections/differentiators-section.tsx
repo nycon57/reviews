@@ -42,23 +42,16 @@ const iconMap: Record<string, PhosphorIcon> = {
 function DifferentiatorIcon({ name }: { name: string }) {
   const IconComponent = iconMap[name.toLowerCase()];
 
-  if (!IconComponent) {
-    return (
-      <span
-        className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-sage-200/15 text-repwell-sage-200"
-        aria-hidden="true"
-      >
-        <span className="h-5 w-5 rounded-full bg-repwell-sage-200/50" />
-      </span>
-    );
-  }
-
   return (
     <span
       className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-sage-200/15 text-repwell-sage-200"
       aria-hidden="true"
     >
-      <IconComponent weight="duotone" className="h-6 w-6" />
+      {IconComponent ? (
+        <IconComponent weight="duotone" className="h-6 w-6" />
+      ) : (
+        <span className="h-5 w-5 rounded-full bg-repwell-sage-200/50" />
+      )}
     </span>
   );
 }
@@ -202,16 +195,11 @@ export function DifferentiatorsSection({
 
   if (differentiators.length === 0) return null;
 
-  const displayHeadline =
-    headline ?? `Why teams switch from ${competitorName}`;
-
   return (
     <div ref={sectionRef}>
-      <div className="text-center">
-        <h2 className="font-display text-3xl font-bold tracking-tight text-repwell-teal-500 md:text-4xl lg:text-5xl">
-          {displayHeadline}
-        </h2>
-      </div>
+      <h2 className="text-center font-display text-3xl font-bold tracking-tight text-repwell-teal-500 md:text-4xl lg:text-5xl">
+        {headline ?? `Why teams switch from ${competitorName}`}
+      </h2>
 
       <div className="mt-10 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {differentiators.map((d, i) => (

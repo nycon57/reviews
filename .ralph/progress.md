@@ -15500,3 +15500,60 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Next.js 16 Turbopack has a race condition on pages-manifest.json during build — this is a pre-existing issue unrelated to any widget changes
   - Bundle is now 26.6KB gzipped for 8 widget types — approaching limits, future widgets may need code-splitting
 ---
+
+## [2026-02-01 17:28:00] - S150: NPS Score Badge Widget
+Thread: 
+Run: 20260201-171813-84109 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-171813-84109-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-171813-84109-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: acb18e1 [Pass 1/3] feat(S150): NPS Score Badge Widget with gauge and numeric display
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (7 pre-existing errors, 0 from S150 code)
+- Files changed:
+  - src/embed/widgets/nps-score-badge/index.ts
+  - src/embed/widgets/nps-score-badge/styles.ts
+  - src/embed/widgets/nps-score-badge/template.ts
+  - src/components/widgets/preview/nps-score-badge-preview.tsx
+  - src/components/widgets/widget-preview.tsx
+  - src/embed/index.ts
+  - src/embed/types.ts
+  - src/lib/widgets/schemas.ts
+  - src/lib/widgets/public-queries.ts
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts
+  - scripts/build-embed.ts
+  - scripts/deploy-embed.ts
+- What was implemented:
+  - NPS Score Badge embed widget with gauge (SVG semicircular dial) and numeric display modes
+  - Color-coded NPS zones: red (<0), yellow (0-30), light green (30-70), dark green (70+)
+  - Gauge needle CSS animation (1.5s ease-out) with prefers-reduced-motion support
+  - Optional promoter/passive/detractor breakdown bar
+  - Configurable label text, response count, time period display
+  - ARIA accessibility: announces "Net Promoter Score is X based on N responses"
+  - Dashboard preview React component with gauge/numeric toggle
+  - API integration: getNpsData() computes NPS from survey_responses table
+  - Config endpoint enriches nps_score_badge widgets with nps_data
+  - Types (WidgetNps, NpsData) and Zod schema (npsSchema)
+  - Bundle budget increased to 28KB for 8 widget types
+- **Learnings for future iterations:**
+  - Previous runs crashed twice before completing — progress entry is critical to persist
+  - SVG gauge construction uses createElementNS for proper SVG namespace handling
+  - NPS range -100 to +100 maps to 0° to 180° for semicircular gauge
+  - Needle animation uses CSS keyframes + transform-origin approach (not requestAnimationFrame)
+---

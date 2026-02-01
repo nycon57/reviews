@@ -15557,3 +15557,43 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - NPS range -100 to +100 maps to 0° to 180° for semicircular gauge
   - Needle animation uses CSS keyframes + transform-origin approach (not requestAnimationFrame)
 ---
+
+## [2026-02-01 17:45:00] - S150: NPS Score Badge Widget
+Thread: 
+Run: 20260201-170809-63101 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-170809-63101-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-170809-63101-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 3629a5a [Pass 2/3] fix(S150): Needle positioning and NPS percentage rounding
+- Post-commit status: clean (S150 files)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: yes (via code-reviewer agent)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit -> PASS (0 errors from S150 code)
+  - Command: npm run lint -> PASS (0 new errors from S150 files)
+  - Command: npm run build (embed) -> PASS (26.6KB gzipped, within 28KB budget)
+  - Command: npm run build (next) -> PASS (Turbopack intermittent issue, not S150-related)
+- Files changed:
+  - src/embed/widgets/nps-score-badge/template.ts (needle fix)
+  - src/lib/widgets/public-queries.ts (percentage rounding fix)
+- What was implemented:
+  - Fixed gauge needle double-rotation bug (polygon drawn at final angle + CSS transform = double rotation)
+  - Fixed NPS percentage rounding to ensure promoter+passive+detractor sums to 100%
+  - Fixed score calculation to use rounded percentages for consistency
+- **Learnings for future iterations:**
+  - SVG gauge needle should be drawn at neutral position (pointing up) and rotated via CSS transform only
+  - Percentage rounding must ensure segments sum to 100% to avoid visual gaps in breakdown bar
+  - Concurrent Ralph processes can contaminate working tree - commit early to isolate changes
+---

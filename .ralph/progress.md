@@ -12802,3 +12802,49 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Suspense boundaries should have explicit fallback props for predictability
   - Build process can hang due to disk/lock issues; type-check is a reliable alternative
 ---
+
+## [2026-02-01] - S128: Navigation Integration & Cross-Linking
+Thread: 
+Run: 20260201-104940-68706 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-104940-68706-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-104940-68706-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f981f3c [Pass 2/3] fix(S128): Fix cross-links filtering logic, restore compareNavItems export, enhance cross-links UX
+- Post-commit status: clean (S128 files committed; prd-reviews.json and USER_ACTION_REQUIRED.md remain unstaged as expected)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer agent)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: ./node_modules/.bin/tsc --noEmit -> PASS (0 errors)
+  - Command: npx eslint [S128 files] -> PASS (0 errors, ran before node_modules corruption)
+  - Command: npm run build -> FAIL (Turbopack ENOENT race condition - pre-existing infrastructure issue, not S128-related)
+- Files changed:
+  - src/config/navigation.ts (restored CompareNavItem interface & compareNavItems export with icon field)
+  - src/components/marketing/mega-menu.tsx (Compare dropdown in mega menu)
+  - src/components/marketing/mobile-menu.tsx (Compare accordion in mobile menu)
+  - src/components/marketing/marketing-footer.tsx (Compare links in footer)
+  - src/components/competitor-pages/sections/cross-links-section.tsx (new: shows all comparison pages with current page dimmed)
+  - src/components/competitor-pages/competitor-comparison-page.tsx (integrated cross-links section)
+  - src/app/(marketing)/pricing/pricing-client.tsx (added Compare section with competitor links)
+- What was implemented:
+  - Code review identified logic bug in cross-links filtering (used substring matching instead of strict equality)
+  - Fixed filtering to use item.slug === currentSlug for robust comparison
+  - Restored compareNavItems export that was missing from navigation.ts
+  - Enhanced cross-links UX: shows all pages with current one dimmed + checkmark (better wayfinding than hiding)
+  - Added icon field to CompareNavItem for consistency with other nav item types
+- **Learnings for future iterations:**
+  - The cross-links filtering used `currentSlug.includes(item.slug)` which works with current slugs but would break if future slugs are substrings of each other (e.g., "expert" vs "total-expert")
+  - Build infrastructure has Turbopack ENOENT race condition - unrelated to code changes
+  - node_modules can become corrupted when multiple processes run npm install concurrently
+---

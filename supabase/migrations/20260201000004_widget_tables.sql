@@ -71,6 +71,7 @@ COMMENT ON COLUMN widget_configs.parent_widget_id IS 'Self-ref for widget versio
 -- Indexes
 CREATE INDEX idx_widget_configs_org_status ON widget_configs(organization_id, status);
 CREATE INDEX idx_widget_configs_config_gin ON widget_configs USING gin (config);
+CREATE INDEX idx_widget_configs_parent_widget_id ON widget_configs(parent_widget_id);
 
 -- RLS
 ALTER TABLE widget_configs ENABLE ROW LEVEL SECURITY;

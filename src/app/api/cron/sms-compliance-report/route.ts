@@ -123,56 +123,72 @@ async function generateOrgReport(
   startDate: string,
   endDate: string
 ): Promise<OrgComplianceReport> {
-  // Message stats
-  const { data: sentStats } = await supabase
-    .from("sms_messages")
-    .select("status", { count: "exact" })
-    .eq("organization_id", orgId)
-    .eq("direction", "outbound")
-    .gte("created_at", startDate)
-    .lte("created_at", endDate + "T23:59:59Z");
+  // Message stats — use count-only queries to avoid fetching all rows
+  const dateFilter = { gte: startDate, lte: endDate + "T23:59:59Z" };
 
-  const messages = sentStats ?? [];
-  const totalSent = messages.length;
-  const totalDelivered = messages.filter(
-    (m: Record<string, unknown>) => m.status === "delivered"
-  ).length;
-  const totalFailed = messages.filter(
-    (m: Record<string, unknown>) =>
-      m.status === "failed" || m.status === "undelivered"
-  ).length;
+  const [
+    { count: totalSentCount },
+    { count: deliveredCount },
+    { count: failedCount },
+    { count: optOutCount },
+    { count: optInCount },
+    { count: totalConsented },
+    { count: quietHoursBlocked },
+  ] = await Promise.all([
+    supabase
+      .from("sms_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .eq("direction", "outbound")
+      .gte("created_at", dateFilter.gte)
+      .lte("created_at", dateFilter.lte),
+    supabase
+      .from("sms_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .eq("direction", "outbound")
+      .eq("status", "delivered")
+      .gte("created_at", dateFilter.gte)
+      .lte("created_at", dateFilter.lte),
+    supabase
+      .from("sms_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .eq("direction", "outbound")
+      .in("status", ["failed", "undelivered"])
+      .gte("created_at", dateFilter.gte)
+      .lte("created_at", dateFilter.lte),
+    supabase
+      .from("sms_audit_log")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .eq("event_type", "opt_out_received")
+      .gte("created_at", dateFilter.gte)
+      .lte("created_at", dateFilter.lte),
+    supabase
+      .from("sms_consent")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .eq("status", "opted_in")
+      .gte("opted_in_at", dateFilter.gte)
+      .lte("opted_in_at", dateFilter.lte),
+    supabase
+      .from("sms_consent")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .eq("status", "opted_in"),
+    supabase
+      .from("sms_audit_log")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", orgId)
+      .eq("event_type", "quiet_hours_blocked")
+      .gte("created_at", dateFilter.gte)
+      .lte("created_at", dateFilter.lte),
+  ]);
 
-  // Consent stats
-  const { count: optOutCount } = await supabase
-    .from("sms_audit_log")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", orgId)
-    .eq("event_type", "opt_out_received")
-    .gte("created_at", startDate)
-    .lte("created_at", endDate + "T23:59:59Z");
-
-  const { count: optInCount } = await supabase
-    .from("sms_consent")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", orgId)
-    .eq("status", "opted_in")
-    .gte("opted_in_at", startDate)
-    .lte("opted_in_at", endDate + "T23:59:59Z");
-
-  const { count: totalConsented } = await supabase
-    .from("sms_consent")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", orgId)
-    .eq("status", "opted_in");
-
-  // Quiet hours violations
-  const { count: quietHoursBlocked } = await supabase
-    .from("sms_audit_log")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", orgId)
-    .eq("event_type", "quiet_hours_blocked")
-    .gte("created_at", startDate)
-    .lte("created_at", endDate + "T23:59:59Z");
+  const totalSent = totalSentCount ?? 0;
+  const totalDelivered = deliveredCount ?? 0;
+  const totalFailed = failedCount ?? 0;
 
   // Registration status
   const { data: settings } = await supabase

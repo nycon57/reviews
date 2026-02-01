@@ -108,7 +108,7 @@ export function AuditLogViewer() {
 
   // Filters
   const [currentPage, setCurrentPage] = useState(1);
-  const [eventType, setEventType] = useState<string>('');
+  const [eventType, setEventType] = useState<string>('all');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -121,7 +121,7 @@ export function AuditLogViewer() {
     const query: AuditLogQuery = {
       page: currentPage,
       pageSize: 50,
-      eventType: eventType || undefined,
+      eventType: eventType === 'all' ? undefined : eventType,
       phoneNumber: phoneNumber || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
@@ -148,7 +148,7 @@ export function AuditLogViewer() {
       const result = await exportAuditLog({
         startDate: start,
         endDate: end,
-        eventType: eventType || undefined,
+        eventType: eventType === 'all' ? undefined : eventType,
         format: 'csv',
       });
 
@@ -254,7 +254,7 @@ export function AuditLogViewer() {
                 <SelectValue placeholder="All events" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All events</SelectItem>
+                <SelectItem value="all">All events</SelectItem>
                 {(Object.keys(EVENT_LABELS) as SmsAuditEventType[]).map((type) => (
                   <SelectItem key={type} value={type}>
                     {EVENT_LABELS[type].label}

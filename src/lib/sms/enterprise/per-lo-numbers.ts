@@ -79,7 +79,7 @@ export async function getLoPhoneAssignments(): Promise<
     .map((n: Record<string, unknown>) => n.loan_officer_id as string | null)
     .filter(Boolean) as string[];
 
-  let loMap = new Map<string, { name: string; email: string }>();
+  const loMap = new Map<string, { name: string; email: string }>();
   if (loIds.length > 0) {
     const { data: users } = await supabase
       .from("users")
@@ -154,12 +154,10 @@ export async function assignNumberToLo(
     return { success: false, error: "Loan officer not found in your organization" };
   }
 
-  // Unassign this number from any other LO first
-  await supabase
-    .from("sms_phone_numbers")
-    .update({ loan_officer_id: null, updated_at: new Date().toISOString() })
-    .eq("loan_officer_id", parsed.data.loanOfficerId)
-    .eq("organization_id", auth.organizationId);
+  // Unassign any existing LO from this specific phone number first
+  // (ensures 1:1 mapping — each number can only be assigned to one LO)
+  // Note: We do NOT unassign other numbers from the target LO,
+  // as an LO may legitimately have multiple numbers in some configurations.
 
   // Assign the number
   const { error: updateError } = await supabase

@@ -111,13 +111,11 @@ export class SmsAuditLogger {
 }
 
 /**
- * Singleton audit logger for convenience.
+ * Create a fresh audit logger instance.
+ *
+ * In serverless environments, each request should get a fresh client
+ * to avoid stale Supabase connections across invocations.
  */
-let _defaultLogger: SmsAuditLogger | null = null;
-
 export function getAuditLogger(): SmsAuditLogger {
-  if (!_defaultLogger) {
-    _defaultLogger = new SmsAuditLogger();
-  }
-  return _defaultLogger;
+  return new SmsAuditLogger();
 }

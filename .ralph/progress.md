@@ -10742,3 +10742,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - SmsService.forOrganization() is async factory pattern
   - The executor's emailSender callback pattern maps cleanly to multi-channel via routeStepToChannel
 ---
+
+## [2026-02-01 02:15:00] - S110: SMS in Campaign Sequencer & Flow Builder
+Thread:
+Run: 20260201-014749-63894 (iteration 4)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: eeb80ec [Pass 2/3] fix(S110): Quality review — fix typo, remove dead code, parallelize eligibility checks
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual)
+  - /vercel-react-best-practices: no (no React components in S110)
+  - /next-best-practices: no (no pages/routes in S110)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no errors in S110 files)
+- Files changed:
+  - src/lib/email/orchestration/channel-router.ts
+  - src/lib/email/orchestration/sms-triggers.ts
+- What was fixed:
+  - **Bug fix**: Typo `hasSmsChanelSteps` → `hasSmsChannelSteps` in opt-out trigger (would have silently failed to exit SMS sequences on opt-out)
+  - **Dead code removal**: Removed mergeFields construction in sendSequenceSms that was built but never passed to sendReviewRequest
+  - **Logic fix**: Removed misleading hardcoded 0.3 email open rate in best_available strategy; without real open tracking, returning 0 is honest
+  - **Dead code removal**: Removed unused email_sequences count query in getUserChannelEngagement
+  - **Performance**: Parallelized consent + credit checks in checkSmsEligibility using Promise.all
+- **Learnings for future iterations:**
+  - The hasSmsChanelSteps typo would have caused opt-out to silently skip sequence exits — always grep for the exact key name used when testing metadata flags
+  - Building variables that are never consumed is a common pattern when adapting from a different service's interface — review all unused vars
+---

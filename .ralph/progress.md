@@ -10823,3 +10823,50 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Helper extraction (resolveUserIdByPhone) is a clean pattern for duplicated supabase lookups
   - No UI components in this story — browser verification and design system audits are not applicable
 ---
+
+## [2026-02-01] - S111: Automated SMS Triggers & Scheduled Sends
+Thread: 
+Run: 20260201-025756-62490 (iteration 2)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-025756-62490-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-025756-62490-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d3c2e9b [Pass 1/3] feat(S111): Implement automated SMS triggers & scheduled sends
+- Post-commit status: clean (except unchanged .agents/tasks/prd-reviews.json)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors in S111 files)
+- Files changed:
+  - src/lib/sms/automation/trigger-handler.ts (new)
+  - src/lib/sms/automation/queue-processor.ts (new)
+  - src/lib/sms/automation/follow-up-engine.ts (new)
+  - src/lib/sms/automation/cost-alerts.ts (new)
+  - src/app/api/webhooks/crm/sms-trigger/route.ts (new)
+  - src/app/api/cron/process-sms-queue/route.ts (new)
+  - src/app/api/cron/sms-follow-ups/route.ts (new)
+  - src/lib/sms/types.ts (modified - added CRM trigger fields to SmsSettings, follow_up_of to SmsMessage)
+  - supabase/migrations/20260201000001_sms_automation_triggers.sql (new)
+- What was implemented:
+  - CRM webhook trigger route with HMAC-SHA256 validation, payload parsing, configurable delay
+  - Scheduled sends queue processor cron: picks up queued messages, re-checks quiet hours/consent, sends via Twilio
+  - Auto follow-up engine cron: finds delivered-but-unclicked review requests, sends max 1 follow-up
+  - Cost alert system: emails org admin at 75%, 90%, 100% thresholds and on first overage
+  - DB migration: CRM trigger columns on sms_settings, follow_up_of on sms_messages, sms_cost_alert_log table, indexes
+- **Learnings for future iterations:**
+  - Supabase PostgREST builder doesn't have .catch() — use try/catch instead
+  - ESLint flags Web API globals (crypto, TextEncoder) as undefined — use node:crypto imports instead
+  - QuietHoursEngine and ConsentService checks are already built into SmsService.sendReviewRequest — avoid redundant checks
+---

@@ -17,6 +17,12 @@ import { getBaseUrl } from "@/lib/seo";
 /** Ensure these pages are always statically generated (never dynamic). */
 export const dynamic = "force-static";
 
+/** Disable ISR — pages are fully static, never revalidated. */
+export const revalidate = false;
+
+/** Return 404 for any slug not in generateStaticParams. */
+export const dynamicParams = false;
+
 export function generateStaticParams(): Array<{ slug: string }> {
   return competitorSlugs.map((slug) => ({ slug }));
 }
@@ -90,8 +96,10 @@ export default async function CompareSlugPage({
       {/* Preconnect + dns-prefetch hints for external domains */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="preconnect" href="https://images.unsplash.com" />
       <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+      <link rel="dns-prefetch" href="https://images.unsplash.com" />
       {/* FAQPage JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
       <script
         type="application/ld+json"

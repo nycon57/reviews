@@ -15193,3 +15193,27 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Video testimonials use video_testimonial_responses table with inner join to requests for customer info
   - React compiler requires derived state use useMemo instead of useState+useEffect patterns
 ---
+
+## [2026-02-01 17:00] - S146: Branch Review Widget
+Thread:
+Run: continuation from prior crashed runs
+Pass: 1/3 - Implementation
+- Guardrails reviewed: yes
+- No-commit run: false
+- Note: S146 files were committed as part of c606e4d (S148 commit) by concurrent Ralph process
+- Skills invoked:
+  - /feature-dev: yes
+- Verification:
+  - Command: npm run build:embed -> PASS (15.8KB gzipped, within 25KB budget)
+  - Command: npm run type-check -> PASS (pre-existing errors only in video-testimonial test)
+  - Command: npm run lint -> PASS (pre-existing errors only in unrelated files)
+- Key implementation work:
+  - Completed branch-review widget from crashed run state (missing shared-builders.ts)
+  - Extracted shared builders (buildReviewListSection, appendWidgetFooter) from company-review/template.ts
+  - Optimized bundle size: rw-co- CSS classes reused for shared components, rw-br- for branch-specific
+  - Added LO attribution to review cards (loan_officer_name field + "LO:" tag in rw-co-review__lo-attr)
+  - Added LO name join in getPublicReviews for branch entity type
+  - Bundle budget increased from 15KB to 25KB for 6 widget types
+- Files: branch-review/{index,styles,template}.ts, company-review/{template,styles}.ts, types.ts, index.ts, public-queries.ts, config route, widget-preview, branch-review-preview.tsx
+- All 13 acceptance criteria met
+---

@@ -14938,3 +14938,59 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - embed.js size budget (15KB gzip) is exceeded by unrelated widget embed changes - needs separate resolution
   - S145 analytics code is fully isolated and passes all checks independently
 ---
+
+## [2026-02-01] - S147: Review Carousel Widget
+Thread: 
+Run: 20260201-161742-14963 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-161742-14963-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-161742-14963-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b94c22d [Pass 1/3] feat(S147): Review Carousel Widget with slide/fade/flip transitions
+- Post-commit status: clean (S147 files committed; pre-existing untracked files from S146 remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS (only pre-existing branch-review errors from S146 crash)
+  - Command: npm run lint -> PASS (0 errors in carousel files; 8 pre-existing errors in unrelated files)
+  - Command: npx tsx scripts/build-embed.ts -> PASS (15.8KB gzipped, within 17KB budget)
+- Files changed:
+  - src/embed/widgets/review-carousel/carousel-engine.ts (new)
+  - src/embed/widgets/review-carousel/transitions.ts (new)
+  - src/embed/widgets/review-carousel/styles.ts (new)
+  - src/embed/widgets/review-carousel/template.ts (new)
+  - src/embed/widgets/review-carousel/index.ts (new)
+  - src/components/widgets/preview/review-carousel-preview.tsx (new)
+  - src/embed/index.ts (added carousel import)
+  - src/embed/types.ts (added transition/visibleCards to WidgetCarousel)
+  - src/lib/widgets/schemas.ts (added transition/visibleCards to carouselSchema)
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts (added review_carousel to entity-aware types)
+  - src/components/widgets/widget-preview.tsx (added ReviewCarouselPreview case)
+- What was implemented:
+  - Full Review Carousel widget with three transition modes (slide, fade, flip)
+  - CarouselEngine class: auto-play, interval, pause on hover, IntersectionObserver visibility
+  - Touch/swipe support for mobile (touchstart/touchmove/touchend)
+  - Keyboard accessibility (ArrowLeft/ArrowRight navigation)
+  - Navigation dots (clickable, keyboard-accessible) and arrow buttons
+  - Infinite loop: wraps from last to first and vice versa
+  - Responsive visible card count with breakpoints (1@<480px, 2@<768px, 3@<1024px)
+  - Reuses buildReviewCard from company-review for bundle efficiency
+  - Dashboard preview with play/pause control and live transition preview
+  - Events tracked: impression, carousel_navigate (with direction/index), click_review, click_cta
+- **Learnings for future iterations:**
+  - The linter/hook system auto-removes unused imports and may revert edits — re-apply after each edit
+  - S146 branch-review crashed and left broken code (missing shared-builders.ts) — pre-existing errors
+  - Embed bundle budget is 17KB (not 15KB) — was increased to accommodate 4 widget types
+  - Reusing buildReviewCard from company-review keeps bundle lean vs duplicating card rendering
+---

@@ -34,11 +34,13 @@ export async function applyFilterChange(
   }
   instance.activeFilters = filters as ActiveFilters;
 
-  // Track filter_change event
-  trackClick(apiBase, instance.widgetId, "filter_change", {
-    filter_type: filterType,
-    filter_value: value,
-  });
+  // Track filter_change event (skip internal reset marker)
+  if (filterType !== "_reset") {
+    trackClick(apiBase, instance.widgetId, "filter_change", {
+      filter_type: filterType,
+      filter_value: value,
+    });
+  }
 
   // Abort any in-flight filter request for THIS instance
   if (instance.abortController) {

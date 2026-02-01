@@ -15783,3 +15783,49 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - When templates build filter controls internally (via buildFilterControls or buildReviewListSection), index.ts should NOT also build them — single source of truth prevents duplication
   - Templates that use buildReviewListSection already wire up the filter engine efficiently (re-renders only the card grid, not the entire widget DOM)
 ---
+
+## [2026-02-01] - S152: Advanced Filtering (Loan Type, Keyword, Date Range)
+Thread: 
+Run: 20260201-180923-45843 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-180923-45843-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-180923-45843-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 89c26af [Pass 3/3] fix(S152): Security hardening and cleanup for advanced filters
+- Post-commit status: clean (S152 files only; unrelated unstaged changes from other stories remain)
+- Skills invoked:
+  - /feature-dev: no (continuation of prior passes)
+  - /code-review: yes (via code-reviewer subagent)
+  - /vercel-react-best-practices: no (no React components changed in this pass)
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS (only pre-existing ab-testing.ts errors)
+  - Command: npx tsx scripts/build-embed.ts -> PASS (32.7 KB gzipped, within 34 KB budget)
+  - Command: npm run lint -> PASS (7 pre-existing errors in unrelated files, 0 new)
+  - Command: npm run build -> TIMEOUT (Next.js build process stalls on this machine, not code-related)
+- Files changed:
+  - src/app/api/v1/widgets/[widgetId]/reviews/route.ts
+  - src/embed/widgets/shared/filter-controls.ts
+  - src/embed/widgets/shared/filter-engine.ts
+  - src/lib/widgets/actions.ts
+  - src/lib/widgets/public-queries.ts
+- What was implemented:
+  - Security: Whitelist-validated loanTypes and sources in API route and server queries to prevent PostgREST filter injection
+  - Security: Sanitized keyword input (strip special chars, limit 10 terms)
+  - Bug fix: Replaced module-level global AbortController with instance-level controller to prevent race conditions on multi-widget pages
+  - Bug fix: Added debounce timer cleanup on instance destroy to prevent memory leaks
+  - UX: Added toolbar UI reset when filters are reset (stars, selects, pills, search input)
+- **Learnings for future iterations:**
+  - Linter auto-reverts can undo manual edits; always verify changes persisted before committing
+  - PostgREST filter syntax via `.or()` is injectable if user input is not validated against a whitelist
+  - Module-level state in embed code is unsafe for multi-widget pages; always use instance-level state
+  - `next build` times out/crashes on this machine but is not code-related (pre-existing issue)
+---

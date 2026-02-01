@@ -10428,3 +10428,58 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
 - **Learnings for future iterations:**
   - Pre-existing type errors in untracked files from other stories can block builds — fix minimally
 ---
+
+### S108: One-Off SMS Send UI & Review Request Flow
+- **Epic**: SMS System
+- **Priority**: P1
+- **Pass**: 1/3 (Implementation)
+- **Status**: Pass 1 Complete — Awaiting Pass 2
+- **Run ID**: 20260201-002742-24866 (iteration 3)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-002742-24866-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-002742-24866-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e35000f [Pass 1/3] feat(S108): Implement One-Off SMS Send UI & Review Request Flow
+- Post-commit status: other unstaged changes from other stories remain
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from S108 files)
+- Files changed:
+  - src/lib/sms/send/schemas.ts (NEW — Zod validation schemas for send flow)
+  - src/lib/sms/send/actions.ts (NEW — Server actions: sendSmsReviewRequest, checkSmsSendReadiness, recordInlineConsent, getSmsTemplatesForSend, renderSmsPreview, getRecentSmsSends, getMessageStatus)
+  - src/components/distribution/sms-borrower-selector.tsx (NEW — Borrower name + phone input with E.164 validation)
+  - src/components/distribution/sms-template-selector.tsx (NEW — Category filter, template dropdown, live preview with segment/encoding info)
+  - src/components/distribution/sms-consent-capture.tsx (NEW — Consent status display and inline opt-in form)
+  - src/components/distribution/sms-send-confirmation.tsx (NEW — Pre-send confirmation dialog with masked phone, preview, credits)
+  - src/components/distribution/sms-delivery-status.tsx (NEW — Delivery polling tracker + recent sends list)
+  - src/components/distribution/sms-send-tab.tsx (NEW — Main SMS send orchestrator: form state, readiness checks, send flow)
+  - src/components/distribution/send-survey-dialog.tsx (MODIFIED — Added SMS tab via Tabs component alongside existing email form)
+- What was implemented:
+  - SMS tab in Send Review Request dialog alongside existing email tab (AC1)
+  - Borrower name + phone input with real-time E.164 validation and formatting (AC2, AC3)
+  - Loan officer assignment dropdown scoped to organization (AC4)
+  - Template selector with category filter badges and live preview showing segments/encoding (AC5)
+  - Consent status indicators: green/amber/red banners with inline opt-in capture form (AC6, AC7)
+  - Pre-send validation grid: registration, credits, template, quiet hours (AC8)
+  - Send button with loading spinner, confirmation dialog, toast success/error feedback (AC9)
+  - Scheduled send option with date/time picker, quiet hours warning (AC10)
+  - Confirmation dialog showing masked phone, preview, segments, credits, schedule info (AC11)
+  - Post-send delivery status polling every 3s for 30s with terminal state detection (AC12)
+  - Recent sends list with status badges and relative timestamps (AC13)
+  - Debounced readiness checks (500ms) to minimize server calls
+- **Learnings for future iterations:**
+  - useMemo is preferred over useEffect+useState for computed values in React strict mode
+  - Synchronous setState inside useEffect triggers cascading render warnings — defer with setTimeout
+---

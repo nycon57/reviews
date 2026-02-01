@@ -12834,6 +12834,8 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - src/components/marketing/mega-menu.tsx (Compare dropdown in mega menu)
   - src/components/marketing/mobile-menu.tsx (Compare accordion in mobile menu)
   - src/components/marketing/marketing-footer.tsx (Compare links in footer)
+  - src/components/competitor-pages/sections/cross-links-section.tsx (cross-links with current page dimmed)
+  - src/app/(marketing)/pricing/pricing-client.tsx (compare section already present)
   - src/components/competitor-pages/sections/cross-links-section.tsx (new: shows all comparison pages with current page dimmed)
   - src/components/competitor-pages/competitor-comparison-page.tsx (integrated cross-links section)
   - src/app/(marketing)/pricing/pricing-client.tsx (added Compare section with competitor links)
@@ -12847,4 +12849,51 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The cross-links filtering used `currentSlug.includes(item.slug)` which works with current slugs but would break if future slugs are substrings of each other (e.g., "expert" vs "total-expert")
   - Build infrastructure has Turbopack ENOENT race condition - unrelated to code changes
   - node_modules can become corrupted when multiple processes run npm install concurrently
+---
+
+## [2026-02-01] - S128: Navigation Integration & Cross-Linking
+Thread:
+Run: 20260201-105443-88239 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-105443-88239-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-105443-88239-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (all changes already committed in Pass 1/2; Pass 3 verified no regressions)
+- Post-commit status: clean (S128 files unchanged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no (code already simplified in Pass 2)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit -> PASS
+  - Command: npx eslint [S128 files] -> PASS (0 errors)
+  - Command: npm run build -> PASS (180 pages generated successfully)
+- Files changed: none (all S128 work committed in prior passes)
+- All 13 acceptance criteria verified:
+  1. Mega menu Compare dropdown with all 5 competitors ✓
+  2. Icons on each compare item (Swap icon) ✓
+  3. Mobile menu Compare accordion ✓
+  4. Cross-links on each comparison page ✓
+  5. Cross-links titled "Compare RepWell to Other Platforms" ✓
+  6. Pricing page "See How We Compare" section ✓
+  7. Footer Compare section ✓
+  8. Navigation config updated with compareNavItems ✓
+  9. Reusable CrossLinksSection driven by config ✓
+  10. SEO anchor text with competitor names ✓
+  11. Current page dimmed with Check icon + aria-current ✓
+  12. All links use Next.js Link component ✓
+  13. CompareNavItem interface includes icon field ✓
+- **Learnings for future iterations:**
+  - ESLint auto-fix can remove "unused" imports when running lint — if a compare dropdown is temporarily removed, the imports get stripped too
+  - The `startsWith` vs `===` comparison for slug matching is functionally equivalent with current data but `===` is semantically correct
+  - Build infrastructure (botid module, Turbopack lock files) can have transient failures — always retry after clearing .next
 ---

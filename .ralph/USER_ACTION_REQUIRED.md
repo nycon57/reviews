@@ -270,3 +270,57 @@ Ralph has failed on this story 3 times and has marked it as **blocked**.
 - To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
 
 ---
+
+## [2026-02-01 13:46:12] BLOCKED: S137: Company Review Widget
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 14:01:20] BLOCKED: S138: Star Rating Badge Widget
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 14:16:36] BLOCKED: S139: Widget Builder UI (No-Code Editor)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 14:31:46] BLOCKED: S140: Theme Presets & Style Controls System
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 14:46:57] BLOCKED: S141: NMLS Compliance & Mortgage-Specific Display
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 15:12:05] BLOCKED: S142: JSON-LD Structured Data Injection
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---

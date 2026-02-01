@@ -10,12 +10,13 @@
 import type { RepWellAPI, WidgetInstance } from "./types";
 import { WidgetState } from "./types";
 import { discoverWidgets } from "./core/discovery";
-import { attachShadow } from "./core/shadow-dom";
+import { attachShadow, loadGoogleFontInShadow } from "./core/shadow-dom";
 import { observe, unobserve } from "./core/lazy-loader";
 import { renderSkeleton, removeSkeleton } from "./core/skeleton";
 import { renderWidget, renderError } from "./core/renderer";
 import { fetchConfig, fetchReviews } from "./core/api-client";
 import { trackImpression } from "./core/event-tracker";
+import { injectStructuredData, removeStructuredData } from "./seo/structured-data";
 
 // Widget type registrations (self-register on import)
 import "./widgets/lo-review";
@@ -74,10 +75,16 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     if (controller.signal.aborted) return;
     instance.reviews = data.reviews;
 
+    // Load Google Font inside Shadow DOM if a non-system font is selected
+    loadGoogleFontInShadow(instance.shadowRoot, config.config?.theme?.typography?.fontFamily);
+
     // Replace skeleton with rendered widget
     removeSkeleton(instance.shadowRoot);
     renderWidget(instance.shadowRoot, config, data.reviews, apiBase);
     instance.state = WidgetState.Rendered;
+
+    // Inject JSON-LD structured data into host page <head>
+    injectStructuredData(config, data.reviews, config.entity_profile);
 
     // Track impression
     trackImpression(apiBase, instance.widgetId);
@@ -136,6 +143,9 @@ function destroyInstance(instance: WidgetInstance): void {
 
   // Stop observing
   unobserve(instance.element);
+
+  // Remove JSON-LD structured data from <head>
+  removeStructuredData(instance.widgetId);
 
   // Clear shadow DOM contents
   while (instance.shadowRoot.firstChild) {

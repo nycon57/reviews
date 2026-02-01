@@ -18,6 +18,10 @@ import {
   formatRelativeDate,
   formatAbsoluteDate,
 } from "../../core/dom-helpers";
+import { buildNmlsBadge } from "../../components/nmls-badge";
+import { buildComplianceFooter } from "../../components/compliance-footer";
+import { buildLoanTypeTag } from "../../components/loan-type-tag";
+import { buildFirstTimeBuyerBadge } from "../../components/first-time-buyer-badge";
 
 function starsRow(rating: number, filledColor: string, emptyColor: string, className: string): HTMLElement {
   const row = el("div", className);
@@ -29,16 +33,7 @@ function starsRow(rating: number, filledColor: string, emptyColor: string, class
   return row;
 }
 
-function getLoanTagClass(loanType: string): string {
-  const normalized = loanType.toLowerCase().replace(/\s+/g, "");
-  const m: Record<string, string> = { purchase: "purchase", refinance: "refinance", va: "va", fha: "fha", jumbo: "jumbo" };
-  return m[normalized] ?? "default";
-}
-
-const NMLS_BASE = "https://www.nmlsconsumeraccess.org/EntityDetails.aspx/INDIVIDUAL/";
-
 function buildProfileHeader(profile: EntityProfile, config: PublicWidgetConfig, starFilled: string, starEmpty: string): HTMLElement {
-  const content = config.config?.content;
   const section = el("div", "rw-lo-profile");
 
   const photoUrl = profile.photo_url ?? profile.avatar_url;
@@ -57,25 +52,13 @@ function buildProfileHeader(profile: EntityProfile, config: PublicWidgetConfig, 
   if (profile.full_name) info.appendChild(text("h3", profile.full_name, "rw-lo-profile__name"));
   if (profile.title) info.appendChild(text("div", profile.title, "rw-lo-profile__title"));
 
-  if (content?.showNMLS !== false && profile.nmls_id) {
-    const nmlsWrapper = el("div", "rw-lo-profile__nmls");
-    nmlsWrapper.textContent = "NMLS# ";
-    const nmlsLink = document.createElement("a");
-    nmlsLink.textContent = profile.nmls_id;
-    nmlsLink.href = `${NMLS_BASE}${encodeURIComponent(profile.nmls_id)}`;
-    nmlsLink.target = "_blank";
-    nmlsLink.rel = "noopener noreferrer";
-    nmlsLink.setAttribute("aria-label", `NMLS ID ${profile.nmls_id} - view on NMLS Consumer Access`);
-    nmlsWrapper.appendChild(nmlsLink);
-    info.appendChild(nmlsWrapper);
-  }
+  // NMLS display is mandatory for LO widgets per SAFE Act — showNMLS config is ignored
+  const nmlsBadge = buildNmlsBadge(profile.nmls_id, "individual", "rw-lo-profile__nmls");
+  if (nmlsBadge) info.appendChild(nmlsBadge);
 
   if (profile.licensing_states && profile.licensing_states.length > 0) {
-    const states = el("div", "rw-lo-profile__states");
-    for (const state of profile.licensing_states) {
-      states.appendChild(text("span", state, "rw-lo-profile__state-tag"));
-    }
-    info.appendChild(states);
+    const statesText = `Licensed in ${profile.licensing_states.join(", ")}`;
+    info.appendChild(text("div", statesText, "rw-lo-profile__licensed-states"));
   }
 
   if (profile.average_rating != null) {
@@ -145,8 +128,11 @@ function buildReviewCard(review: PublicReview, config: PublicWidgetConfig, starF
   const tags = el("div", "rw-lo-review__tags");
   let hasTags = false;
   if (content?.showSource !== false && review.source) { tags.appendChild(text("span", `via ${review.source}`, "rw-lo-review__source")); hasTags = true; }
-  if (review.loan_type) { tags.appendChild(text("span", review.loan_type, `rw-lo-review__loan-tag rw-lo-review__loan-tag--${getLoanTagClass(review.loan_type)}`)); hasTags = true; }
-  if (review.first_time_homebuyer) { tags.appendChild(text("span", "First-Time Homebuyer", "rw-lo-review__fthb-badge")); hasTags = true; }
+  if (review.loan_type) { tags.appendChild(buildLoanTypeTag(review.loan_type, "rw-lo-review")); hasTags = true; }
+  if (review.first_time_homebuyer) {
+    tags.appendChild(buildFirstTimeBuyerBadge("rw-lo-review__fthb-badge"));
+    hasTags = true;
+  }
   if (hasTags) card.appendChild(tags);
 
   return card;
@@ -212,13 +198,12 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
   }
 
   if (content?.showDisclaimer) {
-    const disclaimer = el("div", "rw-lo-disclaimer");
-    const ehl = el("div", "rw-lo-disclaimer__ehl");
-    ehl.textContent = "\u2302 Equal Housing Lender";
-    disclaimer.appendChild(ehl);
-    const disclaimerContent = content.disclaimerText ?? "NMLS Consumer Access: www.nmlsconsumeraccess.org. This is not a commitment to lend. Not all borrowers will qualify. Equal Housing Lender.";
-    disclaimer.appendChild(text("div", disclaimerContent));
-    container.appendChild(disclaimer);
+    container.appendChild(
+      buildComplianceFooter({
+        classPrefix: "rw-lo-disclaimer",
+        disclaimerText: content.disclaimerText,
+      }),
+    );
   }
 
   if (content?.showBranding !== false) {

@@ -66,6 +66,12 @@ export const themeLayoutSchema = z
     padding: cssValueSchema.optional(),
     borderRadius: cssValueSchema.optional(),
     gap: cssValueSchema.optional(),
+    shadow: z
+      .enum(["none", "sm", "md", "lg", "xl"])
+      .optional(),
+    cardStyle: z
+      .enum(["flat", "elevated", "bordered", "glass"])
+      .optional(),
   })
   .optional();
 
@@ -104,6 +110,7 @@ export const contentSchema = z
     language: z.string().min(2).max(10).optional(),
     showNMLS: z.boolean().optional(),
     showDisclaimer: z.boolean().optional(),
+    disclaimerText: z.string().max(500).optional(),
   })
   .optional();
 

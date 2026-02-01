@@ -14,6 +14,7 @@ import {
   formatAbsoluteDate,
   applyTheme,
 } from "./dom-helpers";
+import { createEqualHousingLenderSVG } from "../assets/equal-housing-lender";
 
 // ── Main render ─────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ export function renderWidget(
   const colors = theme?.colors;
 
   // Apply theme CSS custom properties
-  applyTheme(root, colors, theme?.layout);
+  applyTheme(root, colors, theme?.layout, theme?.typography);
 
   const container = el("div", "rw-widget");
   container.setAttribute("role", "region");
@@ -125,15 +126,25 @@ export function renderWidget(
     container.appendChild(cta);
   }
 
-  // NMLS disclaimer
+  // Compliance disclaimer
   if (content?.showDisclaimer || content?.showNMLS) {
-    container.appendChild(
-      text(
-        "div",
-        "NMLS Consumer Access: www.nmlsconsumeraccess.org. Equal Housing Lender.",
-        "rw-disclaimer"
-      )
-    );
+    const disclaimer = el("div", "rw-disclaimer");
+    const ehlRow = el("div", "rw-disclaimer__ehl");
+    ehlRow.appendChild(createEqualHousingLenderSVG(16));
+    ehlRow.appendChild(document.createTextNode("Equal Housing Lender"));
+    disclaimer.appendChild(ehlRow);
+    const defaultDisclaimer = "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.";
+    disclaimer.appendChild(text("div", content?.disclaimerText || defaultDisclaimer));
+    const nmlsLink = document.createElement("a");
+    nmlsLink.href = "https://www.nmlsconsumeraccess.org";
+    nmlsLink.target = "_blank";
+    nmlsLink.rel = "noopener noreferrer";
+    nmlsLink.textContent = "NMLS Consumer Access";
+    nmlsLink.style.fontSize = "10px";
+    nmlsLink.style.color = colors?.primary ?? "#52796f";
+    nmlsLink.style.textDecoration = "none";
+    disclaimer.appendChild(nmlsLink);
+    container.appendChild(disclaimer);
   }
 
   // Branding

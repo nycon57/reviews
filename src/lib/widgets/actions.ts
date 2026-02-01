@@ -447,6 +447,258 @@ export async function duplicateWidget(
   }
 }
 
+// ── Preview Data (for widget builder live preview) ────────────────────────
+
+export interface PreviewProfile {
+  full_name?: string | null;
+  avatar_url?: string | null;
+  photo_url?: string | null;
+  nmls_id?: string | null;
+  title?: string | null;
+  average_rating: number;
+  total_reviews: number;
+  licensing_states?: string[] | null;
+  organization_name?: string | null;
+  logo_url?: string | null;
+}
+
+export interface PreviewReview {
+  id: string;
+  reviewer_name: string | null;
+  rating: number;
+  text: string | null;
+  review_date: string;
+  source: string;
+  avatar_url: string | null;
+  loan_type: string | null;
+  first_time_homebuyer?: boolean | null;
+}
+
+export interface PreviewData {
+  profile: PreviewProfile;
+  reviews: PreviewReview[];
+}
+
+export async function getPreviewData(
+  entityType: "user" | "branch" | "organization",
+  entityId: string
+): Promise<ActionResult<PreviewData>> {
+  try {
+    const supabase = createAdminClient();
+    const ctx = await getAuthedUserContext(supabase);
+    if (!ctx.success) return ctx;
+
+    let profile: PreviewProfile = { average_rating: 0, total_reviews: 0 };
+    const reviews: PreviewReview[] = [];
+
+    if (entityType === "user") {
+      const { data: user } = await supabase
+        .from("users")
+        .select("id, full_name, title, avatar_url, photo_url, nmls_id, average_rating, total_reviews")
+        .eq("id", entityId)
+        .eq("organization_id", ctx.data.organizationId)
+        .single();
+
+      if (user) {
+        profile = {
+          full_name: user.full_name,
+          avatar_url: user.avatar_url ?? user.photo_url,
+          nmls_id: user.nmls_id,
+          title: user.title,
+          average_rating: user.average_rating ?? 0,
+          total_reviews: user.total_reviews ?? 0,
+        };
+      }
+    } else if (entityType === "branch") {
+      const { data: branch } = await supabase
+        .from("branches")
+        .select("id, name, photo_url, average_rating, total_reviews, region")
+        .eq("id", entityId)
+        .eq("organization_id", ctx.data.organizationId)
+        .single();
+
+      if (branch) {
+        profile = {
+          organization_name: branch.name,
+          logo_url: branch.photo_url,
+          average_rating: branch.average_rating ?? 0,
+          total_reviews: branch.total_reviews ?? 0,
+        };
+      }
+    } else {
+      const { data: org } = await supabase
+        .from("organizations")
+        .select("id, name, logo_url")
+        .eq("id", entityId)
+        .single();
+
+      if (org) {
+        profile = {
+          organization_name: org.name,
+          logo_url: org.logo_url,
+          average_rating: 0,
+          total_reviews: 0,
+        };
+      }
+    }
+
+    // Fetch reviews for the entity
+    const reviewColumn = entityType === "user" ? "user_id" : "organization_id";
+    const reviewId = entityType === "organization" ? ctx.data.organizationId : entityId;
+
+    const { data: reviewData } = await supabase
+      .from("reviews")
+      .select("id, customer_name, rating, text, review_date, source")
+      .eq(reviewColumn, reviewId)
+      .order("review_date", { ascending: false })
+      .limit(10);
+
+    if (reviewData) {
+      for (const r of reviewData) {
+        reviews.push({
+          id: r.id,
+          reviewer_name: r.customer_name ?? "Anonymous",
+          rating: r.rating ?? 5,
+          text: r.text ?? "",
+          review_date: r.review_date ?? new Date().toISOString(),
+          source: r.source ?? "internal",
+          avatar_url: null,
+          loan_type: null,
+        });
+      }
+    }
+
+    return { success: true, data: { profile, reviews } };
+  } catch (err) {
+    console.error("getPreviewData error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+// ── Search Entities (for widget entity selector) ─────────────────────────
+
+export interface EntitySearchResult {
+  id: string;
+  name: string;
+  subtitle: string | null;
+  avatarUrl: string | null;
+}
+
+export async function searchEntities(
+  entityType: "user" | "branch" | "organization",
+  search: string
+): Promise<ActionResult<EntitySearchResult[]>> {
+  try {
+    const supabase = createAdminClient();
+    const ctx = await getAuthedUserContext(supabase);
+    if (!ctx.success) return ctx;
+
+    const escaped = search.replace(/[%_\\]/g, "\\$&");
+    const results: EntitySearchResult[] = [];
+
+    if (entityType === "user") {
+      const { data, error } = await supabase
+        .from("users")
+        .select("id, full_name, title, avatar_url, photo_url, nmls_id")
+        .eq("organization_id", ctx.data.organizationId)
+        .ilike("full_name", `%${escaped}%`)
+        .limit(20);
+
+      if (error) return { success: false, error: error.message };
+
+      for (const u of data ?? []) {
+        results.push({
+          id: u.id,
+          name: u.full_name ?? "Unnamed",
+          subtitle: u.title ?? (u.nmls_id ? `NMLS# ${u.nmls_id}` : null),
+          avatarUrl: u.avatar_url ?? u.photo_url ?? null,
+        });
+      }
+    } else if (entityType === "branch") {
+      const { data, error } = await supabase
+        .from("branches")
+        .select("id, name, region, photo_url")
+        .eq("organization_id", ctx.data.organizationId)
+        .ilike("name", `%${escaped}%`)
+        .limit(20);
+
+      if (error) return { success: false, error: error.message };
+
+      for (const b of data ?? []) {
+        results.push({
+          id: b.id,
+          name: b.name,
+          subtitle: b.region ?? null,
+          avatarUrl: b.photo_url ?? null,
+        });
+      }
+    } else {
+      // organization — typically just the user's own org
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name, logo_url")
+        .eq("id", ctx.data.organizationId)
+        .limit(5);
+
+      if (error) return { success: false, error: error.message };
+
+      for (const o of data ?? []) {
+        results.push({
+          id: o.id,
+          name: o.name,
+          subtitle: null,
+          avatarUrl: o.logo_url ?? null,
+        });
+      }
+    }
+
+    return { success: true, data: results };
+  } catch (err) {
+    console.error("searchEntities error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
+// ── Get Organization Brand Colors (for brand_match preset) ──────────────
+
+export interface OrgBrandColors {
+  primaryColor: string;
+  secondaryColor: string;
+  fontFamily: string;
+}
+
+export async function getOrgBrandColors(): Promise<ActionResult<OrgBrandColors>> {
+  try {
+    const supabase = createAdminClient();
+    const ctx = await getAuthedUserContext(supabase);
+    if (!ctx.success) return ctx;
+
+    const { data: org, error } = await supabase
+      .from("organizations")
+      .select("primary_color, settings")
+      .eq("id", ctx.data.organizationId)
+      .single();
+
+    if (error || !org) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const settings = org.settings as Record<string, unknown> | null;
+
+    return {
+      success: true,
+      data: {
+        primaryColor: (settings?.primary_color as string) ?? org.primary_color ?? "#3B82F6",
+        secondaryColor: (settings?.secondary_color as string) ?? "#1E40AF",
+        fontFamily: (settings?.font_family as string) ?? "'Inter', sans-serif",
+      },
+    };
+  } catch (err) {
+    console.error("getOrgBrandColors error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
 // ── Utility: deep merge for JSONB config ────────────────────────────────
 
 function deepMerge(

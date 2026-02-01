@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import type { ReactNode } from "react";
+import { useState, useCallback, useMemo, useTransition } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -23,9 +24,15 @@ import {
   Search as SearchIcon,
   Plus,
   X,
+  AlertTriangle,
+  Check,
 } from "lucide-react";
-import { ThemePresetSelector, THEME_PRESETS, type ThemePresetKey } from "./theme-preset-selector";
+import { ThemePresetSelector, THEME_PRESETS } from "./theme-preset-selector";
+import { getPreset } from "@/lib/widgets/theme-presets";
 import { DomainAllowlistEditor } from "./domain-allowlist-editor";
+import { EntitySelector } from "./entity-selector";
+import { FONT_OPTIONS, getContrastWarnings, buildBrandMatchPreset } from "@/lib/widgets/theme-utils";
+import { getOrgBrandColors } from "@/lib/widgets/actions";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType, WidgetStatus } from "@/lib/widgets/types";
 
@@ -35,6 +42,7 @@ interface WidgetBuilderSidebarProps {
   config: WidgetConfigJson;
   widgetType: WidgetType;
   entityType: WidgetEntityType;
+  entityId: string | null;
   status: WidgetStatus;
   name: string;
   enableStructuredData: boolean;
@@ -45,6 +53,7 @@ interface WidgetBuilderSidebarProps {
   onNameChange: (name: string) => void;
   onStatusChange: (status: WidgetStatus) => void;
   onEntityTypeChange: (entityType: WidgetEntityType) => void;
+  onEntityIdChange: (entityId: string | null) => void;
   onStructuredDataChange: (enabled: boolean) => void;
   onStructuredDataTypeChange: (type: string) => void;
 }
@@ -77,32 +86,68 @@ function ColorField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const [mode, setMode] = useState<"hex" | "rgb">("hex");
+
+  const rgbValue = useMemo(() => {
+    const cleaned = value.replace("#", "");
+    if (cleaned.length === 6) {
+      const r = parseInt(cleaned.slice(0, 2), 16);
+      const g = parseInt(cleaned.slice(2, 4), 16);
+      const b = parseInt(cleaned.slice(4, 6), 16);
+      return `${r}, ${g}, ${b}`;
+    }
+    return "0, 0, 0";
+  }, [value]);
+
+  const handleRgbChange = (rgbStr: string) => {
+    const parts = rgbStr.split(",").map((s) => parseInt(s.trim(), 10));
+    if (parts.length === 3 && parts.every((n) => !isNaN(n) && n >= 0 && n <= 255)) {
+      const hex = `#${parts.map((n) => n.toString(16).padStart(2, "0")).join("")}`;
+      onChange(hex);
+    }
+  };
+
   return (
     <div className="flex items-center gap-3">
-      <button
-        type="button"
-        className="w-8 h-8 rounded-md border border-border flex-shrink-0 cursor-pointer
-          shadow-sm hover:shadow-md transition-shadow"
-        style={{ background: value }}
-        onClick={() => {
-          const input = document.createElement("input");
-          input.type = "color";
-          input.value = value;
-          input.addEventListener("input", (e) => {
-            onChange((e.target as HTMLInputElement).value);
-          });
-          input.click();
-        }}
-        aria-label={`Pick ${label} color`}
-      />
-      <div className="flex-1 min-w-0">
-        <Label className="text-xs text-muted-foreground">{label}</Label>
-        <Input
-          value={value}
+      <div className="relative flex-shrink-0">
+        <input
+          type="color"
+          value={value.startsWith("#") ? value : "#000000"}
           onChange={(e) => onChange(e.target.value)}
-          className="h-7 text-xs font-mono mt-0.5"
-          placeholder="#000000"
+          className="absolute inset-0 w-8 h-8 opacity-0 cursor-pointer"
+          aria-label={`Pick ${label} color`}
         />
+        <div
+          className="w-8 h-8 rounded-md border border-border shadow-sm hover:shadow-md transition-shadow pointer-events-none"
+          style={{ background: value }}
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs text-muted-foreground">{label}</Label>
+          <button
+            type="button"
+            onClick={() => setMode(mode === "hex" ? "rgb" : "hex")}
+            className="text-[9px] font-medium text-muted-foreground/60 hover:text-repwell-teal-300 transition-colors uppercase"
+          >
+            {mode === "hex" ? "RGB" : "HEX"}
+          </button>
+        </div>
+        {mode === "hex" ? (
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-7 text-xs font-mono mt-0.5"
+            placeholder="#000000"
+          />
+        ) : (
+          <Input
+            value={rgbValue}
+            onChange={(e) => handleRgbChange(e.target.value)}
+            className="h-7 text-xs font-mono mt-0.5"
+            placeholder="0, 0, 0"
+          />
+        )}
       </div>
     </div>
   );
@@ -181,16 +226,20 @@ function ChipInput({
 function GeneralTab({
   name,
   entityType,
+  entityId,
   status,
   onNameChange,
   onEntityTypeChange,
+  onEntityIdChange,
   onStatusChange,
 }: {
   name: string;
   entityType: WidgetEntityType;
+  entityId: string | null;
   status: WidgetStatus;
   onNameChange: (name: string) => void;
   onEntityTypeChange: (entityType: WidgetEntityType) => void;
+  onEntityIdChange: (entityId: string | null) => void;
   onStatusChange: (status: WidgetStatus) => void;
 }) {
   return (
@@ -209,7 +258,10 @@ function GeneralTab({
         <Label className="text-xs text-muted-foreground">Entity Type</Label>
         <Select
           value={entityType}
-          onValueChange={(v) => onEntityTypeChange(v as WidgetEntityType)}
+          onValueChange={(v) => {
+            onEntityTypeChange(v as WidgetEntityType);
+            onEntityIdChange(null);
+          }}
         >
           <SelectTrigger className="h-8 text-xs mt-1">
             <SelectValue />
@@ -221,6 +273,13 @@ function GeneralTab({
           </SelectContent>
         </Select>
       </div>
+
+      <EntitySelector
+        entityType={entityType}
+        entityId={entityId}
+        onSelect={(id) => onEntityIdChange(id)}
+        label="Entity"
+      />
 
       <div>
         <Label className="text-xs text-muted-foreground">Status</Label>
@@ -242,6 +301,117 @@ function GeneralTab({
   );
 }
 
+// ── Searchable font dropdown ────────────────────────────────────────────
+
+function FontFamilySelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!search) return FONT_OPTIONS;
+    const lower = search.toLowerCase();
+    return FONT_OPTIONS.filter((f) => f.label.toLowerCase().includes(lower));
+  }, [search]);
+
+  const currentLabel = FONT_OPTIONS.find((f) => f.value === value)?.label ?? "System Default";
+
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-8 text-xs mt-1">
+        <SelectValue>{currentLabel}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <div className="px-2 pb-2">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search fonts..."
+            className="h-7 text-xs"
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+        </div>
+        {filtered.length === 0 && (
+          <div className="px-2 py-1.5 text-xs text-muted-foreground">No fonts found</div>
+        )}
+        {filtered.map((font) => (
+          <SelectItem key={font.value} value={font.value}>
+            <span className="flex items-center gap-2">
+              {font.label}
+              {font.type === "google" && (
+                <span className="text-[9px] px-1 py-0.5 bg-blue-50 text-blue-600 rounded font-medium">
+                  Google
+                </span>
+              )}
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+// ── Contrast warning indicator ──────────────────────────────────────────
+
+function ContrastWarnings({ colors }: { colors: Record<string, string | undefined> }) {
+  const warnings = useMemo(
+    () =>
+      getContrastWarnings({
+        primary: colors.primary,
+        background: colors.background,
+        text: colors.text,
+        accent: colors.accent,
+      }),
+    [colors.primary, colors.background, colors.text, colors.accent],
+  );
+
+  const failing = warnings.filter((w) => !w.passNormal);
+
+  if (failing.length === 0) {
+    return (
+      <div className="flex items-center gap-1.5 py-1.5 px-2 rounded-md bg-green-50 border border-green-200">
+        <Check size={12} className="text-green-600 flex-shrink-0" />
+        <span className="text-[10px] text-green-700 font-medium">
+          All color pairs meet WCAG AA contrast
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-1">
+      {failing.map((w) => (
+        <div
+          key={w.pair}
+          className="flex items-center gap-1.5 py-1.5 px-2 rounded-md bg-amber-50 border border-amber-200"
+        >
+          <AlertTriangle size={12} className="text-amber-600 flex-shrink-0" />
+          <span className="text-[10px] text-amber-700">
+            <span className="font-medium">{w.pair}</span>{" "}
+            <span className="text-amber-600">
+              {w.ratio}:1 {w.passLarge ? "(large text OK)" : "(fails AA)"}
+            </span>
+          </span>
+          <div className="ml-auto flex gap-0.5">
+            <div
+              className="w-3 h-3 rounded-sm border border-amber-300"
+              style={{ background: w.textColor }}
+            />
+            <div
+              className="w-3 h-3 rounded-sm border border-amber-300"
+              style={{ background: w.bgColor }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Tab: Theme ─────────────────────────────────────────────────────────
 
 function ThemeTab({
@@ -251,14 +421,62 @@ function ThemeTab({
   config: WidgetConfigJson;
   onConfigChange: (config: Partial<WidgetConfigJson>) => void;
 }) {
-  const preset = (config.theme?.preset ?? "clean_white") as ThemePresetKey;
+  const preset = config.theme?.preset ?? "clean_white";
   const colors = config.theme?.colors ?? {};
+  const typography = config.theme?.typography ?? {};
+  const layout = config.theme?.layout ?? {};
 
-  const handlePresetChange = (newPreset: ThemePresetKey) => {
-    const presetData = THEME_PRESETS[newPreset];
+  // Parse numeric values from CSS strings for sliders
+  const parsePx = (val: string | undefined, fallback: number): number => {
+    if (!val) return fallback;
+    const num = parseInt(val, 10);
+    return isNaN(num) ? fallback : num;
+  };
+
+  const headerSizePx = parsePx(typography.headerSize, 18);
+  const bodySizePx = parsePx(typography.bodySize, 14);
+  const maxWidthPx = parsePx(layout.maxWidth, 600);
+  const paddingPx = parsePx(layout.padding, 16);
+  const borderRadiusPx = parsePx(layout.borderRadius, 8);
+
+  const [isBrandLoading, startBrandTransition] = useTransition();
+
+  const handlePresetChange = (newPreset: string) => {
+    if (newPreset === "brand_match") {
+      // Fetch org brand colors and derive the theme
+      startBrandTransition(async () => {
+        const result = await getOrgBrandColors();
+        if (result.success) {
+          const { primaryColor, secondaryColor, fontFamily } = result.data;
+          const brandPreset = buildBrandMatchPreset(primaryColor, secondaryColor, fontFamily);
+          onConfigChange({
+            theme: {
+              preset: "brand_match",
+              colors: brandPreset.colors,
+              typography: brandPreset.typography,
+              layout: brandPreset.layout,
+            },
+          });
+        } else {
+          // Fallback to static brand_match preset
+          const fallback = getPreset("brand_match");
+          onConfigChange({
+            theme: {
+              preset: "brand_match",
+              colors: { ...fallback.colors },
+              typography: { ...fallback.typography },
+              layout: { ...fallback.layout },
+            },
+          });
+        }
+      });
+      return;
+    }
+
+    const presetData = getPreset(newPreset);
     onConfigChange({
       theme: {
-        preset: newPreset,
+        preset: newPreset as NonNullable<WidgetConfigJson["theme"]>["preset"],
         colors: { ...presetData.colors },
         typography: { ...presetData.typography },
         layout: { ...presetData.layout },
@@ -276,15 +494,40 @@ function ThemeTab({
     });
   };
 
+  const updateTypography = (field: string, value: string) => {
+    onConfigChange({
+      theme: {
+        ...config.theme,
+        typography: { ...typography, [field]: value },
+      },
+    });
+  };
+
+  const updateLayout = (field: string, value: string) => {
+    onConfigChange({
+      theme: {
+        ...config.theme,
+        layout: { ...layout, [field]: value },
+      },
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {/* Preset selector */}
       <div>
         <Label className="text-sm font-semibold text-repwell-teal-500 mb-2 block">
           Theme Preset
         </Label>
         <ThemePresetSelector value={preset} onChange={handlePresetChange} />
+        {isBrandLoading && (
+          <p className="text-[10px] text-repwell-teal-300 mt-1.5 animate-pulse">
+            Loading brand colors...
+          </p>
+        )}
       </div>
 
+      {/* Colors */}
       <div>
         <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
           Colors
@@ -326,8 +569,13 @@ function ThemeTab({
             onChange={(v) => handleColorChange("starEmpty", v)}
           />
         </div>
+        {/* WCAG contrast warnings */}
+        <div className="mt-3">
+          <ContrastWarnings colors={colors} />
+        </div>
       </div>
 
+      {/* Typography */}
       <div>
         <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
           Typography
@@ -335,120 +583,135 @@ function ThemeTab({
         <div className="space-y-3">
           <div>
             <Label className="text-xs text-muted-foreground">Font Family</Label>
-            <Select
-              value={config.theme?.typography?.fontFamily ?? "system-ui"}
-              onValueChange={(v) =>
-                onConfigChange({
-                  theme: {
-                    ...config.theme,
-                    typography: { ...config.theme?.typography, fontFamily: v },
-                  },
-                })
-              }
-            >
-              <SelectTrigger className="h-8 text-xs mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="system-ui">System Default</SelectItem>
-                <SelectItem value="'Inter', sans-serif">Inter</SelectItem>
-                <SelectItem value="'Roboto', sans-serif">Roboto</SelectItem>
-                <SelectItem value="'Open Sans', sans-serif">Open Sans</SelectItem>
-                <SelectItem value="'Lato', sans-serif">Lato</SelectItem>
-                <SelectItem value="'Poppins', sans-serif">Poppins</SelectItem>
-                <SelectItem value="'Georgia', serif">Georgia</SelectItem>
-                <SelectItem value="'Merriweather', serif">Merriweather</SelectItem>
-                <SelectItem value="'Playfair Display', serif">Playfair Display</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">Header Size</Label>
-            <Input
-              value={config.theme?.typography?.headerSize ?? "18px"}
-              onChange={(e) =>
-                onConfigChange({
-                  theme: {
-                    ...config.theme,
-                    typography: { ...config.theme?.typography, headerSize: e.target.value },
-                  },
-                })
-              }
-              className="h-8 text-xs mt-1"
-              placeholder="18px"
+            <FontFamilySelect
+              value={typography.fontFamily ?? "system-ui"}
+              onChange={(v) => updateTypography("fontFamily", v)}
             />
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Body Size</Label>
-            <Input
-              value={config.theme?.typography?.bodySize ?? "14px"}
-              onChange={(e) =>
-                onConfigChange({
-                  theme: {
-                    ...config.theme,
-                    typography: { ...config.theme?.typography, bodySize: e.target.value },
-                  },
-                })
-              }
-              className="h-8 text-xs mt-1"
-              placeholder="14px"
+            <Label className="text-xs text-muted-foreground">
+              Heading Size ({headerSizePx}px)
+            </Label>
+            <Slider
+              value={[headerSizePx]}
+              onValueChange={([v]) => updateTypography("headerSize", `${v}px`)}
+              min={12}
+              max={32}
+              step={1}
+              className="mt-2"
+            />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground">
+              Body Size ({bodySizePx}px)
+            </Label>
+            <Slider
+              value={[bodySizePx]}
+              onValueChange={([v]) => updateTypography("bodySize", `${v}px`)}
+              min={10}
+              max={20}
+              step={1}
+              className="mt-2"
             />
           </div>
         </div>
       </div>
 
+      {/* Layout */}
       <div>
         <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
           Layout
         </Label>
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <Label className="text-xs text-muted-foreground">Border Radius</Label>
-            <Input
-              value={config.theme?.layout?.borderRadius ?? "8px"}
-              onChange={(e) =>
-                onConfigChange({
-                  theme: {
-                    ...config.theme,
-                    layout: { ...config.theme?.layout, borderRadius: e.target.value },
-                  },
-                })
-              }
-              className="h-8 text-xs mt-1"
-              placeholder="8px"
+            <Label className="text-xs text-muted-foreground">
+              Max Width ({maxWidthPx}px)
+            </Label>
+            <Slider
+              value={[maxWidthPx]}
+              onValueChange={([v]) => updateLayout("maxWidth", `${v}px`)}
+              min={300}
+              max={1200}
+              step={10}
+              className="mt-2"
             />
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Max Width</Label>
-            <Input
-              value={config.theme?.layout?.maxWidth ?? "100%"}
-              onChange={(e) =>
-                onConfigChange({
-                  theme: {
-                    ...config.theme,
-                    layout: { ...config.theme?.layout, maxWidth: e.target.value },
-                  },
-                })
-              }
-              className="h-8 text-xs mt-1"
-              placeholder="600px"
+            <Label className="text-xs text-muted-foreground">
+              Padding ({paddingPx}px)
+            </Label>
+            <Slider
+              value={[paddingPx]}
+              onValueChange={([v]) => updateLayout("padding", `${v}px`)}
+              min={0}
+              max={48}
+              step={2}
+              className="mt-2"
             />
           </div>
           <div>
-            <Label className="text-xs text-muted-foreground">Padding</Label>
-            <Input
-              value={config.theme?.layout?.padding ?? "16px"}
-              onChange={(e) =>
-                onConfigChange({
-                  theme: {
-                    ...config.theme,
-                    layout: { ...config.theme?.layout, padding: e.target.value },
-                  },
-                })
-              }
-              className="h-8 text-xs mt-1"
-              placeholder="16px"
+            <Label className="text-xs text-muted-foreground">
+              Border Radius ({borderRadiusPx}px)
+            </Label>
+            <Slider
+              value={[borderRadiusPx]}
+              onValueChange={([v]) => updateLayout("borderRadius", `${v}px`)}
+              min={0}
+              max={24}
+              step={1}
+              className="mt-2"
             />
+          </div>
+
+          {/* Shadow dropdown */}
+          <div>
+            <Label className="text-xs text-muted-foreground">Shadow</Label>
+            <Select
+              value={layout.shadow ?? "sm"}
+              onValueChange={(v) => updateLayout("shadow", v)}
+            >
+              <SelectTrigger className="h-8 text-xs mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="sm">Small</SelectItem>
+                <SelectItem value="md">Medium</SelectItem>
+                <SelectItem value="lg">Large</SelectItem>
+                <SelectItem value="xl">Extra Large</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Card style radio buttons */}
+          <div>
+            <Label className="text-xs text-muted-foreground mb-2 block">Card Style</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { value: "flat", label: "Flat" },
+                  { value: "elevated", label: "Elevated" },
+                  { value: "bordered", label: "Bordered" },
+                  { value: "glass", label: "Glass" },
+                ] as const
+              ).map((style) => {
+                const isActive = (layout.cardStyle ?? "bordered") === style.value;
+                return (
+                  <button
+                    key={style.value}
+                    type="button"
+                    onClick={() => updateLayout("cardStyle", style.value)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
+                      isActive
+                        ? "bg-repwell-teal-300 text-white border-repwell-teal-300 shadow-sm"
+                        : "bg-white text-repwell-teal-400 border-border hover:border-repwell-sage-200"
+                    }`}
+                  >
+                    {style.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -473,7 +736,8 @@ function ContentTab({
     onConfigChange({ content: { ...content, [field]: value } });
   };
 
-  const isMortgageRelated = ["lo_review", "branch_review"].includes(widgetType);
+  const isMortgageRelated = ["lo_review", "branch_review", "company_review"].includes(widgetType);
+  const isLOWidget = widgetType === "lo_review";
 
   return (
     <div className="space-y-4">
@@ -567,13 +831,20 @@ function ContentTab({
           <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
             Compliance
           </Label>
+          {isLOWidget ? (
+            <div className="flex items-center justify-between py-1">
+              <Label className="text-xs font-medium text-repwell-teal-400">Show NMLS Number</Label>
+              <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Required</span>
+            </div>
+          ) : (
+            <SwitchField
+              label="Show NMLS Number"
+              checked={content.showNMLS !== false}
+              onChange={(v) => update("showNMLS", v)}
+            />
+          )}
           <SwitchField
-            label="Show NMLS Number"
-            checked={content.showNMLS !== false}
-            onChange={(v) => update("showNMLS", v)}
-          />
-          <SwitchField
-            label="Show Disclaimer"
+            label="Show Disclaimer &amp; Equal Housing"
             checked={content.showDisclaimer === true}
             onChange={(v) => update("showDisclaimer", v)}
           />
@@ -581,11 +852,14 @@ function ContentTab({
             <div className="mt-2">
               <Label className="text-xs text-muted-foreground">Disclaimer Text</Label>
               <Input
-                value={(content as Record<string, unknown>).disclaimerText as string ?? ""}
+                value={content.disclaimerText ?? ""}
                 onChange={(e) => update("disclaimerText", e.target.value)}
                 className="h-8 text-xs mt-1"
-                placeholder="NMLS# required by state law..."
+                placeholder="This is not a commitment to lend..."
               />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Leave empty for default compliance text. Minimum 10px font enforced.
+              </p>
             </div>
           )}
         </div>
@@ -772,11 +1046,15 @@ function FiltersTab({
 function SEOTab({
   enableStructuredData,
   structuredDataType,
+  entityType,
+  name,
   onStructuredDataChange,
   onStructuredDataTypeChange,
 }: {
   enableStructuredData: boolean;
   structuredDataType: string;
+  entityType: string;
+  name: string;
   onStructuredDataChange: (enabled: boolean) => void;
   onStructuredDataTypeChange: (type: string) => void;
 }) {
@@ -789,29 +1067,155 @@ function SEOTab({
       />
 
       {enableStructuredData && (
-        <div>
-          <Label className="text-xs text-muted-foreground">Schema Type</Label>
-          <Select
-            value={structuredDataType}
-            onValueChange={onStructuredDataTypeChange}
-          >
-            <SelectTrigger className="h-8 text-xs mt-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="LocalBusiness">Local Business</SelectItem>
-              <SelectItem value="FinancialService">Financial Service</SelectItem>
-              <SelectItem value="ProfessionalService">Professional Service</SelectItem>
-              <SelectItem value="Organization">Organization</SelectItem>
-              <SelectItem value="Product">Product</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-[10px] text-muted-foreground mt-1.5">
-            JSON-LD structured data helps search engines display star ratings in results.
-          </p>
-        </div>
+        <>
+          <div>
+            <Label className="text-xs text-muted-foreground">Schema Type</Label>
+            <Select
+              value={structuredDataType}
+              onValueChange={onStructuredDataTypeChange}
+            >
+              <SelectTrigger className="h-8 text-xs mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="LocalBusiness">Local Business</SelectItem>
+                <SelectItem value="FinancialService">Financial Service</SelectItem>
+                <SelectItem value="MortgageBroker">Mortgage Broker</SelectItem>
+                <SelectItem value="Organization">Organization</SelectItem>
+                <SelectItem value="Person">Person</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[10px] text-muted-foreground mt-1.5">
+              JSON-LD structured data helps search engines display star ratings in results.
+            </p>
+          </div>
+
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Preview</Label>
+            <SeoJsonLdPreview
+              schemaType={structuredDataType}
+              entityType={entityType}
+              name={name}
+            />
+          </div>
+        </>
       )}
     </div>
+  );
+}
+
+/** Apply syntax highlighting to a JSON string. */
+function highlightJson(json: string): ReactNode[] {
+  const parts: ReactNode[] = [];
+  let i = 0;
+
+  const regex =
+    /("(?:[^"\\]|\\.)*")\s*:|("(?:[^"\\]|\\.)*")|(true|false|null)|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = regex.exec(json)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`t${i++}`} className="text-gray-500">
+          {json.slice(lastIndex, match.index)}
+        </span>
+      );
+    }
+
+    if (match[1]) {
+      parts.push(
+        <span key={`k${i++}`} className="text-indigo-600">{match[1]}</span>
+      );
+    } else if (match[2]) {
+      parts.push(
+        <span key={`s${i++}`} className="text-emerald-600">{match[2]}</span>
+      );
+    } else if (match[3]) {
+      parts.push(
+        <span key={`b${i++}`} className="text-amber-600">{match[3]}</span>
+      );
+    } else if (match[4]) {
+      parts.push(
+        <span key={`n${i++}`} className="text-blue-600">{match[4]}</span>
+      );
+    }
+
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < json.length) {
+    parts.push(
+      <span key={`e${i++}`} className="text-gray-500">
+        {json.slice(lastIndex)}
+      </span>
+    );
+  }
+
+  return parts;
+}
+
+/** Inline preview of the JSON-LD that will be generated. */
+function SeoJsonLdPreview({
+  schemaType,
+  entityType,
+  name,
+}: {
+  schemaType: string;
+  entityType: string;
+  name: string;
+}) {
+  const preview = useMemo(() => {
+    const resolvedType = schemaType === "MortgageBroker" ? "FinancialService" : schemaType;
+    const schema: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": resolvedType,
+      name: name || "Your Widget Name",
+    };
+
+    if (entityType === "user" || schemaType === "Person") {
+      schema.jobTitle = "Loan Officer";
+      schema.worksFor = { "@type": "Organization", name: "Your Company" };
+    }
+
+    if (resolvedType === "LocalBusiness") {
+      schema.address = {
+        "@type": "PostalAddress",
+        streetAddress: "123 Main St",
+        addressLocality: "Springfield",
+        addressRegion: "IL",
+        postalCode: "62701",
+      };
+      schema.telephone = "+1-555-555-5555";
+    }
+
+    schema.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      reviewCount: 24,
+      bestRating: "5",
+      worstRating: "1",
+    };
+
+    schema.review = [
+      {
+        "@type": "Review",
+        author: { "@type": "Person", name: "Jane D." },
+        datePublished: new Date().toISOString().split("T")[0],
+        reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 },
+        reviewBody: "Excellent service...",
+      },
+    ];
+
+    return JSON.stringify(schema, null, 2);
+  }, [schemaType, entityType, name]);
+
+  const highlighted = useMemo(() => highlightJson(preview), [preview]);
+
+  return (
+    <pre className="text-[10px] leading-relaxed bg-gray-950 border border-border rounded-md p-2.5 overflow-x-auto max-h-48 overflow-y-auto font-mono whitespace-pre">
+      {highlighted}
+    </pre>
   );
 }
 
@@ -845,6 +1249,7 @@ export function WidgetBuilderSidebar({
   config,
   widgetType,
   entityType,
+  entityId,
   status,
   name,
   enableStructuredData,
@@ -855,6 +1260,7 @@ export function WidgetBuilderSidebar({
   onNameChange,
   onStatusChange,
   onEntityTypeChange,
+  onEntityIdChange,
   onStructuredDataChange,
   onStructuredDataTypeChange,
 }: WidgetBuilderSidebarProps) {
@@ -893,9 +1299,11 @@ export function WidgetBuilderSidebar({
             <GeneralTab
               name={name}
               entityType={entityType}
+              entityId={entityId}
               status={status}
               onNameChange={onNameChange}
               onEntityTypeChange={onEntityTypeChange}
+              onEntityIdChange={onEntityIdChange}
               onStatusChange={onStatusChange}
             />
           </TabsContent>
@@ -912,6 +1320,8 @@ export function WidgetBuilderSidebar({
             <SEOTab
               enableStructuredData={enableStructuredData}
               structuredDataType={structuredDataType}
+              entityType={entityType}
+              name={name}
               onStructuredDataChange={onStructuredDataChange}
               onStructuredDataTypeChange={onStructuredDataTypeChange}
             />

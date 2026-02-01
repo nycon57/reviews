@@ -3,7 +3,8 @@
  * All DOM construction uses safe methods (createElement/textContent) — no innerHTML.
  */
 
-import type { WidgetThemeColors, WidgetThemeLayout } from "../types";
+import type { WidgetThemeColors, WidgetThemeLayout, WidgetThemeTypography } from "../types";
+import { applyTheme as applyThemeEngine } from "../styles/theme-engine";
 
 const STAR_PATH =
   "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
@@ -72,16 +73,15 @@ export function formatRelativeDate(dateStr: string): string {
   }
 }
 
+/**
+ * Apply theme CSS custom properties + load Google Font via the theme engine.
+ * Delegates to styles/theme-engine.ts to keep a single source of truth.
+ */
 export function applyTheme(
   root: ShadowRoot,
   colors?: WidgetThemeColors,
-  layout?: WidgetThemeLayout
+  layout?: WidgetThemeLayout,
+  typography?: WidgetThemeTypography,
 ): void {
-  const host = root.host as HTMLElement;
-  if (colors?.background) host.style.setProperty("--rw-bg", colors.background);
-  if (colors?.text) host.style.setProperty("--rw-text", colors.text);
-  if (colors?.primary) host.style.setProperty("--rw-primary", colors.primary);
-  if (colors?.border) host.style.setProperty("--rw-border", colors.border);
-  if (layout?.maxWidth) host.style.maxWidth = layout.maxWidth;
-  if (layout?.borderRadius) host.style.setProperty("--rw-radius", layout.borderRadius);
+  applyThemeEngine(root, colors, layout, typography);
 }

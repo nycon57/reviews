@@ -139,6 +139,8 @@ const LOAN_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   va: { bg: "#d1fae5", text: "#065f46" },
   fha: { bg: "#e0e7ff", text: "#3730a3" },
   jumbo: { bg: "#fce7f3", text: "#9d174d" },
+  usda: { bg: "#fef9c3", text: "#854d0e" },
+  conventional: { bg: "#f0f9ff", text: "#075985" },
 };
 
 function getLoanTypeColor(loanType: string): { bg: string; text: string } {
@@ -235,28 +237,22 @@ function ProfileHeader({
           <div className="text-[13px] text-gray-500 mb-1">{profile.title}</div>
         )}
 
-        {content.showNMLS !== false && profile.nmls_id && (
+        {/* NMLS is mandatory for LO widgets per SAFE Act */}
+        {profile.nmls_id && (
           <a
             href={`https://www.nmlsconsumeraccess.org/EntityDetails.aspx/INDIVIDUAL/${encodeURIComponent(profile.nmls_id)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[var(--rw-primary,#52796f)] transition-colors no-underline hover:underline"
           >
-            NMLS #{profile.nmls_id}
+            NMLS# {profile.nmls_id}
             <ExternalLink size={10} />
           </a>
         )}
 
         {profile.licensing_states && profile.licensing_states.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1">
-            {profile.licensing_states.map((state) => (
-              <span
-                key={state}
-                className="inline-block px-1.5 py-px text-[10px] font-medium text-gray-500 bg-gray-100 rounded uppercase tracking-wide"
-              >
-                {state}
-              </span>
-            ))}
+          <div className="text-xs text-gray-500 mt-1">
+            Licensed in {profile.licensing_states.join(", ")}
           </div>
         )}
 
@@ -510,12 +506,24 @@ export function LOReviewPreview({
 
       {/* Equal Housing Lender disclaimer */}
       {content.showDisclaimer && (
-        <div className="flex items-center gap-2 mt-3 p-2 text-[10px] leading-snug text-gray-500 bg-gray-50 rounded">
-          <Home size={18} className="flex-shrink-0 text-gray-400" />
-          <span>
-            {content.disclaimerText ??
-              "Equal Housing Lender. NMLS Consumer Access: www.nmlsconsumeraccess.org"}
-          </span>
+        <div className="mt-3 p-2.5 bg-gray-50 rounded border border-gray-100">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Home size={16} className="flex-shrink-0 text-gray-500" />
+            <span className="text-[11px] font-semibold text-gray-600">Equal Housing Lender</span>
+          </div>
+          <p className="text-[10px] leading-snug text-gray-500 mb-1">
+            {content.disclaimerText ||
+              "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice."}
+          </p>
+          <a
+            href="https://www.nmlsconsumeraccess.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] no-underline hover:underline"
+            style={{ color: "var(--rw-primary, #52796f)" }}
+          >
+            NMLS Consumer Access
+          </a>
         </div>
       )}
 

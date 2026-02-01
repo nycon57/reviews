@@ -18,7 +18,7 @@ function renderCompanyReviewWidget(
   reviews: PublicReview[],
   apiBase: string
 ): void {
-  applyTheme(root, config.config?.theme?.colors, config.config?.theme?.layout);
+  applyTheme(root, config.config?.theme?.colors, config.config?.theme?.layout, config.config?.theme?.typography);
 
   const style = document.createElement("style");
   style.textContent = COMPANY_REVIEW_STYLES;

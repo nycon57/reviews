@@ -5,6 +5,10 @@
  */
 
 import { BASE_STYLES } from "../styles/base";
+import { loadFontInShadow } from "../styles/fonts";
+
+// Re-export for backward compatibility with existing consumers
+export { loadFontInShadow as loadGoogleFontInShadow };
 
 export function attachShadow(host: HTMLElement): ShadowRoot {
   const shadow = host.attachShadow({ mode: "open" });

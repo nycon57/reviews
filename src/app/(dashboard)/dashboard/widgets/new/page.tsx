@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { WidgetTypeSelector } from "@/components/widgets/widget-type-selector";
 import { createWidget } from "@/lib/widgets/actions";
+import { EntitySelector } from "@/components/widgets/entity-selector";
 import type { WidgetType, WidgetEntityType } from "@/lib/widgets/types";
 
 type Step = "type" | "entity" | "name";
@@ -34,6 +35,7 @@ export default function NewWidgetPage() {
   const [step, setStep] = useState<Step>("type");
   const [widgetType, setWidgetType] = useState<WidgetType | null>(null);
   const [entityType, setEntityType] = useState<WidgetEntityType>("organization");
+  const [entityId, setEntityId] = useState<string | null>(null);
   const [name, setName] = useState("");
 
   const handleCreate = () => {
@@ -44,6 +46,7 @@ export default function NewWidgetPage() {
         name: name.trim(),
         widget_type: widgetType,
         entity_type: entityType,
+        entity_id: entityId ?? undefined,
         status: "draft",
       });
 
@@ -138,7 +141,10 @@ export default function NewWidgetPage() {
               </Label>
               <Select
                 value={entityType}
-                onValueChange={(v) => setEntityType(v as WidgetEntityType)}
+                onValueChange={(v) => {
+                  setEntityType(v as WidgetEntityType);
+                  setEntityId(null);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -153,6 +159,20 @@ export default function NewWidgetPage() {
                   )}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium text-repwell-teal-500 mb-2 block">
+                Select {ENTITY_TYPE_LABELS[entityType]}
+              </Label>
+              <EntitySelector
+                entityType={entityType}
+                entityId={entityId}
+                onSelect={(id) => setEntityId(id)}
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Search and select a specific {ENTITY_TYPE_LABELS[entityType].toLowerCase()} to display reviews for.
+              </p>
             </div>
 
             <div className="flex justify-between">

@@ -38,6 +38,7 @@ type BuilderAction =
   | { type: "SET_DOMAINS"; payload: string[] }
   | { type: "SET_STATUS"; payload: WidgetStatus }
   | { type: "SET_ENTITY_TYPE"; payload: WidgetEntityType }
+  | { type: "SET_ENTITY_ID"; payload: string | null }
   | { type: "SET_STRUCTURED_DATA"; payload: boolean }
   | { type: "SET_STRUCTURED_DATA_TYPE"; payload: string }
   | { type: "SAVED"; payload: { widgetId: string; dbId: string } };
@@ -70,7 +71,10 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
       return { ...state, status: action.payload, isDirty: true };
 
     case "SET_ENTITY_TYPE":
-      return { ...state, entityType: action.payload, isDirty: true };
+      return { ...state, entityType: action.payload, entityId: null, isDirty: true };
+
+    case "SET_ENTITY_ID":
+      return { ...state, entityId: action.payload, isDirty: true };
 
     case "SET_STRUCTURED_DATA":
       return { ...state, enableStructuredData: action.payload, isDirty: true };
@@ -191,6 +195,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
           enable_structured_data: state.enableStructuredData,
           structured_data_type: state.structuredDataType,
           status: state.status,
+          entity_id: state.entityId ?? undefined,
         });
 
         if (result.success) {
@@ -227,6 +232,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     config: state.config,
     widgetType: state.widgetType,
     entityType: state.entityType,
+    entityId: state.entityId,
     status: state.status,
     name: state.name,
     enableStructuredData: state.enableStructuredData,
@@ -237,6 +243,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     onNameChange: (name: string) => dispatch({ type: "SET_NAME", payload: name }),
     onStatusChange: (status: WidgetStatus) => dispatch({ type: "SET_STATUS", payload: status }),
     onEntityTypeChange: (entityType: WidgetEntityType) => dispatch({ type: "SET_ENTITY_TYPE", payload: entityType }),
+    onEntityIdChange: (entityId: string | null) => dispatch({ type: "SET_ENTITY_ID", payload: entityId }),
     onStructuredDataChange: (enabled: boolean) => dispatch({ type: "SET_STRUCTURED_DATA", payload: enabled }),
     onStructuredDataTypeChange: (type: string) => dispatch({ type: "SET_STRUCTURED_DATA_TYPE", payload: type }),
   };
@@ -299,7 +306,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
             <WidgetBuilderSidebar {...sidebarProps} />
           </div>
           <div className="overflow-hidden border-x border-border">
-            <WidgetPreview config={state.config} widgetType={state.widgetType} />
+            <WidgetPreview config={state.config} widgetType={state.widgetType} entityType={state.entityType} entityId={state.entityId} />
           </div>
           <div className="overflow-hidden">
             <EmbedCodePanel widgetId={state.widgetId} />
@@ -310,7 +317,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
         <div className="lg:hidden h-full">
           {mobileTab === "settings" && <WidgetBuilderSidebar {...sidebarProps} />}
           {mobileTab === "preview" && (
-            <WidgetPreview config={state.config} widgetType={state.widgetType} />
+            <WidgetPreview config={state.config} widgetType={state.widgetType} entityType={state.entityType} entityId={state.entityId} />
           )}
           {mobileTab === "embed" && <EmbedCodePanel widgetId={state.widgetId} />}
         </div>

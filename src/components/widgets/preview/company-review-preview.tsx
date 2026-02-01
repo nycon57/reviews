@@ -138,6 +138,8 @@ const LOAN_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   va: { bg: "#d1fae5", text: "#065f46" },
   fha: { bg: "#e0e7ff", text: "#3730a3" },
   jumbo: { bg: "#fce7f3", text: "#9d174d" },
+  usda: { bg: "#fef9c3", text: "#854d0e" },
+  conventional: { bg: "#f0f9ff", text: "#075985" },
 };
 
 function getLoanTypeColor(loanType: string): { bg: string; text: string } {
@@ -615,11 +617,24 @@ export function CompanyReviewPreview({
 
       {/* Disclaimer */}
       {content.showDisclaimer && (
-        <div className="flex items-center gap-2 mt-3 p-2 text-[10px] leading-snug text-gray-500 bg-gray-50 rounded">
-          <Home size={18} className="flex-shrink-0 text-gray-400" />
-          <span>
-            {content.disclaimerText ?? "Equal Housing Lender. NMLS Consumer Access: www.nmlsconsumeraccess.org"}
-          </span>
+        <div className="mt-3 p-2.5 bg-gray-50 rounded border border-gray-100">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Home size={16} className="flex-shrink-0 text-gray-500" />
+            <span className="text-[11px] font-semibold text-gray-600">Equal Housing Lender</span>
+          </div>
+          <p className="text-[10px] leading-snug text-gray-500 mb-1">
+            {content.disclaimerText ||
+              "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice."}
+          </p>
+          <a
+            href="https://www.nmlsconsumeraccess.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] no-underline hover:underline"
+            style={{ color: "var(--rw-primary, #52796f)" }}
+          >
+            NMLS Consumer Access
+          </a>
         </div>
       )}
 

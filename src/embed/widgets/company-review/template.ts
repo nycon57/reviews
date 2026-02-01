@@ -22,6 +22,7 @@ import {
   formatRelativeDate,
   formatAbsoluteDate,
 } from "../../core/dom-helpers";
+import { createEqualHousingLenderSVG, createHouseIconSVG } from "../../assets/equal-housing-lender";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -37,7 +38,7 @@ function starsRow(rating: number, filledColor: string, emptyColor: string, class
 
 function getLoanTagClass(loanType: string): string {
   const normalized = loanType.toLowerCase().replace(/\s+/g, "");
-  const m: Record<string, string> = { purchase: "purchase", refinance: "refinance", va: "va", fha: "fha", jumbo: "jumbo" };
+  const m: Record<string, string> = { purchase: "purchase", refinance: "refinance", va: "va", fha: "fha", jumbo: "jumbo", usda: "usda", conventional: "conventional" };
   return m[normalized] ?? "default";
 }
 
@@ -57,6 +58,8 @@ const SOURCE_LABELS: Record<string, string> = {
   zillow: "Zillow",
   internal: "RepWell",
 };
+
+const NMLS_COMPANY_BASE = "https://www.nmlsconsumeraccess.org/EntityDetails.aspx/COMPANY/";
 
 // ── Organization Header ──────────────────────────────────────────────
 
@@ -83,6 +86,20 @@ function buildOrgHeader(
   const info = el("div", "rw-co-header__info");
   const orgName = profile.organization_name ?? profile.full_name;
   if (orgName) info.appendChild(text("h3", orgName, "rw-co-header__name"));
+
+  // Company NMLS number in header
+  if (profile.nmls_id) {
+    const nmlsWrapper = el("div", "rw-co-header__nmls");
+    nmlsWrapper.textContent = "NMLS# ";
+    const nmlsLink = document.createElement("a");
+    nmlsLink.textContent = profile.nmls_id;
+    nmlsLink.href = `${NMLS_COMPANY_BASE}${encodeURIComponent(profile.nmls_id)}`;
+    nmlsLink.target = "_blank";
+    nmlsLink.rel = "noopener noreferrer";
+    nmlsLink.setAttribute("aria-label", `Company NMLS ID ${profile.nmls_id} - view on NMLS Consumer Access`);
+    nmlsWrapper.appendChild(nmlsLink);
+    info.appendChild(nmlsWrapper);
+  }
 
   if (profile.average_rating != null) {
     const ratingRow = el("div", "rw-co-header__rating");
@@ -271,7 +288,10 @@ function buildReviewCard(
     hasTags = true;
   }
   if (review.first_time_homebuyer) {
-    tags.appendChild(text("span", "First-Time Homebuyer", "rw-co-review__fthb-badge"));
+    const fthb = el("span", "rw-co-review__fthb-badge");
+    fthb.appendChild(createHouseIconSVG(11));
+    fthb.appendChild(document.createTextNode("First-Time Buyer"));
+    tags.appendChild(fthb);
     hasTags = true;
   }
   if (hasTags) card.appendChild(tags);
@@ -459,10 +479,20 @@ export function buildCompanyReviewDOM(
   if (content?.showDisclaimer) {
     const disclaimer = el("div", "rw-co-disclaimer");
     const ehl = el("div", "rw-co-disclaimer__ehl");
-    ehl.textContent = "\u2302 Equal Housing Lender";
+    ehl.appendChild(createEqualHousingLenderSVG(18));
+    ehl.appendChild(document.createTextNode("Equal Housing Lender"));
     disclaimer.appendChild(ehl);
-    const disclaimerContent = content.disclaimerText ?? "NMLS Consumer Access: www.nmlsconsumeraccess.org. This is not a commitment to lend. Not all borrowers will qualify. Equal Housing Lender.";
-    disclaimer.appendChild(text("div", disclaimerContent));
+    const defaultDisclaimer = "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.";
+    const disclaimerContent = content.disclaimerText || defaultDisclaimer;
+    disclaimer.appendChild(text("div", disclaimerContent, "rw-co-disclaimer__text"));
+    // NMLS Consumer Access link
+    const nmlsLink = document.createElement("a");
+    nmlsLink.className = "rw-co-disclaimer__nmls-link";
+    nmlsLink.href = "https://www.nmlsconsumeraccess.org";
+    nmlsLink.target = "_blank";
+    nmlsLink.rel = "noopener noreferrer";
+    nmlsLink.textContent = "NMLS Consumer Access";
+    disclaimer.appendChild(nmlsLink);
     container.appendChild(disclaimer);
   }
 

@@ -1,15 +1,18 @@
 /**
  * Base styles injected into each widget Shadow DOM.
+ * Uses CSS custom properties (--rw-*) set by applyTheme() for runtime theming.
  * Exported as a string constant so esbuild can inline it (no external CSS request).
  */
 
 export const BASE_STYLES = /* css */ `
   :host {
     display: block;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-    font-size: 14px;
+    font-family: var(--rw-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif);
+    font-size: var(--rw-body-size, 14px);
     line-height: 1.5;
-    color: #1a1a2e;
+    color: var(--rw-text, #1a1a2e);
+    background: var(--rw-bg, #ffffff);
+    max-width: var(--rw-max-width, none);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -25,7 +28,7 @@ export const BASE_STYLES = /* css */ `
   /* ── Skeleton shimmer ──────────────────────────────────────────────── */
 
   .rw-skeleton {
-    padding: 16px;
+    padding: var(--rw-padding, 16px);
   }
 
   .rw-skeleton__header {
@@ -39,9 +42,9 @@ export const BASE_STYLES = /* css */ `
 
   .rw-skeleton__card {
     flex: 1;
-    padding: 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    padding: var(--rw-padding, 16px);
+    border: 1px solid var(--rw-border, #e5e7eb);
+    border-radius: var(--rw-radius, 8px);
   }
 
   .rw-shimmer {
@@ -59,7 +62,7 @@ export const BASE_STYLES = /* css */ `
   /* ── Widget container ──────────────────────────────────────────────── */
 
   .rw-widget {
-    padding: 16px;
+    padding: var(--rw-padding, 16px);
   }
 
   .rw-widget__header {
@@ -67,14 +70,16 @@ export const BASE_STYLES = /* css */ `
   }
 
   .rw-widget__title {
-    font-size: 18px;
+    font-size: var(--rw-heading-size, 18px);
     font-weight: 600;
+    color: var(--rw-text, #1a1a2e);
     margin-bottom: 4px;
   }
 
   .rw-widget__subtitle {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.7;
   }
 
   /* ── Review cards ──────────────────────────────────────────────────── */
@@ -86,10 +91,11 @@ export const BASE_STYLES = /* css */ `
   }
 
   .rw-review {
-    padding: 16px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #fff;
+    padding: var(--rw-padding, 16px);
+    border: 1px solid var(--rw-border, #e5e7eb);
+    border-radius: var(--rw-radius, 8px);
+    background: var(--rw-bg, #fff);
+    box-shadow: var(--rw-shadow, none);
     transition: box-shadow 0.15s ease;
   }
 
@@ -108,13 +114,14 @@ export const BASE_STYLES = /* css */ `
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #e5e7eb;
+    background: var(--rw-border, #e5e7eb);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
     font-size: 14px;
-    color: #6b7280;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.7;
     flex-shrink: 0;
   }
 
@@ -125,7 +132,8 @@ export const BASE_STYLES = /* css */ `
 
   .rw-review__name {
     font-weight: 600;
-    font-size: 14px;
+    font-size: var(--rw-body-size, 14px);
+    color: var(--rw-text, #1a1a2e);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -133,7 +141,8 @@ export const BASE_STYLES = /* css */ `
 
   .rw-review__date {
     font-size: 12px;
-    color: #9ca3af;
+    color: var(--rw-text, #9ca3af);
+    opacity: 0.6;
   }
 
   .rw-review__stars {
@@ -148,23 +157,24 @@ export const BASE_STYLES = /* css */ `
   }
 
   .rw-star--filled {
-    color: #f59e0b;
+    color: var(--rw-star-fill, #f59e0b);
   }
 
   .rw-star--empty {
-    color: #d1d5db;
+    color: var(--rw-star-empty, #d1d5db);
   }
 
   .rw-review__text {
-    font-size: 14px;
+    font-size: var(--rw-body-size, 14px);
     line-height: 1.6;
-    color: #374151;
+    color: var(--rw-text, #374151);
   }
 
   .rw-review__source {
     margin-top: 8px;
     font-size: 11px;
-    color: #9ca3af;
+    color: var(--rw-text, #9ca3af);
+    opacity: 0.5;
     text-transform: capitalize;
   }
 
@@ -174,19 +184,19 @@ export const BASE_STYLES = /* css */ `
     display: inline-block;
     margin-top: 16px;
     padding: 10px 20px;
-    font-size: 14px;
+    font-size: var(--rw-body-size, 14px);
     font-weight: 500;
     color: #fff;
-    background: #2563eb;
+    background: var(--rw-primary, #2563eb);
     border: none;
-    border-radius: 6px;
+    border-radius: var(--rw-radius, 6px);
     text-decoration: none;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: opacity 0.15s ease;
   }
 
   .rw-cta:hover {
-    background: #1d4ed8;
+    opacity: 0.9;
   }
 
   /* ── Branding ───────────────────────────────────────────────────────── */
@@ -194,14 +204,16 @@ export const BASE_STYLES = /* css */ `
   .rw-branding {
     margin-top: 16px;
     padding-top: 12px;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid var(--rw-border, #f3f4f6);
     font-size: 11px;
-    color: #9ca3af;
+    color: var(--rw-text, #9ca3af);
+    opacity: 0.5;
     text-align: center;
   }
 
   .rw-branding a {
-    color: #6b7280;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.7;
     text-decoration: none;
   }
 
@@ -214,28 +226,36 @@ export const BASE_STYLES = /* css */ `
   .rw-disclaimer {
     margin-top: 12px;
     padding: 8px 12px;
-    font-size: 11px;
+    font-size: var(--rw-disclaimer-size, 11px);
     line-height: 1.4;
-    color: #6b7280;
-    background: #f9fafb;
-    border-radius: 4px;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.7;
+    background: var(--rw-bg, #f9fafb);
+    border-radius: var(--rw-radius, 4px);
   }
+
+  /* ── Compliance Elements (dark theme contrast) ──────────────────── */
+
+  .rw-ehl-icon { color: inherit; }
+  .rw-house-icon { color: inherit; }
 
   /* ── Error fallback ─────────────────────────────────────────────────── */
 
   .rw-error {
-    padding: 24px 16px;
+    padding: 24px var(--rw-padding, 16px);
     text-align: center;
-    color: #6b7280;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.7;
     font-size: 13px;
   }
 
   /* ── Empty state ────────────────────────────────────────────────────── */
 
   .rw-empty {
-    padding: 32px 16px;
+    padding: 32px var(--rw-padding, 16px);
     text-align: center;
-    color: #9ca3af;
-    font-size: 14px;
+    color: var(--rw-text, #9ca3af);
+    opacity: 0.6;
+    font-size: var(--rw-body-size, 14px);
   }
 `;

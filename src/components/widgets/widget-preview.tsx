@@ -5,9 +5,16 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LOReviewPreview } from "./preview/lo-review-preview";
 import { CompanyReviewPreview } from "./preview/company-review-preview";
 import { StarRatingBadgePreview } from "./preview/star-rating-badge-preview";
+import { Loader2 } from "lucide-react";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
-import type { WidgetType } from "@/lib/widgets/types";
-import { useState } from "react";
+import type { WidgetType, WidgetEntityType } from "@/lib/widgets/types";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  generateThemeStyleObject,
+  getGoogleFontUrl,
+  SHADOW_VALUES,
+} from "@/lib/widgets/theme-utils";
+import { getPreviewData, type PreviewData, type PreviewProfile, type PreviewReview } from "@/lib/widgets/actions";
 
 type ViewportSize = "desktop" | "tablet" | "mobile";
 
@@ -49,7 +56,7 @@ const SAMPLE_BADGE_PROFILE = {
   total_reviews: 234,
 };
 
-const SAMPLE_REVIEWS = [
+const SAMPLE_REVIEWS: { id: string; reviewer_name: string; rating: number; text: string; review_date: string; source: string; avatar_url: string | null; loan_type: string; first_time_homebuyer: boolean }[] = [
   {
     id: "1",
     reviewer_name: "Michael Chen",
@@ -88,21 +95,117 @@ const SAMPLE_REVIEWS = [
 interface WidgetPreviewProps {
   config: WidgetConfigJson;
   widgetType: WidgetType;
+  entityType?: WidgetEntityType;
+  entityId?: string | null;
 }
 
-function PreviewContent({ config, widgetType }: WidgetPreviewProps) {
+function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPreviewProps) {
   const colors = config.theme?.colors;
   const content = config.content;
   const maxWidth = config.theme?.layout?.maxWidth;
   const borderRadius = config.theme?.layout?.borderRadius;
+
+  // Fetch real data when entity is selected
+  const [liveData, setLiveData] = useState<PreviewData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const fetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const fetchData = useCallback(async () => {
+    if (!entityId || !entityType) {
+      setLiveData(null);
+      return;
+    }
+    setIsLoading(true);
+    const result = await getPreviewData(entityType, entityId);
+    if (result.success) {
+      setLiveData(result.data);
+    }
+    setIsLoading(false);
+  }, [entityType, entityId]);
+
+  useEffect(() => {
+    if (fetchRef.current) clearTimeout(fetchRef.current);
+    fetchRef.current = setTimeout(fetchData, 300);
+    return () => {
+      if (fetchRef.current) clearTimeout(fetchRef.current);
+    };
+  }, [fetchData]);
+
+  // Use real data if available, otherwise sample data
+  const profileData: PreviewProfile | null = liveData?.profile ?? null;
+
+  const loProfile = profileData
+    ? {
+        full_name: profileData.full_name ?? null,
+        avatar_url: profileData.avatar_url ?? null,
+        photo_url: profileData.photo_url ?? null,
+        nmls_id: profileData.nmls_id ?? null,
+        title: profileData.title ?? null,
+        average_rating: profileData.average_rating ?? 0,
+        total_reviews: profileData.total_reviews ?? 0,
+        licensing_states: profileData.licensing_states ?? null,
+      }
+    : SAMPLE_LO_PROFILE;
+
+  const orgProfile = profileData
+    ? {
+        ...SAMPLE_ORG_PROFILE,
+        organization_name: profileData.organization_name ?? profileData.full_name ?? SAMPLE_ORG_PROFILE.organization_name,
+        logo_url: profileData.logo_url ?? null,
+        average_rating: profileData.average_rating ?? SAMPLE_ORG_PROFILE.average_rating,
+        total_reviews: profileData.total_reviews ?? SAMPLE_ORG_PROFILE.total_reviews,
+      }
+    : SAMPLE_ORG_PROFILE;
+
+  const badgeProfile = profileData
+    ? {
+        organization_name: profileData.organization_name ?? profileData.full_name ?? "Preview",
+        full_name: profileData.full_name ?? null,
+        average_rating: profileData.average_rating ?? 4.8,
+        total_reviews: profileData.total_reviews ?? 0,
+      }
+    : SAMPLE_BADGE_PROFILE;
+
+  const reviews: Array<{
+    id: string;
+    reviewer_name: string;
+    rating: number;
+    text: string;
+    review_date: string;
+    source: string;
+    avatar_url: string | null;
+    loan_type: string;
+    first_time_homebuyer: boolean;
+  }> = liveData?.reviews?.length
+    ? liveData.reviews.map((r: PreviewReview) => ({
+        id: r.id,
+        reviewer_name: r.reviewer_name ?? "Anonymous",
+        rating: r.rating,
+        text: r.text ?? "",
+        review_date: r.review_date,
+        source: r.source,
+        avatar_url: r.avatar_url ?? null,
+        loan_type: r.loan_type ?? "purchase",
+        first_time_homebuyer: r.first_time_homebuyer ?? false,
+      }))
+    : SAMPLE_REVIEWS;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 size={20} className="animate-spin text-muted-foreground" />
+        <span className="ml-2 text-xs text-muted-foreground">Loading preview data...</span>
+      </div>
+    );
+  }
 
   switch (widgetType) {
     case "lo_review":
     case "branch_review":
       return (
         <LOReviewPreview
-          profile={SAMPLE_LO_PROFILE}
-          reviews={SAMPLE_REVIEWS}
+          profile={loProfile}
+          reviews={reviews}
           content={content}
           colors={colors}
           maxWidth={maxWidth}
@@ -113,8 +216,8 @@ function PreviewContent({ config, widgetType }: WidgetPreviewProps) {
     case "company_review":
       return (
         <CompanyReviewPreview
-          profile={SAMPLE_ORG_PROFILE}
-          reviews={SAMPLE_REVIEWS}
+          profile={orgProfile}
+          reviews={reviews}
           content={content}
           colors={colors}
           maxWidth={maxWidth}
@@ -126,7 +229,7 @@ function PreviewContent({ config, widgetType }: WidgetPreviewProps) {
     case "nps_score_badge":
       return (
         <StarRatingBadgePreview
-          profile={SAMPLE_BADGE_PROFILE}
+          profile={badgeProfile}
           colors={colors}
           borderRadius={borderRadius}
         />
@@ -136,8 +239,8 @@ function PreviewContent({ config, widgetType }: WidgetPreviewProps) {
     case "review_wall":
       return (
         <CompanyReviewPreview
-          profile={SAMPLE_ORG_PROFILE}
-          reviews={SAMPLE_REVIEWS}
+          profile={orgProfile}
+          reviews={reviews}
           content={{ ...content, columns: widgetType === "review_wall" ? 2 : 1 }}
           colors={colors}
           maxWidth={maxWidth}
@@ -195,9 +298,52 @@ function PreviewContent({ config, widgetType }: WidgetPreviewProps) {
   }
 }
 
-export function WidgetPreview({ config, widgetType }: WidgetPreviewProps) {
+/** Hook to load Google Fonts dynamically when a non-system font is selected */
+function useGoogleFont(fontFamily: string | undefined) {
+  const linkRef = useRef<HTMLLinkElement | null>(null);
+
+  useEffect(() => {
+    // Clean up previous link
+    if (linkRef.current) {
+      linkRef.current.remove();
+      linkRef.current = null;
+    }
+
+    if (!fontFamily) return;
+    const url = getGoogleFontUrl(fontFamily);
+    if (!url) return;
+
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = url;
+    document.head.appendChild(link);
+    linkRef.current = link;
+
+    return () => {
+      if (linkRef.current) {
+        linkRef.current.remove();
+        linkRef.current = null;
+      }
+    };
+  }, [fontFamily]);
+}
+
+export function WidgetPreview({ config, widgetType, entityType, entityId }: WidgetPreviewProps) {
   const [viewport, setViewport] = useState<ViewportSize>("desktop");
   const width = VIEWPORT_WIDTHS[viewport];
+
+  // Load Google Font if needed
+  useGoogleFont(config.theme?.typography?.fontFamily);
+
+  // Generate CSS custom properties for the preview container
+  const themeStyle = generateThemeStyleObject(
+    config.theme?.colors as Record<string, string>,
+    config.theme?.typography as Record<string, string>,
+    config.theme?.layout as Record<string, string>,
+  );
+
+  const shadow = config.theme?.layout?.shadow;
+  const shadowValue = shadow ? (SHADOW_VALUES[shadow] ?? "none") : "0 1px 2px 0 rgba(0,0,0,0.05)";
 
   return (
     <div className="h-full flex flex-col bg-gray-50/50">
@@ -233,8 +379,18 @@ export function WidgetPreview({ config, widgetType }: WidgetPreviewProps) {
             maxWidth: "100%",
           }}
         >
-          <div className="bg-white rounded-lg border border-border shadow-sm overflow-hidden">
-            <PreviewContent config={config} widgetType={widgetType} />
+          <div
+            className="rounded-lg border overflow-hidden"
+            style={{
+              ...themeStyle,
+              background: config.theme?.colors?.background ?? "#ffffff",
+              borderColor: config.theme?.colors?.border ?? "#e5e7eb",
+              boxShadow: shadowValue,
+              borderRadius: config.theme?.layout?.borderRadius ?? "8px",
+              fontFamily: config.theme?.typography?.fontFamily ?? "system-ui",
+            }}
+          >
+            <PreviewContent config={config} widgetType={widgetType} entityType={entityType} entityId={entityId} />
           </div>
         </div>
       </div>

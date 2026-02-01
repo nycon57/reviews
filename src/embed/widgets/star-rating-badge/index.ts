@@ -22,7 +22,7 @@ function renderStarRatingBadgeWidget(
   const host = root.host as HTMLElement;
   host.style.minHeight = "";
 
-  applyTheme(root, config.config?.theme?.colors, config.config?.theme?.layout);
+  applyTheme(root, config.config?.theme?.colors, config.config?.theme?.layout, config.config?.theme?.typography);
 
   const style = document.createElement("style");
   style.textContent = STAR_RATING_BADGE_STYLES;

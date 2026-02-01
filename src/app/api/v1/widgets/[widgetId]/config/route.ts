@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getPublicWidgetConfig, getEntityProfile, getOrganizationProfile } from "@/lib/widgets/public-queries";
+import { getPublicWidgetConfig, getEntityProfile, getOrganizationProfile, getBranchProfile } from "@/lib/widgets/public-queries";
 import {
   resolveAllowedOrigin,
   buildCorsHeaders,
@@ -33,19 +33,25 @@ export async function GET(
     return widgetError("Origin not allowed", "FORBIDDEN", 403, origin ?? "*");
   }
 
-  // Enrich with entity profile based on widget type
+  // Enrich with entity profile based on widget type and entity_type
   let entityProfile = null;
   if (LO_PROFILE_WIDGET_TYPES.has(widget.widget_type) && widget.entity_id) {
     entityProfile = await getEntityProfile(widget.entity_id);
   } else if (ORG_PROFILE_WIDGET_TYPES.has(widget.widget_type)) {
     entityProfile = await getOrganizationProfile(widget.organization_id);
   } else if (ENTITY_AWARE_WIDGET_TYPES.has(widget.widget_type)) {
-    // Resolve profile based on entity_type: LO gets user profile, org gets org profile
     if (widget.entity_type === "user" && widget.entity_id) {
       entityProfile = await getEntityProfile(widget.entity_id);
+    } else if (widget.entity_type === "branch" && widget.entity_id) {
+      entityProfile = await getBranchProfile(widget.entity_id);
     } else {
       entityProfile = await getOrganizationProfile(widget.organization_id);
     }
+  }
+
+  // For branch entity type without a profile yet, fetch branch data
+  if (!entityProfile && widget.entity_type === "branch" && widget.entity_id) {
+    entityProfile = await getBranchProfile(widget.entity_id);
   }
 
   // Strip internal fields from public response

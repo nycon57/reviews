@@ -29,6 +29,8 @@ export interface WidgetThemeLayout {
   padding?: string;
   borderRadius?: string;
   gap?: string;
+  shadow?: string;
+  cardStyle?: "flat" | "elevated" | "bordered" | "glass";
 }
 
 export interface WidgetTheme {
@@ -145,6 +147,18 @@ export interface EntityProfile {
   organization_name?: string | null;
   rating_distribution?: RatingDistribution | null;
   source_breakdown?: SourceBreakdown[] | null;
+  /** Address for LocalBusiness structured data */
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
+  } | null;
+  /** Telephone for LocalBusiness structured data */
+  telephone?: string | null;
+  /** URL for Organization structured data */
+  url?: string | null;
 }
 
 export interface RatingDistribution {

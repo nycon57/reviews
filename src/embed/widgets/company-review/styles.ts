@@ -49,6 +49,10 @@ export const COMPANY_REVIEW_STYLES = /* css */ `
     line-height: 1.3;
   }
 
+  .rw-co-header__nmls { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+  .rw-co-header__nmls a { color: var(--rw-primary, #52796f); text-decoration: none; }
+  .rw-co-header__nmls a:hover { text-decoration: underline; }
+
   .rw-co-header__rating { display: flex; align-items: center; gap: 8px; }
 
   .rw-co-header__rating-value {
@@ -267,9 +271,14 @@ export const COMPANY_REVIEW_STYLES = /* css */ `
   .rw-co-review__loan-tag--va { background: #d1fae5; color: #065f46; }
   .rw-co-review__loan-tag--fha { background: #ede9fe; color: #5b21b6; }
   .rw-co-review__loan-tag--jumbo { background: #fce7f3; color: #9d174d; }
+  .rw-co-review__loan-tag--usda { background: #fef9c3; color: #854d0e; }
+  .rw-co-review__loan-tag--conventional { background: #f0f9ff; color: #075985; }
   .rw-co-review__loan-tag--default { background: #f3f4f6; color: #4b5563; }
 
   .rw-co-review__fthb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 11px;
     padding: 2px 8px;
     border-radius: 10px;
@@ -342,12 +351,27 @@ export const COMPANY_REVIEW_STYLES = /* css */ `
   .rw-co-disclaimer__ehl {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 4px;
     font-weight: 600;
     font-size: 11px;
     color: #4b5563;
   }
+
+  .rw-co-disclaimer__text {
+    font-size: 10px;
+    line-height: 1.5;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .rw-co-disclaimer__nmls-link {
+    font-size: 10px;
+    color: var(--rw-primary, #52796f);
+    text-decoration: none;
+  }
+
+  .rw-co-disclaimer__nmls-link:hover { text-decoration: underline; }
 
   /* ── Responsive ───────────────────────────────────────────────────── */
 

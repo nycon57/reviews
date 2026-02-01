@@ -6124,7 +6124,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6154,9 +6154,7 @@
           "Source breakdown data included in /reviews API response as aggregation metadata"
         ]
       },
-      "updatedAt": "2026-02-01T18:41:12.389736+00:00",
-      "startedAt": "2026-02-01T18:41:12.389605+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-01T18:46:12.958280+00:00"
     },
     {
       "id": "S138",
@@ -6179,7 +6177,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6206,7 +6204,8 @@
           "Floating mode appends to Shadow DOM host attached to document.body, not inside the placeholder element",
           "Auto-refresh uses setTimeout (not setInterval) to avoid memory leaks if widget is destroyed"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T19:01:20.831102+00:00"
     },
     {
       "id": "S139",
@@ -6232,7 +6231,7 @@
       ],
       "priority": "P0",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6270,7 +6269,8 @@
           "Widget builder state managed with useReducer for complex nested config updates",
           "Follow RepWell Design System for all UI components and layout"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T19:16:36.101057+00:00"
     },
     {
       "id": "S140",
@@ -6292,7 +6292,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6323,7 +6323,8 @@
           "Contrast checking uses WCAG relative luminance formula inline rather than external library",
           "Theme presets defined in shared module importable by both embed.js and dashboard for consistency"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T19:31:46.412787+00:00"
     },
     {
       "id": "S141",
@@ -6347,7 +6348,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6377,7 +6378,8 @@
           "Loan type enum values must match database review metadata schema",
           "10px minimum disclaimer font enforced at theme engine level, not just UI validation"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T19:46:57.903402+00:00"
     },
     {
       "id": "S142",
@@ -6400,7 +6402,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6432,7 +6434,8 @@
           "Review body truncated to 200 chars in schema to avoid excessively large JSON-LD blocks",
           "MortgageBroker schema type maps to schema.org/MortgageBroker if available, fallback to FinancialService"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T20:12:05.653247+00:00"
     },
     {
       "id": "S143",
@@ -6455,7 +6458,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6483,7 +6486,10 @@
           "allowed_domains stripped from public config response to prevent leaking authorized domains",
           "Draft status widgets allow localhost to enable development/testing"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T20:12:07.916574+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-01T20:12:07.916802+00:00"
     },
     {
       "id": "S144",

@@ -45,6 +45,16 @@ export interface EntityProfile {
   organization_name?: string | null;
   rating_distribution?: { 5: number; 4: number; 3: number; 2: number; 1: number } | null;
   source_breakdown?: { source: string; count: number; average: number }[] | null;
+  /** Structured data fields for LocalBusiness/Organization schemas */
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    country?: string | null;
+  } | null;
+  telephone?: string | null;
+  url?: string | null;
 }
 
 export async function getPublicWidgetConfig(
@@ -185,6 +195,52 @@ export async function getOrganizationProfile(
     organization_name: org.name,
     rating_distribution: dist,
     source_breakdown: sourceBreakdown,
+  };
+}
+
+/**
+ * Fetch public-safe branch profile for branch widgets.
+ * Returns branch name, address, phone, and computed aggregate stats.
+ */
+export async function getBranchProfile(
+  branchId: string
+): Promise<EntityProfile | null> {
+  const supabase = createAdminClient();
+
+  const { data: branch, error: branchError } = await supabase
+    .from("branches")
+    .select("name, address, phone, website_url, photo_url, average_rating, total_reviews, organization_id")
+    .eq("id", branchId)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (branchError || !branch) return null;
+
+  // Parse JSONB address
+  const rawAddr = branch.address as Record<string, string | null> | null;
+  const address = rawAddr
+    ? {
+        street: rawAddr.street ?? null,
+        city: rawAddr.city ?? null,
+        state: rawAddr.state ?? null,
+        zip: rawAddr.zip ?? null,
+        country: rawAddr.country ?? null,
+      }
+    : null;
+
+  return {
+    full_name: branch.name,
+    avatar_url: null,
+    photo_url: branch.photo_url,
+    nmls_id: null,
+    title: null,
+    average_rating: branch.average_rating ? Number(branch.average_rating) : null,
+    total_reviews: branch.total_reviews,
+    licensing_states: null,
+    organization_name: branch.name,
+    address,
+    telephone: branch.phone,
+    url: branch.website_url,
   };
 }
 

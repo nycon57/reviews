@@ -52,15 +52,10 @@ export const LO_REVIEW_STYLES = /* css */ `
   .rw-lo-profile__nmls a { color: var(--rw-primary, #52796f); text-decoration: none; }
   .rw-lo-profile__nmls a:hover { text-decoration: underline; }
 
-  .rw-lo-profile__states { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-
-  .rw-lo-profile__state-tag {
-    font-size: 11px;
-    padding: 1px 6px;
-    background: #f3f4f6;
-    color: #4b5563;
-    border-radius: 4px;
-    white-space: nowrap;
+  .rw-lo-profile__licensed-states {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 4px;
   }
 
   .rw-lo-profile__rating { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
@@ -134,9 +129,14 @@ export const LO_REVIEW_STYLES = /* css */ `
   .rw-lo-review__loan-tag--va { background: #d1fae5; color: #065f46; }
   .rw-lo-review__loan-tag--fha { background: #ede9fe; color: #5b21b6; }
   .rw-lo-review__loan-tag--jumbo { background: #fce7f3; color: #9d174d; }
+  .rw-lo-review__loan-tag--usda { background: #fef9c3; color: #854d0e; }
+  .rw-lo-review__loan-tag--conventional { background: #f0f9ff; color: #075985; }
   .rw-lo-review__loan-tag--default { background: #f3f4f6; color: #4b5563; }
 
   .rw-lo-review__fthb-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 11px;
     padding: 2px 8px;
     border-radius: 10px;
@@ -180,12 +180,27 @@ export const LO_REVIEW_STYLES = /* css */ `
   .rw-lo-disclaimer__ehl {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     margin-bottom: 4px;
     font-weight: 600;
     font-size: 11px;
     color: #4b5563;
   }
+
+  .rw-lo-disclaimer__text {
+    font-size: 10px;
+    line-height: 1.5;
+    color: #6b7280;
+    margin-bottom: 4px;
+  }
+
+  .rw-lo-disclaimer__nmls-link {
+    font-size: 10px;
+    color: var(--rw-primary, #52796f);
+    text-decoration: none;
+  }
+
+  .rw-lo-disclaimer__nmls-link:hover { text-decoration: underline; }
 
   @media (max-width: 480px) {
     .rw-lo-profile { flex-direction: column; text-align: center; }

@@ -4,6 +4,7 @@ import {
   competitorConfigs,
   competitorSlugs,
   generateBreadcrumbListSchema,
+  generateFAQPageSchema,
   generateProductSchema,
 } from "@/lib/competitor-pages";
 import { CompetitorComparisonPage } from "@/components/competitor-pages";
@@ -79,19 +80,23 @@ export default async function CompareSlugPage({
   const baseUrl = getBaseUrl();
   const breadcrumbSchema = generateBreadcrumbListSchema(config, baseUrl);
   const productSchema = generateProductSchema(config);
+  const faqSchema = generateFAQPageSchema(config.faq);
 
   return (
     <>
-      {/* BreadcrumbList JSON-LD — safe: content from static build-time config */}
+      {/* FAQPage JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
       <script
         type="application/ld+json"
-
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      {/* BreadcrumbList JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
+      <script
+        type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      {/* Product + AggregateRating JSON-LD — safe: content from static build-time config */}
+      {/* Product + AggregateRating JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
       <script
         type="application/ld+json"
-
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
       <CompetitorComparisonPage config={config} />

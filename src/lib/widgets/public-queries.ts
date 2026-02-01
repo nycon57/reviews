@@ -30,7 +30,7 @@ export interface PublicReview {
   first_time_homebuyer: boolean | null;
 }
 
-/** Public-safe LO profile data for lo_review widgets. */
+/** Public-safe entity profile data for lo_review and company_review widgets. */
 export interface EntityProfile {
   full_name: string | null;
   avatar_url: string | null;
@@ -40,6 +40,11 @@ export interface EntityProfile {
   average_rating: number | null;
   total_reviews: number | null;
   licensing_states: string[] | null;
+  /** Organization-specific fields (company_review widget) */
+  logo_url?: string | null;
+  organization_name?: string | null;
+  rating_distribution?: { 5: number; 4: number; 3: number; 2: number; 1: number } | null;
+  source_breakdown?: { source: string; count: number; average: number }[] | null;
 }
 
 export async function getPublicWidgetConfig(
@@ -95,6 +100,91 @@ export async function getEntityProfile(
     average_rating: data.average_rating,
     total_reviews: data.total_reviews,
     licensing_states: licensingStates,
+  };
+}
+
+/**
+ * Fetch public-safe organization profile for company_review widgets.
+ * Returns org name, logo, and computed aggregate stats from approved reviews.
+ */
+export async function getOrganizationProfile(
+  organizationId: string
+): Promise<EntityProfile | null> {
+  const supabase = createAdminClient();
+
+  // Fetch org details
+  const { data: org, error: orgError } = await supabase
+    .from("organizations")
+    .select("name, logo_url")
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (orgError || !org) return null;
+
+  // Compute aggregate stats from approved, published reviews
+  const { data: reviews, error: revError } = await supabase
+    .from("reviews")
+    .select("rating, source")
+    .eq("organization_id", organizationId)
+    .eq("status", "approved")
+    .eq("is_published", true);
+
+  if (revError || !reviews) {
+    return {
+      full_name: org.name,
+      avatar_url: null,
+      photo_url: null,
+      nmls_id: null,
+      title: null,
+      average_rating: null,
+      total_reviews: 0,
+      licensing_states: null,
+      logo_url: org.logo_url,
+      organization_name: org.name,
+      rating_distribution: null,
+      source_breakdown: null,
+    };
+  }
+
+  const totalReviews = reviews.length;
+  const averageRating = totalReviews > 0
+    ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+    : null;
+
+  // Rating distribution
+  const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  for (const r of reviews) {
+    const star = Math.min(5, Math.max(1, Math.round(r.rating))) as 1 | 2 | 3 | 4 | 5;
+    dist[star]++;
+  }
+
+  // Source breakdown
+  const sourceMap = new Map<string, { count: number; total: number }>();
+  for (const r of reviews) {
+    const entry = sourceMap.get(r.source) ?? { count: 0, total: 0 };
+    entry.count++;
+    entry.total += r.rating;
+    sourceMap.set(r.source, entry);
+  }
+  const sourceBreakdown = Array.from(sourceMap.entries()).map(([source, { count, total }]) => ({
+    source,
+    count,
+    average: count > 0 ? total / count : 0,
+  }));
+
+  return {
+    full_name: org.name,
+    avatar_url: null,
+    photo_url: null,
+    nmls_id: null,
+    title: null,
+    average_rating: averageRating,
+    total_reviews: totalReviews,
+    licensing_states: null,
+    logo_url: org.logo_url,
+    organization_name: org.name,
+    rating_distribution: dist,
+    source_breakdown: sourceBreakdown,
   };
 }
 

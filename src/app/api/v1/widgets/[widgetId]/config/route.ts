@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getPublicWidgetConfig, getEntityProfile } from "@/lib/widgets/public-queries";
+import { getPublicWidgetConfig, getEntityProfile, getOrganizationProfile } from "@/lib/widgets/public-queries";
 import {
   resolveAllowedOrigin,
   buildCorsHeaders,
@@ -9,8 +9,10 @@ import {
 
 const CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=60";
 
-/** Widget types that require entity profile data. */
-const PROFILE_WIDGET_TYPES = new Set(["lo_review"]);
+/** Widget types that require an LO entity profile. */
+const LO_PROFILE_WIDGET_TYPES = new Set(["lo_review"]);
+/** Widget types that require an organization-level profile. */
+const ORG_PROFILE_WIDGET_TYPES = new Set(["company_review"]);
 
 export async function GET(
   request: NextRequest,
@@ -29,10 +31,12 @@ export async function GET(
     return widgetError("Origin not allowed", "FORBIDDEN", 403, origin ?? "*");
   }
 
-  // Enrich with entity profile for LO widgets
+  // Enrich with entity profile based on widget type
   let entityProfile = null;
-  if (PROFILE_WIDGET_TYPES.has(widget.widget_type) && widget.entity_id) {
+  if (LO_PROFILE_WIDGET_TYPES.has(widget.widget_type) && widget.entity_id) {
     entityProfile = await getEntityProfile(widget.entity_id);
+  } else if (ORG_PROFILE_WIDGET_TYPES.has(widget.widget_type)) {
+    entityProfile = await getOrganizationProfile(widget.organization_id);
   }
 
   // Strip internal fields from public response

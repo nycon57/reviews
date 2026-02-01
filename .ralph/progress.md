@@ -14382,3 +14382,62 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Existing preview components (lo-review, company-review, star-rating-badge) provide good WYSIWYG previews
   - Server actions already handle deep config merging via updateWidget
 ---
+
+## [2026-02-01 15:16] - S142: JSON-LD Structured Data Injection
+Thread: 
+Run: 20260201-150705-70169 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-150705-70169-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-150705-70169-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 2d8bba7 [Pass 1/3] feat(S142): Implement JSON-LD Structured Data Injection
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /schema-markup
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/structured-data.test.ts -> PASS (18/18 tests)
+  - Command: npm run type-check (S142 files only) -> PASS
+  - Command: npx eslint (S142 files) -> PASS (0 errors, 0 warnings)
+  - Command: npm run build -> FAIL (pre-existing Turbopack ENOENT issue, not S142-related)
+- Files changed:
+  - src/embed/seo/structured-data.ts (new - client-side JSON-LD injection/cleanup)
+  - src/embed/seo/schemas.ts (new - schema builders for all types)
+  - src/lib/widgets/structured-data-generator.ts (new - server-side shared generator)
+  - src/components/widgets/seo-preview.tsx (new - dashboard JSON-LD preview)
+  - src/embed/__tests__/structured-data.test.ts (new - 18 unit tests)
+  - src/app/api/v1/widgets/[widgetId]/structured-data/route.ts (modified - API endpoint)
+  - src/embed/index.ts (modified - structured data import & lifecycle integration)
+  - src/embed/types.ts (modified - EntityProfile address/telephone/url fields)
+  - src/lib/widgets/cors.ts (modified - domain matching for CORS)
+  - src/components/widgets/widget-builder-sidebar.tsx (contains SEO tab with preview)
+- Implementation covers all 11 acceptance criteria:
+  1. JSON-LD <script> injected into host <head> outside Shadow DOM
+  2. LocalBusiness schema for branch widgets (name, address, telephone, aggregateRating, reviews)
+  3. Organization schema for company widgets (name, url, logo, aggregateRating, reviews)
+  4. Person schema for LO widgets (name, jobTitle, worksFor, aggregateRating)
+  5. AggregateRating with ratingValue (1 decimal), reviewCount, bestRating (5), worstRating (1)
+  6. Review schema with author, datePublished (ISO 8601), reviewRating, reviewBody (truncated 200 chars)
+  7. Schema type selectable via structured_data_type config
+  8. /api/v1/widgets/:widgetId/structured-data endpoint returns raw JSON-LD
+  9. Only one JSON-LD block per widget (Map-based duplicate prevention)
+  10. JSON-LD removed on RepWell.destroy()
+  11. Dashboard SEO tab with live JSON-LD preview (SeoJsonLdPreview in sidebar)
+- **Learnings for future iterations:**
+  - Most S142 implementation was done in S139 (Widget Builder) as cross-cutting concerns
+  - Embed seo/ directory is standalone with no app imports (compiles via esbuild)
+  - Server-side generator (structured-data-generator.ts) shares logic for API and dashboard
+  - Client-side schemas (embed/seo/schemas.ts) uses PublicReview/EntityProfile types from embed
+  - MortgageBroker maps to FinancialService per schema.org (no dedicated MortgageBroker type)
+  - Build (npm run build) has pre-existing Turbopack ENOENT issue on temp file creation
+---

@@ -15749,3 +15749,37 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Debounce (400ms) on keyword search prevents excessive API calls
   - Filter engine uses single AbortController pattern to cancel in-flight requests on rapid filter changes
 ---
+
+### S152 — Advanced Filtering (Loan Type, Keyword, Date Range) — Pass 2/3
+- Date: 2026-02-01
+- Run: 20260201-180415-9783 (iteration 1)
+- Pass: 2/3 - Quality Review
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9f6f21f [Pass 2/3] fix(S152): Remove duplicate filter controls from widget index files
+- Post-commit status: clean (only unrelated S153 A/B testing files remain unstaged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+- Verification:
+  - Command: npx tsx scripts/build-embed.ts -> PASS (32.4KB gzipped, within 34KB budget)
+  - Command: npx eslint src/embed/widgets/{lo-review,company-review,branch-review}/index.ts -> PASS (0 errors)
+- Files changed:
+  - src/embed/widgets/lo-review/index.ts (removed duplicate filter controls from index.ts)
+  - src/embed/widgets/company-review/index.ts (removed duplicate filter controls from index.ts)
+  - src/embed/widgets/branch-review/index.ts (removed duplicate filter controls, pass instance to template)
+- What was fixed:
+  - **Duplicate filter controls bug**: lo_review, company_review, and branch_review all built filter controls in BOTH the template (via buildFilterControls/buildReviewListSection) AND the index.ts, resulting in two filter toolbars rendered in the DOM. Fixed by removing the index.ts-level controls and relying solely on the template-level controls, which are more efficient (re-render just review cards, not entire widget).
+  - review_carousel and review_wall were not affected (their templates don't build filter controls, only index.ts does).
+- **Learnings for future iterations:**
+  - When templates build filter controls internally (via buildFilterControls or buildReviewListSection), index.ts should NOT also build them — single source of truth prevents duplication
+  - Templates that use buildReviewListSection already wire up the filter engine efficiently (re-renders only the card grid, not the entire widget DOM)
+---

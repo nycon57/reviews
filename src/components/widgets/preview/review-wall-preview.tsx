@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Star, Home } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 
@@ -50,6 +50,10 @@ interface WidgetWall {
   gap?: number;
 }
 
+interface WidgetFilters {
+  featuredOnly?: boolean;
+}
+
 interface PreviewReview {
   id: string;
   reviewer_name: string | null;
@@ -67,6 +71,7 @@ interface ReviewWallPreviewProps {
   content?: WidgetContent;
   colors?: WidgetThemeColors;
   wall?: WidgetWall;
+  filters?: WidgetFilters;
   maxWidth?: string;
   borderRadius?: string;
   onColumnsChange?: (columns: number) => void;
@@ -192,12 +197,14 @@ function WallReviewCard({
   starFilled,
   starEmpty,
   featured,
+  accentColor,
 }: {
   review: PreviewReview;
   content: WidgetContent;
   starFilled: string;
   starEmpty: string;
   featured?: boolean;
+  accentColor: string;
 }) {
   const cardStyle = content.cardStyle ?? "bordered";
   const dateFormat = content.dateFormat ?? "relative";
@@ -207,17 +214,19 @@ function WallReviewCard({
     cardStyle === "bordered" && "border border-gray-200 bg-white",
     cardStyle === "shadow" && "bg-white shadow-sm hover:shadow-md",
     cardStyle === "flat" && "bg-gray-50",
-    featured && "border-l-[3px] border-l-[#52796f]",
+    featured && "border-l-[3px]",
   ]
     .filter(Boolean)
     .join(" ");
 
-  const featuredBg = featured
-    ? { background: "linear-gradient(135deg, rgba(82,121,111,0.03) 0%, rgba(132,169,140,0.05) 100%)" }
-    : undefined;
+  const inlineStyle: React.CSSProperties = {};
+  if (featured) {
+    inlineStyle.borderLeftColor = accentColor;
+    inlineStyle.background = `linear-gradient(135deg, ${accentColor}08 0%, ${accentColor}0d 100%)`;
+  }
 
   return (
-    <article className={cardClasses} style={featuredBg}>
+    <article className={cardClasses} style={inlineStyle}>
       <div className="flex items-center gap-2.5 mb-2">
         {content.showAvatar !== false && (
           <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-500 flex-shrink-0">
@@ -282,6 +291,64 @@ function WallReviewCard({
   );
 }
 
+// ── Infinite Scroll Sentinel ─────────────────────────────────────────
+
+function LoadMoreButton({
+  onClick,
+  primaryColor,
+}: {
+  onClick: () => void;
+  primaryColor: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="w-full mt-4 py-2.5 px-6 text-sm font-medium rounded-md border transition-colors"
+      style={{
+        color: hovered ? "#fff" : primaryColor,
+        borderColor: primaryColor,
+        background: hovered ? primaryColor : "transparent",
+      }}
+    >
+      Load More Reviews
+    </button>
+  );
+}
+
+function InfiniteScrollSentinel({
+  onVisible,
+}: {
+  onVisible: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            onVisible();
+          }
+        }
+      },
+      { rootMargin: "200px", threshold: 0 },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [onVisible]);
+
+  return <div ref={ref} className="h-px w-full" />;
+}
+
 // ── Main Preview Component ──────────────────────────────────────────
 
 export function ReviewWallPreview({
@@ -289,28 +356,55 @@ export function ReviewWallPreview({
   content = {},
   colors = {},
   wall = {},
+  filters = {},
   maxWidth,
   borderRadius,
   onColumnsChange,
 }: ReviewWallPreviewProps) {
   const starFilled = colors.starFilled ?? "#f59e0b";
   const starEmpty = colors.starEmpty ?? "#d1d5db";
+  const accentColor = colors.accent ?? colors.primary ?? "#52796f";
 
   const columns = Math.min(Math.max(wall.columns ?? 3, 2), 5);
   const gap = wall.gap ?? 16;
   const perPage = content.reviewsPerPage ?? 12;
   const loadMoreMode = wall.loadMore ?? "button";
+  const featuredOnly = filters.featuredOnly ?? false;
+
+  // Resolve truncation: mirror embed logic where wall.truncateReviews gates it
+  const shouldTruncate = wall.truncateReviews === true;
+  const effectiveContent: WidgetContent = shouldTruncate
+    ? { ...content, truncateLength: wall.truncateLength || content.truncateLength || 200 }
+    : { ...content, truncateLength: 0 };
 
   const [visibleCount, setVisibleCount] = useState(
     Math.min(perPage, reviews.length),
   );
   const [previewColumns, setPreviewColumns] = useState(columns);
 
-  const handleColumnsChange = (value: number[]) => {
-    const newCols = value[0];
-    setPreviewColumns(newCols);
-    onColumnsChange?.(newCols);
-  };
+  // Sync state when props change
+  useEffect(() => {
+    setVisibleCount(Math.min(perPage, reviews.length));
+  }, [reviews.length, perPage]);
+
+  useEffect(() => {
+    setPreviewColumns(columns);
+  }, [columns]);
+
+  const handleColumnsChange = useCallback(
+    (value: number[]) => {
+      const newCols = value[0];
+      setPreviewColumns(newCols);
+      onColumnsChange?.(newCols);
+    },
+    [onColumnsChange],
+  );
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((prev) =>
+      Math.min(prev + perPage, reviews.length),
+    );
+  }, [perPage, reviews.length]);
 
   const containerStyle: React.CSSProperties = {
     maxWidth: maxWidth ?? "100%",
@@ -323,6 +417,7 @@ export function ReviewWallPreview({
   };
 
   const visibleReviews = reviews.slice(0, visibleCount);
+  const primaryColor = colors.primary ?? "#52796f";
 
   return (
     <div className="text-sm leading-normal antialiased" style={containerStyle}>
@@ -366,7 +461,11 @@ export function ReviewWallPreview({
             }}
           >
             {visibleReviews.map((review) => {
-              const isFeatured = review.rating === 5 && !!review.text && review.text.length > 100;
+              const isFeatured =
+                featuredOnly ||
+                (review.rating === 5 &&
+                  !!review.text &&
+                  review.text.length > 100);
               return (
                 <div
                   key={review.id}
@@ -379,44 +478,30 @@ export function ReviewWallPreview({
                 >
                   <WallReviewCard
                     review={review}
-                    content={content}
+                    content={effectiveContent}
                     starFilled={starFilled}
                     starEmpty={starEmpty}
                     featured={isFeatured}
+                    accentColor={accentColor}
                   />
                 </div>
               );
             })}
           </div>
 
-          {/* Load More */}
+          {/* Load More Button */}
           {loadMoreMode === "button" &&
             visibleCount < reviews.length && (
-              <button
-                type="button"
-                onClick={() =>
-                  setVisibleCount((prev) =>
-                    Math.min(prev + perPage, reviews.length),
-                  )
-                }
-                className="w-full mt-4 py-2.5 px-6 text-sm font-medium rounded-md border transition-colors hover:text-white"
-                style={{
-                  color: colors.primary ?? "#52796f",
-                  borderColor: colors.primary ?? "#52796f",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background =
-                    colors.primary ?? "#52796f";
-                  e.currentTarget.style.color = "#fff";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color =
-                    colors.primary ?? "#52796f";
-                }}
-              >
-                Load More Reviews
-              </button>
+              <LoadMoreButton
+                onClick={handleLoadMore}
+                primaryColor={primaryColor}
+              />
+            )}
+
+          {/* Infinite Scroll */}
+          {loadMoreMode === "scroll" &&
+            visibleCount < reviews.length && (
+              <InfiniteScrollSentinel onVisible={handleLoadMore} />
             )}
         </>
       )}
@@ -429,7 +514,7 @@ export function ReviewWallPreview({
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block px-5 py-2.5 text-sm font-medium text-white rounded-md no-underline transition-opacity hover:opacity-90"
-            style={{ background: colors.primary ?? "#52796f" }}
+            style={{ background: primaryColor }}
           >
             {content.ctaText}
           </a>
@@ -454,7 +539,7 @@ export function ReviewWallPreview({
             target="_blank"
             rel="noopener noreferrer"
             className="text-[10px] no-underline hover:underline"
-            style={{ color: colors.primary ?? "#52796f" }}
+            style={{ color: primaryColor }}
           >
             NMLS Consumer Access
           </a>

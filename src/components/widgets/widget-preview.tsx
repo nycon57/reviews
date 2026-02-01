@@ -334,6 +334,7 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
           content={content}
           colors={colors}
           wall={config.wall}
+          filters={config.filters}
           maxWidth={maxWidth}
           borderRadius={borderRadius}
         />

@@ -17,7 +17,7 @@ function setupScrollDepthTracking(
   wrapper: HTMLElement,
   apiBase: string,
   widgetId: string,
-): void {
+): IntersectionObserver {
   const tracked = new Set<number>();
 
   for (const pct of DEPTH_THRESHOLDS) {
@@ -40,6 +40,11 @@ function setupScrollDepthTracking(
             depth_percent: depth,
           });
           observer.unobserve(entry.target);
+
+          // Disconnect once all thresholds tracked
+          if (tracked.size === DEPTH_THRESHOLDS.length) {
+            observer.disconnect();
+          }
         }
       }
     },
@@ -50,6 +55,8 @@ function setupScrollDepthTracking(
   for (const s of sentinels) {
     observer.observe(s);
   }
+
+  return observer;
 }
 
 // ── Infinite Scroll ─────────────────────────────────────────────────
@@ -58,11 +65,18 @@ function setupInfiniteScroll(
   sentinel: HTMLElement,
   onLoadMore: () => void,
 ): IntersectionObserver {
+  let loading = false;
+
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !loading) {
+          loading = true;
           onLoadMore();
+          // Reset flag after a frame to batch DOM updates
+          requestAnimationFrame(() => {
+            loading = false;
+          });
         }
       }
     },
@@ -189,7 +203,7 @@ export function buildReviewWallDOM(
         ),
       );
 
-      // Track click on card
+      // Track click on card (analytics-only, not primary interaction)
       cardWrapper.addEventListener("click", () => {
         trackClick(apiBase, config.widget_id, "click_review", {
           review_id: review.id,
@@ -208,10 +222,13 @@ export function buildReviewWallDOM(
   appendCards(0);
   wrapper.appendChild(grid);
 
-  // Scroll depth tracking
-  setupScrollDepthTracking(wrapper, apiBase, config.widget_id);
+  // Scroll depth tracking (store observer for cleanup)
+  const depthObserver = setupScrollDepthTracking(wrapper, apiBase, config.widget_id);
 
   container.appendChild(wrapper);
+
+  // Track observers for cleanup when widget is removed from DOM
+  let scrollObserver: IntersectionObserver | null = null;
 
   // Load more / infinite scroll
   if (reviews.length > perPage) {
@@ -237,7 +254,7 @@ export function buildReviewWallDOM(
       const sentinel = el("div", "rw-wall__sentinel");
       container.appendChild(sentinel);
 
-      setupInfiniteScroll(sentinel, () => {
+      scrollObserver = setupInfiniteScroll(sentinel, () => {
         if (visibleCount >= reviews.length) return;
         const prevCount = visibleCount;
         visibleCount = Math.min(
@@ -245,6 +262,12 @@ export function buildReviewWallDOM(
           reviews.length,
         );
         appendCards(prevCount);
+
+        // Stop observing once all reviews loaded
+        if (visibleCount >= reviews.length && scrollObserver) {
+          scrollObserver.disconnect();
+          scrollObserver = null;
+        }
       });
     }
   }
@@ -303,20 +326,43 @@ export function buildReviewWallDOM(
     container.appendChild(branding);
   }
 
-  // Recalculate masonry on resize (CSS columns handles this natively,
-  // but we re-trigger scroll depth sentinel positions)
+  // Cleanup observers when container is removed from DOM.
+  // Uses MutationObserver on the parent to detect removal.
+  const resizeHandler = (): void => {
+    // Re-position depth sentinels after layout change
+    const sentinels = wrapper.querySelectorAll(
+      ".rw-wall__depth-sentinel",
+    );
+    for (const s of sentinels) {
+      (s as HTMLElement).style.top = `${(s as HTMLElement).dataset.depth}%`;
+    }
+  };
+
   let resizeTimer: ReturnType<typeof setTimeout> | null = null;
-  window.addEventListener("resize", () => {
+  const debouncedResize = (): void => {
     if (resizeTimer) clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      // Re-position depth sentinels
-      const sentinels = wrapper.querySelectorAll(
-        ".rw-wall__depth-sentinel",
-      );
-      for (const s of sentinels) {
-        (s as HTMLElement).style.top = `${(s as HTMLElement).dataset.depth}%`;
-      }
-    }, 150);
+    resizeTimer = setTimeout(resizeHandler, 150);
+  };
+
+  window.addEventListener("resize", debouncedResize);
+
+  // Cleanup when the widget container is disconnected from the DOM
+  const cleanupObserver = new MutationObserver(() => {
+    if (!container.isConnected) {
+      window.removeEventListener("resize", debouncedResize);
+      if (resizeTimer) clearTimeout(resizeTimer);
+      depthObserver.disconnect();
+      scrollObserver?.disconnect();
+      cleanupObserver.disconnect();
+    }
+  });
+
+  // Observe the parent (Shadow DOM host) for removals
+  requestAnimationFrame(() => {
+    const parent = container.parentNode;
+    if (parent) {
+      cleanupObserver.observe(parent, { childList: true });
+    }
   });
 
   return container;

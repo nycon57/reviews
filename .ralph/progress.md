@@ -12941,3 +12941,53 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Index barrel file was auto-updated by linter — check before manual edit
   - Pre-existing unstaged changes in workspace (next.config.js, other component files) — stage only story-specific files
 ---
+
+## [2026-02-01] - S130: Performance Optimization & Core Web Vitals
+Thread:
+Run: 20260201-111455-77888 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-111455-77888-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-111455-77888-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 158fcee [Pass 1/3] perf(S130): Add static generation guards and Unsplash preconnect hints
+- Post-commit status: unstaged S131 changes remain (expected — concurrent process)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no (applied manually)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /seo-audit (applied manually via acceptance criteria review)
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npx eslint src/app/(marketing)/compare/[slug]/page.tsx -> PASS
+  - Command: npm run build -> FAIL (pre-existing Turbopack environment issue, not caused by S130 changes)
+- Files changed:
+  - src/app/(marketing)/compare/[slug]/page.tsx
+- What was implemented:
+  - Added `revalidate = false` to disable ISR, ensuring fully static pages
+  - Added `dynamicParams = false` to return 404 for unknown slugs (no fallback rendering)
+  - Added preconnect + dns-prefetch for images.unsplash.com (image CDN)
+  - Note: Core perf optimizations (AVIF/WebP formats, content-visibility:auto, ScrollProgress GPU compositing, priority images, lazy loading, framer-motion removal from cross-links) were already committed in prior S129 pass by concurrent process
+- **Summary of all S130-relevant optimizations across codebase:**
+  - Static generation: force-static + generateStaticParams + revalidate=false + dynamicParams=false
+  - Image optimization: AVIF/WebP formats in next.config.js, priority loading for logo bar, lazy loading for below-fold, blur placeholders, next/image for all images
+  - Lazy loading: 15 sections via next/dynamic, content-visibility:auto with containIntrinsicSize for below-fold SectionWrappers
+  - Bundle optimization: framer-motion removed from competitor page components, replaced with CSS transitions + IntersectionObserver (useScrollReveal), optimizePackageImports for @phosphor-icons/react
+  - CLS prevention: skeleton loaders for dynamic imports, content-visibility:auto with estimated heights, min-height on tab panels
+  - Render performance: ScrollProgress uses direct DOM manipulation (no React re-renders), transform:scaleX instead of width animation, passive scroll listeners
+  - Font loading: font-display:swap on Erstoria custom font, next/font/google auto-handles Source Sans 3
+  - Preconnect hints: fonts.googleapis.com, fonts.gstatic.com, images.unsplash.com
+  - Third-party scripts: dev-only, using appropriate Next.js Script strategies
+- **Learnings for future iterations:**
+  - Turbopack build has pre-existing environment issues (bcrypt symlink, temp file ENOENT) — type-check and lint still work as verification
+  - Concurrent agent processes may commit overlapping changes — stage only story-specific files
+  - content-visibility:auto is a powerful CSS optimization for long pages with many below-fold sections
+  - Direct DOM manipulation for scroll progress eliminates unnecessary React re-renders
+---

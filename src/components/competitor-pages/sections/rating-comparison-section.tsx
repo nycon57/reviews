@@ -110,10 +110,8 @@ function RatingRow({
               className={cn(
                 "font-display text-2xl font-bold sm:text-3xl",
                 repwellWins
-                  ? "text-emerald-600"
-                  : tied
-                    ? "text-repwell-teal-400"
-                    : "text-repwell-teal-400",
+                  ? "text-repwell-sage-200"
+                  : "text-repwell-teal-400",
               )}
             >
               {repwellScore.toFixed(1)}
@@ -131,7 +129,7 @@ function RatingRow({
           <span className="font-sans text-sm text-repwell-teal-300">N/A</span>
         )}
         {repwellWins && (
-          <Trophy weight="fill" className="hidden h-4 w-4 text-emerald-500 sm:block" aria-hidden="true" />
+          <Trophy weight="fill" className="hidden h-4 w-4 text-repwell-sage-200 sm:block" aria-hidden="true" />
         )}
       </div>
 
@@ -159,7 +157,7 @@ function RatingRow({
               className={cn(
                 "font-display text-2xl font-bold sm:text-3xl",
                 competitorWins
-                  ? "text-emerald-600"
+                  ? "text-repwell-sage-200"
                   : "text-repwell-teal-400/60",
               )}
             >
@@ -181,7 +179,7 @@ function RatingRow({
           </div>
         )}
         {competitorWins && (
-          <Trophy weight="fill" className="hidden h-4 w-4 text-emerald-500 sm:block" aria-hidden="true" />
+          <Trophy weight="fill" className="hidden h-4 w-4 text-repwell-sage-200 sm:block" aria-hidden="true" />
         )}
       </div>
     </div>

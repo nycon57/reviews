@@ -232,7 +232,7 @@ export function MigrationStepsSection({
         {/* CTA */}
         <a
           href="/demo"
-          className="mt-2 inline-flex items-center gap-2 rounded-lg bg-repwell-teal-300 px-6 py-3 font-sans text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-repwell-teal-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2 active:bg-repwell-teal-500"
+          className="mt-2 inline-flex items-center gap-2 rounded-lg bg-repwell-teal-300 px-6 py-3 font-sans text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-repwell-teal-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 active:bg-repwell-teal-500"
         >
           Start Your Migration
           <ArrowRight weight="bold" className="h-4 w-4" aria-hidden="true" />

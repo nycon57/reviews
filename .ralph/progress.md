@@ -12667,3 +12667,101 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - generateFAQPageJsonLd helper exists but is unused (page uses generateFAQPageSchema + JSON.stringify directly) — acceptable redundancy
   - All JSON-LD content comes from static build-time configs, so dangerouslySetInnerHTML is safe
 ---
+
+## [2026-02-01 10:35:00] - S127: URL Aliases, Redirects & switching_from Tracking
+Thread: 
+Run: 20260201-103431-8009 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-103431-8009-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-103431-8009-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 76b5141 [Pass 1/3] feat(S127): Add /vs/ redirects, switching_from tracking hook & CTA components
+- Post-commit status: clean (S127 files committed; PRD JSON and unrelated files remain unstaged as expected)
+- Skills invoked:
+  - /feature-dev: no (code already implemented from prior crashed run)
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none (implementation was already complete from prior crashed session)
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint (S127 files only) -> PASS (0 errors)
+  - Command: npm run build -> FAIL (environment filesystem issue: ENOENT temp files in .next/static, disk at 95% capacity — not a code issue)
+- Files changed:
+  - next.config.js (added 5 /vs/ → /compare/ 301 redirects)
+  - src/hooks/use-switching-from.ts (new: useSwitchingFrom hook with URL param, localStorage, cookie persistence, analytics tracking)
+  - src/components/competitor-pages/switching-from-provider.tsx (new: React context provider)
+  - src/components/competitor-pages/switching-from-hidden-field.tsx (new: hidden form field component)
+  - src/components/competitor-pages/tracked-cta-link.tsx (new: tracked CTA link with switching_from preservation)
+  - src/components/competitor-pages/competitor-comparison-page.tsx (wrapped in SwitchingFromProvider + Suspense)
+  - src/components/competitor-pages/index.ts (added exports)
+- All 15 acceptance criteria addressed:
+  - 5 /vs/ redirects (301) configured in next.config.js
+  - switching_from param read from URL, persisted in localStorage + 30-day cookie
+  - Analytics tracking via dataLayer + custom DOM events
+  - TrackedCtaLink preserves switching_from in hrefs and fires events on click
+  - SwitchingFromHiddenField for demo booking form attribution
+  - Invalid values silently ignored (VALID_SLUGS set validation)
+  - Hook returns { competitor, trackEvent } interface
+- **Learnings for future iterations:**
+  - Code was already implemented from a prior crashed run — verified and committed
+  - Build failures are environment-related (disk at 95%, temp file creation fails in .next/static)
+  - tsc --noEmit is a reliable alternative verification when build has env issues
+---
+
+## 2026-02-01 - S127: URL Aliases, Redirects & switching_from Tracking
+Thread: 
+Run: 20260201-102928-85745 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-102928-85745-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-102928-85745-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 76b5141 [Pass 1/3] feat(S127): Add /vs/ redirects, switching_from tracking hook & CTA components
+- Post-commit status: clean (only pre-existing modified files remain: prd-reviews.json, USER_ACTION_REQUIRED.md, progress.md)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /analytics-tracking: no (deferred to Pass 2)
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: node node_modules/.bin/next build -> PASS
+  - Command: npm run lint -> PASS (0 new errors; 12 pre-existing errors in remotion files)
+- Files changed:
+  - next.config.js (added 5 /vs/* -> /compare/*-alternative 301 redirects)
+  - src/hooks/use-switching-from.ts (new: useSwitchingFrom hook + appendSwitchingFrom utility)
+  - src/components/competitor-pages/switching-from-provider.tsx (new: React context provider)
+  - src/components/competitor-pages/tracked-cta-link.tsx (new: CTA link with tracking + URL param preservation)
+  - src/components/competitor-pages/switching-from-hidden-field.tsx (new: hidden form field for attribution)
+  - src/components/competitor-pages/competitor-comparison-page.tsx (wrapped in SwitchingFromProvider + Suspense)
+  - src/components/competitor-pages/index.ts (exported new components)
+- What was implemented:
+  - 5 permanent 301 redirects: /vs/experience-com, /vs/birdeye, /vs/socialsurvey, /vs/total-expert, /vs/trustpilot
+  - useSwitchingFrom() hook: reads ?switching_from param, validates against allowed slugs, persists to localStorage + 30-day cookie
+  - SwitchingFromProvider: React context wrapping competitor pages for child component access
+  - TrackedCtaLink: anchor component that appends switching_from to hrefs and fires GTM dataLayer + CustomEvent on click
+  - SwitchingFromHiddenField: hidden input for form submissions
+  - appendSwitchingFrom() utility: URL-safe param appending for CTA hrefs
+  - All competitor page content wrapped in provider via Suspense boundary
+- **Learnings for future iterations:**
+  - Next.js 16 build on this machine has transient ENOENT errors on temp files; using `node node_modules/.bin/next build` directly is more reliable than `npm run build`
+  - The competitor-comparison-page.tsx is a server component; client components (SwitchingFromProvider) must be imported and rendered as children, which works fine
+  - useSearchParams() requires a Suspense boundary in Next.js App Router
+  - Avoid calling setState inside useEffect for values derivable synchronously — the eslint rule catches this
+  - Window type casting for dataLayer requires `as unknown as` pattern to satisfy strict TypeScript
+---

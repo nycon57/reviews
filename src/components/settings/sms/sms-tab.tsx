@@ -63,7 +63,7 @@ import {
   getWebhookUrls,
 } from '@/lib/sms/settings/actions';
 import type { SmsSettings, SmsPhoneNumber } from '@/lib/sms/types';
-import { formatPhoneNumber } from '@/lib/sms/format';
+import { formatForDisplay } from '@/lib/sms/phone-utils';
 import { AddPhoneNumberDialog } from './add-phone-number-dialog';
 
 function maskValue(value: string, showLast = 4): string {
@@ -199,7 +199,7 @@ export function SmsTab() {
     try {
       const result = await releasePhoneNumber({ phoneNumberId: releaseTarget.id });
       if (result.success) {
-        toast({ title: 'Number released', description: `${formatPhoneNumber(releaseTarget.phone_number)} has been released.` });
+        toast({ title: 'Number released', description: `${formatForDisplay(releaseTarget.phone_number)} has been released.` });
         setReleaseTarget(null);
         await loadData();
       } else {
@@ -556,7 +556,7 @@ export function SmsTab() {
                         <SelectContent>
                           {phoneNumbers.map((n) => (
                             <SelectItem key={n.id} value={n.phone_number}>
-                              {formatPhoneNumber(n.phone_number)}
+                              {formatForDisplay(n.phone_number)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -580,7 +580,7 @@ export function SmsTab() {
                           {phoneNumbers.map((num) => (
                             <TableRow key={num.id} className="hover:bg-muted/20">
                               <TableCell className="font-mono text-sm text-repwell-teal-400">
-                                {formatPhoneNumber(num.phone_number)}
+                                {formatForDisplay(num.phone_number)}
                                 {settings?.default_from_number === num.phone_number && (
                                   <Badge variant="secondary" className="ml-2 text-xs">
                                     Default
@@ -626,7 +626,7 @@ export function SmsTab() {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => setReleaseTarget(num)}
-                                  aria-label={`Release ${formatPhoneNumber(num.phone_number)}`}
+                                  aria-label={`Release ${formatForDisplay(num.phone_number)}`}
                                   className="text-muted-foreground hover:text-red-500 h-8 w-8 p-0"
                                 >
                                   <Trash className="h-4 w-4" />
@@ -756,7 +756,7 @@ export function SmsTab() {
             <AlertDialogDescription className="space-y-2">
               <span className="block">
                 Are you sure you want to release{' '}
-                <strong>{releaseTarget ? formatPhoneNumber(releaseTarget.phone_number) : ''}</strong>?
+                <strong>{releaseTarget ? formatForDisplay(releaseTarget.phone_number) : ''}</strong>?
               </span>
               <span className="block text-amber-600 text-sm">
                 This will remove the number from your Twilio account. Any active SMS campaigns using

@@ -31,7 +31,7 @@ import {
   purchasePhoneNumber,
 } from '@/lib/sms/settings/actions';
 import type { AvailablePhoneNumber } from '@/lib/sms/types';
-import { formatPhoneNumber } from '@/lib/sms/format';
+import { formatForDisplay } from '@/lib/sms/phone-utils';
 
 interface AddPhoneNumberDialogProps {
   open: boolean;
@@ -84,7 +84,7 @@ export function AddPhoneNumberDialog({ open, onOpenChange, onSuccess }: AddPhone
       if (result.success) {
         toast({
           title: 'Number purchased',
-          description: `${formatPhoneNumber(phoneNumber)} has been added to your account.`,
+          description: `${formatForDisplay(phoneNumber)} has been added to your account.`,
         });
         resetState();
         onSuccess();
@@ -182,7 +182,7 @@ export function AddPhoneNumberDialog({ open, onOpenChange, onSuccess }: AddPhone
                     >
                       <div className="space-y-1">
                         <p className="font-mono text-sm font-medium text-repwell-teal-500">
-                          {formatPhoneNumber(num.phoneNumber)}
+                          {formatForDisplay(num.phoneNumber)}
                         </p>
                         <div className="flex items-center gap-2">
                           {num.locality && (

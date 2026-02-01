@@ -49,10 +49,12 @@ export class RateLimitError extends Error {
 export class SmsService {
   private organizationId: string;
   private twilioService: TwilioService;
+  private creditService: CreditService;
 
   private constructor(organizationId: string, twilioService: TwilioService) {
     this.organizationId = organizationId;
     this.twilioService = twilioService;
+    this.creditService = new CreditService(organizationId);
   }
 
   static async forOrganization(organizationId: string): Promise<SmsService> {
@@ -359,8 +361,7 @@ export class SmsService {
    * is not allowed).
    */
   private async requireCredits(segments: number): Promise<void> {
-    const creditService = new CreditService(this.organizationId);
-    const balance = await creditService.checkBalance();
+    const balance = await this.creditService.checkBalance();
 
     if (balance.remaining < segments && !balance.overageAllowed) {
       throw new InsufficientCreditsError(this.organizationId);
@@ -368,8 +369,7 @@ export class SmsService {
   }
 
   private async deductCredits(segments: number): Promise<void> {
-    const creditService = new CreditService(this.organizationId);
-    await creditService.deductCredit(segments);
+    await this.creditService.deductCredit(segments);
   }
 
   // ── Error handling ─────────────────────────────────────────────────

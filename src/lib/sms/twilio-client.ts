@@ -18,7 +18,6 @@ import type {
   AvailablePhoneNumber,
   SmsPhoneNumber,
 } from "./types";
-import { calculateSegments } from "./segment-calculator";
 
 // ── Singleton client cache ─────────────────────────────────────────────
 
@@ -114,7 +113,6 @@ export class TwilioService {
    */
   async sendSms(options: SendSmsOptions): Promise<SendSmsResult> {
     const { to, body, from, mediaUrl, statusCallback } = options;
-    const segmentInfo = calculateSegments(body);
 
     let fromOrService: { from: string } | { messagingServiceSid: string };
 
@@ -139,7 +137,7 @@ export class TwilioService {
     return {
       sid: message.sid,
       status: message.status,
-      segments: segmentInfo.segments,
+      segments: message.numSegments ? Number(message.numSegments) : 1,
       dateCreated: message.dateCreated?.toISOString() ?? new Date().toISOString(),
     };
   }

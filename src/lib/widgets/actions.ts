@@ -307,7 +307,11 @@ export async function listWidgets(
     if (widget_type) query = query.eq("widget_type", widget_type);
     if (status) query = query.eq("status", status);
     if (entity_type) query = query.eq("entity_type", entity_type);
-    if (search) query = query.ilike("name", `%${search}%`);
+    if (search) {
+      // Escape ILIKE metacharacters to prevent wildcard injection
+      const escaped = search.replace(/[%_\\]/g, "\\$&");
+      query = query.ilike("name", `%${escaped}%`);
+    }
 
     const { data, error, count } = await query
       .order("created_at", { ascending: false })

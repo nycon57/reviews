@@ -14441,3 +14441,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - MortgageBroker maps to FinancialService per schema.org (no dedicated MortgageBroker type)
   - Build (npm run build) has pre-existing Turbopack ENOENT issue on temp file creation
 ---
+
+## [2026-02-01 15:00] - S142: JSON-LD Structured Data Injection
+Thread:
+Run: 20260201-145702-31133 (iteration 35)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-145702-31133-iter-35.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-145702-31133-iter-35.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b8588c3 [Pass 2/3] fix(S142): Harden JSON-LD structured data injection
+- Post-commit status: clean (S142 files committed, other unstaged changes from different tasks remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: yes (via code-reviewer agent)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /schema-markup
+- Verification:
+  - Command: npx tsc --noEmit (S142 files) -> PASS
+  - Command: npm run lint -> PASS (7 pre-existing errors, 0 new)
+  - Command: npm run build -> FAIL (pre-existing Turbopack ENOENT temp file issue)
+- Files changed:
+  - src/embed/seo/schemas.ts (fix: safe date parsing, prevent RangeError)
+  - src/embed/index.ts (fix: remove stale JSON-LD on refresh)
+  - src/lib/widgets/structured-data-generator.ts (fix: safe date parsing)
+  - src/app/api/v1/widgets/[widgetId]/structured-data/route.ts (fix: correct org columns, add branch support)
+  - src/components/widgets/seo-preview.tsx (enhanced: syntax highlighting)
+- Issues found and fixed:
+  1. CRITICAL: Invalid date parsing could crash widget rendering (RangeError on bad review_date)
+  2. HIGH: RepWell.refresh() did not update stale JSON-LD structured data
+  3. HIGH: API route referenced non-existent organization columns (company_phone, company_address)
+- **Learnings for future iterations:**
+  - Always wrap Date parsing in try-catch for user-supplied data
+  - When implementing injection with dedup tracking, consider refresh/update paths
+  - Verify database column names against generated types before using in queries
+---

@@ -21,8 +21,8 @@ export function LogoBarSection({ logos }: LogoBarSectionProps) {
   const allLogos = [...logos, ...logos];
 
   return (
-    <div className="py-10 md:py-14">
-      <p className="mb-8 text-center font-sans text-sm font-medium text-repwell-teal-300">
+    <div className="py-12 md:py-16">
+      <p className="mb-8 text-center font-sans text-sm text-repwell-teal-300">
         Trusted by mortgage professionals nationwide
       </p>
 
@@ -30,21 +30,21 @@ export function LogoBarSection({ logos }: LogoBarSectionProps) {
       <div
         className="logo-bar-mask group relative overflow-hidden"
         aria-label="Customer logos"
-        role="marquee"
+        role="region"
       >
         {/* Scrolling track */}
         <div className="logo-bar-scroll flex w-max items-center gap-12 md:gap-16 group-hover:[animation-play-state:paused]">
           {allLogos.map((logo, i) => (
             <div
               key={`${logo.name}-${i}`}
-              className="flex-shrink-0 opacity-60 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
+              className="flex-shrink-0 opacity-60 grayscale transition-all duration-500 hover:opacity-100 hover:grayscale-0"
             >
               <Image
                 src={logo.logoUrl}
                 alt={logo.name}
                 width={120}
                 height={40}
-                className="h-8 w-auto object-contain md:h-10"
+                className="h-8 w-auto object-contain"
               />
             </div>
           ))}

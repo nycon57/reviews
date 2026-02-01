@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 interface StatCountUpProps {
   /** The final display value (e.g. "4.9/5") */
@@ -29,7 +29,7 @@ function parseStatValue(value: string) {
  * Falls back to instant display if no numeric prefix is found.
  */
 export function StatCountUp({ value, label }: StatCountUpProps) {
-  const parsed = parseStatValue(value);
+  const parsed = useMemo(() => parseStatValue(value), [value]);
   const ref = useRef<HTMLDivElement>(null);
   const [display, setDisplay] = useState(() => parsed?.zero ?? value);
   const hasAnimated = useRef(false);

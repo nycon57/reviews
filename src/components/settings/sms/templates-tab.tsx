@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useTransition } from 'react';
+import { useState, useEffect, useCallback, useMemo, useTransition } from 'react';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -97,11 +97,11 @@ function formatDate(dateStr: string | null) {
 
 export function SmsTemplatesTab() {
   const { toast } = useToast();
-  const [_isPending, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   // Data state
   const [templates, setTemplates] = useState<SmsTemplate[]>([]);
-  const [_total, setTotal] = useState(0);
+  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [perfMetrics, setPerfMetrics] = useState<
     Record<string, { sends: number; click_rate: number; last_used: string | null }>
@@ -156,13 +156,17 @@ export function SmsTemplatesTab() {
 
   // ── Filtered templates ────────────────────────────────────────────
 
-  const filtered = search
-    ? templates.filter(
-        (t) =>
-          t.name.toLowerCase().includes(search.toLowerCase()) ||
-          t.body.toLowerCase().includes(search.toLowerCase())
-      )
-    : templates;
+  const filtered = useMemo(
+    () =>
+      search
+        ? templates.filter(
+            (t) =>
+              t.name.toLowerCase().includes(search.toLowerCase()) ||
+              t.body.toLowerCase().includes(search.toLowerCase())
+          )
+        : templates,
+    [templates, search]
+  );
 
   // ── Actions ───────────────────────────────────────────────────────
 
@@ -234,6 +238,7 @@ export function SmsTemplatesTab() {
           <h2 className="text-xl font-semibold text-repwell-teal-500">SMS Templates</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Manage message templates for surveys, follow-ups, and review requests.
+            {total > 0 && ` ${total} template${total === 1 ? '' : 's'} total.`}
           </p>
         </div>
         <Button
@@ -342,7 +347,11 @@ export function SmsTemplatesTab() {
                       <TableRow
                         key={template.id}
                         className="group cursor-pointer hover:bg-background-subtle/50"
-                        onClick={() => handleEdit(template)}
+                        onClick={(e) => {
+                          // Only trigger row click if not from interactive child
+                          if ((e.target as HTMLElement).closest('button, [role="menuitem"]')) return;
+                          handleEdit(template);
+                        }}
                       >
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -387,7 +396,9 @@ export function SmsTemplatesTab() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                aria-label="Template actions"
+                                disabled={isPending}
                               >
                                 <DotsThree weight="bold" className="h-4 w-4" />
                               </Button>
@@ -441,6 +452,7 @@ export function SmsTemplatesTab() {
 
       {/* Editor dialog */}
       <TemplateEditorDialog
+        key={editingTemplate?.id ?? 'new'}
         open={editorOpen}
         onOpenChange={setEditorOpen}
         template={editingTemplate}

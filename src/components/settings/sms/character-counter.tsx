@@ -38,7 +38,7 @@ export function CharacterCounter({ text, className }: CharacterCounterProps) {
         : 'bg-red-500';
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div role="status" aria-live="polite" aria-atomic="true" className={cn('space-y-2', className)}>
       {/* Progress bar */}
       <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
         <div

@@ -141,8 +141,12 @@ export function TemplatePerformancePanel({
   // Load comparison metrics
   const loadComparison = useCallback(async (id: string) => {
     const result = await getTemplatePerformance(id);
-    if (result.success && result.data) setCompareMetrics(result.data);
-  }, []);
+    if (result.success && result.data) {
+      setCompareMetrics(result.data);
+    } else {
+      toast({ title: 'Error', description: result.error ?? 'Failed to load comparison metrics.', variant: 'destructive' });
+    }
+  }, [toast]);
 
   useEffect(() => {
     if (!compareId) {
@@ -187,7 +191,7 @@ export function TemplatePerformancePanel({
           <CardTitle className="text-base font-semibold text-repwell-teal-500">
             Performance: {template.name}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close performance panel">
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>

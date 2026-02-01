@@ -61,7 +61,7 @@ export function TemplateEditorDialog({
   );
   const [body, setBody] = useState(template?.body ?? '');
 
-  // Reset form when dialog opens with new template
+  // Reset form when dialog opens with a (possibly different) template
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
       if (nextOpen) {

@@ -40,7 +40,7 @@ export function TemplatePreview({ body, className }: TemplatePreviewProps) {
   }
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div role="region" aria-live="polite" aria-label="Template preview" className={cn('space-y-3', className)}>
       {/* Phone mockup preview */}
       <div className="rounded-xl border border-border bg-background-subtle p-4">
         <div className="text-xs font-medium text-muted-foreground mb-2">

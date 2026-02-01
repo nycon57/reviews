@@ -83,18 +83,21 @@ export async function getTemplatePerformance(
 
   let clickCount = 0;
   if (shortLinkIds.length > 0) {
-    const { count } = await supabase
+    const { data: linkData } = await supabase
       .from("sms_short_links")
-      .select("id", { count: "exact", head: true })
+      .select("click_count")
       .in("id", shortLinkIds)
       .gt("click_count", 0);
 
-    clickCount = count ?? 0;
+    clickCount = (linkData ?? []).reduce(
+      (sum, link) => sum + ((link.click_count as number) || 0),
+      0
+    );
   }
 
-  // Estimate conversions: count reviews created within 48h of a clicked message
-  // This is a rough heuristic — real conversion tracking would use event correlation
-  const conversionCount = Math.round(clickCount * 0.3); // Placeholder ratio
+  // Conversion tracking requires event correlation (e.g. source_message_id on reviews).
+  // Until that column exists, report 0 to avoid showing misleading data.
+  const conversionCount = 0;
 
   const lastUsedAt = allMessages.length > 0
     ? allMessages
@@ -196,26 +199,47 @@ export async function getAllTemplatePerformance(): Promise<
     return { success: false, error: `Failed to load metrics: ${error.message}` };
   }
 
-  const metrics: Record<string, { sends: number; delivered: number; clicks: number; last_used: string | null }> = {};
+  const metrics: Record<string, { sends: number; delivered: number; shortLinkIds: string[]; last_used: string | null }> = {};
 
   for (const msg of data ?? []) {
     const tid = msg.template_id as string;
     if (!metrics[tid]) {
-      metrics[tid] = { sends: 0, delivered: 0, clicks: 0, last_used: null };
+      metrics[tid] = { sends: 0, delivered: 0, shortLinkIds: [], last_used: null };
     }
     metrics[tid].sends++;
     if (msg.status === "delivered") metrics[tid].delivered++;
-    if (msg.sent_at && (!metrics[tid].last_used || msg.sent_at > metrics[tid].last_used!)) {
+    if (msg.short_link_id) metrics[tid].shortLinkIds.push(msg.short_link_id as string);
+    if (msg.sent_at && (!metrics[tid].last_used || msg.sent_at > metrics[tid].last_used)) {
       metrics[tid].last_used = msg.sent_at;
+    }
+  }
+
+  // Batch-fetch click counts for all short links
+  const allLinkIds = Object.values(metrics).flatMap((m) => m.shortLinkIds);
+  const clicksByLink = new Map<string, number>();
+
+  if (allLinkIds.length > 0) {
+    const { data: linkData } = await supabase
+      .from("sms_short_links")
+      .select("id, click_count")
+      .in("id", allLinkIds)
+      .gt("click_count", 0);
+
+    for (const link of linkData ?? []) {
+      clicksByLink.set(link.id as string, (link.click_count as number) || 0);
     }
   }
 
   // Build result
   const result: Record<string, { sends: number; click_rate: number; last_used: string | null }> = {};
   for (const [tid, m] of Object.entries(metrics)) {
+    const clicks = m.shortLinkIds.reduce(
+      (sum, id) => sum + (clicksByLink.get(id) ?? 0),
+      0
+    );
     result[tid] = {
       sends: m.sends,
-      click_rate: m.delivered > 0 ? m.clicks / m.delivered : 0,
+      click_rate: m.delivered > 0 ? clicks / m.delivered : 0,
       last_used: m.last_used,
     };
   }

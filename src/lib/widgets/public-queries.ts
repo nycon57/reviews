@@ -26,6 +26,19 @@ export interface PublicReview {
   source: string;
   avatar_url: string | null;
   loan_type: string | null;
+  first_time_homebuyer: boolean | null;
+}
+
+/** Public-safe LO profile data for lo_review widgets. */
+export interface EntityProfile {
+  full_name: string | null;
+  avatar_url: string | null;
+  photo_url: string | null;
+  nmls_id: string | null;
+  title: string | null;
+  average_rating: number | null;
+  total_reviews: number | null;
+  licensing_states: string[] | null;
 }
 
 export async function getPublicWidgetConfig(
@@ -43,6 +56,45 @@ export async function getPublicWidgetConfig(
 
   if (error || !data) return null;
   return data as PublicWidgetConfig;
+}
+
+/**
+ * Fetch public-safe entity profile for lo_review widgets.
+ * Returns LO headshot, NMLS, title, aggregate stats.
+ */
+export async function getEntityProfile(
+  entityId: string
+): Promise<EntityProfile | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select(
+      "full_name, avatar_url, photo_url, nmls_id, title, average_rating, total_reviews, region"
+    )
+    .eq("id", entityId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  // Parse region as licensing states (comma-separated or array stored in region)
+  let licensingStates: string[] | null = null;
+  if (data.region) {
+    licensingStates = data.region
+      .split(",")
+      .map((s: string) => s.trim())
+      .filter(Boolean);
+  }
+
+  return {
+    full_name: data.full_name,
+    avatar_url: data.avatar_url,
+    photo_url: data.photo_url,
+    nmls_id: data.nmls_id,
+    title: data.title,
+    average_rating: data.average_rating,
+    total_reviews: data.total_reviews,
+    licensing_states: licensingStates,
+  };
 }
 
 interface ReviewQueryOptions {
@@ -125,6 +177,7 @@ export async function getPublicReviews(
     source: row.source,
     avatar_url: null,
     loan_type: null,
+    first_time_homebuyer: null,
   }));
 
   const nextCursor = hasMore ? items[items.length - 1].id : null;
@@ -146,8 +199,9 @@ export function isValidEventType(value: string): value is WidgetEventType {
 export async function hashIp(ip: string): Promise<string> {
   const today = new Date().toISOString().slice(0, 10);
   const salt = process.env.IP_HASH_SALT || "repwell-widget-default";
-  const data = new TextEncoder().encode(`${ip}:${today}:${salt}`);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const encoder = new globalThis.TextEncoder();
+  const data = encoder.encode(`${ip}:${today}:${salt}`);
+  const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }

@@ -40,7 +40,6 @@ export async function GET(
   }
 
   const jsonLd = await buildJsonLd(
-    widget.name,
     widget.structured_data_type || "LocalBusiness",
     organizationId,
     widget.entity_type,
@@ -59,8 +58,9 @@ export async function OPTIONS() {
   });
 }
 
+// ── JSON-LD builder ──────────────────────────────────────────────────────
+
 async function buildJsonLd(
-  name: string,
   schemaType: string,
   organizationId: string,
   entityType: string,
@@ -68,9 +68,29 @@ async function buildJsonLd(
 ): Promise<Record<string, unknown>> {
   const supabase = createAdminClient();
 
+  // Resolve entity name from the actual entity (users table, not loan_officers)
+  let entityName = "";
+  if (entityType === "user" && entityId) {
+    const { data: user } = await supabase
+      .from("users")
+      .select("full_name")
+      .eq("id", entityId)
+      .maybeSingle();
+    entityName = user?.full_name ?? "";
+  }
+  if (!entityName) {
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", organizationId)
+      .maybeSingle();
+    entityName = org?.name ?? "Unknown";
+  }
+
+  // Fetch approved, published reviews for aggregate rating + snippets
   let query = supabase
     .from("reviews")
-    .select("rating")
+    .select("rating, customer_name, text, review_date")
     .eq("organization_id", organizationId)
     .eq("status", "approved")
     .eq("is_published", true);
@@ -79,12 +99,14 @@ async function buildJsonLd(
     query = query.eq("user_id", entityId);
   }
 
-  const { data: reviews } = await query;
+  const { data: reviews } = await query
+    .order("review_date", { ascending: false })
+    .limit(50);
 
   const jsonLd: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": schemaType,
-    name,
+    name: entityName,
   };
 
   if (reviews && reviews.length > 0) {
@@ -96,8 +118,26 @@ async function buildJsonLd(
       ratingValue: avg.toFixed(1),
       bestRating: "5",
       worstRating: "1",
-      ratingCount: reviews.length,
+      reviewCount: reviews.length,
     };
+
+    // Include up to 10 individual review snippets
+    jsonLd.review = reviews.slice(0, 10).map((r) => ({
+      "@type": "Review",
+      author: {
+        "@type": "Person",
+        name: r.customer_name ?? "Anonymous",
+      },
+      datePublished: r.review_date,
+      reviewRating: {
+        "@type": "Rating",
+        ratingValue: r.rating,
+        bestRating: 5,
+        worstRating: 1,
+      },
+      // Truncate to 200 chars per spec
+      reviewBody: r.text ? r.text.slice(0, 200) : "",
+    }));
   }
 
   return jsonLd;

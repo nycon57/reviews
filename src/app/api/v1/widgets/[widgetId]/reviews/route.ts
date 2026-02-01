@@ -14,7 +14,7 @@ import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 
 const CACHE_CONTROL = "public, max-age=60, stale-while-revalidate=30";
 const DEFAULT_LIMIT = 10;
-const MAX_LIMIT = 50;
+const MAX_LIMIT = 100;
 
 export async function GET(
   request: NextRequest,

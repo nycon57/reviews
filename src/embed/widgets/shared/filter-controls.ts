@@ -32,6 +32,7 @@ export function buildFilterControls(opts: FilterControlsOptions): HTMLElement {
   const ctx: FilterEngineContext = {
     instance,
     apiBase,
+    toolbar,
     onLoading: () => {
       reviewsContainer.classList.add("rw-filter-loading");
     },
@@ -229,9 +230,17 @@ function buildKeywordSearch(
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
+  const clearDebounce = (): void => {
+    if (debounceTimer) {
+      clearTimeout(debounceTimer);
+      debounceTimer = null;
+    }
+  };
+
   input.addEventListener("input", () => {
-    if (debounceTimer) clearTimeout(debounceTimer);
+    clearDebounce();
     debounceTimer = setTimeout(() => {
+      debounceTimer = null;
       const val = input.value.trim();
       const keywords = val
         ? val.split(/\s+/).filter(Boolean)
@@ -239,6 +248,9 @@ function buildKeywordSearch(
       applyFilterChange(ctx, "keywords", keywords);
     }, 400);
   });
+
+  // Clean up timer when instance is destroyed
+  ctx.instance.abortController?.signal.addEventListener("abort", clearDebounce, { once: true });
 
   toolbar.appendChild(input);
 }

@@ -779,10 +779,18 @@ export async function getFilteredReviewCount(
       }
     }
     if (loanTypes && loanTypes.length > 0) {
-      const loanTypeFilter = loanTypes
-        .map((lt) => `metadata->>loan_type.eq.${lt}`)
-        .join(",");
-      query = query.or(loanTypeFilter);
+      const ALLOWED_LOAN_TYPES = [
+        "Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional",
+      ];
+      const safeLoanTypes = loanTypes.filter((lt) =>
+        ALLOWED_LOAN_TYPES.includes(lt)
+      );
+      if (safeLoanTypes.length > 0) {
+        const loanTypeFilter = safeLoanTypes
+          .map((lt) => `metadata->>loan_type.eq.${lt}`)
+          .join(",");
+        query = query.or(loanTypeFilter);
+      }
     }
 
     const { count, error } = await query;

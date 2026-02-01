@@ -68,6 +68,8 @@ export async function GET(
   const qDateRange = searchParams.get("dateRange");
 
   const VALID_SORT_ORDERS = ["newest", "oldest", "highest", "lowest"];
+  const VALID_LOAN_TYPES = ["Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional"];
+  const VALID_SOURCES = ["google", "zillow", "internal", "facebook", "yelp"];
 
   const filters: WidgetConfigJson["filters"] = {
     ...configFilters,
@@ -83,12 +85,14 @@ export async function GET(
             | "lowest",
         }
       : {}),
-    ...(qSources ? { sources: qSources.split(",").filter(Boolean) } : {}),
+    ...(qSources
+      ? { sources: qSources.split(",").filter((s) => VALID_SOURCES.includes(s)) }
+      : {}),
     ...(qLoanTypes
-      ? { loanTypes: qLoanTypes.split(",").filter(Boolean) }
+      ? { loanTypes: qLoanTypes.split(",").filter((t) => VALID_LOAN_TYPES.includes(t)) }
       : {}),
     ...(qKeywords
-      ? { keywords: qKeywords.split(",").filter(Boolean) }
+      ? { keywords: qKeywords.split(",").map((k) => k.replace(/[^a-zA-Z0-9\s-]/g, "").trim()).filter(Boolean).slice(0, 10) }
       : {}),
   };
 

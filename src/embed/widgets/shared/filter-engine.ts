@@ -10,13 +10,12 @@ import { trackClick } from "../../core/event-tracker";
 export interface FilterEngineContext {
   instance: WidgetInstance;
   apiBase: string;
+  toolbar?: HTMLElement;
   onLoading: () => void;
   onReviewsLoaded: (reviews: PublicReview[]) => void;
   onEmpty: () => void;
   onError: () => void;
 }
-
-let activeController: AbortController | null = null;
 
 export async function applyFilterChange(
   ctx: FilterEngineContext,
@@ -41,12 +40,12 @@ export async function applyFilterChange(
     filter_value: value,
   });
 
-  // Abort any in-flight filter request
-  if (activeController) {
-    activeController.abort();
+  // Abort any in-flight filter request for THIS instance
+  if (instance.abortController) {
+    instance.abortController.abort();
   }
-  activeController = new AbortController();
-  const controller = activeController;
+  instance.abortController = new AbortController();
+  const controller = instance.abortController;
 
   ctx.onLoading();
 
@@ -79,6 +78,23 @@ export async function applyFilterChange(
 
 export function resetFilters(ctx: FilterEngineContext): void {
   ctx.instance.activeFilters = {};
+
+  // Reset toolbar UI controls to default visual state
+  if (ctx.toolbar) {
+    for (const btn of ctx.toolbar.querySelectorAll(".rw-filter-star-btn")) {
+      (btn as HTMLElement).setAttribute("aria-pressed",
+        btn.textContent === "All" ? "true" : "false");
+    }
+    for (const sel of ctx.toolbar.querySelectorAll<HTMLSelectElement>(".rw-filter-select")) {
+      sel.selectedIndex = 0;
+    }
+    for (const pill of ctx.toolbar.querySelectorAll(".rw-filter-pill")) {
+      (pill as HTMLElement).setAttribute("aria-pressed", "false");
+    }
+    const search = ctx.toolbar.querySelector<HTMLInputElement>(".rw-filter-search");
+    if (search) search.value = "";
+  }
+
   // Re-fetch with no filters
   applyFilterChange(ctx, "_reset", undefined);
 }

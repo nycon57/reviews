@@ -465,10 +465,18 @@ export async function getPublicReviews(
     }
   }
   if (filters?.loanTypes && filters.loanTypes.length > 0) {
-    const loanTypeFilter = filters.loanTypes
-      .map((lt) => `metadata->>loan_type.eq.${lt}`)
-      .join(",");
-    query = query.or(loanTypeFilter);
+    const ALLOWED_LOAN_TYPES = [
+      "Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional",
+    ];
+    const safeLoanTypes = filters.loanTypes.filter((lt) =>
+      ALLOWED_LOAN_TYPES.includes(lt)
+    );
+    if (safeLoanTypes.length > 0) {
+      const loanTypeFilter = safeLoanTypes
+        .map((lt) => `metadata->>loan_type.eq.${lt}`)
+        .join(",");
+      query = query.or(loanTypeFilter);
+    }
   }
 
   const sortField = "review_date";

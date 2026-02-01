@@ -14195,3 +14195,52 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The API integration (config route dispatching to correct profile fetcher) was the missing piece
   - Pre-existing build issues (Next.js .next cache corruption) can be resolved by rm -rf .next
 ---
+
+## [2026-02-01] - S138: Star Rating Badge Widget
+Thread: 
+Run: 20260201-134615-40635 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-134615-40635-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-134615-40635-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: a3bcc81 [Pass 1/3] feat(S138): Implement Star Rating Badge Widget
+- Post-commit status: clean (only pre-existing unstaged files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors, 5 pre-existing errors from unrelated files)
+- Files changed:
+  - src/embed/types.ts (added WidgetBadge interface and badge field to WidgetConfigJson)
+  - src/embed/widgets/star-rating-badge/index.ts (new - widget registration)
+  - src/embed/widgets/star-rating-badge/styles.ts (new - scoped CSS for inline/floating modes)
+  - src/embed/widgets/star-rating-badge/template.ts (new - DOM builder with partial star fill)
+  - src/embed/index.ts (import star-rating-badge widget)
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts (entity profile enrichment for star_rating_badge)
+  - src/components/widgets/preview/star-rating-badge-preview.tsx (new - dashboard preview)
+  - .ralph/activity.log
+- What was implemented:
+  - Compact badge widget rendering star icons with partial fill (CSS clip-path), numeric rating, review count, optional entity name
+  - Inline mode (inline-block) and floating mode (fixed position with configurable corner, offset, z-index, animation)
+  - Badge click opens configurable URL in new tab with click_cta event tracking
+  - Auto-refresh via setTimeout with configurable intervals (1hr, 6hr, 24hr)
+  - ARIA accessibility: role=img with 'Rated X out of 5 based on N reviews' label
+  - Dashboard preview component supporting both inline and floating mode previews
+  - API route enrichment for star_rating_badge type (resolves org or LO profile based on entity_type)
+- **Learnings for future iterations:**
+  - Partial star fill uses stacked SVG pair with clip-path — lightweight and smooth
+  - Floating mode applies classes to :host element for position/animation, keeping CSS isolated in Shadow DOM
+  - Widget auto-refresh uses setTimeout (not setInterval) to avoid memory leaks if destroyed
+  - Entity-aware widget types need both org and LO profile resolution paths in the config route
+---

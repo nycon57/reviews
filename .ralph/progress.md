@@ -11696,3 +11696,41 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Pass 3 polish on well-reviewed code produces small but meaningful DRY improvements
   - Config-driven components need minimal prose review since text comes from data layer
 ---
+
+## 2026-02-01 08:28 - S119: Feature Showcase & AI Features Tabs Sub-Components (Sections 7-8)
+Thread: 
+Run: 20260201-082827-60829 (iteration 2)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-082827-60829-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-082827-60829-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 675003f [Pass 1/3] feat(S119): Implement feature showcase grid and AI features tabs
+- Post-commit status: clean (prd-reviews.json unstaged but excluded per rules)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors, 12 pre-existing)
+- Files changed:
+  - src/components/competitor-pages/sections/feature-showcase-section.tsx
+  - src/components/competitor-pages/sections/ai-feature-tabs-section.tsx
+- What was implemented:
+  - Feature showcase section (Section 7): Full responsive grid (3/2/1 cols), Next.js Image with blur placeholder, badge pill overlay on top-right, hover scale+shadow effect, staggered scroll-triggered entrance animations, config-driven via features prop
+  - AI features tabs section (Section 8): Animated tab switching with ARIA tablist/tabpanel roles, two-column layout (text + illustration), CheckCircle bullet list, lazy-loaded images with blur-up, min-height to prevent CLS during tab switching, reduced motion support, config-driven via capabilities prop
+- **Learnings for future iterations:**
+  - Existing stub components had comments indicating which story owned their full implementation
+  - Followed patterns from testimonials-section and differentiators-section for IntersectionObserver scroll animations
+  - Used Phosphor Icons (CheckCircle) consistent with rest of codebase
+  - blurDataURL uses inline SVG base64 for immediate placeholder without external image dependency
+---

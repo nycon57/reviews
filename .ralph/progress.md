@@ -10483,3 +10483,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - useMemo is preferred over useEffect+useState for computed values in React strict mode
   - Synchronous setState inside useEffect triggers cascading render warnings — defer with setTimeout
 ---
+
+## [2026-02-01] - S108: One-Off SMS Send UI & Review Request Flow
+Thread: 
+Run: 20260201-010746-94770 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-010746-94770-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-010746-94770-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 29b4926 [Pass 2/3] fix(S108): Quality review — parallelize queries, fix delivery tracker bug, clean effects
+- Post-commit status: other unstaged changes from other stories remain
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual)
+  - /vercel-react-best-practices: yes (applied during review)
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from S108 files)
+- Files changed:
+  - src/lib/sms/send/actions.ts (parallelized 5 sequential DB queries in checkSmsSendReadiness)
+  - src/components/distribution/sms-send-tab.tsx (fixed sentMessageId reset bug, removed setTimeout hack, fixed effect deps)
+  - src/components/distribution/sms-template-selector.tsx (fixed useMemo dependency array)
+  - src/components/distribution/sms-delivery-status.tsx (used ref pattern for onStatusChange callback)
+- What was implemented:
+  - **Performance**: Parallelized consent, quiet hours, registration, credits, and template queries in checkSmsSendReadiness — was 5 sequential round-trips, now 1 parallel batch
+  - **Bug fix**: sentMessageId was being reset to null immediately after setting in handleConfirmSend, so the delivery tracker never appeared
+  - **Bug fix**: useMemo in template selector used `[selected]` (object ref) instead of `[selected?.id, selected?.body]` (stable primitives)
+  - **Stability**: Used ref pattern for onStatusChange in delivery tracker to prevent polling effect from restarting on parent re-renders
+  - **Cleanup**: Removed setTimeout(setReadiness(null), 0) workaround — direct setState in effect cleanup is fine
+  - **Cleanup**: Removed redundant borrowerPhone from readiness effect deps since phoneE164 is already derived from it
+- **Learnings for future iterations:**
+  - Sequential Supabase queries in server actions are a common perf issue — always check for parallelizable queries
+  - React state resets after async operations need careful ordering — setting then immediately resetting a value in the same function is a subtle bug
+  - useMemo with object references as deps will recompute every render — use stable primitive props instead
+---

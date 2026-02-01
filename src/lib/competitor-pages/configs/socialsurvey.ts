@@ -281,7 +281,7 @@ export const socialSurveyConfig: CompetitorPageConfig = {
       repwellValue:
         "Published pricing starting at $29/user/month, no setup fees",
       competitorValue:
-        "Pricing hidden behind sales calls, typically $500+/mo for enterprise plans",
+        "Pricing not published; former customers reported $500+/mo for enterprise plans",
     },
   ],
 
@@ -755,7 +755,7 @@ export const socialSurveyConfig: CompetitorPageConfig = {
       {
         question: "Is RepWell more expensive than SocialSurvey was?",
         answer:
-          "For most teams, RepWell costs less. SocialSurvey's enterprise pricing was typically $500-$1,500+/month depending on volume. RepWell starts at $29/user/month with transparent published pricing. Most former SocialSurvey customers see a 30-50% cost reduction while gaining additional features.",
+          "For most teams, RepWell costs less. Former customers reported SocialSurvey enterprise pricing in the range of $500-$1,500+/month depending on volume. RepWell starts at $29/user/month with transparent published pricing. Most former SocialSurvey customers report a 30-50% cost reduction while gaining additional features.",
       },
       {
         question: "What does RepWell have that SocialSurvey did not?",

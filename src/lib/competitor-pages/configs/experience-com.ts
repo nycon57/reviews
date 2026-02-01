@@ -32,6 +32,7 @@ export const experienceComConfig: CompetitorPageConfig = {
       "experience.com pricing",
       "experience.com reviews",
     ],
+    ogImage: "/images/og/experience-com-vs-repwell.png",
     twitterCard: "summary_large_image",
   },
 
@@ -77,7 +78,11 @@ export const experienceComConfig: CompetitorPageConfig = {
           competitor: "Custom quote only",
         },
         { feature: "Annual contract required", repwell: false, competitor: true },
-        { feature: "Setup fee", repwell: "$0", competitor: "$2,000+" },
+        {
+          feature: "Setup fee",
+          repwell: "$0",
+          competitor: "$2,000+ (reported)",
+        },
         { feature: "Review request automation", repwell: true, competitor: true },
         { feature: "NPS surveys", repwell: true, competitor: true },
         { feature: "Google review integration", repwell: true, competitor: true },
@@ -134,7 +139,7 @@ export const experienceComConfig: CompetitorPageConfig = {
         },
         {
           feature: "Onboarding timeline",
-          repwell: "Under 1 week",
+          repwell: "3-5 business days",
           competitor: "4-8 weeks",
         },
         { feature: "API access", repwell: true, competitor: true },
@@ -226,7 +231,7 @@ export const experienceComConfig: CompetitorPageConfig = {
       title: "Set up in days, not months",
       description:
         "Get your team running on RepWell in under a week. Experience.com implementations routinely take 4-8 weeks.",
-      repwellValue: "Average setup: 3 business days",
+      repwellValue: "Average setup: 3-5 business days",
       competitorValue: "Average setup: 4-8 weeks with dedicated project manager",
     },
     {
@@ -521,9 +526,9 @@ export const experienceComConfig: CompetitorPageConfig = {
           percentageChange: "+163%",
         },
         {
-          label: "Support ticket resolution",
+          label: "Avg. support response time",
           before: "3-5 days",
-          after: "< 4 hours",
+          after: "< 2 hours",
           percentageChange: "-95%",
         },
       ],
@@ -703,7 +708,7 @@ export const experienceComConfig: CompetitorPageConfig = {
       author: "Amanda S.",
       role: "Operations Manager",
       company: "Liberty Home Funding",
-      rating: 5,
+      rating: 4,
       platform: "G2",
       date: "2025-09-18",
     },

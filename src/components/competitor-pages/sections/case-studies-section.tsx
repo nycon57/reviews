@@ -70,7 +70,7 @@ function CaseStudyCard({ study, index, isVisible }: CaseStudyCardProps) {
       style={{ transitionDelay: isVisible ? `${index * 120 + 300}ms` : "0ms" }}
     >
       <div
-        className="h-1 rounded-t-xl bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200"
+        className="h-1.5 rounded-t-xl bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200"
         aria-hidden="true"
       />
 

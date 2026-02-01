@@ -9960,3 +9960,54 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Project uses @phosphor-icons/react not lucide-react for icons
   - Existing SMS tabs follow consistent pattern: useCallback for data load + useEffect trigger
 ---
+
+## [2026-01-31] - S107: SMS Template Editor UI
+Thread:
+Run: 20260131-181324-57745 (iteration 5)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-5.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-181324-57745-iter-5.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6beb0a7 [Pass 2/3] fix(S107): Quality improvements for SMS Template Editor UI
+- Post-commit status: clean (S107 files only)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer subagent)
+  - /vercel-react-best-practices: yes (review-based)
+  - /next-best-practices: yes (review-based)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: yes (accessibility fixes applied)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /form-cro (merge field toolbar review)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 S107 errors)
+- Files changed:
+  - src/components/settings/sms/character-counter.tsx (added ARIA live region)
+  - src/components/settings/sms/template-editor-dialog.tsx (removed useEffect sync)
+  - src/components/settings/sms/template-performance.tsx (ARIA label, error toast)
+  - src/components/settings/sms/template-preview.tsx (ARIA live region)
+  - src/components/settings/sms/templates-tab.tsx (useMemo, isPending, ARIA, row click guard, key-based dialog reset)
+  - src/lib/sms/templates/performance-actions.ts (click tracking fix, conversion tracking fix)
+- What was fixed:
+  - CRITICAL: getAllTemplatePerformance clicks never incremented — added batch short link query
+  - CRITICAL: Placeholder 30% conversion rate replaced with honest 0 until event correlation exists
+  - getTemplatePerformance now sums actual click_count from sms_short_links
+  - Added ARIA labels to icon-only buttons (dots menu, close panel)
+  - Added role="status" aria-live="polite" to character counter for screen reader announcements
+  - Added role="region" aria-live="polite" to template preview
+  - Used isPending from useTransition to disable menu trigger during operations
+  - Added useMemo for search filter performance optimization
+  - Added error toast to comparison metrics loading
+  - Fixed nested interactive elements: row onClick now guards against button/menuitem clicks
+  - Added key prop to TemplateEditorDialog for proper state reset on template switch
+  - Exposed unused total count variable in header text
+- **Learnings for future iterations:**
+  - react-hooks/set-state-in-effect rule blocks useEffect-based prop sync; prefer key-based remounting
+  - Click tracking in summary queries should batch-fetch short link data to avoid N+1
+  - Always audit placeholder/heuristic values before shipping — fake metrics erode trust
+---

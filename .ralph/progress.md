@@ -14548,4 +14548,7 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Pre-commit hooks may auto-commit with different messages — check commit hash after committing
   - The linter reverts file changes — need to re-read and re-apply edits after lint runs
   - Most S143 implementation was already done in prior iterations; this pass closed remaining gaps
+- Follow-up commit: d997ee1 [Pass 1/3] fix(S143): Update subdomain test to require wildcard syntax
+  - Fixed public-api.test.ts: subdomain matching now requires explicit *.example.com wildcard
+  - Build, lint, and all domain-validation tests pass (43/43)
 ---

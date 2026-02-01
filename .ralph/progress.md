@@ -13309,3 +13309,41 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Types regeneration via MCP plugin returns JSON-escaped string, need to parse with node
   - BRIN index type is ideal for append-only time-series tables like widget_events
 ---
+
+## [2026-02-01] - S132: Widget Database Schema & Migrations
+Thread:
+Run: 20260201-115014-32070 (iteration 2)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-115014-32070-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-115014-32070-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 4e67d61 [Pass 2/3] fix(S132): Add missing FK index on widget_configs.parent_widget_id
+- Post-commit status: clean (pre-existing .agents/tasks/prd-reviews.json and .ralph/USER_ACTION_REQUIRED.md not from this story)
+- Skills invoked:
+  - /feature-dev: no (review pass)
+  - /code-review: yes (via feature-dev:code-reviewer agent)
+  - /vercel-react-best-practices: no (no React code)
+  - /next-best-practices: no (no Next.js code)
+  - /supabase-postgres-best-practices: yes
+  - /code-simplifier: no (Pass 2)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (no prose changes)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (12 pre-existing errors, 0 from this story)
+  - Command: Supabase execute_sql (CREATE INDEX) -> PASS
+- Files changed:
+  - supabase/migrations/20260201000004_widget_tables.sql (added parent_widget_id index)
+- What was implemented:
+  - Code review identified 1 HIGH issue: missing index on parent_widget_id FK column
+  - Added idx_widget_configs_parent_widget_id index for efficient ON DELETE SET NULL and version tree queries
+  - Applied index to live Supabase database
+  - Verified RLS policies correct (no overlapping conflicts), BRIN index appropriate, schema complete
+- **Learnings for future iterations:**
+  - Always index FK columns in PostgreSQL (not auto-indexed like MySQL)
+  - Self-referencing FKs with ON DELETE SET NULL especially need indexes to avoid full table scans
+---

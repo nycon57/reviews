@@ -15399,3 +15399,50 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Append-only patterns are better than full re-render for paginated lists in embed widgets
   - CSS columns masonry handles dynamic card insertion natively without recalculation
 ---
+
+## [2026-02-01] - S149: Review Wall Widget (Masonry Grid)
+Thread:
+Run: 20260201-170306-54946 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-170306-54946-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-170306-54946-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d2b5bd3 [Pass 2/3] fix(S149): Memory leaks, race conditions, and preview parity
+- Post-commit status: clean (remaining files are from other stories: NPS badge)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: yes (via code-reviewer agents)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no (scheduled for Pass 3/3)
+  - /web-design-guidelines: no (scheduled for Pass 3/3)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (7 pre-existing errors, 0 new in S149 files)
+- Files changed:
+  - src/embed/widgets/review-wall/template.ts (fixed memory leaks, race conditions, observer cleanup)
+  - src/embed/widgets/review-wall/styles.ts (no additional changes)
+  - src/components/widgets/preview/review-wall-preview.tsx (fixed stale state, parity, hover anti-pattern)
+  - src/components/widgets/widget-preview.tsx (added filters prop to ReviewWallPreview)
+- What was implemented:
+  - Fixed 3 memory leaks: window resize listener, scroll depth observer, infinite scroll observer
+  - Added MutationObserver-based cleanup for when widget container is removed from DOM
+  - Fixed infinite scroll race condition with loading flag debounce
+  - Fixed preview stale state: visibleCount and previewColumns now sync with prop changes
+  - Fixed preview featured card logic to check filters.featuredOnly (matching embed)
+  - Fixed preview truncation to respect wall.truncateReviews gate (matching embed)
+  - Added infinite scroll mode support to preview for WYSIWYG parity
+  - Replaced inline hover handlers with LoadMoreButton component
+  - Used theme accent color for featured card styling instead of hardcoded values
+- **Learnings for future iterations:**
+  - Widget embed code runs inside Shadow DOM but global listeners (window.resize) leak outside — always provide cleanup
+  - IntersectionObserver instances must be tracked and disconnected when widget is destroyed
+  - Preview components must mirror embed logic exactly for WYSIWYG accuracy (truncation gating, featured logic)
+  - React state initialized from props doesn't auto-sync — use useEffect to keep in sync
+---

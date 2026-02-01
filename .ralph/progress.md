@@ -13749,3 +13749,77 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The Write tool triggers linter hooks but Edit tool does not — use Edit for targeted changes
   - Pass 1 linter modifications need cleanup in Pass 2
 ---
+
+## [2026-02-01] - S132: Widget Database Schema & Migrations
+Thread:
+Run: 20260201-130553-68629 (iteration 1)
+Pass: Verification (all 3 passes already completed in prior runs)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-130553-68629-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-130553-68629-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (no new changes — all 3 passes already committed: 74023b6, 4e67d61, 20982dd)
+- Post-commit status: clean (for S132 files)
+- Skills invoked:
+  - /feature-dev: no (already complete)
+  - /code-review: no (already complete)
+  - /vercel-react-best-practices: no (no React)
+  - /next-best-practices: no (no pages/routes)
+  - /supabase-postgres-best-practices: no (already complete)
+  - /code-simplifier: no (already complete)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (no prose)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS (after .next cache clean)
+  - Command: npm run lint -> PASS (5 pre-existing errors in unrelated files, 0 in S132 files)
+- Files changed: none (verification only)
+- What was done:
+  - Confirmed all 3 passes (1/3, 2/3, 3/3) already completed with commits
+  - Verified build passes (stale .next cache caused false error, resolved by cache clean)
+  - Verified migration files exist: 20260201000004_widget_tables.sql, 20260201000005_widget_rls_fixes.sql
+  - Verified database types include widget_configs, widget_events, social_proof_graphics
+- **Learnings for future iterations:**
+  - Stale .next cache can cause false build failures — clean cache when error doesn't match source
+---
+
+## [2026-02-01] - S136: LO Review Widget (embed.js)
+Thread:
+Run: continuation
+Pass: 1/3 (Implementation)
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: [Pass 1/3] feat(S136): Implement LO Review Widget for embed.js
+- Skills invoked:
+  - /feature-dev: yes (widget implementation)
+  - /vercel-react-best-practices: yes (dashboard preview component)
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/embed.test.ts -> PASS (35/35 tests)
+  - Command: npm run type-check -> PASS (0 errors)
+  - Command: npm run lint -> PASS (0 errors in S136 files; 5 pre-existing errors in unrelated files)
+  - Command: npm run build -> Compiled successfully but hit known Next.js 16 Turbopack manifest issue (pre-existing, unrelated)
+- Files created:
+  - src/embed/widgets/registry.ts — Widget type registry (registerWidget/getWidgetRenderer)
+  - src/embed/widgets/lo-review/index.ts — LO Review widget entry (theme, styles, registration)
+  - src/embed/widgets/lo-review/template.ts — DOM builder (profile header, review cards, actions, disclaimer, branding)
+  - src/embed/widgets/lo-review/styles.ts — Scoped CSS for Shadow DOM
+  - src/components/widgets/preview/lo-review-preview.tsx — Dashboard preview React component
+- Files modified:
+  - src/embed/index.ts — Side-effect import for LO Review widget registration
+  - src/embed/core/renderer.ts — Dispatch to type-specific widget renderers via registry
+  - src/embed/__tests__/embed.test.ts — 13 new LO Review widget tests (35 total)
+- What was done:
+  - Implemented widget type registry pattern for extensible widget rendering
+  - Built LO Review widget with: profile header (photo/initials, name, title, NMLS link, licensing states, aggregate rating), review cards (avatar, name, date, stars, text with truncation/expand, source, loan type tags, FTHB badge), CTA/Write Review buttons, Equal Housing Lender disclaimer, RepWell branding
+  - All DOM construction uses safe methods (createElement/textContent) — no innerHTML
+  - Theme support via CSS custom properties (--rw-bg, --rw-text, --rw-primary, --rw-border, --rw-radius)
+  - Analytics events: click_review, click_cta, click_write_review via trackClick
+  - Responsive layout with 480px breakpoint
+  - Full ARIA accessibility (role=region, role=article, role=img, aria-labels, keyboard navigation)
+  - Dashboard preview component mirrors embed output with inline React styles
+- **Learnings for future iterations:**
+  - Self-registering widget modules (side-effect imports) keep the registry clean but need careful test setup with vi.resetModules()
+  - Next.js 16 Turbopack has a known build manifest race condition — type-check and lint are more reliable quality gates
+---

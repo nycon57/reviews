@@ -9,6 +9,7 @@ import type {
   WidgetThemeColors,
   WidgetThemeLayout,
 } from "../types";
+import { getWidgetRenderer } from "../widgets/registry";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -85,8 +86,16 @@ function applyTheme(
 export function renderWidget(
   root: ShadowRoot,
   config: PublicWidgetConfig,
-  reviews: PublicReview[]
+  reviews: PublicReview[],
+  apiBase?: string
 ): void {
+  // Dispatch to type-specific renderer if registered
+  const typeRenderer = getWidgetRenderer(config.widget_type);
+  if (typeRenderer && apiBase) {
+    typeRenderer(root, config, reviews, apiBase);
+    return;
+  }
+
   const cfg = config.config;
   const content = cfg?.content;
   const theme = cfg?.theme;

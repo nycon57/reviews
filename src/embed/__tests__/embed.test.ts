@@ -430,3 +430,282 @@ describe("shadow-dom", () => {
     expect(shadow.querySelector("style")?.textContent).toContain(":host");
   });
 });
+
+// ── LO Review Widget tests ─────────────────────────────────────────
+
+describe("LO Review Widget", () => {
+  const loProfile = {
+    full_name: "Sarah Johnson",
+    avatar_url: null,
+    photo_url: "https://example.com/sarah.jpg",
+    nmls_id: "123456",
+    title: "Senior Loan Officer",
+    average_rating: 4.8,
+    total_reviews: 42,
+    licensing_states: ["CA", "TX", "FL"],
+  };
+
+  const loConfig: PublicWidgetConfig = {
+    widget_id: "lo-widget-1",
+    widget_type: "lo_review",
+    entity_type: "user",
+    entity_id: "user-123",
+    name: "Sarah Johnson Reviews",
+    config: {
+      content: {
+        showHeader: true,
+        headerText: "Reviews for Sarah Johnson",
+        showCTA: true,
+        ctaText: "Get Pre-Approved",
+        ctaUrl: "https://example.com/apply",
+        showSource: true,
+        showDate: true,
+        showAvatar: true,
+        showBranding: true,
+        showNMLS: true,
+        showDisclaimer: true,
+        truncateLength: 200,
+        showWriteReview: true,
+        writeReviewUrl: "https://example.com/write-review",
+        cardStyle: "bordered",
+        dateFormat: "relative",
+      },
+    },
+    enable_structured_data: true,
+    structured_data_type: "LocalBusiness",
+    status: "active",
+    version: 1,
+    entity_profile: loProfile,
+  };
+
+  const loReviews: PublicReview[] = [
+    {
+      id: "r1",
+      reviewer_name: "John Doe",
+      rating: 5,
+      text: "Sarah was amazing! She helped us through the entire process.",
+      review_date: "2026-01-15",
+      source: "google",
+      avatar_url: null,
+      loan_type: "Purchase",
+      first_time_homebuyer: true,
+    },
+    {
+      id: "r2",
+      reviewer_name: "Jane Smith",
+      rating: 4,
+      text: "Great experience refinancing with Sarah.",
+      review_date: "2025-12-01",
+      source: "zillow",
+      avatar_url: null,
+      loan_type: "Refinance",
+      first_time_homebuyer: false,
+    },
+    {
+      id: "r3",
+      reviewer_name: "Bob Wilson",
+      rating: 5,
+      text: "Excellent VA loan process.",
+      review_date: "2025-11-10",
+      source: "internal",
+      avatar_url: null,
+      loan_type: "VA",
+      first_time_homebuyer: null,
+    },
+  ];
+
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
+  it("registers lo_review widget type", async () => {
+    await import("../widgets/lo-review");
+    const { getWidgetRenderer } = await import("../widgets/registry");
+    expect(getWidgetRenderer("lo_review")).toBeDefined();
+  });
+
+  it("renders profile header with name, photo, NMLS, states, and rating", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, loReviews, "https://app.repwell.com");
+
+    expect(shadow.querySelector(".rw-lo-profile__name")?.textContent).toBe("Sarah Johnson");
+
+    const photo = shadow.querySelector(".rw-lo-profile__photo") as HTMLImageElement;
+    expect(photo).not.toBeNull();
+    expect(photo?.src).toBe("https://example.com/sarah.jpg");
+
+    const nmlsLink = shadow.querySelector(".rw-lo-profile__nmls a") as HTMLAnchorElement;
+    expect(nmlsLink?.textContent).toBe("123456");
+    expect(nmlsLink?.href).toContain("nmlsconsumeraccess.org");
+
+    const states = shadow.querySelectorAll(".rw-lo-profile__state-tag");
+    expect(states).toHaveLength(3);
+
+    expect(shadow.querySelector(".rw-lo-profile__rating-value")?.textContent).toBe("4.8");
+    expect(shadow.querySelector(".rw-lo-profile__rating-count")?.textContent).toBe("42 reviews");
+  });
+
+  it("renders initials placeholder when no photo", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+
+    const noPhotoConfig = {
+      ...loConfig,
+      entity_profile: { ...loProfile, photo_url: null, avatar_url: null },
+    };
+    renderLoReviewWidget(shadow, noPhotoConfig, loReviews, "");
+
+    const placeholder = shadow.querySelector(".rw-lo-profile__photo-placeholder");
+    expect(placeholder).not.toBeNull();
+    expect(placeholder?.textContent).toBe("SJ");
+  });
+
+  it("renders review cards with loan type tags and FTHB badge", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, loReviews, "");
+
+    expect(shadow.querySelectorAll(".rw-lo-review")).toHaveLength(3);
+    expect(shadow.querySelector(".rw-lo-review__loan-tag--purchase")?.textContent).toBe("Purchase");
+    expect(shadow.querySelector(".rw-lo-review__loan-tag--refinance")?.textContent).toBe("Refinance");
+    expect(shadow.querySelector(".rw-lo-review__loan-tag--va")?.textContent).toBe("VA");
+
+    const fthb = shadow.querySelectorAll(".rw-lo-review__fthb-badge");
+    expect(fthb).toHaveLength(1);
+    expect(fthb[0].textContent).toBe("First-Time Homebuyer");
+  });
+
+  it("renders star ratings correctly", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, loReviews, "");
+
+    const firstCard = shadow.querySelector(".rw-lo-review");
+    expect(firstCard?.querySelectorAll(".rw-star--filled")).toHaveLength(5);
+
+    const secondCard = shadow.querySelectorAll(".rw-lo-review")[1];
+    expect(secondCard?.querySelectorAll(".rw-star--filled")).toHaveLength(4);
+    expect(secondCard?.querySelectorAll(".rw-star--empty")).toHaveLength(1);
+  });
+
+  it("renders Equal Housing Lender disclaimer", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, loReviews, "");
+
+    expect(shadow.querySelector(".rw-lo-disclaimer")).not.toBeNull();
+    expect(shadow.querySelector(".rw-lo-disclaimer__ehl")?.textContent).toContain("Equal Housing Lender");
+  });
+
+  it("renders CTA and Write a Review buttons", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, loReviews, "");
+
+    const cta = shadow.querySelector(".rw-cta") as HTMLAnchorElement;
+    expect(cta?.textContent).toBe("Get Pre-Approved");
+    expect(cta?.target).toBe("_blank");
+
+    const writeBtn = shadow.querySelector(".rw-lo-actions__write-review") as HTMLAnchorElement;
+    expect(writeBtn?.textContent).toBe("Write a Review");
+    expect(writeBtn?.target).toBe("_blank");
+  });
+
+  it("renders branding and hides when configured", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, loReviews, "");
+
+    expect(shadow.querySelector(".rw-branding a")?.textContent).toBe("RepWell");
+  });
+
+  it("renders empty state with profile header", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, [], "");
+
+    expect(shadow.querySelector(".rw-empty")).not.toBeNull();
+    expect(shadow.querySelector(".rw-lo-review")).toBeNull();
+    expect(shadow.querySelector(".rw-lo-profile")).not.toBeNull();
+  });
+
+  it("applies ARIA attributes for accessibility", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderLoReviewWidget(shadow, loConfig, loReviews, "");
+
+    expect(shadow.querySelector(".rw-widget")?.getAttribute("role")).toBe("region");
+    expect(shadow.querySelector(".rw-lo-review__stars")?.getAttribute("role")).toBe("img");
+    expect(shadow.querySelector(".rw-lo-review__stars")?.getAttribute("aria-label")).toContain("out of 5 stars");
+    expect(shadow.querySelector(".rw-lo-review")?.getAttribute("role")).toBe("article");
+
+    const nmlsLink = shadow.querySelector(".rw-lo-profile__nmls a");
+    expect(nmlsLink?.getAttribute("aria-label")).toContain("NMLS ID 123456");
+  });
+
+  it("dispatches to LO renderer via renderWidget", async () => {
+    await import("../widgets/lo-review");
+    const { renderWidget } = await import("../core/renderer");
+
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+    renderWidget(shadow, loConfig, loReviews, "https://app.repwell.com");
+
+    expect(shadow.querySelector(".rw-lo-profile")).not.toBeNull();
+  });
+
+  it("supports multi-column grid layout", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+
+    const multiColConfig = {
+      ...loConfig,
+      config: {
+        ...loConfig.config,
+        content: { ...loConfig.config.content, columns: 2 },
+      },
+    };
+    renderLoReviewWidget(shadow, multiColConfig, loReviews, "");
+
+    const grid = shadow.querySelector(".rw-lo-reviews") as HTMLElement;
+    expect(grid?.style.gridTemplateColumns).toBe("repeat(2, 1fr)");
+  });
+
+  it("applies theme CSS custom properties", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+
+    const themedConfig = {
+      ...loConfig,
+      config: {
+        ...loConfig.config,
+        theme: {
+          colors: {
+            primary: "#ff0000",
+            background: "#000000",
+            text: "#ffffff",
+            border: "#333333",
+          },
+        },
+      },
+    };
+    renderLoReviewWidget(shadow, themedConfig, loReviews, "");
+
+    expect(host.style.getPropertyValue("--rw-bg")).toBe("#000000");
+    expect(host.style.getPropertyValue("--rw-text")).toBe("#ffffff");
+    expect(host.style.getPropertyValue("--rw-primary")).toBe("#ff0000");
+    expect(host.style.getPropertyValue("--rw-border")).toBe("#333333");
+  });
+});

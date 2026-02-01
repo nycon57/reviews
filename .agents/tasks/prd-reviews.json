@@ -5774,7 +5774,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5807,9 +5807,7 @@
           "MVP: weekly report is a dashboard view, not automated email"
         ]
       },
-      "startedAt": "2026-02-01T16:30:03.360634+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-01T16:30:03.360825+00:00"
+      "updatedAt": "2026-02-01T18:05:51.091239+00:00"
     },
     {
       "id": "S132",
@@ -5832,7 +5830,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -5871,7 +5869,8 @@
           "Separate widget_events from widget_configs to allow high-write event ingestion without locking config reads",
           "Version column + parent_widget_id enables version history without separate table"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T18:10:53.669894+00:00"
     },
     {
       "id": "S133",
@@ -5894,7 +5893,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -5922,7 +5921,8 @@
           "widget_id slug generated from name + random suffix (e.g., 'my-widget-a1b2c3')",
           "Soft delete to preserve analytics data referencing widget_id"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T18:15:56.791875+00:00"
     },
     {
       "id": "S134",
@@ -5947,7 +5947,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -5981,7 +5981,10 @@
           "Stale-while-revalidate pattern for config/reviews to reduce origin load while keeping data fresh",
           "Cursor-based pagination on reviews to support infinite scroll in widgets"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T18:16:00.848985+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-01T18:16:00.849457+00:00"
     },
     {
       "id": "S135",

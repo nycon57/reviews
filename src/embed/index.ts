@@ -17,6 +17,9 @@ import { renderWidget, renderError } from "./core/renderer";
 import { fetchConfig, fetchReviews } from "./core/api-client";
 import { trackImpression } from "./core/event-tracker";
 
+// Widget type registrations (self-register on import)
+import "./widgets/lo-review";
+
 // ── Resolve API base URL from the script tag ────────────────────────
 
 function resolveApiBase(): string {
@@ -74,7 +77,7 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
 
     // Replace skeleton with rendered widget
     removeSkeleton(instance.shadowRoot);
-    renderWidget(instance.shadowRoot, config, data.reviews);
+    renderWidget(instance.shadowRoot, config, data.reviews, apiBase);
     instance.state = WidgetState.Rendered;
 
     // Track impression

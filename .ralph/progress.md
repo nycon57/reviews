@@ -14153,3 +14153,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - When default sort is "newest", ensure initial render matches that sort order
   - Dashboard preview components should mirror embed behavior but avoid unused prop threading
 ---
+
+## [2026-02-01 13:50] - S137: Company Review Widget
+Thread: 
+Run: 20260201-134112-18793 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-134112-18793-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-134112-18793-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f41855c [Pass 3/3] feat(S137): Add organization profile API support for Company Review Widget
+- Post-commit status: clean (only unrelated unstaged changes remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/company-review.test.ts -> PASS (20/20 tests)
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint -> PASS (no issues in changed files)
+  - Command: npm run build -> PASS
+  - Command: npx vitest run -> PASS (352/352 tests, 1 pre-existing env failure)
+- Files changed:
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts
+  - src/lib/widgets/public-queries.ts
+- What was implemented:
+  - Added getOrganizationProfile function to public-queries.ts that computes aggregate stats (average rating, total reviews, rating distribution, source breakdown) from approved/published reviews for an organization
+  - Expanded EntityProfile interface with organization-specific fields (logo_url, organization_name, rating_distribution, source_breakdown)
+  - Updated config route to dispatch company_review widget type to the new org profile fetcher (separate from LO profile fetcher)
+  - Previous passes (1 and 2) already implemented: embed widget (Shadow DOM), dashboard preview, unit tests, security fixes
+- **Learnings for future iterations:**
+  - Widget embed code (template, styles, index) was already fully implemented in Pass 1+2 via previous run attempts
+  - The API integration (config route dispatching to correct profile fetcher) was the missing piece
+  - Pre-existing build issues (Next.js .next cache corruption) can be resolved by rm -rf .next
+---

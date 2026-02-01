@@ -13914,3 +13914,53 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - jsdom supports querySelectorAll with BEM class names without issues
   - Pre-existing lint errors exist in other files; S136 files are clean
 ---
+
+## [2026-02-01 13:23] - S134: Public Widget API Endpoints
+Thread: N/A
+Run: 20260201-131600-8899 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-131600-8899-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-131600-8899-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 252881d [Pass 2/3] fix(S134): Fix security, performance, and correctness issues in widget API
+- Post-commit status: clean (for S134 files)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review of all Pass 1 code)
+  - /vercel-react-best-practices: no (no React components in S134)
+  - /next-best-practices: yes (reviewed route handlers)
+  - /supabase-postgres-best-practices: yes (reviewed query patterns)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/widgets/ -> PASS (68 tests)
+  - Command: npx eslint src/app/api/v1/widgets/ src/lib/widgets/cors.ts src/lib/widgets/public-queries.ts -> PASS (0 errors)
+  - Command: npm run build -> PASS
+- Files changed:
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts
+  - src/app/api/v1/widgets/[widgetId]/events/route.ts
+  - src/app/api/v1/widgets/[widgetId]/reviews/route.ts
+  - src/app/api/v1/widgets/[widgetId]/structured-data/route.ts
+  - src/lib/widgets/__tests__/public-api.test.ts
+  - src/lib/widgets/cors.ts
+  - src/lib/widgets/public-queries.ts
+- What was implemented:
+  - Fixed 5 issues found during quality review:
+    1. Added Vary: Origin header in withCorsAndCache for proper CDN behavior
+    2. Eliminated redundant widget_configs DB queries by including organization_id in config fetch
+    3. Sanitized keyword filter wildcards (%, _, \) to prevent Postgres pattern injection
+    4. Fixed cursor pagination to use composite base64url cursor (review_date + rating + id) for correct keyset pagination
+    5. Used Next.js after() for fire-and-forget event insert to ensure completion in serverless
+  - Stripped organization_id from public config response (was leaked after adding to config fetch)
+  - Added withCorsAndCache tests for Vary header behavior
+- **Learnings for future iterations:**
+  - Cursor pagination with non-unique sort keys requires composite cursors (sort_key + tiebreaker)
+  - Next.js after() is the correct pattern for fire-and-forget work in serverless route handlers
+  - Always add Vary: Origin when CORS headers use specific origins for CDN correctness
+  - Supabase ilike patterns need wildcard escaping at the application layer
+---

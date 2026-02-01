@@ -25,7 +25,7 @@ const trustIconMap: Record<string, PhosphorIcon> = {
 };
 
 function TrustBadgeItem({ badge }: { badge: TrustBadge }) {
-  const IconComponent = trustIconMap[badge.icon.toLowerCase()];
+  const IconComponent = trustIconMap[badge.icon?.toLowerCase() ?? "check"];
 
   return (
     <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export function FooterCTASection({ config }: FooterCTASectionProps) {
       {/* Headline */}
       <h2
         className={cn(
-          "font-display text-3xl font-bold tracking-tight text-white transition-all duration-500 md:text-4xl lg:text-5xl",
+          "text-balance font-display text-3xl font-bold tracking-tight text-white transition-all duration-500 md:text-4xl lg:text-5xl",
           isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
         )}
       >
@@ -99,7 +99,7 @@ export function FooterCTASection({ config }: FooterCTASectionProps) {
         {/* Primary CTA — inverted (white bg on gradient) */}
         <a
           href={config.primaryCta.href}
-          className="inline-flex w-full items-center justify-center rounded-lg bg-white px-8 py-4 font-sans text-base font-semibold text-repwell-teal-500 shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-repwell-sage-100 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-repwell-teal-400 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-lg bg-white px-8 py-4 font-sans text-base font-semibold text-repwell-teal-500 shadow-lg transition-all duration-200 hover:-translate-y-1 hover:bg-repwell-sage-100 hover:shadow-xl focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-repwell-teal-400 sm:w-auto"
         >
           {config.primaryCta.label}
         </a>
@@ -107,7 +107,7 @@ export function FooterCTASection({ config }: FooterCTASectionProps) {
         {/* Secondary CTA — outline */}
         <a
           href={config.secondaryCta.href}
-          className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white/30 px-8 py-4 font-sans text-base font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-white/50 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-repwell-teal-400 sm:w-auto"
+          className="inline-flex w-full items-center justify-center rounded-lg border-2 border-white/30 px-8 py-4 font-sans text-base font-semibold text-white transition-all duration-200 hover:-translate-y-1 hover:border-white/50 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-repwell-teal-400 sm:w-auto"
         >
           {config.secondaryCta.label}
         </a>

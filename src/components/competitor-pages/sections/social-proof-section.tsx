@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Star, User } from "@phosphor-icons/react";
 
 // ---------------------------------------------------------------------------
-// Platform icon mapping — small badge showing review source
+// Platform badge — small pill showing review source
 // ---------------------------------------------------------------------------
 
 function PlatformBadge({ platform }: { platform: string }) {
@@ -85,7 +85,7 @@ function ReviewCard({ card, index, isVisible }: ReviewCardProps) {
   return (
     <article
       className={cn(
-        "break-inside-avoid rounded-xl border border-border bg-white p-5 shadow-sm transition-all duration-500 hover:-translate-y-0.5 hover:shadow-md lg:p-6",
+        "break-inside-avoid rounded-xl border border-border bg-white p-5 shadow-sm transition-all duration-500 hover:-translate-y-1 hover:shadow-md lg:p-6",
         isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
       )}
       style={{
@@ -175,7 +175,7 @@ export function SocialProofSection({
 
         <h2
           className={cn(
-            "mt-3 font-display text-3xl font-bold tracking-tight text-repwell-teal-500 transition-all duration-500 md:text-4xl lg:text-5xl",
+            "mt-3 text-balance font-display text-3xl font-bold tracking-tight text-repwell-teal-500 transition-all duration-500 md:text-4xl lg:text-5xl",
             isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
           )}
           style={{ transitionDelay: isVisible ? "100ms" : "0ms" }}

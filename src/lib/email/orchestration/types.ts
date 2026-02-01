@@ -12,6 +12,97 @@
 import type { EmailTemplate } from "../types";
 
 // ============================================================================
+// Channel Types
+// ============================================================================
+
+/**
+ * Supported communication channels in the sequencer
+ */
+export type ChannelType = "email" | "sms";
+
+/**
+ * SMS-specific template configuration for sequence steps
+ */
+export interface SmsTemplateConfig {
+  /** SMS template ID (references sms_templates table) */
+  templateId: string;
+  /** Merge field overrides for this step */
+  mergeFieldOverrides?: Record<string, string>;
+}
+
+/**
+ * Channel-specific configuration for a sequence step.
+ * When channel is "sms", smsTemplate must be provided.
+ * When channel is "email" (default), the existing template field is used.
+ */
+export interface ChannelConfig {
+  /** Which channel to use for this step. Defaults to "email" if omitted. */
+  channel: ChannelType;
+  /** SMS template config (required when channel is "sms") */
+  smsTemplate?: SmsTemplateConfig;
+  /** Fallback channel if primary fails (e.g., no SMS consent → fall back to email) */
+  fallbackChannel?: ChannelType;
+  /** Fallback template (email) if falling back from SMS */
+  fallbackTemplate?: TemplateConfig;
+  /** Fallback SMS template if falling back from email */
+  fallbackSmsTemplate?: SmsTemplateConfig;
+}
+
+/**
+ * Smart channel selection configuration.
+ * Determines which channel to use based on recipient state.
+ */
+export interface SmartChannelConfig {
+  /** Strategy for automatic channel selection */
+  strategy: "prefer_sms" | "prefer_email" | "best_available" | "round_robin";
+  /** Requirements that must be met for SMS delivery */
+  smsRequirements?: {
+    /** Require active SMS consent */
+    requireConsent?: boolean;
+    /** Require phone number on file */
+    requirePhoneNumber?: boolean;
+    /** Respect quiet hours (delays rather than falls back) */
+    respectQuietHours?: boolean;
+    /** Require sufficient SMS credits */
+    requireCredits?: boolean;
+  };
+}
+
+/**
+ * Context for sending an SMS through the orchestration engine
+ */
+export interface SmsOrchestratedContext {
+  sequence: SequenceRecord;
+  step: SequenceStep;
+  user: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    phone?: string | null;
+  };
+  organizationId: string;
+  smsTemplate: SmsTemplateConfig;
+  variant?: string;
+  metadata: Record<string, unknown>;
+}
+
+/**
+ * Result from a channel send operation (unified across email/SMS)
+ */
+export interface ChannelSendResult {
+  success: boolean;
+  channel: ChannelType;
+  messageId?: string;
+  error?: string;
+  /** If the message was queued (e.g., quiet hours) rather than sent immediately */
+  queued?: boolean;
+  scheduledAt?: string;
+  /** If a fallback channel was used */
+  usedFallback?: boolean;
+  fallbackChannel?: ChannelType;
+}
+
+// ============================================================================
 // Sequence Definition Types
 // ============================================================================
 
@@ -77,6 +168,11 @@ export type TriggerEvent =
   | "action_abandoned"
   | "milestone_reached"
   | "referral_created"
+  | "sms_received"
+  | "sms_opt_in"
+  | "sms_opt_out"
+  | "sms_delivered"
+  | "sms_failed"
   | "custom_event";
 
 /**
@@ -111,6 +207,9 @@ export type ExitReason =
   | "user_returned"
   | "user_disabled_notifications"
   | "email_unsubscribed"
+  | "sms_consent_revoked"
+  | "sms_credits_exhausted"
+  | "no_phone_number"
   | "action_completed"
   | "timeout"
   | "manual_cancel"
@@ -198,7 +297,7 @@ export interface TemplateConfig {
 export interface SequenceStep {
   /** Step number (1-indexed) */
   step: number;
-  /** Email template configuration */
+  /** Email template configuration (used when channel is "email" or omitted) */
   template: TemplateConfig;
   /** Delay from previous step (or sequence start for step 1) */
   delay: DelayConfig;
@@ -214,6 +313,17 @@ export interface SequenceStep {
   exitConditions?: ConditionalBranch[];
   /** Description for logging/debugging */
   description?: string;
+  /**
+   * Channel configuration for this step.
+   * When omitted, defaults to email channel with the template field.
+   */
+  channelConfig?: ChannelConfig;
+  /**
+   * Smart channel selection. When set, the engine automatically picks
+   * the best channel based on recipient state (consent, phone availability, etc.).
+   * Overrides channelConfig.channel if conditions allow.
+   */
+  smartChannel?: SmartChannelConfig;
 }
 
 /**
@@ -293,6 +403,10 @@ export interface CompletedStep {
   sent_at: string;
   template?: string;
   variant?: string;
+  /** Which channel was used to deliver this step */
+  channel?: ChannelType;
+  /** If a fallback channel was used */
+  used_fallback?: boolean;
 }
 
 /**

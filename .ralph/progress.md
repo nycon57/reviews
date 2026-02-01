@@ -14503,3 +14503,49 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
 - **Learnings for future iterations:**
   - When implementing lifecycle cleanup (destroy), always check sibling lifecycle methods (refresh) for same cleanup needs
 ---
+
+## 2026-02-01 15:33 - S143: Domain Allowlist & CORS Enforcement
+Thread: 
+Run: 20260201-152213-6041 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-152213-6041-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-152213-6041-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e8cae03 [Pass 3/3] fix(S142): Remove stale JSON-LD on widget refresh (note: pre-commit hook auto-committed with S142 message; contains all S143 changes)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no (not needed — implementation mostly pre-existed, only gaps needed fixing)
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/widgets/__tests__/domain-validation.test.ts -> PASS (25 tests)
+  - Command: npm run type-check -> PASS (0 errors)
+  - Command: npm run lint -> PASS (0 new errors; 7 pre-existing errors in unrelated remotion files)
+- Files changed:
+  - src/components/widgets/domain-allowlist-editor.tsx (use shared isValidHostname for wildcard support)
+  - src/embed/index.ts (wire fetchWithDomainCheck, add removeStructuredData to refresh)
+  - src/embed/core/domain-check.ts (new: client-side domain error handling)
+  - src/lib/widgets/domain-validation.ts (new: shared domain matching + validation)
+  - src/lib/widgets/__tests__/domain-validation.test.ts (new: 25 tests)
+  - src/lib/widgets/public-queries.ts (restore includeDraft option)
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts (CORS enforcement)
+  - src/app/api/v1/widgets/[widgetId]/reviews/route.ts (CORS enforcement)
+- What was implemented:
+  - Consolidated DomainAllowlistEditor to use shared isValidHostname from domain-validation.ts (supports *.example.com wildcards)
+  - Wired fetchWithDomainCheck into embed/index.ts loadWidget to convert 403 → DomainNotAllowedError with clear user-facing message
+  - Restored includeDraft option on getPublicWidgetConfig (draft widgets accessible from localhost)
+  - Full domain allowlist + CORS enforcement already existed: cors.ts, API routes, domain-validation.ts, domain-check.ts, tests
+- **Learnings for future iterations:**
+  - Pre-commit hooks may auto-commit with different messages — check commit hash after committing
+  - The linter reverts file changes — need to re-read and re-apply edits after lint runs
+  - Most S143 implementation was already done in prior iterations; this pass closed remaining gaps
+---

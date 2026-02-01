@@ -18,6 +18,8 @@ interface SmsDeliveryTrackerProps {
   onStatusChange?: (status: string) => void;
 }
 
+const TERMINAL_STATUSES = new Set(["delivered", "undelivered", "failed"]);
+
 const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle; label: string; color: string }> = {
   queued: { icon: Clock, label: "Queued", color: "text-muted-foreground" },
   sent: { icon: PaperPlaneRight, label: "Sent", color: "text-blue-600 dark:text-blue-400" },
@@ -49,7 +51,7 @@ export function SmsDeliveryTracker({ messageId, onStatusChange }: SmsDeliveryTra
         setStatus(result.data.status);
         onStatusChangeRef.current?.(result.data.status);
 
-        if (["delivered", "undelivered", "failed"].includes(result.data.status)) {
+        if (TERMINAL_STATUSES.has(result.data.status)) {
           setPolling(false);
         }
       }

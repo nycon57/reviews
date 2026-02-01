@@ -175,7 +175,7 @@ export function SmsSendTab({ onSuccess }: SmsSendTabProps) {
         } else {
           toast({
             title: "SMS sent",
-            description: "Review request sent successfully.",
+            description: "Review request sent.",
           });
         }
 
@@ -201,7 +201,7 @@ export function SmsSendTab({ onSuccess }: SmsSendTabProps) {
       } else {
         toast({
           title: "Send failed",
-          description: result.success ? "Unknown error" : result.error,
+          description: !result.success ? result.error : "Unexpected error",
           variant: "destructive",
         });
       }
@@ -213,7 +213,7 @@ export function SmsSendTab({ onSuccess }: SmsSendTabProps) {
     if (phoneE164 && templateId) {
       startTransition(async () => {
         const result = await checkSmsSendReadiness({
-          borrowerPhone,
+          borrowerPhone: phoneE164,
           templateId,
         });
         if (result.success && result.data) {

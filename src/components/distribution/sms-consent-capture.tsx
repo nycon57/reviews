@@ -51,7 +51,7 @@ export function SmsConsentCapture({
     return (
       <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-950/30">
         <Clock weight="fill" className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-        <span className="text-sm text-amber-700 dark:text-amber-300">Pending double opt-in confirmation</span>
+        <span className="text-sm text-amber-700 dark:text-amber-300">Awaiting double opt-in confirmation</span>
         <Badge variant="outline" className="ml-auto text-[10px] border-amber-300 text-amber-600 dark:border-amber-700 dark:text-amber-400">
           Pending
         </Badge>
@@ -95,7 +95,7 @@ export function SmsConsentCapture({
         </p>
       ) : (
         <p className="text-xs text-muted-foreground">
-          You need the borrower&apos;s consent before sending SMS messages. Record their consent below.
+          Record the borrower&apos;s consent before sending SMS messages.
         </p>
       )}
 

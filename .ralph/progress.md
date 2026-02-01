@@ -10058,3 +10058,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Module-level pure functions avoid recreation per render and are easier to test
   - ?? is more precise than || when checking for missing keys (avoids false positive on empty string)
 ---
+
+## [2026-01-31 22:10] - S097: Twilio SDK Integration & Service Layer
+Thread:
+Run: 20260131-220526-4394 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-220526-4394-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-220526-4394-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5e17121 [Pass 2/3] fix(S097): Quality improvements for Twilio SDK & SMS service layer
+- Post-commit status: clean (only pre-existing uncommitted files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review of all S097 files)
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: no (no Next.js pages)
+  - /supabase-postgres-best-practices: no (no schema changes)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/__tests__/ -> PASS (50 tests, 3 files)
+  - Command: npm run build -> PASS
+  - Command: npx eslint src/lib/sms/ -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/lib/sms/daily-stats.ts (added VALID_STAT_COLUMNS allowlist for column injection prevention)
+  - src/lib/sms/twilio-client.ts (fixed toll-free number detection with proper area code prefixes)
+  - src/lib/sms/sms-service.ts (cleaned up InsufficientCreditsError import alias)
+  - src/lib/sms/__tests__/sms-service.test.ts (updated assertion to match actual error message)
+- What was implemented:
+  - Security fix: Added column name allowlist in daily-stats.ts to prevent dynamic column injection
+  - Bug fix: Toll-free number detection now checks against actual toll-free prefixes (800, 833, 844, 855, 866, 877, 888) instead of naive "+18" prefix matching
+  - Code quality: Removed confusing CreditInsufficientError alias, using InsufficientCreditsError directly
+  - Test fix: Updated InsufficientCreditsError test assertion to match current error message wording
+- **Learnings for future iterations:**
+  - The InsufficientCreditsError message was changed by the credits system story but the test wasn't updated
+  - Dynamic column names in Supabase queries should always be validated against an allowlist
+  - US toll-free area codes are: 800, 833, 844, 855, 866, 877, 888 — not just anything starting with 8
+---

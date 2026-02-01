@@ -47,6 +47,11 @@ const SOURCE_ICONS: Record<string, string> = {
   internal: "R",
 };
 
+/** Sanitize a value for safe use in CSS class names (alphanumeric + hyphens only). */
+function safeClassName(value: string): string {
+  return value.replace(/[^a-zA-Z0-9-]/g, "");
+}
+
 const SOURCE_LABELS: Record<string, string> = {
   google: "Google",
   zillow: "Zillow",
@@ -57,7 +62,6 @@ const SOURCE_LABELS: Record<string, string> = {
 
 function buildOrgHeader(
   profile: EntityProfile,
-  config: PublicWidgetConfig,
   starFilled: string,
   starEmpty: string
 ): HTMLElement {
@@ -143,7 +147,7 @@ function buildSourceBreakdown(
   for (const src of sources) {
     const item = el("div", "rw-co-sources__item");
 
-    const icon = text("span", SOURCE_ICONS[src.source] ?? src.source[0]?.toUpperCase() ?? "?", `rw-co-sources__icon rw-co-sources__icon--${src.source}`);
+    const icon = text("span", SOURCE_ICONS[src.source] ?? src.source[0]?.toUpperCase() ?? "?", `rw-co-sources__icon rw-co-sources__icon--${safeClassName(src.source)}`);
     item.appendChild(icon);
 
     const info = el("div", "rw-co-sources__info");
@@ -209,7 +213,7 @@ function buildReviewCard(
 ): HTMLElement {
   const content = config.config?.content;
   const cardStyle = content?.cardStyle ?? "bordered";
-  const card = el("div", `rw-co-review rw-co-review--${cardStyle}`);
+  const card = el("div", `rw-co-review rw-co-review--${safeClassName(cardStyle)}`);
   card.setAttribute("role", "article");
   card.setAttribute("aria-label", `Review by ${review.reviewer_name ?? "Anonymous"}`);
 
@@ -299,7 +303,7 @@ export function buildCompanyReviewDOM(
 
   // Organization header
   if (profile && content?.showHeader !== false) {
-    container.appendChild(buildOrgHeader(profile, config, starFilled, starEmpty));
+    container.appendChild(buildOrgHeader(profile, starFilled, starEmpty));
   }
 
   // Rating distribution bar chart
@@ -320,6 +324,9 @@ export function buildCompanyReviewDOM(
   // Sort controls
   if (content?.showFilters && reviews.length > 0) {
     let currentSort: SortOption = "newest";
+
+    // Pre-sort by "newest" (default active sort)
+    currentReviews.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
 
     const filtersContainer = el("div", "rw-co-filters-wrapper");
     const gridContainer = el("div", "rw-co-reviews");

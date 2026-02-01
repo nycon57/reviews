@@ -5947,7 +5947,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -5982,9 +5982,7 @@
           "Cursor-based pagination on reviews to support infinite scroll in widgets"
         ]
       },
-      "startedAt": "2026-02-01T18:16:00.848985+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-01T18:16:00.849457+00:00"
+      "updatedAt": "2026-02-01T18:21:00.443620+00:00"
     },
     {
       "id": "S135",
@@ -6010,7 +6008,7 @@
       ],
       "priority": "P0",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6046,7 +6044,8 @@
           "API client uses native fetch with AbortController for timeout handling",
           "Build script uses esbuild with metafile output to verify bundle size"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T18:26:02.907284+00:00"
     },
     {
       "id": "S136",
@@ -6070,7 +6069,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6100,7 +6099,8 @@
           "Loan type tags use standardized color coding consistent across all widgets",
           "Dashboard preview uses React component that mirrors embed.js HTML output for WYSIWYG editing"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T18:31:05.385496+00:00"
     },
     {
       "id": "S137",
@@ -6124,7 +6124,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6153,7 +6153,10 @@
           "Aggregation query runs server-side in the reviews API endpoint, not computed client-side",
           "Source breakdown data included in /reviews API response as aggregation metadata"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T18:41:12.389736+00:00",
+      "startedAt": "2026-02-01T18:41:12.389605+00:00",
+      "completedAt": null
     },
     {
       "id": "S138",

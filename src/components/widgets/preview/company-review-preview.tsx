@@ -253,11 +253,10 @@ function OrgHeader({ profile, starFilled, starEmpty }: {
 
 // ── Rating Distribution ──────────────────────────────────────────────
 
-function RatingDistributionChart({ distribution, totalReviews, starFilled, starEmpty }: {
+function RatingDistributionChart({ distribution, totalReviews, starFilled }: {
   distribution: RatingDistribution;
   totalReviews: number;
   starFilled: string;
-  starEmpty: string;
 }) {
   return (
     <div
@@ -518,7 +517,6 @@ export function CompanyReviewPreview({
           distribution={profile.rating_distribution}
           totalReviews={profile.total_reviews}
           starFilled={starFilled}
-          starEmpty={starEmpty}
         />
       ) : null}
 

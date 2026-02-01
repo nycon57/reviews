@@ -48,12 +48,12 @@ export async function getSmsAnalytics(params?: {
   const orgId = context.organization_id;
   const { startDate, endDate, userId } = params ?? {};
 
-  // Fetch total clicks once and share across summary + funnel
+  // Fetch total clicks once and share across summary, funnel, and channel comparison
   const totalClicks = await fetchTotalClicks(orgId, startDate, endDate, userId);
 
+  // fetchSummaryAndFunnel combines two formerly separate queries into one DB round-trip
   const [
-    summary,
-    funnel,
+    { summary, funnel },
     dailyVolume,
     templatePerformance,
     loLeaderboard,
@@ -62,8 +62,7 @@ export async function getSmsAnalytics(params?: {
     timeHeatmap,
     channelComparison,
   ] = await Promise.all([
-    fetchSummary(orgId, startDate, endDate, userId, totalClicks),
-    fetchFunnel(orgId, startDate, endDate, userId, totalClicks),
+    fetchSummaryAndFunnel(orgId, startDate, endDate, userId, totalClicks),
     fetchDailyVolume(orgId, startDate, endDate, userId),
     fetchTemplatePerformance(orgId, startDate, endDate, userId),
     context.role !== "user"
@@ -91,15 +90,15 @@ export async function getSmsAnalytics(params?: {
   };
 }
 
-// ── Summary KPIs ────────────────────────────────────────────────────
+// ── Summary + Funnel (single query) ─────────────────────────────────
 
-async function fetchSummary(
+async function fetchSummaryAndFunnel(
   orgId: string,
   startDate?: string,
   endDate?: string,
   userId?: string,
   precomputedClicks?: number
-): Promise<SmsAnalyticsSummary> {
+): Promise<{ summary: SmsAnalyticsSummary; funnel: SmsDeliveryFunnel }> {
   const supabase = createUntypedAdminClient();
 
   let query = supabase
@@ -119,7 +118,6 @@ async function fetchSummary(
   const totalFailed = rows.reduce((s, r) => s + ((r.failed as number) ?? 0), 0);
   const totalCostCents = rows.reduce((s, r) => s + ((r.total_cost_cents as number) ?? 0), 0);
   const totalReviewsGenerated = rows.reduce((s, r) => s + ((r.reviews_generated as number) ?? 0), 0);
-
   const totalClicks = precomputedClicks ?? 0;
 
   const deliveryRate = totalSent > 0 ? totalDelivered / totalSent : 0;
@@ -128,55 +126,27 @@ async function fetchSummary(
   const costPerReview = totalReviewsGenerated > 0 ? totalCostCents / totalReviewsGenerated : 0;
 
   return {
-    totalSent,
-    totalDelivered,
-    totalFailed,
-    totalClicks,
-    totalReviewsGenerated,
-    totalCostCents,
-    deliveryRate,
-    clickRate,
-    conversionRate,
-    costPerReview,
-  };
-}
-
-// ── Delivery funnel ─────────────────────────────────────────────────
-
-async function fetchFunnel(
-  orgId: string,
-  startDate?: string,
-  endDate?: string,
-  userId?: string,
-  precomputedClicks?: number
-): Promise<SmsDeliveryFunnel> {
-  const supabase = createUntypedAdminClient();
-
-  let query = supabase
-    .from("sms_daily_stats")
-    .select("sent, delivered, reviews_generated")
-    .eq("organization_id", orgId);
-
-  if (startDate) query = query.gte("date", startDate.slice(0, 10));
-  if (endDate) query = query.lte("date", endDate.slice(0, 10));
-  if (userId) query = query.eq("loan_officer_id", userId);
-
-  const { data } = await query;
-  const rows = data ?? [];
-
-  const sent = rows.reduce((s, r) => s + ((r.sent as number) ?? 0), 0);
-  const delivered = rows.reduce((s, r) => s + ((r.delivered as number) ?? 0), 0);
-  const reviewed = rows.reduce((s, r) => s + ((r.reviews_generated as number) ?? 0), 0);
-  const clicked = precomputedClicks ?? 0;
-
-  return {
-    sent,
-    delivered,
-    clicked,
-    reviewed,
-    sentToDelivered: sent > 0 ? delivered / sent : 0,
-    deliveredToClicked: delivered > 0 ? clicked / delivered : 0,
-    clickedToReviewed: clicked > 0 ? reviewed / clicked : 0,
+    summary: {
+      totalSent,
+      totalDelivered,
+      totalFailed,
+      totalClicks,
+      totalReviewsGenerated,
+      totalCostCents,
+      deliveryRate,
+      clickRate,
+      conversionRate,
+      costPerReview,
+    },
+    funnel: {
+      sent: totalSent,
+      delivered: totalDelivered,
+      clicked: totalClicks,
+      reviewed: totalReviewsGenerated,
+      sentToDelivered: deliveryRate,
+      deliveredToClicked: totalDelivered > 0 ? totalClicks / totalDelivered : 0,
+      clickedToReviewed: totalClicks > 0 ? totalReviewsGenerated / totalClicks : 0,
+    },
   };
 }
 

@@ -339,7 +339,7 @@ function DeliveryFunnel({ data }: { data: SmsAnalyticsData }) {
                   <p className="text-sm font-medium">{stage.label}</p>
                   {stage.rate !== undefined && (
                     <p className="text-xs text-muted-foreground">
-                      {formatPercent(stage.rate)} from prev
+                      {formatPercent(stage.rate)} from previous step
                     </p>
                   )}
                 </div>

@@ -23,6 +23,7 @@ export type {
   AICapabilityTab,
   IntegrationItem,
   MortgageFeature,
+  MortgageSectionConfig,
   MigrationStep,
   MigrationSection,
   PlatformRatings,

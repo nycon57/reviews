@@ -223,7 +223,7 @@ export interface IntegrationItem {
 
 /** Mortgage/financial-services-specific feature */
 export interface MortgageFeature {
-  /** Icon name (Lucide) */
+  /** Icon name (Phosphor) */
   icon: string;
   /** Feature title */
   title: string;
@@ -231,6 +231,18 @@ export interface MortgageFeature {
   description: string;
   /** Whether this is unique to RepWell */
   repwellExclusive?: boolean;
+}
+
+/** Section-level configuration for the mortgage-specific section */
+export interface MortgageSectionConfig {
+  /** Section headline */
+  headline?: string;
+  /** Section description */
+  description?: string;
+  /** CTA linking to mortgage landing page or demo */
+  cta?: CtaLink;
+  /** Visual stat callout (e.g. "500+" mortgage companies) */
+  stat?: StatItem;
 }
 
 // ---------------------------------------------------------------------------
@@ -435,6 +447,8 @@ export interface CompetitorPageConfig {
   integrations: IntegrationItem[];
   /** Section 10: Mortgage-specific features */
   mortgageFeatures: MortgageFeature[];
+  /** Section 10: Mortgage section-level configuration (headline, CTA, stat) */
+  mortgageSectionConfig?: MortgageSectionConfig;
   /** Section 11: Migration steps */
   migration: MigrationSection;
   /** Section 12: Rating comparison */

@@ -218,7 +218,13 @@ export function CompetitorComparisonPage({
 
       {/* Section 10: Mortgage-Specific Features */}
       <SectionWrapper id="mortgage-features" background="subtle">
-        <MortgageSpecificSection features={config.mortgageFeatures} />
+        <MortgageSpecificSection
+          features={config.mortgageFeatures}
+          headline={config.mortgageSectionConfig?.headline}
+          description={config.mortgageSectionConfig?.description}
+          cta={config.mortgageSectionConfig?.cta}
+          stat={config.mortgageSectionConfig?.stat}
+        />
       </SectionWrapper>
 
       {/* Section 11: Migration Steps */}

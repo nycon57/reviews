@@ -14323,3 +14323,62 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Hover/pointer effects should be scoped to interactive elements only — static trust badges shouldn't suggest clickability
   - Pass 2 already addressed the major quality issues (URL sanitization, aria-hidden, CSS variables), leaving Pass 3 for UX polish
 ---
+
+## [2026-02-01] - S139: Widget Builder UI (No-Code Editor)
+Thread: 
+Run: 20260201-140123-8465 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-140123-8465-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-140123-8465-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d007b95 [Pass 1/3] feat(S139): Implement Widget Builder UI (No-Code Editor)
+- Post-commit status: clean (only pre-existing modified files remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors, 5 pre-existing)
+- Files changed:
+  - src/app/(dashboard)/dashboard/widgets/page.tsx (widget list page)
+  - src/app/(dashboard)/dashboard/widgets/new/page.tsx (creation wizard)
+  - src/app/(dashboard)/dashboard/widgets/[id]/page.tsx (editor page)
+  - src/components/widgets/widget-type-selector.tsx (9 widget types with icons)
+  - src/components/widgets/theme-preset-selector.tsx (8 theme presets with thumbnails)
+  - src/components/widgets/domain-allowlist-editor.tsx (domain validation)
+  - src/components/widgets/widget-builder-sidebar.tsx (theme/content/filters/domain tabs)
+  - src/components/widgets/widget-preview.tsx (live preview with viewport toggle)
+  - src/components/widgets/embed-code-panel.tsx (script tag + iframe embed code)
+  - src/components/widgets/widget-builder.tsx (main 3-panel layout with useReducer)
+  - src/components/widgets/widget-card.tsx (card with quick actions)
+  - src/components/widgets/widget-list.tsx (card grid with search/filter)
+  - package.json (added lucide-react dependency)
+  - package-lock.json
+- What was implemented:
+  - Complete widget builder no-code editor with three-panel layout
+  - Widget creation wizard: select type → entity → name → open editor
+  - Widget list page with card grid, search, status/type filters
+  - Settings sidebar with four tabs: Theme (presets + color pickers + typography + layout), Content (header, avatars, dates, CTA, compliance), Filters (rating, count, sort, sources), Domains (allowlist editor)
+  - Live preview rendering actual widget components with sample data
+  - Desktop/tablet/mobile viewport toggle in preview
+  - Embed code panel with script tag and iframe methods, copy-to-clipboard
+  - useReducer state management with debounced config changes (150ms)
+  - Save/create via existing server actions
+  - Responsive mobile layout with tabbed navigation
+  - Widget cards with edit, duplicate, delete, copy embed code actions
+- **Learnings for future iterations:**
+  - lucide-react was not installed but used by prior S136-S138 preview components; installed it as dependency
+  - useToast comes from @/hooks/use-toast, not @/components/ui/toast
+  - Existing preview components (lo-review, company-review, star-rating-badge) provide good WYSIWYG previews
+  - Server actions already handle deep config merging via updateWidget
+---

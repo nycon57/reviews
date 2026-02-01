@@ -11332,3 +11332,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Code was already high quality from Pass 1/2; Pass 3 polish focused on minor readability improvements
   - The getTransitionBackground helper is more maintainable than inline ternary for variant mapping
 ---
+
+## 2026-02-01 06:23 - S116: Hero Section & Logo Bar Sub-Components (Sections 1-2)
+Thread:
+Run: 20260201-062314-34627 (iteration 3)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-062314-34627-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-062314-34627-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 168564b [Pass 1/3] feat(S116): Implement Hero Section & Logo Bar sub-components
+- Post-commit status: clean (only prd-reviews.json and USER_ACTION_REQUIRED.md remain, as expected)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no (Pass 2)
+  - /next-best-practices: no (Pass 2)
+  - /supabase-postgres-best-practices: no (not applicable)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (Pass 2/3)
+  - /web-design-guidelines: no (Pass 2)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (Pass 3)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (S116 files) -> PASS (0 errors in our files)
+- Files changed:
+  - src/components/competitor-pages/sections/hero-section.tsx (rewritten)
+  - src/components/competitor-pages/sections/logo-bar-section.tsx (rewritten)
+  - src/components/competitor-pages/sections/stat-count-up.tsx (new)
+  - src/app/globals.css (added logo-bar animation keyframes + mask)
+- What was implemented:
+  - Hero Section: Server Component with badge (brand accent tinted bg + border), H1 with competitor name highlighted in sage-200, subheadline (max 2 lines), dual CTAs with full hover/focus/active states, subtle background gradient, StatCountUp client child for animated count-up on scroll into view
+  - Logo Bar: CSS @keyframes infinite scroll (30s loop, no JS), gradient fade masks on left/right, hover pauses animation, Next.js Image components with width/height/alt, logos duplicated for seamless loop, reduced motion support
+  - StatCountUp: Client component using IntersectionObserver + requestAnimationFrame, parses leading numeric portion, ease-out cubic easing, respects prefers-reduced-motion
+- **Learnings for future iterations:**
+  - React Compiler lint rule disallows synchronous setState in useEffect body — use requestAnimationFrame or initialize state via useState callback
+  - `performance.now()` needs `window.` prefix in client components to satisfy no-undef lint rule
+  - CSS mask-image with gradient is the cleanest approach for fade edges on scrolling content
+  - Logo bar animation styles belong in globals.css rather than inline HTML injection to avoid security hook warnings
+---

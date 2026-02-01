@@ -15194,6 +15194,52 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - React compiler requires derived state use useMemo instead of useState+useEffect patterns
 ---
 
+## [2026-02-01 16:27] - S148: Video Testimonial Widget
+Thread:
+Run: 20260201-162747-37830 (iteration 2)
+Pass: 1/3 - Implementation (verification)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-162747-37830-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-162747-37830-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: c7fdec6 [Pass 1/3] feat(S148): Video Testimonial Widget (committed by prior iteration)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+- Verification:
+  - Command: npx tsc --noEmit (video-testimonial files) -> PASS (0 errors in S148 files)
+  - Command: npx eslint src/embed/widgets/video-testimonial/ src/components/widgets/preview/video-testimonial-preview.tsx -> PASS (0 errors)
+  - Command: npx tsx scripts/build-embed.ts -> PASS (22.8KB gzipped, within 25KB budget)
+  - Command: npx next build -> PASS (exit code 0)
+  - Acceptance criteria verification -> PASS (13/13 criteria met)
+- Files changed (verified from c7fdec6):
+  - src/embed/widgets/video-testimonial/index.ts (widget registration)
+  - src/embed/widgets/video-testimonial/player.ts (lazy-loading HTML5 player with custom controls)
+  - src/embed/widgets/video-testimonial/transcript.ts (auto-scroll, highlight, click-to-seek)
+  - src/embed/widgets/video-testimonial/styles.ts (responsive Shadow DOM CSS)
+  - src/embed/widgets/video-testimonial/template.ts (DOM builder with LO section, disclaimer)
+  - src/embed/types.ts (VideoTestimonial, WidgetVideo, VideoTranscriptSegment types)
+  - src/embed/index.ts (widget import registration)
+  - src/components/widgets/preview/video-testimonial-preview.tsx (dashboard WYSIWYG preview)
+  - src/components/widgets/widget-preview.tsx (route video_testimonial to preview component)
+  - src/lib/widgets/schemas.ts (videoSchema for config validation)
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts (entity profile + video data for video_testimonial)
+- All 13 acceptance criteria verified passing
+- **Learnings for future iterations:**
+  - Parallel iterations may commit code before current iteration finishes — always check git status first
+  - Turbopack build failures on this machine are intermittent (ENOENT for temp files) — retry usually works
+  - The embed bundle grew from 15.8KB to 22.8KB gzipped with video widget — still within 25KB budget
+---
+
 ## [2026-02-01 17:00] - S146: Branch Review Widget
 Thread:
 Run: continuation from prior crashed runs

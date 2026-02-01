@@ -11816,3 +11816,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The integration logos section auto-generates category labels from the integrations array categories
   - Pre-existing lint errors (12) are in remotion and other unrelated files — do not attempt to fix
 ---
+
+## [2026-02-01] - S120: Integration Logos & Mortgage-Specific Sub-Components (Sections 9-10)
+Thread: 
+Run: 20260201-084837-46662 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-084837-46662-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-084837-46662-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: pending
+- Post-commit status: pending
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /better-icons (icons already implemented with Phosphor)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in changed files; 12 pre-existing errors in unrelated files)
+- Files changed:
+  - src/components/competitor-pages/sections/integration-logos-section.tsx
+  - src/components/competitor-pages/sections/mortgage-specific-section.tsx
+  - src/lib/competitor-pages/types.ts
+  - src/lib/competitor-pages/index.ts
+  - src/components/competitor-pages/competitor-comparison-page.tsx
+- Implemented integration logos section (Section 9) with grayscale-to-color hover, responsive flex-wrap grid, IntersectionObserver scroll animation, configurable headline/subtitle, category auto-derivation, Next.js Image with alt text
+- Implemented mortgage-specific section (Section 10) with Phosphor icon mapping, feature cards with entrance animations, stat callout visual element, CTA button, RepWell Exclusive badges, heading hierarchy
+- Added MortgageSectionConfig type and wired into CompetitorPageConfig
+- Updated competitor-comparison-page to pass section config props
+- **Learnings for future iterations:**
+  - Both sections were already partially stubbed from S115; upgrade pattern works well
+  - Phosphor icons require explicit icon map for config-driven rendering
+  - IntersectionObserver with reduced-motion check is a reusable pattern across sections
+---

@@ -10526,3 +10526,41 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - React state resets after async operations need careful ordering — setting then immediately resetting a value in the same function is a subtle bug
   - useMemo with object references as deps will recompute every render — use stable primitive props instead
 ---
+
+## [2026-02-01] - S108: One-Off SMS Send UI & Review Request Flow
+Thread:
+Run: 20260201-010746-94770 (iteration 2)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-010746-94770-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-010746-94770-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 16f43da [Pass 3/3] refactor(S108): Polish — tighten copy, extract terminal status set, fix consent recheck phone
+- Post-commit status: S108 files clean, pre-existing uncommitted changes from other stories remain
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (manual application)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (manual application)
+  - /agent-browser: no
+  - Other skills: /form-cro: no
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from S108 files)
+- Files changed:
+  - src/components/distribution/sms-send-tab.tsx (fixed consent recheck to use normalized E.164, tightened toast copy)
+  - src/components/distribution/sms-delivery-status.tsx (extracted TERMINAL_STATUSES set constant)
+  - src/components/distribution/sms-consent-capture.tsx (tightened consent copy — clearer, more concise)
+- What was implemented:
+  - **Bug fix**: handleConsentRecorded was passing raw borrowerPhone instead of normalized phoneE164 to checkSmsSendReadiness
+  - **Code clarity**: Extracted terminal statuses into a module-level Set for readability and perf (Set.has vs Array.includes)
+  - **Copy polish**: Removed redundant "successfully" from success toast, clarified consent status text, tightened consent capture instructions
+- **Learnings for future iterations:**
+  - When a component derives a normalized value from raw input, always use the normalized value in subsequent calls — don't mix raw and normalized
+  - Small copy improvements compound into a more professional feel
+---

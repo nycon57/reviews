@@ -79,6 +79,7 @@ export interface SmsMessage {
   scheduled_at: string | null;
   sent_at: string | null;
   delivered_at: string | null;
+  follow_up_of: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -108,6 +109,11 @@ export interface SmsSettings {
   help_response: string;
   double_opt_in_message: string;
   consent_language_text: string;
+  crm_trigger_enabled: boolean;
+  crm_trigger_delay_hours: number;
+  crm_trigger_template_id: string | null;
+  crm_webhook_secret: string | null;
+  crm_field_mapping: Record<string, string>;
   created_at: string;
   updated_at: string;
 }

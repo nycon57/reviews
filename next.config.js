@@ -182,6 +182,20 @@ const nextConfig = {
           },
         ],
       },
+      // Embed: block public access to source maps
+      {
+        source: "/embed/:path*.map",
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store",
+          },
+        ],
+      },
       // Embed: CORS for all embed assets
       {
         source: "/embed/:path*",
@@ -191,6 +205,15 @@ const nextConfig = {
             value: "*",
           },
         ],
+      },
+    ];
+  },
+  // Rewrite source map requests to 404 to prevent public access
+  async rewrites() {
+    return [
+      {
+        source: "/embed/:path*.map",
+        destination: "/404",
       },
     ];
   },

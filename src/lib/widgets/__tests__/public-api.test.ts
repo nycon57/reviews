@@ -13,8 +13,11 @@ describe("resolveAllowedOrigin", () => {
   it("returns origin when matching", () => {
     expect(resolveAllowedOrigin("https://example.com", ["example.com"])).toBe("https://example.com");
   });
-  it("matches subdomains", () => {
-    expect(resolveAllowedOrigin("https://app.example.com", ["example.com"])).toBe("https://app.example.com");
+  it("matches subdomains with wildcard", () => {
+    expect(resolveAllowedOrigin("https://app.example.com", ["*.example.com"])).toBe("https://app.example.com");
+  });
+  it("does not match subdomains without wildcard", () => {
+    expect(resolveAllowedOrigin("https://app.example.com", ["example.com"])).toBeNull();
   });
   it("returns null for non-matching", () => {
     expect(resolveAllowedOrigin("https://evil.com", ["example.com"])).toBeNull();

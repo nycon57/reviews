@@ -118,6 +118,12 @@ async function main() {
   const gzipSize = gzipBuf.length;
   const brotliSize = brotliBuf.length;
 
+  // Write pre-compressed files for CDN serving
+  writeFileSync(resolve(OUT_DIR, `${hashedFilename}.gz`), gzipBuf);
+  writeFileSync(resolve(OUT_DIR, `${hashedFilename}.br`), brotliBuf);
+  writeFileSync(resolve(OUT_DIR, "embed.min.js.gz"), gzipBuf);
+  writeFileSync(resolve(OUT_DIR, "embed.min.js.br"), brotliBuf);
+
   console.log(`  embed.min.js: ${(minSize / 1024).toFixed(1)} KB`);
   console.log(`  ${hashedFilename}: ${(minSize / 1024).toFixed(1)} KB`);
   console.log(`  gzipped:      ${(gzipSize / 1024).toFixed(1)} KB`);

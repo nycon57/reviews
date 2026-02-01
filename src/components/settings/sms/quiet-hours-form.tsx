@@ -110,7 +110,7 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-5">
-        <fieldset disabled={!enabled} className={`border-0 p-0 m-0 ${!enabled ? 'opacity-50' : ''}`} aria-disabled={!enabled}>
+        <fieldset disabled={!enabled} className={`border-0 p-0 m-0 ${!enabled ? 'opacity-50' : ''}`}>
           {/* Time Range */}
           <div className="grid grid-cols-2 gap-4">
             <div>

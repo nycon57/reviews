@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { TextAlignLeft } from '@phosphor-icons/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,11 +19,7 @@ export function ConsentLanguageForm({ settings, onSaved }: ConsentLanguageFormPr
   const { toast } = useToast();
   const [consentText, setConsentText] = useState(settings.consent_language_text);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
-
-  useEffect(() => {
-    setIsDirty(consentText !== settings.consent_language_text);
-  }, [consentText, settings]);
+  const isDirty = consentText !== settings.consent_language_text;
 
   async function handleSave() {
     setIsSaving(true);
@@ -32,7 +28,6 @@ export function ConsentLanguageForm({ settings, onSaved }: ConsentLanguageFormPr
       if (result.success) {
         toast({ title: 'Consent language saved' });
         onSaved();
-        setIsDirty(false);
       } else {
         toast({ title: 'Error', description: result.error, variant: 'destructive' });
       }

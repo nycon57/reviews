@@ -1,5 +1,7 @@
 "use server";
 
+// createUntypedAdminClient used for compliance columns not yet in generated types.
+// Remove once `npm run db:types` includes these columns.
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUserWithProfile } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
@@ -76,7 +78,6 @@ export async function saveOptOutSettings(
     return { success: false, error: parsed.error.errors[0].message };
   }
 
-  // Use untyped client for new columns not yet in generated types
   const supabase = createUntypedAdminClient();
   const { error } = await supabase
     .from("sms_settings")
@@ -106,7 +107,6 @@ export async function saveDoubleOptIn(
     return { success: false, error: parsed.error.errors[0].message };
   }
 
-  // Use untyped client for new columns not yet in generated types
   const supabase = createUntypedAdminClient();
   const { error } = await supabase
     .from("sms_settings")
@@ -136,7 +136,6 @@ export async function saveConsentLanguage(
     return { success: false, error: parsed.error.errors[0].message };
   }
 
-  // Use untyped client for new columns not yet in generated types
   const supabase = createUntypedAdminClient();
   const { error } = await supabase
     .from("sms_settings")
@@ -238,8 +237,7 @@ export async function getComplianceReport(
     const optedIn = optInByDate.get(date) ?? 0;
     const optedOut = optOutByDate.get(date) ?? 0;
     const sent = sentByDate.get(date) ?? 0;
-    // Daily compliance rate: percentage of sends to opted-in contacts
-    // (100% if no opt-outs occurred that day, scaled by opt-out ratio)
+    // Compliance rate = (sends - opt-outs) / sends. 100% if no sends.
     const complianceRate = sent > 0
       ? Math.round(((sent - optedOut) / sent) * 1000) / 10
       : 100;

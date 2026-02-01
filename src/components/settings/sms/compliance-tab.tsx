@@ -135,16 +135,10 @@ export function ComplianceTab() {
 function HealthScoreCard({ score }: { score: ComplianceHealthScore | null }) {
   if (!score) return null;
 
-  const getScoreColor = (value: number) => {
-    if (value >= 80) return 'text-repwell-sage-200';
-    if (value >= 50) return 'text-amber-500';
-    return 'text-red-500';
-  };
-
-  const getScoreBg = (value: number) => {
-    if (value >= 80) return 'bg-repwell-sage-200/10';
-    if (value >= 50) return 'bg-amber-50';
-    return 'bg-red-50';
+  const scoreLevel = (value: number) => {
+    if (value >= 80) return { text: 'text-repwell-sage-200', bg: 'bg-repwell-sage-200/10' };
+    if (value >= 50) return { text: 'text-amber-500', bg: 'bg-amber-50' };
+    return { text: 'text-red-500', bg: 'bg-red-50' };
   };
 
   const items = [
@@ -166,8 +160,8 @@ function HealthScoreCard({ score }: { score: ComplianceHealthScore | null }) {
       <CardContent className="space-y-4">
         {/* Score Circle */}
         <div className="flex justify-center">
-          <div className={`w-24 h-24 rounded-full ${getScoreBg(score.score)} flex items-center justify-center`}>
-            <span className={`text-3xl font-bold ${getScoreColor(score.score)}`}>
+          <div className={`w-24 h-24 rounded-full ${scoreLevel(score.score).bg} flex items-center justify-center`}>
+            <span className={`text-3xl font-bold ${scoreLevel(score.score).text}`}>
               {score.score}%
             </span>
           </div>
@@ -198,21 +192,21 @@ function ComplianceInfoCards() {
     {
       title: 'TCPA Requirements',
       description:
-        'The Telephone Consumer Protection Act requires prior express written consent before sending marketing SMS. Messages must not be sent during quiet hours (9 PM - 8 AM local time).',
+        'The TCPA requires prior express written consent before sending marketing SMS. Messages must not be sent during quiet hours (9 PM\u20138 AM local time).',
       badge: 'Federal Law',
       badgeColor: 'bg-red-50 text-red-600 border-red-200',
     },
     {
       title: 'CAN-SPAM Compliance',
       description:
-        'While primarily for email, CAN-SPAM principles apply to commercial SMS. Always honor opt-out requests immediately and include your business identity.',
+        'CAN-SPAM principles extend to commercial SMS. Honor opt-out requests immediately and include your business identity in every message.',
       badge: 'Best Practice',
       badgeColor: 'bg-blue-50 text-blue-600 border-blue-200',
     },
     {
       title: 'RESPA Restrictions',
       description:
-        'The Real Estate Settlement Procedures Act prohibits kickbacks for referrals. SMS review requests must not offer incentives for positive reviews.',
+        'RESPA prohibits kickbacks for referrals. SMS review requests must not offer incentives for positive reviews.',
       badge: 'Mortgage Specific',
       badgeColor: 'bg-purple-50 text-purple-600 border-purple-200',
     },

@@ -5,7 +5,7 @@ import { calculateSegments } from "./segment-calculator";
 import { checkRateLimits } from "./rate-limiter";
 import {
   CreditService,
-  InsufficientCreditsError as CreditInsufficientError,
+  InsufficientCreditsError,
 } from "./credits/credit-service";
 import type {
   SmsSendResult,
@@ -33,7 +33,7 @@ export class QuietHoursError extends Error {
   }
 }
 
-export { InsufficientCreditsError } from "./credits/credit-service";
+export { InsufficientCreditsError };
 
 export class RateLimitError extends Error {
   public retryAfter?: string;
@@ -363,7 +363,7 @@ export class SmsService {
     const balance = await creditService.checkBalance();
 
     if (balance.remaining < segments && !balance.overageAllowed) {
-      throw new CreditInsufficientError(this.organizationId);
+      throw new InsufficientCreditsError(this.organizationId);
     }
   }
 
@@ -385,7 +385,7 @@ export class SmsService {
       this.log({ organization_id: this.organizationId, message_id: null, status: "queued", duration_ms, error_code: "QUIET_HOURS" });
       return { success: false, error: error.message, errorCode: "QUIET_HOURS" };
     }
-    if (error instanceof CreditInsufficientError) {
+    if (error instanceof InsufficientCreditsError) {
       this.log({ organization_id: this.organizationId, message_id: null, status: "failed", duration_ms, error_code: "NO_CREDITS" });
       return { success: false, error: error.message, errorCode: "NO_CREDITS" };
     }

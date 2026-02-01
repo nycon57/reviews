@@ -254,6 +254,14 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** US toll-free area code prefixes (800, 833, 844, 855, 866, 877, 888) */
+const TOLL_FREE_PREFIXES = ["800", "833", "844", "855", "866", "877", "888"];
+
+function isTollFreeNumber(phoneNumber: string): boolean {
+  const match = phoneNumber.match(/^\+1(\d{3})/);
+  return match ? TOLL_FREE_PREFIXES.includes(match[1]) : false;
+}
+
 function mapTwilioNumber(n: IncomingPhoneNumberInstance): SmsPhoneNumber {
   return {
     id: "",
@@ -261,7 +269,7 @@ function mapTwilioNumber(n: IncomingPhoneNumberInstance): SmsPhoneNumber {
     phone_number: n.phoneNumber,
     twilio_sid: n.sid,
     messaging_service_sid: null,
-    number_type: n.phoneNumber.startsWith("+18") ? "toll_free" : "local",
+    number_type: isTollFreeNumber(n.phoneNumber) ? "toll_free" : "local",
     status: "active",
     capabilities: {
       sms: Boolean(n.capabilities?.sms),

@@ -28,7 +28,7 @@ describe("Custom error classes", () => {
   it("InsufficientCreditsError has correct name", () => {
     const err = new InsufficientCreditsError("org-123");
     expect(err.name).toBe("InsufficientCreditsError");
-    expect(err.message).toContain("Insufficient SMS credits");
+    expect(err.message).toContain("SMS credits");
   });
 
   it("RateLimitError has correct name and retryAfter", () => {

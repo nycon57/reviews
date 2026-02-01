@@ -1,5 +1,14 @@
 import type { UntypedSupabaseClient } from "@/lib/supabase/admin";
 
+const VALID_STAT_COLUMNS = new Set([
+  "sent",
+  "delivered",
+  "failed",
+  "segments_used",
+  "total_cost_cents",
+  "reviews_generated",
+]);
+
 /**
  * Atomically increment a column in sms_daily_stats using the RPC.
  * Falls back to a select-then-upsert pattern if the RPC is unavailable.
@@ -11,6 +20,10 @@ export async function incrementDailyStat(
   date: string,
   column: string
 ): Promise<void> {
+  if (!VALID_STAT_COLUMNS.has(column)) {
+    console.error(`[SMS Daily Stats] Invalid column name: ${column}`);
+    return;
+  }
   const { error } = await supabase.rpc("increment_sms_daily_stat", {
     p_organization_id: organizationId,
     p_loan_officer_id: loanOfficerId,

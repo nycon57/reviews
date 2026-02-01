@@ -1,9 +1,9 @@
-import type { FAQSection } from "./types";
+import type { CompetitorPageConfig, FAQSection } from "./types";
 
-/**
- * Schema.org FAQPage structured data type.
- * @see https://schema.org/FAQPage
- */
+// ---------------------------------------------------------------------------
+// FAQPage Schema
+// ---------------------------------------------------------------------------
+
 interface FAQPageSchema {
   "@context": "https://schema.org";
   "@type": "FAQPage";
@@ -46,4 +46,91 @@ export function generateFAQPageSchema(faq: FAQSection): FAQPageSchema {
 /** Serializes FAQPage schema to a JSON-LD string for `<script type="application/ld+json">`. */
 export function generateFAQPageJsonLd(faq: FAQSection): string {
   return JSON.stringify(generateFAQPageSchema(faq));
+}
+
+// ---------------------------------------------------------------------------
+// BreadcrumbList Schema
+// ---------------------------------------------------------------------------
+
+interface BreadcrumbListSchema {
+  "@context": "https://schema.org";
+  "@type": "BreadcrumbList";
+  itemListElement: Array<{
+    "@type": "ListItem";
+    position: number;
+    name: string;
+    item?: string;
+  }>;
+}
+
+/**
+ * Generates BreadcrumbList JSON-LD for a competitor comparison page.
+ * Hierarchy: Home > Compare > [Competitor Name] Alternative
+ */
+export function generateBreadcrumbListSchema(
+  config: CompetitorPageConfig,
+  baseUrl: string,
+): BreadcrumbListSchema {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: baseUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Compare",
+        item: `${baseUrl}/compare`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: `${config.competitorName} Alternative`,
+      },
+    ],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Product with AggregateRating Schema
+// ---------------------------------------------------------------------------
+
+interface ProductSchema {
+  "@context": "https://schema.org";
+  "@type": "Product";
+  name: string;
+  description: string;
+  brand: { "@type": "Brand"; name: string };
+  aggregateRating: {
+    "@type": "AggregateRating";
+    ratingValue: number;
+    bestRating: number;
+    ratingCount: number;
+  };
+}
+
+/**
+ * Generates Product JSON-LD with AggregateRating from RepWell's G2 rating data.
+ */
+export function generateProductSchema(
+  config: CompetitorPageConfig,
+): ProductSchema {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "RepWell",
+    description: config.seo.description,
+    brand: { "@type": "Brand", name: "RepWell" },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: config.ratingComparison.repwell.g2Score,
+      bestRating: 5,
+      ratingCount: config.ratingComparison.repwell.g2ReviewCount,
+    },
+  };
 }

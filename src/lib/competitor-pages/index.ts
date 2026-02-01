@@ -45,8 +45,24 @@ export type {
 export {
   generateFAQPageSchema,
   generateFAQPageJsonLd,
+  generateBreadcrumbListSchema,
+  generateProductSchema,
 } from "./schema-generators";
 
 // Competitor page configs
 export { experienceComConfig } from "./configs/experience-com";
 export { birdeyeConfig } from "./configs/birdeye";
+
+// All configs indexed by slug for route lookup
+import { experienceComConfig } from "./configs/experience-com";
+import { birdeyeConfig } from "./configs/birdeye";
+import type { CompetitorPageConfig } from "./types";
+
+/** All competitor page configs, keyed by slug. */
+export const competitorConfigs: Record<string, CompetitorPageConfig> = {
+  [experienceComConfig.slug]: experienceComConfig,
+  [birdeyeConfig.slug]: birdeyeConfig,
+};
+
+/** All competitor slugs for static generation. */
+export const competitorSlugs: string[] = Object.keys(competitorConfigs);

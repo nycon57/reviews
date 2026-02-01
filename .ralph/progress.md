@@ -10100,3 +10100,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Dynamic column names in Supabase queries should always be validated against an allowlist
   - US toll-free area codes are: 800, 833, 844, 855, 866, 877, 888 — not just anything starting with 8
 ---
+
+## [2026-01-31 22:37] - S097: Twilio SDK Integration & Service Layer
+Thread: 
+Run: 20260131-222727-13322 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-222727-13322-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260131-222727-13322-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 0f4caf5 [Pass 3/3] refactor(S097): Polish Twilio SDK & SMS service layer
+- Post-commit status: clean (S097 files only)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (via code-simplifier:code-simplifier agent)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (manual review of all user-facing text)
+  - /agent-browser: no (not a UI story)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/sms/__tests__/ -> PASS (50 tests)
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in S097 files; 9 pre-existing errors in unrelated files)
+- Files changed:
+  - src/lib/sms/format.ts (DELETED - duplicate of phone-utils.ts:formatForDisplay)
+  - src/lib/sms/twilio-client.ts (removed redundant calculateSegments import/call)
+  - src/lib/sms/sms-service.ts (reuse single CreditService instance)
+  - src/components/settings/sms/sms-tab.tsx (import formatForDisplay from phone-utils)
+  - src/components/settings/sms/add-phone-number-dialog.tsx (import formatForDisplay from phone-utils)
+- What was implemented:
+  - Removed duplicate formatPhoneNumber in favor of formatForDisplay from phone-utils
+  - Removed redundant segment calculation from TwilioService.sendSms (SmsService already computes segments before calling)
+  - Consolidated CreditService instantiation to a single class member instead of creating two per send flow
+  - Fixed client component imports to avoid barrel re-export of server-only Twilio code
+- **Learnings for future iterations:**
+  - Client components must not import from barrel files that re-export server-only modules (like twilio)
+  - Use direct module imports for client components instead of barrel @/lib/sms
+  - Avoid creating duplicate utility functions with different names (formatPhoneNumber vs formatForDisplay)
+---

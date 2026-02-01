@@ -13441,3 +13441,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Admin client returns string|null for organization_id; use concrete AuthedContext type to avoid TS narrowing issues
   - Next.js build has transient Turbopack ENOENT issues; type-check is reliable alternative verification
 ---
+
+## [2026-02-01 12:35] - S133: Dashboard Widget CRUD API & Server Actions
+Thread:
+Run: 20260201-121024-24230 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-121024-24230-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-121024-24230-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (no code changes needed — Pass 1 linter already applied type safety fixes)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: yes (server actions review)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run test -- --run src/lib/widgets/ -> PASS (51 tests, 2 files)
+  - Command: npx tsc --noEmit (widget files) -> PASS (0 errors)
+  - Command: npm run lint (widget files) -> PASS (0 widget errors)
+- Files changed:
+  - none (quality review found no issues; Pass 1 linter had already applied AuthedContext type safety, z.input types, and removed stale files)
+- What was reviewed:
+  - Security: Auth guard on all actions, org membership check, Zod validation, no injection vectors
+  - Performance: Indexed queries, pagination, head:true on count queries
+  - Type safety: AuthedContext discriminated union eliminates non-null assertions
+  - Test coverage: 51 tests covering schemas, actions, auth, validation errors
+  - Stale file cleanup: Removed public-queries.ts, public-api.test.ts, api/v1/widgets/ from crashed run
+- **Learnings for future iterations:**
+  - When a prior run crashes mid-way, it may leave stale files that cause build errors
+  - The linter applies type fixes during git commit hooks, so Pass 1 code may already be clean
+---

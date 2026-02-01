@@ -113,8 +113,6 @@ export interface PricingTab {
 
 /** Single bullet item in the transition section */
 export interface TransitionBullet {
-  /** Icon name (Lucide) — defaults to checkmark if omitted */
-  icon?: string;
   /** Bullet text */
   text: string;
 }

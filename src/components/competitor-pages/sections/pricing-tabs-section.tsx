@@ -18,29 +18,21 @@ function ComparisonValue({
   variant: "repwell" | "competitor";
 }) {
   if (typeof value === "boolean") {
-    return value ? (
+    const Icon = value ? Check : X;
+    const label = value ? "Included" : "Not included";
+
+    return (
       <span
         className={cn(
           "inline-flex h-7 w-7 items-center justify-center rounded-full",
-          variant === "repwell"
+          value
             ? "bg-repwell-sage-200/20 text-repwell-sage-200"
             : "bg-red-50 text-red-400",
         )}
+        role="img"
+        aria-label={label}
       >
-        {value ? (
-          <Check weight="bold" className="h-4 w-4" />
-        ) : (
-          <X weight="bold" className="h-4 w-4" />
-        )}
-      </span>
-    ) : (
-      <span
-        className={cn(
-          "inline-flex h-7 w-7 items-center justify-center rounded-full",
-          "bg-red-50 text-red-400",
-        )}
-      >
-        <X weight="bold" className="h-4 w-4" />
+        <Icon weight="bold" className="h-4 w-4" aria-hidden="true" />
       </span>
     );
   }
@@ -133,7 +125,7 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
 
             {/* Comparison table */}
             {tab.comparisonRows.length > 0 && (
-              <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+              <div className="rounded-xl border border-border bg-white p-6 shadow-sm lg:p-8">
                 {/* Table header */}
                 <div className="grid grid-cols-3 items-center gap-4 border-b border-border pb-3">
                   <span className="text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/60">
@@ -158,7 +150,7 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
             <div className="mt-8 text-center">
               <a
                 href="#footer-cta"
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-repwell-teal-300 px-8 py-3.5 font-sans text-base font-semibold text-white shadow-sm transition-all duration-200 hover:bg-repwell-teal-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 active:scale-[0.98]"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-repwell-teal-300 px-6 py-3 font-sans text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-repwell-teal-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2 active:scale-[0.98]"
               >
                 {tab.ctaLabel}
               </a>

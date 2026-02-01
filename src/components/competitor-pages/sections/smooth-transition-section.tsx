@@ -43,8 +43,8 @@ export function SmoothTransitionSection({
       {/* Bullet list */}
       {config.bullets && config.bullets.length > 0 && (
         <ul className="mt-8 inline-flex flex-col gap-3 text-left">
-          {config.bullets.map((bullet) => (
-            <li key={bullet.text} className="flex items-start gap-3">
+          {config.bullets.map((bullet, index) => (
+            <li key={`bullet-${index}`} className="flex items-start gap-3">
               <CheckCircle
                 weight="duotone"
                 className={cn(

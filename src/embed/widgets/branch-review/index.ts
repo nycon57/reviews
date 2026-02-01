@@ -9,7 +9,6 @@ import { applyTheme } from "../../core/dom-helpers";
 import { BRANCH_REVIEW_STYLES } from "./styles";
 import { COMPANY_REVIEW_STYLES } from "../company-review/styles";
 import { buildBranchReviewDOM } from "./template";
-import { buildFilterControls } from "../shared/filter-controls";
 
 /**
  * Renders the Branch Review Widget inside a Shadow DOM root.
@@ -29,29 +28,7 @@ function renderBranchReviewWidget(
   root.appendChild(style);
 
   const instance = getInstanceForRoot(root);
-  const widgetDOM = buildBranchReviewDOM(config, reviews, apiBase);
-  root.appendChild(widgetDOM);
-
-  if (config.config?.content?.showFilters && instance) {
-    const reviewsContainer = (widgetDOM.querySelector(".rw-co-reviews") as HTMLElement) ?? widgetDOM;
-    const filterControls = buildFilterControls({
-      instance,
-      config,
-      apiBase,
-      reviewsContainer,
-      renderReviews: (filteredReviews) => {
-        while (root.lastChild && root.lastChild !== style) {
-          root.lastChild.remove();
-        }
-        const newDOM = buildBranchReviewDOM(config, filteredReviews, apiBase);
-        root.appendChild(newDOM);
-        const target = newDOM.querySelector(".rw-co-reviews");
-        if (target) newDOM.insertBefore(filterControls, target);
-      },
-    });
-    const target = widgetDOM.querySelector(".rw-co-reviews");
-    if (target) widgetDOM.insertBefore(filterControls, target);
-  }
+  root.appendChild(buildBranchReviewDOM(config, reviews, apiBase, instance ?? undefined));
 }
 
 registerWidget("branch_review", renderBranchReviewWidget);

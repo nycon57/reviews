@@ -14058,3 +14058,58 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Always check git history before attempting fixes — another agent may have already addressed issues
   - The code-reviewer subagent correctly identifies real bugs but may not account for concurrent fixes
 ---
+
+## [2026-02-01 13:40] - S137: Company Review Widget
+Thread: 
+Run: 20260201-133609-96218 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-133609-96218-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-133609-96218-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cd1175b [Pass 1/3] feat(S137): Implement Company Review Widget
+- Post-commit status: clean (staged files committed; unrelated files remain unstaged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/company-review.test.ts -> PASS (20 tests)
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in widget files; 5 pre-existing errors in remotion)
+- Files changed:
+  - src/embed/widgets/company-review/index.ts (new)
+  - src/embed/widgets/company-review/template.ts (new)
+  - src/embed/widgets/company-review/styles.ts (new)
+  - src/embed/index.ts (modified - added company-review import)
+  - src/embed/types.ts (modified - added RatingDistribution, SourceBreakdown, org fields)
+  - src/components/widgets/preview/company-review-preview.tsx (new)
+  - src/embed/__tests__/company-review.test.ts (new)
+- Implemented company_review widget type with full embed (Shadow DOM) and dashboard preview:
+  - Organization header with logo/initials, name, aggregate rating, review count
+  - Rating distribution bar chart (pure CSS, no charting lib)
+  - Source breakdown (Google, Zillow, RepWell) with colored icons
+  - Review cards with stars, name, date, text truncation, source, loan type tags, FTHB badge
+  - Sort controls: Most Recent, Highest Rated, Lowest Rated with filter_change event
+  - Load More pagination
+  - CTA and Write Review action buttons with click tracking
+  - Equal Housing Lender compliance disclaimer
+  - Responsive layout (mobile stacking at 480px)
+  - Theme preset support via CSS custom properties
+  - Full ARIA accessibility (region, article, img roles, keyboard navigation)
+  - Dashboard preview mirrors embed output pixel-perfect in React
+  - 20 unit tests covering 0, 1, 50+ reviews, sorting, pagination, truncation, registration
+- **Learnings for future iterations:**
+  - Widget code follows established lo-review pattern: index.ts (register), template.ts (DOM), styles.ts (CSS)
+  - EntityProfile type extended with org-specific fields (logo_url, organization_name, rating_distribution, source_breakdown)
+  - Preview component duplicates helper functions to avoid importing from embed package (separate build targets)
+  - All DOM construction uses safe methods (createElement/textContent), no innerHTML
+---

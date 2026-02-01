@@ -21,6 +21,9 @@ import {
   Globe,
   ShieldCheck,
 } from '@phosphor-icons/react';
+import { BrandedDomainSetup } from './branded-domain-setup';
+import { AuditLogViewer } from './audit-log-viewer';
+import { LoPhoneAssignment } from '@/components/organization/lo-phone-assignment';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -776,6 +779,13 @@ export function SmsTab() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Enterprise Features */}
+      <motion.div variants={fadeInUp} className="space-y-6">
+        <BrandedDomainSetup />
+        <LoPhoneAssignment />
+        <AuditLogViewer />
+      </motion.div>
     </motion.div>
   );
 }

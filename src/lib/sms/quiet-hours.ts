@@ -5,6 +5,7 @@ import {
   TCPA_DEFAULT_QUIET_START,
   TCPA_DEFAULT_QUIET_END,
 } from "./timezone-lookup";
+import { StateQuietHoursService } from "./enterprise/state-quiet-hours";
 
 // ── Types ───────────────────────────────────────────────────────────────
 
@@ -49,14 +50,20 @@ export class QuietHoursError extends Error {
  */
 export class QuietHoursEngine {
   private supabase: UntypedSupabaseClient;
+  private stateQuietHours: StateQuietHoursService;
 
   constructor(supabase?: UntypedSupabaseClient) {
     this.supabase = supabase ?? createUntypedAdminClient();
+    this.stateQuietHours = new StateQuietHoursService(this.supabase);
   }
 
   /**
    * Check whether a message to the given phone number falls within
    * quiet hours for the specified organization.
+   *
+   * Applies the most restrictive window between:
+   * 1. Organization quiet hours config
+   * 2. State-specific quiet hours (based on recipient area code)
    */
   async check(
     organizationId: string,
@@ -74,9 +81,23 @@ export class QuietHoursEngine {
       ? getTimezoneForPhone(recipientPhone) ?? config.timezone
       : config.timezone;
 
+    // Check for state-specific overrides and use the more restrictive window
+    let effectiveStart = config.start;
+    let effectiveEnd = config.end;
+
+    try {
+      const stateResult = await this.stateQuietHours.resolveQuietHours(recipientPhone);
+      if (stateResult.isStateOverride) {
+        effectiveStart = stateResult.effectiveStart;
+        effectiveEnd = stateResult.effectiveEnd;
+      }
+    } catch {
+      // Fall through to org/federal defaults if state lookup fails
+    }
+
     return checkTimeAgainstQuietHours(
-      config.start,
-      config.end,
+      effectiveStart,
+      effectiveEnd,
       resolvedTimezone,
       now ?? new Date()
     );

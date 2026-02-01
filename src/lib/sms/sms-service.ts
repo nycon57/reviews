@@ -9,6 +9,9 @@ import {
 } from "./credits/credit-service";
 import { ConsentService, ConsentRequiredError } from "./consent-service";
 import { QuietHoursEngine, QuietHoursError } from "./quiet-hours";
+import { StateQuietHoursService } from "./enterprise/state-quiet-hours";
+import { resolveLoFromNumber } from "./enterprise/per-lo-numbers";
+import { SmsAuditLogger } from "./audit/audit-logger";
 import type {
   SmsSendResult,
   SmsLogEntry,
@@ -40,6 +43,8 @@ export class SmsService {
   private creditService: CreditService;
   private consentService: ConsentService;
   private quietHoursEngine: QuietHoursEngine;
+  private stateQuietHours: StateQuietHoursService;
+  private auditLogger: SmsAuditLogger;
 
   private constructor(organizationId: string, twilioService: TwilioService) {
     this.organizationId = organizationId;
@@ -47,6 +52,8 @@ export class SmsService {
     this.creditService = new CreditService(organizationId);
     this.consentService = new ConsentService();
     this.quietHoursEngine = new QuietHoursEngine();
+    this.stateQuietHours = new StateQuietHoursService();
+    this.auditLogger = new SmsAuditLogger();
   }
 
   static async forOrganization(organizationId: string): Promise<SmsService> {
@@ -117,8 +124,8 @@ export class SmsService {
       // 6b. Check credit balance before sending
       await this.requireCredits(segmentInfo.segments);
 
-      // 7. Resolve from number
-      const fromNumber = await this.resolveFromNumber();
+      // 7. Resolve from number (per-LO number priority)
+      const fromNumber = await this.resolveFromNumber(input.loanOfficerId);
 
       // 8. Send via Twilio
       const result = await this.twilioService.sendSms({
@@ -151,6 +158,16 @@ export class SmsService {
         status: "sent",
         duration_ms: Date.now() - startMs,
         segments: segmentInfo.segments,
+      });
+
+      // 11. Audit log
+      await this.auditLogger.log({
+        organizationId: this.organizationId,
+        eventType: "message_sent",
+        phoneNumber: normalizedPhone,
+        loanOfficerId: input.loanOfficerId,
+        messageId,
+        details: { segments: segmentInfo.segments, template_id: input.templateId },
       });
 
       return {
@@ -203,7 +220,7 @@ export class SmsService {
 
       await this.requireCredits(segmentInfo.segments);
 
-      const fromNumber = await this.resolveFromNumber();
+      const fromNumber = await this.resolveFromNumber(input.loanOfficerId);
 
       const result = await this.twilioService.sendSms({
         to: normalizedPhone,
@@ -231,6 +248,15 @@ export class SmsService {
         status: "sent",
         duration_ms: Date.now() - startMs,
         segments: segmentInfo.segments,
+      });
+
+      await this.auditLogger.log({
+        organizationId: this.organizationId,
+        eventType: "message_sent",
+        phoneNumber: normalizedPhone,
+        loanOfficerId: input.loanOfficerId,
+        messageId,
+        details: { segments: segmentInfo.segments },
       });
 
       return {
@@ -261,7 +287,7 @@ export class SmsService {
     scheduledAt: string;
     startMs: number;
   }): Promise<SmsSendResult> {
-    const fromNumber = await this.resolveFromNumber();
+    const fromNumber = await this.resolveFromNumber(opts.loanOfficerId);
 
     const messageId = await this.persistMessage({
       loan_officer_id: opts.loanOfficerId,
@@ -282,6 +308,19 @@ export class SmsService {
       status: "queued",
       duration_ms: Date.now() - opts.startMs,
       segments: opts.segments,
+    });
+
+    await this.auditLogger.log({
+      organizationId: this.organizationId,
+      eventType: "message_queued",
+      phoneNumber: opts.phone,
+      loanOfficerId: opts.loanOfficerId,
+      messageId,
+      details: {
+        scheduled_at: opts.scheduledAt,
+        reason: "quiet_hours",
+        segments: opts.segments,
+      },
     });
 
     return {
@@ -318,7 +357,22 @@ export class SmsService {
     return resolved;
   }
 
-  private async resolveFromNumber(): Promise<string> {
+  /**
+   * Resolve from number with per-LO number priority:
+   * 1. LO's dedicated number (if assigned)
+   * 2. Org default_from_number
+   * 3. First active org phone number
+   */
+  private async resolveFromNumber(loanOfficerId?: string): Promise<string> {
+    // Check for per-LO dedicated number first
+    if (loanOfficerId) {
+      const loNumber = await resolveLoFromNumber(
+        this.organizationId,
+        loanOfficerId
+      );
+      if (loNumber) return loNumber;
+    }
+
     const supabase = createUntypedAdminClient();
     const { data: settings } = await supabase
       .from("sms_settings")
@@ -336,6 +390,7 @@ export class SmsService {
       .select("phone_number")
       .eq("organization_id", this.organizationId)
       .eq("status", "active")
+      .is("loan_officer_id", null)
       .limit(1)
       .single();
 

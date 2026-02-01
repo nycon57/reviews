@@ -15597,3 +15597,58 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Percentage rounding must ensure segments sum to 100% to avoid visual gaps in breakdown bar
   - Concurrent Ralph processes can contaminate working tree - commit early to isolate changes
 ---
+
+## [2026-02-01 17:23:16] - S151: Social Proof Banner Widget
+Thread: 
+Run: 20260201-172316-96440 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-172316-96440-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-172316-96440-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 356aa3d [Pass 1/3] feat(S151): Social Proof Banner Widget with notification, counter, and badge modes
+- Post-commit status: clean (remaining changes are pre-existing from S150)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none (Pass 1 focused on core implementation)
+- Verification:
+  - Command: npx tsx scripts/build-embed.ts -> PASS (gzipped 26.6KB within 32KB budget)
+  - Command: npm run lint -> PASS (no new errors from S151 files; 7 pre-existing errors)
+  - Command: npx next build -> FAIL (Turbopack ENOENT race condition, unrelated to S151 changes)
+- Files changed:
+  - src/embed/widgets/social-proof-banner/index.ts (widget registration, body-level Shadow DOM host)
+  - src/embed/widgets/social-proof-banner/template.ts (DOM construction for 3 modes)
+  - src/embed/widgets/social-proof-banner/styles.ts (CSS for all modes, animations, mobile responsive)
+  - src/embed/widgets/social-proof-banner/trigger-engine.ts (immediate/scroll/time/exit-intent)
+  - src/embed/widgets/social-proof-banner/frequency-manager.ts (localStorage frequency tracking)
+  - src/components/widgets/preview/social-proof-banner-preview.tsx (dashboard WYSIWYG preview)
+  - src/embed/types.ts (WidgetSocialProofBanner interface + WidgetConfigJson extension)
+  - src/embed/index.ts (import registration)
+  - scripts/build-embed.ts (budget 28KB -> 32KB for 9 widget types)
+  - scripts/deploy-embed.ts (budget 28KB -> 32KB)
+- What was implemented:
+  - Three banner modes: notification popup (toast with auto-rotating reviews), counter bar (fixed stats bar with CTA), floating badge (expand-on-hover with latest review)
+  - Trigger engine: immediate, scroll percentage, time delay, exit-intent (mouseleave detection)
+  - Frequency manager: every_visit, once_per_session (sessionStorage), once_per_day, once_per_week (localStorage with timestamps)
+  - Dismissal persistence per frequency setting
+  - Placement: top-left, top-right, bottom-left, bottom-right, top-bar, bottom-bar
+  - Animations: slide (direction-aware), fade, bounce with prefers-reduced-motion support
+  - Configurable z-index (default 99999)
+  - Event tracking: impression, banner_click, banner_dismiss
+  - Mobile responsive: full-width bottom toast on small viewports
+  - Dashboard preview with simulated viewport, mode toggle, trigger simulation
+- **Learnings for future iterations:**
+  - Next.js 16.1.4 Turbopack has a persistent ENOENT build race condition that needs investigation
+  - The linter/formatter aggressively rewrites newly created files — write files and let the formatter improve them
+  - Embed bundle grew from ~26KB to ~27KB gzipped with the new widget; budget bumped to 32KB
+  - Banner widget uses a separate body-level Shadow DOM host for proper fixed positioning (pattern differs from inline widgets)
+---

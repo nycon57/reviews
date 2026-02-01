@@ -6458,7 +6458,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6487,9 +6487,7 @@
           "Draft status widgets allow localhost to enable development/testing"
         ]
       },
-      "startedAt": "2026-02-01T20:12:07.916574+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-01T20:12:07.916802+00:00"
+      "updatedAt": "2026-02-01T20:32:17.699814+00:00"
     },
     {
       "id": "S144",
@@ -6512,7 +6510,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6537,7 +6535,10 @@
           "Source maps stored separately for error tracking services (Sentry) but not exposed publicly",
           "Version manifest enables embed.js self-update checking (future feature)"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T20:32:19.906812+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-01T20:32:19.906980+00:00"
     },
     {
       "id": "S145",

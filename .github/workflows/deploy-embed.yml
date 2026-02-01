@@ -1,0 +1,80 @@
+name: Build & Verify embed.js
+
+on:
+  push:
+    paths:
+      - "src/embed/**"
+      - "scripts/build-embed.ts"
+      - "scripts/deploy-embed.ts"
+  pull_request:
+    paths:
+      - "src/embed/**"
+      - "scripts/build-embed.ts"
+      - "scripts/deploy-embed.ts"
+
+jobs:
+  build-embed:
+    name: Build embed.js & enforce size budget
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build embed.js
+        run: npx tsx scripts/build-embed.ts
+
+      - name: Verify build output
+        run: npx tsx scripts/deploy-embed.ts --verify
+
+      - name: Upload build artifacts
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: embed-build
+          path: |
+            public/embed/v1/manifest.json
+            public/embed/v1/embed.*.min.js
+            public/embed/v1/embed.js
+          retention-days: 30
+
+      - name: Comment bundle size on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('public/embed/v1/manifest.json', 'utf-8'));
+            const { current } = manifest;
+            const budget = 15 * 1024;
+            const usage = ((current.gzipSize / budget) * 100).toFixed(1);
+
+            const body = [
+              '## embed.js Bundle Size Report',
+              '',
+              '| Metric | Value |',
+              '|--------|-------|',
+              `| Version | \`${current.version}\` |`,
+              `| Hash | \`${current.hash}\` |`,
+              `| Raw size | ${(current.size / 1024).toFixed(1)} KB |`,
+              `| Gzipped | ${(current.gzipSize / 1024).toFixed(1)} KB |`,
+              `| Brotli | ${(current.brotliSize / 1024).toFixed(1)} KB |`,
+              `| Budget usage | ${usage}% of 15 KB |`,
+              `| Built | ${current.buildTimestamp} |`,
+            ].join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });

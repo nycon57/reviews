@@ -58,17 +58,24 @@ export interface EntityProfile {
 }
 
 export async function getPublicWidgetConfig(
-  widgetId: string
+  widgetId: string,
+  options?: { includeDraft?: boolean }
 ): Promise<PublicWidgetConfig | null> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("widget_configs")
     .select(
       "widget_id, widget_type, entity_type, entity_id, name, config, allowed_domains, enable_structured_data, structured_data_type, status, version, organization_id"
     )
-    .eq("widget_id", widgetId)
-    .eq("status", "active")
-    .maybeSingle();
+    .eq("widget_id", widgetId);
+
+  if (options?.includeDraft) {
+    query = query.in("status", ["active", "draft"]);
+  } else {
+    query = query.eq("status", "active");
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error || !data) return null;
   return data as PublicWidgetConfig;

@@ -21,7 +21,9 @@
     "db:reset": "supabase db reset",
     "db:generate": "supabase migration new",
     "seed:test-users": "npx tsx scripts/seed-test-users.ts",
-    "build:embed": "npx tsx scripts/build-embed.ts"
+    "build:embed": "npx tsx scripts/build-embed.ts",
+    "deploy:embed": "npx tsx scripts/deploy-embed.ts",
+    "verify:embed": "npx tsx scripts/deploy-embed.ts --verify"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",

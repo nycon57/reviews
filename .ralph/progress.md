@@ -14483,3 +14483,23 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - When implementing injection with dedup tracking, consider refresh/update paths
   - Verify database column names against generated types before using in queries
 ---
+
+### S142 — Pass 3/3 (Polish & Finalize)
+- **Date:** 2026-02-01
+- **Status:** COMPLETE
+- **Pass type:** Polish & Finalize
+- Skills invoked:
+  - /schema-markup: yes
+  - /feature-dev: yes
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/structured-data.test.ts -> PASS (18/18)
+  - Command: npx tsc --noEmit -> PASS
+- Files changed:
+  - src/embed/index.ts (fix: add removeStructuredData() call in refresh() to clear stale JSON-LD)
+- Issues found and fixed:
+  1. MEDIUM: refresh() was missing removeStructuredData() call, causing stale JSON-LD to persist after widget refresh
+- **Learnings for future iterations:**
+  - When implementing lifecycle cleanup (destroy), always check sibling lifecycle methods (refresh) for same cleanup needs
+---

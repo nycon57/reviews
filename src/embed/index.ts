@@ -194,6 +194,9 @@ function refresh(widgetId: string): void {
       // Abort current load if any
       instance.abortController?.abort();
 
+      // Remove stale JSON-LD so it gets re-injected with fresh data
+      removeStructuredData(instance.widgetId);
+
       // Clear current content
       const style = instance.shadowRoot.querySelector("style");
       while (instance.shadowRoot.firstChild) {

@@ -4,8 +4,7 @@ import { useState, useCallback } from "react";
 import { Plus, X, Globe } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
-const HOSTNAME_REGEX = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+import { isValidHostname } from "@/lib/widgets/domain-validation";
 
 interface DomainAllowlistEditorProps {
   domains: string[];
@@ -23,8 +22,8 @@ export function DomainAllowlistEditor({ domains, onChange }: DomainAllowlistEdit
     // Strip protocol if pasted with one
     const cleaned = trimmed.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 
-    if (!HOSTNAME_REGEX.test(cleaned)) {
-      setError("Enter a valid domain (e.g., example.com)");
+    if (!isValidHostname(cleaned)) {
+      setError("Enter a valid domain (e.g., example.com or *.example.com)");
       return;
     }
 
@@ -62,7 +61,7 @@ export function DomainAllowlistEditor({ domains, onChange }: DomainAllowlistEdit
             setError(null);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="example.com"
+          placeholder="example.com or *.example.com"
           className="flex-1"
         />
         <Button

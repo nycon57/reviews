@@ -12156,3 +12156,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Design system specifies h-1.5 for accent bars, not h-1
   - ShadCN Accordion provides sufficient animation without Framer Motion
 ---
+
+## [2026-02-01] - S123: Social Proof Wall & Footer CTA Sub-Components (Sections 15-16)
+Thread: 
+Run: 20260201-092858-28217 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-092858-28217-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-092858-28217-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b20eb24 [Pass 1/3] feat(S123): Implement social proof wall and footer CTA sections
+- Post-commit status: clean (only unrelated prd-reviews.json and USER_ACTION_REQUIRED.md remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from changed files)
+- Files changed:
+  - src/components/competitor-pages/sections/social-proof-section.tsx
+  - src/components/competitor-pages/sections/footer-cta-section.tsx
+- What was implemented:
+  - Social proof wall: CSS-columns masonry layout (3 cols desktop, 2 tablet, 1 mobile), staggered scroll-reveal fade-in animations via useScrollReveal hook, star ratings with Phosphor Star icons, platform badges (G2/Capterra/etc), author info with avatar placeholder and review date, break-inside-avoid for proper masonry flow, section header with eyebrow + headline + description
+  - Footer CTA: scroll-triggered entrance animations, large high-contrast dual CTA buttons (primary inverted white + secondary outline), trust badge icons mapped from config string names to Phosphor icons (ShieldCheck, Lock, Clock, CheckCircle), full-width on mobile buttons, proper focus-visible states, gradient background handled by parent SectionWrapper
+- **Learnings for future iterations:**
+  - Both sections were stubs with "Full implementation in S123/S128" comments — replaced entirely
+  - CSS columns with break-inside-avoid is simpler than JS masonry and matches the PRD key decision
+  - useScrollReveal hook pattern (from case-studies/FAQ sections) provides consistent scroll animation across all sections
+  - Phosphor icons used throughout competitor pages (not Lucide despite type comments) — used Phosphor consistently
+  - SectionWrapper background="gradient" already provides the gradient background for footer CTA
+---

@@ -11948,3 +11948,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Half-star rendering uses clip overflow technique
   - Pre-existing lint errors remain at 12 (unrelated to S121)
 ---
+
+## 2026-02-01 - S121: Migration Steps & Rating Comparison Sub-Components (Sections 11-12)
+Thread:
+Run: 20260201-090345-15748 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-090345-15748-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-090345-15748-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b3f06e0 [Pass 2/3] refactor(S121): Align colors with design system and improve focus states
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review against design system and React best practices)
+  - /vercel-react-best-practices: yes
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no (design system compliance checked manually)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from S121 files)
+  - Command: npx eslint src/components/competitor-pages/sections/migration-steps-section.tsx src/components/competitor-pages/sections/rating-comparison-section.tsx -> PASS
+- Files changed:
+  - src/components/competitor-pages/sections/migration-steps-section.tsx
+  - src/components/competitor-pages/sections/rating-comparison-section.tsx
+- Quality review findings and fixes:
+  - Replaced off-brand emerald-600/emerald-500 colors with design system token text-repwell-sage-200 for winner score indicators and trophy icons
+  - Simplified redundant tied ternary branch (tied and default both mapped to same color)
+  - Changed focus:ring to focus-visible:ring on migration CTA per design system accessibility spec
+  - Verified barrel import concern: @phosphor-icons/react is in next.config.js optimizePackageImports
+  - All 14 acceptance criteria verified against implementation
+- **Learnings for future iterations:**
+  - Always use design system semantic color tokens (repwell-sage-200 for success) instead of Tailwind defaults (emerald)
+  - Use focus-visible instead of focus for keyboard accessibility (avoids ring on mouse click)
+  - Check optimizePackageImports in next.config.js before flagging barrel imports
+---

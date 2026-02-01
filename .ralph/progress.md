@@ -11373,3 +11373,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - CSS mask-image with gradient is the cleanest approach for fade edges on scrolling content
   - Logo bar animation styles belong in globals.css rather than inline HTML injection to avoid security hook warnings
 ---
+## 2026-02-01 07:10 - S116: Hero Section & Logo Bar Sub-Components (Sections 1-2)
+Thread:
+Run: 20260201-070818-24849 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-070818-24849-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-070818-24849-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 7d72a62 [Pass 2/3] fix(S116): Fix accessibility, performance, and design system compliance
+- Post-commit status: clean (only prd-reviews.json and USER_ACTION_REQUIRED.md remain)
+- Skills invoked:
+  - /feature-dev: no (Pass 1)
+  - /code-review: yes (code-review:code-review)
+  - /vercel-react-best-practices: yes
+  - /next-best-practices: yes
+  - /supabase-postgres-best-practices: no (not applicable)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (Pass 3)
+  - /web-design-guidelines: yes (via design system compliance audit)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (Pass 3)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S116 files) -> PASS (0 errors)
+- Files changed:
+  - src/components/competitor-pages/sections/logo-bar-section.tsx
+  - src/components/competitor-pages/sections/stat-count-up.tsx
+- What was implemented:
+  - Fixed invalid role="marquee" → role="region" for ARIA compliance
+  - Memoized parseStatValue with useMemo to prevent IntersectionObserver re-creation on parent re-renders
+  - Aligned logo bar padding with design system (py-12 md:py-16)
+  - Fixed logo hover transition duration from 300ms to 500ms per design system
+  - Removed extraneous font-medium from logo bar intro text
+  - Removed non-spec responsive logo sizing (md:h-10)
+  - Confirmed SectionWrapper handles section element, container, and padding — components correctly compose within it
+- **Learnings for future iterations:**
+  - SectionWrapper already provides <section>, container (max-w-7xl mx-auto px-4), and vertical padding — section sub-components should NOT duplicate these
+  - Logo bar uses flush prop on SectionWrapper so it manages its own padding
+  - bg-background-subtle is used in codebase but not defined in tailwind.config.ts — it works via ShadCN CSS variable convention
+  - Always check parent composition before flagging "missing" structural elements as design system violations
+---

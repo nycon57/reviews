@@ -13450,7 +13450,7 @@ Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201
 Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-121024-24230-iter-1.md
 - Guardrails reviewed: yes
 - No-commit run: false
-- Commit: none (no code changes needed — Pass 1 linter already applied type safety fixes)
+- Commit: a78aa33 [Pass 2/3] fix(S133): Escape ILIKE metacharacters in widget search
 - Post-commit status: clean
 - Skills invoked:
   - /feature-dev: yes
@@ -13469,7 +13469,7 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Command: npx tsc --noEmit (widget files) -> PASS (0 errors)
   - Command: npm run lint (widget files) -> PASS (0 widget errors)
 - Files changed:
-  - none (quality review found no issues; Pass 1 linter had already applied AuthedContext type safety, z.input types, and removed stale files)
+  - src/lib/widgets/actions.ts (ILIKE metacharacter escaping in search)
 - What was reviewed:
   - Security: Auth guard on all actions, org membership check, Zod validation, no injection vectors
   - Performance: Indexed queries, pagination, head:true on count queries

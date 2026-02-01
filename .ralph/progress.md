@@ -11857,3 +11857,41 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Phosphor icons require explicit icon map for config-driven rendering
   - IntersectionObserver with reduced-motion check is a reusable pattern across sections
 ---
+
+## [2026-02-01] - S120: Integration Logos & Mortgage-Specific Sub-Components (Sections 9-10)
+Thread: 
+Run: 20260201-085340-68166 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-085340-68166-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-085340-68166-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 2363dae [Pass 3/3] refactor(S120): Extract shared useScrollReveal hook and polish copy
+- Post-commit status: clean (prd-reviews.json and USER_ACTION_REQUIRED.md unstaged as expected)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in changed files; 12 pre-existing errors in unrelated files)
+- Files changed:
+  - src/hooks/use-scroll-reveal.ts (new)
+  - src/components/competitor-pages/sections/integration-logos-section.tsx
+  - src/components/competitor-pages/sections/mortgage-specific-section.tsx
+- Extracted duplicate IntersectionObserver + prefers-reduced-motion pattern into shared useScrollReveal hook
+- Tightened mortgage section default description copy for clarity
+- Design system compliance audit: all colors, typography, spacing, interactions, and accessibility patterns verified correct
+- **Learnings for future iterations:**
+  - useScrollReveal hook is now available at @/hooks/use-scroll-reveal for any section needing scroll-triggered animations
+  - Other competitor-page sections (hero, testimonials, etc.) could also adopt this hook to reduce duplication
+  - Pre-existing 12 lint errors are all in unrelated files (remotion, crypto globals)
+---

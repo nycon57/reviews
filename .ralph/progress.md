@@ -12765,3 +12765,40 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Avoid calling setState inside useEffect for values derivable synchronously — the eslint rule catches this
   - Window type casting for dataLayer requires `as unknown as` pattern to satisfy strict TypeScript
 ---
+## [2026-02-01] - S127: URL Aliases, Redirects & switching_from Tracking
+Thread: 
+Run: 20260201-103933-27329 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-103933-27329-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-103933-27329-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: a572b46 [Pass 2/3] fix(S127): Add cookie Secure flag and explicit Suspense fallback
+- Post-commit status: clean (S127 files committed; unrelated files from other stories remain unstaged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via feature-dev:code-reviewer agent)
+  - /vercel-react-best-practices: no (covered by code review)
+  - /next-best-practices: no (covered by code review)
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: no (deferred to Pass 3)
+  - /frontend-design: no (no UI changes)
+  - /web-design-guidelines: no (no UI changes)
+  - /writing-clearly-and-concisely: no (deferred to Pass 3)
+  - /agent-browser: no (no UI changes)
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint (S127 files) -> PASS (0 errors in S127 files)
+- Files changed:
+  - src/hooks/use-switching-from.ts (added Secure flag to cookie when on HTTPS)
+  - src/components/competitor-pages/competitor-comparison-page.tsx (added explicit fallback={null} to Suspense)
+- What was implemented:
+  - Code review identified 2 issues from Pass 1
+  - Fixed cookie security: added Secure flag when protocol is HTTPS
+  - Fixed Suspense best practice: added explicit fallback={null}
+- **Learnings for future iterations:**
+  - Always add Secure flag to cookies for production HTTPS environments
+  - Suspense boundaries should have explicit fallback props for predictability
+  - Build process can hang due to disk/lock issues; type-check is a reliable alternative
+---

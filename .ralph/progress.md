@@ -14703,3 +14703,56 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Health checks should verify CDN serving via HTTP, not just file existence
   - Shared types across build scripts and API routes prevent drift
 ---
+
+## [2026-02-01] - S144: CDN Deployment for embed.js & Static Assets
+Thread:
+Run: 20260201-154224-48548 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-154224-48548-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-154224-48548-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 97446ff [Pass 3/3] chore(S144): Final polish verification for CDN deployment
+- Post-commit status: clean (prd-reviews.json and USER_ACTION_REQUIRED.md remain, pre-existing)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (verified all S144 files - no further changes needed)
+  - /frontend-design: no (not a UI story)
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (reviewed console output, error messages, API responses - all clear)
+  - /agent-browser: no (not a UI story)
+  - Other skills: none
+- Verification:
+  - Command: npm run build:embed -> PASS (14.3 KB gzipped, within 15 KB budget)
+  - Command: npm run build -> PASS
+  - Command: npx eslint scripts/build-embed.ts scripts/deploy-embed.ts src/app/api/embed/health/route.ts src/lib/widgets/manifest-types.ts -> PASS (0 errors)
+  - Command: npm run verify:embed -> PASS
+- Files changed:
+  - .ralph/progress.md (this entry)
+  - .ralph/activity.log (activity logging)
+- What was implemented:
+  - Pass 3 polish verification of all S144 CDN deployment infrastructure
+  - Code-simplifier confirmed all files already clean from Pass 1+2 improvements
+  - All 12 acceptance criteria verified:
+    1. embed.js served via Vercel Edge at /embed/v1/embed.min.js
+    2. Cache-Control: immutable for hashed files, 24h for stable URL
+    3. Content-hash filenames (embed.{hash}.min.js) with stable redirect
+    4. Version manifest at /embed/v1/manifest.json with current + 10 previous
+    5. Static assets bundled inline via esbuild
+    6. Gzip + Brotli pre-compressed files + Vercel Edge auto-compression
+    7. CORS Access-Control-Allow-Origin: * on all /embed/* paths
+    8. Build pipeline: TS -> esbuild -> hash -> manifest -> versioned copy
+    9. Rollback at /embed/v1/{version}/embed.min.js
+    10. Health check at /api/embed/health with HTTP-based CDN verification
+    11. Source maps generated but blocked via rewrite to /404 + X-Robots-Tag
+    12. CI/CD workflow with size gate at 15 KB gzipped
+  - Bundle: 57.3 KB raw, 14.3 KB gzipped (93.3% of budget), 12.3 KB brotli
+- **Learnings for future iterations:**
+  - S144 code was already well-polished after Pass 1 (implementation) and Pass 2 (quality review)
+  - code-simplifier changes (remove empty external array, rename versionDir, simplify unused params) were already applied
+  - No further code changes needed for Pass 3 - all criteria met
+---

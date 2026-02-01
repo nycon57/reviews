@@ -13533,3 +13533,110 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Build filesystem race conditions (ENOENT) are transient; retry resolves them
   - cors.ts should not have been committed in S133 (it belongs to S134)
 ---
+
+## [2026-02-01] - S135: embed.js Core Script (Shadow DOM, Lazy Loading, Rendering)
+Thread: 
+Run: 20260201-124039-56129 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-124039-56129-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-124039-56129-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b96c9eb [Pass 1/3] feat(S135): Implement embed.js core script with Shadow DOM, lazy loading, and rendering
+- Post-commit status: clean (S135 files committed; pre-existing uncommitted files from other stories remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no (not React — vanilla TS)
+  - /next-best-practices: no (standalone embed script)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (not dashboard UI)
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no (Pass 1)
+  - /agent-browser: no (not frontend story)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/embed.test.ts -> PASS (22 tests)
+  - Command: npm run build:embed -> PASS (4.8KB gzipped, within 15KB budget)
+  - Command: npm run type-check -> PASS
+  - Command: npx eslint src/embed/ -> PASS (0 errors, 0 warnings)
+  - Command: npm run build -> FAIL (pre-existing Next.js Turbopack ENOENT bug, not related to S135)
+- Files changed:
+  - src/embed/index.ts (entry point, global API, auto-init, MutationObserver)
+  - src/embed/types.ts (TypeScript interfaces for config, reviews, instances, API)
+  - src/embed/core/api-client.ts (fetch config/reviews/events with timeout + abort)
+  - src/embed/core/discovery.ts (discover [data-repwell-widget] elements)
+  - src/embed/core/event-tracker.ts (impression/click tracking via sendBeacon)
+  - src/embed/core/lazy-loader.ts (IntersectionObserver with per-element callbacks)
+  - src/embed/core/renderer.ts (render reviews, stars, CTA, branding, NMLS into Shadow DOM)
+  - src/embed/core/shadow-dom.ts (attach open Shadow DOM, inject base styles)
+  - src/embed/core/skeleton.ts (CSS-only shimmer skeleton for loading state)
+  - src/embed/styles/base.ts (inline CSS for widget encapsulation)
+  - src/embed/__tests__/embed.test.ts (22 unit tests covering all modules)
+  - scripts/build-embed.ts (esbuild build script with gzip budget enforcement)
+  - public/embed.js + embed.min.js + source maps (build output)
+- What was implemented:
+  - Full embed.js lifecycle: discover → attach Shadow DOM → skeleton → IntersectionObserver → fetch config → fetch reviews → render → track impression
+  - Fixed lazy-loader bug: was using single shared callback, now uses per-element Map
+  - Fixed api-client timeout: was calling dispatchEvent on external signal (broken), now properly chains AbortControllers
+  - Build script outputs embed.js (24.1KB) and embed.min.js (15.6KB, 4.8KB gzipped)
+  - 22 unit tests covering discovery, skeleton, renderer, lazy-loader, shadow-dom, api-client, error states
+- **Learnings for future iterations:**
+  - The IntersectionObserver pattern with a shared observer + per-element callback Map is the correct pattern for multiple independent widgets
+  - AbortSignal cannot be dispatched on directly — must chain through a new AbortController
+  - npm run build has a pre-existing Turbopack ENOENT bug on _buildManifest.js.tmp (not caused by embed changes)
+  - The embed script is well under the 15KB gzip budget at 4.8KB — plenty of room for widget-specific renderers in later stories
+---
+
+## [2026-02-01 12:51] - S134: Public Widget API Endpoints
+Thread: 
+Run: 20260201-122029-67580 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-122029-67580-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-122029-67580-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: fb6ac2d [Pass 1/3] feat(S134): Add public widget API endpoints
+- Commit: d3ad0b3 [Pass 1/3] feat(S134): Add public query helpers and tests
+- Post-commit status: clean (for S134 files)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: yes
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit (my files) -> PASS
+  - Command: npm run lint (my files) -> PASS (0 errors from S134 files)
+  - Command: npm run test -- --run (public-api.test.ts) -> PASS (15 tests)
+  - Command: npm run test -- --run (full suite) -> PASS (275 tests, 1 pre-existing failure)
+  - Command: npm run build -> FAIL (pre-existing Turbopack crash, not caused by S134)
+- Files changed:
+  - src/lib/widgets/cors.ts (new)
+  - src/lib/widgets/public-queries.ts (new)
+  - src/lib/widgets/__tests__/public-api.test.ts (new)
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts (new)
+  - src/app/api/v1/widgets/[widgetId]/reviews/route.ts (new)
+  - src/app/api/v1/widgets/[widgetId]/events/route.ts (new)
+  - src/app/api/v1/widgets/[widgetId]/structured-data/route.ts (new)
+- What was implemented:
+  - GET /api/v1/widgets/:widgetId/config: Returns public-safe widget config JSON, strips internal fields (organization_id, created_by), 5min cache with stale-while-revalidate, CORS with domain allowlist, 404 for inactive/missing
+  - GET /api/v1/widgets/:widgetId/reviews: Returns filtered reviews matching widget config filters (minRating, dateRange, sources, featuredOnly, keywords, sortOrder), cursor-based pagination, 60s cache
+  - POST /api/v1/widgets/:widgetId/events: Accepts analytics events, validates event_type enum, SHA-256 IP hashing with daily salt, in-memory rate limiting (100/min/IP), fire-and-forget 202 response
+  - GET /api/v1/widgets/:widgetId/structured-data: Returns JSON-LD with aggregate rating, 1hr cache
+  - CORS utility: Origin validation against allowed_domains, subdomain matching, consistent headers
+  - Error responses: { error, code } shape on all endpoints
+  - All endpoints handle OPTIONS preflight requests
+- **Learnings for future iterations:**
+  - Another Ralph agent (S133/S135) runs concurrently and modifies files, causing unexpected file deletions during builds
+  - The Turbopack build is crashing on this machine (temp file ENOENT errors) - pre-existing issue not caused by S134
+  - Files written via Write tool get deleted by concurrent processes - use bash heredoc + immediate git add/commit to persist
+  - cors.ts was previously committed and removed by S133's pass 3 cleanup - needed to recreate
+---

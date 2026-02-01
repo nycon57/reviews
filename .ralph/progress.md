@@ -13113,3 +13113,59 @@ Pass: 2/3 - Quality Review
   - Case study companies must be unique per competitor page to avoid implying the same company switched from multiple competitors
   - Pricing claims about competitors must be defensible per E19 guardrails — use "reported" or "estimated" language
 ---
+
+## [2026-02-01 11:45] - S131: A/B Testing Framework & Comparison Analytics Dashboard
+Thread: 
+Run: 20260201-113003-41132 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-113003-41132-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-113003-41132-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e4d0c34 [Pass 1/3] feat(S131): Add A/B testing framework & competitor pages analytics dashboard
+- Post-commit status: clean (only pre-existing unrelated changes remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /ab-test-setup (referenced), /analytics-tracking (referenced)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors, 13 pre-existing)
+  - Command: npx tsc --noEmit -> PASS
+- Files changed:
+  - src/lib/ab-testing/types.ts (new — A/B test type definitions)
+  - src/lib/ab-testing/config.ts (new — per-page A/B test configurations)
+  - src/lib/ab-testing/assignment.ts (new — cookie-based variant assignment)
+  - src/lib/ab-testing/tracking.ts (new — event tracking to GTM/localStorage)
+  - src/lib/ab-testing/metrics.ts (new — metrics computation with significance testing)
+  - src/lib/ab-testing/mock-data.ts (new — mock event generator for dashboard)
+  - src/lib/ab-testing/index.ts (new — public API barrel export)
+  - src/components/competitor-pages/ab-test-provider.tsx (new — React context for A/B variants)
+  - src/components/competitor-pages/sections/ab-hero-wrapper.tsx (new — client component for A/B hero rendering)
+  - src/components/competitor-pages/sections/hero-section.tsx (modified — delegates to ABHeroWrapper)
+  - src/components/competitor-pages/competitor-comparison-page.tsx (modified — wraps with ABTestProvider)
+  - src/app/(dashboard)/dashboard/analytics/competitor-pages/page.tsx (new — dashboard page with role guard)
+  - src/app/(dashboard)/dashboard/analytics/competitor-pages/competitor-pages-dashboard.tsx (new — client dashboard)
+- What was implemented:
+  - A/B testing infrastructure: cookie-based deterministic variant assignment (30-day cookies), djb2 hash for 50/50 splits
+  - Test configs for all 5 competitor pages: H1, CTA copy, CTA color variants with per-test enable/disable
+  - Event tracking: page_view, cta_click, demo_booked events pushed to GTM dataLayer and localStorage
+  - Traffic source detection: organic, direct, social, paid, referral classification
+  - ABTestProvider context wrapping competitor pages, ABHeroWrapper for dynamic hero content
+  - Analytics dashboard at /dashboard/analytics/competitor-pages: stat cards, page comparison table, per-variant A/B test results with statistical significance (z-test), traffic source breakdown, switching_from distribution, test configuration view
+  - Dashboard restricted to manager+ roles via checkPageAccess
+  - Mock data generator for dashboard rendering with realistic event distributions
+  - Weekly report data structure defined for future automated reporting
+- **Learnings for future iterations:**
+  - Server components cannot pass functions to client components (render prop pattern fails at build time). Use composition: wrap entire interactive content in a client component instead.
+  - The linter auto-refactors code (added getPageTests helper, extracted createMockEvent). Check for linter modifications before committing.
+  - .next cache corruption can cause ENOENT build errors; rm -rf .next resolves it
+---

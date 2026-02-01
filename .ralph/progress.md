@@ -10392,3 +10392,39 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Native HTML fieldset disabled already sets aria-disabled — no need to duplicate
   - When multiple functions share the same workaround, document it once at the top rather than repeating inline comments
 ---
+
+## [2026-02-01 00:27] - S105: SMS Compliance & Quiet Hours Settings UI
+Thread: 
+Run: 20260201-002742-24866 (iteration 1)
+Pass: 3+/3 - Polish & Finalize (verification pass)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-002742-24866-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-002742-24866-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: bb0abc1 fix: Remove invalid props from ReviewCard in pro/[slug] reviews-list
+- Post-commit status: other unstaged changes from other stories remain
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S105 files) -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/app/pro/[slug]/components/reviews-list.tsx (fix type error - remove invalid props)
+- What was implemented:
+  - Verification pass: confirmed all S105 acceptance criteria met from prior passes
+  - Fixed pre-existing build error in unrelated file (reviews-list.tsx passing non-existent props to ReviewCard)
+  - All S105 components confirmed present: ComplianceTab, QuietHoursForm, OptOutSettingsForm, ConsentLanguageForm, ComplianceReport
+  - Build and lint pass cleanly
+- **Learnings for future iterations:**
+  - Pre-existing type errors in untracked files from other stories can block builds — fix minimally
+---

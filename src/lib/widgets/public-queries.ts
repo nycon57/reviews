@@ -358,17 +358,26 @@ export async function getNpsData(organizationId: string): Promise<NpsData> {
     else detractors++;
   }
 
-  const promoterPct = (promoters / total) * 100;
-  const passivePct = (passives / total) * 100;
-  const detractorPct = (detractors / total) * 100;
-  const score = Math.round(promoterPct - detractorPct);
+  // Round percentages ensuring they sum to 100
+  const rawPromoter = (promoters / total) * 100;
+  const rawDetractor = (detractors / total) * 100;
+  let roundedPromoter = Math.round(rawPromoter);
+  let roundedDetractor = Math.round(rawDetractor);
+  let roundedPassive = 100 - roundedPromoter - roundedDetractor;
+  // Correct if passive went negative due to rounding
+  if (roundedPassive < 0) {
+    if (roundedPromoter > roundedDetractor) roundedPromoter += roundedPassive;
+    else roundedDetractor += roundedPassive;
+    roundedPassive = 0;
+  }
+  const score = roundedPromoter - roundedDetractor;
 
   return {
     score,
     totalResponses: total,
-    promoterPct: Math.round(promoterPct),
-    passivePct: Math.round(passivePct),
-    detractorPct: Math.round(detractorPct),
+    promoterPct: roundedPromoter,
+    passivePct: roundedPassive,
+    detractorPct: roundedDetractor,
   };
 }
 

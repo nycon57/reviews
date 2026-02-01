@@ -126,23 +126,23 @@ function buildGauge(npsScore: number): HTMLElement {
     svg.appendChild(activePath);
   }
 
-  // Needle — a thin triangle pointing from center outward
-  const needleAngle = scoreAngle;
+  // Needle — drawn pointing straight up (neutral), rotated via CSS transform.
+  // The CSS animation sweeps from -90deg (left/0°) to the final angle.
   const needle = svgEl("polygon");
-  const [tipX, tipY] = arcPoint(cx, cy, r - 16, needleAngle);
-  // Build a thin triangle: tip → two base points near center
+  // Tip points straight up from center
+  const tipX = cx;
+  const tipY = cy - (r - 16);
+  // Base points spread horizontally at center
   const baseOffset = 3;
-  const baseRad1 = ((needleAngle - 180 + 90) * Math.PI) / 180;
-  const baseRad2 = ((needleAngle - 180 - 90) * Math.PI) / 180;
-  const b1x = cx + baseOffset * Math.cos(baseRad1);
-  const b1y = cy + baseOffset * Math.sin(baseRad1);
-  const b2x = cx + baseOffset * Math.cos(baseRad2);
-  const b2y = cy + baseOffset * Math.sin(baseRad2);
+  const b1x = cx + baseOffset;
+  const b1y = cy;
+  const b2x = cx - baseOffset;
+  const b2y = cy;
 
   setAttrs(needle, {
     points: `${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}`,
     class: "rw-nps__gauge-needle rw-nps__gauge-needle--animated",
-    style: `transform: rotate(${needleAngle - 90}deg)`,
+    style: `transform: rotate(${scoreAngle - 90}deg)`,
   });
   svg.appendChild(needle);
 

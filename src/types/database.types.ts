@@ -4323,9 +4323,12 @@ export type Database = {
           auto_follow_up_enabled: boolean
           auto_follow_up_template_id: string | null
           brand_name: string | null
+          consent_language_text: string
           created_at: string
           default_from_number: string | null
           double_opt_in_enabled: boolean
+          double_opt_in_message: string
+          help_response: string
           id: string
           messaging_service_sid: string | null
           monthly_message_limit: number
@@ -4335,6 +4338,7 @@ export type Database = {
           quiet_hours_start: string
           quiet_hours_timezone: string
           registration_status: Database["public"]["Enums"]["sms_registration_status"]
+          stop_response: string
           twilio_account_sid: string | null
           twilio_auth_token_encrypted: string | null
           updated_at: string
@@ -4347,9 +4351,12 @@ export type Database = {
           auto_follow_up_enabled?: boolean
           auto_follow_up_template_id?: string | null
           brand_name?: string | null
+          consent_language_text?: string
           created_at?: string
           default_from_number?: string | null
           double_opt_in_enabled?: boolean
+          double_opt_in_message?: string
+          help_response?: string
           id?: string
           messaging_service_sid?: string | null
           monthly_message_limit?: number
@@ -4359,6 +4366,7 @@ export type Database = {
           quiet_hours_start?: string
           quiet_hours_timezone?: string
           registration_status?: Database["public"]["Enums"]["sms_registration_status"]
+          stop_response?: string
           twilio_account_sid?: string | null
           twilio_auth_token_encrypted?: string | null
           updated_at?: string
@@ -4371,9 +4379,12 @@ export type Database = {
           auto_follow_up_enabled?: boolean
           auto_follow_up_template_id?: string | null
           brand_name?: string | null
+          consent_language_text?: string
           created_at?: string
           default_from_number?: string | null
           double_opt_in_enabled?: boolean
+          double_opt_in_message?: string
+          help_response?: string
           id?: string
           messaging_service_sid?: string | null
           monthly_message_limit?: number
@@ -4383,6 +4394,7 @@ export type Database = {
           quiet_hours_start?: string
           quiet_hours_timezone?: string
           registration_status?: Database["public"]["Enums"]["sms_registration_status"]
+          stop_response?: string
           twilio_account_sid?: string | null
           twilio_auth_token_encrypted?: string | null
           updated_at?: string
@@ -4525,6 +4537,72 @@ export type Database = {
           },
           {
             foreignKeyName: "sms_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_proof_graphics: {
+        Row: {
+          canvas_size: Json
+          created_at: string
+          created_by: string | null
+          elements: Json
+          id: string
+          last_generated_at: string | null
+          name: string
+          organization_id: string
+          render_status: Database["public"]["Enums"]["render_status"]
+          render_url: string | null
+          review_ids: string[] | null
+          schedule_cron: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          canvas_size: Json
+          created_at?: string
+          created_by?: string | null
+          elements?: Json
+          id?: string
+          last_generated_at?: string | null
+          name: string
+          organization_id: string
+          render_status?: Database["public"]["Enums"]["render_status"]
+          render_url?: string | null
+          review_ids?: string[] | null
+          schedule_cron?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          canvas_size?: Json
+          created_at?: string
+          created_by?: string | null
+          elements?: Json
+          id?: string
+          last_generated_at?: string | null
+          name?: string
+          organization_id?: string
+          render_status?: Database["public"]["Enums"]["render_status"]
+          render_url?: string | null
+          review_ids?: string[] | null
+          schedule_cron?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_proof_graphics_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_proof_graphics_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -5912,6 +5990,138 @@ export type Database = {
           },
         ]
       }
+      widget_configs: {
+        Row: {
+          ab_test_group: string | null
+          allowed_domains: string[] | null
+          config: Json
+          created_at: string
+          created_by: string | null
+          enable_structured_data: boolean | null
+          entity_id: string | null
+          entity_type: Database["public"]["Enums"]["widget_entity_type"]
+          id: string
+          name: string
+          organization_id: string
+          parent_widget_id: string | null
+          status: Database["public"]["Enums"]["widget_status"]
+          structured_data_type: string | null
+          updated_at: string
+          version: number | null
+          widget_id: string
+          widget_type: Database["public"]["Enums"]["widget_type"]
+        }
+        Insert: {
+          ab_test_group?: string | null
+          allowed_domains?: string[] | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          enable_structured_data?: boolean | null
+          entity_id?: string | null
+          entity_type: Database["public"]["Enums"]["widget_entity_type"]
+          id?: string
+          name: string
+          organization_id: string
+          parent_widget_id?: string | null
+          status?: Database["public"]["Enums"]["widget_status"]
+          structured_data_type?: string | null
+          updated_at?: string
+          version?: number | null
+          widget_id: string
+          widget_type: Database["public"]["Enums"]["widget_type"]
+        }
+        Update: {
+          ab_test_group?: string | null
+          allowed_domains?: string[] | null
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          enable_structured_data?: boolean | null
+          entity_id?: string | null
+          entity_type?: Database["public"]["Enums"]["widget_entity_type"]
+          id?: string
+          name?: string
+          organization_id?: string
+          parent_widget_id?: string | null
+          status?: Database["public"]["Enums"]["widget_status"]
+          structured_data_type?: string | null
+          updated_at?: string
+          version?: number | null
+          widget_id?: string
+          widget_type?: Database["public"]["Enums"]["widget_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_configs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "widget_configs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "widget_configs_parent_widget_id_fkey"
+            columns: ["parent_widget_id"]
+            isOneToOne: false
+            referencedRelation: "widget_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      widget_events: {
+        Row: {
+          created_at: string
+          event_type: Database["public"]["Enums"]["widget_event_type"]
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          page_url: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          widget_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: Database["public"]["Enums"]["widget_event_type"]
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          widget_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: Database["public"]["Enums"]["widget_event_type"]
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          widget_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_events_widget_id_fkey"
+            columns: ["widget_id"]
+            isOneToOne: false
+            referencedRelation: "widget_configs"
+            referencedColumns: ["widget_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -6016,6 +6226,7 @@ export type Database = {
       }
     }
     Enums: {
+      render_status: "pending" | "rendering" | "complete" | "failed"
       sms_consent_method:
         | "web_form"
         | "sms_keyword"
@@ -6065,6 +6276,29 @@ export type Database = {
         | "submitted"
         | "expired"
         | "cancelled"
+      widget_entity_type: "user" | "branch" | "organization"
+      widget_event_type:
+        | "impression"
+        | "click_review"
+        | "click_cta"
+        | "click_write_review"
+        | "video_play"
+        | "scroll_depth"
+        | "banner_dismiss"
+        | "banner_click"
+        | "carousel_navigate"
+        | "filter_change"
+      widget_status: "active" | "inactive" | "draft"
+      widget_type:
+        | "lo_review"
+        | "branch_review"
+        | "company_review"
+        | "review_carousel"
+        | "star_rating_badge"
+        | "video_testimonial"
+        | "review_wall"
+        | "nps_score_badge"
+        | "social_proof_banner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6192,6 +6426,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      render_status: ["pending", "rendering", "complete", "failed"],
       sms_consent_method: [
         "web_form",
         "sms_keyword",
@@ -6246,6 +6481,31 @@ export const Constants = {
         "submitted",
         "expired",
         "cancelled",
+      ],
+      widget_entity_type: ["user", "branch", "organization"],
+      widget_event_type: [
+        "impression",
+        "click_review",
+        "click_cta",
+        "click_write_review",
+        "video_play",
+        "scroll_depth",
+        "banner_dismiss",
+        "banner_click",
+        "carousel_navigate",
+        "filter_change",
+      ],
+      widget_status: ["active", "inactive", "draft"],
+      widget_type: [
+        "lo_review",
+        "branch_review",
+        "company_review",
+        "review_carousel",
+        "star_rating_badge",
+        "video_testimonial",
+        "review_wall",
+        "nps_score_badge",
+        "social_proof_banner",
       ],
     },
   },

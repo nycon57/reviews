@@ -1,0 +1,40 @@
+// Competitor comparison pages — public API
+// Data contract for all "[Competitor] vs RepWell" pages (Epic E19)
+
+export type {
+  // Shared primitives
+  CtaLink,
+  StatItem,
+  TrustBadge,
+
+  // SEO
+  CompetitorSEO,
+
+  // Section types
+  CompetitorHero,
+  LogoBarItem,
+  PricingComparisonRow,
+  PricingTab,
+  TransitionSection,
+  TestimonialCard,
+  DifferentiatorCard,
+  FeatureCard,
+  AICapabilityTab,
+  IntegrationItem,
+  MortgageFeature,
+  MigrationStep,
+  MigrationSection,
+  PlatformRatings,
+  RatingComparison,
+  CaseStudyMetric,
+  CaseStudy,
+  FAQItem,
+  FAQSection,
+  SocialProofCard,
+  FooterCta,
+  FeatureComparisonItem,
+  FeatureComparisonCategory,
+
+  // Root config
+  CompetitorPageConfig,
+} from "./types";

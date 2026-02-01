@@ -58,6 +58,11 @@ export interface WidgetContent {
   columns?: number;
   dateFormat?: "relative" | "absolute";
   cardStyle?: "bordered" | "shadow" | "flat";
+  showFilters?: boolean;
+  showRatingDistribution?: boolean;
+  showSourceBreakdown?: boolean;
+  paginationStyle?: "load_more" | "infinite_scroll";
+  reviewsPerPage?: number;
 }
 
 export interface WidgetFilters {
@@ -109,7 +114,7 @@ export interface PublicWidgetConfig {
   entity_profile?: EntityProfile | null;
 }
 
-// ── Entity Profile (from /config endpoint for lo_review widgets) ──────
+// ── Entity Profile (from /config endpoint) ────────────────────────────
 
 export interface EntityProfile {
   full_name: string | null;
@@ -120,6 +125,25 @@ export interface EntityProfile {
   average_rating: number | null;
   total_reviews: number | null;
   licensing_states: string[] | null;
+  /** Organization-specific fields (company_review widget) */
+  logo_url?: string | null;
+  organization_name?: string | null;
+  rating_distribution?: RatingDistribution | null;
+  source_breakdown?: SourceBreakdown[] | null;
+}
+
+export interface RatingDistribution {
+  5: number;
+  4: number;
+  3: number;
+  2: number;
+  1: number;
+}
+
+export interface SourceBreakdown {
+  source: string;
+  count: number;
+  average: number;
 }
 
 // ── Review (from /reviews endpoint) ───────────────────────────────────

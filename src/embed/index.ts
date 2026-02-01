@@ -19,6 +19,7 @@ import { trackImpression } from "./core/event-tracker";
 
 // Widget type registrations (self-register on import)
 import "./widgets/lo-review";
+import "./widgets/company-review";
 
 // ── Resolve API base URL from the script tag ────────────────────────
 

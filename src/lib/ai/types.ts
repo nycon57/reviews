@@ -71,9 +71,9 @@ export interface OpenAIChatResponse {
 
 // Configuration constants
 export const AI_CONFIG = {
-  model: 'gemini-2.5-flash',
-  maxTokens: 500,
-  temperature: 0.3, // Low temperature for consistent analysis
+  model: 'gemini-2.0-flash',
+  maxTokens: 1024,
+  temperature: 0.7, // Higher for more creative/varied responses
   maxRetries: 3,
   retryDelayMs: 1000,
   batchSize: 10, // Process reviews in batches

@@ -9,7 +9,7 @@ export interface WithContext<T> {
   "@type": T;
 }
 
-// Person schema for Loan Officers
+// Person schema for Professionals
 export interface PersonSchema extends WithContext<"Person"> {
   name: string;
   jobTitle?: string;
@@ -94,7 +94,7 @@ export interface AggregateRatingSchema extends WithContext<"AggregateRating"> {
   reviewCount: number;
 }
 
-// Combined schema for LO profile page (Person + AggregateRating)
+// Combined schema for professional profile page (Person + AggregateRating)
 export interface PersonWithRatingSchema extends WithContext<"Person"> {
   name: string;
   jobTitle?: string;

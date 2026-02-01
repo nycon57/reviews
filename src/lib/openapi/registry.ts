@@ -216,10 +216,10 @@ registry.register('Branch', BranchSchema);
 registry.register('CreateBranchInput', CreateBranchSchema);
 
 // ============================================================================
-// Loan Officer Schemas
+// Professional Schemas
 // ============================================================================
 
-const LoanOfficerSchema = z
+const ProfessionalSchema = z
   .object({
     id: z.string().uuid(),
     organization_id: z.string().uuid(),
@@ -238,9 +238,9 @@ const LoanOfficerSchema = z
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
   })
-  .openapi('LoanOfficer');
+  .openapi('Professional');
 
-const UpdateLoanOfficerSchema = z
+const UpdateProfessionalSchema = z
   .object({
     full_name: z.string().min(1).max(200).optional(),
     phone: z.string().optional().nullable(),
@@ -249,7 +249,16 @@ const UpdateLoanOfficerSchema = z
     branch_id: z.string().uuid().optional().nullable(),
     is_active: z.boolean().optional(),
   })
-  .openapi('UpdateLoanOfficerInput');
+  .openapi('UpdateProfessionalInput');
+
+registry.register('Professional', ProfessionalSchema);
+registry.register('UpdateProfessionalInput', UpdateProfessionalSchema);
+
+// Deprecated aliases for backward compatibility
+/** @deprecated Use ProfessionalSchema instead */
+const LoanOfficerSchema = ProfessionalSchema;
+/** @deprecated Use UpdateProfessionalSchema instead */
+const UpdateLoanOfficerSchema = UpdateProfessionalSchema;
 
 registry.register('LoanOfficer', LoanOfficerSchema);
 registry.register('UpdateLoanOfficerInput', UpdateLoanOfficerSchema);
@@ -347,6 +356,9 @@ registry.register('ReviewListResponse', createListResponse(ReviewSchema, 'Review
 registry.register('ReviewResponse', createSingleResponse(ReviewSchema, 'Review'));
 registry.register('BranchListResponse', createListResponse(BranchSchema, 'Branch'));
 registry.register('BranchResponse', createSingleResponse(BranchSchema, 'Branch'));
+registry.register('ProfessionalListResponse', createListResponse(ProfessionalSchema, 'Professional'));
+registry.register('ProfessionalResponse', createSingleResponse(ProfessionalSchema, 'Professional'));
+// Deprecated aliases
 registry.register('LoanOfficerListResponse', createListResponse(LoanOfficerSchema, 'LoanOfficer'));
 registry.register('LoanOfficerResponse', createSingleResponse(LoanOfficerSchema, 'LoanOfficer'));
 registry.register('UserListResponse', createListResponse(UserSchema, 'User'));
@@ -604,13 +616,122 @@ registry.registerPath({
   },
 });
 
-// Loan Officers
+// Professionals
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/professionals',
+  summary: 'List professionals',
+  description: 'Get a paginated list of professionals for your organization',
+  tags: ['Professionals'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    query: z.object({
+      page: z.coerce.number().int().min(1).default(1).optional(),
+      page_size: z.coerce.number().int().min(1).max(100).default(25).optional(),
+      is_active: z.enum(['true', 'false']).optional(),
+      branch_id: z.string().uuid().optional(),
+      search: z.string().max(200).optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'List of professionals',
+      content: {
+        'application/json': {
+          schema: createListResponse(ProfessionalSchema, 'Professional'),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/professionals/{id}',
+  summary: 'Get a professional',
+  description: 'Get details of a specific professional',
+  tags: ['Professionals'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Professional details',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ProfessionalSchema, 'Professional'),
+        },
+      },
+    },
+    404: {
+      description: 'Professional not found',
+      content: {
+        'application/json': {
+          schema: createErrorResponse(),
+        },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/api/v1/professionals/{id}',
+  summary: 'Update a professional',
+  description: 'Update details of a specific professional',
+  tags: ['Professionals'],
+  security: [{ ApiKeyAuth: [] }],
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+    }),
+    body: {
+      content: {
+        'application/json': {
+          schema: UpdateProfessionalSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Professional updated successfully',
+      content: {
+        'application/json': {
+          schema: createSingleResponse(ProfessionalSchema, 'Professional'),
+        },
+      },
+    },
+    400: {
+      description: 'Validation error',
+      content: {
+        'application/json': {
+          schema: createErrorResponse(),
+        },
+      },
+    },
+    404: {
+      description: 'Professional not found',
+      content: {
+        'application/json': {
+          schema: createErrorResponse(),
+        },
+      },
+    },
+  },
+});
+
+// Loan Officers (deprecated - use /professionals instead)
 registry.registerPath({
   method: 'get',
   path: '/api/v1/loan-officers',
-  summary: 'List loan officers',
-  description: 'Get a paginated list of loan officers for your organization',
-  tags: ['Loan Officers'],
+  summary: 'List loan officers (deprecated)',
+  description: 'Get a paginated list of loan officers for your organization. **Deprecated: Use /api/v1/professionals instead.**',
+  tags: ['Loan Officers (Deprecated)'],
+  deprecated: true,
   security: [{ ApiKeyAuth: [] }],
   request: {
     query: z.object({
@@ -862,9 +983,10 @@ Common error codes:
       { name: 'Surveys', description: 'Survey management endpoints' },
       { name: 'Reviews', description: 'Review management endpoints' },
       { name: 'Branches', description: 'Branch management endpoints' },
-      { name: 'Loan Officers', description: 'Loan officer management endpoints' },
+      { name: 'Professionals', description: 'Professional management endpoints' },
       { name: 'Organization', description: 'Organization settings endpoints' },
       { name: 'Users', description: 'User management endpoints' },
+      { name: 'Loan Officers (Deprecated)', description: 'Deprecated: Use /professionals endpoints instead' },
     ],
   });
 }

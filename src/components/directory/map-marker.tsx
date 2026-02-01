@@ -101,7 +101,7 @@ function PopupContent({ professional }: PopupContentProps) {
   return (
     <div className="p-2 min-w-[240px]">
       <div className="flex items-start gap-3">
-        <Link href={`/pro/${professional.id}`}>
+        <Link href={`/pro/${professional.slug || professional.id}`}>
           <Avatar className="h-12 w-12 border-2 border-repwell-sage-100">
             <AvatarImage
               src={professional.photo_url || undefined}
@@ -114,7 +114,7 @@ function PopupContent({ professional }: PopupContentProps) {
         </Link>
 
         <div className="flex-1 min-w-0">
-          <Link href={`/pro/${professional.id}`}>
+          <Link href={`/pro/${professional.slug || professional.id}`}>
             <h4 className="font-semibold text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
               {professional.full_name}
             </h4>
@@ -169,7 +169,7 @@ function PopupContent({ professional }: PopupContentProps) {
             </Button>
           )}
           <Button size="sm" className="h-8" asChild>
-            <Link href={`/pro/${professional.id}`}>View Profile</Link>
+            <Link href={`/pro/${professional.slug || professional.id}`}>View Profile</Link>
           </Button>
         </div>
       </div>

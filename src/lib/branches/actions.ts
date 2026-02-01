@@ -86,6 +86,8 @@ interface BranchRow {
   average_rating: number | null;
   total_reviews: number | null;
   total_members: number | null;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -115,6 +117,8 @@ function mapRowToBranch(row: BranchRow): Branch {
     averageRating: row.average_rating,
     totalReviews: row.total_reviews || 0,
     totalMembers: row.total_members || 0,
+    latitude: row.latitude,
+    longitude: row.longitude,
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
   };
@@ -126,6 +130,25 @@ function generateSlug(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
+}
+
+/**
+ * Geocode a branch address and return coordinates
+ */
+async function geocodeBranchAddress(
+  address: BranchAddress | undefined
+): Promise<{ latitude: number; longitude: number } | null> {
+  if (!address) return null;
+
+  // Import geocoding at runtime to avoid circular dependencies
+  const { geocodeAddressWithFallback } = await import('@/lib/directory/geocoding');
+
+  return geocodeAddressWithFallback(
+    address.street,
+    address.city,
+    address.state,
+    address.postal_code
+  );
 }
 
 // Common authorization check
@@ -367,6 +390,9 @@ export async function createBranch(
       }
     }
 
+    // Geocode the address if provided
+    const coords = await geocodeBranchAddress(validated.data.address);
+
     // Create branch
     const { data, error } = await adminSupabase
       .from('branches')
@@ -385,6 +411,8 @@ export async function createBranch(
         description: validated.data.description,
         is_active: true,
         is_public: true,
+        latitude: coords?.latitude ?? null,
+        longitude: coords?.longitude ?? null,
       })
       .select('*')
       .single();
@@ -446,6 +474,10 @@ export async function updateBranch(
     }
     if (validated.data.address !== undefined) {
       updateData.address = validated.data.address as Json;
+      // Geocode the new address
+      const coords = await geocodeBranchAddress(validated.data.address);
+      updateData.latitude = coords?.latitude ?? null;
+      updateData.longitude = coords?.longitude ?? null;
     }
     if (validated.data.phone !== undefined) {
       updateData.phone = validated.data.phone;

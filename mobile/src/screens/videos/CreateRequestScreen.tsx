@@ -23,13 +23,13 @@ import {
 import { Colors } from '../../constants/colors';
 import {
   createVideoTestimonialRequest,
-  getLoanOfficers,
+  getProfessionals,
   getUserProfile,
 } from '../../lib/video-testimonials';
-import type { LoanOfficer } from '../../types';
+import type { Professional } from '../../types';
 
 interface FormErrors {
-  loanOfficer?: string;
+  professional?: string;
   customerName?: string;
   customerEmail?: string;
 }
@@ -39,11 +39,11 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [loanOfficers, setLoanOfficers] = useState<LoanOfficer[]>([]);
-  const [userLoanOfficerId, setUserLoanOfficerId] = useState<string | null>(null);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [userProfessionalId, setUserProfessionalId] = useState<string | null>(null);
 
   // Form fields
-  const [selectedLoanOfficer, setSelectedLoanOfficer] = useState<string>('');
+  const [selectedProfessional, setSelectedProfessional] = useState<string>('');
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -56,25 +56,25 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
       try {
         setLoading(true);
 
-        // Fetch profile and loan officers in parallel for better performance
-        const [profile, officers] = await Promise.all([
+        // Fetch profile and professionals in parallel for better performance
+        const [profile, professionalList] = await Promise.all([
           getUserProfile(),
-          getLoanOfficers(),
+          getProfessionals(),
         ]);
 
-        setLoanOfficers(officers);
+        setProfessionals(professionalList);
 
-        // If user is a loan officer, pre-select themselves
+        // If user is a professional, pre-select themselves
         if (profile?.role === 'user') {
-          // Match by user_id, not loan officer id
-          const userOfficer = officers.find(lo => lo.user_id === profile.id);
-          if (userOfficer) {
-            setSelectedLoanOfficer(userOfficer.id);
-            setUserLoanOfficerId(userOfficer.id);
+          // Match by user_id, not professional id
+          const userProfessional = professionalList.find(p => p.user_id === profile.id);
+          if (userProfessional) {
+            setSelectedProfessional(userProfessional.id);
+            setUserProfessionalId(userProfessional.id);
           }
-        } else if (officers.length === 1) {
+        } else if (professionalList.length === 1) {
           // Auto-select if only one option
-          setSelectedLoanOfficer(officers[0].id);
+          setSelectedProfessional(professionalList[0].id);
         }
       } catch (err) {
         console.error('Error loading data:', err);
@@ -89,8 +89,8 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
   const validateForm = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!selectedLoanOfficer) {
-      newErrors.loanOfficer = 'Please select a professional';
+    if (!selectedProfessional) {
+      newErrors.professional = 'Please select a professional';
     }
 
     if (!customerName.trim()) {
@@ -105,7 +105,7 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [selectedLoanOfficer, customerName, customerEmail]);
+  }, [selectedProfessional, customerName, customerEmail]);
 
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) return;
@@ -114,7 +114,7 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
       setSubmitting(true);
 
       const result = await createVideoTestimonialRequest({
-        user_id: selectedLoanOfficer,
+        user_id: selectedProfessional,
         customer_name: customerName.trim(),
         customer_email: customerEmail.trim().toLowerCase(),
         customer_phone: customerPhone.trim() || undefined,
@@ -140,7 +140,7 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
     }
   }, [
     validateForm,
-    selectedLoanOfficer,
+    selectedProfessional,
     customerName,
     customerEmail,
     customerPhone,
@@ -179,35 +179,35 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
               <CardTitle>Professional</CardTitle>
             </CardHeader>
             <CardContent>
-              {userLoanOfficerId ? (
-                <View style={styles.selectedOfficer}>
+              {userProfessionalId ? (
+                <View style={styles.selectedProfessional}>
                   <Ionicons name="person" size={20} color={colors.primary} />
                   <Text variant="body" style={{ marginLeft: 8 }}>
-                    {loanOfficers.find(lo => lo.id === userLoanOfficerId)?.full_name || 'You'}
+                    {professionals.find(p => p.id === userProfessionalId)?.full_name || 'You'}
                   </Text>
                 </View>
               ) : (
-                <View style={[styles.pickerContainer, { borderColor: errors.loanOfficer ? colors.destructive : colors.border }]}>
+                <View style={[styles.pickerContainer, { borderColor: errors.professional ? colors.destructive : colors.border }]}>
                   <Picker
-                    selectedValue={selectedLoanOfficer}
+                    selectedValue={selectedProfessional}
                     onValueChange={(value: string) => {
-                      setSelectedLoanOfficer(value);
-                      if (errors.loanOfficer) {
-                        setErrors(prev => ({ ...prev, loanOfficer: undefined }));
+                      setSelectedProfessional(value);
+                      if (errors.professional) {
+                        setErrors(prev => ({ ...prev, professional: undefined }));
                       }
                     }}
                     style={styles.picker}
                   >
                     <Picker.Item label="Select professional..." value="" />
-                    {loanOfficers.map((lo) => (
-                      <Picker.Item key={lo.id} label={lo.full_name} value={lo.id} />
+                    {professionals.map((prof) => (
+                      <Picker.Item key={prof.id} label={prof.full_name} value={prof.id} />
                     ))}
                   </Picker>
                 </View>
               )}
-              {errors.loanOfficer && (
+              {errors.professional && (
                 <Text variant="small" style={[styles.errorText, { color: colors.destructive }]}>
-                  {errors.loanOfficer}
+                  {errors.professional}
                 </Text>
               )}
             </CardContent>
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
   },
-  selectedOfficer: {
+  selectedProfessional: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,

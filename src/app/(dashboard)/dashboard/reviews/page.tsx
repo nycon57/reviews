@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getReviewStats,
-  getLoanOfficersForFilter,
+  getUsersForFilter,
 } from "@/lib/reviews/actions";
 import {
   getAggregatedReviews,
@@ -12,7 +12,7 @@ import {
 } from "@/lib/reviews/aggregation-actions";
 import {
   getVideoTestimonialResponses,
-  getLoanOfficersForVideoRequests,
+  getUsersForVideoRequests,
   type VideoLibraryStats,
 } from "@/lib/video-testimonials/actions";
 import { getCurrentOrganization } from "@/lib/organization/actions";
@@ -110,17 +110,17 @@ export default async function ReviewsPage({
     reviewsResult,
     reviewStatsResult,
     aggregatedStatsResult,
-    reviewLoanOfficersResult,
+    reviewUsersResult,
     videosResult,
-    videoLoanOfficersResult,
+    videoUsersResult,
     orgResult,
   ] = await Promise.all([
     getAggregatedReviews({ page: 1, limit: 20 }),
     getReviewStats(),
     getReviewAggregationStats(),
-    getLoanOfficersForFilter(),
+    getUsersForFilter(),
     getVideoTestimonialResponses({ page: 1, pageSize: 24 }),
-    getLoanOfficersForVideoRequests(),
+    getUsersForVideoRequests(),
     getCurrentOrganization(),
   ]);
 
@@ -146,11 +146,11 @@ export default async function ReviewsPage({
     : DEFAULT_VIDEO_STATS;
 
   // Merge users from both sources (dedupe by id)
-  const reviewUsers = reviewLoanOfficersResult.success
-    ? reviewLoanOfficersResult.data ?? []
+  const reviewUsers = reviewUsersResult.success
+    ? reviewUsersResult.data ?? []
     : [];
-  const videoUsers = videoLoanOfficersResult.success
-    ? videoLoanOfficersResult.data ?? []
+  const videoUsers = videoUsersResult.success
+    ? videoUsersResult.data ?? []
     : [];
 
   const userMap = new Map<string, { id: string; fullName: string; email?: string }>();

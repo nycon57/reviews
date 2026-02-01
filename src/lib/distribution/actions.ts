@@ -526,8 +526,8 @@ export async function getSurveysForDistribution(params?: {
   }
 }
 
-// Get loan officers for the current organization
-export async function getLoanOfficersForSend(): Promise<
+// Get users for the current organization
+export async function getUsersForSend(): Promise<
   ActionResult<Array<{ id: string; fullName: string; email: string }>>
 > {
   try {
@@ -559,10 +559,10 @@ export async function getLoanOfficersForSend(): Promise<
       return { success: false, error: error.message };
     }
 
-    const users = (data || []).map((user) => ({
-      id: user.id,
-      fullName: user.full_name || 'Unknown',
-      email: user.email,
+    const users = (data || []).map((u) => ({
+      id: u.id,
+      fullName: u.full_name || 'Unknown',
+      email: u.email,
     }));
 
     return { success: true, data: users };
@@ -571,6 +571,9 @@ export async function getLoanOfficersForSend(): Promise<
     return { success: false, error: "Failed to fetch users" };
   }
 }
+
+/** @deprecated Use getUsersForSend instead */
+export const getLoanOfficersForSend = getUsersForSend;
 
 // Get active survey templates for the current organization
 export async function getActiveTemplatesForSend(): Promise<

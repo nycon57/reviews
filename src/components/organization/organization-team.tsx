@@ -346,7 +346,7 @@ export function OrganizationTeam() {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={member.photo_url || undefined} />
+                        <AvatarImage src={member.avatar_url || undefined} />
                         <AvatarFallback>
                           {(member.full_name || member.email)
                             .split(" ")
@@ -504,7 +504,7 @@ export function OrganizationTeam() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={member.photo_url || undefined} />
+                          <AvatarImage src={member.avatar_url || undefined} />
                           <AvatarFallback>
                             {(member.full_name || member.email)
                               .split(" ")

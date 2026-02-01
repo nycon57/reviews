@@ -24,6 +24,9 @@ export const updateProfileSchema = z.object({
 
   // Preferences
   timezone: z.string().optional().or(z.literal("")),
+
+  // Cover photo
+  bannerUrl: z.string().url().optional().or(z.literal("")),
 });
 
 export const changePasswordSchema = z.object({

@@ -17,7 +17,11 @@ export const API_KEY_SCOPES = [
   'branches:read',
   'branches:write',
 
-  // Loan officer operations
+  // Professional operations
+  'professionals:read',
+  'professionals:write',
+
+  // Loan officer operations (deprecated - use professionals:* instead)
   'loan-officers:read',
   'loan-officers:write',
 

@@ -13,6 +13,7 @@ import {
   ProfileForm,
   ChangePasswordForm,
   ProfileBanner,
+  CoverPhotoUpload,
   AccountDangerZone,
 } from '@/components/settings';
 import { fadeInUp, staggerContainer } from '@/lib/motion/variants';
@@ -29,6 +30,10 @@ interface ProfileTabProps {
   userLinkedinUrl?: string | null;
   userZillowProfileUrl?: string | null;
   userTimezone?: string | null;
+  userSlug?: string | null;
+  userBannerUrl?: string | null;
+  userId?: string;
+  isAdmin?: boolean;
 }
 
 interface QuickActionButtonProps {
@@ -68,11 +73,15 @@ export function ProfileTab({
   userLinkedinUrl,
   userZillowProfileUrl,
   userTimezone,
+  userSlug,
+  userBannerUrl,
+  userId,
+  isAdmin,
 }: ProfileTabProps) {
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   };
 
@@ -102,6 +111,11 @@ export function ProfileTab({
             <ProfileBanner />
           </motion.div>
 
+          {/* Cover Photo Upload */}
+          <motion.div variants={fadeInUp} id="cover-photo">
+            <CoverPhotoUpload currentBannerUrl={userBannerUrl} />
+          </motion.div>
+
           {/* Profile Form */}
           <motion.div variants={fadeInUp} id="profile-form">
             <ProfileForm
@@ -116,6 +130,9 @@ export function ProfileTab({
               initialLinkedinUrl={userLinkedinUrl}
               initialZillowProfileUrl={userZillowProfileUrl}
               initialTimezone={userTimezone}
+              initialSlug={userSlug}
+              userId={userId}
+              isAdmin={isAdmin}
             />
           </motion.div>
 

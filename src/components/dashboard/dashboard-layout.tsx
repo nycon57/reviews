@@ -14,6 +14,7 @@ interface User {
   avatar?: string;
   initials: string;
   loanOfficerId?: string;
+  slug?: string;
 }
 
 interface DashboardLayoutProps {

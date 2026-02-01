@@ -3,6 +3,7 @@ import type {
   VideoTestimonialRequest,
   VideoTestimonialResponse,
   VideoTestimonialStats,
+  Professional,
   LoanOfficer,
   CreateVideoRequestInput,
   VideoTestimonialApprovalStatus,
@@ -44,10 +45,10 @@ async function getAuthenticatedUserContext(): Promise<AuthContext> {
 }
 
 /**
- * Get user ID for the current user (if they are a professional/loan officer)
- * Now that loan_officers is consolidated into users, the user ID is the loan officer ID
+ * Get professional ID for the current user
+ * Now that professionals are consolidated into users, the user ID is the professional ID
  */
-async function getLoanOfficerIdForUser(userId: string): Promise<string | null> {
+async function getUserProfessionalId(userId: string): Promise<string | null> {
   const { data } = await supabase
     .from('users')
     .select('id')
@@ -56,13 +57,16 @@ async function getLoanOfficerIdForUser(userId: string): Promise<string | null> {
   return data?.id ?? null;
 }
 
+/** @deprecated Use getUserProfessionalId instead */
+const getLoanOfficerIdForUser = getUserProfessionalId;
+
 /**
  * Transform raw video response data to typed VideoTestimonialResponse
  */
 function transformVideoResponse(
   res: Record<string, unknown>,
   request: { customer_name: string; customer_email: string },
-  loanOfficer: { full_name: string }
+  professional: { full_name: string }
 ): VideoTestimonialResponse {
   return {
     id: res.id as string,
@@ -90,7 +94,7 @@ function transformVideoResponse(
     created_at: res.created_at as string,
     customer_name: request.customer_name,
     customer_email: request.customer_email,
-    user_name: loanOfficer.full_name,
+    user_name: professional.full_name,
   };
 }
 
@@ -129,6 +133,8 @@ export function getStatusDisplay(status: string): { label: string; color: string
  */
 export async function getVideoTestimonialResponses(params?: {
   approvalStatus?: string;
+  professionalId?: string;
+  /** @deprecated Use professionalId instead */
   loanOfficerId?: string;
   search?: string;
   page?: number;
@@ -183,21 +189,22 @@ export async function getVideoTestimonialResponses(params?: {
     .order('created_at', { ascending: false })
     .range(offset, offset + pageSize - 1);
 
-  // Apply filters
+  // Apply filters (support both professionalId and deprecated loanOfficerId)
   if (params?.approvalStatus) {
     query = query.eq('approval_status', params.approvalStatus);
   }
 
-  if (params?.loanOfficerId) {
-    query = query.eq('user_id', params.loanOfficerId);
+  const filterProfessionalId = params?.professionalId ?? params?.loanOfficerId;
+  if (filterProfessionalId) {
+    query = query.eq('user_id', filterProfessionalId);
   }
 
   // Role-based filtering for users
-  let loanOfficerId: string | null = null;
+  let professionalId: string | null = null;
   if (auth.role === 'user') {
-    loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
-    if (loanOfficerId) {
-      query = query.eq('user_id', loanOfficerId);
+    professionalId = await getUserProfessionalId(auth.userId);
+    if (professionalId) {
+      query = query.eq('user_id', professionalId);
     } else {
       return { responses: [], total: 0, stats: getEmptyStats() };
     }
@@ -216,12 +223,12 @@ export async function getVideoTestimonialResponses(params?: {
       customer_name: string;
       customer_email: string;
     };
-    const loanOfficer = res.users as unknown as { full_name: string };
-    return transformVideoResponse(res as unknown as Record<string, unknown>, request, loanOfficer);
+    const professional = res.users as unknown as { full_name: string };
+    return transformVideoResponse(res as unknown as Record<string, unknown>, request, professional);
   });
 
-  // Get stats (pass loan officer ID directly to avoid redundant lookup)
-  const stats = await getVideoStats(auth.organizationId, loanOfficerId);
+  // Get stats (pass professional ID directly to avoid redundant lookup)
+  const stats = await getVideoStats(auth.organizationId, professionalId);
 
   return {
     responses,
@@ -235,15 +242,15 @@ export async function getVideoTestimonialResponses(params?: {
  */
 async function getVideoStats(
   organizationId: string,
-  loanOfficerId?: string | null
+  professionalId?: string | null
 ): Promise<VideoTestimonialStats> {
   let query = supabase
     .from('video_testimonial_responses')
     .select('approval_status, duration_seconds')
     .eq('organization_id', organizationId);
 
-  if (loanOfficerId) {
-    query = query.eq('user_id', loanOfficerId);
+  if (professionalId) {
+    query = query.eq('user_id', professionalId);
   }
 
   const { data } = await query;
@@ -309,9 +316,9 @@ export async function getVideoTestimonialResponse(
     customer_name: string;
     customer_email: string;
   };
-  const loanOfficer = data.users as unknown as { full_name: string };
+  const professional = data.users as unknown as { full_name: string };
 
-  return transformVideoResponse(data as unknown as Record<string, unknown>, request, loanOfficer);
+  return transformVideoResponse(data as unknown as Record<string, unknown>, request, professional);
 }
 
 /**
@@ -319,6 +326,8 @@ export async function getVideoTestimonialResponse(
  */
 export async function getVideoTestimonialRequests(params?: {
   status?: string;
+  professionalId?: string;
+  /** @deprecated Use professionalId instead */
   loanOfficerId?: string;
   page?: number;
   pageSize?: number;
@@ -363,15 +372,17 @@ export async function getVideoTestimonialRequests(params?: {
     query = query.eq('status', params.status);
   }
 
-  if (params?.loanOfficerId) {
-    query = query.eq('user_id', params.loanOfficerId);
+  // Support both professionalId and deprecated loanOfficerId
+  const filterProfessionalId = params?.professionalId ?? params?.loanOfficerId;
+  if (filterProfessionalId) {
+    query = query.eq('user_id', filterProfessionalId);
   }
 
   // Role-based filtering for users
   if (auth.role === 'user') {
-    const loanOfficerId = await getLoanOfficerIdForUser(auth.userId);
-    if (loanOfficerId) {
-      query = query.eq('user_id', loanOfficerId);
+    const professionalId = await getUserProfessionalId(auth.userId);
+    if (professionalId) {
+      query = query.eq('user_id', professionalId);
     } else {
       return { requests: [], total: 0 };
     }
@@ -385,7 +396,7 @@ export async function getVideoTestimonialRequests(params?: {
   }
 
   const requests: VideoTestimonialRequest[] = (data || []).map((req) => {
-    const loanOfficer = req.users as unknown as { full_name: string };
+    const professional = req.users as unknown as { full_name: string };
     return {
       id: req.id,
       token: req.token,
@@ -403,7 +414,7 @@ export async function getVideoTestimonialRequests(params?: {
       expires_at: req.expires_at,
       reminder_count: req.reminder_count || 0,
       created_at: req.created_at,
-      user_name: loanOfficer.full_name,
+      user_name: professional.full_name,
     };
   });
 
@@ -539,9 +550,9 @@ export async function getVideoSignedUrl(videoPath: string): Promise<string> {
 }
 
 /**
- * Get professionals/users for request creation
+ * Get professionals for request creation
  */
-export async function getLoanOfficers(): Promise<LoanOfficer[]> {
+export async function getProfessionals(): Promise<Professional[]> {
   const auth = await getAuthenticatedUserContext();
 
   const { data, error } = await supabase
@@ -552,17 +563,20 @@ export async function getLoanOfficers(): Promise<LoanOfficer[]> {
     .order('full_name', { ascending: true });
 
   if (error) {
-    console.error('Error fetching loan officers:', error);
+    console.error('Error fetching professionals:', error);
     throw error;
   }
 
-  return (data || []).map((lo) => ({
-    id: lo.id,
-    full_name: lo.full_name,
-    email: lo.email,
-    user_id: lo.user_id,
+  return (data || []).map((prof) => ({
+    id: prof.id,
+    full_name: prof.full_name,
+    email: prof.email,
+    user_id: prof.id,
   }));
 }
+
+/** @deprecated Use getProfessionals instead */
+export const getLoanOfficers = getProfessionals;
 
 /**
  * Get user profile with role

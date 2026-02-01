@@ -2,7 +2,7 @@
  * BrandedIntro Component
  *
  * Animated intro sequence featuring organization branding,
- * loan officer info, and customer context.
+ * professional info, and customer context.
  */
 
 import { useCurrentFrame, useVideoConfig, interpolate, spring, Img } from "remotion";
@@ -13,12 +13,12 @@ import { withOpacity, generateGradient } from "../utils/colors";
 interface BrandedIntroProps {
   /** Organization branding info */
   organization: OrganizationBranding;
-  /** Loan officer name */
-  loanOfficerName: string;
-  /** Loan officer title */
-  loanOfficerTitle?: string | null;
-  /** Loan officer photo URL */
-  loanOfficerPhotoUrl?: string | null;
+  /** Professional name */
+  professionalName: string;
+  /** Professional title */
+  professionalTitle?: string | null;
+  /** Professional photo URL */
+  professionalPhotoUrl?: string | null;
   /** Customer name for context */
   customerName?: string;
   /** Output format */
@@ -29,9 +29,9 @@ interface BrandedIntroProps {
 
 export const BrandedIntro: React.FC<BrandedIntroProps> = ({
   organization,
-  loanOfficerName,
-  loanOfficerTitle,
-  loanOfficerPhotoUrl,
+  professionalName,
+  professionalTitle,
+  professionalPhotoUrl,
   customerName,
   format,
   durationFrames,
@@ -138,11 +138,11 @@ export const BrandedIntro: React.FC<BrandedIntroProps> = ({
           fontSize={isVertical ? 24 : 20}
         />
 
-        {/* Loan Officer Info */}
-        <AnimatedLoanOfficer
-          name={loanOfficerName}
-          title={loanOfficerTitle}
-          photoUrl={loanOfficerPhotoUrl}
+        {/* Professional Info */}
+        <AnimatedProfessional
+          name={professionalName}
+          title={professionalTitle}
+          photoUrl={professionalPhotoUrl}
           startFrame={loStartFrame}
           frame={frame}
           fps={fps}
@@ -264,9 +264,9 @@ const AnimatedTitle: React.FC<{
 };
 
 /**
- * Animated loan officer component
+ * Animated professional component
  */
-const AnimatedLoanOfficer: React.FC<{
+const AnimatedProfessional: React.FC<{
   name: string;
   title?: string | null;
   photoUrl?: string | null;

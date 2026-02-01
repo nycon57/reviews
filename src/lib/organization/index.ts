@@ -51,4 +51,5 @@ export {
   getOrganizationStats,
   getAuditLogs,
   isOrganizationAdmin,
+  updateOrganizationSlug,
 } from "./actions";

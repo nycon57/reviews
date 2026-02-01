@@ -9,7 +9,7 @@ import { UnifiedRequestsHub } from "@/components/requests/unified-requests-hub";
 import {
   getVideoTestimonialRequests,
   getVideoTestimonialRequestStats,
-  getLoanOfficersForVideoRequests,
+  getUsersForVideoRequests,
 } from "@/lib/video-testimonials/actions";
 import { unifiedGetUser } from "@/lib/auth/actions";
 
@@ -62,7 +62,7 @@ export default async function RequestsPage({
   const [requestsResult, statsResult, usersResult] = await Promise.all([
     getVideoTestimonialRequests({ page: 1, pageSize: 25 }),
     getVideoTestimonialRequestStats(),
-    getLoanOfficersForVideoRequests(),
+    getUsersForVideoRequests(),
   ]);
 
   const initialVideoRequests = requestsResult.success

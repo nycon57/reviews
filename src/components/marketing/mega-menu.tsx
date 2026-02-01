@@ -239,6 +239,11 @@ export function MegaMenu() {
           <NavLink href="/pricing">Pricing</NavLink>
         </NavigationMenu.Item>
 
+        {/* Directory (direct link) */}
+        <NavigationMenu.Item>
+          <NavLink href="/directory">Directory</NavLink>
+        </NavigationMenu.Item>
+
         {/* Blog (direct link) */}
         <NavigationMenu.Item>
           <NavLink href="/blog">Blog</NavLink>

@@ -21,6 +21,7 @@ import {
   type SubscriptionTier,
   type SubscriptionStatus,
 } from "./types";
+import { validateOrgSlug, generateUserSlug } from "@/lib/users/slug-utils";
 
 // Transform database row to full Organization type
 function transformDbOrganization(row: Tables<"organizations">): Organization {
@@ -266,7 +267,7 @@ export async function getOrganizationMembers(): Promise<{
   // Get members
   const { data: members, error } = await supabase
     .from("users")
-    .select("id, email, full_name, photo_url, role, is_active, last_login_at, created_at")
+    .select("id, email, full_name, avatar_url, role, is_active, last_login_at, created_at")
     .eq("organization_id", userData.organization_id)
     .order("created_at", { ascending: false });
 
@@ -354,7 +355,7 @@ export async function updateMemberRole(
 // Update member details (admin only)
 export async function updateMemberDetails(
   memberId: string,
-  data: { full_name?: string; photo_url?: string }
+  data: { full_name?: string; avatar_url?: string }
 ): Promise<{ success: boolean; error: string | null }> {
   const user = await unifiedGetUser();
   if (!user) {
@@ -768,4 +769,103 @@ export async function isOrganizationAdmin(): Promise<boolean> {
     .single();
 
   return userData?.role === "admin";
+}
+
+/**
+ * Update the organization's public URL slug (admin only)
+ * @param newSlug The new slug to set
+ */
+export async function updateOrganizationSlug(
+  newSlug: string
+): Promise<{ success: boolean; error: string | null }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Get user's organization and role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can update the organization URL" };
+  }
+
+  // Get current organization slug for revalidation
+  const { data: currentOrg } = await supabase
+    .from("organizations")
+    .select("slug")
+    .eq("id", userData.organization_id)
+    .single();
+
+  // Normalize the slug
+  const normalizedSlug = newSlug.toLowerCase().trim();
+
+  // Validate the new slug
+  const validation = await validateOrgSlug(normalizedSlug, userData.organization_id);
+  if (!validation.valid) {
+    return { success: false, error: validation.error || "Invalid slug" };
+  }
+
+  // Update the slug
+  const { error: updateError } = await supabase
+    .from("organizations")
+    .update({
+      slug: normalizedSlug,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userData.organization_id);
+
+  if (updateError) {
+    // Handle unique constraint violation
+    if (updateError.code === "23505") {
+      return { success: false, error: "This URL is already taken. Please try a different one." };
+    }
+    return { success: false, error: updateError.message };
+  }
+
+  // Revalidate relevant paths
+  revalidatePath("/dashboard/organization");
+  if (currentOrg?.slug) {
+    revalidatePath(`/org/${currentOrg.slug}`);
+  }
+  revalidatePath(`/org/${normalizedSlug}`);
+
+  return { success: true, error: null };
+}
+
+/**
+ * Get a suggested slug for an organization based on its name
+ */
+export async function getSuggestedOrgSlug(
+  name: string,
+  excludeOrgId?: string
+): Promise<{ slug: string }> {
+  const baseSlug = generateUserSlug(name); // Reuse the same slug generation logic
+  if (!baseSlug) {
+    return { slug: "" };
+  }
+
+  // Check if the base slug is available
+  const validation = await validateOrgSlug(baseSlug, excludeOrgId);
+  if (validation.valid) {
+    return { slug: baseSlug };
+  }
+
+  // Return suggestion if available
+  if (validation.suggestion) {
+    return { slug: validation.suggestion };
+  }
+
+  // Slug is invalid and no suggestion exists
+  return { slug: "" };
 }

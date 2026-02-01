@@ -159,12 +159,15 @@ export interface VideoTestimonialStats {
   averageDuration: number;
 }
 
-export interface LoanOfficer {
+export interface Professional {
   id: string;
   full_name: string;
   email: string;
   user_id?: string | null;
 }
+
+/** @deprecated Use Professional instead */
+export type LoanOfficer = Professional;
 
 export interface CreateVideoRequestInput {
   user_id: string;

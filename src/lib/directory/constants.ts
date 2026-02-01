@@ -1,4 +1,4 @@
-// Common specialties for loan officers
+// Common specialties for professionals
 export const SPECIALTIES = [
   "First-Time Homebuyer",
   "VA Loans",

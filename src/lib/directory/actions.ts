@@ -2,10 +2,12 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SPECIALTIES, LANGUAGES, US_STATES } from "./constants";
+import type { IndustryType } from "@/lib/industry/types";
 
 // Types
 export interface DirectoryProfessional {
   id: string;
+  slug: string | null;
   full_name: string;
   title: string | null;
   bio: string | null;
@@ -32,12 +34,35 @@ export interface DirectoryProfessional {
   organization: {
     id: string;
     name: string;
+    slug: string;
     logo_url: string | null;
+    industry: IndustryType | null;
+  } | null;
+  /** Branch info with coordinates and address for map display */
+  branch_info: {
+    id: string;
+    name: string;
+    latitude: number | null;
+    longitude: number | null;
+    address: {
+      street?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+    } | null;
   } | null;
 }
 
 /** @deprecated Use DirectoryProfessional instead */
 export type DirectoryLoanOfficer = DirectoryProfessional;
+
+/** Geographic bounds for map-based filtering */
+export interface MapBounds {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+}
 
 export interface SearchFilters {
   query?: string;
@@ -49,6 +74,12 @@ export interface SearchFilters {
   language?: string;
   sortBy?: "rating" | "reviews" | "name";
   sortOrder?: "asc" | "desc";
+  /** Filter by industry type */
+  industry?: IndustryType;
+  /** Filter by organization ID */
+  organizationId?: string;
+  /** Filter by geographic bounds (for map view) */
+  bounds?: MapBounds;
 }
 
 export interface DirectorySearchResult {
@@ -85,11 +116,13 @@ export async function searchProfessionals(
     const offset = (page - 1) * pageSize;
 
     // Build the base query for fetching professionals
+    // Join with branches to get branch coordinates for map display
     let query = supabase
       .from("users")
       .select(
         `
         id,
+        slug,
         full_name,
         title,
         bio,
@@ -110,12 +143,30 @@ export async function searchProfessionals(
         organizations (
           id,
           name,
+          slug,
           logo_url
+        ),
+        branches (
+          id,
+          name,
+          latitude,
+          longitude,
+          address
         )
       `,
         { count: "exact" }
       )
       .eq("is_active", true);
+
+    // Apply organization filter
+    if (filters.organizationId) {
+      query = query.eq("organization_id", filters.organizationId);
+    }
+
+    // Apply industry filter - disabled until industry column is added to organizations
+    // if (filters.industry) {
+    //   query = query.eq("organizations.industry", filters.industry);
+    // }
 
     // Apply text search filter
     if (filters.query && filters.query.trim()) {
@@ -140,6 +191,10 @@ export async function searchProfessionals(
     if (filters.minRating && filters.minRating > 0) {
       query = query.gte("average_rating", filters.minRating);
     }
+
+    // Note: geographic bounds filtering is applied post-fetch (see below)
+    // because the UI uses effective coordinates (branch coords ?? user coords)
+    // and DB-level filtering on users.latitude/longitude would be inconsistent.
 
     // Apply sorting
     const sortBy = filters.sortBy || "rating";
@@ -180,11 +235,34 @@ export async function searchProfessionals(
       return { success: false, error: "Failed to search professionals" };
     }
 
-    // Transform data to match our interface
-    const professionals: DirectoryProfessional[] = (data || []).map((record) => {
-      const org = record.organizations as { id: string; name: string; logo_url: string | null } | null;
+    // Transform data to match our interface, then apply bounds filter post-fetch
+    let professionals: DirectoryProfessional[] = (data || []).map((record) => {
+      const org = record.organizations as {
+        id: string;
+        name: string;
+        slug: string;
+        logo_url: string | null;
+      } | null;
+      const branchData = record.branches as {
+        id: string;
+        name: string;
+        latitude: number | null;
+        longitude: number | null;
+        address: {
+          street?: string;
+          city?: string;
+          state?: string;
+          postal_code?: string;
+        } | null;
+      } | null;
+
+      // Use branch coordinates as primary, fall back to user coordinates
+      const effectiveLatitude = branchData?.latitude ?? record.latitude;
+      const effectiveLongitude = branchData?.longitude ?? record.longitude;
+
       return {
         id: record.id,
+        slug: record.slug,
         full_name: record.full_name || 'Unknown',
         title: record.title,
         bio: record.bio,
@@ -199,11 +277,25 @@ export async function searchProfessionals(
         linkedin_url: record.linkedin_url,
         average_rating: record.average_rating,
         total_reviews: record.total_reviews,
-        latitude: record.latitude,
-        longitude: record.longitude,
-        organization: org,
+        latitude: effectiveLatitude,
+        longitude: effectiveLongitude,
+        organization: org ? { ...org, industry: null } : null,
+        branch_info: branchData,
       };
     });
+
+    // Apply geographic bounds filter post-fetch using effective coordinates
+    if (filters.bounds) {
+      professionals = professionals.filter((p) => {
+        if (p.latitude == null || p.longitude == null) return false;
+        return (
+          p.latitude >= filters.bounds!.south &&
+          p.latitude <= filters.bounds!.north &&
+          p.longitude >= filters.bounds!.west &&
+          p.longitude <= filters.bounds!.east
+        );
+      });
+    }
 
     // Get facets for filtering - states
     const { data: stateData } = await supabase
@@ -384,3 +476,134 @@ export async function batchGeocodeUsers(
 
 /** @deprecated Use batchGeocodeUsers instead */
 export const batchGeocodeLoanOfficers = batchGeocodeUsers;
+
+/**
+ * Batch geocode branches that don't have coordinates
+ * This is the preferred method as branches are fewer than users
+ */
+export async function batchGeocodeBranches(
+  limit = 10
+): Promise<{ success: boolean; processed: number; error?: string }> {
+  // Import geocoding at runtime to avoid circular dependencies
+  const { geocodeAddressWithFallback } = await import("./geocoding");
+
+  try {
+    const supabase = createAdminClient();
+
+    // Get branches without coordinates
+    const { data: branches, error: fetchError } = await supabase
+      .from("branches")
+      .select("id, address")
+      .eq("is_active", true)
+      .is("latitude", null)
+      .limit(limit);
+
+    if (fetchError) {
+      console.error("Fetch error:", fetchError);
+      return { success: false, processed: 0, error: "Failed to fetch branches" };
+    }
+
+    if (!branches?.length) {
+      return { success: true, processed: 0 };
+    }
+
+    let processed = 0;
+
+    for (const branch of branches) {
+      const addr = branch.address as {
+        street?: string;
+        city?: string;
+        state?: string;
+        postal_code?: string;
+      } | null;
+
+      if (!addr) continue;
+
+      const result = await geocodeAddressWithFallback(
+        addr.street,
+        addr.city,
+        addr.state,
+        addr.postal_code
+      );
+
+      if (result) {
+        const { error: updateError } = await supabase
+          .from("branches")
+          .update({
+            latitude: result.latitude,
+            longitude: result.longitude,
+          })
+          .eq("id", branch.id);
+
+        if (!updateError) {
+          processed++;
+        }
+      }
+
+      // Small delay to avoid rate limiting
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+
+    return { success: true, processed };
+  } catch (error) {
+    console.error("Batch geocode error:", error instanceof Error ? error.message : error);
+    return { success: false, processed: 0, error: "Failed to geocode branches" };
+  }
+}
+
+/**
+ * Get industries with professional counts for the filter
+ */
+export async function getAvailableIndustries(): Promise<
+  { value: IndustryType; label: string; count: number }[]
+> {
+  try {
+    const supabase = createAdminClient();
+
+    // Get all active professionals with their organization's industry
+    const { data } = await supabase
+      .from("users")
+      .select(
+        `
+        id,
+        organizations!inner (
+          industry
+        )
+      `
+      )
+      .eq("is_active", true);
+
+    if (!data) return [];
+
+    // Count by industry
+    const industryCounts = new Map<IndustryType, number>();
+    for (const record of data) {
+      const org = record.organizations as unknown as { industry: IndustryType | null } | null;
+      if (org?.industry) {
+        industryCounts.set(org.industry, (industryCounts.get(org.industry) || 0) + 1);
+      }
+    }
+
+    // Industry display labels
+    const industryLabels: Record<IndustryType, string> = {
+      mortgage: "Mortgage",
+      real_estate: "Real Estate",
+      insurance: "Insurance",
+      financial_advisory: "Financial Advisory",
+      healthcare: "Healthcare",
+      home_services: "Home Services",
+      legal: "Legal",
+      consulting: "Consulting",
+    };
+
+    return Array.from(industryCounts.entries())
+      .map(([value, count]) => ({
+        value,
+        label: industryLabels[value] || value,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+  } catch {
+    return [];
+  }
+}

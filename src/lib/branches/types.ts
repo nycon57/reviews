@@ -34,6 +34,8 @@ export interface Branch {
   averageRating: number | null;
   totalReviews: number;
   totalMembers: number;
+  latitude: number | null;
+  longitude: number | null;
   createdAt: string;
   updatedAt: string;
 }

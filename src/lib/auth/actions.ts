@@ -28,6 +28,7 @@ import {
   resendVerificationEmailBetterAuth,
   checkAdminAccessBetterAuth,
 } from "./server-actions";
+import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
 
 function slugify(text: string): string {
   return text
@@ -92,6 +93,15 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
 
   // Create the user record in our users table
   if (orgData) {
+    // Generate SEO-friendly slug for the user
+    let userSlug: string;
+    try {
+      userSlug = await generateUniqueUserSlug(fullName);
+    } catch (slugError) {
+      console.error("Slug generation failed, using fallback:", slugError);
+      userSlug = slugify(fullName) + "-" + Date.now();
+    }
+
     const { error: userError } = await supabase
       .from("users")
       .insert({
@@ -99,6 +109,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
         organization_id: orgData.id,
         email: email,
         full_name: fullName,
+        slug: userSlug,
         role: "admin", // First user is admin
         is_active: true,
         is_owner: true, // Self-serve signup = owner of their org

@@ -390,7 +390,7 @@ export async function createVideoTestimonialRequest(
         customer_email: validated.data.customerEmail,
         customer_name: validated.data.customerName,
         user_id: validated.data.loanOfficerId,
-        loan_officer_name: targetUser.full_name,
+        professional_name: targetUser.full_name,
         scheduled_at: scheduledAt.toISOString(),
         send_immediately: validated.data.sendImmediately,
         email_status: emailStatus,
@@ -627,7 +627,7 @@ export async function getVideoTestimonialRequests(params?: {
       if (userRecord) {
         query = query.eq("user_id", userRecord.id);
       } else {
-        // Security: If no loan officer record found, return empty results
+        // Security: If no user record found, return empty results
         // to prevent unauthorized access to organization data
         return {
           success: true,
@@ -721,7 +721,7 @@ export async function getVideoTestimonialRequestStats(params?: {
       .select("status", { count: "exact", head: false })
       .eq("organization_id", userData.organization_id);
 
-    // Filter by loan officer if specified or if user is a loan officer
+    // Filter by user if specified or if user has role "user"
     if (params?.loanOfficerId) {
       query = query.eq("user_id", params.loanOfficerId);
     } else if (userData.role === "user") {
@@ -1521,7 +1521,7 @@ export async function getVideoTestimonialResponses(params?: {
 
 /**
  * Get a single video testimonial response by ID
- * - Enforces role-based access (loan officers can only access their own videos)
+ * - Enforces role-based access (users can only access their own videos)
  */
 export async function getVideoTestimonialResponse(
   responseId: string
@@ -1796,7 +1796,7 @@ export async function updateVideoApprovalStatus(
       },
     });
 
-    // Send notification to loan officer for relevant actions
+    // Send notification to user for relevant actions
     const request = existing.video_testimonial_requests as unknown as { customer_name: string };
 
     if (existing.user_id && ["approve", "reject", "request_changes"].includes(action)) {
@@ -1930,7 +1930,7 @@ export async function deleteVideoTestimonialResponse(
 /**
  * Get signed URL for video playback
  * - Validates video exists in database and belongs to user's organization
- * - Enforces role-based access (loan officers can only access their own videos)
+ * - Enforces role-based access (users can only access their own videos)
  * - Prevents path traversal attacks
  */
 export async function getVideoSignedUrl(

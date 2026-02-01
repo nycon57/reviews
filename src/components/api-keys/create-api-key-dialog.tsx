@@ -57,7 +57,7 @@ const scopeGroups = [
   },
   {
     name: 'Professionals',
-    scopes: ['loan-officers:read', 'loan-officers:write'] as ApiKeyScope[],
+    scopes: ['professionals:read', 'professionals:write'] as ApiKeyScope[],
   },
   {
     name: 'Organization',

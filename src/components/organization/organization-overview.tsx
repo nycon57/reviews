@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Users,
@@ -12,15 +13,19 @@ import {
   Clock,
   CheckCircle as CheckCircle2,
   BuildingOffice as Building2,
+  Link as LinkIcon,
+  PencilSimple,
 } from "@phosphor-icons/react";
 import {
   getCurrentOrganization,
   getOrganizationStats,
+  updateOrganizationSlug,
   type Organization,
   type OrganizationStats,
   TIER_FEATURES,
   TIER_LIMITS,
 } from "@/lib/organization";
+import { EditSlugDialog } from "@/components/shared/edit-slug-dialog";
 import { cn } from "@/lib/utils";
 
 interface StatCardProps {
@@ -65,10 +70,16 @@ function StatCardSkeleton() {
   );
 }
 
-export function OrganizationOverview() {
+interface OrganizationOverviewProps {
+  isAdmin?: boolean;
+}
+
+export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewProps) {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [stats, setStats] = useState<OrganizationStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [slugDialogOpen, setSlugDialogOpen] = useState(false);
+  const [currentSlug, setCurrentSlug] = useState("");
 
   useEffect(() => {
     async function loadData() {
@@ -79,6 +90,7 @@ export function OrganizationOverview() {
 
       if (orgResult.organization) {
         setOrganization(orgResult.organization);
+        setCurrentSlug(orgResult.organization.slug || "");
       }
       if (statsResult.stats) {
         setStats(statsResult.stats);
@@ -146,7 +158,7 @@ export function OrganizationOverview() {
               <div>
                 <CardTitle className="text-xl">{organization.name}</CardTitle>
                 <CardDescription className="mt-1">
-                  {organization.domain || organization.slug}
+                  {organization.domain || currentSlug}
                 </CardDescription>
               </div>
             </div>
@@ -188,8 +200,65 @@ export function OrganizationOverview() {
               </div>
             )}
           </div>
+
+          {/* Public URL Section */}
+          {currentSlug && (
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex items-center gap-2 mb-3">
+                <LinkIcon className="h-4 w-4 text-primary" />
+                <h4 className="text-sm font-medium">Public Organization Page</h4>
+              </div>
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground mb-1">Your organization page can be accessed at:</p>
+                    <p className="text-sm font-mono break-all text-primary">
+                      {typeof window !== 'undefined' ? window.location.origin : ''}/org/{currentSlug}
+                    </p>
+                  </div>
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSlugDialogOpen(true)}
+                      className="shrink-0"
+                    >
+                      <PencilSimple className="h-4 w-4 mr-2" />
+                      Edit URL
+                    </Button>
+                  )}
+                </div>
+                {!isAdmin && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Contact your admin to change the organization URL.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Slug Edit Dialog */}
+      {isAdmin && (
+        <EditSlugDialog
+          open={slugDialogOpen}
+          onOpenChange={setSlugDialogOpen}
+          currentSlug={currentSlug}
+          entityName={organization.name}
+          entityType="organization"
+          baseUrl={typeof window !== 'undefined' ? window.location.origin : ''}
+          pathPrefix="/org"
+          onSave={async (newSlug) => {
+            const result = await updateOrganizationSlug(newSlug);
+            if (result.success) {
+              setCurrentSlug(newSlug);
+              setOrganization(prev => prev ? { ...prev, slug: newSlug } : null);
+            }
+            return { success: result.success, error: result.error };
+          }}
+        />
+      )}
 
       {/* Stats grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -202,7 +271,7 @@ export function OrganizationOverview() {
         <StatCard
           title="Professionals"
           value={stats?.total_members || 0}
-          description={limits.max_loan_officers === -1 ? "Unlimited" : `of ${limits.max_loan_officers} allowed`}
+          description={limits.max_professionals === -1 ? "Unlimited" : `of ${limits.max_professionals} allowed`}
           icon={<UserCheck className="h-4 w-4 text-primary" />}
         />
         <StatCard
@@ -283,7 +352,7 @@ export function OrganizationOverview() {
             <UsageBar
               label="Professionals"
               current={stats?.total_members || 0}
-              max={limits.max_loan_officers}
+              max={limits.max_professionals}
             />
             <UsageBar
               label="Surveys/Month"

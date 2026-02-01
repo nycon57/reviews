@@ -427,7 +427,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={member.photo_url || undefined} />
+                        <AvatarImage src={member.avatar_url || undefined} />
                         <AvatarFallback>
                           {(member.full_name || member.email)
                             .split(" ")
@@ -640,7 +640,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={member.photo_url || undefined} />
+                          <AvatarImage src={member.avatar_url || undefined} />
                           <AvatarFallback>
                             {(member.full_name || member.email)
                               .split(" ")
@@ -690,7 +690,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                 id: recognitionMember.id,
                 name: recognitionMember.full_name || recognitionMember.email,
                 email: recognitionMember.email,
-                avatarUrl: recognitionMember.photo_url || undefined,
+                avatarUrl: recognitionMember.avatar_url || undefined,
               }
             : undefined
         }

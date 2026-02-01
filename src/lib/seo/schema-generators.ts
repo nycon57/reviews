@@ -15,6 +15,26 @@ import type {
   OpeningHoursSpecificationSchema,
 } from "./types";
 
+// Industry display labels and slugs for breadcrumbs
+const industryLabels: Record<string, string> = {
+  mortgage: "Mortgage",
+  real_estate: "Real Estate",
+  insurance: "Insurance",
+  financial_advisory: "Financial Advisory",
+  healthcare: "Healthcare",
+  home_services: "Home Services",
+  legal: "Legal",
+  consulting: "Consulting",
+};
+
+function getIndustrySlug(industry: string): string {
+  return industry.replace(/_/g, "-");
+}
+
+function getIndustryLabel(industry: string): string {
+  return industryLabels[industry] || industry;
+}
+
 interface BranchAddress {
   street?: string;
   city?: string;
@@ -55,6 +75,7 @@ export interface SchemaBranch {
  */
 export interface SchemaBranchProfessional {
   id: string;
+  slug?: string | null;
   full_name: string;
   title: string | null;
 }
@@ -75,6 +96,7 @@ interface ProfessionalAddress {
  */
 export interface SchemaProfessional {
   id: string;
+  slug?: string | null;
   full_name: string;
   title: string | null;
   bio: string | null;
@@ -98,6 +120,8 @@ export type SchemaLoanOfficer = SchemaProfessional;
 export interface SchemaOrganization {
   name: string;
   domain?: string | null;
+  slug?: string;
+  industry?: string | null;
 }
 
 /**
@@ -122,7 +146,7 @@ export function generatePersonSchema(
   organization: SchemaOrganization | null,
   baseUrl: string
 ): PersonWithRatingSchema {
-  const profileUrl = `${baseUrl}/pro/${professional.id}`;
+  const profileUrl = `${baseUrl}/pro/${professional.slug || professional.id}`;
 
   // Parse address if available
   const address = professional.address as ProfessionalAddress | null;
@@ -226,7 +250,7 @@ export function generateAggregateRatingSchema(
     itemReviewed: {
       "@type": "Person",
       name: professional.full_name,
-      url: `${baseUrl}/pro/${professional.id}`,
+      url: `${baseUrl}/pro/${professional.slug || professional.id}`,
       image: professional.photo_url || undefined,
     },
     ratingValue: Number(professional.average_rating),
@@ -252,7 +276,7 @@ export function generateReviewSchema(
     itemReviewed: {
       "@type": "Person",
       name: professional.full_name,
-      url: `${baseUrl}/pro/${professional.id}`,
+      url: `${baseUrl}/pro/${professional.slug || professional.id}`,
     },
     author: {
       "@type": "Person",
@@ -332,14 +356,34 @@ export function generateProfilePageSchema(
     schemas.push(generateReviewSchema(review, professional, organization, baseUrl));
   }
 
-  // Breadcrumb schema
-  schemas.push(
-    generateBreadcrumbSchema([
-      { name: "Home", url: baseUrl },
-      { name: "Professionals", url: `${baseUrl}/pro` },
-      { name: professional.full_name, url: `${baseUrl}/pro/${professional.id}` },
-    ])
-  );
+  // Breadcrumb schema - include industry and org if available
+  const breadcrumbItems = [
+    { name: "Home", url: baseUrl },
+    { name: "Find a Professional", url: `${baseUrl}/directory` },
+  ];
+
+  if (organization?.industry) {
+    const industrySlug = getIndustrySlug(organization.industry);
+    const industryLabel = getIndustryLabel(organization.industry);
+    breadcrumbItems.push({
+      name: industryLabel,
+      url: `${baseUrl}/directory/${industrySlug}`,
+    });
+  }
+
+  if (organization?.slug) {
+    breadcrumbItems.push({
+      name: organization.name,
+      url: `${baseUrl}/org/${organization.slug}`,
+    });
+  }
+
+  breadcrumbItems.push({
+    name: professional.full_name,
+    url: `${baseUrl}/pro/${professional.slug || professional.id}`,
+  });
+
+  schemas.push(generateBreadcrumbSchema(breadcrumbItems));
 
   return schemas;
 }
@@ -447,7 +491,7 @@ export function generateLocalBusinessSchema(
       "@type": "Person" as const,
       name: prof.full_name,
       jobTitle: prof.title || "Professional",
-      url: `${baseUrl}/pro/${prof.id}`,
+      url: `${baseUrl}/pro/${prof.slug || prof.id}`,
     }));
   }
 
@@ -576,6 +620,7 @@ export interface SchemaOrganizationFull {
   total_reviews: number;
   total_branches: number;
   total_members: number;
+  industry?: string | null;
 }
 
 /**
@@ -592,6 +637,7 @@ export interface SchemaOrgBranch {
  */
 export interface SchemaOrgProfessional {
   id: string;
+  slug: string | null;
   full_name: string;
   title: string | null;
 }
@@ -741,7 +787,7 @@ export function generateOrganizationWithRatingSchema(
       "@type": "Person",
       name: prof.full_name,
       jobTitle: prof.title || "Professional",
-      url: `${baseUrl}/pro/${prof.id}`,
+      url: `${baseUrl}/pro/${prof.slug || prof.id}`,
     }));
   }
 
@@ -819,14 +865,27 @@ export function generateOrganizationProfilePageSchema(
     schemas.push(generateOrganizationReviewSchema(testimonial, org, baseUrl));
   }
 
-  // Breadcrumb schema
-  schemas.push(
-    generateBreadcrumbSchema([
-      { name: "Home", url: baseUrl },
-      { name: "Organizations", url: `${baseUrl}/org` },
-      { name: org.name, url: `${baseUrl}/org/${org.slug}` },
-    ])
-  );
+  // Breadcrumb schema - include industry if available
+  const breadcrumbItems = [
+    { name: "Home", url: baseUrl },
+    { name: "Find a Professional", url: `${baseUrl}/directory` },
+  ];
+
+  if (org.industry) {
+    const industrySlug = getIndustrySlug(org.industry);
+    const industryLabel = getIndustryLabel(org.industry);
+    breadcrumbItems.push({
+      name: industryLabel,
+      url: `${baseUrl}/directory/${industrySlug}`,
+    });
+  }
+
+  breadcrumbItems.push({
+    name: org.name,
+    url: `${baseUrl}/org/${org.slug}`,
+  });
+
+  schemas.push(generateBreadcrumbSchema(breadcrumbItems));
 
   return schemas;
 }

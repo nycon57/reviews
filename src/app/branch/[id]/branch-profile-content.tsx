@@ -20,7 +20,7 @@ import {
 } from "@phosphor-icons/react";
 import type {
   PublicBranch,
-  PublicBranchLoanOfficer,
+  PublicBranchProfessional,
   PublicBranchReview,
 } from "@/lib/seo/actions";
 import type { Tables } from "@/types/database.types";
@@ -28,7 +28,7 @@ import type { Tables } from "@/types/database.types";
 interface BranchProfileContentProps {
   branch: PublicBranch;
   organization: Pick<Tables<"organizations">, "id" | "name" | "logo_url" | "domain"> | null;
-  loanOfficers: PublicBranchLoanOfficer[];
+  professionals: PublicBranchProfessional[];
   reviews: PublicBranchReview[];
 }
 
@@ -105,7 +105,7 @@ function formatHours(hours: HoursOfOperation | null): string[] {
 export function BranchProfileContent({
   branch,
   organization,
-  loanOfficers,
+  professionals,
   reviews,
 }: BranchProfileContentProps) {
   const address = branch.address as {
@@ -330,13 +330,13 @@ export function BranchProfileContent({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {loanOfficers.length === 0 ? (
+                {professionals.length === 0 ? (
                   <p className="py-8 text-center text-muted-foreground">
                     No team members listed at this branch.
                   </p>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {loanOfficers.map((member) => (
+                    {professionals.map((member) => (
                       <Link
                         key={member.id}
                         href={`/pro/${member.id}`}

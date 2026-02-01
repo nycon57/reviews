@@ -50,8 +50,12 @@ export interface VideoSocialPost {
 export const VIDEO_TEMPLATE_PLACEHOLDERS = {
   "{{customer_name}}": "Customer display name",
   "{{customer_relationship}}": "Customer relationship type (e.g., Home Buyer)",
-  "{{loan_officer_name}}": "Loan officer full name",
-  "{{loan_officer_title}}": "Loan officer job title",
+  "{{professional_name}}": "Professional's full name",
+  "{{professional_title}}": "Professional's job title",
+  /** @deprecated Use {{professional_name}} instead */
+  "{{loan_officer_name}}": "Professional's full name (deprecated)",
+  /** @deprecated Use {{professional_title}} instead */
+  "{{loan_officer_title}}": "Professional's job title (deprecated)",
   "{{organization_name}}": "Organization name",
   "{{video_quote}}": "AI-generated quote from video",
   "{{video_excerpt}}": "Short excerpt from video quote",
@@ -82,7 +86,7 @@ const DEFAULT_TEMPLATES: VideoSocialTemplate[] = [
 
 "{{video_excerpt}}"
 
-{{customer_name}} worked with {{loan_officer_name}} to achieve their homeownership dreams. Watch their full story:
+{{customer_name}} worked with {{professional_name}} to achieve their homeownership dreams. Watch their full story:
 
 {{video_link}}
 
@@ -99,7 +103,7 @@ const DEFAULT_TEMPLATES: VideoSocialTemplate[] = [
 
 "{{video_excerpt}}"
 
-Thank you, {{customer_name}}, for trusting {{loan_officer_name}} and the {{organization_name}} team with your mortgage journey.
+Thank you, {{customer_name}}, for trusting {{professional_name}} and the {{organization_name}} team with your mortgage journey.
 
 Watch the full video testimonial: {{video_link}}
 
@@ -131,8 +135,12 @@ function fillVideoTemplatePlaceholders(
   data: {
     customerName: string;
     customerRelationship: string | null;
-    loanOfficerName: string;
-    loanOfficerTitle: string | null;
+    professionalName: string;
+    professionalTitle: string | null;
+    /** @deprecated Use professionalName instead */
+    loanOfficerName?: string;
+    /** @deprecated Use professionalTitle instead */
+    loanOfficerTitle?: string | null;
     organizationName: string;
     videoQuote: string | null;
     videoLink: string;
@@ -148,11 +156,19 @@ function fillVideoTemplatePlaceholders(
 
   const hashtags = DEFAULT_HASHTAGS[data.platform] || [];
 
+  // Support both new and deprecated variable names
+  const name = data.professionalName || data.loanOfficerName || "";
+  const title = data.professionalTitle || data.loanOfficerTitle || "Professional";
+
   return template
     .replace(/\{\{customer_name\}\}/g, data.customerName)
     .replace(/\{\{customer_relationship\}\}/g, formatRelationship(data.customerRelationship))
-    .replace(/\{\{loan_officer_name\}\}/g, data.loanOfficerName)
-    .replace(/\{\{loan_officer_title\}\}/g, data.loanOfficerTitle || "Loan Officer")
+    // New variable names
+    .replace(/\{\{professional_name\}\}/g, name)
+    .replace(/\{\{professional_title\}\}/g, title)
+    // Deprecated variable names (for backward compatibility with existing templates)
+    .replace(/\{\{loan_officer_name\}\}/g, name)
+    .replace(/\{\{loan_officer_title\}\}/g, title)
     .replace(/\{\{organization_name\}\}/g, data.organizationName)
     .replace(/\{\{video_quote\}\}/g, data.videoQuote || "")
     .replace(/\{\{video_excerpt\}\}/g, excerpt)
@@ -221,11 +237,11 @@ export async function generateVideoPostPreview(
   }
 
   type RequestData = { customer_name: string; source_metadata: { customer_display_name?: string; customer_relationship?: string } | null };
-  type LOData = { full_name: string; title: string | null };
+  type ProfessionalData = { full_name: string; title: string | null };
   type OrgData = { name: string };
 
   const request = video.video_testimonial_requests as unknown as RequestData;
-  const loanOfficer = video.users as unknown as LOData;
+  const professional = video.users as unknown as ProfessionalData;
   const organization = video.organizations as unknown as OrgData;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
@@ -242,8 +258,8 @@ export async function generateVideoPostPreview(
     content = fillVideoTemplatePlaceholders(template.templateText, {
       customerName: request.source_metadata?.customer_display_name || request.customer_name,
       customerRelationship: request.source_metadata?.customer_relationship || null,
-      loanOfficerName: loanOfficer.full_name,
-      loanOfficerTitle: loanOfficer.title,
+      professionalName: professional.full_name,
+      professionalTitle: professional.title,
       organizationName: organization.name,
       videoQuote: video.ai_generated_text,
       videoLink: pageUrl,

@@ -19,6 +19,8 @@ import type { DirectoryProfessional } from "@/lib/directory/actions";
 interface DirectoryCardProps {
   professional: DirectoryProfessional;
   variant?: "grid" | "list";
+  /** Whether this card is being hovered (for map sync) */
+  isHovered?: boolean;
 }
 
 function getInitials(name: string): string {
@@ -47,22 +49,26 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function DirectoryCard({ professional, variant = "grid" }: DirectoryCardProps) {
-  const location = professional.address
-    ? [professional.address.city, professional.address.state]
-        .filter(Boolean)
-        .join(", ")
-    : [professional.branch, professional.region].filter(Boolean).join(", ");
+export function DirectoryCard({ professional, variant = "grid", isHovered = false }: DirectoryCardProps) {
+  // Prefer user's address, fall back to branch address, then branch name + region
+  const location = professional.address?.city || professional.address?.state
+    ? [professional.address.city, professional.address.state].filter(Boolean).join(", ")
+    : professional.branch_info?.address?.city || professional.branch_info?.address?.state
+      ? [professional.branch_info.address.city, professional.branch_info.address.state].filter(Boolean).join(", ")
+      : [professional.branch, professional.region].filter(Boolean).join(", ");
 
   // List variant - horizontal, compact layout
   if (variant === "list") {
     return (
-      <Card className="group transition-all hover:shadow-md hover:border-primary/50">
+      <Card className={cn(
+        "group transition-all hover:shadow-md hover:border-primary/50",
+        isHovered && "shadow-md border-repwell-teal-300 bg-repwell-sage-100/30"
+      )}>
         <CardContent className="p-4 sm:p-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             {/* Avatar + Main Info */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
-              <Link href={`/pro/${professional.id}`} className="shrink-0">
+              <Link href={`/pro/${professional.slug || professional.id}`} className="shrink-0">
                 <Avatar className="h-14 w-14 border-2 border-muted transition-transform group-hover:scale-105">
                   <AvatarImage
                     src={professional.photo_url || undefined}
@@ -76,7 +82,7 @@ export function DirectoryCard({ professional, variant = "grid" }: DirectoryCardP
 
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                  <Link href={`/pro/${professional.id}`}>
+                  <Link href={`/pro/${professional.slug || professional.id}`}>
                     <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
                       {professional.full_name}
                     </h3>
@@ -163,7 +169,7 @@ export function DirectoryCard({ professional, variant = "grid" }: DirectoryCardP
                 </a>
               )}
               <Button variant="default" size="sm" asChild className="h-9 flex-1 sm:flex-none">
-                <Link href={`/pro/${professional.id}`}>
+                <Link href={`/pro/${professional.slug || professional.id}`}>
                   View Profile
                 </Link>
               </Button>
@@ -176,11 +182,14 @@ export function DirectoryCard({ professional, variant = "grid" }: DirectoryCardP
 
   // Grid variant - original vertical layout
   return (
-    <Card className="group h-full transition-all hover:shadow-lg hover:border-primary/50">
+    <Card className={cn(
+      "group h-full transition-all hover:shadow-lg hover:border-primary/50",
+      isHovered && "shadow-lg border-repwell-teal-300 bg-repwell-sage-100/30"
+    )}>
       <CardContent className="p-5">
         <div className="flex items-start gap-4">
           {/* Avatar */}
-          <Link href={`/pro/${professional.id}`}>
+          <Link href={`/pro/${professional.slug || professional.id}`}>
             <Avatar className="h-16 w-16 border-2 border-muted transition-transform group-hover:scale-105">
               <AvatarImage
                 src={professional.photo_url || undefined}
@@ -194,7 +203,7 @@ export function DirectoryCard({ professional, variant = "grid" }: DirectoryCardP
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <Link href={`/pro/${professional.id}`}>
+            <Link href={`/pro/${professional.slug || professional.id}`}>
               <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
                 {professional.full_name}
               </h3>
@@ -276,7 +285,7 @@ export function DirectoryCard({ professional, variant = "grid" }: DirectoryCardP
             </a>
           )}
           <Button variant="default" size="sm" asChild className="h-8 ml-auto">
-            <Link href={`/pro/${professional.id}`}>
+            <Link href={`/pro/${professional.slug || professional.id}`}>
               View Profile
               <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
             </Link>

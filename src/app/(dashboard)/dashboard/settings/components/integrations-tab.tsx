@@ -16,7 +16,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { GoogleIntegrationCard } from '@/components/google/google-integration-card';
 import { SocialIntegrationCard } from '@/components/social';
-import { SalesforceIntegrationCard } from '@/components/salesforce';
 import { SlackIntegrationCard, TeamsIntegrationCard } from '@/components/integrations';
 import { fadeInUp, staggerContainer } from '@/lib/motion/variants';
 
@@ -149,12 +148,6 @@ export function IntegrationsTab() {
           <motion.div variants={fadeInUp}>
             <Suspense fallback={<IntegrationCardSkeleton />}>
               <SocialIntegrationCard />
-            </Suspense>
-          </motion.div>
-
-          <motion.div variants={fadeInUp}>
-            <Suspense fallback={<IntegrationCardSkeleton />}>
-              <SalesforceIntegrationCard />
             </Suspense>
           </motion.div>
 

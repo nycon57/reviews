@@ -10,8 +10,9 @@ type Branch = Tables<"branches">;
 /**
  * Minimal professional data needed for metadata generation
  */
-interface MetadataLoanOfficer {
+interface MetadataProfessional {
   id: string;
+  slug?: string | null;
   full_name: string;
   title: string | null;
   bio: string | null;
@@ -48,15 +49,15 @@ interface MetadataOrganization {
  * Generate metadata for a professional profile page
  */
 export function generateLOProfileMetadata(
-  loanOfficer: MetadataLoanOfficer,
+  professional: MetadataProfessional,
   organization: MetadataOrganization | null,
   baseUrl: string
 ): Metadata {
-  const title = `${loanOfficer.full_name} - ${loanOfficer.title || "Professional"} Reviews`;
+  const title = `${professional.full_name} - ${professional.title || "Professional"} Reviews`;
   const description =
-    loanOfficer.bio ||
-    `Read reviews and ratings for ${loanOfficer.full_name}, ${loanOfficer.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${loanOfficer.total_reviews || 0} reviews with ${loanOfficer.average_rating ? `${Number(loanOfficer.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
-  const profileUrl = `${baseUrl}/pro/${loanOfficer.id}`;
+    professional.bio ||
+    `Read reviews and ratings for ${professional.full_name}, ${professional.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${professional.total_reviews || 0} reviews with ${professional.average_rating ? `${Number(professional.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
+  const profileUrl = `${baseUrl}/pro/${professional.slug || professional.id}`;
 
   const metadata: Metadata = {
     title,
@@ -84,21 +85,21 @@ export function generateLOProfileMetadata(
   };
 
   // Add image if photo exists
-  if (loanOfficer.photo_url) {
+  if (professional.photo_url) {
     metadata.openGraph = {
       ...metadata.openGraph,
       images: [
         {
-          url: loanOfficer.photo_url,
+          url: professional.photo_url,
           width: 400,
           height: 400,
-          alt: `${loanOfficer.full_name} profile photo`,
+          alt: `${professional.full_name} profile photo`,
         },
       ],
     };
     metadata.twitter = {
       ...metadata.twitter,
-      images: [loanOfficer.photo_url],
+      images: [professional.photo_url],
     };
   }
 
@@ -179,25 +180,25 @@ export function truncateForSEO(text: string, maxLength: number): string {
  * Generate keywords from LO profile data
  */
 export function generateLOKeywords(
-  loanOfficer: MetadataLoanOfficer,
+  professional: MetadataProfessional,
   organization: MetadataOrganization | null
 ): string[] {
   const keywords: string[] = [
-    loanOfficer.full_name,
+    professional.full_name,
     "loan officer",
     "mortgage",
     "reviews",
     "ratings",
   ];
 
-  if (loanOfficer.title) keywords.push(loanOfficer.title);
+  if (professional.title) keywords.push(professional.title);
   if (organization?.name) keywords.push(organization.name);
-  if (loanOfficer.branch) keywords.push(loanOfficer.branch);
-  if (loanOfficer.region) keywords.push(loanOfficer.region);
-  if (loanOfficer.nmls_id) keywords.push(`NMLS ${loanOfficer.nmls_id}`);
+  if (professional.branch) keywords.push(professional.branch);
+  if (professional.region) keywords.push(professional.region);
+  if (professional.nmls_id) keywords.push(`NMLS ${professional.nmls_id}`);
 
   // Parse address for location keywords
-  const address = loanOfficer.address as { city?: string; state?: string } | null;
+  const address = professional.address as { city?: string; state?: string } | null;
   if (address?.city) keywords.push(address.city);
   if (address?.state) keywords.push(address.state);
 

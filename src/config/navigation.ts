@@ -63,7 +63,7 @@ export const featureNavItems: FeatureNavItem[] = [
     slug: "analytics",
     title: "Analytics & NPS",
     description: "Real-time dashboards and metrics",
-    icon: "BarChart3",
+    icon: "ChartBar",
     href: "/features/analytics",
   },
   {
@@ -77,21 +77,21 @@ export const featureNavItems: FeatureNavItem[] = [
     slug: "amplification",
     title: "Reputation Amplification",
     description: "Publish to Google, social, and more",
-    icon: "Zap",
+    icon: "Lightning",
     href: "/features/amplification",
   },
   {
     slug: "surveys",
     title: "Survey Management",
     description: "Custom templates and distribution",
-    icon: "Send",
+    icon: "PaperPlaneRight",
     href: "/features/surveys",
   },
   {
     slug: "testimonials",
     title: "Testimonial Capture",
     description: "Video and written testimonials",
-    icon: "Video",
+    icon: "VideoCamera",
     href: "/features/testimonials",
   },
 ];
@@ -104,7 +104,7 @@ export const solutionNavItems: SolutionNavItem[] = [
     slug: "review-growth",
     title: "Grow Review Volume",
     description: "3x your reviews with automation",
-    icon: "TrendingUp",
+    icon: "TrendUp",
     href: "/solutions/review-growth",
   },
   {
@@ -137,13 +137,13 @@ export const industryNavItems: IndustryNavItem[] = [
   {
     slug: "mortgage",
     title: "Mortgage",
-    icon: "Home",
+    icon: "House",
     href: "/for/mortgage",
   },
   {
     slug: "real-estate",
     title: "Real Estate",
-    icon: "Building2",
+    icon: "BuildingOffice",
     href: "/for/real-estate",
   },
   {
@@ -161,7 +161,7 @@ export const industryNavItems: IndustryNavItem[] = [
   {
     slug: "financial-advisory",
     title: "Financial Advisory",
-    icon: "TrendingUp",
+    icon: "TrendUp",
     href: "/for/financial-advisory",
   },
   {
@@ -173,7 +173,7 @@ export const industryNavItems: IndustryNavItem[] = [
   {
     slug: "legal",
     title: "Legal",
-    icon: "Scale",
+    icon: "Scales",
     href: "/for/legal",
   },
   {

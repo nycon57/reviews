@@ -53,7 +53,7 @@ async function requireManagerRole(): Promise<{
 // Map database row to AggregatedReview
 function mapRowToAggregatedReview(
   row: Record<string, unknown>,
-  loanOfficer: { id: string; full_name: string; email: string; photo_url: string | null },
+  loanOfficer: { id: string; full_name: string; email: string; avatar_url: string | null },
   surveyResponse: { id: string; overall_rating: number | null; nps_score: number | null; testimonial_text: string | null } | null
 ): AggregatedReview {
   return {
@@ -86,13 +86,15 @@ function mapRowToAggregatedReview(
     responseAt: row.response_at as string | null,
     responseBy: row.response_by as string | null,
     responseSyncedAt: row.response_synced_at as string | null,
+    responseTemplateId: row.response_template_id as string | null,
+    aiSuggestedResponse: row.ai_suggested_response as string | null,
     featured: (row.featured as boolean) ?? false,
     syncedAt: row.synced_at as string | null,
     loanOfficer: {
       id: loanOfficer.id,
       fullName: loanOfficer.full_name,
       email: loanOfficer.email,
-      photoUrl: loanOfficer.photo_url,
+      avatarUrl: loanOfficer.avatar_url,
     },
     surveyResponse: surveyResponse
       ? {
@@ -158,6 +160,8 @@ export async function getAggregatedReviews(
       response_at,
       response_by,
       response_synced_at,
+      response_template_id,
+      ai_suggested_response,
       is_published,
       published_at,
       featured,
@@ -169,7 +173,7 @@ export async function getAggregatedReviews(
         id,
         full_name,
         email,
-        photo_url
+        avatar_url
       ),
       survey_responses (
         id,
@@ -247,7 +251,7 @@ export async function getAggregatedReviews(
       id: string;
       full_name: string;
       email: string;
-      photo_url: string | null;
+      avatar_url: string | null;
     };
 
     const surveyResponse = row.survey_responses as unknown as {
@@ -305,6 +309,8 @@ export async function getAggregatedReviewById(
       response_at,
       response_by,
       response_synced_at,
+      response_template_id,
+      ai_suggested_response,
       is_published,
       published_at,
       featured,
@@ -316,7 +322,7 @@ export async function getAggregatedReviewById(
         id,
         full_name,
         email,
-        photo_url
+        avatar_url
       ),
       survey_responses (
         id,
@@ -338,7 +344,7 @@ export async function getAggregatedReviewById(
     id: string;
     full_name: string;
     email: string;
-    photo_url: string | null;
+    avatar_url: string | null;
   };
 
   const surveyResponse = data.survey_responses as unknown as {
@@ -422,7 +428,7 @@ export async function getReviewAggregationStats(): Promise<
   return { success: true, data: stats };
 }
 
-// Toggle featured status
+// Toggle featured status - enforces only one featured review per user
 export async function toggleReviewFeatured(
   reviewId: string,
   featured: boolean
@@ -434,6 +440,36 @@ export async function toggleReviewFeatured(
 
   const supabase = createAdminClient();
 
+  // First, get the user_id for this review (needed for both featured and unfeatured)
+  const { data: review, error: fetchError } = await supabase
+    .from("reviews")
+    .select("user_id")
+    .eq("id", reviewId)
+    .eq("organization_id", context.organizationId)
+    .single();
+
+  if (fetchError || !review) {
+    console.error("Error fetching review:", fetchError);
+    return { success: false, error: "Review not found" };
+  }
+
+  // If setting as featured, unset any existing featured review for this user
+  if (featured && review.user_id) {
+    const { error: unsetError } = await supabase
+      .from("reviews")
+      .update({ featured: false })
+      .eq("user_id", review.user_id)
+      .eq("organization_id", context.organizationId)
+      .eq("featured", true)
+      .neq("id", reviewId);
+
+    if (unsetError) {
+      console.error("Error unsetting previous featured review:", unsetError);
+      // Continue anyway - not a critical error
+    }
+  }
+
+  // Now set the featured status on this review
   const { error } = await supabase
     .from("reviews")
     .update({ featured })
@@ -446,6 +482,11 @@ export async function toggleReviewFeatured(
   }
 
   revalidatePath("/dashboard/all-reviews");
+  revalidatePath("/dashboard/reviews");
+  // Also revalidate the public pro profile page
+  if (review.user_id) {
+    revalidatePath(`/pro/${review.user_id}`);
+  }
   return { success: true };
 }
 

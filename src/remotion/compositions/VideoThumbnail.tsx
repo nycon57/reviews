@@ -157,7 +157,7 @@ export const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
           {customerName}
         </div>
 
-        {/* Loan officer info (bottom right) */}
+        {/* Professional info (bottom right) */}
         <div
           style={{
             position: "absolute",

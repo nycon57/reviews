@@ -18,6 +18,7 @@ import {
   type AuthResult,
 } from "./schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
 
 /**
  * Helper to slugify organization names
@@ -93,11 +94,35 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       };
     }
 
+    // Generate SEO-friendly slug for the user
+    let userSlug: string;
+    try {
+      userSlug = await generateUniqueUserSlug(fullName);
+    } catch (slugError) {
+      console.error("Slug generation failed, cleaning up:", slugError);
+      // Clean up the created user and organization to avoid orphaned records
+      try {
+        await supabaseAdmin.from("users").delete().eq("id", signUpResult.user.id);
+      } catch (cleanupErr) {
+        console.error("Failed to clean up user after slug error:", cleanupErr);
+      }
+      try {
+        await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
+      } catch (cleanupErr) {
+        console.error("Failed to clean up organization after slug error:", cleanupErr);
+      }
+      return {
+        success: false,
+        error: "Unable to generate user slug, please try again",
+      };
+    }
+
     // Update user with organization details
     const { error: userUpdateError } = await supabaseAdmin
       .from("users")
       .update({
         organization_id: orgData.id,
+        slug: userSlug,
         role: "admin",
         is_active: true,
         is_owner: true,

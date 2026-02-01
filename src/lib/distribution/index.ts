@@ -20,7 +20,8 @@ export {
   resendSurvey,
   getSurveysForDistribution,
   getDistributionQueue,
-  getLoanOfficersForSend,
+  getUsersForSend,
+  getLoanOfficersForSend, // @deprecated - use getUsersForSend
   getActiveTemplatesForSend,
   getWebhookConfigs,
   createWebhookConfig,

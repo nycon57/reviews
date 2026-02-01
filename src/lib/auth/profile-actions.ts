@@ -10,6 +10,7 @@ import {
   type ChangePasswordInput,
   type ProfileResult,
 } from "./profile-schemas";
+import { validateUserSlug, generateUserSlug } from "@/lib/users/slug-utils";
 
 export async function updateProfile(formData: UpdateProfileInput): Promise<ProfileResult> {
   // Validate input
@@ -21,6 +22,7 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
   const {
     fullName,
     avatarUrl,
+    bannerUrl,
     title,
     nmlsId,
     bio,
@@ -45,6 +47,8 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
     .update({
       full_name: fullName,
       avatar_url: avatarUrl || null,
+      photo_url: avatarUrl || null,
+      banner_url: bannerUrl || null,
       title: title || null,
       nmls_id: nmlsId || null,
       bio: bio || null,
@@ -62,6 +66,7 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
   }
 
   revalidatePath("/profile");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/dashboard/settings");
   return { success: true };
 }
@@ -139,6 +144,14 @@ export async function uploadAvatar(
     return { success: false, error: "File too large. Maximum size is 5MB." };
   }
 
+  // Get old avatar URL before uploading new one (for cleanup later)
+  const { data: currentProfile } = await supabase
+    .from("users")
+    .select("avatar_url")
+    .eq("id", user.id)
+    .single();
+  const oldAvatarUrl = currentProfile?.avatar_url;
+
   // Generate unique filename
   const fileExt = file.name.split(".").pop() || "jpg";
   const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
@@ -161,11 +174,13 @@ export async function uploadAvatar(
     .from("avatars")
     .getPublicUrl(fileName);
 
-  // Update user's avatar_url in database
+  // Update both avatar_url and photo_url to keep them in sync
+  // (photo_url is used by directory/public profile, avatar_url by dashboard)
   const { error: dbError } = await supabase
     .from("users")
     .update({
       avatar_url: publicUrl,
+      photo_url: publicUrl,
       updated_at: new Date().toISOString(),
     })
     .eq("id", user.id);
@@ -177,33 +192,138 @@ export async function uploadAvatar(
     return { success: false, error: "Failed to update profile. Please try again." };
   }
 
-  // Also sync to loan_officers.photo_url if user has a linked loan officer record
-  await supabase
-    .from("users")
-    .update({
-      photo_url: publicUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("user_id", user.id);
-
   // Delete old avatar if it exists and is from our storage
-  const { data: profile } = await supabase
-    .from("users")
-    .select("avatar_url")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.avatar_url && profile.avatar_url.includes("/avatars/")) {
-    const oldPath = profile.avatar_url.split("/avatars/").pop();
+  if (oldAvatarUrl && oldAvatarUrl.includes("/avatars/")) {
+    const oldPath = oldAvatarUrl.split("/avatars/").pop();
     if (oldPath && oldPath !== fileName) {
       await supabase.storage.from("avatars").remove([oldPath]);
     }
   }
 
   revalidatePath("/profile");
+  revalidatePath("/dashboard", "layout");
+  revalidatePath("/dashboard/settings");
+
+  return { success: true, url: publicUrl };
+}
+
+export async function uploadCoverPhoto(
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(file.type)) {
+    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
+  }
+
+  // 10MB max for cover photos (larger than avatars)
+  if (file.size > 10 * 1024 * 1024) {
+    return { success: false, error: "File too large. Maximum size is 10MB." };
+  }
+
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const fileName = `${user.id}/cover-${Date.now()}.${fileExt}`;
+
+  // Get old banner URL before updating
+  const { data: currentProfile } = await supabase
+    .from("users")
+    .select("banner_url")
+    .eq("id", user.id)
+    .single();
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(fileName, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    console.error("Cover photo upload error:", uploadError);
+    return { success: false, error: "Failed to upload image. Please try again." };
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from("avatars")
+    .getPublicUrl(fileName);
+
+  const { error: dbError } = await supabase
+    .from("users")
+    .update({
+      banner_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (dbError) {
+    console.error("Database update error:", dbError);
+    await supabase.storage.from("avatars").remove([fileName]);
+    return { success: false, error: "Failed to update profile. Please try again." };
+  }
+
+  // Delete old cover photo if it exists in our storage
+  if (currentProfile?.banner_url && currentProfile.banner_url.includes("/avatars/")) {
+    const oldPath = currentProfile.banner_url.split("/avatars/").pop();
+    if (oldPath && oldPath !== fileName) {
+      await supabase.storage.from("avatars").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
 
   return { success: true, url: publicUrl };
+}
+
+export async function removeCoverPhoto(): Promise<ProfileResult> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Get current banner URL for cleanup
+  const { data: profile } = await supabase
+    .from("users")
+    .select("banner_url")
+    .eq("id", user.id)
+    .single();
+
+  const { error: dbError } = await supabase
+    .from("users")
+    .update({
+      banner_url: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", user.id);
+
+  if (dbError) {
+    return { success: false, error: dbError.message };
+  }
+
+  // Delete from storage
+  if (profile?.banner_url && profile.banner_url.includes("/avatars/")) {
+    const oldPath = profile.banner_url.split("/avatars/").pop();
+    if (oldPath) {
+      await supabase.storage.from("avatars").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard");
+
+  return { success: true };
 }
 
 export async function deleteAccount(): Promise<ProfileResult> {
@@ -229,4 +349,110 @@ export async function deleteAccount(): Promise<ProfileResult> {
   // Sign out the user - client will handle redirect
   // Note: signOut is handled client-side with Better Auth
   return { success: true };
+}
+
+/**
+ * Update a user's profile slug (admin only)
+ * @param targetUserId The user ID to update
+ * @param newSlug The new slug to set
+ */
+export async function updateUserSlug(
+  targetUserId: string,
+  newSlug: string
+): Promise<ProfileResult> {
+  // Get current user
+  const currentUser = await unifiedGetUser();
+  if (!currentUser) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Check if current user is an admin
+  const { data: userData } = await supabase
+    .from("users")
+    .select("role, organization_id")
+    .eq("id", currentUser.id)
+    .single();
+
+  if (!userData || userData.role !== "admin") {
+    return { success: false, error: "Only admins can update profile URLs" };
+  }
+
+  // Verify target user exists and is in the same organization
+  const { data: targetUser } = await supabase
+    .from("users")
+    .select("id, organization_id, slug")
+    .eq("id", targetUserId)
+    .single();
+
+  if (!targetUser) {
+    return { success: false, error: "User not found" };
+  }
+
+  if (targetUser.organization_id !== userData.organization_id) {
+    return { success: false, error: "Cannot update users from other organizations" };
+  }
+
+  // Normalize the slug
+  const normalizedSlug = newSlug.toLowerCase().trim();
+
+  // Validate the new slug
+  const validation = await validateUserSlug(normalizedSlug, targetUserId);
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  // Update the slug
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({
+      slug: normalizedSlug,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", targetUserId);
+
+  if (updateError) {
+    // Handle unique constraint violation
+    if (updateError.code === "23505") {
+      return { success: false, error: "This URL is already taken. Please try a different one." };
+    }
+    return { success: false, error: updateError.message };
+  }
+
+  // Revalidate relevant paths
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/organization");
+  if (targetUser.slug) {
+    revalidatePath(`/pro/${targetUser.slug}`);
+  }
+  revalidatePath(`/pro/${normalizedSlug}`);
+
+  return { success: true };
+}
+
+/**
+ * Get a suggested slug for a user based on their name
+ */
+export async function getSuggestedUserSlug(
+  fullName: string,
+  excludeUserId?: string
+): Promise<{ slug: string }> {
+  const baseSlug = generateUserSlug(fullName);
+  if (!baseSlug) {
+    return { slug: "" };
+  }
+
+  // Check if the base slug is available
+  const validation = await validateUserSlug(baseSlug, excludeUserId);
+  if (validation.valid) {
+    return { slug: baseSlug };
+  }
+
+  // Return suggestion if available
+  if (validation.suggestion) {
+    return { slug: validation.suggestion };
+  }
+
+  return { slug: baseSlug };
 }

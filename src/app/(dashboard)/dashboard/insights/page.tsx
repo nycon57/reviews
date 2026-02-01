@@ -22,26 +22,26 @@ export const metadata = {
   description: "AI-powered insights and analytics for your reviews",
 };
 
-// Server component to fetch current user's loan officer ID
-async function getCurrentLoanOfficerId(ctx: AccessContext): Promise<string | undefined> {
+// Server component to fetch current user's ID for filtering
+async function getCurrentUserId(ctx: AccessContext): Promise<string | undefined> {
   // If not a regular user, return undefined (get org-wide data)
   if (ctx.role !== "user") {
     return undefined;
   }
 
   const supabase = await createClient();
-  const { data: loanOfficer } = await supabase
+  const { data: userData } = await supabase
     .from("users")
     .select("id")
-    .eq("user_id", ctx.userId)
+    .eq("id", ctx.userId)
     .single();
 
-  return loanOfficer?.id;
+  return userData?.id;
 }
 
 // Server component for sentiment distribution
-async function SentimentDistributionSection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function SentimentDistributionSection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return (
@@ -62,8 +62,8 @@ async function SentimentDistributionSection({ loanOfficerId }: { loanOfficerId?:
 }
 
 // Server component for sentiment trend
-async function SentimentTrendSection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function SentimentTrendSection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return null;
@@ -73,8 +73,8 @@ async function SentimentTrendSection({ loanOfficerId }: { loanOfficerId?: string
 }
 
 // Server component for theme cloud
-async function ThemeCloudSection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function ThemeCloudSection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return null;
@@ -84,8 +84,8 @@ async function ThemeCloudSection({ loanOfficerId }: { loanOfficerId?: string }) 
 }
 
 // Server component for key phrases
-async function KeyPhrasesSection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function KeyPhrasesSection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return null;
@@ -95,8 +95,8 @@ async function KeyPhrasesSection({ loanOfficerId }: { loanOfficerId?: string }) 
 }
 
 // Server component for AI summary
-async function AISummarySection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function AISummarySection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return null;
@@ -106,8 +106,8 @@ async function AISummarySection({ loanOfficerId }: { loanOfficerId?: string }) {
 }
 
 // Server component for recommendations
-async function RecommendationsSection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function RecommendationsSection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return null;
@@ -117,8 +117,8 @@ async function RecommendationsSection({ loanOfficerId }: { loanOfficerId?: strin
 }
 
 // Server component for benchmarks
-async function BenchmarksSection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function BenchmarksSection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return null;
@@ -128,8 +128,8 @@ async function BenchmarksSection({ loanOfficerId }: { loanOfficerId?: string }) 
 }
 
 // Server component for export button
-async function ExportSection({ loanOfficerId }: { loanOfficerId?: string }) {
-  const result = await getAIInsightsData(loanOfficerId, 6);
+async function ExportSection({ userId }: { userId?: string }) {
+  const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return null;
@@ -141,7 +141,7 @@ async function ExportSection({ loanOfficerId }: { loanOfficerId?: string }) {
 export default async function AIInsightsPage() {
   // Check access - requires Pro tier (pro or enterprise subscription)
   const ctx = await requireProTier();
-  const loanOfficerId = await getCurrentLoanOfficerId(ctx);
+  const userId = await getCurrentUserId(ctx);
 
   return (
     <div className="flex-1 space-y-6">
@@ -157,43 +157,43 @@ export default async function AIInsightsPage() {
           </p>
         </div>
         <Suspense fallback={<div className="h-10 w-32 animate-pulse rounded-md bg-muted" />}>
-          <ExportSection loanOfficerId={loanOfficerId} />
+          <ExportSection userId={userId} />
         </Suspense>
       </div>
 
       {/* Summary and distribution row */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
-          <AISummarySection loanOfficerId={loanOfficerId} />
+          <AISummarySection userId={userId} />
         </Suspense>
         <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
-          <SentimentDistributionSection loanOfficerId={loanOfficerId} />
+          <SentimentDistributionSection userId={userId} />
         </Suspense>
       </div>
 
       {/* Sentiment trend chart */}
       <Suspense fallback={<ChartSkeleton />}>
-        <SentimentTrendSection loanOfficerId={loanOfficerId} />
+        <SentimentTrendSection userId={userId} />
       </Suspense>
 
       {/* Theme and key phrases row */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-          <ThemeCloudSection loanOfficerId={loanOfficerId} />
+          <ThemeCloudSection userId={userId} />
         </Suspense>
         <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-          <KeyPhrasesSection loanOfficerId={loanOfficerId} />
+          <KeyPhrasesSection userId={userId} />
         </Suspense>
       </div>
 
       {/* Industry benchmarks */}
       <Suspense fallback={<CardSkeleton className="h-[500px]" />}>
-        <BenchmarksSection loanOfficerId={loanOfficerId} />
+        <BenchmarksSection userId={userId} />
       </Suspense>
 
       {/* Improvement recommendations */}
       <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-        <RecommendationsSection loanOfficerId={loanOfficerId} />
+        <RecommendationsSection userId={userId} />
       </Suspense>
     </div>
   );

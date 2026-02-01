@@ -77,7 +77,7 @@ async function getUserContext() {
 }
 
 /**
- * Get NPS metrics for a loan officer or organization
+ * Get NPS metrics for a user or organization
  */
 export async function getNPSMetrics(
   loanOfficerId?: string,
@@ -112,7 +112,7 @@ export async function getNPSMetrics(
     return { success: false, error: "Failed to fetch NPS data" };
   }
 
-  // Filter by loan officer or organization
+  // Filter by user or organization
   const filteredData = (data || []).filter((r) => {
     const survey = r.surveys as unknown as { user_id: string; organization_id: string };
     if (loanOfficerId) {
@@ -128,7 +128,7 @@ export async function getNPSMetrics(
 }
 
 /**
- * Get CSAT metrics for a loan officer or organization
+ * Get CSAT metrics for a user or organization
  */
 export async function getCSATMetrics(
   loanOfficerId?: string,
@@ -163,7 +163,7 @@ export async function getCSATMetrics(
     return { success: false, error: "Failed to fetch CSAT data" };
   }
 
-  // Filter by loan officer or organization
+  // Filter by user or organization
   const filteredData = (data || []).filter((r) => {
     const survey = r.surveys as unknown as { user_id: string; organization_id: string };
     if (loanOfficerId) {
@@ -179,7 +179,7 @@ export async function getCSATMetrics(
 }
 
 /**
- * Get response rate metrics for a loan officer or organization
+ * Get response rate metrics for a user or organization
  */
 export async function getResponseRateMetrics(
   loanOfficerId?: string,
@@ -223,7 +223,7 @@ export async function getResponseRateMetrics(
 }
 
 /**
- * Get review velocity metrics for a loan officer or organization
+ * Get review velocity metrics for a user or organization
  */
 export async function getReviewVelocityMetrics(
   loanOfficerId?: string,
@@ -414,7 +414,7 @@ export async function getOrganizationAnalytics(
   const supabase = createAdminClient();
   const dateRange = getDateRangeForPeriod(periodType);
 
-  // Fetch all metrics without loan officer filter (org-wide)
+  // Fetch all metrics without user filter (org-wide)
   const [npsResult, csatResult, responseRateResult, velocityResult] = await Promise.all([
     getNPSMetrics(undefined, dateRange),
     getCSATMetrics(undefined, dateRange),

@@ -57,30 +57,34 @@ export async function checkSmsEligibility(
     return { eligible: false, reason: "no_phone_number" };
   }
 
-  // 2. Check SMS consent
-  if (requirements?.requireConsent !== false) {
-    const consentService = new ConsentService();
-    const hasConsent = await consentService.checkConsent(organizationId, phone);
-    if (!hasConsent) {
-      return { eligible: false, reason: "no_sms_consent" };
-    }
+  // 2 & 3. Check consent and credits in parallel (both depend only on phone/org)
+  const checkConsent = requirements?.requireConsent !== false;
+  const checkCredits = requirements?.requireCredits !== false;
+
+  const [consentResult, creditsResult] = await Promise.all([
+    checkConsent
+      ? new ConsentService().checkConsent(organizationId, phone)
+      : Promise.resolve(true),
+    checkCredits
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase.from as any)("sms_credits")
+          .select("included_credits, used_credits, overage_rate_cents")
+          .eq("organization_id", organizationId)
+          .order("period_end", { ascending: false })
+          .limit(1)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  if (checkConsent && !consentResult) {
+    return { eligible: false, reason: "no_sms_consent" };
   }
 
-  // 3. Check SMS credits
-  if (requirements?.requireCredits !== false) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: credits } = await (supabase.from as any)("sms_credits")
-      .select("included_credits, used_credits, overage_rate_cents")
-      .eq("organization_id", organizationId)
-      .order("period_end", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (credits) {
-      const remaining = credits.included_credits - credits.used_credits;
-      if (remaining <= 0 && credits.overage_rate_cents === 0) {
-        return { eligible: false, reason: "sms_credits_exhausted", phone };
-      }
+  if (checkCredits && creditsResult.data) {
+    const credits = creditsResult.data;
+    const remaining = credits.included_credits - credits.used_credits;
+    if (remaining <= 0 && credits.overage_rate_cents === 0) {
+      return { eligible: false, reason: "sms_credits_exhausted", phone };
     }
   }
 
@@ -159,14 +163,7 @@ async function getUserChannelEngagement(
 ): Promise<{ emailOpenRate: number; smsConversionRate: number }> {
   const supabase = createAdminClient();
 
-  // Email: check open rate from email_sequences completed steps
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { count: emailCount } = await (supabase.from as any)("email_sequences")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .eq("organization_id", organizationId);
-
-  // SMS: check delivery + click rate
+  // SMS: check delivery rate from recent outbound messages
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: smsStats } = await (supabase.from as any)("sms_messages")
     .select("status")
@@ -180,8 +177,10 @@ async function getUserChannelEngagement(
     (m: { status: string }) => m.status === "delivered"
   ).length ?? 0;
 
+  // Without real open-tracking data we can't compute a true email open rate.
+  // Return 0 so "best_available" prefers SMS when delivery data exists.
   return {
-    emailOpenRate: emailCount ? 0.3 : 0, // baseline; real tracking would use email opens
+    emailOpenRate: 0,
     smsConversionRate: smsTotal > 0 ? smsDelivered / smsTotal : 0,
   };
 }
@@ -207,19 +206,6 @@ export async function sendSequenceSms(
 
   try {
     const smsService = await SmsService.forOrganization(ctx.organizationId);
-
-    // Resolve merge fields from sequence metadata
-    const mergeFields: Record<string, string> = {
-      borrower_name: ctx.user.full_name || "",
-      ...(ctx.smsTemplate.mergeFieldOverrides ?? {}),
-    };
-
-    // Add metadata values as merge fields
-    for (const [key, value] of Object.entries(ctx.metadata)) {
-      if (typeof value === "string") {
-        mergeFields[key] = value;
-      }
-    }
 
     const result = await smsService.sendReviewRequest({
       borrowerId: ctx.user.id,

@@ -12,13 +12,9 @@ import {
   CheckCircle,
   XCircle,
   ShareNetwork as Share2,
-  ThumbsUp,
-  ThumbsDown,
   Chats as MessageSquare,
-  PencilSimple as Edit3,
   SpinnerGap as Loader2,
   Calendar,
-  WarningCircle as AlertCircle,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,14 +30,15 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
   getVideoSignedUrl,
   updateVideoApprovalStatus,
-  updateVideoAIText,
 } from "@/lib/video-testimonials/actions";
+import { VideoPlayerSection } from "./video-player-section";
+import { VideoApprovalPanel } from "./video-approval-panel";
+import { VideoFeedbackSection } from "./video-feedback-section";
 
 // ============================================================================
 // Types
@@ -113,7 +110,7 @@ function formatFileSize(bytes: number | null): string {
 }
 
 // ============================================================================
-// Status Badge Component
+// Status Badge
 // ============================================================================
 
 function ApprovalStatusBadge({ status }: { status: string }) {
@@ -148,28 +145,6 @@ function ApprovalStatusBadge({ status }: { status: string }) {
   return (
     <Badge variant={variant} className={cn("gap-1", className)}>
       <Icon className="h-3 w-3" />
-      {label}
-    </Badge>
-  );
-}
-
-// ============================================================================
-// Sentiment Badge Component
-// ============================================================================
-
-function SentimentBadge({ label }: { label: string | null }) {
-  if (!label) return null;
-
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "text-xs",
-        label === "positive" && "border-repwell-sage-200/50 text-repwell-sage-200",
-        label === "negative" && "border-[#c47c7c]/50 text-[#c47c7c]",
-        label === "neutral" && "border-[#7c9eb8]/50 text-[#7c9eb8]"
-      )}
-    >
       {label}
     </Badge>
   );
@@ -324,11 +299,6 @@ export function VideoDetailView({ video, userRole }: Props) {
   const [isLoadingUrl, setIsLoadingUrl] = useState(true);
   const [activeTab, setActiveTab] = useState<"video" | "transcription" | "details">("video");
 
-  // Editing state
-  const [isEditingText, setIsEditingText] = useState(false);
-  const [editedAiText, setEditedAiText] = useState(video.aiGeneratedText || "");
-  const [isSavingText, setIsSavingText] = useState(false);
-
   // Action state
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<ApprovalAction | null>(null);
@@ -377,13 +347,11 @@ export function VideoDetailView({ video, userRole }: Props) {
     };
   }, [video.videoPath]);
 
-  // Handle action button click
   const handleActionClick = (action: ApprovalAction) => {
     setCurrentAction(action);
     setActionDialogOpen(true);
   };
 
-  // Handle action confirm
   const handleActionConfirm = useCallback(
     async (notes?: string) => {
       if (!currentAction) return;
@@ -423,27 +391,6 @@ export function VideoDetailView({ video, userRole }: Props) {
     [currentAction, video.id, router]
   );
 
-  // Handle save AI text
-  const handleSaveAiText = async () => {
-    setIsSavingText(true);
-    try {
-      const result = await updateVideoAIText(video.id, editedAiText);
-      if (result.success) {
-        toast({ title: "Success", description: "AI text updated successfully" });
-        setIsEditingText(false);
-        router.refresh();
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to update AI text",
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsSavingText(false);
-    }
-  };
-
   return (
     <div className="flex-1 space-y-6">
       {/* Back link and header */}
@@ -472,34 +419,13 @@ export function VideoDetailView({ video, userRole }: Props) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Video player and tabs - 2 columns */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Video Player */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="relative aspect-video overflow-hidden rounded-lg bg-black">
-                {isLoadingUrl ? (
-                  <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-white/50" />
-                  </div>
-                ) : signedUrl ? (
-                  <video
-                    ref={videoRef}
-                    src={signedUrl}
-                    controls
-                    className="h-full w-full"
-                    poster={video.thumbnailUrl || undefined}
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <div className="flex h-full items-center justify-center text-white/50">
-                    Video unavailable
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <VideoPlayerSection
+            signedUrl={signedUrl}
+            isLoadingUrl={isLoadingUrl}
+            thumbnailUrl={video.thumbnailUrl}
+            videoRef={videoRef}
+          />
 
-          {/* Tabs */}
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as typeof activeTab)}
@@ -551,113 +477,8 @@ export function VideoDetailView({ video, userRole }: Props) {
               </Card>
             </TabsContent>
 
-            <TabsContent value="transcription" className="mt-4 space-y-4">
-              {/* Transcription */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Transcription</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {video.transcriptionStatus === "completed" && video.transcription ? (
-                    <ScrollArea className="h-[200px]">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {video.transcription}
-                      </p>
-                    </ScrollArea>
-                  ) : video.transcriptionStatus === "processing" ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Transcription in progress...
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      No transcription available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* AI Generated Text */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-base">AI-Generated Review Text</CardTitle>
-                  {canManage && !isEditingText && video.aiGeneratedText && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditingText(true)}
-                      className="gap-1.5"
-                    >
-                      <Edit3 className="h-3.5 w-3.5" />
-                      Edit
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {isEditingText ? (
-                    <div className="space-y-3">
-                      <Textarea
-                        value={editedAiText}
-                        onChange={(e) => setEditedAiText(e.target.value)}
-                        rows={6}
-                        className="text-sm leading-relaxed"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setIsEditingText(false);
-                            setEditedAiText(video.aiGeneratedText || "");
-                          }}
-                          disabled={isSavingText}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={handleSaveAiText}
-                          disabled={isSavingText || editedAiText === video.aiGeneratedText}
-                        >
-                          {isSavingText ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            "Save Changes"
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  ) : video.aiGeneratedText ? (
-                    <div className="rounded-lg border bg-primary/5 p-4">
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                        {video.aiGeneratedText}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      No AI-generated text available
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Key Phrases */}
-              {video.keyPhrases && video.keyPhrases.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Key Phrases</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {video.keyPhrases.map((phrase, idx) => (
-                        <Badge key={idx} variant="outline">
-                          {phrase}
-                        </Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+            <TabsContent value="transcription" className="mt-4">
+              <VideoFeedbackSection video={video} canManage={canManage} />
             </TabsContent>
 
             <TabsContent value="details" className="mt-4 space-y-4">
@@ -738,125 +559,12 @@ export function VideoDetailView({ video, userRole }: Props) {
           </Tabs>
         </div>
 
-        {/* Sidebar - 1 column */}
-        <div className="space-y-6">
-          {/* Approval Actions */}
-          {canManage && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {(video.approvalStatus === "pending" ||
-                  video.approvalStatus === "changes_requested") && (
-                  <>
-                    <Button
-                      onClick={() => handleActionClick("approve")}
-                      className="w-full gap-2 bg-repwell-sage-200 text-white hover:bg-repwell-sage-200/80"
-                    >
-                      <ThumbsUp className="h-4 w-4" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleActionClick("request_changes")}
-                      className="w-full gap-2 border-amber-500/50 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      Request Changes
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleActionClick("reject")}
-                      className="w-full gap-2 border-[#c47c7c]/50 text-[#c47c7c] hover:bg-red-50 hover:text-[#c47c7c]"
-                    >
-                      <ThumbsDown className="h-4 w-4" />
-                      Reject
-                    </Button>
-                  </>
-                )}
-                {video.approvalStatus === "approved" && (
-                  <Button
-                    onClick={() => handleActionClick("publish")}
-                    className="w-full gap-2"
-                  >
-                    <Share2 className="h-4 w-4" />
-                    Publish
-                  </Button>
-                )}
-                {video.approvalStatus === "published" && (
-                  <div className="text-center text-sm text-muted-foreground">
-                    This video has been published
-                  </div>
-                )}
-                {video.approvalStatus === "rejected" && (
-                  <div className="text-center text-sm text-muted-foreground">
-                    This video has been rejected
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* AI Analysis */}
-          {(video.sentimentLabel || video.sentimentScore !== null) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <AlertCircle className="h-4 w-4" />
-                  AI Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <dl className="space-y-3 text-sm">
-                  {video.sentimentLabel && (
-                    <div className="flex justify-between items-center">
-                      <dt className="text-muted-foreground">Sentiment</dt>
-                      <dd>
-                        <SentimentBadge label={video.sentimentLabel} />
-                      </dd>
-                    </div>
-                  )}
-                  {video.sentimentScore !== null && (
-                    <div className="flex justify-between">
-                      <dt className="text-muted-foreground">Confidence</dt>
-                      <dd className="font-medium">
-                        {(video.sentimentScore * 100).toFixed(0)}%
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Manager Notes / Rejection Reason */}
-          {video.managerNotes && (
-            <Card className="border-amber-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-amber-600">Manager Notes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap text-sm text-amber-700">
-                  {video.managerNotes}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {video.approvalStatus === "rejected" && video.rejectionReason && (
-            <Card className="border-red-200">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base text-red-600">Rejection Reason</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="whitespace-pre-wrap text-sm text-red-600">
-                  {video.rejectionReason}
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {/* Sidebar */}
+        <VideoApprovalPanel
+          video={video}
+          canManage={canManage}
+          onAction={handleActionClick}
+        />
       </div>
 
       {/* Action Dialog */}

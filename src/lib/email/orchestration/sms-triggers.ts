@@ -189,7 +189,7 @@ export async function handleSmsOptOutTrigger(
   for (const seq of sequences) {
     // Check if sequence metadata indicates SMS usage
     const meta = seq.metadata as Record<string, unknown> | null;
-    const hasSmsSteps = meta?.hasSmsChanelSteps === true;
+    const hasSmsSteps = meta?.hasSmsChannelSteps === true;
 
     if (hasSmsSteps) {
       await updateSequenceStatus(

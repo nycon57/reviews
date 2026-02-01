@@ -8,6 +8,7 @@ import {
 } from "@/lib/seo";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { OrganizationProfileContent } from "./organization-profile-content";
+import { buildCompanyBreadcrumbs } from "@/lib/directory/breadcrumb-utils";
 
 interface PageProps {
   params: Promise<{
@@ -43,6 +44,13 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
   const { organization, branches, featuredProfessionals, testimonials } = result.data;
   const baseUrl = getBaseUrl();
 
+  // Build breadcrumbs for navigation
+  const breadcrumbs = buildCompanyBreadcrumbs({
+    slug: organization.slug,
+    name: organization.name,
+    industry: organization.industry,
+  });
+
   // Generate structured data schemas
   const schemas = generateOrganizationProfilePageSchema(
     {
@@ -67,6 +75,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
     })),
     featuredProfessionals.map((member) => ({
       id: member.id,
+      slug: member.slug,
       full_name: member.full_name,
       title: member.title,
     })),
@@ -89,6 +98,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
         branches={branches}
         featuredProfessionals={featuredProfessionals}
         testimonials={testimonials}
+        breadcrumbs={breadcrumbs}
       />
     </>
   );

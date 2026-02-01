@@ -44,7 +44,7 @@ const MOCK_REVIEWS: Review[] = [
   {
     id: '3',
     rating: 5,
-    text: 'Highly recommend! Best loan officer I have worked with.',
+    text: 'Highly recommend! Best professional I have worked with.',
     source: 'internal',
     status: 'pending',
     customer_name: 'Mike Davis',

@@ -1,13 +1,15 @@
 import { MetadataRoute } from "next";
-import { getAllPublicLOIds, getAllOrganizationSlugs } from "@/lib/seo/actions";
+import { getAllPublicUserSlugs, getAllOrganizationSlugs } from "@/lib/seo/actions";
 import { getBaseUrl } from "@/lib/seo";
+import { industryFilterConfig } from "@/components/directory/industry-filter";
 
 /**
  * Generate dynamic sitemap for SEO
  * Includes all public-facing pages:
  * - Static pages (home, about, etc.)
- * - Loan officer profile pages
- * - Organization-specific LO listing pages
+ * - Industry directory pages
+ * - Professional profile pages
+ * - Organization profile pages
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
@@ -35,23 +37,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // Dynamic professional profile pages
-  const professionalIds = await getAllPublicLOIds();
-  const professionalPages: MetadataRoute.Sitemap = professionalIds.map((id) => ({
-    url: `${baseUrl}/pro/${id}`,
+  // Industry directory pages
+  const industryPages: MetadataRoute.Sitemap = Object.values(industryFilterConfig).map(({ slug }) => ({
+    url: `${baseUrl}/directory/${slug}`,
+    lastModified: now,
+    changeFrequency: "daily" as const,
+    priority: 0.9,
+  }));
+
+  // Dynamic professional profile pages (using SEO-friendly slugs)
+  const professionalSlugs = await getAllPublicUserSlugs();
+  const professionalPages: MetadataRoute.Sitemap = professionalSlugs.map((slug) => ({
+    url: `${baseUrl}/pro/${slug}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.8,
   }));
 
-  // Organization-specific listing pages (if using org slugs)
+  // Organization profile pages
   const orgSlugs = await getAllOrganizationSlugs();
   const orgPages: MetadataRoute.Sitemap = orgSlugs.map((slug) => ({
-    url: `${baseUrl}/org/${slug}/team`,
+    url: `${baseUrl}/org/${slug}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
-    priority: 0.7,
+    priority: 0.75,
   }));
 
-  return [...staticPages, ...professionalPages, ...orgPages];
+  return [...staticPages, ...industryPages, ...professionalPages, ...orgPages];
 }

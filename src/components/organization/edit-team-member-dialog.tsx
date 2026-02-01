@@ -30,7 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const editMemberSchema = z.object({
   full_name: z.string().min(2, "Name must be at least 2 characters").max(100),
-  photo_url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  avatar_url: z.string().url("Must be a valid URL").optional().or(z.literal("")),
 });
 
 type EditMemberForm = z.infer<typeof editMemberSchema>;
@@ -55,7 +55,7 @@ export function EditTeamMemberDialog({
     resolver: zodResolver(editMemberSchema),
     defaultValues: {
       full_name: member.full_name || "",
-      photo_url: member.photo_url || "",
+      avatar_url: member.avatar_url || "",
     },
   });
 
@@ -63,15 +63,15 @@ export function EditTeamMemberDialog({
   useEffect(() => {
     form.reset({
       full_name: member.full_name || "",
-      photo_url: member.photo_url || "",
+      avatar_url: member.avatar_url || "",
     });
-  }, [member.id, member.full_name, member.photo_url, form]);
+  }, [member.id, member.full_name, member.avatar_url, form]);
 
   function onSubmit(data: EditMemberForm) {
     startTransition(async () => {
       const result = await updateMemberDetails(member.id, {
         full_name: data.full_name || undefined,
-        photo_url: data.photo_url || undefined,
+        avatar_url: data.avatar_url || undefined,
       });
 
       if (result.error) {
@@ -87,7 +87,7 @@ export function EditTeamMemberDialog({
     });
   }
 
-  const avatarUrl = form.watch("photo_url");
+  const avatarUrl = form.watch("avatar_url");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,7 +104,7 @@ export function EditTeamMemberDialog({
             {/* Avatar Preview */}
             <div className="flex justify-center pb-2">
               <Avatar className="h-20 w-20">
-                <AvatarImage src={avatarUrl || member.photo_url || undefined} />
+                <AvatarImage src={avatarUrl || member.avatar_url || undefined} />
                 <AvatarFallback className="text-xl">
                   {(member.full_name || member.email)
                     .split(" ")
@@ -139,7 +139,7 @@ export function EditTeamMemberDialog({
 
             <FormField
               control={form.control}
-              name="photo_url"
+              name="avatar_url"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Photo URL</FormLabel>

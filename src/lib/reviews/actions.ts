@@ -91,7 +91,7 @@ export async function getPendingReviews(params?: {
         id,
         full_name,
         email,
-        photo_url
+        avatar_url
       ),
       survey_responses (
         id,
@@ -133,7 +133,7 @@ export async function getPendingReviews(params?: {
       id: string;
       full_name: string;
       email: string;
-      photo_url: string | null;
+      avatar_url: string | null;
     };
 
     const surveyResponse = row.survey_responses as unknown as {
@@ -165,7 +165,7 @@ export async function getPendingReviews(params?: {
         id: loanOfficer.id,
         fullName: loanOfficer.full_name,
         email: loanOfficer.email,
-        photoUrl: loanOfficer.photo_url,
+        avatarUrl: loanOfficer.avatar_url,
       },
       surveyResponse: surveyResponse
         ? {
@@ -227,7 +227,7 @@ export async function getReviews(params?: {
         id,
         full_name,
         email,
-        photo_url
+        avatar_url
       ),
       survey_responses (
         id,
@@ -267,7 +267,7 @@ export async function getReviews(params?: {
       id: string;
       full_name: string;
       email: string;
-      photo_url: string | null;
+      avatar_url: string | null;
     };
 
     const surveyResponse = row.survey_responses as unknown as {
@@ -299,7 +299,7 @@ export async function getReviews(params?: {
         id: loanOfficer.id,
         fullName: loanOfficer.full_name,
         email: loanOfficer.email,
-        photoUrl: loanOfficer.photo_url,
+        avatarUrl: loanOfficer.avatar_url,
       },
       surveyResponse: surveyResponse
         ? {
@@ -354,7 +354,7 @@ export async function getReviewById(
         id,
         full_name,
         email,
-        photo_url
+        avatar_url
       ),
       survey_responses (
         id,
@@ -376,7 +376,7 @@ export async function getReviewById(
     id: string;
     full_name: string;
     email: string;
-    photo_url: string | null;
+    avatar_url: string | null;
   };
 
   const surveyResponse = data.survey_responses as unknown as {
@@ -408,7 +408,7 @@ export async function getReviewById(
       id: loanOfficer.id,
       fullName: loanOfficer.full_name,
       email: loanOfficer.email,
-      photoUrl: loanOfficer.photo_url,
+      avatarUrl: loanOfficer.avatar_url,
     },
     surveyResponse: surveyResponse
       ? {
@@ -875,8 +875,8 @@ export async function getReviewStats(): Promise<
   return { success: true, data: stats };
 }
 
-// Get loan officers for filter dropdown
-export async function getLoanOfficersForFilter(): Promise<
+// Get users for filter dropdown
+export async function getUsersForFilter(): Promise<
   ActionResult<{ id: string; fullName: string }[]>
 > {
   const context = await requireManagerRole();
@@ -894,8 +894,8 @@ export async function getLoanOfficersForFilter(): Promise<
     .order("full_name");
 
   if (error) {
-    console.error("Error fetching loan officers:", error);
-    return { success: false, error: "Failed to fetch loan officers" };
+    console.error("Error fetching users:", error);
+    return { success: false, error: "Failed to fetch users" };
   }
 
   return {
@@ -906,3 +906,6 @@ export async function getLoanOfficersForFilter(): Promise<
     })),
   };
 }
+
+/** @deprecated Use getUsersForFilter instead */
+export const getLoanOfficersForFilter = getUsersForFilter;

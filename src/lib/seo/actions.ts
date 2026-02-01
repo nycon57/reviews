@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/types/database.types";
+import type { IndustryType } from "@/lib/industry/types";
 
 type User = Tables<"users">;
 type Organization = Tables<"organizations">;
@@ -62,7 +63,7 @@ export interface PublicBranchReview {
 export interface PublicBranchProfileData {
   branch: PublicBranch;
   organization: Pick<Organization, "id" | "name" | "logo_url" | "domain"> | null;
-  loanOfficers: PublicBranchLoanOfficer[];
+  professionals: PublicBranchProfessional[];
   reviews: PublicBranchReview[];
 }
 
@@ -79,6 +80,7 @@ export interface BusinessHours {
 // Minimal interface for list views
 export interface PublicProfessionalListItem {
   id: string;
+  slug?: string | null;
   full_name: string;
   title: string | null;
   bio: string | null;
@@ -101,6 +103,7 @@ export type PublicLoanOfficerListItem = PublicProfessionalListItem;
 
 // Full interface for profile views with customization fields
 export interface PublicProfessional extends PublicProfessionalListItem {
+  slug: string | null;
   branch_id: string | null;
   // Profile customization fields
   banner_url: string | null;
@@ -126,11 +129,15 @@ export interface PublicReview {
   review_date: string;
   source: string;
   response_text: string | null;
+  featured: boolean;
 }
 
 export interface PublicProfessionalProfileData {
   professional: PublicProfessional;
-  organization: Pick<Organization, "id" | "name" | "logo_url" | "domain"> | null;
+  organization: (Pick<Organization, "id" | "name" | "logo_url" | "domain"> & {
+    slug: string;
+    industry: IndustryType | null;
+  }) | null;
   reviews: PublicReview[];
   featuredReviews: PublicReview[];
   businessHours: BusinessHours | null;
@@ -140,13 +147,26 @@ export interface PublicProfessionalProfileData {
 export type PublicLOProfileData = PublicProfessionalProfileData;
 
 /**
- * Get a public professional profile by user ID
+ * Check if a string is a valid UUID v4
+ */
+function isUUID(str: string): boolean {
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+/**
+ * Get a public professional profile by user ID or slug
+ * @param slugOrId Either a user ID (UUID) or a slug (e.g., "john-smith")
  */
 export async function getPublicLOProfile(
-  userId: string
+  slugOrId: string
 ): Promise<{ success: boolean; data?: PublicLOProfileData; error?: string }> {
   try {
     const supabase = createAdminClient();
+
+    // Determine if we're looking up by ID or slug
+    const lookupField = isUUID(slugOrId) ? "id" : "slug";
 
     // Fetch the user (professional)
     const { data: user, error: userError } = await supabase
@@ -154,6 +174,7 @@ export async function getPublicLOProfile(
       .select(
         `
         id,
+        slug,
         full_name,
         title,
         bio,
@@ -180,10 +201,11 @@ export async function getPublicLOProfile(
         video_thumbnail_url,
         accepts_public_reviews,
         referral_enabled,
-        featured_review_ids
+        featured_review_ids,
+        industry
       `
       )
-      .eq("id", userId)
+      .eq(lookupField, slugOrId)
       .eq("is_active", true)
       .single();
 
@@ -195,15 +217,23 @@ export async function getPublicLOProfile(
       return { success: false, error: "Professional not associated with an organization" };
     }
 
-    // Use photo_url or avatar_url as fallback
-    const photoUrl = user.photo_url || user.avatar_url;
+    // Use avatar_url (from settings) or photo_url as fallback
+    const photoUrl = user.avatar_url || user.photo_url;
 
-    // Fetch the organization
-    const { data: organization } = await supabase
+    // Fetch the organization with slug for breadcrumbs
+    const { data: orgData } = await supabase
       .from("organizations")
-      .select("id, name, logo_url, domain")
+      .select("id, name, logo_url, domain, slug")
       .eq("id", user.organization_id)
       .single();
+
+    const organization = orgData as {
+      id: string;
+      name: string;
+      logo_url: string | null;
+      domain: string | null;
+      slug: string | null;
+    } | null;
 
     // Fetch published reviews (user_id references users table)
     const { data: reviews } = await supabase
@@ -218,10 +248,11 @@ export async function getPublicLOProfile(
         title,
         review_date,
         source,
-        response_text
+        response_text,
+        featured
       `
       )
-      .eq("user_id", userId)
+      .eq("user_id", user.id)
       .eq("is_published", true)
       .eq("status", "approved")
       .order("review_date", { ascending: false })
@@ -243,7 +274,8 @@ export async function getPublicLOProfile(
           title,
           review_date,
           source,
-          response_text
+          response_text,
+          featured
         `
         )
         .in("id", featuredIds)
@@ -254,7 +286,8 @@ export async function getPublicLOProfile(
         // Maintain the order specified in featured_review_ids
         featuredReviews = featuredIds
           .map((id) => featured.find((r) => r.id === id))
-          .filter((r): r is NonNullable<typeof r> => r !== undefined);
+          .filter((r): r is NonNullable<typeof r> => r !== undefined)
+          .map((r) => ({ ...r, featured: r.featured ?? false }));
       }
     }
 
@@ -277,6 +310,7 @@ export async function getPublicLOProfile(
       data: {
         professional: {
           id: user.id,
+          slug: user.slug,
           full_name: user.full_name || "Unknown",
           title: user.title,
           bio: user.bio,
@@ -302,8 +336,17 @@ export async function getPublicLOProfile(
           referral_enabled: user.referral_enabled ?? false,
           featured_review_ids: featuredIds,
         },
-        organization: organization || null,
-        reviews: reviews || [],
+        organization: organization
+          ? {
+              id: organization.id,
+              name: organization.name,
+              logo_url: organization.logo_url,
+              domain: organization.domain,
+              slug: organization.slug || "",
+              industry: (user.industry as IndustryType) || null,
+            }
+          : null,
+        reviews: (reviews || []).map((r) => ({ ...r, featured: r.featured ?? false })),
         featuredReviews,
         businessHours,
       },
@@ -320,7 +363,7 @@ export async function getPublicLOList(
   organizationSlug?: string
 ): Promise<{
   success: boolean;
-  data?: { loanOfficers: PublicLoanOfficerListItem[]; organization: Pick<Organization, "id" | "name" | "logo_url"> | null };
+  data?: { professionals: PublicProfessionalListItem[]; organization: Pick<Organization, "id" | "name" | "logo_url"> | null };
   error?: string;
 }> {
   try {
@@ -349,6 +392,7 @@ export async function getPublicLOList(
       .select(
         `
         id,
+        slug,
         full_name,
         title,
         bio,
@@ -384,13 +428,13 @@ export async function getPublicLOList(
     const professionals = (users || []).map((user) => ({
       ...user,
       full_name: user.full_name || "Unknown",
-      photo_url: user.photo_url || user.avatar_url,
+      photo_url: user.avatar_url || user.photo_url,
     }));
 
     return {
       success: true,
       data: {
-        loanOfficers: professionals,
+        professionals,
         organization,
       },
     };
@@ -401,6 +445,7 @@ export async function getPublicLOList(
 
 /**
  * Get all public professional IDs for sitemap generation
+ * @deprecated Use getAllPublicUserSlugs instead for SEO-friendly URLs
  */
 export async function getAllPublicLOIds(): Promise<string[]> {
   try {
@@ -416,6 +461,30 @@ export async function getAllPublicLOIds(): Promise<string[]> {
     }
 
     return data.map((u) => u.id);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get all public professional slugs for sitemap generation
+ * Returns slugs for users who have them, for SEO-friendly URLs
+ */
+export async function getAllPublicUserSlugs(): Promise<string[]> {
+  try {
+    const supabase = createAdminClient();
+
+    const { data, error } = await supabase
+      .from("users")
+      .select("slug")
+      .eq("is_active", true)
+      .not("slug", "is", null);
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map((u) => u.slug).filter((slug): slug is string => slug !== null);
   } catch {
     return [];
   }
@@ -518,7 +587,7 @@ export async function getPublicBranchProfile(
     const professionals = (branchUsers || []).map((user) => ({
       ...user,
       full_name: user.full_name || "Unknown",
-      photo_url: user.photo_url || user.avatar_url,
+      photo_url: user.avatar_url || user.photo_url,
     }));
 
     // Get user IDs for fetching reviews
@@ -600,7 +669,7 @@ export async function getPublicBranchProfile(
           total_members: branch.total_members,
         },
         organization: organization || null,
-        loanOfficers: professionals || [],
+        professionals: professionals || [],
         reviews,
       },
     };
@@ -659,6 +728,7 @@ export interface PublicOrganization {
   total_reviews: number;
   total_branches: number;
   total_members: number;
+  industry: IndustryType | null;
 }
 
 export interface PublicOrgBranch {
@@ -676,6 +746,7 @@ export interface PublicOrgBranch {
 
 export interface PublicOrgProfessional {
   id: string;
+  slug: string | null;
   full_name: string;
   title: string | null;
   photo_url: string | null;
@@ -723,7 +794,7 @@ export async function getPublicOrganizationProfile(
     const supabase = createAdminClient();
 
     // Fetch the organization by slug
-    const { data: organization, error: orgError } = await supabase
+    const { data: orgData, error: orgError } = await supabase
       .from("organizations")
       .select(
         `
@@ -739,9 +810,20 @@ export async function getPublicOrganizationProfile(
       .eq("slug", slug)
       .single();
 
-    if (orgError || !organization) {
+    if (orgError || !orgData) {
       return { success: false, error: "Organization not found" };
     }
+
+    // Cast to expected type
+    const organization = orgData as {
+      id: string;
+      name: string;
+      slug: string;
+      domain: string | null;
+      logo_url: string | null;
+      primary_color: string | null;
+      settings: unknown;
+    };
 
     // Parse organization settings for additional fields
     const settings = organization.settings as {
@@ -784,6 +866,7 @@ export async function getPublicOrganizationProfile(
       .select(
         `
         id,
+        slug,
         full_name,
         title,
         photo_url,
@@ -802,7 +885,7 @@ export async function getPublicOrganizationProfile(
     // Map to expected format with photo fallback
     const professionals = (orgUsers || []).map((user) => ({
       ...user,
-      photo_url: user.photo_url || user.avatar_url,
+      photo_url: user.avatar_url || user.photo_url,
     }));
 
     // Calculate aggregate stats
@@ -909,6 +992,7 @@ export async function getPublicOrganizationProfile(
           total_reviews: totalReviews,
           total_branches: allBranches.length,
           total_members: totalProfessionalsCount || 0,
+          industry: null, // Industry will be populated when migration is applied
         },
         branches: allBranches.map((b) => ({
           id: b.id,
@@ -924,6 +1008,7 @@ export async function getPublicOrganizationProfile(
         })),
         featuredProfessionals: allProfessionals.map((professional) => ({
           id: professional.id,
+          slug: professional.slug,
           full_name: professional.full_name || "Unknown",
           title: professional.title,
           photo_url: professional.photo_url,

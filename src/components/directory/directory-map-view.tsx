@@ -13,8 +13,10 @@ import {
   MapPin,
   Phone,
   MapTrifold as Map,
+  MagnifyingGlass,
+  CircleNotch,
 } from "@phosphor-icons/react";
-import type { DirectoryProfessional } from "@/lib/directory/actions";
+import type { DirectoryProfessional, MapBounds } from "@/lib/directory/actions";
 
 // Dynamically import map components to avoid SSR issues
 const MapContainer = dynamic(
@@ -40,10 +42,28 @@ const MarkerClusterGroup = dynamic(
   { ssr: false }
 );
 
+// Import bounds tracker (uses react-leaflet hooks)
+const MapBoundsTracker = dynamic(
+  () => import("./map-bounds-tracker").then((mod) => mod.MapBoundsTracker),
+  { ssr: false }
+);
+
 interface DirectoryMapViewProps {
   professionals: DirectoryProfessional[];
   onSelectProfessional?: (id: string) => void;
   selectedProfessionalId?: string | null;
+  /** Called when map bounds change (pan/zoom) */
+  onBoundsChange?: (bounds: MapBounds) => void;
+  /** Called when user clicks "Search this area" button */
+  onSearchThisArea?: () => void;
+  /** Whether to show the "Search this area" button */
+  showSearchButton?: boolean;
+  /** Loading state for "Search this area" */
+  isSearchingArea?: boolean;
+  /** ID of professional being hovered in the list */
+  hoveredProfessionalId?: string | null;
+  /** Height class for the map container */
+  heightClass?: string;
 }
 
 function getInitials(name: string): string {
@@ -130,9 +150,16 @@ function InteractiveMap({
   professionals,
   onSelectProfessional,
   selectedProfessionalId,
+  onBoundsChange,
+  onSearchThisArea,
+  showSearchButton = false,
+  isSearchingArea = false,
+  hoveredProfessionalId,
+  heightClass = "h-[400px] md:h-[500px]",
 }: DirectoryMapViewProps) {
   const mapRef = useRef<LeafletMap | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
+  const [isLeafletLoaded, setIsLeafletLoaded] = useState(false);
 
   // Filter officers with valid coordinates
   const professionalsWithCoords = useMemo(
@@ -182,16 +209,18 @@ function InteractiveMap({
   useEffect(() => {
     import("leaflet").then((L) => {
       leafletRef.current = L;
+      setIsLeafletLoaded(true);
     });
   }, []);
 
   // Create custom marker icons
-  const createIcon = useCallback((isSelected: boolean): DivIcon | undefined => {
+  const createIcon = useCallback((isSelected: boolean, isHovered: boolean): DivIcon | undefined => {
     if (typeof window === "undefined" || !leafletRef.current) return undefined;
 
     const L = leafletRef.current;
-    const color = isSelected ? "#354f52" : "#52796f"; // teal-400 : teal-300
-    const scale = isSelected ? 1.15 : 1;
+    const isHighlighted = isSelected || isHovered;
+    const color = isHighlighted ? "#354f52" : "#52796f"; // teal-400 : teal-300
+    const scale = isHighlighted ? 1.15 : 1;
 
     return L.divIcon({
       className: "custom-map-marker",
@@ -261,7 +290,7 @@ function InteractiveMap({
 
   return (
     <Card className="overflow-hidden">
-      <div className="relative h-[400px] md:h-[500px]">
+      <div className={`relative ${heightClass}`}>
         <MapContainer
           ref={mapRef}
           center={bounds ? [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2] : US_BOUNDS.center}
@@ -272,106 +301,112 @@ function InteractiveMap({
           scrollWheelZoom={true}
           whenReady={() => setIsMapReady(true)}
         >
+          {/* Bounds tracker for map-list synchronization */}
+          {onBoundsChange && <MapBoundsTracker onBoundsChange={onBoundsChange} />}
+
           {/* CartoDB Positron - light, minimal tiles */}
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
           />
 
-          <MarkerClusterGroup
-            chunkedLoading
-            spiderfyOnMaxZoom={true}
-            showCoverageOnHover={false}
-            maxClusterRadius={60}
-            iconCreateFunction={createClusterIcon}
-          >
-            {professionalsWithCoords.map((prof) => {
-              const isSelected = selectedProfessionalId === prof.id;
-              const icon = createIcon(isSelected);
+          {isLeafletLoaded && (
+            <MarkerClusterGroup
+              chunkedLoading
+              spiderfyOnMaxZoom={true}
+              showCoverageOnHover={false}
+              maxClusterRadius={60}
+              iconCreateFunction={createClusterIcon}
+            >
+              {professionalsWithCoords.map((prof) => {
+                const isSelected = selectedProfessionalId === prof.id;
+                const isHovered = hoveredProfessionalId === prof.id;
+                const icon = createIcon(isSelected, isHovered);
 
-              return (
-                <Marker
-                  key={prof.id}
-                  position={[prof.latitude!, prof.longitude!]}
-                  icon={icon}
-                  eventHandlers={{
-                    click: () => onSelectProfessional?.(prof.id),
-                  }}
-                >
-                  <Popup className="repwell-popup" closeButton={true} maxWidth={280}>
-                    <div className="p-1">
-                      <div className="flex items-start gap-3">
-                        <Link href={`/pro/${prof.id}`}>
-                          <Avatar className="h-11 w-11 border-2 border-repwell-sage-100">
-                            <AvatarImage
-                              src={prof.photo_url || undefined}
-                              alt={prof.full_name}
-                            />
-                            <AvatarFallback className="bg-repwell-teal-300/10 text-repwell-teal-400 font-medium text-sm">
-                              {getInitials(prof.full_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                        </Link>
-
-                        <div className="flex-1 min-w-0">
-                          <Link href={`/pro/${prof.id}`}>
-                            <h4 className="font-semibold text-sm text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
-                              {prof.full_name}
-                            </h4>
+                return (
+                  <Marker
+                    key={prof.id}
+                    position={[prof.latitude!, prof.longitude!]}
+                    icon={icon}
+                    eventHandlers={{
+                      click: () => onSelectProfessional?.(prof.id),
+                    }}
+                  >
+                    <Popup className="repwell-popup" closeButton={true} maxWidth={280}>
+                      <div className="p-1">
+                        <div className="flex items-start gap-3">
+                          <Link href={`/pro/${prof.slug || prof.id}`}>
+                            <Avatar className="h-11 w-11 border-2 border-repwell-sage-100">
+                              <AvatarImage
+                                src={prof.photo_url || undefined}
+                                alt={prof.full_name}
+                              />
+                              <AvatarFallback className="bg-repwell-teal-300/10 text-repwell-teal-400 font-medium text-sm">
+                                {getInitials(prof.full_name)}
+                              </AvatarFallback>
+                            </Avatar>
                           </Link>
-                          {prof.title && (
-                            <p className="text-xs text-repwell-teal-400 truncate">
-                              {prof.title}
-                            </p>
-                          )}
-                          {prof.address?.city && (
-                            <div className="flex items-center gap-1 text-xs text-repwell-teal-300 mt-0.5">
-                              <MapPin className="h-3 w-3 flex-shrink-0" />
-                              <span className="truncate">
-                                {prof.address.city}
-                                {prof.address.state ? `, ${prof.address.state}` : ""}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
 
-                      <div className="mt-2.5 pt-2.5 border-t border-repwell-sage-100 flex items-center justify-between">
-                        {prof.average_rating ? (
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                            <span className="font-semibold text-sm text-repwell-teal-500">
-                              {Number(prof.average_rating).toFixed(1)}
-                            </span>
-                            {prof.total_reviews !== null && prof.total_reviews > 0 && (
-                              <span className="text-xs text-repwell-teal-300">
-                                ({prof.total_reviews})
-                              </span>
+                          <div className="flex-1 min-w-0">
+                            <Link href={`/pro/${prof.slug || prof.id}`}>
+                              <h4 className="font-semibold text-sm text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
+                                {prof.full_name}
+                              </h4>
+                            </Link>
+                            {prof.title && (
+                              <p className="text-xs text-repwell-teal-400 truncate">
+                                {prof.title}
+                              </p>
+                            )}
+                            {prof.address?.city && (
+                              <div className="flex items-center gap-1 text-xs text-repwell-teal-300 mt-0.5">
+                                <MapPin className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">
+                                  {prof.address.city}
+                                  {prof.address.state ? `, ${prof.address.state}` : ""}
+                                </span>
+                              </div>
                             )}
                           </div>
-                        ) : (
-                          <span className="text-xs text-repwell-teal-300">No reviews</span>
-                        )}
+                        </div>
 
-                        <div className="flex items-center gap-1.5">
-                          {prof.phone && (
-                            <Button variant="outline" size="sm" className="h-7 w-7 p-0" asChild>
-                              <a href={`tel:${prof.phone}`} title={`Call ${prof.full_name}`}>
-                                <Phone className="h-3 w-3" />
-                              </a>
-                            </Button>
+                        <div className="mt-2.5 pt-2.5 border-t border-repwell-sage-100 flex items-center justify-between">
+                          {prof.average_rating ? (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                              <span className="font-semibold text-sm text-repwell-teal-500">
+                                {Number(prof.average_rating).toFixed(1)}
+                              </span>
+                              {prof.total_reviews !== null && prof.total_reviews > 0 && (
+                                <span className="text-xs text-repwell-teal-300">
+                                  ({prof.total_reviews})
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-repwell-teal-300">No reviews</span>
                           )}
-                          <Button size="sm" className="h-7 text-xs px-2.5" asChild>
-                            <Link href={`/pro/${prof.id}`}>View</Link>
-                          </Button>
+
+                          <div className="flex items-center gap-1.5">
+                            {prof.phone && (
+                              <Button variant="outline" size="sm" className="h-7 w-7 p-0" asChild>
+                                <a href={`tel:${prof.phone}`} title={`Call ${prof.full_name}`}>
+                                  <Phone className="h-3 w-3" />
+                                </a>
+                              </Button>
+                            )}
+                            <Button size="sm" className="h-7 text-xs px-2.5" asChild>
+                              <Link href={`/pro/${prof.slug || prof.id}`}>View</Link>
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MarkerClusterGroup>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MarkerClusterGroup>
+          )}
         </MapContainer>
 
         {/* Results badge */}
@@ -386,6 +421,26 @@ function InteractiveMap({
             )}
           </Badge>
         </div>
+
+        {/* Search this area button */}
+        {showSearchButton && onSearchThisArea && (
+          <div className="absolute top-3 right-3 z-[1000]">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onSearchThisArea}
+              disabled={isSearchingArea}
+              className="bg-white/95 backdrop-blur-sm shadow-sm hover:bg-white"
+            >
+              {isSearchingArea ? (
+                <CircleNotch className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <MagnifyingGlass className="mr-1.5 h-3.5 w-3.5" />
+              )}
+              Search this area
+            </Button>
+          </div>
+        )}
       </div>
     </Card>
   );

@@ -45,6 +45,10 @@ async function SettingsContent() {
       userLinkedinUrl={profile?.linkedin_url}
       userZillowProfileUrl={profile?.zillow_profile_url}
       userTimezone={profile?.timezone}
+      userSlug={profile?.slug}
+      userBannerUrl={profile?.banner_url}
+      userId={profile?.id}
+      userRole={profile?.role}
     />
   );
 }

@@ -31,6 +31,7 @@ export interface UserAddress {
 export interface User {
   id: string;
   organizationId: string;
+  slug: string | null;
   email: string;
   fullName: string | null;
   avatarUrl: string | null;
@@ -150,6 +151,7 @@ export interface OrganizationSettings {
 export interface Professional {
   id: string;
   organizationId: string;
+  slug: string | null;
   userId: string | null;
   fullName: string;
   email: string;

@@ -2,7 +2,7 @@
  * VideoTestimonial Composition
  *
  * Full branded video testimonial with:
- * - Animated intro (org logo, LO name/photo)
+ * - Animated intro (org logo, professional name/photo)
  * - TikTok-style animated captions
  * - AI quote highlight segment
  * - Branded outro with CTA
@@ -105,9 +105,9 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
         <Sequence from={introStart} durationInFrames={introFrames} name="Intro">
           <BrandedIntro
             organization={organization}
-            loanOfficerName={loanOfficer.fullName}
-            loanOfficerTitle={loanOfficer.title}
-            loanOfficerPhotoUrl={loanOfficer.photoUrl}
+            professionalName={loanOfficer.fullName}
+            professionalTitle={loanOfficer.title}
+            professionalPhotoUrl={loanOfficer.photoUrl}
             customerName={customer.displayName}
             format={format}
             durationFrames={introFrames}

@@ -49,7 +49,7 @@ export interface VideoTestimonialProps {
     displayName: string;
     relationship: string | null;
   };
-  /** Loan officer information */
+  /** Professional information */
   loanOfficer: {
     fullName: string;
     title: string | null;
@@ -205,7 +205,7 @@ export interface VideoThumbnailProps {
   rating: number;
   /** Organization branding */
   organization: OrganizationBranding;
-  /** Loan officer info */
+  /** Professional info */
   loanOfficer: {
     fullName: string;
     photoUrl: string | null;

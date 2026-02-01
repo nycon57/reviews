@@ -71,7 +71,7 @@ export default async function OrganizationPage() {
 
         <TabsContent value="overview" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
-            <OrganizationOverview />
+            <OrganizationOverview isAdmin />
           </Suspense>
         </TabsContent>
 

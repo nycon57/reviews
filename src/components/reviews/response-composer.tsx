@@ -95,9 +95,12 @@ export function ResponseComposer({
   const handleTemplateSelect = (templateId: string) => {
     const template = templates.find((t) => t.id === templateId);
     if (template) {
+      const professionalName = review.loanOfficer?.fullName || "Your Team Member";
       const variables: Record<string, string> = {
         customer_name: review.customerName || "Valued Customer",
-        loan_officer_name: review.loanOfficer?.fullName || "Your Team Member",
+        professional_name: professionalName,
+        // Keep for backward compatibility with existing templates
+        loan_officer_name: professionalName,
       };
       const appliedContent = applyTemplateVariables(template.content, variables);
       setResponseText(appliedContent);

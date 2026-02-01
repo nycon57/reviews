@@ -11,7 +11,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Star,
   ArrowSquareOut as ExternalLink,
@@ -20,7 +19,6 @@ import {
   Chats as MessageSquare,
   Calendar,
   MapPin,
-  User,
   BuildingOffice as Building2,
   TrendUp as TrendingUp,
   Tag as Tags,
@@ -245,34 +243,6 @@ export function ReviewDetailModal({
               </div>
             </>
           )}
-
-          {/* Professional Info */}
-          <Separator />
-          <div className="space-y-3">
-            <h4 className="font-medium flex items-center gap-2">
-              <User className="h-4 w-4" />
-              Professional
-            </h4>
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={review.loanOfficer?.photoUrl || undefined} />
-                <AvatarFallback>
-                  {review.loanOfficer?.fullName
-                    ?.split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .toUpperCase()
-                    .slice(0, 2) || "TM"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium">{review.loanOfficer?.fullName}</p>
-                <p className="text-sm text-muted-foreground">
-                  {review.loanOfficer?.email}
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Response Section */}
           {review.responseText && (

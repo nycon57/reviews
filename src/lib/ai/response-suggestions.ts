@@ -27,11 +27,30 @@ export interface ReviewContext {
   keyPhrases?: string[];
 }
 
-// Tone descriptions for the AI prompt
+// Tone descriptions for the AI prompt - make each tone DISTINCTLY different
 const TONE_DESCRIPTIONS: Record<ResponseTone, string> = {
-  professional: 'Maintain a professional, business-like tone. Be courteous and formal while still being warm. Use proper grammar and avoid slang.',
-  friendly: 'Use a warm, conversational tone. Be personable and approachable while maintaining professionalism. Include genuine appreciation.',
-  empathetic: 'Show deep understanding and compassion. Acknowledge any frustrations or concerns. Focus on resolving issues and rebuilding trust.',
+  professional: `FORMAL BUSINESS TONE:
+- Use "Dear [Name]" greeting
+- NO contractions (write "I am" not "I'm", "would not" not "wouldn't")
+- Formal vocabulary: "appreciate", "pleasure", "sincerely", "grateful"
+- Sign off with "Best regards" or "Sincerely"
+- Keep sentences structured and polished`,
+
+  friendly: `CASUAL, WARM TONE:
+- Use "Hi [Name]!" or "Hey [Name]!" greeting with exclamation
+- USE contractions freely (I'm, you're, that's, wouldn't)
+- Casual vocabulary: "awesome", "great", "really happy", "so glad"
+- Use exclamation marks for enthusiasm!
+- Sign off with "Thanks so much!" or "Cheers"
+- Feel free to be conversational and upbeat`,
+
+  empathetic: `DEEPLY UNDERSTANDING TONE:
+- Use "Dear [Name]" greeting
+- Lead with acknowledging their FEELINGS: "I can only imagine...", "I truly understand...", "Your frustration is completely valid..."
+- Use emotional language: "means so much", "deeply appreciate", "touched by"
+- For concerns: validate first, then address
+- Sign off with "Warmly" or "With sincere appreciation"
+- Focus on the HUMAN connection, not just the transaction`,
 };
 
 // Generate the system prompt for response suggestions
@@ -48,33 +67,33 @@ function getSystemPrompt(tone: ResponseTone, context: ReviewContext): string {
     ? `Key phrases from the review: "${context.keyPhrases.join('", "')}".`
     : '';
 
-  return `You are an expert at writing personalized responses to customer reviews for professionals.
-Your task is to generate a thoughtful, contextual response to a customer review.
+  return `You are an expert at writing personalized responses to customer reviews for mortgage professionals.
 
-TONE REQUIREMENT: ${TONE_DESCRIPTIONS[tone]}
+CRITICAL - TONE REQUIREMENT (you MUST follow this exactly):
+${TONE_DESCRIPTIONS[tone]}
 
 CONTEXT:
-- This is a ${context.source} review with a ${context.rating}-star rating.
-- The loan officer's name is ${context.loanOfficerName}.
+- ${context.source} review, ${context.rating}-star rating
+- Loan officer: ${context.loanOfficerName}
+- Customer: ${context.customerName || 'Valued Customer'}
 ${sentimentContext}
 ${themesContext}
 ${keyPhrasesContext}
 
-GUIDELINES:
-1. Address the customer by name if provided, otherwise use "Valued Customer"
-2. For positive reviews (4-5 stars): Express genuine gratitude, highlight specific positives they mentioned, encourage referrals
-3. For neutral reviews (3 stars): Thank them, acknowledge areas for improvement, offer to discuss further
-4. For negative reviews (1-2 stars): Apologize sincerely, acknowledge specific concerns, offer to make things right, provide contact info
-5. Keep responses between 75-150 words for optimal engagement
-6. Never be defensive or dismissive of feedback
-7. End with the loan officer's name as signature
-8. Include a subtle call-to-action when appropriate (referrals for positive, follow-up for negative)
+CONTENT GUIDELINES:
+- For 4-5 stars: Thank them, reference specifics they mentioned, subtle referral ask
+- For 3 stars: Thank them, acknowledge room to improve, offer to discuss
+- For 1-2 stars: Apologize sincerely, acknowledge their specific concerns, offer resolution
+- Keep to 75-150 words
+- Sign with the loan officer's name
 
-Respond with a JSON object:
+IMPORTANT: The tone styling above is MORE important than these content guidelines. A "friendly" response should feel completely different from a "professional" one.
+
+Return JSON:
 {
-  "response": "<the full response text>",
-  "keyPoints": ["<2-3 key points addressed in the response>"],
-  "suggestedFollowUp": "<optional: suggested follow-up action if applicable>"
+  "response": "<full response text following the tone exactly>",
+  "keyPoints": ["<2-3 points addressed>"],
+  "suggestedFollowUp": "<optional follow-up action>"
 }`;
 }
 
@@ -95,7 +114,16 @@ export async function generateResponseSuggestion(
   for (let attempt = 0; attempt < AI_CONFIG.maxRetries; attempt++) {
     try {
       const response = await createChatCompletion(systemPrompt, userPrompt);
-      const parsed = JSON.parse(response);
+
+      // Try to extract JSON from the response (handle markdown code blocks)
+      let jsonStr = response.trim();
+      const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1].trim();
+      }
+
+      // Parse the JSON
+      const parsed = JSON.parse(jsonStr);
 
       // Validate response structure
       if (!parsed.response || typeof parsed.response !== 'string') {

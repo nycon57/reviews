@@ -29,9 +29,11 @@ import {
   BuildingOffice as Building2,
   IdentificationBadge,
 } from "@phosphor-icons/react";
-import { updateProfile, uploadAvatar } from '@/lib/auth/profile-actions';
+import { updateProfile, uploadAvatar, updateUserSlug } from '@/lib/auth/profile-actions';
 import { AvatarUpload } from '@/components/shared/avatar-upload';
+import { EditSlugDialog } from '@/components/shared/edit-slug-dialog';
 import { updateProfileSchema } from '@/lib/auth/profile-schemas';
+import { Link as LinkIcon, PencilSimple } from "@phosphor-icons/react";
 
 type ProfileFormData = z.infer<typeof updateProfileSchema>;
 
@@ -58,6 +60,9 @@ interface ProfileFormProps {
   initialLinkedinUrl?: string | null;
   initialZillowProfileUrl?: string | null;
   initialTimezone?: string | null;
+  initialSlug?: string | null;
+  userId?: string;
+  isAdmin?: boolean;
 }
 
 export function ProfileForm({
@@ -72,10 +77,15 @@ export function ProfileForm({
   initialLinkedinUrl,
   initialZillowProfileUrl,
   initialTimezone,
+  initialSlug,
+  userId,
+  isAdmin = false,
 }: ProfileFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl ?? null);
   const [avatarChanged, setAvatarChanged] = useState(false);
+  const [slugDialogOpen, setSlugDialogOpen] = useState(false);
+  const [currentSlug, setCurrentSlug] = useState(initialSlug || '');
   const { toast } = useToast();
 
   const {
@@ -152,6 +162,7 @@ export function ProfileForm({
   };
 
   return (
+    <>
     <Card className="border border-border shadow-soft overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
         <div className="flex items-center gap-3">
@@ -214,7 +225,46 @@ export function ProfileForm({
             </div>
           </div>
 
-          {/* Section 2: Professional Details */}
+          {/* Section 2: Public Profile URL */}
+          {initialSlug && (
+            <div className="p-6 border-b border-border/50">
+              <div className="flex items-center gap-2 mb-4">
+                <LinkIcon className="h-4 w-4 text-repwell-teal-300" />
+                <h3 className="text-sm font-semibold text-repwell-teal-500 uppercase tracking-wide">
+                  Public Profile URL
+                </h3>
+              </div>
+              <div className="rounded-lg border bg-muted/50 p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-muted-foreground mb-1">Your public profile can be accessed at:</p>
+                    <p className="text-sm font-mono break-all text-repwell-teal-400">
+                      {typeof window !== 'undefined' ? window.location.origin : ''}/pro/{currentSlug}
+                    </p>
+                  </div>
+                  {isAdmin && userId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSlugDialogOpen(true)}
+                      className="shrink-0"
+                    >
+                      <PencilSimple className="h-4 w-4 mr-2" />
+                      Edit URL
+                    </Button>
+                  )}
+                </div>
+                {!isAdmin && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Contact your admin to change your profile URL.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Section 3: Professional Details */}
           <div className="p-6 border-b border-border/50">
             <div className="flex items-center gap-2 mb-4">
               <Briefcase className="h-4 w-4 text-repwell-teal-300" />
@@ -409,5 +459,26 @@ export function ProfileForm({
         </form>
       </CardContent>
     </Card>
+
+      {/* Slug Edit Dialog */}
+      {isAdmin && userId && (
+        <EditSlugDialog
+          open={slugDialogOpen}
+          onOpenChange={setSlugDialogOpen}
+          currentSlug={currentSlug}
+          entityName={initialName || 'User'}
+          entityType="user"
+          baseUrl={typeof window !== 'undefined' ? window.location.origin : ''}
+          pathPrefix="/pro"
+          onSave={async (newSlug) => {
+            const result = await updateUserSlug(userId, newSlug);
+            if (result.success) {
+              setCurrentSlug(newSlug);
+            }
+            return { success: result.success, error: result.error };
+          }}
+        />
+      )}
+    </>
   );
 }

@@ -417,14 +417,14 @@ export async function postResponse(
 
   // Send email notification to reviewer (only for internal reviews with customer email)
   if (review.source === "internal" && review.customer_email) {
-    const loanOfficer = review.loan_officers as unknown as { full_name: string };
+    const loanOfficer = review.users as { full_name: string } | null;
     const organization = review.organizations as unknown as { name: string };
 
     await sendReviewResponseEmail({
       toEmail: review.customer_email,
       toName: review.customer_name || undefined,
       customerName: review.customer_name || "Valued Customer",
-      loanOfficerName: loanOfficer.full_name,
+      loanOfficerName: loanOfficer?.full_name ?? "Team Member",
       organizationName: organization.name,
       originalReviewText: review.text || null,
       responseText: responseText,
@@ -641,12 +641,12 @@ export async function generateAISuggestion(
   }
 
   // Build review context for AI
-  const loanOfficer = review.loan_officers as unknown as { full_name: string };
+  const loanOfficer = review.users as { full_name: string } | null;
   const reviewContext: ReviewContext = {
     text: review.text,
     rating: review.rating,
     customerName: review.customer_name,
-    loanOfficerName: loanOfficer.full_name,
+    loanOfficerName: loanOfficer?.full_name ?? "Team Member",
     source: review.source,
     sentimentScore: review.sentiment_score,
     sentimentLabel: review.sentiment_label,
@@ -712,12 +712,12 @@ export async function trackResponseEdit(
     return { success: false, error: "Review not found" };
   }
 
-  const loanOfficer = review.loan_officers as unknown as { full_name: string };
+  const loanOfficer = review.users as { full_name: string } | null;
   const reviewContext: ReviewContext = {
     text: review.text,
     rating: review.rating,
     customerName: review.customer_name,
-    loanOfficerName: loanOfficer.full_name,
+    loanOfficerName: loanOfficer?.full_name ?? "Team Member",
     source: review.source,
     sentimentScore: review.sentiment_score,
     sentimentLabel: review.sentiment_label,

@@ -350,11 +350,11 @@ export function OrganizationBilling() {
               <div className="flex justify-between text-sm">
                 <span>Professionals</span>
                 <span className="text-muted-foreground">
-                  {limits.max_loan_officers === -1 ? "Unlimited" : `${billingData?.usage?.currentMembers || 0} / ${limits.max_loan_officers}`}
+                  {limits.max_professionals === -1 ? "Unlimited" : `${billingData?.usage?.currentMembers || 0} / ${limits.max_professionals}`}
                 </span>
               </div>
-              {limits.max_loan_officers !== -1 && (
-                <Progress value={((billingData?.usage?.currentMembers || 0) / limits.max_loan_officers) * 100} className="h-2" />
+              {limits.max_professionals !== -1 && (
+                <Progress value={((billingData?.usage?.currentMembers || 0) / limits.max_professionals) * 100} className="h-2" />
               )}
             </div>
 
@@ -417,7 +417,7 @@ export function OrganizationBilling() {
                           {tierLimits.max_users === -1 ? "Unlimited" : tierLimits.max_users} team members
                         </li>
                         <li>
-                          {tierLimits.max_loan_officers === -1 ? "Unlimited" : tierLimits.max_loan_officers} professionals
+                          {tierLimits.max_professionals === -1 ? "Unlimited" : tierLimits.max_professionals} professionals
                         </li>
                         <li>
                           {tierLimits.max_surveys_per_month === -1 ? "Unlimited" : tierLimits.max_surveys_per_month.toLocaleString()} surveys/mo

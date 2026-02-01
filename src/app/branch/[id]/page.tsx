@@ -44,7 +44,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const { branch, organization, loanOfficers, reviews } = result.data;
+  const { branch, organization, professionals, reviews } = result.data;
   const baseUrl = getBaseUrl();
 
   // Add is_published and status for schema filtering
@@ -72,7 +72,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
       total_reviews: branch.total_reviews,
     },
     organization,
-    loanOfficers,
+    professionals,
     reviewsWithStatus,
     baseUrl
   );
@@ -83,7 +83,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
       <BranchProfileContent
         branch={branch}
         organization={organization}
-        loanOfficers={loanOfficers}
+        professionals={professionals}
         reviews={reviews}
       />
     </>

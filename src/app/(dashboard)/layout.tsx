@@ -38,13 +38,14 @@ export default async function DashboardRootLayout({
     .eq("id", authUser.id)
     .single();
 
-  // Cast to access potentially untyped columns (is_owner, account_type)
+  // Cast to access potentially untyped columns (is_owner, account_type, slug)
   const profile = profileData as {
     full_name?: string | null;
-    photo_url?: string | null;
+    avatar_url?: string | null;
     role?: string | null;
     is_owner?: boolean | null;
     organization_id?: string | null;
+    slug?: string | null;
     organizations?: {
       account_type?: string | null;
       subscription_tier?: string | null;
@@ -59,9 +60,10 @@ export default async function DashboardRootLayout({
   const user = {
     name: profile?.full_name || authUserName || "User",
     email: authUser.email || "",
-    avatar: profile?.photo_url || undefined,
+    avatar: profile?.avatar_url || undefined,
     initials: getInitials(profile?.full_name || authUserName || null),
     loanOfficerId: authUser.id, // User ID is now the professional ID
+    slug: profile?.slug || undefined,
   };
 
   // Build user context for permission system

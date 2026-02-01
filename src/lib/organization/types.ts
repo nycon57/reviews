@@ -22,7 +22,7 @@ export type Address = z.infer<typeof addressSchema>;
 // Organization limits schema
 export const organizationLimitsSchema = z.object({
   max_users: z.number().default(10),
-  max_loan_officers: z.number().default(50),
+  max_professionals: z.number().default(50),
   max_surveys_per_month: z.number().default(1000),
   max_api_calls_per_day: z.number().default(10000),
 });
@@ -126,7 +126,7 @@ export const organizationMemberSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
   full_name: z.string().nullable(),
-  photo_url: z.string().url().nullable(),
+  avatar_url: z.string().url().nullable(),
   role: z.enum(["admin", "manager", "user"]),
   is_active: z.boolean(),
   last_login_at: z.string().nullable(),
@@ -208,25 +208,25 @@ export const TIER_FEATURES: Record<SubscriptionTier, OrganizationFeatures> = {
 export const TIER_LIMITS: Record<SubscriptionTier, OrganizationLimits> = {
   free: {
     max_users: 3,
-    max_loan_officers: 5,
+    max_professionals: 5,
     max_surveys_per_month: 100,
     max_api_calls_per_day: 100,
   },
   starter: {
     max_users: 10,
-    max_loan_officers: 25,
+    max_professionals: 25,
     max_surveys_per_month: 500,
     max_api_calls_per_day: 1000,
   },
   professional: {
     max_users: 50,
-    max_loan_officers: 100,
+    max_professionals: 100,
     max_surveys_per_month: 2500,
     max_api_calls_per_day: 10000,
   },
   enterprise: {
     max_users: -1, // unlimited
-    max_loan_officers: -1, // unlimited
+    max_professionals: -1, // unlimited
     max_surveys_per_month: -1, // unlimited
     max_api_calls_per_day: -1, // unlimited
   },

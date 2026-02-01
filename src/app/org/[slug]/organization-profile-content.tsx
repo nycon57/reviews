@@ -23,12 +23,17 @@ import type {
   PublicOrgProfessional,
   PublicOrgTestimonial,
 } from "@/lib/seo/actions";
+import {
+  DirectoryBreadcrumbs,
+  type DirectoryBreadcrumbItem,
+} from "@/components/shared/directory-breadcrumbs";
 
 interface OrganizationProfileContentProps {
   organization: PublicOrganization;
   branches: PublicOrgBranch[];
   featuredProfessionals: PublicOrgProfessional[];
   testimonials: PublicOrgTestimonial[];
+  breadcrumbs?: DirectoryBreadcrumbItem[];
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -87,6 +92,7 @@ export function OrganizationProfileContent({
   branches,
   featuredProfessionals,
   testimonials,
+  breadcrumbs,
 }: OrganizationProfileContentProps) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -99,6 +105,11 @@ export function OrganizationProfileContent({
           }}
         />
         <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+          {/* Breadcrumbs */}
+          {breadcrumbs && breadcrumbs.length > 0 && (
+            <DirectoryBreadcrumbs items={breadcrumbs} className="mb-6" />
+          )}
+
           <div className="flex flex-col items-center gap-6 text-center">
             {/* Logo */}
             <div className="h-28 w-28 overflow-hidden rounded-2xl border-4 border-background bg-white shadow-lg">

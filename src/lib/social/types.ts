@@ -97,7 +97,9 @@ export const TEMPLATE_PLACEHOLDERS = {
   '{{rating_stars}}': 'Star emoji representation',
   '{{review_text}}': 'Full review text',
   '{{review_excerpt}}': 'Shortened review excerpt',
-  '{{loan_officer_name}}': 'Loan officer full name',
+  '{{professional_name}}': "Professional's full name",
+  /** @deprecated Use {{professional_name}} instead */
+  '{{loan_officer_name}}': "Professional's full name (deprecated)",
   '{{branch_name}}': 'Branch name',
   '{{organization_name}}': 'Organization name',
   '{{hashtags}}': 'Platform-appropriate hashtags',
@@ -164,6 +166,8 @@ export function fillTemplatePlaceholders(
     reviewerName?: string;
     rating?: number;
     reviewText?: string;
+    professionalName?: string;
+    /** @deprecated Use professionalName instead */
     loanOfficerName?: string;
     branchName?: string;
     organizationName?: string;
@@ -191,8 +195,11 @@ export function fillTemplatePlaceholders(
         : data.reviewText;
     result = result.replace(/\{\{review_excerpt\}\}/g, excerpt);
   }
-  if (data.loanOfficerName) {
-    result = result.replace(/\{\{loan_officer_name\}\}/g, data.loanOfficerName);
+  // Support both new and deprecated variable names
+  const professionalName = data.professionalName || data.loanOfficerName;
+  if (professionalName) {
+    result = result.replace(/\{\{professional_name\}\}/g, professionalName);
+    result = result.replace(/\{\{loan_officer_name\}\}/g, professionalName);
   }
   if (data.branchName) {
     result = result.replace(/\{\{branch_name\}\}/g, data.branchName);

@@ -22,7 +22,7 @@ export interface Review {
     id: string;
     fullName: string;
     email: string;
-    photoUrl: string | null;
+    avatarUrl: string | null;
   };
   surveyResponse?: {
     id: string;
@@ -45,6 +45,8 @@ export interface AggregatedReview extends Review {
   responseAt: string | null;
   responseBy: string | null;
   responseSyncedAt: string | null;
+  responseTemplateId: string | null;
+  aiSuggestedResponse: string | null;
   featured: boolean;
   syncedAt: string | null;
   updatedAt: string;

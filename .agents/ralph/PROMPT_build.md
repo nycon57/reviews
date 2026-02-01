@@ -15,9 +15,14 @@ Before each run, check {{PROGRESS_PATH}} for entries on this story ({{STORY_ID}}
 ### Pass-Specific Tasks
 
 **Pass 1 - Implementation:**
-- Read `docs/design/REPWELL_DESIGN_SYSTEM` for design standards
 - Load `/feature-dev` for architecture planning
+- Load story-specific skills (see Skill Invocation Matrix below)
+- If UI story: **read `docs/design/REPWELL_DESIGN_SYSTEM` first**, then load `/frontend-design`, `/better-icons`
+- If Next.js page/route: load `/next-best-practices`
+- If Supabase work: load `/supabase-postgres-best-practices`
 - Implement core functionality per acceptance criteria
+- Run `/vercel-react-best-practices` on any React components written
+- Run `/next-best-practices` on any Next.js pages/routes written
 - Run `npm run build && npm run lint`
 - Commit with message prefix: `[Pass 1/3]`
 - DO NOT output `<promise>COMPLETE</promise>`
@@ -26,16 +31,19 @@ Before each run, check {{PROGRESS_PATH}} for entries on this story ({{STORY_ID}}
 **Pass 2 - Quality Review:**
 - Run `/code-review` on all changes from Pass 1
 - Run `/vercel-react-best-practices` on React code
+- Run `/next-best-practices` on Next.js code
+- If UI story: verify UI matches `docs/design/REPWELL_DESIGN_SYSTEM` specs, then run `/web-design-guidelines` for accessibility/UX audit
+- If form story: run `/form-cro` to optimize form conversion
 - Fix identified issues (bugs, security, logic errors)
-- Verify design system compliance
 - Commit with message prefix: `[Pass 2/3]`
 - DO NOT output `<promise>COMPLETE</promise>`
 - End the run normally
 
 **Pass 3 - Polish & Finalize:**
 - Run `/code-simplifier` on all story code
-- Run `/frontend-design` audit (for UI stories)
-- Browser verification for any UI changes
+- Run `/writing-clearly-and-concisely` on all user-facing text, error messages, comments
+- If UI story: final design system compliance audit against `docs/design/REPWELL_DESIGN_SYSTEM`, then run `/frontend-design` audit, then `/agent-browser` for browser verification
+- If marketing/copy story: run `/copywriting` for final copy polish
 - Final verification of ALL acceptance criteria
 - Commit with message prefix: `[Pass 3/3]`
 - ONLY output `<promise>COMPLETE</promise>` if ALL criteria pass
@@ -69,6 +77,15 @@ Story details:
 
 If the story details are empty or missing, STOP and report that the PRD story format could not be parsed.
 
+## Design & Pattern References
+- **Design System**: `docs/design/REPWELL_DESIGN_SYSTEM` — **MANDATORY for all UI work**
+- **UI Reference**: Mobbin.com for production-grade design patterns (see Mobbin section below)
+
+**RULES:**
+- Read `REPWELL_DESIGN_SYSTEM` before any UI implementation
+- Match the polish level of Stripe Dashboard or Linear
+- All component styling must comply with design system specs
+
 ## Rules (Non-Negotiable)
 - Implement **only** the work required to complete the selected story.
 - Complete all tasks associated with this story (and only this story).
@@ -81,52 +98,218 @@ If the story details are empty or missing, STOP and report that the PRD story fo
 - All changes made during the run must be committed (including updates to progress/logs).
  - Before committing, perform a final **security**, **performance**, and **regression** review of your changes.
 
-## Plugin Strategy (Load Based on Story Phase)
+## Skill Invocation Matrix
 
-Before implementing, determine which phase the story belongs to and load the appropriate plugins:
+**CRITICAL**: Invoke skills proactively. Do not wait to be asked. Load them via `/skill-name`.
 
-### Phase 1 (S001-S010, S012) - Foundation MVP
-- Run `/feature-dev` for architecture planning on complex stories
-- Use `feature-dev:code-architect` for S003 (Auth), S005 (Survey Builder)
+### Universal Skills (EVERY story, EVERY pass)
+| Skill | When |
+|-------|------|
+| `/next-best-practices` | Any Next.js code (pages, routes, layouts, middleware, metadata) |
+| `/vercel-react-best-practices` | Any React component |
+| `/supabase-postgres-best-practices` | Any Supabase work: queries, schema, RLS, migrations, clients, types |
+| `/writing-clearly-and-concisely` | Any prose: comments, error messages, UI text, docs |
+| `/commit` | End of each pass |
 
-### Phase 2 (S009, S011, S013-S016, S026, S031) - Enhanced Features
-- Run `/frontend-design` for dashboard UI stories (S011, S013, S014)
-- Use `/feature-dev` for integration stories (S015 Google API)
+### Per-Story Skill Map
 
-### Phase 3 (S017-S022, S032) - AI & Advanced
-- ALWAYS run `/feature-dev` before AI stories - architecture is critical
-- Use `feature-dev:code-architect` for S019 (Sentiment Analysis) as it sets patterns
+#### Phase 1: Foundation (E1) — S001-S010, S012
+| Story | Required Skills |
+|-------|----------------|
+| S001 | `/feature-dev`, `/vercel-composition-patterns` |
+| S002 | `/supabase-postgres-best-practices` |
+| S003 | `/supabase-postgres-best-practices`, `/feature-dev` |
+| S004 | `/supabase-postgres-best-practices` |
+| S005 | `/feature-dev`, `/frontend-design` |
+| S006 | `/frontend-design`, `/form-cro` |
+| S007 | `/frontend-design`, `/better-icons` |
+| S008 | `/frontend-design`, `/analytics-tracking` |
+| S009 | `/frontend-design`, `/form-cro` |
+| S010 | `/frontend-design` |
+| S012 | `/feature-dev`, `/supabase-postgres-best-practices` |
 
-### Phase 4 (S023-S030) - Mobile & Integrations
-- Run `/frontend-design` for all mobile UI stories (S023-S025)
-- Use `/feature-dev` for API/integration stories (S027-S030)
+#### Phase 2: Enhanced Features (E2-E4) — S009, S011, S013-S016, S026, S031
+| Story | Required Skills |
+|-------|----------------|
+| S011 | `/frontend-design`, `/better-icons` |
+| S013 | `/feature-dev`, `/next-cache-components`, `/next-best-practices` |
+| S014 | `/frontend-design`, `/analytics-tracking` |
+| S015 | `/feature-dev`, `/analytics-tracking` |
+| S016 | `/frontend-design`, `/form-cro` |
+| S026 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S031 | `/frontend-design` |
 
-### Phase 10 (E15) - Video Testimonials Epic
-**Focus**: Video recording, processing, and testimonial management
-**Stories**: S050-S059 (approximately)
+#### Phase 3: AI & Advanced (E5) — S017-S022, S032
+| Story | Required Skills |
+|-------|----------------|
+| S017 | `/feature-dev`, `/ai-sdk` |
+| S018 | `/feature-dev`, `/ai-sdk` |
+| S019 | `/feature-dev`, `/ai-sdk`, `/supabase-postgres-best-practices` |
+| S020 | `/feature-dev`, `/ai-sdk` |
+| S021 | `/frontend-design`, `/ai-sdk` |
+| S022 | `/feature-dev`, `/ai-sdk` |
+| S032 | `/feature-dev`, `/email-best-practices`, `/react-email`, `/resend`, `/send-email` |
 
-**Required Plugins (ALL stories):**
-- `/feature-dev` - ALWAYS run at start for architecture planning
-- `/vercel-react-best-practices` - ALWAYS run for React component optimization
-- `/frontend-design` - For video player UI, recording interface, gallery components
-- `/code-review` - Run during Pass 2 for quality assurance
-- `/code-simplifier` - Run during Pass 3 for clean, maintainable code
+#### Phase 4: Mobile & Integrations (E6-E7) — S023-S030
+| Story | Required Skills |
+|-------|----------------|
+| S023 | `/feature-dev`, `/vercel-composition-patterns` |
+| S024 | `/frontend-design` |
+| S025 | `/frontend-design` |
+| S026 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S027 | `/feature-dev`, `/next-best-practices` |
+| S028 | `/feature-dev` |
+| S029 | `/frontend-design`, `/feature-dev` |
+| S030 | `/feature-dev` |
 
-**Mandatory Requirements:**
-- **Design System**: Read `docs/design/REPWELL_DESIGN_SYSTEM` BEFORE any UI work
-- **React Patterns**: All components must follow Vercel React best practices
-- **3-Pass Minimum**: No story completes until Pass 3 verification passes
+#### Phase 5-9: Marketing, Integrations, AI Visibility, Docs (E8-E12)
+| Story | Required Skills |
+|-------|----------------|
+| S033-S036 | `/frontend-design`, `/seo-audit`, `/schema-markup`, `/copywriting` |
+| S037-S040 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S041-S044 | `/feature-dev`, `/seo-audit`, `/schema-markup` |
+| S045-S048 | `/frontend-design`, `/copywriting` |
 
-**Technical Guidelines:**
-- Use native MediaRecorder API for video capture
-- Implement proper loading/processing states for video uploads
-- Ensure mobile-first responsive design for recording UI
-- Apply accessibility standards for video controls (WCAG 2.1 AA)
-- Use ShadCN components as foundation, style per design system
+#### Phase 10: Video Testimonials (E15) — S050-S059
+| Story | Required Skills |
+|-------|----------------|
+| ALL | `/feature-dev`, `/vercel-react-best-practices`, `/frontend-design` |
+
+#### Phase 11: Product Email Sequencing (E16) — S073-S095
+| Story | Required Skills |
+|-------|----------------|
+| S073 | `/frontend-design`, `/react-email` |
+| S074-S076 | `/email-sequence`, `/react-email`, `/resend`, `/send-email`, `/copywriting` |
+| S077-S079 | `/email-sequence`, `/react-email`, `/resend`, `/send-email` |
+| S080-S082 | `/email-sequence`, `/react-email`, `/copywriting` |
+| S083-S085 | `/email-sequence`, `/react-email`, `/resend` |
+| S086-S089 | `/email-sequence`, `/react-email`, `/stripe-best-practices` |
+| S090 | `/frontend-design`, `/form-cro` |
+| S091 | `/frontend-design`, `/analytics-tracking` |
+| S092 | `/feature-dev`, `/ab-test-setup` |
+| S093-S094 | `/feature-dev`, `/email-best-practices` |
+| S095 | `/feature-dev`, `/vercel-composition-patterns` |
+
+#### Phase 12: SMS Channel (E18) — S096-S113
+| Story | Required Skills |
+|-------|----------------|
+| S096 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S097 | `/feature-dev` |
+| S098 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S099 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S100 | `/feature-dev` |
+| S101 | `/feature-dev`, `/next-best-practices` |
+| S102 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S103 | `/frontend-design`, `/form-cro` |
+| S104 | `/frontend-design`, `/form-cro`, `/signup-flow-cro` |
+| S105 | `/frontend-design`, `/form-cro` |
+| S106 | `/frontend-design`, `/stripe-best-practices` |
+| S107 | `/frontend-design`, `/form-cro` |
+| S108 | `/frontend-design`, `/form-cro` |
+| S109 | `/frontend-design`, `/analytics-tracking` |
+| S110 | `/feature-dev`, `/vercel-composition-patterns` |
+| S111 | `/feature-dev`, `/next-best-practices` |
+| S112 | `/frontend-design`, `/vercel-composition-patterns` |
+| S113 | `/feature-dev`, `/frontend-design`, `/supabase-postgres-best-practices` |
+
+#### Phase 13: Competitor Comparison Pages (E19) — S114-S131
+| Story | Required Skills |
+|-------|----------------|
+| S114 | `/feature-dev` |
+| S115 | `/frontend-design`, `/vercel-composition-patterns` |
+| S116 | `/frontend-design`, `/better-icons`, `/seo-audit` |
+| S117 | `/frontend-design`, `/pricing-strategy` |
+| S118 | `/frontend-design`, `/copywriting` |
+| S119 | `/frontend-design`, `/better-icons` |
+| S120 | `/frontend-design`, `/better-icons` |
+| S121 | `/frontend-design` |
+| S122 | `/frontend-design`, `/schema-markup` |
+| S123 | `/frontend-design` |
+| S124 | `/copywriting`, `/competitor-alternatives`, `/page-cro` |
+| S125 | `/copywriting`, `/competitor-alternatives`, `/page-cro` |
+| S126 | `/seo-audit`, `/schema-markup`, `/next-best-practices` |
+| S127 | `/analytics-tracking`, `/next-best-practices` |
+| S128 | `/frontend-design` |
+| S129 | `/copywriting`, `/competitor-alternatives` |
+| S130 | `/seo-audit`, `/next-best-practices` |
+| S131 | `/feature-dev`, `/ab-test-setup`, `/analytics-tracking` |
+
+#### Phase 14: Embeddable Review Widgets (E20) — S132-S165
+| Story | Required Skills |
+|-------|----------------|
+| S132 | `/feature-dev`, `/supabase-postgres-best-practices` |
+| S133 | `/feature-dev`, `/next-best-practices` |
+| S134 | `/feature-dev`, `/next-best-practices` |
+| S135 | `/feature-dev`, `/vercel-composition-patterns` |
+| S136 | `/frontend-design` |
+| S137 | `/frontend-design` |
+| S138 | `/frontend-design` |
+| S139 | `/frontend-design`, `/form-cro` |
+| S140 | `/frontend-design` |
+| S141 | `/frontend-design` |
+| S142 | `/schema-markup`, `/seo-audit` |
+| S143 | `/feature-dev`, `/next-best-practices` |
+| S144 | `/feature-dev` |
+| S145 | `/frontend-design`, `/analytics-tracking` |
+| S146 | `/frontend-design` |
+| S147 | `/frontend-design` |
+| S148 | `/frontend-design` |
+| S149 | `/frontend-design` |
+| S150 | `/frontend-design` |
+| S151 | `/frontend-design`, `/popup-cro` |
+| S152 | `/frontend-design` |
+| S153 | `/feature-dev`, `/ab-test-setup` |
+| S154 | `/frontend-design`, `/analytics-tracking` |
+| S155 | `/feature-dev`, `/vercel-composition-patterns` |
+| S156 | `/feature-dev` |
+| S157 | `/frontend-design`, `/vercel-composition-patterns` |
+| S158 | `/frontend-design`, `/copywriting` |
+| S159 | `/feature-dev`, `/frontend-design` |
+| S160 | `/frontend-design`, `/seo-audit`, `/schema-markup` |
+| S161 | `/feature-dev` |
+| S162 | `/frontend-design` |
+| S163 | `/frontend-design`, `/copywriting` |
+| S164 | `/feature-dev` |
+| S165 | `/feature-dev` |
+
+### Pass-Specific Skills (apply to ALL stories)
+
+**Pass 1** (Implementation): Story-specific skills from table above
+**Pass 2** (Quality Review): `/code-review`, `/web-design-guidelines` (if UI), `/next-best-practices`
+**Pass 3** (Polish): `/code-simplifier`, `/writing-clearly-and-concisely`, `/agent-browser` (if UI), `/frontend-design` (if UI)
 
 ### After Every Story
 - Run `/code-simplifier` to ensure clean, maintainable code
 - For complex stories, consider running `/code-review` before committing
+
+## RepWell-Specific Guardrails
+
+**Supabase (invoke `/supabase-postgres-best-practices` ALWAYS):**
+- Universal skill — invoke on EVERY story that touches the database
+- Covers: query optimization, RLS policy design, index strategy, migration patterns, connection pooling, type generation
+- Run `npm run db:types` after any schema changes
+
+**Email via Resend (invoke ALL email skills for guidance):**
+- When building any email feature, invoke ALL of: `/email-best-practices`, `/email-sequence`, `/react-email`, `/resend`, `/send-email`
+- Build email templates with React Email components
+- Follow deliverability best practices
+- Applies to: S032, S073-S095, and any future story adding email features
+
+**SMS/Twilio (E18 stories):**
+- TCPA compliance (S098) and 10DLC registration (S104) are legal requirements before production SMS
+- All SMS sends must check consent, quiet hours, and credit balance
+- Phone numbers stored as E.164, displayed as (XXX) XXX-XXXX
+
+**Competitor Pages (E19 stories):**
+- All copy must be factual and defensible — no unsubstantiated claims
+- JSON-LD must validate in Google Rich Results Test
+- Performance target: Lighthouse 90+ on all pages
+
+**Widgets (E20 stories):**
+- embed.js must be < 15KB gzipped — enforce in CI
+- Shadow DOM encapsulation required — no style leakage
+- NMLS disclaimer required on all mortgage-related widgets
+- Widget must not block host page rendering
 
 ## RepWell Design System (MANDATORY)
 
@@ -169,7 +352,7 @@ Before any UI implementation:
 1. Read {{GUARDRAILS_PATH}} before any code changes.
 2. Read {{ERRORS_LOG_PATH}} for repeated failures to avoid.
 3. Read {{PRD_PATH}} for global context (do not edit).
-4. **Determine the story's phase and load appropriate plugins** (see Plugin Strategy above).
+4. **Determine the story's group and load appropriate skills** (see Skill Invocation Matrix above).
 5. Fully audit and read all necessary files to understand the task end-to-end before implementing. Do not assume missing functionality.
 6. If {{AGENTS_PATH}} exists, follow its build/test instructions.
 8. Implement only the tasks that belong to {{STORY_ID}}.
@@ -183,7 +366,7 @@ Before any UI implementation:
     - **Security:** check for obvious vulnerabilities or unsafe handling introduced by your changes.
     - **Performance:** check for avoidable regressions (extra queries, heavy loops, unnecessary re-renders).
     - **Regression:** verify existing behavior that could be impacted still works.
-13. If No-commit is false, commit changes using the `$commit` skill.
+13. If No-commit is false, commit changes using the `/commit` skill.
     - Stage everything: `git add -A`
     - Confirm a clean working tree after commit: `git status --porcelain` should be empty.
     - After committing, capture the commit hash and subject using:
@@ -207,8 +390,14 @@ Run summary: {{RUN_META_PATH}}
   - /feature-dev: [yes/no]
   - /code-review: [yes/no]
   - /vercel-react-best-practices: [yes/no]
+  - /next-best-practices: [yes/no]
+  - /supabase-postgres-best-practices: [yes/no]
   - /code-simplifier: [yes/no]
   - /frontend-design: [yes/no]
+  - /web-design-guidelines: [yes/no]
+  - /writing-clearly-and-concisely: [yes/no]
+  - /agent-browser: [yes/no]
+  - Other skills: [list any additional skills invoked, e.g. /stripe-best-practices, /form-cro, /copywriting]
 - Verification:
   - Command: <exact command> -> PASS/FAIL
   - Command: <exact command> -> PASS/FAIL
@@ -249,7 +438,7 @@ Log at least:
 
 ## Browser Testing (Required for Frontend Stories)
 If the selected story changes UI, you MUST verify it in the browser:
-1. Load the `dev-browser` skill.
+1. Load the `/agent-browser` skill.
 2. Navigate to the relevant page.
 3. Verify the UI changes work as expected.
 4. Take a screenshot if helpful for the progress log.

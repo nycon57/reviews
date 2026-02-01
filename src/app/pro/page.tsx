@@ -40,7 +40,7 @@ export default async function LOListingPage() {
     );
   }
 
-  const { loanOfficers, organization } = result.data;
+  const { professionals, organization } = result.data;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -60,7 +60,7 @@ export default async function LOListingPage() {
 
       {/* Loan Officers Grid */}
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        {loanOfficers.length === 0 ? (
+        {professionals.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <Users className="h-16 w-16 text-muted-foreground/50" />
             <p className="mt-4 text-lg text-muted-foreground">
@@ -69,14 +69,14 @@ export default async function LOListingPage() {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {loanOfficers.map((professional) => {
+            {professionals.map((professional) => {
               const address = professional.address as { city?: string; state?: string } | null;
               const location = address
                 ? [address.city, address.state].filter(Boolean).join(", ")
                 : [professional.branch, professional.region].filter(Boolean).join(", ");
 
               return (
-                <Link key={professional.id} href={`/pro/${professional.id}`}>
+                <Link key={professional.id} href={`/pro/${professional.slug || professional.id}`}>
                   <Card className="group h-full transition-all hover:shadow-lg hover:border-primary/50">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">

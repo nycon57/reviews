@@ -12542,3 +12542,50 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The Birdeye config now uses the same 6-category structure as Experience.com (Review Management, Surveys & NPS, AI & Analytics, Team & Engagement, Testimonials, Platform & Support)
   - Data verification comments in docblocks are a good pattern for competitor pages since data accuracy matters
 ---
+
+## 2026-02-01 10:14 - S126: Dynamic Route, SEO, & Schema Markup Implementation
+Thread: 
+Run: 20260201-101420-24998 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-101420-24998-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-101420-24998-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 67e8f9e [Pass 1/3] feat(S126): Add dynamic route, SEO metadata, and JSON-LD schema for competitor comparison pages
+- Post-commit status: clean (only PRD status changes and USER_ACTION_REQUIRED remain unstaged, as expected)
+- Skills invoked:
+  - /feature-dev: yes (feature-dev:feature-dev)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: yes
+  - /next-best-practices: yes
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (no UI creation)
+  - /web-design-guidelines: no (Pass 1)
+  - /writing-clearly-and-concisely: no (Pass 1)
+  - /agent-browser: no (Pass 1)
+  - Other skills: /seo-audit, /schema-markup
+- Verification:
+  - Command: npx eslint src/app/(marketing)/compare/[slug]/page.tsx src/lib/competitor-pages/schema-generators.ts src/lib/competitor-pages/index.ts src/app/sitemap.ts src/app/robots.ts -> PASS
+  - Command: npm run build -> PASS (compare routes statically generated: /compare/experience-com-alternative, /compare/birdeye-alternative)
+- Files changed:
+  - src/app/(marketing)/compare/[slug]/page.tsx (new: dynamic route with generateStaticParams, generateMetadata, JSON-LD injection)
+  - src/lib/competitor-pages/schema-generators.ts (added BreadcrumbList and Product+AggregateRating generators)
+  - src/lib/competitor-pages/index.ts (added competitorConfigs map, competitorSlugs array, new generator exports)
+  - src/app/sitemap.ts (added competitor comparison pages to sitemap)
+  - src/app/robots.ts (added /compare/ to allow list)
+- What was implemented:
+  - Dynamic route at /compare/[slug] with generateStaticParams returning all competitor slugs
+  - generateMetadata returning per-page title, description, keywords, OG tags, Twitter Cards, canonical URL
+  - BreadcrumbList JSON-LD (Home > Compare > [Competitor] Alternative)
+  - Product JSON-LD with AggregateRating from RepWell G2 data
+  - FAQPage JSON-LD already rendered by CompetitorComparisonPage template
+  - Sitemap entries with lastmod, changefreq (weekly), priority (0.8)
+  - robots.ts allows /compare/ crawling
+  - 404 via notFound() for unknown slugs
+- **Learnings for future iterations:**
+  - The eslint rule react/no-danger is NOT configured in this project — avoid eslint-disable comments for it
+  - Only 2 configs exist currently (experience-com, birdeye) — competitorSlugs returns 2 not 5 until S129 adds the remaining 3
+  - The CompetitorComparisonPage template already handles FAQPage JSON-LD injection, so the page only needs BreadcrumbList and Product schemas
+  - PRD status changes and USER_ACTION_REQUIRED.md should not be staged in feature commits
+---

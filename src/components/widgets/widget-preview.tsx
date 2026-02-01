@@ -4,7 +4,10 @@ import { Monitor, Tablet, Smartphone } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LOReviewPreview } from "./preview/lo-review-preview";
 import { CompanyReviewPreview } from "./preview/company-review-preview";
+import { BranchReviewPreview } from "./preview/branch-review-preview";
 import { StarRatingBadgePreview } from "./preview/star-rating-badge-preview";
+import { ReviewCarouselPreview } from "./preview/review-carousel-preview";
+import { VideoTestimonialPreview } from "./preview/video-testimonial-preview";
 import { Loader2 } from "lucide-react";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType } from "@/lib/widgets/types";
@@ -49,12 +52,66 @@ const SAMPLE_ORG_PROFILE = {
   ],
 };
 
+const SAMPLE_BRANCH_PROFILE = {
+  organization_name: "Horizon Mortgage - Downtown",
+  logo_url: null,
+  photo_url: null,
+  nmls_id: "9876543",
+  average_rating: 4.7,
+  total_reviews: 89,
+  rating_distribution: { 5: 52, 4: 22, 3: 10, 2: 3, 1: 2 } as { 5: number; 4: number; 3: number; 2: number; 1: number },
+  source_breakdown: [
+    { source: "google", count: 45, average: 4.8 },
+    { source: "zillow", count: 30, average: 4.6 },
+    { source: "internal", count: 14, average: 4.9 },
+  ],
+  address: { street: "123 Main Street", city: "Austin", state: "TX", zip: "78701" },
+  telephone: "+15125551234",
+  team_members: [
+    { id: "t1", full_name: "Sarah Johnson", photo_url: null, title: "Senior Loan Officer", nmls_id: "1234567", average_rating: 4.9, total_reviews: 45 },
+    { id: "t2", full_name: "Mike Thompson", photo_url: null, title: "Loan Officer", nmls_id: "2345678", average_rating: 4.6, total_reviews: 28 },
+    { id: "t3", full_name: "Lisa Chen", photo_url: null, title: "Loan Officer", nmls_id: "3456789", average_rating: 4.8, total_reviews: 16 },
+  ],
+};
+
 const SAMPLE_BADGE_PROFILE = {
   organization_name: "Horizon Mortgage Group",
   full_name: null,
   average_rating: 4.8,
   total_reviews: 234,
 };
+
+const SAMPLE_VIDEO_TESTIMONIALS = [
+  {
+    id: "vt1",
+    video_url: "",
+    poster_url: null,
+    reviewer_name: "Amanda Torres",
+    reviewer_title: "First-Time Homebuyer",
+    rating: 5,
+    duration: 92,
+    transcript: [
+      { start: 0, end: 5, text: "I was so nervous about buying my first home." },
+      { start: 5, end: 12, text: "Sarah made the whole process feel manageable and stress-free." },
+      { start: 12, end: 20, text: "She explained every step clearly and was always available to answer questions." },
+      { start: 20, end: 28, text: "I honestly could not have done it without her guidance." },
+    ],
+  },
+  {
+    id: "vt2",
+    video_url: "",
+    poster_url: null,
+    reviewer_name: "David Kim",
+    reviewer_title: "Refinance Client",
+    rating: 5,
+    duration: 68,
+    transcript: [
+      { start: 0, end: 6, text: "We refinanced our home and saved over $400 a month." },
+      { start: 6, end: 14, text: "The team was incredibly responsive and professional throughout." },
+      { start: 14, end: 22, text: "I would absolutely recommend them to anyone looking for a mortgage." },
+    ],
+  },
+];
 
 const SAMPLE_REVIEWS: { id: string; reviewer_name: string; rating: number; text: string; review_date: string; source: string; avatar_url: string | null; loan_type: string; first_time_homebuyer: boolean }[] = [
   {
@@ -157,6 +214,17 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
       }
     : SAMPLE_ORG_PROFILE;
 
+  const branchProfile = profileData
+    ? {
+        ...SAMPLE_BRANCH_PROFILE,
+        organization_name: profileData.organization_name ?? profileData.full_name ?? SAMPLE_BRANCH_PROFILE.organization_name,
+        logo_url: profileData.logo_url ?? null,
+        photo_url: profileData.photo_url ?? null,
+        average_rating: profileData.average_rating ?? SAMPLE_BRANCH_PROFILE.average_rating,
+        total_reviews: profileData.total_reviews ?? SAMPLE_BRANCH_PROFILE.total_reviews,
+      }
+    : SAMPLE_BRANCH_PROFILE;
+
   const badgeProfile = profileData
     ? {
         organization_name: profileData.organization_name ?? profileData.full_name ?? "Preview",
@@ -201,10 +269,21 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
 
   switch (widgetType) {
     case "lo_review":
-    case "branch_review":
       return (
         <LOReviewPreview
           profile={loProfile}
+          reviews={reviews}
+          content={content}
+          colors={colors}
+          maxWidth={maxWidth}
+          borderRadius={borderRadius}
+        />
+      );
+
+    case "branch_review":
+      return (
+        <BranchReviewPreview
+          profile={branchProfile}
           reviews={reviews}
           content={content}
           colors={colors}
@@ -236,12 +315,23 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
       );
 
     case "review_carousel":
+      return (
+        <ReviewCarouselPreview
+          reviews={reviews}
+          content={content}
+          colors={colors}
+          carousel={config.carousel}
+          maxWidth={maxWidth}
+          borderRadius={borderRadius}
+        />
+      );
+
     case "review_wall":
       return (
         <CompanyReviewPreview
           profile={orgProfile}
           reviews={reviews}
-          content={{ ...content, columns: widgetType === "review_wall" ? 2 : 1 }}
+          content={{ ...content, columns: 2 }}
           colors={colors}
           maxWidth={maxWidth}
           borderRadius={borderRadius}
@@ -250,17 +340,15 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
 
     case "video_testimonial":
       return (
-        <div
-          className="rounded-lg border border-dashed border-gray-300 p-8 text-center"
-          style={{
-            background: colors?.background ?? "#ffffff",
-            maxWidth: maxWidth ?? "100%",
-          }}
-        >
-          <div className="text-gray-400 text-sm">
-            Video testimonial preview will be available once video content is uploaded.
-          </div>
-        </div>
+        <VideoTestimonialPreview
+          profile={loProfile}
+          testimonials={SAMPLE_VIDEO_TESTIMONIALS}
+          content={content}
+          video={config.video}
+          colors={colors}
+          maxWidth={maxWidth}
+          borderRadius={borderRadius}
+        />
       );
 
     case "social_proof_banner":

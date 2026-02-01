@@ -63,6 +63,7 @@ export interface WidgetContent {
   showFilters?: boolean;
   showRatingDistribution?: boolean;
   showSourceBreakdown?: boolean;
+  showTeam?: boolean;
   paginationStyle?: "load_more" | "infinite_scroll";
   reviewsPerPage?: number;
 }
@@ -84,6 +85,8 @@ export interface WidgetCarousel {
   showArrows?: boolean;
   showDots?: boolean;
   slidesPerView?: number;
+  transition?: "slide" | "fade" | "flip";
+  visibleCards?: number;
 }
 
 export interface WidgetBanner {
@@ -107,6 +110,28 @@ export interface WidgetBadge {
   refreshInterval?: "never" | "1hr" | "6hr" | "24hr";
 }
 
+export interface WidgetVideo {
+  transcriptPosition?: "below" | "side" | "hidden";
+  layout?: "list" | "grid";
+}
+
+export interface VideoTestimonial {
+  id: string;
+  video_url: string;
+  poster_url: string | null;
+  reviewer_name: string | null;
+  reviewer_title: string | null;
+  rating: number;
+  duration: number | null;
+  transcript: VideoTranscriptSegment[] | null;
+}
+
+export interface VideoTranscriptSegment {
+  start: number;
+  end: number;
+  text: string;
+}
+
 export interface WidgetConfigJson {
   theme?: WidgetTheme;
   content?: WidgetContent;
@@ -114,6 +139,7 @@ export interface WidgetConfigJson {
   carousel?: WidgetCarousel;
   banner?: WidgetBanner;
   badge?: WidgetBadge;
+  video?: WidgetVideo;
   seo?: { title?: string; description?: string; keywords?: string[] };
 }
 
@@ -129,6 +155,8 @@ export interface PublicWidgetConfig {
   status: string;
   version: number | null;
   entity_profile?: EntityProfile | null;
+  /** Video testimonials data (only for video_testimonial widget type) */
+  video_testimonials?: VideoTestimonial[] | null;
 }
 
 // ── Entity Profile (from /config endpoint) ────────────────────────────
@@ -159,6 +187,18 @@ export interface EntityProfile {
   telephone?: string | null;
   /** URL for Organization structured data */
   url?: string | null;
+  /** Branch-specific: team members (LOs at this branch) */
+  team_members?: TeamMember[] | null;
+}
+
+export interface TeamMember {
+  id: string;
+  full_name: string | null;
+  photo_url: string | null;
+  title: string | null;
+  nmls_id: string | null;
+  average_rating: number | null;
+  total_reviews: number | null;
 }
 
 export interface RatingDistribution {
@@ -187,6 +227,8 @@ export interface PublicReview {
   avatar_url: string | null;
   loan_type: string | null;
   first_time_homebuyer: boolean | null;
+  /** LO name for branch-level reviews (populated when entity_type is "branch") */
+  loan_officer_name: string | null;
 }
 
 export interface ReviewsResponse {

@@ -22,6 +22,7 @@ import { injectStructuredData, removeStructuredData } from "./seo/structured-dat
 // Widget type registrations (self-register on import)
 import "./widgets/lo-review";
 import "./widgets/company-review";
+import "./widgets/branch-review";
 import "./widgets/star-rating-badge";
 
 // ── Resolve API base URL from the script tag ────────────────────────

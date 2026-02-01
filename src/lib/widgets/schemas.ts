@@ -111,6 +111,17 @@ export const contentSchema = z
     showNMLS: z.boolean().optional(),
     showDisclaimer: z.boolean().optional(),
     disclaimerText: z.string().max(500).optional(),
+    showWriteReview: z.boolean().optional(),
+    writeReviewUrl: z.string().url().or(z.literal("")).optional(),
+    columns: z.number().int().min(1).max(6).optional(),
+    dateFormat: z.enum(["relative", "absolute"]).optional(),
+    cardStyle: z.enum(["bordered", "shadow", "flat"]).optional(),
+    showFilters: z.boolean().optional(),
+    showRatingDistribution: z.boolean().optional(),
+    showSourceBreakdown: z.boolean().optional(),
+    showTeam: z.boolean().optional(),
+    paginationStyle: z.enum(["load_more", "infinite_scroll"]).optional(),
+    reviewsPerPage: z.number().int().min(1).max(50).optional(),
   })
   .optional();
 
@@ -139,6 +150,8 @@ export const carouselSchema = z
     showArrows: z.boolean().optional(),
     showDots: z.boolean().optional(),
     slidesPerView: z.number().int().min(1).max(5).optional(),
+    transition: z.enum(["slide", "fade", "flip"]).optional(),
+    visibleCards: z.number().int().min(1).max(4).optional(),
   })
   .optional();
 
@@ -159,12 +172,20 @@ export const seoSchema = z
   })
   .optional();
 
+export const videoSchema = z
+  .object({
+    transcriptPosition: z.enum(["below", "side", "hidden"]).optional(),
+    layout: z.enum(["list", "grid"]).optional(),
+  })
+  .optional();
+
 export const widgetConfigJsonSchema = z.object({
   theme: themeSchema,
   content: contentSchema,
   filters: filtersSchema,
   carousel: carouselSchema,
   banner: bannerSchema,
+  video: videoSchema,
   seo: seoSchema,
 });
 

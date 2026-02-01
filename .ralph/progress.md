@@ -12231,3 +12231,98 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - toLocaleDateString can cause hydration mismatches when server and client locales differ — use manual formatting for SSR components
   - Stagger delays compound linearly; always cap at a reasonable max for variable-length lists
 ---
+
+## [2026-02-01] - S123: Social Proof Wall & Footer CTA Sub-Components (Sections 15-16)
+Thread: 
+Run: 20260201-093902-72981 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-093902-72981-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-093902-72981-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: cf2a3f3 [Pass 2/3] fix(S123): Quality review fixes for social proof wall and footer CTA
+- Post-commit status: clean (only unrelated prd-reviews.json and USER_ACTION_REQUIRED.md remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (5 parallel review agents)
+  - /vercel-react-best-practices: yes
+  - /next-best-practices: yes (checked patterns)
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: yes (accessibility/UX audit)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from changed files)
+- Files changed:
+  - src/components/competitor-pages/sections/social-proof-section.tsx
+  - src/components/competitor-pages/sections/footer-cta-section.tsx
+- What was implemented:
+  - Fixed null safety: badge.icon?.toLowerCase() with fallback to prevent TypeError crash
+  - Aligned hover lift to hover:-translate-y-1 matching design system spec (y: -4) across cards and CTA buttons
+  - Added text-balance on h2 headings per web interface guidelines (prevents orphaned words)
+  - Fixed misleading "icon mapping" comment on text-only PlatformBadge component
+- **Learnings for future iterations:**
+  - Design system specifies whileHover={{ y: -4 }} = -translate-y-1 in Tailwind, not -translate-y-0.5
+  - Always add null safety on config-driven icon lookups where data comes from JSON configs
+  - text-balance is a quick typography win for headings with dynamic content
+  - transition-all is used codebase-wide; changing to transition-[transform,opacity] would need a coordinated effort
+---
+
+## 2026-02-01 09:44 - S124: Experience.com Competitor Page Configuration & Content
+Thread: 
+Run: 20260201-094405-95385 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-094405-95385-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-094405-95385-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 9099ac9 [Pass 1/3] feat(S124): Add Experience.com competitor page configuration
+- Post-commit status: clean (only unrelated modified files remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /copywriting (planned for pass 2/3), /competitor-alternatives (planned for pass 2/3), /page-cro (planned for pass 2/3)
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run build -> PASS
+  - Command: npm run lint (changed files only) -> PASS
+- Files changed:
+  - src/lib/competitor-pages/configs/experience-com.ts (new)
+  - src/lib/competitor-pages/index.ts (added export)
+- What was implemented:
+  - Created complete CompetitorPageConfig for Experience.com with all 16 sections
+  - SEO targeting "Experience.com Alternative" keywords
+  - Hero with enterprise pricing pain point positioning
+  - 3 pricing tabs (Starter/Professional/Enterprise) with specific comparison data
+  - Transition section with 5 migration retention bullets
+  - 3 testimonials mentioning Experience.com by name with switch stories
+  - 3 differentiators: transparent pricing, fast setup, responsive support
+  - 8 feature cards covering review dashboard, AI, LO profiles, surveys, testimonials, leaderboards, social, GBP
+  - 3 AI capability tabs: sentiment analysis, smart responses, predictive insights
+  - 15 integrations across LOS/CRM/Reviews/Social/Communication/Automation categories
+  - 6 mortgage-specific features with NMLS compliance, post-close automation
+  - 5 migration steps with contract buyout note
+  - Rating comparison (RepWell 4.8 G2 vs Experience.com 4.3 G2)
+  - 4 case studies with realistic before/after metrics
+  - 12 FAQs (5 standard + 7 Experience.com-specific including contract buyout)
+  - 16 social proof cards across G2, Capterra, Trustpilot
+  - Footer CTA with 4 trust badges
+  - 6-category feature comparison table
+- **Learnings for future iterations:**
+  - configs/ directory did not exist yet under competitor-pages — created it per PRD spec
+  - No existing competitor configs to reference for patterns; this is the first one
+  - All copy positions Experience.com as expensive enterprise with opaque pricing, complex setup, long contracts
+  - S125 (Birdeye) will follow same pattern but different positioning angle (generic vs mortgage-native)
+---

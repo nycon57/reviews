@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest, after } from "next/server";
 import { z } from "zod";
 import {
   isValidEventType,
@@ -47,6 +47,7 @@ export async function POST(
   if (!isValidEventType(body.event_type)) {
     return widgetError("Invalid event_type", "VALIDATION_ERROR", 400);
   }
+  const eventType = body.event_type;
 
   const clientIp =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -61,15 +62,19 @@ export async function POST(
   }
 
   const userAgent = request.headers.get("user-agent");
-  insertWidgetEvent({
-    widgetId,
-    eventType: body.event_type,
-    pageUrl: body.page_url ?? null,
-    referrer: body.referrer ?? null,
-    ipHash,
-    userAgent,
-    metadata: body.metadata ?? null,
-    sessionId: body.session_id ?? null,
+
+  // Use Next.js after() to ensure the insert completes even after the response is sent
+  after(async () => {
+    await insertWidgetEvent({
+      widgetId,
+      eventType,
+      pageUrl: body.page_url ?? null,
+      referrer: body.referrer ?? null,
+      ipHash,
+      userAgent,
+      metadata: body.metadata ?? null,
+      sessionId: body.session_id ?? null,
+    });
   });
 
   const response = new NextResponse(null, { status: 202 });

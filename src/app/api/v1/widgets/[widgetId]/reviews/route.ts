@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   getPublicWidgetConfig,
   getPublicReviews,
-  getWidgetOrganizationId,
 } from "@/lib/widgets/public-queries";
 import {
   resolveAllowedOrigin,
@@ -33,10 +32,7 @@ export async function GET(
     return widgetError("Origin not allowed", "FORBIDDEN", 403);
   }
 
-  const orgId = await getWidgetOrganizationId(widgetId);
-  if (!orgId) {
-    return widgetError("Widget configuration error", "INTERNAL_ERROR", 500, allowedOrigin);
-  }
+  const orgId = widget.organization_id;
 
   const searchParams = request.nextUrl.searchParams;
   const cursor = searchParams.get("cursor") || undefined;

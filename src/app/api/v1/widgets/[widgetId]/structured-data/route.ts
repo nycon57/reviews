@@ -1,9 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  getPublicWidgetConfig,
-  getWidgetOrganizationId,
-} from "@/lib/widgets/public-queries";
+import { getPublicWidgetConfig } from "@/lib/widgets/public-queries";
 import {
   resolveAllowedOrigin,
   buildCorsHeaders,
@@ -34,10 +31,7 @@ export async function GET(
     return widgetError("Origin not allowed", "FORBIDDEN", 403);
   }
 
-  const organizationId = await getWidgetOrganizationId(widgetId);
-  if (!organizationId) {
-    return widgetError("Widget not found", "NOT_FOUND", 404);
-  }
+  const organizationId = widget.organization_id;
 
   const jsonLd = await buildJsonLd(
     widget.structured_data_type || "LocalBusiness",

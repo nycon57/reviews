@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { resolveAllowedOrigin, buildCorsHeaders, widgetError } from "../cors";
+import { resolveAllowedOrigin, buildCorsHeaders, widgetError, withCorsAndCache } from "../cors";
 import { isValidEventType, checkEventRateLimit } from "../public-queries";
+import { NextResponse } from "next/server";
 
 describe("resolveAllowedOrigin", () => {
   it("returns '*' when allowedDomains is null", () => {
@@ -31,6 +32,22 @@ describe("buildCorsHeaders", () => {
     const h = buildCorsHeaders("*");
     expect(h["Access-Control-Allow-Origin"]).toBe("*");
     expect(h["Access-Control-Allow-Methods"]).toBe("GET, POST, OPTIONS");
+  });
+});
+
+describe("withCorsAndCache", () => {
+  it("sets Vary: Origin when origin is not wildcard", () => {
+    const res = NextResponse.json({});
+    const result = withCorsAndCache(res, "https://example.com", "public, max-age=300");
+    expect(result.headers.get("Vary")).toBe("Origin");
+    expect(result.headers.get("Access-Control-Allow-Origin")).toBe("https://example.com");
+    expect(result.headers.get("Cache-Control")).toBe("public, max-age=300");
+  });
+  it("does not set Vary: Origin for wildcard", () => {
+    const res = NextResponse.json({});
+    const result = withCorsAndCache(res, "*", "public, max-age=60");
+    expect(result.headers.get("Vary")).toBeNull();
+    expect(result.headers.get("Access-Control-Allow-Origin")).toBe("*");
   });
 });
 

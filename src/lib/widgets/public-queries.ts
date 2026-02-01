@@ -15,6 +15,7 @@ export interface PublicWidgetConfig {
   structured_data_type: string | null;
   status: string;
   version: number | null;
+  organization_id: string;
 }
 
 export interface PublicReview {
@@ -48,7 +49,7 @@ export async function getPublicWidgetConfig(
   const { data, error } = await supabase
     .from("widget_configs")
     .select(
-      "widget_id, widget_type, entity_type, entity_id, name, config, allowed_domains, enable_structured_data, structured_data_type, status, version"
+      "widget_id, widget_type, entity_type, entity_id, name, config, allowed_domains, enable_structured_data, structured_data_type, status, version, organization_id"
     )
     .eq("widget_id", widgetId)
     .eq("status", "active")
@@ -139,7 +140,10 @@ export async function getPublicReviews(
   }
   if (filters?.keywords && filters.keywords.length > 0) {
     const keywordFilter = filters.keywords
-      .map((kw) => `text.ilike.%${kw}%`)
+      .map((kw) => {
+        const escaped = kw.replace(/[%_\\]/g, "\\$&");
+        return `text.ilike.%${escaped}%`;
+      })
       .join(",");
     query = query.or(keywordFilter);
   }
@@ -155,9 +159,28 @@ export async function getPublicReviews(
   query = query.order(sortField, { ascending });
   query = query.order("id", { ascending: true });
 
+  // Cursor is an opaque base64-encoded token containing the last row's sort values + id
   if (cursor) {
-    query = query.gt("id", cursor);
+    try {
+      const decoded = JSON.parse(
+        Buffer.from(cursor, "base64url").toString("utf-8")
+      );
+      const { id: cursorId, review_date: cursorDate, rating: cursorRating } = decoded;
+      if (filters?.sortOrder === "highest" || filters?.sortOrder === "lowest") {
+        const ratingAsc = filters.sortOrder === "lowest";
+        query = query.or(
+          `rating.${ratingAsc ? "gt" : "lt"}.${cursorRating},and(rating.eq.${cursorRating},or(review_date.${ascending ? "gt" : "lt"}.${cursorDate},and(review_date.eq.${cursorDate},id.gt.${cursorId})))`
+        );
+      } else {
+        query = query.or(
+          `review_date.${ascending ? "gt" : "lt"}.${cursorDate},and(review_date.eq.${cursorDate},id.gt.${cursorId})`
+        );
+      }
+    } catch {
+      // Invalid cursor — ignore and return from beginning
+    }
   }
+
   query = query.limit(limit + 1);
 
   const { data, error } = await query;
@@ -180,7 +203,19 @@ export async function getPublicReviews(
     first_time_homebuyer: null,
   }));
 
-  const nextCursor = hasMore ? items[items.length - 1].id : null;
+  let nextCursor: string | null = null;
+  if (hasMore) {
+    const lastItem = items[items.length - 1];
+    nextCursor = Buffer.from(
+      JSON.stringify({
+        id: lastItem.id,
+        review_date: lastItem.review_date,
+        rating: lastItem.rating,
+      }),
+      "utf-8"
+    ).toString("base64url");
+  }
+
   return { reviews, nextCursor };
 }
 

@@ -44,6 +44,9 @@ export function withCorsAndCache(
   for (const [key, value] of Object.entries(cors)) {
     response.headers.set(key, value);
   }
+  if (allowedOrigin !== "*") {
+    response.headers.set("Vary", "Origin");
+  }
   response.headers.set("Cache-Control", cacheControl);
   return response;
 }

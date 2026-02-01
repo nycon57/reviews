@@ -35,8 +35,8 @@ export async function GET(
     entityProfile = await getEntityProfile(widget.entity_id);
   }
 
-  // Strip allowed_domains from public response to prevent domain leakage
-  const { allowed_domains: _ad, ...publicWidget } = widget;
+  // Strip internal fields from public response
+  const { allowed_domains: _ad, organization_id: _oid, ...publicWidget } = widget;
   const body = { ...publicWidget, entity_profile: entityProfile };
   const response = NextResponse.json(body);
   return withCorsAndCache(response, allowedOrigin, CACHE_CONTROL);

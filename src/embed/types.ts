@@ -228,7 +228,7 @@ export interface PublicReview {
   loan_type: string | null;
   first_time_homebuyer: boolean | null;
   /** LO name for branch-level reviews (populated when entity_type is "branch") */
-  loan_officer_name: string | null;
+  loan_officer_name?: string | null;
 }
 
 export interface ReviewsResponse {

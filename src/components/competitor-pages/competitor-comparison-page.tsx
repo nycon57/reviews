@@ -128,6 +128,14 @@ const FooterCTASection = dynamic(
   { loading: () => <SectionSkeleton height="sm" /> },
 );
 
+const CrossLinksSection = dynamic(
+  () =>
+    import("./sections/cross-links-section").then(
+      (m) => m.CrossLinksSection,
+    ),
+  { loading: () => <SectionSkeleton height="sm" /> },
+);
+
 /** Maps a TransitionSection variant to the corresponding SectionWrapper background. */
 function getTransitionBackground(
   variant: TransitionSection["variant"],
@@ -262,7 +270,12 @@ export function CompetitorComparisonPage({
         <SocialProofSection cards={config.socialProof} />
       </SectionWrapper>
 
-      {/* Section 16: Footer CTA */}
+      {/* Section 17: Cross-Links to Other Comparisons */}
+      <SectionWrapper id="cross-links" background="subtle">
+        <CrossLinksSection currentSlug={config.slug} />
+      </SectionWrapper>
+
+      {/* Section 18: Footer CTA */}
       <SectionWrapper id="footer-cta" background="gradient">
         <FooterCTASection config={config.footerCta} />
       </SectionWrapper>

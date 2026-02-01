@@ -34,6 +34,16 @@ const footerSections: FooterSection[] = [
     ],
   },
   {
+    title: "Compare",
+    links: [
+      { label: "vs Experience.com", href: "/compare/experience-com-alternative" },
+      { label: "vs Birdeye", href: "/compare/birdeye-alternative" },
+      { label: "vs SocialSurvey", href: "/compare/socialsurvey-alternative" },
+      { label: "vs Total Expert", href: "/compare/total-expert-alternative" },
+      { label: "vs Trustpilot", href: "/compare/trustpilot-alternative" },
+    ],
+  },
+  {
     title: "Company",
     links: [
       { label: "About", href: "/about" },
@@ -82,7 +92,7 @@ export function MarketingFooter() {
       className="border-t border-border/50 bg-background"
     >
       <div className="container mx-auto px-4 py-16">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6">
           {/* Brand Column */}
           <motion.div variants={fadeInUp} className="lg:col-span-2">
             <Link href="/" className="inline-block mb-5">

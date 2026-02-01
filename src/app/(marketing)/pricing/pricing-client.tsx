@@ -629,6 +629,83 @@ export function PricingPageClient() {
         </div>
       </section>
 
+      {/* Compare Section */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={staggerContainer}
+          >
+            <motion.div variants={fadeInUp} className="text-center mb-12">
+              <Badge
+                variant="outline"
+                className="border-repwell-teal-300/50 text-repwell-teal-400 mb-4"
+              >
+                Compare
+              </Badge>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-repwell-teal-500 mb-4">
+                See How We <span className="text-repwell-teal-300">Compare</span>
+              </h2>
+              <p className="text-lg text-repwell-teal-400 max-w-2xl mx-auto">
+                Switching from another platform? See how RepWell stacks up
+                against the competition.
+              </p>
+            </motion.div>
+
+            <motion.div
+              variants={fadeInUp}
+              className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto"
+            >
+              {[
+                {
+                  name: "Experience.com",
+                  href: "/compare/experience-com-alternative",
+                  tagline: "Transparent pricing, no contracts",
+                },
+                {
+                  name: "Birdeye",
+                  href: "/compare/birdeye-alternative",
+                  tagline: "Mortgage-native, not generic",
+                },
+                {
+                  name: "SocialSurvey",
+                  href: "/compare/socialsurvey-alternative",
+                  tagline: "Modern AI-powered alternative",
+                },
+                {
+                  name: "Total Expert",
+                  href: "/compare/total-expert-alternative",
+                  tagline: "Focused on reviews & reputation",
+                },
+                {
+                  name: "Trustpilot",
+                  href: "/compare/trustpilot-alternative",
+                  tagline: "Built for mortgage professionals",
+                },
+              ].map((competitor) => (
+                <Link
+                  key={competitor.name}
+                  href={competitor.href}
+                  className="group flex items-center justify-between rounded-2xl border border-repwell-sage-100 bg-repwell-sage-100/30 p-5 transition-all hover:border-repwell-teal-300/40 hover:bg-white hover:shadow-md"
+                >
+                  <div className="min-w-0">
+                    <p className="font-sans text-sm font-semibold text-repwell-teal-500 group-hover:text-repwell-teal-400">
+                      RepWell vs {competitor.name}
+                    </p>
+                    <p className="font-sans text-xs text-repwell-teal-400/80 mt-0.5">
+                      {competitor.tagline}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 shrink-0 text-repwell-teal-400/50 transition-all group-hover:text-repwell-teal-300 group-hover:translate-x-0.5" />
+                </Link>
+              ))}
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section className="py-16 md:py-24 bg-repwell-sage-100/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

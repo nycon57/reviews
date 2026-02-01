@@ -230,6 +230,58 @@ export const directNavLinks = [
 ];
 
 /**
+ * Compare navigation item for competitor comparison pages
+ */
+export interface CompareNavItem {
+  slug: string;
+  title: string;
+  description: string;
+  icon: string;
+  href: string;
+}
+
+/**
+ * Compare navigation items for mega menu
+ */
+export const compareNavItems: CompareNavItem[] = [
+  {
+    slug: "experience-com",
+    title: "RepWell vs Experience.com",
+    description: "Transparent pricing, no contracts",
+    icon: "Swap",
+    href: "/compare/experience-com-alternative",
+  },
+  {
+    slug: "birdeye",
+    title: "RepWell vs Birdeye",
+    description: "Mortgage-native, not generic",
+    icon: "Swap",
+    href: "/compare/birdeye-alternative",
+  },
+  {
+    slug: "socialsurvey",
+    title: "RepWell vs SocialSurvey",
+    description: "Modern AI-powered alternative",
+    icon: "Swap",
+    href: "/compare/socialsurvey-alternative",
+  },
+  {
+    slug: "total-expert",
+    title: "RepWell vs Total Expert",
+    description: "Focused on reviews & reputation",
+    icon: "Swap",
+    href: "/compare/total-expert-alternative",
+  },
+  {
+    slug: "trustpilot",
+    title: "RepWell vs Trustpilot",
+    description: "Built for mortgage professionals",
+    icon: "Swap",
+    href: "/compare/trustpilot-alternative",
+  },
+];
+
+/**
  * Get feature nav item by slug
  */
 export function getFeatureNavItem(slug: FeatureSlug): FeatureNavItem | undefined {

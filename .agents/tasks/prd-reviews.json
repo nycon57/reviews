@@ -6510,7 +6510,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6536,9 +6536,7 @@
           "Version manifest enables embed.js self-update checking (future feature)"
         ]
       },
-      "startedAt": "2026-02-01T20:32:19.906812+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-01T20:32:19.906980+00:00"
+      "updatedAt": "2026-02-01T20:47:25.338096+00:00"
     },
     {
       "id": "S145",
@@ -6562,7 +6560,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6594,7 +6592,10 @@
           "5min server-side cache on analytics API to reduce database load from frequent dashboard refreshes",
           "Charts use Recharts (already in project dependencies) for consistency with existing analytics pages"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T21:29:58.049114+00:00",
+      "completedAt": "2026-02-01T21:29:58.049282+00:00",
+      "startedAt": "2026-02-01T21:29:58.049285+00:00"
     },
     {
       "id": "S146",
@@ -6618,7 +6619,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6648,7 +6649,8 @@
           "Branch entity_id joins to branches table for address/phone data included in config API response",
           "LO attribution on review cards links to LO's individual profile page if available"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T21:17:40.019306+00:00"
     },
     {
       "id": "S147",
@@ -6673,7 +6675,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6703,7 +6705,8 @@
           "Infinite loop implemented by cloning first/last cards and resetting position after transition",
           "Touch handling uses native touch events (touchstart, touchmove, touchend) not a gesture library"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T21:37:51.267784+00:00"
     },
     {
       "id": "S148",
@@ -6727,7 +6730,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6759,7 +6762,10 @@
           "Transcript data fetched alongside video config, stored as timed segments [{start, end, text}]",
           "Video progress events throttled to one per milestone (25/50/75/100) per session to avoid event spam"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T21:47:59.635397+00:00",
+      "startedAt": "2026-02-01T21:47:59.630480+00:00",
+      "completedAt": null
     },
     {
       "id": "S149",

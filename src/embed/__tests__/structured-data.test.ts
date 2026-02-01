@@ -31,6 +31,7 @@ function makeReview(overrides: Partial<PublicReview> = {}): PublicReview {
     avatar_url: null,
     loan_type: null,
     first_time_homebuyer: null,
+    loan_officer_name: null,
     ...overrides,
   };
 }

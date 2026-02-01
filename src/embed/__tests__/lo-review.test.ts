@@ -90,6 +90,7 @@ describe("LO Review Widget", () => {
       avatar_url: null,
       loan_type: "Purchase",
       first_time_homebuyer: true,
+      loan_officer_name: null,
     },
     {
       id: "r2",
@@ -101,6 +102,7 @@ describe("LO Review Widget", () => {
       avatar_url: null,
       loan_type: "Refinance",
       first_time_homebuyer: false,
+      loan_officer_name: null,
     },
     {
       id: "r3",
@@ -112,6 +114,7 @@ describe("LO Review Widget", () => {
       avatar_url: null,
       loan_type: "VA",
       first_time_homebuyer: false,
+      loan_officer_name: null,
     },
   ];
 

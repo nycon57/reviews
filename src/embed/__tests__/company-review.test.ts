@@ -82,6 +82,7 @@ function makeReviews(count: number): PublicReview[] {
     avatar_url: null,
     loan_type: ["Purchase", "Refinance", "VA", "FHA", "Jumbo"][i % 5],
     first_time_homebuyer: i % 4 === 0,
+    loan_officer_name: null,
   }));
 }
 

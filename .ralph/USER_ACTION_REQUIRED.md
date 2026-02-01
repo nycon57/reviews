@@ -333,3 +333,39 @@ Ralph has failed on this story 3 times and has marked it as **blocked**.
 - To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
 
 ---
+
+## [2026-02-01 15:47:25] BLOCKED: S144: CDN Deployment for embed.js & Static Assets
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 16:02:32] BLOCKED: S145: Widget Analytics Dashboard
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 16:17:40] BLOCKED: S146: Branch Review Widget
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 16:37:51] BLOCKED: S147: Review Carousel Widget
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---

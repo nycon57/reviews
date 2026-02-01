@@ -3,6 +3,9 @@
  * Displays org branding, aggregate stats, rating distribution, source breakdown,
  * sortable review cards with pagination.
  * All DOM construction uses safe methods (createElement/textContent) — no innerHTML.
+ *
+ * Exports shared builders (starsRow, buildRatingDistribution, buildSourceBreakdown,
+ * buildSortControls, buildReviewCard) for reuse by branch-review widget.
  */
 
 import type {
@@ -24,9 +27,9 @@ import {
 } from "../../core/dom-helpers";
 import { createEqualHousingLenderSVG, createHouseIconSVG } from "../../assets/equal-housing-lender";
 
-// ── Helpers ──────────────────────────────────────────────────────────
+// ── Shared Helpers (exported for branch-review) ─────────────────────
 
-function starsRow(rating: number, filledColor: string, emptyColor: string, className: string): HTMLElement {
+export function starsRow(rating: number, filledColor: string, emptyColor: string, className: string): HTMLElement {
   const row = el("div", className);
   row.setAttribute("role", "img");
   row.setAttribute("aria-label", `${rating} out of 5 stars`);
@@ -115,9 +118,9 @@ function buildOrgHeader(
   return section;
 }
 
-// ── Rating Distribution Bar Chart ────────────────────────────────────
+// ── Rating Distribution Bar Chart (exported for branch-review) ──────
 
-function buildRatingDistribution(
+export function buildRatingDistribution(
   distribution: RatingDistribution,
   totalReviews: number,
   starFilled: string,
@@ -150,9 +153,9 @@ function buildRatingDistribution(
   return section;
 }
 
-// ── Source Breakdown ─────────────────────────────────────────────────
+// ── Source Breakdown (exported for branch-review) ────────────────────
 
-function buildSourceBreakdown(
+export function buildSourceBreakdown(
   sources: SourceBreakdown[],
   starFilled: string,
   starEmpty: string
@@ -183,11 +186,11 @@ function buildSourceBreakdown(
   return section;
 }
 
-// ── Sorting Controls ─────────────────────────────────────────────────
+// ── Sorting Controls (exported for branch-review) ───────────────────
 
-type SortOption = "newest" | "highest" | "lowest";
+export type SortOption = "newest" | "highest" | "lowest";
 
-function buildSortControls(
+export function buildSortControls(
   activeSort: SortOption,
   onSort: (sort: SortOption) => void,
   apiBase: string,
@@ -219,9 +222,9 @@ function buildSortControls(
   return section;
 }
 
-// ── Review Card ──────────────────────────────────────────────────────
+// ── Review Card (exported for branch-review) ─────────────────────────
 
-function buildReviewCard(
+export function buildReviewCard(
   review: PublicReview,
   config: PublicWidgetConfig,
   starFilled: string,
@@ -294,6 +297,10 @@ function buildReviewCard(
     tags.appendChild(fthb);
     hasTags = true;
   }
+  if (review.loan_officer_name) {
+    tags.appendChild(text("span", `LO: ${review.loan_officer_name}`, "rw-co-review__lo-attr"));
+    hasTags = true;
+  }
   if (hasTags) card.appendChild(tags);
 
   return card;
@@ -336,118 +343,26 @@ export function buildCompanyReviewDOM(
     container.appendChild(buildSourceBreakdown(profile.source_breakdown, starFilled, starEmpty));
   }
 
-  // Sort/filter controls and review list
-  let currentReviews = [...reviews];
-  const perPage = content?.reviewsPerPage ?? 10;
-  let visibleCount = Math.min(perPage, currentReviews.length);
+  // Review list with sort/filter/pagination
+  buildReviewListSection(container, reviews, config, starFilled, starEmpty, apiBase);
 
-  // Sort controls
-  if (content?.showFilters && reviews.length > 0) {
-    let currentSort: SortOption = "newest";
+  // Actions, compliance, branding
+  appendWidgetFooter(container, config, apiBase);
 
-    // Pre-sort by "newest" (default active sort)
-    currentReviews.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
+  return container;
+}
 
-    const filtersContainer = el("div", "rw-co-filters-wrapper");
-    const gridContainer = el("div", "rw-co-reviews");
-    const columns = Math.min(Math.max(content?.columns ?? 1, 1), 6);
-    if (columns > 1) gridContainer.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+// ── Shared builders for reuse by branch-review ──────────────────────
 
-    const renderReviews = (): void => {
-      while (gridContainer.firstChild) gridContainer.firstChild.remove();
-      const visible = currentReviews.slice(0, visibleCount);
-      for (const review of visible) {
-        gridContainer.appendChild(buildReviewCard(review, config, starFilled, starEmpty, apiBase));
-      }
-    };
+/** Appends actions (CTA + Write Review), disclaimer, and branding to a widget container. */
+export function appendWidgetFooter(
+  container: HTMLElement,
+  config: PublicWidgetConfig,
+  apiBase: string
+): void {
+  const content = config.config?.content;
+  const colors = config.config?.theme?.colors;
 
-    const sortReviews = (sort: SortOption): void => {
-      currentSort = sort;
-      currentReviews = [...reviews];
-      switch (sort) {
-        case "newest":
-          currentReviews.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
-          break;
-        case "highest":
-          currentReviews.sort((a, b) => b.rating - a.rating);
-          break;
-        case "lowest":
-          currentReviews.sort((a, b) => a.rating - b.rating);
-          break;
-      }
-      visibleCount = Math.min(perPage, currentReviews.length);
-      renderReviews();
-      // Update sort button active states
-      const btns = filtersContainer.querySelectorAll(".rw-co-filters__btn");
-      const sortValues: SortOption[] = ["newest", "highest", "lowest"];
-      btns.forEach((btn, i) => {
-        const isActive = sortValues[i] === currentSort;
-        btn.classList.toggle("rw-co-filters__btn--active", isActive);
-        btn.setAttribute("aria-pressed", String(isActive));
-      });
-      // Update Load More visibility
-      updateLoadMore();
-    };
-
-    filtersContainer.appendChild(buildSortControls(currentSort, sortReviews, apiBase, config.widget_id));
-    container.appendChild(filtersContainer);
-
-    renderReviews();
-    container.appendChild(gridContainer);
-
-    // Load More button
-    let loadMoreBtn: HTMLButtonElement | null = null;
-    const updateLoadMore = (): void => {
-      if (loadMoreBtn) {
-        loadMoreBtn.style.display = visibleCount < currentReviews.length ? "" : "none";
-      }
-    };
-
-    if (currentReviews.length > perPage) {
-      loadMoreBtn = document.createElement("button");
-      loadMoreBtn.className = "rw-co-load-more";
-      loadMoreBtn.textContent = "Load More Reviews";
-      loadMoreBtn.type = "button";
-      loadMoreBtn.addEventListener("click", () => {
-        visibleCount = Math.min(visibleCount + perPage, currentReviews.length);
-        renderReviews();
-        updateLoadMore();
-      });
-      container.appendChild(loadMoreBtn);
-    }
-  } else if (reviews.length === 0) {
-    container.appendChild(text("div", "No reviews yet.", "rw-empty"));
-  } else {
-    // No filter controls — simple render with pagination
-    const grid = el("div", "rw-co-reviews");
-    const columns = Math.min(Math.max(content?.columns ?? 1, 1), 6);
-    if (columns > 1) grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-
-    const renderPage = (): void => {
-      while (grid.firstChild) grid.firstChild.remove();
-      for (const review of currentReviews.slice(0, visibleCount)) {
-        grid.appendChild(buildReviewCard(review, config, starFilled, starEmpty, apiBase));
-      }
-    };
-
-    renderPage();
-    container.appendChild(grid);
-
-    if (currentReviews.length > perPage) {
-      const loadMoreBtn = document.createElement("button");
-      loadMoreBtn.className = "rw-co-load-more";
-      loadMoreBtn.textContent = "Load More Reviews";
-      loadMoreBtn.type = "button";
-      loadMoreBtn.addEventListener("click", () => {
-        visibleCount = Math.min(visibleCount + perPage, currentReviews.length);
-        renderPage();
-        loadMoreBtn.style.display = visibleCount < currentReviews.length ? "" : "none";
-      });
-      container.appendChild(loadMoreBtn);
-    }
-  }
-
-  // CTA and Write Review actions
   const hasActions = (content?.showCTA && content.ctaText && content.ctaUrl) || (content?.showWriteReview && content.writeReviewUrl);
   if (hasActions) {
     const actions = el("div", "rw-co-actions");
@@ -463,29 +378,25 @@ export function buildCompanyReviewDOM(
       actions.appendChild(cta);
     }
     if (content?.showWriteReview && content.writeReviewUrl) {
-      const writeBtn = document.createElement("a");
-      writeBtn.className = "rw-co-actions__write-review";
-      writeBtn.textContent = "Write a Review";
-      writeBtn.href = content.writeReviewUrl;
-      writeBtn.target = "_blank";
-      writeBtn.rel = "noopener noreferrer";
-      writeBtn.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_write_review"); });
-      actions.appendChild(writeBtn);
+      const w = document.createElement("a");
+      w.className = "rw-co-actions__write-review";
+      w.textContent = "Write a Review";
+      w.href = content.writeReviewUrl;
+      w.target = "_blank";
+      w.rel = "noopener noreferrer";
+      w.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_write_review"); });
+      actions.appendChild(w);
     }
     container.appendChild(actions);
   }
 
-  // Compliance disclaimer
   if (content?.showDisclaimer) {
     const disclaimer = el("div", "rw-co-disclaimer");
     const ehl = el("div", "rw-co-disclaimer__ehl");
     ehl.appendChild(createEqualHousingLenderSVG(18));
     ehl.appendChild(document.createTextNode("Equal Housing Lender"));
     disclaimer.appendChild(ehl);
-    const defaultDisclaimer = "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.";
-    const disclaimerContent = content.disclaimerText || defaultDisclaimer;
-    disclaimer.appendChild(text("div", disclaimerContent, "rw-co-disclaimer__text"));
-    // NMLS Consumer Access link
+    disclaimer.appendChild(text("div", content.disclaimerText || "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.", "rw-co-disclaimer__text"));
     const nmlsLink = document.createElement("a");
     nmlsLink.className = "rw-co-disclaimer__nmls-link";
     nmlsLink.href = "https://www.nmlsconsumeraccess.org";
@@ -496,7 +407,6 @@ export function buildCompanyReviewDOM(
     container.appendChild(disclaimer);
   }
 
-  // Branding
   if (content?.showBranding !== false) {
     const branding = el("div", "rw-branding");
     branding.textContent = "Powered by ";
@@ -508,6 +418,81 @@ export function buildCompanyReviewDOM(
     branding.appendChild(link);
     container.appendChild(branding);
   }
+}
 
-  return container;
+/** Builds a review list section with optional sort/filter controls and load-more pagination. */
+export function buildReviewListSection(
+  container: HTMLElement,
+  reviews: PublicReview[],
+  config: PublicWidgetConfig,
+  starFilled: string,
+  starEmpty: string,
+  apiBase: string,
+  emptyNode?: HTMLElement
+): void {
+  const content = config.config?.content;
+  const perPage = content?.reviewsPerPage ?? 10;
+  const columns = Math.min(Math.max(content?.columns ?? 1, 1), 6);
+
+  if (reviews.length === 0) {
+    if (emptyNode) container.appendChild(emptyNode);
+    else container.appendChild(text("div", "No reviews yet.", "rw-empty"));
+    return;
+  }
+
+  let currentReviews = [...reviews];
+  let visibleCount = Math.min(perPage, currentReviews.length);
+  const grid = el("div", "rw-co-reviews");
+  if (columns > 1) grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+
+  const render = (): void => {
+    while (grid.firstChild) grid.firstChild.remove();
+    for (const r of currentReviews.slice(0, visibleCount)) {
+      grid.appendChild(buildReviewCard(r, config, starFilled, starEmpty, apiBase));
+    }
+  };
+
+  let loadMoreBtn: HTMLButtonElement | null = null;
+  const updateLoadMore = (): void => {
+    if (loadMoreBtn) loadMoreBtn.style.display = visibleCount < currentReviews.length ? "" : "none";
+  };
+
+  if (content?.showFilters) {
+    let currentSort: SortOption = "newest";
+    currentReviews.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
+    const fw = el("div", "rw-co-filters-wrapper");
+    const sortFn = (sort: SortOption): void => {
+      currentSort = sort;
+      currentReviews = [...reviews];
+      if (sort === "newest") currentReviews.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
+      else if (sort === "highest") currentReviews.sort((a, b) => b.rating - a.rating);
+      else currentReviews.sort((a, b) => a.rating - b.rating);
+      visibleCount = Math.min(perPage, currentReviews.length);
+      render();
+      fw.querySelectorAll(".rw-co-filters__btn").forEach((btn, i) => {
+        const vals: SortOption[] = ["newest", "highest", "lowest"];
+        btn.classList.toggle("rw-co-filters__btn--active", vals[i] === currentSort);
+        btn.setAttribute("aria-pressed", String(vals[i] === currentSort));
+      });
+      updateLoadMore();
+    };
+    fw.appendChild(buildSortControls(currentSort, sortFn, apiBase, config.widget_id));
+    container.appendChild(fw);
+  }
+
+  render();
+  container.appendChild(grid);
+
+  if (currentReviews.length > perPage) {
+    loadMoreBtn = document.createElement("button");
+    loadMoreBtn.className = "rw-co-load-more";
+    loadMoreBtn.textContent = "Load More Reviews";
+    loadMoreBtn.type = "button";
+    loadMoreBtn.addEventListener("click", () => {
+      visibleCount = Math.min(visibleCount + perPage, currentReviews.length);
+      render();
+      updateLoadMore();
+    });
+    container.appendChild(loadMoreBtn);
+  }
 }

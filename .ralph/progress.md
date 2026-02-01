@@ -11068,3 +11068,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The S113 enterprise features were mostly pre-built as part of the SMS channel infrastructure (E18). Pass 1 focused on verifying completeness and fixing lint issues.
   - The migration `20260201000003_sms_enterprise_features.sql` already exists with all tables, RLS policies, and seed data.
 ---
+
+## [2026-02-01] - S113: Enterprise SMS Features & Compliance Audit
+Thread: 
+Run: 20260201-051307-42173 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-051307-42173-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-051307-42173-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: fe9d76c [Pass 2/3] fix(S113): Quality review fixes for enterprise SMS features
+- Post-commit status: clean (only prd-reviews.json modified, per instructions not to edit)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review of all 14 files)
+  - /vercel-react-best-practices: yes (reviewed React components)
+  - /next-best-practices: yes (reviewed cron route)
+  - /supabase-postgres-best-practices: yes (optimized queries)
+  - /code-simplifier: no (Pass 3 task)
+  - /frontend-design: no (Pass 3 task)
+  - /web-design-guidelines: yes (reviewed UI components)
+  - /writing-clearly-and-concisely: no (Pass 3 task)
+  - /agent-browser: no (Pass 3 task)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S113 files) -> PASS (0 errors)
+- Files changed:
+  - src/lib/sms/enterprise/per-lo-numbers.ts (let→const fix, removed incorrect unassign logic)
+  - src/lib/sms/audit/audit-logger.ts (removed singleton pattern for serverless safety)
+  - src/components/settings/sms/audit-log-viewer.tsx (fixed empty SelectItem value for Radix compat)
+  - src/app/api/cron/sms-compliance-report/route.ts (optimized to parallel count queries)
+- What was implemented:
+  - Code review of all 14 S113 files from Pass 1
+  - Fixed 5 issues: singleton stale connection, SelectItem empty value, cron perf (fetching all rows→count queries), let→const, incorrect unassign-all logic
+  - All fixes verified with build + lint
+- **Learnings for future iterations:**
+  - Radix UI Select doesn't support empty string values well — use a sentinel like "all" instead
+  - Module-level singletons holding DB clients can cause stale connections in serverless
+  - Supabase count queries with head:true are much more efficient than fetching all rows and filtering client-side
+  - Promise.all for parallel count queries significantly reduces cron execution time
+---

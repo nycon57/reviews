@@ -14812,3 +14812,60 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Next.js build has intermittent ENOENT on temp files (filesystem race) - unrelated to code, retry or use tsc --noEmit for type verification
   - Linter auto-fixes static component extraction (react-hooks/static-components rule) - define helper components outside parent
 ---
+
+## [2026-02-01] - S145: Widget Analytics Dashboard
+Thread: 
+Run: 20260201-155230-66608 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-155230-66608-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-155230-66608-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e25e804 [Pass 1/3] feat(S145): Widget analytics dashboard with charts, table, and drill-down
+- Post-commit status: clean (S145 files committed in prior session before crash)
+- Skills invoked:
+  - /feature-dev: no (implementation was complete from prior crash)
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npx eslint (S145 files) -> PASS (0 errors after SortButton extraction)
+  - Command: npm run build -> FAIL (Turbopack _buildManifest.js.tmp ENOENT race condition - system issue, not code issue)
+- Files changed:
+  - src/app/(dashboard)/dashboard/widgets/analytics/page.tsx
+  - src/app/api/dashboard/widgets/[id]/analytics/route.ts
+  - src/components/widgets/analytics/analytics-summary.tsx
+  - src/components/widgets/analytics/csv-export.tsx
+  - src/components/widgets/analytics/impressions-chart.tsx
+  - src/components/widgets/analytics/widget-analytics-dashboard.tsx
+  - src/components/widgets/analytics/widget-analytics-table.tsx
+  - src/components/widgets/analytics/widget-detail-analytics.tsx
+  - src/lib/widgets/analytics-actions.ts
+- What was implemented:
+  - All 13 acceptance criteria implemented in commit e25e804 (from prior crashed session)
+  - This pass verified code quality: fixed SortButton static component lint error, removed unused import
+  - Analytics page at /dashboard/widgets/analytics
+  - Summary cards (impressions, clicks, CTR, write-review clicks, unique pages)
+  - Date range filter (7d/30d/90d/custom with calendar picker)
+  - AreaChart for daily impressions/clicks
+  - Sortable per-widget table with type icons, status, top referrer
+  - Widget detail drill-down (daily chart, event pie chart, top pages, top referrers)
+  - Server actions for all aggregation queries
+  - API route with 5min cache
+  - CSV export
+  - Empty state with CTA
+  - Loading skeletons
+  - 60s polling on detail page
+- **Learnings for future iterations:**
+  - Turbopack in Next.js 16.1.4 has intermittent _buildManifest.js.tmp ENOENT race condition
+  - SortButton defined inside render causes react-hooks/static-components lint error - always define components at module scope
+  - Pre-commit hooks auto-fix type issues (e.g. CLICK_EVENTS const typing)
+---

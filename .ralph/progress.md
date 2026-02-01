@@ -13823,3 +13823,94 @@ Pass: 1/3 (Implementation)
   - Self-registering widget modules (side-effect imports) keep the registry clean but need careful test setup with vi.resetModules()
   - Next.js 16 Turbopack has a known build manifest race condition — type-check and lint are more reliable quality gates
 ---
+
+## [2026-02-01 13:20] - S133: Dashboard Widget CRUD API & Server Actions
+Thread: 
+Run: 20260201-131055-90837 (iteration 1)
+Pass: 3+ - Verification & Final Confirmation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-131055-90837-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-131055-90837-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (all S133 code already committed in passes 1-3; no S133 changes needed)
+- Post-commit status: clean (modified files belong to S134/S135)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/lib/widgets/__tests__/ -> PASS (66 tests, 3 files)
+  - Command: npx eslint src/lib/widgets/actions.ts schemas.ts types.ts index.ts -> PASS (0 errors)
+  - Command: npx tsc --noEmit (S133 files only) -> PASS (0 errors in S133 files)
+  - Command: npm run build -> FAIL (concurrent Ralph agent filesystem race condition, not S133 issue)
+- Files changed:
+  - none (verification-only pass)
+- All 12 acceptance criteria verified against implementation
+- All 3 passes previously completed (1/3 implementation, 2/3 quality review, 3/3 polish)
+- **Learnings for future iterations:**
+  - Concurrent Ralph agents cause .next build directory race conditions (ENOENT errors)
+  - S133 code is clean and fully functional; TypeScript errors in reviews/route.ts are from S134
+  - Build failures from concurrent agents are not code quality issues
+---
+
+## 2026-02-01 13:00 - S136: LO Review Widget
+Thread: 
+Run: 20260201-130050-45680 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-130050-45680-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-130050-45680-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 66a957e [Pass 1/3] feat(S136): Implement LO Review Widget for embed.js
+- Commit: 13a56d2 [Pass 1/3] test(S136): Add dedicated LO Review Widget test suite
+- Post-commit status: clean (remaining unstaged files are from prior S134/S135 work)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/lo-review.test.ts -> PASS (22/22 tests)
+  - Command: npx vitest run src/embed/__tests__/embed.test.ts -> PASS (35/35 tests)
+  - Command: npm run build -> PASS
+  - Command: npm run lint (S136 files only) -> PASS (0 errors)
+- Files changed:
+  - src/embed/widgets/registry.ts (new - widget type registry)
+  - src/embed/widgets/lo-review/index.ts (new - LO widget renderer entry)
+  - src/embed/widgets/lo-review/template.ts (new - DOM template builder)
+  - src/embed/widgets/lo-review/styles.ts (new - LO-specific CSS)
+  - src/embed/core/renderer.ts (modified - registry dispatch)
+  - src/embed/index.ts (modified - import lo-review widget)
+  - src/embed/__tests__/lo-review.test.ts (new - 22 tests)
+  - src/components/widgets/preview/lo-review-preview.tsx (new - dashboard preview)
+- What was implemented:
+  - Widget registry pattern (registerWidget/getWidgetRenderer) enabling type-specific renderers
+  - LO Review Widget embed renderer with: LO profile header (photo/initials, name, title, NMLS clickable link, licensing states, aggregate rating), review cards with star ratings, loan type tags (Purchase/Refinance/VA/FHA/Jumbo with color coding), First-Time Homebuyer badges, source badges, text truncation with expand, card styles (bordered/shadow/flat), responsive grid columns, CTA button, Write a Review button, Equal Housing Lender disclaimer, RepWell branding, configurable date formats
+  - Theme support via CSS custom properties (colors, layout, typography)
+  - Event tracking (click_review on expand, click_cta, click_write_review)
+  - ARIA accessibility (region role, img role on stars, article role on cards, labels)
+  - Responsive mobile layout (<480px single column)
+  - Dashboard preview React component (LOReviewPreview) mirroring embed output
+  - 22 unit tests covering all acceptance criteria
+- **Learnings for future iterations:**
+  - The existing codebase already had the LO review template/styles partially scaffolded from S135; class names use `rw-lo-review` prefix (not `rw-review`)
+  - Widget registry pattern is simple Map-based; type-specific renderers self-register on import
+  - Dashboard preview uses Tailwind/React while embed uses vanilla DOM (intentional separation)
+  - jsdom supports querySelectorAll with BEM class names without issues
+  - Pre-existing lint errors exist in other files; S136 files are clean
+---

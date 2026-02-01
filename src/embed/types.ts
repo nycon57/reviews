@@ -52,6 +52,12 @@ export interface WidgetContent {
   language?: string;
   showNMLS?: boolean;
   showDisclaimer?: boolean;
+  disclaimerText?: string;
+  showWriteReview?: boolean;
+  writeReviewUrl?: string;
+  columns?: number;
+  dateFormat?: "relative" | "absolute";
+  cardStyle?: "bordered" | "shadow" | "flat";
 }
 
 export interface WidgetFilters {
@@ -100,6 +106,20 @@ export interface PublicWidgetConfig {
   structured_data_type: string | null;
   status: string;
   version: number | null;
+  entity_profile?: EntityProfile | null;
+}
+
+// ── Entity Profile (from /config endpoint for lo_review widgets) ──────
+
+export interface EntityProfile {
+  full_name: string | null;
+  avatar_url: string | null;
+  photo_url: string | null;
+  nmls_id: string | null;
+  title: string | null;
+  average_rating: number | null;
+  total_reviews: number | null;
+  licensing_states: string[] | null;
 }
 
 // ── Review (from /reviews endpoint) ───────────────────────────────────
@@ -113,6 +133,7 @@ export interface PublicReview {
   source: string;
   avatar_url: string | null;
   loan_type: string | null;
+  first_time_homebuyer: boolean | null;
 }
 
 export interface ReviewsResponse {

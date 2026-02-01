@@ -20,7 +20,8 @@
     "db:push": "supabase db push",
     "db:reset": "supabase db reset",
     "db:generate": "supabase migration new",
-    "seed:test-users": "npx tsx scripts/seed-test-users.ts"
+    "seed:test-users": "npx tsx scripts/seed-test-users.ts",
+    "build:embed": "npx tsx scripts/build-embed.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",
@@ -125,10 +126,12 @@
     "@typescript-eslint/parser": "^8.53.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "esbuild": "^0.27.2",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "jsdom": "^27.4.0",
     "postcss": "^8.4.49",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.9",

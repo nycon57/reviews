@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import type { PublicWidgetConfig, PublicReview } from "../types";
 
 // ── Discovery tests ─────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ describe("skeleton", () => {
 // ── Renderer tests ──────────────────────────────────────────────────
 
 describe("renderWidget", () => {
-  const mockConfig = {
+  const mockConfig: PublicWidgetConfig = {
     widget_id: "test-widget",
     widget_type: "lo_review",
     entity_type: "user",
@@ -102,9 +103,9 @@ describe("renderWidget", () => {
     structured_data_type: "LocalBusiness",
     status: "active",
     version: 1,
-  } as const;
+  };
 
-  const mockReviews = [
+  const mockReviews: PublicReview[] = [
     {
       id: "r1",
       reviewer_name: "John Doe",
@@ -114,6 +115,7 @@ describe("renderWidget", () => {
       source: "google",
       avatar_url: null,
       loan_type: null,
+      first_time_homebuyer: null,
     },
     {
       id: "r2",
@@ -124,6 +126,7 @@ describe("renderWidget", () => {
       source: "zillow",
       avatar_url: null,
       loan_type: null,
+      first_time_homebuyer: null,
     },
   ];
 
@@ -302,7 +305,7 @@ describe("lazy-loader", () => {
     expect(mockObserve).toHaveBeenCalledWith(el);
 
     intersectionCb(
-      [{ isIntersecting: true, target: el } as IntersectionObserverEntry],
+      [{ isIntersecting: true, target: el } as unknown as IntersectionObserverEntry],
       {} as IntersectionObserver
     );
     expect(cb).toHaveBeenCalledOnce();
@@ -320,7 +323,7 @@ describe("lazy-loader", () => {
 
     // Only el1 intersects
     intersectionCb(
-      [{ isIntersecting: true, target: el1 } as IntersectionObserverEntry],
+      [{ isIntersecting: true, target: el1 } as unknown as IntersectionObserverEntry],
       {} as IntersectionObserver
     );
     expect(cb1).toHaveBeenCalledOnce();
@@ -328,7 +331,7 @@ describe("lazy-loader", () => {
 
     // Now el2 intersects
     intersectionCb(
-      [{ isIntersecting: true, target: el2 } as IntersectionObserverEntry],
+      [{ isIntersecting: true, target: el2 } as unknown as IntersectionObserverEntry],
       {} as IntersectionObserver
     );
     expect(cb2).toHaveBeenCalledOnce();
@@ -341,7 +344,7 @@ describe("lazy-loader", () => {
 
     observe(el, cb);
     intersectionCb(
-      [{ isIntersecting: false, target: el } as IntersectionObserverEntry],
+      [{ isIntersecting: false, target: el } as unknown as IntersectionObserverEntry],
       {} as IntersectionObserver
     );
     expect(cb).not.toHaveBeenCalled();

@@ -10620,3 +10620,81 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - sms_daily_stats table provides fast pre-aggregated counters; sms_messages needed for detail drills (clicks, time heatmap)
   - Existing analytics tab pattern: Tabs wrapper as client component, tab content lazy-loaded
 ---
+
+## [2026-02-01 01:55] - S109: SMS Analytics Dashboard
+Thread: 
+Run: 20260201-014749-63894 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 22699b3 [Pass 2/3] fix(S109): Quality review — deduplicate click queries, fix chart type, harden CSV export
+- Post-commit status: clean (S109 files only)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual)
+  - /vercel-react-best-practices: yes (manual)
+  - /next-best-practices: yes
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in S109 files; 12 pre-existing errors in other files)
+- Files changed:
+  - src/components/analytics/sms-analytics-tab.tsx
+  - src/lib/sms/analytics/actions.ts
+- What was implemented:
+  - **Performance: Deduplicated fetchTotalClicks** — Was called 3 times (summary, funnel, channel comparison). Now pre-computed once and passed to all three functions, eliminating 2 redundant DB round-trips per analytics load.
+  - **Bug fix: OptOutTrendChart chart type** — Replaced LineChart with ComposedChart. Bar+Line combination requires ComposedChart in Recharts; LineChart silently dropped the Bar component.
+  - **Security: CSV formula injection** — Added csvEscape() helper that prefixes dangerous characters (=, +, -, @) with single quote and properly escapes embedded double quotes in template names and user names.
+  - **Performance: Bounded heatmap query** — Added .limit(10000) to fetchTimeHeatmap to prevent unbounded message fetches on large datasets.
+  - **Code quality: Removed dead code** — Removed unused useRef import and isInitialRender ref that had no functional effect.
+  - **Performance: Memoized totalCost** — Wrapped CostBreakdownChart's totalCost calculation in useMemo.
+  - **Accessibility: Heatmap aria** — Added role="img" with descriptive aria-label to heatmap container.
+- **Learnings for future iterations:**
+  - Recharts ComposedChart is required when mixing Bar and Line in the same chart — LineChart silently drops non-Line children
+  - CSV export should always escape user-controlled strings to prevent formula injection
+  - Pre-computing shared data (like click counts) before parallel Promise.all avoids duplicate DB queries
+---
+
+## [2026-02-01 01:55] - S109: SMS Analytics Dashboard
+Thread: 
+Run: 20260201-014749-63894 (iteration 2)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-014749-63894-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d2e6d6c [Pass 3/3] refactor(S109): Polish — merge summary+funnel queries, clarify funnel labels
+- Post-commit status: clean (S109 files only)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (manual)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (manual)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint src/components/analytics/sms-analytics-tab.tsx src/lib/sms/analytics/actions.ts src/lib/sms/analytics/types.ts -> PASS (0 errors)
+- Files changed:
+  - src/components/analytics/sms-analytics-tab.tsx
+  - src/lib/sms/analytics/actions.ts
+- What was implemented:
+  - Merged fetchSummary + fetchFunnel into single fetchSummaryAndFunnel function, eliminating a duplicate DB query to sms_daily_stats
+  - Clarified funnel label text from "from prev" to "from previous step"
+- **Learnings for future iterations:**
+  - When two functions query the same table with identical filters, merge them early to save a DB round-trip
+  - The summary and funnel data share identical aggregation columns (sent, delivered, reviews_generated), making them natural candidates for consolidation
+---

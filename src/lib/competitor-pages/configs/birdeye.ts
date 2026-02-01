@@ -924,6 +924,7 @@ export const birdeyeConfig: CompetitorPageConfig = {
         { name: "Predictive NPS trending", repwell: true, competitor: false },
         { name: "Branch benchmarking", repwell: true, competitor: "Basic" },
         { name: "AI executive summaries", repwell: true, competitor: false },
+        { name: "Compliance-safe AI responses", repwell: true, competitor: false },
         { name: "Custom report builder", repwell: true, competitor: true },
       ],
     },

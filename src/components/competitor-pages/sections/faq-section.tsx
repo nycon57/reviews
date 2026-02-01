@@ -18,20 +18,9 @@ interface FAQSectionComponentProps {
 /**
  * Section 14: FAQ Accordion.
  *
- * Renders 8-12 FAQ questions in an accessible accordion. Combines standard
- * product questions with competitor-specific questions that mention the
- * competitor by name.
- *
- * Uses the ShadCN/Radix Accordion for built-in keyboard navigation
- * (Enter/Space to toggle, arrow keys between items) and ARIA attributes
- * (aria-expanded, aria-controls).
- *
- * FAQ answers support rich text via HTML. Content originates from
- * developer-authored static config objects (not user input), so
- * innerHTML rendering is used safely without a sanitizer.
- *
- * FAQPage JSON-LD structured data is handled separately by the schema
- * generator utility injected at the page level.
+ * Renders standard + competitor-specific FAQ questions in a ShadCN/Radix
+ * Accordion. Answers support HTML from static config (not user input).
+ * FAQPage JSON-LD is handled by the schema generator at the page level.
  */
 export function FAQSectionComponent({
   config,
@@ -45,7 +34,6 @@ export function FAQSectionComponent({
 
   return (
     <div ref={sectionRef}>
-      {/* Section header */}
       <div className="mx-auto max-w-3xl text-center">
         <p
           className={cn(
@@ -78,7 +66,6 @@ export function FAQSectionComponent({
         </p>
       </div>
 
-      {/* Accordion */}
       <div
         className={cn(
           "mx-auto mt-12 max-w-3xl transition-all duration-500",
@@ -100,7 +87,6 @@ export function FAQSectionComponent({
                 <div
                   className="faq-answer font-sans text-sm leading-relaxed text-repwell-teal-400 [&_strong]:font-semibold [&_strong]:text-repwell-teal-500 [&_a]:text-repwell-teal-300 [&_a]:underline hover:[&_a]:text-repwell-teal-400 [&_ul]:mt-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:mt-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1 [&_p+p]:mt-2"
                   // Safe: FAQ answers come from static developer-authored config, not user input
-                  // eslint-disable-next-line react/no-danger
                   dangerouslySetInnerHTML={{ __html: faq.answer }}
                 />
               </AccordionContent>

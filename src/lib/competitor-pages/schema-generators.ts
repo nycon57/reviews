@@ -1,4 +1,4 @@
-import type { FAQSection, CompetitorPageConfig } from "./types";
+import type { FAQSection } from "./types";
 
 /**
  * Schema.org FAQPage structured data type.
@@ -17,22 +17,13 @@ interface FAQPageSchema {
   }>;
 }
 
-/**
- * Strips HTML tags from a string to produce plain-text for JSON-LD.
- * JSON-LD answer text should be plain or lightly formatted — Google
- * tolerates some HTML but plain text is safest.
- */
+/** Strips HTML tags to produce plain-text for JSON-LD answer fields. */
 function stripHtmlTags(html: string): string {
   return html.replace(/<[^>]*>/g, "").trim();
 }
 
 /**
- * Generates FAQPage JSON-LD structured data from a competitor page config.
- *
- * Combines standard and competitor-specific FAQ items into a single
- * schema.org FAQPage entity. This should be injected as a
- * `<script type="application/ld+json">` tag in the page head.
- *
+ * Generates FAQPage JSON-LD structured data from a competitor page FAQ config.
  * @see https://developers.google.com/search/docs/appearance/structured-data/faqpage
  */
 export function generateFAQPageSchema(faq: FAQSection): FAQPageSchema {
@@ -52,10 +43,7 @@ export function generateFAQPageSchema(faq: FAQSection): FAQPageSchema {
   };
 }
 
-/**
- * Returns the JSON-LD string for a FAQPage, ready to be injected
- * into a `<script type="application/ld+json">` tag.
- */
+/** Serializes FAQPage schema to a JSON-LD string for `<script type="application/ld+json">`. */
 export function generateFAQPageJsonLd(faq: FAQSection): string {
   return JSON.stringify(generateFAQPageSchema(faq));
 }

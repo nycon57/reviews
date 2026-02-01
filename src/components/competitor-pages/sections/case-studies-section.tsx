@@ -13,8 +13,18 @@ interface CaseStudiesSectionProps {
   caseStudies: CaseStudy[];
 }
 
-/** Renders a before→after metric with percentage change highlighted in green. */
-function MetricDelta({ metric }: { metric: CaseStudyMetric }) {
+interface MetricDeltaProps {
+  metric: CaseStudyMetric;
+}
+
+interface CaseStudyCardProps {
+  study: CaseStudy;
+  index: number;
+  isVisible: boolean;
+}
+
+/** Renders a before/after metric with percentage change. */
+function MetricDelta({ metric }: MetricDeltaProps) {
   return (
     <div className="text-center">
       <p className="font-sans text-xs font-medium text-repwell-teal-300">
@@ -50,15 +60,7 @@ function MetricDelta({ metric }: { metric: CaseStudyMetric }) {
 }
 
 /** Single case study card with logo, industry badge, metrics, quote, and CTA. */
-function CaseStudyCard({
-  study,
-  index,
-  isVisible,
-}: {
-  study: CaseStudy;
-  index: number;
-  isVisible: boolean;
-}) {
+function CaseStudyCard({ study, index, isVisible }: CaseStudyCardProps) {
   return (
     <div
       className={cn(
@@ -67,14 +69,12 @@ function CaseStudyCard({
       )}
       style={{ transitionDelay: isVisible ? `${index * 120 + 300}ms` : "0ms" }}
     >
-      {/* Top accent bar */}
       <div
         className="h-1 rounded-t-xl bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200"
         aria-hidden="true"
       />
 
       <div className="flex flex-1 flex-col p-6 lg:p-8">
-        {/* Header: logo + company name + industry badge */}
         <div className="flex items-center gap-3">
           {study.logo ? (
             <img
@@ -103,21 +103,18 @@ function CaseStudyCard({
           </span>
         </div>
 
-        {/* Metrics grid: before → after */}
         <div className="mt-6 grid grid-cols-2 gap-4 rounded-lg border border-border/50 bg-background-subtle p-4 sm:grid-cols-3">
           {study.metrics.map((m) => (
             <MetricDelta key={m.label} metric={m} />
           ))}
         </div>
 
-        {/* Quote */}
         <blockquote className="mt-6 flex-1 border-l-2 border-repwell-sage-200/50 pl-4">
           <p className="font-sans text-sm leading-relaxed text-repwell-teal-400 italic">
             &ldquo;{study.quote}&rdquo;
           </p>
         </blockquote>
 
-        {/* CTA link */}
         <a
           href={study.ctaHref}
           className="mt-6 inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-repwell-teal-300 transition-colors duration-200 hover:text-repwell-teal-400 focus:outline-none focus-visible:underline"
@@ -134,15 +131,7 @@ function CaseStudyCard({
   );
 }
 
-/**
- * Section 13: Case Studies.
- *
- * Renders 4 case study cards in a 2×2 grid (stacked on mobile). Each card
- * shows the company name, industry badge, company logo, before/after metrics,
- * a pull quote, and a CTA link to the full case study.
- *
- * Scroll-triggered entrance animations with staggered timing.
- */
+/** Section 13: Case Studies -- 2x2 grid with scroll-triggered entrance animations. */
 export function CaseStudiesSection({
   caseStudies,
 }: CaseStudiesSectionProps) {
@@ -152,7 +141,6 @@ export function CaseStudiesSection({
 
   return (
     <div ref={sectionRef}>
-      {/* Section header */}
       <div className="mx-auto max-w-3xl text-center">
         <p
           className={cn(
@@ -185,7 +173,6 @@ export function CaseStudiesSection({
         </p>
       </div>
 
-      {/* 2×2 grid (stacked on mobile) */}
       <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:gap-8">
         {caseStudies.map((study, i) => (
           <CaseStudyCard

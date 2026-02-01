@@ -8,6 +8,7 @@ import { BranchReviewPreview } from "./preview/branch-review-preview";
 import { StarRatingBadgePreview } from "./preview/star-rating-badge-preview";
 import { ReviewCarouselPreview } from "./preview/review-carousel-preview";
 import { VideoTestimonialPreview } from "./preview/video-testimonial-preview";
+import { ReviewWallPreview } from "./preview/review-wall-preview";
 import { Loader2 } from "lucide-react";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType } from "@/lib/widgets/types";
@@ -328,11 +329,11 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
 
     case "review_wall":
       return (
-        <CompanyReviewPreview
-          profile={orgProfile}
+        <ReviewWallPreview
           reviews={reviews}
-          content={{ ...content, columns: 2 }}
+          content={content}
           colors={colors}
+          wall={config.wall}
           maxWidth={maxWidth}
           borderRadius={borderRadius}
         />

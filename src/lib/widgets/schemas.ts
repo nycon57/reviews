@@ -179,6 +179,18 @@ export const videoSchema = z
   })
   .optional();
 
+export const wallSchema = z
+  .object({
+    columns: z.number().int().min(2).max(5).optional(),
+    columnsTablet: z.number().int().min(1).max(3).optional(),
+    columnsMobile: z.number().int().min(1).max(2).optional(),
+    loadMore: z.enum(["button", "scroll", "none"]).optional(),
+    truncateReviews: z.boolean().optional(),
+    truncateLength: z.number().int().min(0).max(1000).optional(),
+    gap: z.number().int().min(4).max(48).optional(),
+  })
+  .optional();
+
 export const widgetConfigJsonSchema = z.object({
   theme: themeSchema,
   content: contentSchema,
@@ -186,6 +198,7 @@ export const widgetConfigJsonSchema = z.object({
   carousel: carouselSchema,
   banner: bannerSchema,
   video: videoSchema,
+  wall: wallSchema,
   seo: seoSchema,
 });
 

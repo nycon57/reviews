@@ -115,6 +115,16 @@ export interface WidgetVideo {
   layout?: "list" | "grid";
 }
 
+export interface WidgetWall {
+  columns?: number;
+  columnsTablet?: number;
+  columnsMobile?: number;
+  loadMore?: "button" | "scroll" | "none";
+  truncateReviews?: boolean;
+  truncateLength?: number;
+  gap?: number;
+}
+
 export interface VideoTestimonial {
   id: string;
   video_url: string;
@@ -140,6 +150,7 @@ export interface WidgetConfigJson {
   banner?: WidgetBanner;
   badge?: WidgetBadge;
   video?: WidgetVideo;
+  wall?: WidgetWall;
   seo?: { title?: string; description?: string; keywords?: string[] };
 }
 

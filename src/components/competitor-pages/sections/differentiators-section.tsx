@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import {
   Cursor,
   Lightning,
@@ -13,6 +12,7 @@ import {
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 import type { DifferentiatorCard } from "@/lib/competitor-pages";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { cn } from "@/lib/utils";
 
 interface DifferentiatorsSectionProps {
@@ -162,36 +162,7 @@ export function DifferentiatorsSection({
   competitorName,
   headline,
 }: DifferentiatorsSectionProps) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (prefersReducedMotion) {
-      // Use rAF to avoid synchronous setState in effect body
-      const id = requestAnimationFrame(() => setIsVisible(true));
-      return () => cancelAnimationFrame(id);
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const { ref: sectionRef, isVisible } = useScrollReveal();
 
   if (differentiators.length === 0) return null;
 

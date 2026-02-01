@@ -5466,7 +5466,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run type-check passes",
         "All config fields populated"
@@ -5485,9 +5485,7 @@
           "FAQ should address feature gaps for mortgage use cases"
         ]
       },
-      "startedAt": "2026-02-01T14:59:13.208400+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-01T14:59:13.208700+00:00"
+      "updatedAt": "2026-02-01T15:14:18.377129+00:00"
     },
     {
       "id": "S126",
@@ -5513,7 +5511,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build passes with static generation",
         "JSON-LD validates in Google Rich Results Test",
@@ -5540,7 +5538,8 @@
           "Static generation ensures zero server cost and fast TTFB",
           "BreadcrumbList uses absolute URLs for Google compatibility"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T15:29:26.330050+00:00"
     },
     {
       "id": "S127",
@@ -5566,7 +5565,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build passes",
         "All 5 redirects work correctly",
@@ -5588,7 +5587,8 @@
           "Hook is a client component hook since it reads URL params and localStorage",
           "Analytics events use existing analytics infrastructure if available"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T15:44:34.365430+00:00"
     },
     {
       "id": "S128",
@@ -5612,7 +5612,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5637,7 +5637,8 @@
           "Pricing page compare section placed between pricing tiers and FAQ",
           "Use competitor logos in mega menu for visual recognition"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T15:59:43.597829+00:00"
     },
     {
       "id": "S129",
@@ -5664,7 +5665,7 @@
       ],
       "priority": "P1",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run type-check passes",
         "All 3 config files complete with no placeholder content",
@@ -5687,7 +5688,8 @@
           "Trustpilot: positioning around B2B mortgage vs B2C consumer reviews",
           "Reuse shared content (integration logos, some FAQs) where appropriate but keep unique"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T16:14:53.003229+00:00"
     },
     {
       "id": "S130",
@@ -5713,7 +5715,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "Lighthouse Performance >= 90 on all 5 pages",
         "LCP < 2.5s measured via Lighthouse",
@@ -5744,7 +5746,8 @@
           "Tab panels use min-height to prevent CLS during tab switch",
           "Masonry social proof uses CSS columns (no JS layout library)"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T16:30:01.141737+00:00"
     },
     {
       "id": "S131",
@@ -5771,7 +5774,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5803,7 +5806,10 @@
           "Dashboard uses React Query for data fetching from server actions",
           "MVP: weekly report is a dashboard view, not automated email"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T16:30:03.360634+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-01T16:30:03.360825+00:00"
     },
     {
       "id": "S132",

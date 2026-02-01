@@ -162,3 +162,57 @@ Ralph has failed on this story 3 times and has marked it as **blocked**.
 - To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
 
 ---
+
+## [2026-02-01 10:14:18] BLOCKED: S125: Birdeye Competitor Page Configuration & Content
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 10:29:26] BLOCKED: S126: Dynamic Route, SEO, & Schema Markup Implementation
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 10:44:34] BLOCKED: S127: URL Aliases, Redirects & switching_from Tracking
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 10:59:43] BLOCKED: S128: Navigation Integration & Cross-Linking
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 11:14:53] BLOCKED: S129: SocialSurvey, Total Expert & Trustpilot Page Configurations
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 11:30:01] BLOCKED: S130: Performance Optimization & Core Web Vitals
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---

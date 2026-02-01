@@ -3,6 +3,7 @@
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import type { CaseStudy, CaseStudyMetric } from "@/lib/competitor-pages";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import {
   ArrowRight,
   ArrowUp,
@@ -77,10 +78,14 @@ function CaseStudyCard({ study, index, isVisible }: CaseStudyCardProps) {
       <div className="flex flex-1 flex-col p-6 lg:p-8">
         <div className="flex items-center gap-3">
           {study.logo ? (
-            <img
+            <Image
               src={study.logo}
               alt={`${study.companyName} logo`}
+              width={40}
+              height={40}
+              sizes="40px"
               className="h-10 w-10 rounded-lg border border-border object-contain p-1"
+              loading="lazy"
             />
           ) : (
             <div

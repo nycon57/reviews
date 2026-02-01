@@ -43,6 +43,7 @@ function IntegrationLogo({
           alt={item.name}
           width={120}
           height={40}
+          sizes="120px"
           className="h-8 w-auto max-w-[100px] object-contain grayscale transition-[filter] duration-300 group-hover:grayscale-0 sm:h-10 sm:max-w-[120px]"
           loading="lazy"
         />

@@ -26,9 +26,9 @@ export function LogoBarSection({ logos }: LogoBarSectionProps) {
         Trusted by mortgage professionals nationwide
       </p>
 
-      {/* Scroll container with gradient masks */}
+      {/* Scroll container with gradient masks — fixed height prevents CLS */}
       <div
-        className="logo-bar-mask group relative overflow-hidden"
+        className="logo-bar-mask group relative h-8 overflow-hidden"
         aria-label="Customer logos"
         role="region"
       >
@@ -37,14 +37,17 @@ export function LogoBarSection({ logos }: LogoBarSectionProps) {
           {allLogos.map((logo, i) => (
             <div
               key={`${logo.name}-${i}`}
-              className="flex-shrink-0 opacity-60 grayscale transition-all duration-500 hover:opacity-100 hover:grayscale-0"
+              className="flex-shrink-0 opacity-60 grayscale transition-[opacity,filter] duration-500 hover:opacity-100 hover:grayscale-0"
             >
               <Image
                 src={logo.logoUrl}
                 alt={logo.name}
                 width={120}
-                height={40}
+                height={32}
+                sizes="120px"
                 className="h-8 w-auto object-contain"
+                loading={i < 3 ? "eager" : "lazy"}
+                priority={i < 3}
               />
             </div>
           ))}

@@ -86,7 +86,9 @@ function TestimonialCardItem({
             alt={testimonial.author}
             width={40}
             height={40}
+            sizes="40px"
             className="h-10 w-10 rounded-full object-cover"
+            loading="lazy"
           />
         ) : (
           <span

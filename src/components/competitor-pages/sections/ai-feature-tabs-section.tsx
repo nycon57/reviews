@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import { CheckCircle } from "@phosphor-icons/react";
 import type { AICapabilityTab } from "@/lib/competitor-pages";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { cn } from "@/lib/utils";
 
 interface AIFeatureTabsSectionProps {
@@ -131,39 +132,11 @@ export function AIFeatureTabsSection({
   capabilities,
   headline = "AI-Powered Intelligence",
 }: AIFeatureTabsSectionProps) {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const { ref: sectionRef, isVisible } = useScrollReveal();
   const [activeTab, setActiveTab] = useState(0);
 
   const handleTabChange = useCallback((index: number) => {
     setActiveTab(index);
-  }, []);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-
-    if (prefersReducedMotion) {
-      const id = requestAnimationFrame(() => setIsVisible(true));
-      return () => cancelAnimationFrame(id);
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
   }, []);
 
   if (capabilities.length === 0) return null;

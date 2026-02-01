@@ -11,8 +11,11 @@ import { CompetitorComparisonPage } from "@/components/competitor-pages";
 import { getBaseUrl } from "@/lib/seo";
 
 // ---------------------------------------------------------------------------
-// Static generation
+// Static generation — all competitor pages are pre-rendered at build time
 // ---------------------------------------------------------------------------
+
+/** Ensure these pages are always statically generated (never dynamic). */
+export const dynamic = "force-static";
 
 export function generateStaticParams(): Array<{ slug: string }> {
   return competitorSlugs.map((slug) => ({ slug }));
@@ -84,6 +87,11 @@ export default async function CompareSlugPage({
 
   return (
     <>
+      {/* Preconnect + dns-prefetch hints for external domains */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+      <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
       {/* FAQPage JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
       <script
         type="application/ld+json"

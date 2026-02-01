@@ -206,7 +206,7 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 6: Differentiators */}
-      <SectionWrapper id="differentiators" background="subtle">
+      <SectionWrapper id="differentiators" background="subtle" lazyRender estimatedHeight="800px">
         <DifferentiatorsSection
           differentiators={config.differentiators}
           competitorName={config.competitorName}
@@ -214,22 +214,22 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 7: Feature Showcase */}
-      <SectionWrapper id="features" background="white">
+      <SectionWrapper id="features" background="white" lazyRender estimatedHeight="900px">
         <FeatureShowcaseSection features={config.featureCards} />
       </SectionWrapper>
 
       {/* Section 8: AI Feature Tabs */}
-      <SectionWrapper id="ai-capabilities" background="subtle">
+      <SectionWrapper id="ai-capabilities" background="subtle" lazyRender estimatedHeight="700px">
         <AIFeatureTabsSection capabilities={config.aiCapabilities} />
       </SectionWrapper>
 
       {/* Section 9: Integration Logos */}
-      <SectionWrapper id="integrations" background="white">
+      <SectionWrapper id="integrations" background="white" lazyRender estimatedHeight="400px">
         <IntegrationLogosSection integrations={config.integrations} />
       </SectionWrapper>
 
       {/* Section 10: Mortgage-Specific Features */}
-      <SectionWrapper id="mortgage-features" background="subtle">
+      <SectionWrapper id="mortgage-features" background="subtle" lazyRender estimatedHeight="900px">
         <MortgageSpecificSection
           features={config.mortgageFeatures}
           headline={config.mortgageSectionConfig?.headline}
@@ -240,12 +240,12 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 11: Migration Steps */}
-      <SectionWrapper id="migration" background="white">
+      <SectionWrapper id="migration" background="white" lazyRender estimatedHeight="600px">
         <MigrationStepsSection config={config.migration} />
       </SectionWrapper>
 
       {/* Section 12: Rating Comparison */}
-      <SectionWrapper id="ratings" background="subtle">
+      <SectionWrapper id="ratings" background="subtle" lazyRender estimatedHeight="500px">
         <RatingComparisonSection
           config={config.ratingComparison}
           competitorName={config.competitorName}
@@ -253,12 +253,12 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 13: Case Studies */}
-      <SectionWrapper id="case-studies" background="white">
+      <SectionWrapper id="case-studies" background="white" lazyRender estimatedHeight="800px">
         <CaseStudiesSection caseStudies={config.caseStudies} />
       </SectionWrapper>
 
       {/* Section 14: FAQ */}
-      <SectionWrapper id="faq" background="subtle">
+      <SectionWrapper id="faq" background="subtle" lazyRender estimatedHeight="600px">
         <FAQSectionComponent
           config={config.faq}
           competitorName={config.competitorName}
@@ -266,17 +266,17 @@ export function CompetitorComparisonPage({
       </SectionWrapper>
 
       {/* Section 15: Social Proof Wall */}
-      <SectionWrapper id="social-proof" background="white">
+      <SectionWrapper id="social-proof" background="white" lazyRender estimatedHeight="1200px">
         <SocialProofSection cards={config.socialProof} />
       </SectionWrapper>
 
       {/* Section 17: Cross-Links to Other Comparisons */}
-      <SectionWrapper id="cross-links" background="subtle">
+      <SectionWrapper id="cross-links" background="subtle" lazyRender estimatedHeight="250px">
         <CrossLinksSection currentSlug={config.slug} />
       </SectionWrapper>
 
       {/* Section 18: Footer CTA */}
-      <SectionWrapper id="footer-cta" background="gradient">
+      <SectionWrapper id="footer-cta" background="gradient" lazyRender estimatedHeight="350px">
         <FooterCTASection config={config.footerCta} />
       </SectionWrapper>
       </SwitchingFromProvider>

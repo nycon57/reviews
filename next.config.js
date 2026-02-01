@@ -52,6 +52,7 @@ const nextConfig = {
     ],
   },
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",
@@ -66,6 +67,29 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
+  },
+  // Cache headers for static assets (fonts, images, JS/CSS)
+  async headers() {
+    return [
+      {
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/fonts/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
   },
   // Redirect root to dashboard for authenticated users
   async redirects() {

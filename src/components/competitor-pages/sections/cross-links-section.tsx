@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, Check } from "@phosphor-icons/react";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
+import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { compareNavItems } from "@/config/navigation";
 
 interface CrossLinksSectionProps {
@@ -15,34 +14,30 @@ interface CrossLinksSectionProps {
 /**
  * Cross-links section shown on competitor comparison pages.
  * Displays links to all comparison pages with the current one dimmed.
+ *
+ * Uses CSS transitions + IntersectionObserver instead of framer-motion
+ * to reduce client-side JS bundle size.
  */
 export function CrossLinksSection({ currentSlug }: CrossLinksSectionProps) {
+  const { ref: sectionRef, isVisible } = useScrollReveal();
+
   if (compareNavItems.length === 0) return null;
 
   return (
-    <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={viewportOnce}
-      variants={staggerContainer}
-      className="text-center"
+    <div
+      ref={sectionRef}
+      className={cn(
+        "text-center transition-[opacity,transform] duration-500",
+        isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
+      )}
     >
-      <motion.h2
-        variants={fadeInUp}
-        className="font-display text-2xl md:text-3xl font-bold text-repwell-teal-500 mb-3"
-      >
+      <h2 className="font-display text-2xl md:text-3xl font-bold text-repwell-teal-500 mb-3">
         Compare RepWell to Other Platforms
-      </motion.h2>
-      <motion.p
-        variants={fadeInUp}
-        className="font-sans text-sm text-repwell-teal-400/80 mb-8 max-w-lg mx-auto"
-      >
+      </h2>
+      <p className="font-sans text-sm text-repwell-teal-400/80 mb-8 max-w-lg mx-auto">
         See how RepWell stacks up against other review management platforms.
-      </motion.p>
-      <motion.div
-        variants={fadeInUp}
-        className="flex flex-wrap items-center justify-center gap-3"
-      >
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-3">
         {compareNavItems.map((item) => {
           const isCurrent = currentSlug.startsWith(item.slug);
 
@@ -78,7 +73,7 @@ export function CrossLinksSection({ currentSlug }: CrossLinksSectionProps) {
             </Link>
           );
         })}
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

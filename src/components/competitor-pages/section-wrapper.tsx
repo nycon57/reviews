@@ -12,6 +12,10 @@ interface SectionWrapperProps {
   wide?: boolean;
   /** Remove vertical padding (used for flush sections like logo bars) */
   flush?: boolean;
+  /** Enable content-visibility:auto for below-fold sections (skips rendering until near viewport) */
+  lazyRender?: boolean;
+  /** Estimated intrinsic height hint for content-visibility:auto (prevents CLS) */
+  estimatedHeight?: string;
   children: React.ReactNode;
   className?: string;
 }
@@ -34,6 +38,8 @@ export function SectionWrapper({
   background = "white",
   wide = false,
   flush = false,
+  lazyRender = false,
+  estimatedHeight = "600px",
   children,
   className,
 }: SectionWrapperProps) {
@@ -46,6 +52,14 @@ export function SectionWrapper({
         "scroll-mt-20",
         className,
       )}
+      style={
+        lazyRender
+          ? {
+              contentVisibility: "auto",
+              containIntrinsicSize: `auto ${estimatedHeight}`,
+            }
+          : undefined
+      }
     >
       <div
         className={cn(

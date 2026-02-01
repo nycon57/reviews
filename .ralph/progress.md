@@ -12195,3 +12195,39 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Phosphor icons used throughout competitor pages (not Lucide despite type comments) — used Phosphor consistently
   - SectionWrapper background="gradient" already provides the gradient background for footer CTA
 ---
+
+## [2026-02-01] - S123: Social Proof Wall & Footer CTA Sub-Components (Sections 15-16)
+Thread:
+Run: 20260201-093400-50757 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-093400-50757-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-093400-50757-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 24a5ce1 [Pass 2/3] refactor(S123): Quality improvements for social proof wall
+- Post-commit status: clean (only unrelated prd-reviews.json and USER_ACTION_REQUIRED.md remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: yes (verified patterns)
+  - /next-best-practices: yes (checked SSR/hydration)
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: yes (design system compliance check)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors from changed files)
+- Files changed:
+  - src/components/competitor-pages/sections/social-proof-section.tsx
+- What was implemented:
+  - Removed redundant platformLabels identity map (was mapping each string to itself)
+  - Capped stagger animation delay at 800ms max to prevent sluggish reveals on 20-card walls
+  - Replaced locale-dependent toLocaleDateString with deterministic UTC month abbreviation to prevent SSR hydration mismatches
+- **Learnings for future iterations:**
+  - toLocaleDateString can cause hydration mismatches when server and client locales differ — use manual formatting for SSR components
+  - Stagger delays compound linearly; always cap at a reasonable max for variable-length lists
+---

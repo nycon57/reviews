@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import type {
   CompetitorPageConfig,
   TransitionSection,
@@ -8,6 +9,7 @@ import type { SectionBackground } from "./section-wrapper";
 import { SectionWrapper } from "./section-wrapper";
 import { SectionSkeleton } from "./section-skeleton";
 import { ScrollProgress } from "./scroll-progress";
+import { SwitchingFromProvider } from "./switching-from-provider";
 
 // ---------------------------------------------------------------------------
 // Above-the-fold sections (eagerly imported for fast LCP)
@@ -160,7 +162,8 @@ export function CompetitorComparisonPage({
   showScrollProgress = true,
 }: CompetitorComparisonPageProps) {
   return (
-    <>
+    <Suspense>
+      <SwitchingFromProvider>
       {showScrollProgress && <ScrollProgress />}
 
       {/* Section 1: Hero */}
@@ -263,6 +266,7 @@ export function CompetitorComparisonPage({
       <SectionWrapper id="footer-cta" background="gradient">
         <FooterCTASection config={config.footerCta} />
       </SectionWrapper>
-    </>
+      </SwitchingFromProvider>
+    </Suspense>
   );
 }

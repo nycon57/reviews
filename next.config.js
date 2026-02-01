@@ -81,6 +81,32 @@ const nextConfig = {
         destination: "/pro/:id",
         permanent: true,
       },
+      // /vs/[competitor] aliases → /compare/[competitor]-alternative
+      {
+        source: "/vs/experience-com",
+        destination: "/compare/experience-com-alternative",
+        permanent: true,
+      },
+      {
+        source: "/vs/birdeye",
+        destination: "/compare/birdeye-alternative",
+        permanent: true,
+      },
+      {
+        source: "/vs/socialsurvey",
+        destination: "/compare/socialsurvey-alternative",
+        permanent: true,
+      },
+      {
+        source: "/vs/total-expert",
+        destination: "/compare/total-expert-alternative",
+        permanent: true,
+      },
+      {
+        source: "/vs/trustpilot",
+        destination: "/compare/trustpilot-alternative",
+        permanent: true,
+      },
     ];
   },
 };

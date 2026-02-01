@@ -48,6 +48,9 @@ export async function getSmsAnalytics(params?: {
   const orgId = context.organization_id;
   const { startDate, endDate, userId } = params ?? {};
 
+  // Fetch total clicks once and share across summary + funnel
+  const totalClicks = await fetchTotalClicks(orgId, startDate, endDate, userId);
+
   const [
     summary,
     funnel,
@@ -59,8 +62,8 @@ export async function getSmsAnalytics(params?: {
     timeHeatmap,
     channelComparison,
   ] = await Promise.all([
-    fetchSummary(orgId, startDate, endDate, userId),
-    fetchFunnel(orgId, startDate, endDate, userId),
+    fetchSummary(orgId, startDate, endDate, userId, totalClicks),
+    fetchFunnel(orgId, startDate, endDate, userId, totalClicks),
     fetchDailyVolume(orgId, startDate, endDate, userId),
     fetchTemplatePerformance(orgId, startDate, endDate, userId),
     context.role !== "user"
@@ -69,7 +72,7 @@ export async function getSmsAnalytics(params?: {
     fetchOptOutTrend(orgId, startDate, endDate),
     fetchCostBreakdown(orgId, startDate, endDate, userId),
     fetchTimeHeatmap(orgId, startDate, endDate, userId),
-    fetchChannelComparison(orgId, startDate, endDate, userId),
+    fetchChannelComparison(orgId, startDate, endDate, userId, totalClicks),
   ]);
 
   return {
@@ -94,7 +97,8 @@ async function fetchSummary(
   orgId: string,
   startDate?: string,
   endDate?: string,
-  userId?: string
+  userId?: string,
+  precomputedClicks?: number
 ): Promise<SmsAnalyticsSummary> {
   const supabase = createUntypedAdminClient();
 
@@ -116,8 +120,7 @@ async function fetchSummary(
   const totalCostCents = rows.reduce((s, r) => s + ((r.total_cost_cents as number) ?? 0), 0);
   const totalReviewsGenerated = rows.reduce((s, r) => s + ((r.reviews_generated as number) ?? 0), 0);
 
-  // Get click data from short links
-  const totalClicks = await fetchTotalClicks(orgId, startDate, endDate, userId);
+  const totalClicks = precomputedClicks ?? 0;
 
   const deliveryRate = totalSent > 0 ? totalDelivered / totalSent : 0;
   const clickRate = totalDelivered > 0 ? totalClicks / totalDelivered : 0;
@@ -144,7 +147,8 @@ async function fetchFunnel(
   orgId: string,
   startDate?: string,
   endDate?: string,
-  userId?: string
+  userId?: string,
+  precomputedClicks?: number
 ): Promise<SmsDeliveryFunnel> {
   const supabase = createUntypedAdminClient();
 
@@ -163,7 +167,7 @@ async function fetchFunnel(
   const sent = rows.reduce((s, r) => s + ((r.sent as number) ?? 0), 0);
   const delivered = rows.reduce((s, r) => s + ((r.delivered as number) ?? 0), 0);
   const reviewed = rows.reduce((s, r) => s + ((r.reviews_generated as number) ?? 0), 0);
-  const clicked = await fetchTotalClicks(orgId, startDate, endDate, userId);
+  const clicked = precomputedClicks ?? 0;
 
   return {
     sent,
@@ -482,7 +486,8 @@ async function fetchTimeHeatmap(
     .select("sent_at, short_link_id, status")
     .eq("organization_id", orgId)
     .eq("direction", "outbound")
-    .not("sent_at", "is", null);
+    .not("sent_at", "is", null)
+    .limit(10000);
 
   if (startDate) query = query.gte("sent_at", startDate);
   if (endDate) query = query.lte("sent_at", endDate);
@@ -547,7 +552,8 @@ async function fetchChannelComparison(
   orgId: string,
   startDate?: string,
   endDate?: string,
-  userId?: string
+  userId?: string,
+  precomputedClicks?: number
 ): Promise<SmsChannelComparison[] | null> {
   const supabase = createUntypedAdminClient();
 
@@ -567,7 +573,7 @@ async function fetchChannelComparison(
   const smsDelivered = (smsData ?? []).reduce((s, r) => s + ((r.delivered as number) ?? 0), 0);
   const smsCost = (smsData ?? []).reduce((s, r) => s + ((r.total_cost_cents as number) ?? 0), 0);
   const smsReviews = (smsData ?? []).reduce((s, r) => s + ((r.reviews_generated as number) ?? 0), 0);
-  const smsClicks = await fetchTotalClicks(orgId, startDate, endDate, userId);
+  const smsClicks = precomputedClicks ?? 0;
 
   // Get email stats (from surveys table as proxy)
   let emailQuery = supabase
@@ -667,6 +673,17 @@ async function fetchTotalClicks(
 
 // ── CSV Export ──────────────────────────────────────────────────────
 
+/** Escape a string for CSV: quote it and neutralize formula-injection characters. */
+function csvEscape(value: string): string {
+  // Prevent CSV formula injection: prefix dangerous first chars with a single quote
+  let safe = value;
+  if (/^[=+\-@\t\r]/.test(safe)) {
+    safe = `'${safe}`;
+  }
+  // Escape embedded double quotes and wrap in quotes
+  return `"${safe.replace(/"/g, '""')}"`;
+}
+
 export async function exportSmsAnalyticsCsv(params?: {
   startDate?: string;
   endDate?: string;
@@ -706,7 +723,7 @@ export async function exportSmsAnalyticsCsv(params?: {
   lines.push("Template,Category,Sends,Delivery Rate,Click Rate,Avg Cost");
   for (const t of templatePerformance) {
     lines.push(
-      `"${t.templateName}",${t.category},${t.sends},` +
+      `${csvEscape(t.templateName)},${csvEscape(t.category)},${t.sends},` +
       `${(t.deliveryRate * 100).toFixed(1)}%,${(t.clickRate * 100).toFixed(1)}%,` +
       `$${(t.avgCostCents / 100).toFixed(2)}`
     );
@@ -719,7 +736,7 @@ export async function exportSmsAnalyticsCsv(params?: {
     lines.push("Name,SMS Sent,Reviews Generated,Conversion Rate,Cost Per Review");
     for (const lo of loLeaderboard) {
       lines.push(
-        `"${lo.userName}",${lo.smsSent},${lo.reviewsGenerated},` +
+        `${csvEscape(lo.userName)},${lo.smsSent},${lo.reviewsGenerated},` +
         `${(lo.conversionRate * 100).toFixed(1)}%,$${(lo.costPerReview / 100).toFixed(2)}`
       );
     }

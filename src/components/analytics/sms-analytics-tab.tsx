@@ -4,7 +4,6 @@ import {
   useState,
   useCallback,
   useEffect,
-  useRef,
   useMemo,
   memo,
 } from "react";
@@ -28,7 +27,7 @@ import {
 import {
   BarChart,
   Bar,
-  LineChart,
+  ComposedChart,
   Line,
   PieChart,
   Pie,
@@ -581,11 +580,11 @@ function OptOutTrendChart({ data }: { data: SmsOptOutTrend[] }) {
           <EmptyState message="No opt-out data recorded" />
         ) : (
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+            <ComposedChart data={chartData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
               <YAxis yAxisId="count" tick={{ fontSize: 12 }} />
-              <YAxis yAxisId="rate" orientation="right" tick={{ fontSize: 12 }} tickFormatter={(v) => `${v.toFixed(1)}%`} />
+              <YAxis yAxisId="rate" orientation="right" tick={{ fontSize: 12 }} tickFormatter={(v: number) => `${v.toFixed(1)}%`} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: "hsl(var(--background))",
@@ -597,7 +596,7 @@ function OptOutTrendChart({ data }: { data: SmsOptOutTrend[] }) {
               <Legend />
               <Bar yAxisId="count" dataKey="optOutCount" name="Opt-outs" fill={CHART_COLORS.failed} />
               <Line yAxisId="rate" type="monotone" dataKey="optOutRatePercent" name="Opt-out Rate %" stroke="#354f52" strokeWidth={2} dot={false} />
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         )}
       </CardContent>
@@ -619,7 +618,7 @@ function CostBreakdownChart({ data }: { data: SmsCostBreakdown[] }) {
     [data]
   );
 
-  const totalCost = data.reduce((s, d) => s + d.costCents, 0);
+  const totalCost = useMemo(() => data.reduce((s, d) => s + d.costCents, 0), [data]);
 
   return (
     <Card>
@@ -716,7 +715,7 @@ function TimeHeatmap({ data }: { data: SmsTimeHeatmapCell[] }) {
         {!hasSends ? (
           <EmptyState message="No send time data available" />
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" role="img" aria-label="Heatmap showing SMS click rates by day of week and hour. Best times are highlighted in darker teal.">
             <div className="min-w-[500px]">
               {/* Hour headers */}
               <div className="flex gap-px mb-1 pl-10">
@@ -878,12 +877,7 @@ export function SmsAnalyticsTab({ teamMembers, userRole }: Props) {
     }
   }, [dateRange, selectedMember]);
 
-  const isInitialRender = useRef(true);
   useEffect(() => {
-    // Fetch on mount and when filters change
-    if (isInitialRender.current) {
-      isInitialRender.current = false;
-    }
     fetchData();
   }, [fetchData]);
 

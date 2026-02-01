@@ -11614,3 +11614,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - react-hooks/set-state-in-effect lint rule requires wrapping sync setState in rAF
   - Existing section stubs had "Full implementation in S118" comments — replaced entirely
 ---
+
+## [2026-02-01] - S118: Testimonials & Differentiators Sub-Components (Sections 5-6)
+Thread: 
+Run: 20260201-081324-99875 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-081324-99875-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-081324-99875-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: eaa389c [Pass 2/3] fix(S118): Quality review fixes for testimonials and differentiators
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes
+  - /vercel-react-best-practices: yes
+  - /next-best-practices: yes
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: yes
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (S118 files) -> PASS
+- Files changed:
+  - src/components/competitor-pages/sections/testimonials-section.tsx
+  - src/components/competitor-pages/sections/differentiators-section.tsx
+- Quality review fixes applied:
+  - Replaced native `<img>` with `next/image` for avatar optimization and CLS prevention
+  - Fixed non-unique React keys using composite `${value}-${index}` pattern
+  - Passed `competitorName` through to comparison bar labels instead of generic "Competitor"
+  - Added `focus-visible:ring-2` styles to carousel navigation buttons (WCAG compliance)
+  - Computed scroll gap dynamically from DOM instead of hardcoded 24px
+  - Added `role="group"` to carousel nav container (aria-label not valid on plain div)
+  - Replaced `transition-all` with targeted `transition-[transform,box-shadow,opacity]`
+- **Learnings for future iterations:**
+  - `aria-label` requires a landmark role or explicit `role` attribute on `<div>` elements
+  - `transition-all` is flagged by Web Interface Guidelines; always use specific properties
+  - next/image handles lazy loading automatically, no need for `loading="lazy"` attribute
+  - Comparison bars use illustrative widths (100% vs 55%) — acceptable for qualitative comparisons but should be documented
+---

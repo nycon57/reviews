@@ -96,9 +96,37 @@ export class ConsentService {
       .single();
 
     if (error || !data) {
-      // Handle unique constraint race condition
+      // Handle unique constraint race condition with a single retry
       if (error?.code === "23505") {
-        return this.recordConsent(input);
+        const { data: retryData } = await this.supabase
+          .from("sms_consent")
+          .select("id, status")
+          .eq("organization_id", input.orgId)
+          .eq("phone_number", phone)
+          .maybeSingle();
+
+        if (retryData) {
+          const { data: updated, error: updateErr } = await this.supabase
+            .from("sms_consent")
+            .update({
+              status: "opted_in" as SmsConsentStatus,
+              consent_method: input.method,
+              consent_language: input.language ?? null,
+              consent_source: input.source ?? null,
+              consent_ip: input.ip ?? null,
+              opted_in_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", retryData.id)
+            .select("*")
+            .single();
+
+          if (updateErr || !updated) {
+            throw new Error(`Failed to record consent after retry: ${updateErr?.message}`);
+          }
+          return mapToConsentRecord(updated);
+        }
+        throw new Error("Failed to record consent: race condition could not be resolved");
       }
       throw new Error(`Failed to record consent: ${error?.message}`);
     }
@@ -239,11 +267,14 @@ export class ConsentService {
     if (existing) {
       // If already opted in, return the existing record
       if (existing.status === "opted_in") {
-        const { data } = await this.supabase
+        const { data, error: fetchErr } = await this.supabase
           .from("sms_consent")
           .select("*")
           .eq("id", existing.id)
           .single();
+        if (fetchErr || !data) {
+          throw new Error(`Failed to fetch existing consent record: ${fetchErr?.message}`);
+        }
         return mapToConsentRecord(data);
       }
 
@@ -283,7 +314,43 @@ export class ConsentService {
 
     if (error || !data) {
       if (error?.code === "23505") {
-        return this.initiateDoubleOptIn(orgId, phone, method, source, ip);
+        // Race condition: another request inserted first. Fetch and update.
+        const { data: raceRow } = await this.supabase
+          .from("sms_consent")
+          .select("id, status")
+          .eq("organization_id", orgId)
+          .eq("phone_number", normalized)
+          .maybeSingle();
+
+        if (raceRow) {
+          if (raceRow.status === "opted_in") {
+            const { data: fullRow } = await this.supabase
+              .from("sms_consent")
+              .select("*")
+              .eq("id", raceRow.id)
+              .single();
+            return mapToConsentRecord(fullRow);
+          }
+
+          const { data: updated, error: updateErr } = await this.supabase
+            .from("sms_consent")
+            .update({
+              status: "pending" as SmsConsentStatus,
+              consent_method: method,
+              consent_source: source ?? null,
+              consent_ip: ip ?? null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", raceRow.id)
+            .select("*")
+            .single();
+
+          if (updateErr || !updated) {
+            throw new Error(`Failed to initiate double opt-in after retry: ${updateErr?.message}`);
+          }
+          return mapToConsentRecord(updated);
+        }
+        throw new Error("Failed to create pending consent: race condition could not be resolved");
       }
       throw new Error(`Failed to create pending consent: ${error?.message}`);
     }

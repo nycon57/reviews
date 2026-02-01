@@ -90,7 +90,7 @@ export class KeywordHandler {
       case "opt_in":
         return this.handleOptIn(organizationId, phone, settings);
       case "help":
-        return this.handleHelp(organizationId, settings);
+        return this.handleHelp(settings);
       case "double_opt_in_confirm":
         return this.handleDoubleOptInConfirm(organizationId, phone, settings);
       default:
@@ -144,10 +144,7 @@ export class KeywordHandler {
     };
   }
 
-  private async handleHelp(
-    organizationId: string,
-    settings: OrgKeywordSettings
-  ): Promise<KeywordResult> {
+  private handleHelp(settings: OrgKeywordSettings): KeywordResult {
     // Interpolate org name into help response
     let response = settings.helpResponse;
     if (settings.orgName) {

@@ -16,6 +16,7 @@ import { renderSkeleton, removeSkeleton } from "./core/skeleton";
 import { renderWidget, renderError } from "./core/renderer";
 import { fetchConfig, fetchReviews } from "./core/api-client";
 import { trackImpression } from "./core/event-tracker";
+import { DomainNotAllowedError, fetchWithDomainCheck } from "./core/domain-check";
 import { injectStructuredData, removeStructuredData } from "./seo/structured-data";
 
 // Widget type registrations (self-register on import)
@@ -64,14 +65,18 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
   instance.abortController = controller;
 
   try {
-    // Fetch config
-    const config = await fetchConfig(apiBase, instance.widgetId, controller.signal);
+    // Fetch config (wraps 403 → DomainNotAllowedError for clear feedback)
+    const config = await fetchWithDomainCheck(instance.widgetId, () =>
+      fetchConfig(apiBase, instance.widgetId, controller.signal)
+    );
     if (controller.signal.aborted) return;
     instance.config = config;
 
     // Fetch reviews
     const limit = config.config?.filters?.maxReviews ?? 10;
-    const data = await fetchReviews(apiBase, instance.widgetId, controller.signal, limit);
+    const data = await fetchWithDomainCheck(instance.widgetId, () =>
+      fetchReviews(apiBase, instance.widgetId, controller.signal, limit)
+    );
     if (controller.signal.aborted) return;
     instance.reviews = data.reviews;
 
@@ -93,8 +98,14 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
 
     instance.state = WidgetState.Error;
     removeSkeleton(instance.shadowRoot);
-    renderError(instance.shadowRoot);
-    console.warn(`[RepWell] Failed to load widget "${instance.widgetId}":`, err);
+
+    if (err instanceof DomainNotAllowedError) {
+      renderError(instance.shadowRoot, "This widget is not authorized for this domain.");
+      console.warn(`[RepWell] ${err.message}`);
+    } else {
+      renderError(instance.shadowRoot);
+      console.warn(`[RepWell] Failed to load widget "${instance.widgetId}":`, err);
+    }
   } finally {
     instance.abortController = null;
   }

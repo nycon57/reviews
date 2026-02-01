@@ -46,6 +46,19 @@ const MAX_REVIEW_SNIPPETS = 10;
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
+/** Safely format a date string to ISO 8601 (YYYY-MM-DD). Falls back to today's date. */
+function safeIsoDate(dateStr: string | null | undefined): string {
+  const fallback = new Date().toISOString().split("T")[0];
+  if (!dateStr) return fallback;
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return fallback;
+    return d.toISOString().split("T")[0];
+  } catch {
+    return fallback;
+  }
+}
+
 function buildAggregateRating(
   ratingValue: number,
   reviewCount: number
@@ -66,9 +79,7 @@ function buildReviewSnippets(reviews: PublicReview[]): ReviewSchema[] {
       "@type": "Person" as const,
       name: r.reviewer_name ?? "Anonymous",
     },
-    datePublished: r.review_date
-      ? new Date(r.review_date).toISOString().split("T")[0]
-      : new Date().toISOString().split("T")[0],
+    datePublished: safeIsoDate(r.review_date),
     reviewRating: {
       "@type": "Rating" as const,
       ratingValue: r.rating,
@@ -213,8 +224,27 @@ function buildFinancialService(
     name,
   };
 
+  if (profile?.url) schema.url = profile.url;
   if (profile?.logo_url) {
     schema.logo = profile.logo_url;
+  }
+
+  if (profile?.address) {
+    const addr = profile.address;
+    if (addr.street || addr.city || addr.state) {
+      schema.address = {
+        "@type": "PostalAddress",
+        ...(addr.street && { streetAddress: addr.street }),
+        ...(addr.city && { addressLocality: addr.city }),
+        ...(addr.state && { addressRegion: addr.state }),
+        ...(addr.zip && { postalCode: addr.zip }),
+        ...(addr.country && { addressCountry: addr.country }),
+      };
+    }
+  }
+
+  if (profile?.telephone) {
+    schema.telephone = profile.telephone;
   }
 
   const avg = profile?.average_rating ?? computeAverageRating(reviews);

@@ -11577,3 +11577,40 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - JSX comments like `{/* Headline */}` above an `<h2>` add no value — let the code speak
   - Optional chaining with nullish coalescing is cleaner than double-check guards for optional arrays
 ---
+
+## [2026-02-01] - S118: Testimonials & Differentiators Sub-Components (Sections 5-6)
+Thread: 
+Run: 20260201-074821-93844 (iteration 3)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-074821-93844-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-074821-93844-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: a089834 [Pass 1/3] feat(S118): Build testimonials carousel and differentiator cards
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (my files) -> PASS
+- Files changed:
+  - src/components/competitor-pages/sections/testimonials-section.tsx
+  - src/components/competitor-pages/sections/differentiators-section.tsx
+- Implemented full TestimonialsSection: 3-col desktop grid, mobile carousel with nav buttons, star ratings, avatar fallbacks, markdown bold competitor name emphasis, accessible ARIA labels
+- Implemented full DifferentiatorsSection: icon mapping from config, visual comparison bars, staggered fade-up entrance animation, reduced-motion support, configurable headline
+- Both components config-driven per acceptance criteria
+- **Learnings for future iterations:**
+  - Phosphor icons used instead of Lucide (only @phosphor-icons/react installed). Icon map bridges config icon names to Phosphor components.
+  - react-hooks/set-state-in-effect lint rule requires wrapping sync setState in rAF
+  - Existing section stubs had "Full implementation in S118" comments — replaced entirely
+---

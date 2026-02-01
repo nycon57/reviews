@@ -12503,3 +12503,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Competitor claims need source documentation and verification dates
   - Mortgage-specific features are better distributed across standard categories than in a standalone category
 ---
+
+## 2026-02-01 - S125: Birdeye Competitor Page Configuration & Content
+Thread:
+Run: 20260201-100918-3038 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-100918-3038-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-100918-3038-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f9dd127 [Pass 2/3] fix(S125): Add compliance-safe AI responses to feature comparison
+- Post-commit status: clean (prd-reviews.json and USER_ACTION_REQUIRED.md modified, not our edits)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via feature-dev:code-reviewer subagent)
+  - /vercel-react-best-practices: no (data-only story)
+  - /next-best-practices: no (data-only story)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no (config file, not applicable)
+  - /frontend-design: no (data-only story)
+  - /web-design-guidelines: no (data-only story)
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit -> PASS
+  - Command: npx eslint src/lib/competitor-pages/configs/birdeye.ts -> PASS
+  - Command: npm run lint -> PASS (no new errors; all 13 errors pre-existing in remotion/)
+- Files changed:
+  - src/lib/competitor-pages/configs/birdeye.ts (added Compliance-safe AI responses to feature comparison)
+- Quality review findings:
+  - Code review (automated): no issues found - type compliance, content quality, consistency, data integrity all PASS
+  - Manual percentage verification: all 10 case study percentage calculations verified correct
+  - Prior uncommitted changes found: category restructuring (Mortgage-Specific → Team & Engagement + Testimonials) and docblock verification comment — these were from a prior Pass 2 run (752fb0f) and already committed
+  - One gap found: "Compliance-safe AI responses" was dropped from feature comparison table during category restructuring — re-added to AI & Analytics category
+- **Learnings for future iterations:**
+  - When restructuring categories in feature comparison tables, cross-reference the removed category's features against all remaining categories to ensure no features are silently dropped
+  - The Birdeye config now uses the same 6-category structure as Experience.com (Review Management, Surveys & NPS, AI & Analytics, Team & Engagement, Testimonials, Platform & Support)
+  - Data verification comments in docblocks are a good pattern for competitor pages since data accuracy matters
+---

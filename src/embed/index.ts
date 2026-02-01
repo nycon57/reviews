@@ -19,7 +19,7 @@ import { trackImpression } from "./core/event-tracker";
 import { attachScrollDepthTracking } from "./core/scroll-tracker";
 import { setupConversionTracking } from "./core/conversion-tracker";
 import { DomainNotAllowedError, fetchWithDomainCheck } from "./core/domain-check";
-import { resolveAbVariant } from "./core/ab-resolver";
+import { resolveAbVariant, clearAbAssignment } from "./core/ab-resolver";
 import { injectStructuredData, removeStructuredData } from "./seo/structured-data";
 import { setInstanceForRoot } from "./widgets/registry";
 
@@ -204,6 +204,9 @@ function destroyInstance(instance: WidgetInstance): void {
 
   // Stop observing
   unobserve(instance.element);
+
+  // Clear A/B test assignment so visitor gets fresh assignment on next load
+  clearAbAssignment(instance.widgetId);
 
   // Remove JSON-LD structured data from <head>
   removeStructuredData(instance.widgetId);

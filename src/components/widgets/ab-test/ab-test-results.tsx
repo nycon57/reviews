@@ -30,11 +30,6 @@ function confidenceBadge(level: ConfidenceLevel) {
   return <Badge variant={variant}>{label}</Badge>;
 }
 
-function formatCtr(clicks: number, impressions: number): string {
-  if (impressions === 0) return "0%";
-  return ((clicks / impressions) * 100).toFixed(2) + "%";
-}
-
 function MetricCard({
   label,
   variantA,

@@ -12076,3 +12076,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Verify file state on disk before assuming review agent findings reflect current code
   - The _ssgManifest.js build error is a pre-existing Next.js issue, not a regression
 ---
+
+## 2026-02-01 - S122: Case Studies & FAQ Accordion Sub-Components (Sections 13-14)
+Thread: 
+Run: 20260201-091853-83007 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-091853-83007-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-091853-83007-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 86f163d [Pass 2/3] refactor(S122): Quality improvements for case studies and FAQ sections
+- Post-commit status: clean (only prd-reviews.json remains, not edited by this run)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no (linter auto-simplified comments)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /schema-markup (reviewed JSON-LD generation)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no errors from S122 files)
+- Files changed:
+  - src/components/competitor-pages/sections/case-studies-section.tsx
+  - src/components/competitor-pages/sections/faq-section.tsx
+  - src/lib/competitor-pages/schema-generators.ts
+- What was implemented:
+  - Extracted named interfaces (MetricDeltaProps, CaseStudyCardProps) from inline types
+  - Added percentage change display with green ArrowUp indicator on case study metrics (uses repwell-sage-200 for success color per design system)
+  - Enabled rich text (HTML) rendering for FAQ answers with Tailwind child selectors for bold, links, lists
+  - Fixed unused CompetitorPageConfig import in schema-generators.ts
+  - Simplified verbose JSDoc comments for clarity (auto-linted)
+- **Learnings for future iterations:**
+  - The percentageChange field was already added to the type in Pass 1 but rendering was missing — always check both type and component when reviewing ACs
+  - FAQ rich text uses dangerouslySetInnerHTML which is safe for static config data but would need DOMPurify for user-generated content
+  - The react/no-danger ESLint rule is not configured in this project, so eslint-disable comments for it cause lint errors
+  - Linter auto-simplifies comments between edits — verify file state before committing
+---

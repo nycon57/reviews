@@ -101,6 +101,12 @@ export async function processFollowUps(): Promise<FollowUpResult> {
           }
         }
 
+        // Skip if missing required IDs (loan_officer_id is required for sending)
+        if (!msg.loan_officer_id) {
+          result.skipped++;
+          continue;
+        }
+
         // Check consent
         const hasConsent = await consentService.checkConsent(
           msg.organization_id,
@@ -117,11 +123,11 @@ export async function processFollowUps(): Promise<FollowUpResult> {
             msg.organization_id
           );
           const sendResult = await smsService.sendReviewRequest({
-            borrowerId: msg.borrower_id ?? msg.loan_officer_id!,
-            loanOfficerId: msg.loan_officer_id!,
+            borrowerId: msg.borrower_id ?? msg.loan_officer_id,
+            loanOfficerId: msg.loan_officer_id,
             templateId: settings.auto_follow_up_template_id!,
             borrowerPhone: msg.to_number,
-            borrowerName: "", // Follow-up — name unavailable from original message
+            borrowerName: "",
           });
 
           if (sendResult.success && sendResult.messageId) {

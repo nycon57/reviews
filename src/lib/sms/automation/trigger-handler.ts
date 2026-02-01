@@ -52,11 +52,11 @@ export async function handleCrmTrigger(
 ): Promise<TriggerResult> {
   const supabase = createUntypedAdminClient();
 
-  // Load org trigger settings
+  // Load org trigger settings (includes default_from_number to avoid a second query)
   const { data: settings } = await supabase
     .from("sms_settings")
     .select(
-      "crm_trigger_enabled, crm_trigger_delay_hours, crm_trigger_template_id, crm_field_mapping"
+      "crm_trigger_enabled, crm_trigger_delay_hours, crm_trigger_template_id, crm_field_mapping, default_from_number"
     )
     .eq("organization_id", organizationId)
     .single();
@@ -113,8 +113,11 @@ export async function handleCrmTrigger(
     };
   }
 
-  // Queue for future delivery
-  const fromNumber = await resolveFromNumber(supabase, organizationId);
+  // Queue for future delivery — use default from the already-fetched settings,
+  // falling back to the first active phone number.
+  const fromNumber =
+    settings.default_from_number ??
+    (await resolveActivePhoneNumber(supabase, organizationId));
   if (!fromNumber) {
     return { success: false, error: "No from number configured" };
   }
@@ -195,18 +198,10 @@ export async function handleCrmTrigger(
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
-async function resolveFromNumber(
+async function resolveActivePhoneNumber(
   supabase: ReturnType<typeof createUntypedAdminClient>,
   organizationId: string
 ): Promise<string | null> {
-  const { data: settings } = await supabase
-    .from("sms_settings")
-    .select("default_from_number")
-    .eq("organization_id", organizationId)
-    .single();
-
-  if (settings?.default_from_number) return settings.default_from_number;
-
   const { data: number } = await supabase
     .from("sms_phone_numbers")
     .select("phone_number")

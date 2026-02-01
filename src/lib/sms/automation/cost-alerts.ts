@@ -117,18 +117,10 @@ interface BalanceInfo {
   periodEnd: string;
 }
 
-/**
- * Send a cost alert email to the org admin.
- * Uses the existing Resend email infrastructure.
- */
-async function sendCostAlertEmail(
-  organizationId: string,
-  level: AlertLevel,
-  balance: BalanceInfo
-): Promise<void> {
+async function getOrgAdminEmail(
+  organizationId: string
+): Promise<{ email: string; fullName: string | null } | null> {
   const supabase = createUntypedAdminClient();
-
-  // Find org admin email
   const { data: admin } = await supabase
     .from("users")
     .select("email, full_name")
@@ -137,7 +129,37 @@ async function sendCostAlertEmail(
     .limit(1)
     .single();
 
-  if (!admin?.email) {
+  if (!admin?.email) return null;
+  return { email: admin.email, fullName: admin.full_name ?? null };
+}
+
+async function sendAlertEmail(
+  to: string,
+  subject: string,
+  text: string
+): Promise<void> {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    console.warn("[SMS Cost Alert] RESEND_API_KEY not configured");
+    return;
+  }
+  const { Resend } = await import("resend");
+  const resend = new Resend(resendApiKey);
+  await resend.emails.send({
+    from: "RepWell <notifications@repwell.com>",
+    to,
+    subject,
+    text,
+  });
+}
+
+async function sendCostAlertEmail(
+  organizationId: string,
+  level: AlertLevel,
+  balance: BalanceInfo
+): Promise<void> {
+  const admin = await getOrgAdminEmail(organizationId);
+  if (!admin) {
     console.warn(`[SMS Cost Alert] No admin email found for org ${organizationId}`);
     return;
   }
@@ -146,21 +168,8 @@ async function sendCostAlertEmail(
   const subject = getCostAlertSubject(level, percentage);
   const body = getCostAlertBody(level, balance, percentage);
 
-  // Use Resend for email delivery
   try {
-    const { Resend } = await import("resend");
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) {
-      console.warn("[SMS Cost Alert] RESEND_API_KEY not configured");
-      return;
-    }
-    const resend = new Resend(resendApiKey);
-    await resend.emails.send({
-      from: "RepWell <notifications@repwell.com>",
-      to: admin.email,
-      subject,
-      text: body,
-    });
+    await sendAlertEmail(admin.email, subject, body);
   } catch (error) {
     console.error(`[SMS Cost Alert] Failed to send email: ${error}`);
   }
@@ -170,47 +179,29 @@ async function sendOverageAlertEmail(
   organizationId: string,
   balance: BalanceInfo
 ): Promise<void> {
-  const supabase = createUntypedAdminClient();
-
-  const { data: admin } = await supabase
-    .from("users")
-    .select("email, full_name")
-    .eq("organization_id", organizationId)
-    .eq("role", "admin")
-    .limit(1)
-    .single();
-
-  if (!admin?.email) return;
+  const admin = await getOrgAdminEmail(organizationId);
+  if (!admin) return;
 
   const overageCost = (balance.overage * balance.overageRateCents) / 100;
   const projectedOverage = estimateMonthlyOverage(balance);
 
   const subject = "SMS Credit Overage Alert — RepWell";
   const body = [
-    `Hi ${admin.full_name ?? "there"},`,
+    `Hi ${admin.fullName ?? "there"},`,
     "",
-    `Your organization has exceeded its included SMS credits and is now incurring overage charges.`,
+    "Your organization has exceeded its included SMS credits and is now incurring overage charges.",
     "",
     `Current overage: ${balance.overage} credits ($${overageCost.toFixed(2)})`,
     `Overage rate: $${(balance.overageRateCents / 100).toFixed(2)} per credit`,
     `Projected monthly overage cost: $${projectedOverage.toFixed(2)}`,
     "",
-    `To manage costs, consider purchasing a credit pack or upgrading your plan.`,
+    "To manage costs, consider purchasing a credit pack or upgrading your plan.",
     "",
     "— RepWell",
   ].join("\n");
 
   try {
-    const { Resend } = await import("resend");
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (!resendApiKey) return;
-    const resend = new Resend(resendApiKey);
-    await resend.emails.send({
-      from: "RepWell <notifications@repwell.com>",
-      to: admin.email,
-      subject,
-      text: body,
-    });
+    await sendAlertEmail(admin.email, subject, body);
   } catch (error) {
     console.error(`[SMS Cost Alert] Overage email failed: ${error}`);
   }

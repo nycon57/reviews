@@ -11219,3 +11219,42 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Types-only stories have minimal review surface — focus on acceptance criteria completeness and naming conventions
   - Pre-existing lint errors (crypto, AbortController) are in other files, not related to this story
 ---
+
+## 2026-02-01 - S115: Shared CompetitorComparisonPage Template Component
+Thread:
+Run: 20260201-054310-68122 (iteration 3)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-054310-68122-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-054310-68122-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 45aa764 [Pass 1/3] feat(S115): Add CompetitorComparisonPage template component & section shell
+- Post-commit status: clean (only pre-existing modified files remain)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (Pass 2)
+  - /next-best-practices: no (Pass 2)
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (Pass 2/3)
+  - /web-design-guidelines: no (Pass 2)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (Pass 3)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (only pre-existing warnings, 2 warnings in my files fixed with _ prefix)
+- Files changed:
+  - src/components/competitor-pages/competitor-comparison-page.tsx (main template)
+  - src/components/competitor-pages/section-wrapper.tsx (section layout wrapper)
+  - src/components/competitor-pages/scroll-progress.tsx (client scroll indicator)
+  - src/components/competitor-pages/section-skeleton.tsx (lazy-load skeleton)
+  - src/components/competitor-pages/index.ts (barrel export)
+  - src/components/competitor-pages/sections/*.tsx (16 section stub components)
+- Implemented CompetitorComparisonPage server component that accepts CompetitorPageConfig and renders all 16 sections in order. SectionWrapper handles max-width container, vertical spacing (py-16 md:py-24 lg:py-32), alternating backgrounds (white/subtle/muted/dark/gradient), and scroll-mt-20 for anchor links. Sections 3-16 lazy-loaded via next/dynamic with SectionSkeleton fallbacks. ScrollProgress client component tracks page scroll. Stub section components render config data with design system styling.
+- **Learnings for future iterations:**
+  - next/dynamic with named exports needs .then(m => m.ComponentName) pattern
+  - Design system uses py-16 md:py-24 lg:py-32 for standard sections, not py-20 lg:py-28 as AC states — followed design system
+  - Stub sections should keep competitorName prop with _ prefix for future implementation stories
+---

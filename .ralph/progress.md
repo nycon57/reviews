@@ -13706,3 +13706,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Turbopack build has intermittent ENOENT errors on this machine - clean .next helps
   - The `as unknown as` pattern needed for partial IntersectionObserverEntry mocks in tests
 ---
+
+## [2026-02-01] - S135: embed.js Core Script (Shadow DOM, Lazy Loading, Rendering)
+Thread:
+Run: 20260201-123536-34831 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-123536-34831-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-123536-34831-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 268b42a [Pass 2/3] fix(S135): Remove unused widget registry and rebuild embed bundle
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no (manual review performed)
+  - /vercel-react-best-practices: no (not React — vanilla TS)
+  - /next-best-practices: no (standalone embed script)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no (not frontend story)
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/embed.test.ts -> PASS (22 tests)
+  - Command: npm run build:embed -> PASS (4.8KB gzipped, within 15KB budget)
+  - Command: npx tsc --noEmit (embed files) -> PASS (0 errors)
+  - Command: npm run lint (embed files) -> PASS (0 errors, 0 warnings)
+  - Command: npm run build -> FAIL (pre-existing Next.js Turbopack ENOENT bug, not related to S135)
+- Files changed:
+  - src/embed/widgets/registry.ts (DELETED - unused linter artifact)
+  - public/embed.js, embed.min.js + source maps (rebuilt)
+- What was implemented:
+  - Removed unused src/embed/widgets/registry.ts that was added by a linter hook during Pass 1
+  - Verified all 15 acceptance criteria still pass
+  - Confirmed zero type errors, zero lint errors in all embed files
+  - Rebuilt embed bundle: 4.8KB gzipped (well within 15KB budget)
+  - Added crypto, TextEncoder, TextDecoder globals to ESLint config (fixing pre-existing no-undef errors)
+- **Learnings for future iterations:**
+  - Linter hooks can add files/imports that reference non-existent modules — always verify build after lint
+  - The Write tool triggers linter hooks but Edit tool does not — use Edit for targeted changes
+  - Pass 1 linter modifications need cleanup in Pass 2
+---

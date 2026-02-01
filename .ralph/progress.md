@@ -11773,3 +11773,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - `duration-400` is not a standard Tailwind utility; only 300 and 500 are available by default
   - ARIA tab pattern requires id/aria-controls/aria-labelledby plus keyboard arrow navigation
 ---
+
+## [2026-02-01] - S120: Integration Logos & Mortgage-Specific Sub-Components (Sections 9-10)
+Thread: 
+Run: 20260201-084334-26319 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-084334-26319-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-084334-26319-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: ab51558 [Pass 1/3] feat(S120): Implement integration logos grid and mortgage-specific section
+- Post-commit status: clean (staged files only; .agents/tasks/prd-reviews.json and .ralph/USER_ACTION_REQUIRED.md remain unstaged as expected)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /better-icons (Phosphor icon mapping)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors; 12 pre-existing errors in unrelated files)
+- Files changed:
+  - src/components/competitor-pages/sections/integration-logos-section.tsx (full rewrite)
+  - src/components/competitor-pages/sections/mortgage-specific-section.tsx (full rewrite)
+  - src/components/competitor-pages/competitor-comparison-page.tsx (pass mortgage config props)
+  - src/lib/competitor-pages/types.ts (add MortgageSectionConfig type)
+  - src/lib/competitor-pages/index.ts (export MortgageSectionConfig)
+- What was implemented:
+  - Section 9: Integration logos grid with grayscale-to-color hover, responsive flex-wrap layout, configurable headline, auto-generated category subtitle, staggered fade-up scroll animation, Next.js Image with alt text, IntersectionObserver with reduced-motion support
+  - Section 10: Mortgage-specific features with icon cards (Phosphor duotone), RepWell Exclusive badges, stat callout visual element, CTA button with arrow, eyebrow label, configurable headline/description, staggered fade-up animation
+  - Added MortgageSectionConfig type for section-level config (headline, description, cta, stat)
+  - Updated template to pass mortgage section config props
+- **Learnings for future iterations:**
+  - Existing sections follow a consistent pattern: "use client", IntersectionObserver for scroll animation, Phosphor icons with iconMap, cn() for conditional classes
+  - MortgageSectionConfig is optional on CompetitorPageConfig to maintain backward compatibility
+  - The integration logos section auto-generates category labels from the integrations array categories
+  - Pre-existing lint errors (12) are in remotion and other unrelated files — do not attempt to fix
+---

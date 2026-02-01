@@ -14,6 +14,7 @@ import type {
   EntityProfile,
   RatingDistribution,
   SourceBreakdown,
+  WidgetInstance,
 } from "../../types";
 import { trackClick } from "../../core/event-tracker";
 import {
@@ -26,6 +27,7 @@ import {
   formatAbsoluteDate,
 } from "../../core/dom-helpers";
 import { createEqualHousingLenderSVG, createHouseIconSVG } from "../../assets/equal-housing-lender";
+import { buildFilterControls } from "../shared/filter-controls";
 
 // ── Shared Helpers (exported for branch-review) ─────────────────────
 
@@ -314,7 +316,8 @@ export function buildReviewCard(
 export function buildCompanyReviewDOM(
   config: PublicWidgetConfig,
   reviews: PublicReview[],
-  apiBase: string
+  apiBase: string,
+  instance?: WidgetInstance,
 ): HTMLElement {
   const cfg = config.config;
   const content = cfg?.content;
@@ -344,7 +347,7 @@ export function buildCompanyReviewDOM(
   }
 
   // Review list with sort/filter/pagination
-  buildReviewListSection(container, reviews, config, starFilled, starEmpty, apiBase);
+  buildReviewListSection(container, reviews, config, starFilled, starEmpty, apiBase, undefined, instance);
 
   // Actions, compliance, branding
   appendWidgetFooter(container, config, apiBase);
@@ -428,24 +431,19 @@ export function buildReviewListSection(
   starFilled: string,
   starEmpty: string,
   apiBase: string,
-  emptyNode?: HTMLElement
+  emptyNode?: HTMLElement,
+  instance?: WidgetInstance,
 ): void {
   const content = config.config?.content;
   const perPage = content?.reviewsPerPage ?? 10;
   const columns = Math.min(Math.max(content?.columns ?? 1, 1), 6);
-
-  if (reviews.length === 0) {
-    if (emptyNode) container.appendChild(emptyNode);
-    else container.appendChild(text("div", "No reviews yet.", "rw-empty"));
-    return;
-  }
 
   let currentReviews = [...reviews];
   let visibleCount = Math.min(perPage, currentReviews.length);
   const grid = el("div", "rw-co-reviews");
   if (columns > 1) grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
 
-  const render = (): void => {
+  const renderCards = (): void => {
     while (grid.firstChild) grid.firstChild.remove();
     for (const r of currentReviews.slice(0, visibleCount)) {
       grid.appendChild(buildReviewCard(r, config, starFilled, starEmpty, apiBase));
@@ -457,7 +455,24 @@ export function buildReviewListSection(
     if (loadMoreBtn) loadMoreBtn.style.display = visibleCount < currentReviews.length ? "" : "none";
   };
 
-  if (content?.showFilters) {
+  if (content?.showFilters && instance) {
+    // Interactive filter controls with server-side re-fetch
+    container.appendChild(
+      buildFilterControls({
+        instance,
+        config,
+        apiBase,
+        reviewsContainer: grid,
+        renderReviews: (newReviews) => {
+          currentReviews = [...newReviews];
+          visibleCount = Math.min(perPage, currentReviews.length);
+          renderCards();
+          updateLoadMore();
+        },
+      }),
+    );
+  } else if (content?.showFilters) {
+    // Fallback: client-side sort controls only
     let currentSort: SortOption = "newest";
     currentReviews.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
     const fw = el("div", "rw-co-filters-wrapper");
@@ -468,7 +483,7 @@ export function buildReviewListSection(
       else if (sort === "highest") currentReviews.sort((a, b) => b.rating - a.rating);
       else currentReviews.sort((a, b) => a.rating - b.rating);
       visibleCount = Math.min(perPage, currentReviews.length);
-      render();
+      renderCards();
       fw.querySelectorAll(".rw-co-filters__btn").forEach((btn, i) => {
         const vals: SortOption[] = ["newest", "highest", "lowest"];
         btn.classList.toggle("rw-co-filters__btn--active", vals[i] === currentSort);
@@ -480,7 +495,13 @@ export function buildReviewListSection(
     container.appendChild(fw);
   }
 
-  render();
+  if (reviews.length === 0) {
+    if (emptyNode) container.appendChild(emptyNode);
+    else container.appendChild(text("div", "No reviews yet.", "rw-empty"));
+    return;
+  }
+
+  renderCards();
   container.appendChild(grid);
 
   if (currentReviews.length > perPage) {
@@ -490,7 +511,7 @@ export function buildReviewListSection(
     loadMoreBtn.type = "button";
     loadMoreBtn.addEventListener("click", () => {
       visibleCount = Math.min(visibleCount + perPage, currentReviews.length);
-      render();
+      renderCards();
       updateLoadMore();
     });
     container.appendChild(loadMoreBtn);

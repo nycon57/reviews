@@ -699,6 +699,105 @@ export async function getOrgBrandColors(): Promise<ActionResult<OrgBrandColors>>
   }
 }
 
+// ── Get Filtered Review Count (for Widget Builder preview) ──────────────
+
+export interface FilteredReviewCountInput {
+  entityType: "user" | "branch" | "organization";
+  entityId: string | null;
+  filters: {
+    minRating?: number;
+    dateRange?: { preset?: string; start?: string; end?: string };
+    sources?: string[];
+    featuredOnly?: boolean;
+    keywords?: string[];
+    loanTypes?: string[];
+  };
+}
+
+export async function getFilteredReviewCount(
+  input: FilteredReviewCountInput
+): Promise<ActionResult<{ count: number }>> {
+  try {
+    const supabase = createAdminClient();
+    const ctx = await getAuthedUserContext(supabase);
+    if (!ctx.success) return ctx;
+
+    let query = supabase
+      .from("reviews")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", ctx.data.organizationId)
+      .eq("status", "approved")
+      .eq("is_published", true);
+
+    if (input.entityType === "user" && input.entityId) {
+      query = query.eq("user_id", input.entityId);
+    } else if (input.entityType === "branch" && input.entityId) {
+      const { data: branchUsers } = await supabase
+        .from("users")
+        .select("id")
+        .eq("branch_id", input.entityId)
+        .eq("is_active", true);
+      const userIds = (branchUsers ?? []).map((u) => u.id);
+      if (userIds.length > 0) {
+        query = query.in("user_id", userIds);
+      } else {
+        return { success: true, data: { count: 0 } };
+      }
+    }
+
+    const { minRating, dateRange, sources, featuredOnly, keywords, loanTypes } = input.filters;
+
+    if (minRating) {
+      query = query.gte("rating", minRating);
+    }
+    if (dateRange) {
+      const { preset, start, end } = dateRange;
+      if (preset && preset !== "all_time" && preset !== "custom" && !start) {
+        const days: Record<string, number> = { last_30d: 30, last_90d: 90, last_year: 365 };
+        const d = days[preset];
+        if (d) {
+          const s = new Date(Date.now() - d * 86_400_000);
+          query = query.gte("review_date", s.toISOString().split("T")[0]);
+        }
+      }
+      if (start) query = query.gte("review_date", start);
+      if (end) query = query.lte("review_date", end);
+    }
+    if (sources && sources.length > 0) {
+      query = query.in("source", sources);
+    }
+    if (featuredOnly) {
+      query = query.eq("featured", true);
+    }
+    if (keywords && keywords.length > 0) {
+      const tsQuery = keywords
+        .map((kw) => kw.replace(/[^a-zA-Z0-9\s]/g, "").trim())
+        .filter(Boolean)
+        .join(" | ");
+      if (tsQuery) {
+        query = query.textSearch("text_search", tsQuery, { type: "plain", config: "english" });
+      }
+    }
+    if (loanTypes && loanTypes.length > 0) {
+      const loanTypeFilter = loanTypes
+        .map((lt) => `metadata->>loan_type.eq.${lt}`)
+        .join(",");
+      query = query.or(loanTypeFilter);
+    }
+
+    const { count, error } = await query;
+    if (error) {
+      console.error("getFilteredReviewCount error:", error);
+      return { success: false, error: "Failed to count reviews" };
+    }
+
+    return { success: true, data: { count: count ?? 0 } };
+  } catch (err) {
+    console.error("getFilteredReviewCount error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
+}
+
 // ── Utility: deep merge for JSONB config ────────────────────────────────
 
 function deepMerge(

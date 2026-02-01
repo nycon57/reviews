@@ -1,4 +1,4 @@
-import type { PublicWidgetConfig, ReviewsResponse } from "../types";
+import type { ActiveFilters, PublicWidgetConfig, ReviewsResponse } from "../types";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
@@ -45,10 +45,23 @@ export function fetchReviews(
   widgetId: string,
   signal: AbortSignal,
   limit = 10,
-  cursor?: string
+  cursor?: string,
+  filters?: Partial<ActiveFilters>
 ): Promise<ReviewsResponse> {
   let url = buildUrl(apiBase, widgetId, "reviews") + `?limit=${limit}`;
   if (cursor) url += `&cursor=${encodeURIComponent(cursor)}`;
+  if (filters) {
+    if (filters.minRating) url += `&minRating=${filters.minRating}`;
+    if (filters.sortOrder) url += `&sortOrder=${encodeURIComponent(filters.sortOrder)}`;
+    if (filters.sources && filters.sources.length > 0)
+      url += `&sources=${encodeURIComponent(filters.sources.join(","))}`;
+    if (filters.loanTypes && filters.loanTypes.length > 0)
+      url += `&loanTypes=${encodeURIComponent(filters.loanTypes.join(","))}`;
+    if (filters.keywords && filters.keywords.length > 0)
+      url += `&keywords=${encodeURIComponent(filters.keywords.join(","))}`;
+    if (filters.dateRange)
+      url += `&dateRange=${encodeURIComponent(filters.dateRange)}`;
+  }
   return request<ReviewsResponse>(url, signal);
 }
 

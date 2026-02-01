@@ -70,7 +70,7 @@ export interface WidgetContent {
 
 export interface WidgetFilters {
   minRating?: number;
-  dateRange?: { start?: string; end?: string };
+  dateRange?: { preset?: string; start?: string; end?: string };
   sources?: string[];
   maxReviews?: number;
   sortOrder?: "newest" | "oldest" | "highest" | "lowest";
@@ -297,6 +297,15 @@ export const enum WidgetState {
   Error = 5,
 }
 
+export interface ActiveFilters {
+  minRating?: number;
+  sortOrder?: "newest" | "oldest" | "highest" | "lowest";
+  sources?: string[];
+  loanTypes?: string[];
+  keywords?: string[];
+  dateRange?: string;
+}
+
 export interface WidgetInstance {
   id: string;
   widgetId: string;
@@ -306,6 +315,7 @@ export interface WidgetInstance {
   config: PublicWidgetConfig | null;
   reviews: PublicReview[];
   abortController: AbortController | null;
+  activeFilters: ActiveFilters;
 }
 
 // ── Global API ────────────────────────────────────────────────────────

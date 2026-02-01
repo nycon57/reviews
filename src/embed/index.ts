@@ -18,6 +18,7 @@ import { fetchConfig, fetchReviews } from "./core/api-client";
 import { trackImpression } from "./core/event-tracker";
 import { DomainNotAllowedError, fetchWithDomainCheck } from "./core/domain-check";
 import { injectStructuredData, removeStructuredData } from "./seo/structured-data";
+import { setInstanceForRoot } from "./widgets/registry";
 
 // Widget type registrations (self-register on import)
 import "./widgets/lo-review";
@@ -78,16 +79,19 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     if (controller.signal.aborted) return;
     instance.config = config;
 
-    // Fetch reviews
+    // Fetch reviews (apply active filters if set by interactive controls)
     const limit = config.config?.filters?.maxReviews ?? 10;
     const data = await fetchWithDomainCheck(instance.widgetId, () =>
-      fetchReviews(apiBase, instance.widgetId, controller.signal, limit)
+      fetchReviews(apiBase, instance.widgetId, controller.signal, limit, undefined, instance.activeFilters)
     );
     if (controller.signal.aborted) return;
     instance.reviews = data.reviews;
 
     // Load Google Font inside Shadow DOM if a non-system font is selected
     loadGoogleFontInShadow(instance.shadowRoot, config.config?.theme?.typography?.fontFamily);
+
+    // Register instance so widget renderers can access it for interactive filters
+    setInstanceForRoot(instance.shadowRoot, instance);
 
     // Replace skeleton with rendered widget
     removeSkeleton(instance.shadowRoot);
@@ -140,6 +144,7 @@ function initializeWidget(element: HTMLElement, widgetId: string, apiBase: strin
     config: null,
     reviews: [],
     abortController: null,
+    activeFilters: {},
   };
 
   instances.set(id, instance);

@@ -398,8 +398,8 @@ export async function getPublicReviews(
 
   // Include LO name join for branch-level reviews
   const selectFields = entityType === "branch"
-    ? "id, customer_name, rating, text, review_date, source, customer_location, user:user_id(full_name)"
-    : "id, customer_name, rating, text, review_date, source, customer_location";
+    ? "id, customer_name, rating, text, review_date, source, customer_location, metadata, user:user_id(full_name)"
+    : "id, customer_name, rating, text, review_date, source, customer_location, metadata";
 
   let query = supabase
     .from("reviews")
@@ -428,11 +428,23 @@ export async function getPublicReviews(
   if (filters?.minRating) {
     query = query.gte("rating", filters.minRating);
   }
-  if (filters?.dateRange?.start) {
-    query = query.gte("review_date", filters.dateRange.start);
-  }
-  if (filters?.dateRange?.end) {
-    query = query.lte("review_date", filters.dateRange.end);
+  if (filters?.dateRange) {
+    const { preset, start, end } = filters.dateRange;
+    // Resolve preset to start date if no explicit start is set
+    if (preset && preset !== "all_time" && preset !== "custom" && !start) {
+      const days: Record<string, number> = { last_30d: 30, last_90d: 90, last_year: 365 };
+      const d = days[preset];
+      if (d) {
+        const s = new Date(Date.now() - d * 86_400_000);
+        query = query.gte("review_date", s.toISOString().split("T")[0]);
+      }
+    }
+    if (start) {
+      query = query.gte("review_date", start);
+    }
+    if (end) {
+      query = query.lte("review_date", end);
+    }
   }
   if (filters?.sources && filters.sources.length > 0) {
     query = query.in("source", filters.sources);
@@ -441,13 +453,22 @@ export async function getPublicReviews(
     query = query.eq("featured", true);
   }
   if (filters?.keywords && filters.keywords.length > 0) {
-    const keywordFilter = filters.keywords
-      .map((kw) => {
-        const escaped = kw.replace(/[%_\\]/g, "\\$&");
-        return `text.ilike.%${escaped}%`;
-      })
+    const tsQuery = filters.keywords
+      .map((kw) => kw.replace(/[^a-zA-Z0-9\s]/g, "").trim())
+      .filter(Boolean)
+      .join(" | ");
+    if (tsQuery) {
+      query = query.textSearch("text_search", tsQuery, {
+        type: "plain",
+        config: "english",
+      });
+    }
+  }
+  if (filters?.loanTypes && filters.loanTypes.length > 0) {
+    const loanTypeFilter = filters.loanTypes
+      .map((lt) => `metadata->>loan_type.eq.${lt}`)
       .join(",");
-    query = query.or(keywordFilter);
+    query = query.or(loanTypeFilter);
   }
 
   const sortField = "review_date";
@@ -493,18 +514,21 @@ export async function getPublicReviews(
   const hasMore = data.length > limit;
   const items = hasMore ? data.slice(0, limit) : data;
 
-  const reviews: PublicReview[] = (items as unknown as Record<string, unknown>[]).map((row) => ({
-    id: row.id as string,
-    reviewer_name: row.customer_name as string | null,
-    rating: row.rating as number,
-    text: row.text as string | null,
-    review_date: row.review_date as string,
-    source: row.source as string,
-    avatar_url: null,
-    loan_type: null,
-    first_time_homebuyer: null,
-    loan_officer_name: (row.user as { full_name: string } | null)?.full_name ?? null,
-  }));
+  const reviews: PublicReview[] = (items as unknown as Record<string, unknown>[]).map((row) => {
+    const meta = row.metadata as Record<string, unknown> | null;
+    return {
+      id: row.id as string,
+      reviewer_name: row.customer_name as string | null,
+      rating: row.rating as number,
+      text: row.text as string | null,
+      review_date: row.review_date as string,
+      source: row.source as string,
+      avatar_url: null,
+      loan_type: (meta?.loan_type as string | null) ?? null,
+      first_time_homebuyer: (meta?.first_time_homebuyer as boolean | null) ?? null,
+      loan_officer_name: (row.user as { full_name: string } | null)?.full_name ?? null,
+    };
+  });
 
   let nextCursor: string | null = null;
   if (hasMore) {

@@ -130,6 +130,9 @@ export const filtersSchema = z
     minRating: z.number().int().min(1).max(5).optional(),
     dateRange: z
       .object({
+        preset: z
+          .enum(["last_30d", "last_90d", "last_year", "all_time", "custom"])
+          .optional(),
         start: z.string().optional(),
         end: z.string().optional(),
       })

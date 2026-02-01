@@ -22,6 +22,8 @@ import { buildNmlsBadge } from "../../components/nmls-badge";
 import { buildComplianceFooter } from "../../components/compliance-footer";
 import { buildLoanTypeTag } from "../../components/loan-type-tag";
 import { buildFirstTimeBuyerBadge } from "../../components/first-time-buyer-badge";
+import type { WidgetInstance } from "../../types";
+import { buildFilterControls } from "../shared/filter-controls";
 
 function starsRow(rating: number, filledColor: string, emptyColor: string, className: string): HTMLElement {
   const row = el("div", className);
@@ -141,7 +143,7 @@ function buildReviewCard(review: PublicReview, config: PublicWidgetConfig, starF
 /**
  * Builds the LO Review widget DOM tree (without styles/theme — handled by index.ts).
  */
-export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicReview[], apiBase: string): HTMLElement {
+export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicReview[], apiBase: string, instance?: WidgetInstance): HTMLElement {
   const cfg = config.config;
   const content = cfg?.content;
   const colors = cfg?.theme?.colors;
@@ -158,15 +160,34 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
     container.appendChild(buildProfileHeader(profile, config, starFilled, starEmpty));
   }
 
+  const grid = el("div", "rw-lo-reviews");
+  const columns = Math.min(Math.max(content?.columns ?? 1, 1), 6);
+  if (columns > 1) grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+
+  const renderCards = (reviewList: PublicReview[]): void => {
+    while (grid.firstChild) grid.firstChild.remove();
+    for (const review of reviewList) {
+      grid.appendChild(buildReviewCard(review, config, starFilled, starEmpty, apiBase));
+    }
+  };
+
+  // Insert filter toolbar before reviews if enabled
+  if (content?.showFilters && instance) {
+    container.appendChild(
+      buildFilterControls({
+        instance,
+        config,
+        apiBase,
+        reviewsContainer: grid,
+        renderReviews: renderCards,
+      }),
+    );
+  }
+
   if (reviews.length === 0) {
     container.appendChild(text("div", "No reviews yet.", "rw-empty"));
   } else {
-    const grid = el("div", "rw-lo-reviews");
-    const columns = Math.min(Math.max(content?.columns ?? 1, 1), 6);
-    if (columns > 1) grid.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
-    for (const review of reviews) {
-      grid.appendChild(buildReviewCard(review, config, starFilled, starEmpty, apiBase));
-    }
+    renderCards(reviews);
     container.appendChild(grid);
   }
 

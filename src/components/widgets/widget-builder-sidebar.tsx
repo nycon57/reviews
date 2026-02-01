@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState, useCallback, useMemo, useTransition } from "react";
+import { useState, useCallback, useEffect, useMemo, useTransition } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import { getPreset } from "@/lib/widgets/theme-presets";
 import { DomainAllowlistEditor } from "./domain-allowlist-editor";
 import { EntitySelector } from "./entity-selector";
 import { FONT_OPTIONS, getContrastWarnings, buildBrandMatchPreset } from "@/lib/widgets/theme-utils";
-import { getOrgBrandColors } from "@/lib/widgets/actions";
+import { getOrgBrandColors, getFilteredReviewCount } from "@/lib/widgets/actions";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType, WidgetStatus } from "@/lib/widgets/types";
 
@@ -778,6 +778,11 @@ function ContentTab({
         checked={content.showBranding !== false}
         onChange={(v) => update("showBranding", v)}
       />
+      <SwitchField
+        label="Show Interactive Filters"
+        checked={content.showFilters === true}
+        onChange={(v) => update("showFilters", v)}
+      />
 
       <div>
         <Label className="text-xs text-muted-foreground">
@@ -872,21 +877,69 @@ function ContentTab({
 
 function FiltersTab({
   config,
+  entityType,
+  entityId,
   onConfigChange,
 }: {
   config: WidgetConfigJson;
+  entityType: WidgetEntityType;
+  entityId: string | null;
   onConfigChange: (config: Partial<WidgetConfigJson>) => void;
 }) {
   const filters = config.filters ?? {};
+  const [matchCount, setMatchCount] = useState<number | null>(null);
+  const [isCountLoading, startCountTransition] = useTransition();
 
   const update = (field: string, value: unknown) => {
     onConfigChange({ filters: { ...filters, [field]: value } });
   };
 
+  // Fetch matching review count whenever filters change
+  const fetchCount = useCallback(() => {
+    startCountTransition(async () => {
+      const result = await getFilteredReviewCount({
+        entityType,
+        entityId,
+        filters: {
+          minRating: filters.minRating,
+          dateRange: filters.dateRange,
+          sources: filters.sources,
+          featuredOnly: filters.featuredOnly,
+          keywords: filters.keywords,
+          loanTypes: filters.loanTypes,
+        },
+      });
+      if (result.success) {
+        setMatchCount(result.data.count);
+      }
+    });
+  }, [entityType, entityId, filters.minRating, filters.dateRange, filters.sources, filters.featuredOnly, filters.keywords, filters.loanTypes]);
+
+  // Re-fetch count when filters change
+  const filtersKey = useMemo(
+    () => JSON.stringify({ entityType, entityId, filters }),
+    [entityType, entityId, filters]
+  );
+  useEffect(() => { fetchCount(); }, [filtersKey, fetchCount]);
+
   const dateRange = filters.dateRange ?? {};
 
   return (
     <div className="space-y-4">
+      {/* Matching review count banner */}
+      <div className="flex items-center justify-between rounded-md border border-repwell-sage-200/50 bg-repwell-sage-100/20 px-3 py-2">
+        <span className="text-xs font-medium text-repwell-teal-400">
+          Matching reviews
+        </span>
+        <span className="text-sm font-semibold text-repwell-teal-500 tabular-nums">
+          {isCountLoading ? (
+            <span className="inline-block w-6 h-4 bg-repwell-sage-200/40 rounded animate-pulse" />
+          ) : (
+            matchCount ?? "—"
+          )}
+        </span>
+      </div>
+
       <div>
         <Label className="text-xs text-muted-foreground">
           Minimum Rating ({filters.minRating ?? 1} stars)
@@ -942,14 +995,14 @@ function FiltersTab({
       <div>
         <Label className="text-xs text-muted-foreground">Sources</Label>
         <div className="flex flex-wrap gap-2 mt-2">
-          {["google", "zillow", "internal"].map((source) => {
+          {["google", "zillow", "internal", "facebook"].map((source) => {
             const isActive = !filters.sources || filters.sources.includes(source);
             return (
               <button
                 key={source}
                 type="button"
                 onClick={() => {
-                  const current = filters.sources ?? ["google", "zillow", "internal"];
+                  const current = filters.sources ?? ["google", "zillow", "internal", "facebook"];
                   if (isActive) {
                     update("sources", current.filter((s) => s !== source));
                   } else {
@@ -962,7 +1015,7 @@ function FiltersTab({
                     : "bg-white text-muted-foreground border-border hover:border-repwell-sage-200"
                 }`}
               >
-                {source === "internal" ? "RepWell" : source}
+                {source === "internal" ? "RepWell" : source.charAt(0).toUpperCase() + source.slice(1)}
               </button>
             );
           })}
@@ -973,30 +1026,56 @@ function FiltersTab({
         <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
           Date Range
         </Label>
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label className="text-xs text-muted-foreground">From</Label>
-            <Input
-              type="date"
-              value={dateRange.start ?? ""}
-              onChange={(e) =>
-                update("dateRange", { ...dateRange, start: e.target.value || undefined })
+        <div className="mb-3">
+          <Label className="text-xs text-muted-foreground">Preset</Label>
+          <Select
+            value={dateRange.preset ?? "all_time"}
+            onValueChange={(v) => {
+              if (v === "custom") {
+                update("dateRange", { ...dateRange, preset: "custom" });
+              } else {
+                update("dateRange", { preset: v, start: undefined, end: undefined });
               }
-              className="h-8 text-xs mt-1"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">To</Label>
-            <Input
-              type="date"
-              value={dateRange.end ?? ""}
-              onChange={(e) =>
-                update("dateRange", { ...dateRange, end: e.target.value || undefined })
-              }
-              className="h-8 text-xs mt-1"
-            />
-          </div>
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs mt-1">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_time">All Time</SelectItem>
+              <SelectItem value="last_30d">Last 30 Days</SelectItem>
+              <SelectItem value="last_90d">Last 90 Days</SelectItem>
+              <SelectItem value="last_year">Last Year</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        {(dateRange.preset === "custom" || (!dateRange.preset && (dateRange.start || dateRange.end))) && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs text-muted-foreground">From</Label>
+              <Input
+                type="date"
+                value={dateRange.start ?? ""}
+                onChange={(e) =>
+                  update("dateRange", { ...dateRange, preset: "custom", start: e.target.value || undefined })
+                }
+                className="h-8 text-xs mt-1"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-muted-foreground">To</Label>
+              <Input
+                type="date"
+                value={dateRange.end ?? ""}
+                onChange={(e) =>
+                  update("dateRange", { ...dateRange, preset: "custom", end: e.target.value || undefined })
+                }
+                className="h-8 text-xs mt-1"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="border-t border-border pt-4">
@@ -1011,7 +1090,7 @@ function FiltersTab({
       <div className="border-t border-border pt-4">
         <Label className="text-xs text-muted-foreground">Loan Types</Label>
         <div className="flex flex-wrap gap-2 mt-2">
-          {["purchase", "refinance", "va", "fha", "jumbo", "heloc"].map((loanType) => {
+          {["Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional"].map((loanType) => {
             const currentTypes = filters.loanTypes ?? [];
             const isActive = currentTypes.includes(loanType);
             return (
@@ -1314,7 +1393,7 @@ export function WidgetBuilderSidebar({
             <ContentTab config={config} widgetType={widgetType} onConfigChange={onConfigChange} />
           </TabsContent>
           <TabsContent value="filters" className="mt-0">
-            <FiltersTab config={config} onConfigChange={onConfigChange} />
+            <FiltersTab config={config} entityType={entityType} entityId={entityId} onConfigChange={onConfigChange} />
           </TabsContent>
           <TabsContent value="seo" className="mt-0">
             <SEOTab

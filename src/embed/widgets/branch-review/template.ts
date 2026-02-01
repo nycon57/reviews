@@ -146,7 +146,8 @@ function buildTeamGrid(members: TeamMember[], starFilled: string, starEmpty: str
 export function buildBranchReviewDOM(
   config: PublicWidgetConfig,
   reviews: PublicReview[],
-  apiBase: string
+  apiBase: string,
+  instance?: import("../../types").WidgetInstance,
 ): HTMLElement {
   const cfg = config.config;
   const content = cfg?.content;
@@ -197,7 +198,7 @@ export function buildBranchReviewDOM(
     return empty;
   })();
 
-  buildReviewListSection(container, reviews, config, starFilled, starEmpty, apiBase, emptyNode);
+  buildReviewListSection(container, reviews, config, starFilled, starEmpty, apiBase, emptyNode, instance);
 
   // Actions + disclaimer + branding (reuses shared builder)
   appendWidgetFooter(container, config, apiBase);

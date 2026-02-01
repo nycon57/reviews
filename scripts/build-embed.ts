@@ -34,7 +34,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const ENTRY = resolve(ROOT, "src/embed/index.ts");
 const OUT_DIR = resolve(ROOT, "public/embed/v1");
-const MAX_GZIP_BYTES = 32 * 1024; // 32KB — 9 widget types incl. social-proof-banner
+const MAX_GZIP_BYTES = 34 * 1024; // 34KB — 9 widget types + interactive filter controls (S152)
 
 // Read package.json for version
 const pkg = JSON.parse(readFileSync(resolve(ROOT, "package.json"), "utf-8"));

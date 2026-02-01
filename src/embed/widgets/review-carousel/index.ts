@@ -4,11 +4,12 @@
  */
 
 import type { PublicWidgetConfig, PublicReview } from "../../types";
-import { registerWidget } from "../registry";
+import { registerWidget, getInstanceForRoot } from "../registry";
 import { applyTheme } from "../../core/dom-helpers";
 import { REVIEW_CAROUSEL_STYLES } from "./styles";
 import { COMPANY_REVIEW_STYLES } from "../company-review/styles";
 import { buildReviewCarouselDOM } from "./template";
+import { buildFilterControls } from "../shared/filter-controls";
 
 /**
  * Renders the Review Carousel Widget inside a Shadow DOM root.
@@ -27,7 +28,28 @@ function renderReviewCarouselWidget(
   style.textContent = COMPANY_REVIEW_STYLES + REVIEW_CAROUSEL_STYLES;
   root.appendChild(style);
 
-  root.appendChild(buildReviewCarouselDOM(config, reviews, apiBase));
+  const widgetDOM = buildReviewCarouselDOM(config, reviews, apiBase);
+  root.appendChild(widgetDOM);
+
+  const instance = getInstanceForRoot(root);
+  if (config.config?.content?.showFilters && instance) {
+    const reviewsContainer = (widgetDOM.querySelector(".rw-carousel") as HTMLElement) ?? widgetDOM;
+    const filterControls = buildFilterControls({
+      instance,
+      config,
+      apiBase,
+      reviewsContainer,
+      renderReviews: (filteredReviews) => {
+        while (root.lastChild && root.lastChild !== style) {
+          root.lastChild.remove();
+        }
+        const newDOM = buildReviewCarouselDOM(config, filteredReviews, apiBase);
+        root.appendChild(newDOM);
+        newDOM.insertBefore(filterControls, newDOM.firstChild);
+      },
+    });
+    widgetDOM.insertBefore(filterControls, widgetDOM.firstChild);
+  }
 }
 
 registerWidget("review_carousel", renderReviewCarouselWidget);

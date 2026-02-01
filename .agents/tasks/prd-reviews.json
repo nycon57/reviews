@@ -6841,7 +6841,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6871,9 +6871,7 @@
           "Color zones are hardcoded industry-standard NPS ranges, not theme-customizable"
         ]
       },
-      "updatedAt": "2026-02-01T22:18:14.022347+00:00",
-      "startedAt": "2026-02-01T22:18:14.022147+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-01T22:23:14.162703+00:00"
     },
     {
       "id": "S151",
@@ -6898,7 +6896,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6928,7 +6926,10 @@
           "Exit-intent detection uses mouseleave on document.documentElement with Y-position check",
           "Trigger engine is event-driven: registers listeners on init, fires show event once trigger condition met"
         ]
-      }
+      },
+      "startedAt": "2026-02-01T22:23:16.366248+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-01T22:23:16.366420+00:00"
     },
     {
       "id": "S152",

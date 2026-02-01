@@ -15446,3 +15446,57 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Preview components must mirror embed logic exactly for WYSIWYG accuracy (truncation gating, featured logic)
   - React state initialized from props doesn't auto-sync — use useEffect to keep in sync
 ---
+
+## [2026-02-01 17:15:00] - S150: NPS Score Badge Widget
+Thread: 
+Run: 20260201-171311-73836 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-171311-73836-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-171311-73836-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: acb18e1 [Pass 1/3] feat(S150): NPS Score Badge Widget with gauge and numeric display
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint -> PASS (no new errors from S150 files)
+  - Command: npm run build (embed) -> PASS (26.6KB gzipped, within 28KB budget)
+  - Command: npm run build (next) -> FAIL (pre-existing Turbopack race condition on pages-manifest.json, not related to S150 changes)
+- Files changed:
+  - src/embed/widgets/nps-score-badge/template.ts (new)
+  - src/embed/widgets/nps-score-badge/styles.ts (new)
+  - src/embed/widgets/nps-score-badge/index.ts (new)
+  - src/components/widgets/preview/nps-score-badge-preview.tsx (new)
+  - src/embed/index.ts (added NPS widget import)
+  - src/embed/types.ts (WidgetNps, NpsData interfaces)
+  - src/lib/widgets/schemas.ts (npsSchema)
+  - src/lib/widgets/public-queries.ts (getNpsData function)
+  - src/app/api/v1/widgets/[widgetId]/config/route.ts (NPS data in API response)
+  - src/components/widgets/widget-preview.tsx (NPS preview wired up)
+  - scripts/build-embed.ts (bundle budget 25KB -> 28KB)
+  - scripts/deploy-embed.ts (bundle budget 15KB -> 28KB)
+- What was implemented:
+  - NPS Score Badge embed widget with gauge (SVG semicircular dial with animated needle) and numeric display modes
+  - Color-coded NPS zones: red (<0), yellow (0-30), light-green (31-70), dark-green (71+)
+  - Breakdown bar showing promoter/passive/detractor percentages
+  - Dashboard preview component with gauge/numeric toggle
+  - API endpoint returns computed NPS data from survey_responses table
+  - Shadow DOM encapsulation with dedicated styles
+  - Accessible labels and aria attributes
+- **Learnings for future iterations:**
+  - Previous crashed run had already created most files; only embed import and budget increase were missing
+  - Next.js 16 Turbopack has a race condition on pages-manifest.json during build — this is a pre-existing issue unrelated to any widget changes
+  - Bundle is now 26.6KB gzipped for 8 widget types — approaching limits, future widgets may need code-splitting
+---

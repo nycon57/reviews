@@ -178,6 +178,11 @@ async function upsertConversation(
       .update({ last_message_at: now, status: "active" })
       .eq("id", existing.id);
 
+    // Increment unread count for the conversation
+    await supabase.rpc("increment_conversation_unread", {
+      p_conversation_id: existing.id,
+    });
+
     if (error) {
       console.error(
         "[SMS Inbound Webhook] Conversation update failed:",
@@ -194,6 +199,7 @@ async function upsertConversation(
       borrower_phone: borrowerPhone,
       last_message_at: now,
       status: "active",
+      unread_count: 1,
     });
 
   if (!insertError) return;

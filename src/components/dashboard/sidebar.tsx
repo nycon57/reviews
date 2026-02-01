@@ -26,6 +26,7 @@ import {
   Trophy,
   PaperPlaneRight as Send,
   Envelope as Mail,
+  ChatCircle,
   SquaresFour as LayoutDashboard,
   Sparkle as Sparkles,
   Quotes as Quote,
@@ -103,6 +104,13 @@ const mainNavItems: NavItem[] = [
     href: "/dashboard/testimonials",
     icon: <Quote className="h-4 w-4" />,
     permission: PERMISSIONS.VIEW_TESTIMONIALS,
+  },
+  {
+    title: "Messages",
+    href: "/dashboard/messages",
+    icon: <ChatCircle className="h-4 w-4" />,
+    permission: PERMISSIONS.VIEW_MESSAGES,
+    isNew: true,
   },
 ];
 

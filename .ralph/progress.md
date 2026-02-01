@@ -13034,3 +13034,45 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - deviceSizes/imageSizes in next.config.js is a low-effort high-impact optimization for pages with many small images
   - Font preloading for the LCP heading font directly improves Lighthouse LCP scores
 ---
+
+## [2026-02-01] - S130: Performance Optimization & Core Web Vitals
+Thread:
+Run: 20260201-111958-98303 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-111958-98303-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-111958-98303-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d82f09b [Pass 1/3] perf(S130): Optimize CWV for competitor comparison pages
+- Post-commit status: clean (S130 files committed; S129/S131 changes remain unstaged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: yes (applied principles)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /seo-audit (applied principles)
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint -> PASS (12 pre-existing errors, 0 from S130 files)
+- Files changed:
+  - src/app/globals.css (will-change:transform on logo-bar animation)
+  - src/app/(marketing)/compare/[slug]/page.tsx (Supabase CDN preconnect)
+  - src/components/marketing/marketing-nav.tsx (sizes="140px" on logo)
+  - src/components/marketing/marketing-footer.tsx (sizes="140px" + loading="lazy" on logo)
+- What was implemented:
+  - Added `will-change: transform` to `.logo-bar-scroll` for GPU-composited animation
+  - Added Supabase storage CDN preconnect/dns-prefetch for nav logo (priority image)
+  - Added `sizes="140px"` to marketing nav and footer logo images (prevents oversized image downloads)
+  - Added `loading="lazy"` to footer logo (below fold, doesn't need eager loading)
+  - Pass 1 already covered: image device sizes, font preload, preconnect cleanup, static generation
+- **Learnings for future iterations:**
+  - will-change:transform on CSS @keyframes animations promotes to GPU compositor layer
+  - Preconnect for CDN domains hosting priority images reduces TTFB for LCP resources
+  - sizes prop on fixed-width images prevents Next.js from generating unnecessary srcset sizes
+---

@@ -191,6 +191,17 @@ export const wallSchema = z
   })
   .optional();
 
+export const npsSchema = z
+  .object({
+    displayMode: z.enum(["gauge", "numeric"]).optional(),
+    showBreakdown: z.boolean().optional(),
+    showCount: z.boolean().optional(),
+    showPeriod: z.boolean().optional(),
+    labelText: z.string().max(100).optional(),
+    periodText: z.string().max(100).optional(),
+  })
+  .optional();
+
 export const widgetConfigJsonSchema = z.object({
   theme: themeSchema,
   content: contentSchema,
@@ -199,6 +210,7 @@ export const widgetConfigJsonSchema = z.object({
   banner: bannerSchema,
   video: videoSchema,
   wall: wallSchema,
+  nps: npsSchema,
   seo: seoSchema,
 });
 

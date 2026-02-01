@@ -9,6 +9,7 @@ import { StarRatingBadgePreview } from "./preview/star-rating-badge-preview";
 import { ReviewCarouselPreview } from "./preview/review-carousel-preview";
 import { VideoTestimonialPreview } from "./preview/video-testimonial-preview";
 import { ReviewWallPreview } from "./preview/review-wall-preview";
+import { NpsScoreBadgePreview } from "./preview/nps-score-badge-preview";
 import { Loader2 } from "lucide-react";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType } from "@/lib/widgets/types";
@@ -306,10 +307,18 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
       );
 
     case "star_rating_badge":
-    case "nps_score_badge":
       return (
         <StarRatingBadgePreview
           profile={badgeProfile}
+          colors={colors}
+          borderRadius={borderRadius}
+        />
+      );
+
+    case "nps_score_badge":
+      return (
+        <NpsScoreBadgePreview
+          nps={config.nps}
           colors={colors}
           borderRadius={borderRadius}
         />

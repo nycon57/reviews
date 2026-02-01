@@ -320,6 +320,58 @@ export async function getBranchProfile(
   };
 }
 
+/** NPS data for nps_score_badge widgets. */
+export interface NpsData {
+  score: number;
+  totalResponses: number;
+  promoterPct: number;
+  passivePct: number;
+  detractorPct: number;
+}
+
+/**
+ * Compute NPS data from survey responses for a given organization.
+ * NPS = %Promoters(9-10) - %Detractors(0-6). Passives(7-8) are neutral.
+ */
+export async function getNpsData(organizationId: string): Promise<NpsData> {
+  const supabase = createAdminClient();
+
+  const { data, error } = await supabase
+    .from("survey_responses")
+    .select("nps_score")
+    .eq("organization_id", organizationId)
+    .not("nps_score", "is", null);
+
+  if (error || !data || data.length === 0) {
+    return { score: 0, totalResponses: 0, promoterPct: 0, passivePct: 0, detractorPct: 0 };
+  }
+
+  const total = data.length;
+  let promoters = 0;
+  let passives = 0;
+  let detractors = 0;
+
+  for (const row of data) {
+    const s = row.nps_score as number;
+    if (s >= 9) promoters++;
+    else if (s >= 7) passives++;
+    else detractors++;
+  }
+
+  const promoterPct = (promoters / total) * 100;
+  const passivePct = (passives / total) * 100;
+  const detractorPct = (detractors / total) * 100;
+  const score = Math.round(promoterPct - detractorPct);
+
+  return {
+    score,
+    totalResponses: total,
+    promoterPct: Math.round(promoterPct),
+    passivePct: Math.round(passivePct),
+    detractorPct: Math.round(detractorPct),
+  };
+}
+
 interface ReviewQueryOptions {
   organizationId: string;
   entityType: string;

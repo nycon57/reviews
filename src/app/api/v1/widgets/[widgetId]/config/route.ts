@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getPublicWidgetConfig, getEntityProfile, getOrganizationProfile, getBranchProfile, getVideoTestimonials } from "@/lib/widgets/public-queries";
+import { getPublicWidgetConfig, getEntityProfile, getOrganizationProfile, getBranchProfile, getVideoTestimonials, getNpsData } from "@/lib/widgets/public-queries";
 import {
   resolveAllowedOrigin,
   buildCorsHeaders,
@@ -85,12 +85,19 @@ export async function GET(
     );
   }
 
+  // Fetch NPS data for nps_score_badge widgets
+  let npsData = null;
+  if (widget.widget_type === "nps_score_badge") {
+    npsData = await getNpsData(widget.organization_id);
+  }
+
   // Strip internal fields from public response
   const { allowed_domains: _ad, organization_id: _oid, ...publicWidget } = widget;
   const body = {
     ...publicWidget,
     entity_profile: entityProfile,
     ...(videoTestimonials ? { video_testimonials: videoTestimonials } : {}),
+    ...(npsData ? { nps_data: npsData } : {}),
   };
   const response = NextResponse.json(body);
   return withCorsAndCache(response, allowedOrigin, CACHE_CONTROL);

@@ -6730,7 +6730,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6763,9 +6763,7 @@
           "Video progress events throttled to one per milestone (25/50/75/100) per session to avoid event spam"
         ]
       },
-      "updatedAt": "2026-02-01T21:47:59.635397+00:00",
-      "startedAt": "2026-02-01T21:47:59.630480+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-01T21:52:59.782227+00:00"
     },
     {
       "id": "S149",
@@ -6789,7 +6787,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6818,7 +6816,8 @@
           "Featured cards use column-span: all on wide layouts for visual emphasis",
           "Scroll depth tracking uses percentage thresholds on the widget container, not the page"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T22:08:06.910450+00:00"
     },
     {
       "id": "S150",
@@ -6842,7 +6841,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6871,7 +6870,10 @@
           "Gauge animation uses CSS transform: rotate() with transition, not requestAnimationFrame",
           "Color zones are hardcoded industry-standard NPS ranges, not theme-customizable"
         ]
-      }
+      },
+      "updatedAt": "2026-02-01T22:18:14.022347+00:00",
+      "startedAt": "2026-02-01T22:18:14.022147+00:00",
+      "completedAt": null
     },
     {
       "id": "S151",

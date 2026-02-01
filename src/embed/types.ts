@@ -125,6 +125,15 @@ export interface WidgetWall {
   gap?: number;
 }
 
+export interface WidgetNps {
+  displayMode?: "gauge" | "numeric";
+  showBreakdown?: boolean;
+  showCount?: boolean;
+  showPeriod?: boolean;
+  labelText?: string;
+  periodText?: string;
+}
+
 export interface VideoTestimonial {
   id: string;
   video_url: string;
@@ -151,6 +160,7 @@ export interface WidgetConfigJson {
   badge?: WidgetBadge;
   video?: WidgetVideo;
   wall?: WidgetWall;
+  nps?: WidgetNps;
   seo?: { title?: string; description?: string; keywords?: string[] };
 }
 
@@ -168,6 +178,16 @@ export interface PublicWidgetConfig {
   entity_profile?: EntityProfile | null;
   /** Video testimonials data (only for video_testimonial widget type) */
   video_testimonials?: VideoTestimonial[] | null;
+  /** NPS data (only for nps_score_badge widget type) */
+  nps_data?: NpsData | null;
+}
+
+export interface NpsData {
+  score: number;
+  totalResponses: number;
+  promoterPct: number;
+  passivePct: number;
+  detractorPct: number;
 }
 
 // ── Entity Profile (from /config endpoint) ────────────────────────────

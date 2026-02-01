@@ -11258,3 +11258,44 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Design system uses py-16 md:py-24 lg:py-32 for standard sections, not py-20 lg:py-28 as AC states — followed design system
   - Stub sections should keep competitorName prop with _ prefix for future implementation stories
 ---
+
+## 2026-02-01 - S115: Shared CompetitorComparisonPage Template Component
+Thread:
+Run: 20260201-062314-34627 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-062314-34627-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-062314-34627-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f598ca0 [Pass 2/3] review(S115): Quality review of CompetitorComparisonPage — no issues found
+- Post-commit status: clean (only pre-existing modified files remain)
+- Skills invoked:
+  - /feature-dev: no (Pass 1 only)
+  - /code-review: yes
+  - /vercel-react-best-practices: yes
+  - /next-best-practices: yes
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (Pass 3)
+  - /web-design-guidelines: no (no visual issues found)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (Pass 3)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (only pre-existing warnings in remotion files)
+  - Command: npx eslint src/components/competitor-pages/ -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/components/competitor-pages/scroll-progress.tsx
+- Quality review findings and fixes:
+  - Added ARIA progressbar role, aria-label, aria-valuenow/min/max to ScrollProgress for WCAG 2.1 AA
+  - Throttled scroll event handler with requestAnimationFrame to prevent 60+ re-renders/sec during scrolling
+  - No bugs, security issues, or logic errors found in the 21-file implementation
+  - RSC boundaries correct: server components have no hooks, client components have "use client"
+  - Dynamic imports follow correct .then(m => m.Component) pattern with proper loading skeletons
+  - All props passed from server to client are serializable
+- **Learnings for future iterations:**
+  - ScrollProgress is a shared component that persists across stories — worth investing in quality here
+  - requestAnimationFrame throttling is standard for scroll handlers in React
+  - The stub sections are clean enough that no refactoring was needed
+---

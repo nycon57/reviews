@@ -15359,3 +15359,43 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Preview components mirror embed.js rendering patterns using React
   - Linter auto-applies featured card class addition that was left as comment
 ---
+
+## [2026-02-01] - S149: Review Wall Widget (Masonry Grid)
+Thread:
+Run: 20260201-165804-45001 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-165804-45001-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-165804-45001-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b877f51 [Pass 2/3] fix(S149): Performance and layout fixes for Review Wall Widget
+- Post-commit status: clean (only prd-reviews.json and USER_ACTION_REQUIRED.md remain — external)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors in changed files)
+- Files changed:
+  - src/embed/widgets/review-wall/template.ts (refactored renderCards to append-only)
+  - src/embed/widgets/review-wall/styles.ts (removed scale transform from featured cards)
+  - src/components/widgets/preview/review-wall-preview.tsx (removed scale from featured, kept border)
+- What was fixed:
+  - Refactored renderCards() to appendCards() — only appends new cards on "Load More" instead of re-creating all cards (performance improvement)
+  - Removed transform: scale(1.02) from featured cards — caused overflow in CSS columns masonry layout
+  - Featured cards retain accent border-left and gradient background for visual emphasis
+  - New cards get fade-in animation only when appended after initial render
+- **Learnings for future iterations:**
+  - transform: scale() on items in CSS columns layout causes visual overflow — avoid it
+  - Append-only patterns are better than full re-render for paginated lists in embed widgets
+  - CSS columns masonry handles dynamic card insertion natively without recalculation
+---

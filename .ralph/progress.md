@@ -14113,3 +14113,43 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Preview component duplicates helper functions to avoid importing from embed package (separate build targets)
   - All DOM construction uses safe methods (createElement/textContent), no innerHTML
 ---
+
+## [2026-02-01 13:46] - S137: Company Review Widget
+Thread:
+Run: 20260201-133107-74925 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-133107-74925-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-133107-74925-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f3f9249 [Pass 2/3] fix(S137): Security and quality improvements for Company Review Widget
+- Post-commit status: clean (staged files committed; unrelated unstaged files remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx vitest run src/embed/__tests__/company-review.test.ts -> PASS (20 tests)
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in widget files)
+- Files changed:
+  - src/embed/widgets/company-review/template.ts (security + correctness fixes)
+  - src/components/widgets/preview/company-review-preview.tsx (remove unused params)
+- Issues found and fixed:
+  - **SECURITY**: Dynamic CSS class names from API data (`src.source`, `cardStyle`) used unsanitized — added `safeClassName()` to strip non-alphanumeric chars
+  - **CORRECTNESS**: Unused `config` parameter in `buildOrgHeader` — removed
+  - **CORRECTNESS**: Initial reviews not pre-sorted by "newest" when sort controls active — added initial sort
+  - **QUALITY**: Unused `starEmpty` param in `RatingDistributionChart` preview — removed
+- **Learnings for future iterations:**
+  - Always sanitize API-derived values before using in CSS class names
+  - When default sort is "newest", ensure initial render matches that sort order
+  - Dashboard preview components should mirror embed behavior but avoid unused prop threading
+---

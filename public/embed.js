@@ -601,7 +601,7 @@
       if (controller.signal.aborted) return;
       instance.reviews = data.reviews;
       removeSkeleton(instance.shadowRoot);
-      renderWidget(instance.shadowRoot, config, data.reviews, apiBase);
+      renderWidget(instance.shadowRoot, config, data.reviews);
       instance.state = 4 /* Rendered */;
       trackImpression(apiBase, instance.widgetId);
     } catch (err) {

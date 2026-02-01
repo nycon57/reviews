@@ -13599,6 +13599,7 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
 - No-commit run: false
 - Commit: fb6ac2d [Pass 1/3] feat(S134): Add public widget API endpoints
 - Commit: d3ad0b3 [Pass 1/3] feat(S134): Add public query helpers and tests
+- Commit: 738be91 [Pass 1/3] fix(S134): Enrich public widget API with entity profiles and JSON-LD snippets
 - Post-commit status: clean (for S134 files)
 - Skills invoked:
   - /feature-dev: yes
@@ -13627,10 +13628,10 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - src/app/api/v1/widgets/[widgetId]/events/route.ts (new)
   - src/app/api/v1/widgets/[widgetId]/structured-data/route.ts (new)
 - What was implemented:
-  - GET /api/v1/widgets/:widgetId/config: Returns public-safe widget config JSON, strips internal fields (organization_id, created_by), 5min cache with stale-while-revalidate, CORS with domain allowlist, 404 for inactive/missing
-  - GET /api/v1/widgets/:widgetId/reviews: Returns filtered reviews matching widget config filters (minRating, dateRange, sources, featuredOnly, keywords, sortOrder), cursor-based pagination, 60s cache
+  - GET /api/v1/widgets/:widgetId/config: Returns public-safe widget config JSON, strips allowed_domains from response, enriches lo_review widgets with entity profile (full_name, NMLS, avatar, stats), 5min cache with stale-while-revalidate, CORS with domain allowlist, 404 for inactive/missing
+  - GET /api/v1/widgets/:widgetId/reviews: Returns filtered reviews matching widget config filters (minRating, dateRange, sources, featuredOnly, keywords, sortOrder), cursor-based pagination, MAX_LIMIT=100, 60s cache
   - POST /api/v1/widgets/:widgetId/events: Accepts analytics events, validates event_type enum, SHA-256 IP hashing with daily salt, in-memory rate limiting (100/min/IP), fire-and-forget 202 response
-  - GET /api/v1/widgets/:widgetId/structured-data: Returns JSON-LD with aggregate rating, 1hr cache
+  - GET /api/v1/widgets/:widgetId/structured-data: Returns JSON-LD with aggregate rating + up to 10 review snippets (200 char limit), resolves entity name from users/organizations tables, 1hr cache
   - CORS utility: Origin validation against allowed_domains, subdomain matching, consistent headers
   - Error responses: { error, code } shape on all endpoints
   - All endpoints handle OPTIONS preflight requests

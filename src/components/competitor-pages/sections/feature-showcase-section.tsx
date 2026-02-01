@@ -31,7 +31,7 @@ function FeatureCardItem({
       }}
     >
       {/* Screenshot / illustration */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-background-subtle">
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-repwell-sage-50">
         <Image
           src={card.screenshot}
           alt={card.title}

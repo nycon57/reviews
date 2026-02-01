@@ -16,16 +16,23 @@ function TabButton({
   label,
   isActive,
   onClick,
+  id,
+  panelId,
 }: {
   label: string;
   isActive: boolean;
   onClick: () => void;
+  id: string;
+  panelId: string;
 }) {
   return (
     <button
       type="button"
       role="tab"
+      id={id}
       aria-selected={isActive}
+      aria-controls={panelId}
+      tabIndex={isActive ? 0 : -1}
       onClick={onClick}
       className={cn(
         "relative rounded-lg px-5 py-2.5 text-sm font-medium transition-all duration-300 focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-2",
@@ -43,16 +50,22 @@ function TabButton({
 function TabPanel({
   capability,
   isActive,
+  id,
+  tabId,
 }: {
   capability: AICapabilityTab;
   isActive: boolean;
+  id: string;
+  tabId: string;
 }) {
   return (
     <div
       role="tabpanel"
+      id={id}
+      aria-labelledby={tabId}
       aria-hidden={!isActive}
       className={cn(
-        "transition-[opacity,transform] duration-400",
+        "transition-[opacity,transform] duration-500",
         isActive
           ? "translate-y-0 opacity-100"
           : "pointer-events-none absolute inset-0 translate-y-2 opacity-0",
@@ -85,7 +98,7 @@ function TabPanel({
         </div>
 
         {/* Illustration / screenshot */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-background-subtle shadow-sm">
+        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-border bg-repwell-sage-50 shadow-sm">
           <Image
             src={capability.illustration}
             alt={capability.headline}
@@ -172,6 +185,20 @@ export function AIFeatureTabsSection({
         className="mt-8 flex flex-wrap justify-center gap-2"
         role="tablist"
         aria-label="AI capabilities"
+        onKeyDown={(e) => {
+          const count = capabilities.length;
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            const next = (activeTab + 1) % count;
+            handleTabChange(next);
+            (e.currentTarget.children[next] as HTMLElement)?.focus();
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            const prev = (activeTab - 1 + count) % count;
+            handleTabChange(prev);
+            (e.currentTarget.children[prev] as HTMLElement)?.focus();
+          }
+        }}
       >
         {capabilities.map((cap, i) => (
           <TabButton
@@ -179,6 +206,8 @@ export function AIFeatureTabsSection({
             label={cap.tabLabel}
             isActive={i === activeTab}
             onClick={() => handleTabChange(i)}
+            id={`ai-tab-${i}`}
+            panelId={`ai-panel-${i}`}
           />
         ))}
       </div>
@@ -190,6 +219,8 @@ export function AIFeatureTabsSection({
             key={cap.tabLabel}
             capability={cap}
             isActive={i === activeTab}
+            id={`ai-panel-${i}`}
+            tabId={`ai-tab-${i}`}
           />
         ))}
       </div>

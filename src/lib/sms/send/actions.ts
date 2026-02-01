@@ -122,53 +122,50 @@ export async function checkSmsSendReadiness(
   const phoneValid = normalizedPhone !== null;
   const supabase = createUntypedAdminClient();
 
-  // Check consent
-  let consentStatus: SmsConsentStatus | "none" = "none";
-  if (phoneValid && normalizedPhone) {
-    const { data: consent } = await supabase
-      .from("sms_consent")
-      .select("status")
-      .eq("organization_id", auth.organizationId)
-      .eq("phone_number", normalizedPhone)
-      .maybeSingle();
+  // Run independent checks in parallel
+  const [consentResult, quietResult, settingsResult, balance, templateResult] =
+    await Promise.all([
+      // Consent check
+      phoneValid && normalizedPhone
+        ? supabase
+            .from("sms_consent")
+            .select("status")
+            .eq("organization_id", auth.organizationId)
+            .eq("phone_number", normalizedPhone)
+            .maybeSingle()
+        : Promise.resolve({ data: null }),
+      // Quiet hours check
+      phoneValid && normalizedPhone
+        ? new QuietHoursEngine().check(auth.organizationId, normalizedPhone)
+        : Promise.resolve({ blocked: false, nextValidTime: null }),
+      // Registration check
+      supabase
+        .from("sms_settings")
+        .select("registration_status")
+        .eq("organization_id", auth.organizationId)
+        .single(),
+      // Credits check
+      new CreditService(auth.organizationId).checkBalance(),
+      // Template check
+      supabase
+        .from("sms_templates")
+        .select("body, status")
+        .eq("id", parsed.data.templateId)
+        .eq("organization_id", auth.organizationId)
+        .single(),
+    ]);
 
-    consentStatus = (consent?.status as SmsConsentStatus) ?? "none";
-  }
+  const consentStatus: SmsConsentStatus | "none" =
+    (consentResult.data?.status as SmsConsentStatus) ?? "none";
+  const quietHoursBlocked = quietResult.blocked;
+  const quietHoursNextValid = quietResult.nextValidTime;
+  const registrationComplete =
+    settingsResult.data?.registration_status === "approved";
 
-  // Check quiet hours
-  let quietHoursBlocked = false;
-  let quietHoursNextValid: string | null = null;
-  if (phoneValid && normalizedPhone) {
-    const quietEngine = new QuietHoursEngine();
-    const quietResult = await quietEngine.check(auth.organizationId, normalizedPhone);
-    quietHoursBlocked = quietResult.blocked;
-    quietHoursNextValid = quietResult.nextValidTime;
-  }
-
-  // Check registration
-  const { data: settings } = await supabase
-    .from("sms_settings")
-    .select("registration_status")
-    .eq("organization_id", auth.organizationId)
-    .single();
-
-  const registrationComplete = settings?.registration_status === "approved";
-
-  // Check credits
-  const creditService = new CreditService(auth.organizationId);
-  const balance = await creditService.checkBalance();
-
-  // Check template and render preview
   let templateValid = false;
   let templatePreview: string | null = null;
   let segmentCount = 0;
-
-  const { data: template } = await supabase
-    .from("sms_templates")
-    .select("body, status")
-    .eq("id", parsed.data.templateId)
-    .eq("organization_id", auth.organizationId)
-    .single();
+  const template = templateResult.data;
 
   if (template && template.status === "active") {
     templateValid = true;

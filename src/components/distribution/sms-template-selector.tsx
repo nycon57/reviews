@@ -57,7 +57,7 @@ export function SmsTemplateSelector({
       segments: result.segmentInfo.segments,
       encoding: result.segmentInfo.encoding,
     };
-  }, [selected]);
+  }, [selected?.id, selected?.body]);
 
   return (
     <div className="space-y-3">

@@ -110,18 +110,17 @@ export function SmsSendTab({ onSuccess }: SmsSendTabProps) {
     ? { valid: phoneE164 !== null, display: phoneE164 ? formatForDisplay(phoneE164) : null }
     : null;
 
-  // Check readiness when phone and template change
+  // Check readiness when phone and template change (debounced 500ms)
   useEffect(() => {
     if (!phoneE164 || !templateId) {
-      // Defer null reset to avoid synchronous setState in effect
-      const t = setTimeout(() => setReadiness(null), 0);
-      return () => clearTimeout(t);
+      setReadiness(null);
+      return;
     }
 
     const timeout = setTimeout(async () => {
       setIsCheckingReadiness(true);
       const result = await checkSmsSendReadiness({
-        borrowerPhone,
+        borrowerPhone: phoneE164,
         templateId,
       });
       if (result.success && result.data) {
@@ -131,7 +130,7 @@ export function SmsSendTab({ onSuccess }: SmsSendTabProps) {
     }, 500);
 
     return () => clearTimeout(timeout);
-  }, [phoneE164, templateId, borrowerPhone]);
+  }, [phoneE164, templateId]);
 
   // Compute whether form is ready to submit
   const canSend =
@@ -190,7 +189,7 @@ export function SmsSendTab({ onSuccess }: SmsSendTabProps) {
           setRecentSends(sendsResult.data);
         }
 
-        // Reset form
+        // Reset form (preserve sentMessageId for delivery tracking)
         setBorrowerName("");
         setBorrowerPhone("");
         setTemplateId("");
@@ -198,7 +197,6 @@ export function SmsSendTab({ onSuccess }: SmsSendTabProps) {
         setScheduledTime("");
         setUseSchedule(false);
         setReadiness(null);
-        setSentMessageId(null);
         onSuccess?.();
       } else {
         toast({

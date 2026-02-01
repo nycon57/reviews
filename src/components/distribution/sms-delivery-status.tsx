@@ -30,13 +30,15 @@ export function SmsDeliveryTracker({ messageId, onStatusChange }: SmsDeliveryTra
   const [status, setStatus] = useState<string>("queued");
   const [polling, setPolling] = useState(true);
   const pollCount = useRef(0);
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
 
   useEffect(() => {
     if (!polling) return;
+    pollCount.current = 0;
 
     const interval = setInterval(async () => {
       pollCount.current++;
-      // Stop polling after 10 attempts (30 seconds)
       if (pollCount.current > 10) {
         setPolling(false);
         return;
@@ -45,9 +47,8 @@ export function SmsDeliveryTracker({ messageId, onStatusChange }: SmsDeliveryTra
       const result = await getMessageStatus(messageId);
       if (result.success && result.data) {
         setStatus(result.data.status);
-        onStatusChange?.(result.data.status);
+        onStatusChangeRef.current?.(result.data.status);
 
-        // Stop polling on terminal statuses
         if (["delivered", "undelivered", "failed"].includes(result.data.status)) {
           setPolling(false);
         }
@@ -55,7 +56,7 @@ export function SmsDeliveryTracker({ messageId, onStatusChange }: SmsDeliveryTra
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [messageId, polling, onStatusChange]);
+  }, [messageId, polling]);
 
   const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.queued;
   const Icon = config.icon;

@@ -40,6 +40,7 @@ export interface WidgetDetailAnalytics {
   eventBreakdown: { eventType: string; count: number }[];
   topPageUrls: { url: string; count: number }[];
   topReferrers: { referrer: string; count: number }[];
+  geographicBreakdown: { ipHash: string; count: number }[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -433,7 +434,7 @@ export async function getWidgetDetailAnalytics(
     // Fetch all events for this widget in range
     const { data: events, error: eErr } = await supabase
       .from("widget_events")
-      .select("event_type, page_url, referrer, created_at")
+      .select("event_type, page_url, referrer, ip_hash, created_at")
       .eq("widget_id", widgetId)
       .gte("created_at", `${start}T00:00:00Z`)
       .lte("created_at", `${end}T23:59:59Z`)
@@ -464,6 +465,9 @@ export async function getWidgetDetailAnalytics(
     // Referrer counts
     const refCounts = new Map<string, number>();
 
+    // IP hash counts (geographic proxy)
+    const ipHashCounts = new Map<string, number>();
+
     for (const event of events ?? []) {
       const day = event.created_at.slice(0, 10);
       const entry = dayMap.get(day) ?? { impressions: 0, clicks: 0 };
@@ -489,6 +493,12 @@ export async function getWidgetDetailAnalytics(
       if (event.referrer) {
         const rc = refCounts.get(event.referrer) ?? 0;
         refCounts.set(event.referrer, rc + 1);
+      }
+
+      // IP hash (geographic proxy)
+      if (event.ip_hash) {
+        const ic = ipHashCounts.get(event.ip_hash) ?? 0;
+        ipHashCounts.set(event.ip_hash, ic + 1);
       }
     }
 
@@ -516,9 +526,22 @@ export async function getWidgetDetailAnalytics(
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
+    const geographicBreakdown = Array.from(
+      ipHashCounts,
+      ([ipHash, count]) => ({ ipHash, count })
+    )
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+
     return {
       success: true,
-      data: { daily, eventBreakdown, topPageUrls, topReferrers },
+      data: {
+        daily,
+        eventBreakdown,
+        topPageUrls,
+        topReferrers,
+        geographicBreakdown,
+      },
     };
   } catch (err) {
     console.error("getWidgetDetailAnalytics error:", err);

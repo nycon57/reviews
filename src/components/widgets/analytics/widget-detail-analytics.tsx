@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import {
   XAxis,
@@ -425,6 +425,49 @@ export const WidgetDetailAnalyticsPanel = memo(
             </CardContent>
           </Card>
         </div>
+
+        {/* Geographic breakdown */}
+        <Card className="border-border">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <MapPin size={16} className="text-repwell-teal-300" />
+              <div>
+                <CardTitle className="text-base">
+                  Geographic Breakdown
+                </CardTitle>
+                <CardDescription>
+                  Unique visitors by IP hash
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {!data?.geographicBreakdown?.length ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">
+                No geographic data available yet
+              </p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                {data.geographicBreakdown.map((item) => (
+                  <div
+                    key={item.ipHash}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border p-3"
+                  >
+                    <span
+                      className="text-xs text-muted-foreground font-mono truncate max-w-[70%]"
+                      title={item.ipHash}
+                    >
+                      {item.ipHash.slice(0, 8)}...
+                    </span>
+                    <span className="text-xs font-medium tabular-nums text-repwell-teal-500">
+                      {item.count.toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }

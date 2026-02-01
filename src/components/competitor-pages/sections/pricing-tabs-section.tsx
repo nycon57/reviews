@@ -84,7 +84,6 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
 
   return (
     <div className="mx-auto max-w-4xl">
-      {/* Section heading */}
       <div className="text-center">
         <h2 className="font-display text-3xl font-bold tracking-tight text-repwell-teal-500 md:text-4xl lg:text-5xl">
           Pricing Comparison
@@ -94,7 +93,6 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
         </p>
       </div>
 
-      {/* Tabs */}
       <Tabs defaultValue={defaultTab} className="mt-10">
         <TabsList
           variant="pills"
@@ -113,7 +111,6 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
             value={tab.tabLabel}
             className="mt-8 animate-fade-in-up"
           >
-            {/* Tab headline and body */}
             <div className="mb-6 text-center">
               <h3 className="font-sans text-xl font-semibold text-repwell-teal-500 md:text-2xl">
                 {tab.headline}
@@ -123,10 +120,8 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
               </p>
             </div>
 
-            {/* Comparison table */}
             {tab.comparisonRows.length > 0 && (
               <div className="rounded-xl border border-border bg-white p-6 shadow-sm lg:p-8">
-                {/* Table header */}
                 <div className="grid grid-cols-3 items-center gap-4 border-b border-border pb-3">
                   <span className="text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/60">
                     Feature
@@ -139,14 +134,12 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
                   </span>
                 </div>
 
-                {/* Comparison rows */}
                 {tab.comparisonRows.map((row) => (
                   <ComparisonRow key={row.feature} row={row} />
                 ))}
               </div>
             )}
 
-            {/* CTA button */}
             <div className="mt-8 text-center">
               <a
                 href="#footer-cta"

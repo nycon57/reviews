@@ -20,7 +20,6 @@ export function SmoothTransitionSection({
 
   return (
     <div className="mx-auto max-w-3xl text-center">
-      {/* Headline */}
       <h2
         className={cn(
           "font-display text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl",
@@ -30,7 +29,6 @@ export function SmoothTransitionSection({
         {config.headline}
       </h2>
 
-      {/* Body text */}
       <p
         className={cn(
           "mx-auto mt-4 max-w-2xl font-sans text-lg leading-relaxed",
@@ -40,11 +38,10 @@ export function SmoothTransitionSection({
         {config.body}
       </p>
 
-      {/* Bullet list */}
-      {config.bullets && config.bullets.length > 0 && (
+      {(config.bullets?.length ?? 0) > 0 && (
         <ul className="mt-8 inline-flex flex-col gap-3 text-left">
-          {config.bullets.map((bullet, index) => (
-            <li key={`bullet-${index}`} className="flex items-start gap-3">
+          {config.bullets?.map((bullet, index) => (
+            <li key={index} className="flex items-start gap-3">
               <CheckCircle
                 weight="duotone"
                 className={cn(

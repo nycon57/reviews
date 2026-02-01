@@ -10908,3 +10908,46 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - verifyCronSecret is duplicated across 20+ cron routes — a future story should extract it to a shared utility
   - The queue processor uses status='sent' as an optimistic lock which is semantically misleading (should be 'processing') but works correctly
 ---
+
+## [2026-02-01] - S111: Automated SMS Triggers & Scheduled Sends
+Thread: 
+Run: 20260201-025756-62490 (iteration 4)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-025756-62490-iter-4.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-025756-62490-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 6fd5d09 [Pass 3/3] refactor(S111): Polish — extract shared cron auth, simplify helpers, clean comments
+- Post-commit status: clean (except unchanged .agents/tasks/prd-reviews.json)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no (no React components in S111)
+  - /next-best-practices: no (no Next.js page changes, only route handler simplification)
+  - /supabase-postgres-best-practices: no (no schema changes)
+  - /code-simplifier: yes
+  - /frontend-design: no (no UI in S111)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: yes (reviewed all email text and error messages)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors in S111 files)
+- Files changed:
+  - src/lib/cron/verify-secret.ts (new — extracted shared cron auth utility)
+  - src/lib/sms/automation/trigger-handler.ts (extracted sendImmediately, queueForLater, renderTemplate helpers)
+  - src/lib/sms/automation/queue-processor.ts (extracted markFailed helper, removed restating comments)
+  - src/lib/sms/automation/follow-up-engine.ts (extracted alreadyFollowedUp, linkWasClicked helpers)
+  - src/lib/sms/automation/cost-alerts.ts (replaced local BalanceInfo with CreditBalance type, removed unused .select().single())
+  - src/app/api/webhooks/crm/sms-trigger/route.ts (shortened docblock, inlined isValid check)
+  - src/app/api/cron/process-sms-queue/route.ts (imported shared verifyCronSecret)
+  - src/app/api/cron/sms-follow-ups/route.ts (imported shared verifyCronSecret)
+- What was implemented:
+  - Code simplification pass: extracted helpers for readability, consolidated duplicated verifyCronSecret into shared utility, removed redundant comments, replaced local type with existing CreditBalance
+  - Security/performance/regression audit: HMAC validation, timing-safe comparison, RLS policies, indexed queries all verified
+  - User-facing text reviewed for clarity and concision
+- **Learnings for future iterations:**
+  - The new src/lib/cron/verify-secret.ts can be adopted by all other cron routes in a future cleanup story
+  - CreditBalance type from credits/types.ts is a superset of what cost-alerts needs — no need for local interfaces
+---

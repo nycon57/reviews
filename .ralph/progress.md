@@ -12629,3 +12629,41 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The `generateStaticParams` dynamically returns all slugs from competitorConfigs, so new configs are auto-included
   - Only 2 competitor configs exist (birdeye, experience-com) — the "5 competitor slugs" AC refers to eventual state after all E19 stories complete
 ---
+
+## [2026-02-01] - S126: Dynamic Route, SEO, & Schema Markup Implementation
+Thread: 
+Run: 20260201-102425-68132 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-102425-68132-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-102425-68132-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: (see below)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no (code already follows patterns)
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: yes (reviewed — no changes needed)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (reviewed not-found copy — already clear)
+  - /agent-browser: no
+  - Other skills: /seo-audit (verified schema structure), /schema-markup (verified JSON-LD)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (12 pre-existing errors, 0 new)
+- Files changed:
+  - No code changes in Pass 3 (all implementation complete from Pass 1+2)
+- All 14 acceptance criteria verified:
+  - Dynamic route, generateStaticParams, generateMetadata with OG/Twitter/canonical
+  - FAQPage, BreadcrumbList, Product JSON-LD all render as application/ld+json
+  - Sitemap integration with weekly changefreq, 0.8 priority
+  - robots.txt allows /compare/, 404 page for unknown slugs
+- **Learnings for future iterations:**
+  - The FAQPage JSON-LD generator existed in schema-generators.ts but was not wired into page.tsx until Pass 2
+  - generateFAQPageJsonLd helper exists but is unused (page uses generateFAQPageSchema + JSON.stringify directly) — acceptable redundancy
+  - All JSON-LD content comes from static build-time configs, so dangerouslySetInnerHTML is safe
+---

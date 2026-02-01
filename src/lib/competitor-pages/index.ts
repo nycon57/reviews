@@ -49,3 +49,4 @@ export {
 
 // Competitor page configs
 export { experienceComConfig } from "./configs/experience-com";
+export { birdeyeConfig } from "./configs/birdeye";

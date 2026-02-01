@@ -10870,3 +10870,41 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - ESLint flags Web API globals (crypto, TextEncoder) as undefined — use node:crypto imports instead
   - QuietHoursEngine and ConsentService checks are already built into SmsService.sendReviewRequest — avoid redundant checks
 ---
+
+## [2026-02-01] - S111: Automated SMS Triggers & Scheduled Sends
+Thread: 
+Run: 20260201-025756-62490 (iteration 3)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-025756-62490-iter-3.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-025756-62490-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 3befc70 [Pass 2/3] fix(S111): Quality review — deduplicate queries, fix null safety, consolidate helpers
+- Post-commit status: clean (except unchanged .agents/tasks/prd-reviews.json)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: no (no React components in S111)
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors in S111 files)
+- Files changed:
+  - src/lib/sms/automation/trigger-handler.ts (eliminated duplicate sms_settings query)
+  - src/lib/sms/automation/follow-up-engine.ts (fixed null safety on loan_officer_id)
+  - src/lib/sms/automation/cost-alerts.ts (extracted getOrgAdminEmail + sendAlertEmail helpers)
+- What was implemented:
+  - Eliminated duplicate sms_settings DB query in trigger-handler by including default_from_number in initial fetch
+  - Fixed unsafe non-null assertion on loan_officer_id in follow-up-engine — now skips messages with no LO ID
+  - Consolidated duplicate admin email lookup and Resend initialization into shared helpers in cost-alerts
+- **Learnings for future iterations:**
+  - verifyCronSecret is duplicated across 20+ cron routes — a future story should extract it to a shared utility
+  - The queue processor uses status='sent' as an optimistic lock which is semantically misleading (should be 'processing') but works correctly
+---

@@ -10,18 +10,13 @@ export interface FollowUpResult {
 }
 
 /**
- * Process auto follow-up SMS for delivered review requests that
- * have not been clicked within the configured delay.
- *
- * Rules (per acceptance criteria):
- * - Max 1 follow-up per borrower per review request
- * - Respects consent and quiet hours
- * - Uses the follow_up template category
+ * Send auto follow-up SMS for delivered review requests that have not
+ * been clicked within the configured delay. Max 1 follow-up per
+ * original message. Respects consent and quiet hours.
  */
 export async function processFollowUps(): Promise<FollowUpResult> {
   const supabase = createUntypedAdminClient();
 
-  // Find orgs with auto follow-up enabled
   const { data: orgSettings, error: settingsError } = await supabase
     .from("sms_settings")
     .select(
@@ -50,12 +45,6 @@ export async function processFollowUps(): Promise<FollowUpResult> {
         Date.now() - delayHours * 60 * 60 * 1000
       ).toISOString();
 
-      // Find delivered messages eligible for follow-up:
-      // - Delivered (not failed/undelivered)
-      // - Has a short_link (review request link)
-      // - Has a template (was a template-based send)
-      // - Delivered before the cutoff time
-      // - No follow-up already sent (no sms_messages with follow_up_of = id)
       const { data: eligible, error: queryError } = await supabase
         .from("sms_messages")
         .select(
@@ -74,40 +63,21 @@ export async function processFollowUps(): Promise<FollowUpResult> {
       for (const msg of eligible) {
         result.processed++;
 
-        // Check if a follow-up was already sent for this message
-        const { data: existingFollowUp } = await supabase
-          .from("sms_messages")
-          .select("id")
-          .eq("follow_up_of", msg.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (existingFollowUp) {
+        if (await alreadyFollowedUp(supabase, msg.id)) {
           result.skipped++;
           continue;
         }
 
-        // Check if the short link was clicked
-        if (msg.short_link_id) {
-          const { data: link } = await supabase
-            .from("sms_short_links")
-            .select("click_count")
-            .eq("id", msg.short_link_id)
-            .single();
-
-          if (link && link.click_count > 0) {
-            result.skipped++;
-            continue;
-          }
+        if (msg.short_link_id && (await linkWasClicked(supabase, msg.short_link_id))) {
+          result.skipped++;
+          continue;
         }
 
-        // Skip if missing required IDs (loan_officer_id is required for sending)
         if (!msg.loan_officer_id) {
           result.skipped++;
           continue;
         }
 
-        // Check consent
         const hasConsent = await consentService.checkConsent(
           msg.organization_id,
           msg.to_number
@@ -117,7 +87,6 @@ export async function processFollowUps(): Promise<FollowUpResult> {
           continue;
         }
 
-        // Send the follow-up (SmsService internally handles quiet hours)
         try {
           const smsService = await SmsService.forOrganization(
             msg.organization_id
@@ -131,7 +100,6 @@ export async function processFollowUps(): Promise<FollowUpResult> {
           });
 
           if (sendResult.success && sendResult.messageId) {
-            // Link follow-up to original
             await supabase
               .from("sms_messages")
               .update({ follow_up_of: msg.id })
@@ -153,4 +121,29 @@ export async function processFollowUps(): Promise<FollowUpResult> {
   }
 
   return result;
+}
+
+async function alreadyFollowedUp(
+  supabase: ReturnType<typeof createUntypedAdminClient>,
+  messageId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("sms_messages")
+    .select("id")
+    .eq("follow_up_of", messageId)
+    .limit(1)
+    .maybeSingle();
+  return !!data;
+}
+
+async function linkWasClicked(
+  supabase: ReturnType<typeof createUntypedAdminClient>,
+  shortLinkId: string
+): Promise<boolean> {
+  const { data: link } = await supabase
+    .from("sms_short_links")
+    .select("click_count")
+    .eq("id", shortLinkId)
+    .single();
+  return !!link && link.click_count > 0;
 }

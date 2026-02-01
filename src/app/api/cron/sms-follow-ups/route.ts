@@ -1,29 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyCronSecret } from "@/lib/cron/verify-secret";
 import { processFollowUps } from "@/lib/sms/automation/follow-up-engine";
 
 export const dynamic = "force-dynamic";
 
-function verifyCronSecret(request: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return process.env.NODE_ENV === "development";
-  }
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${cronSecret}`;
-}
-
 /**
  * POST /api/cron/sms-follow-ups
  *
- * Processes auto follow-up SMS for review requests that were delivered
- * but not clicked within the configured delay (default 72 hours).
- *
- * Rules:
- * - Max 1 follow-up per borrower per review request
- * - Respects consent and quiet hours
- * - Uses the follow_up template category
- *
- * Recommended frequency: every 15 minutes.
+ * Sends auto follow-up SMS for unclicked review requests.
+ * Recommended: every 15 minutes.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!verifyCronSecret(request)) {

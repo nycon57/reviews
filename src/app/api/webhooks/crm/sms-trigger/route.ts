@@ -11,13 +11,8 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/webhooks/crm/sms-trigger
  *
- * Receives CRM webhook payloads (e.g. loan closed events) and triggers
- * automated post-closing SMS to borrowers.
- *
- * Security: Validates HMAC-SHA256 signature via X-Webhook-Signature header
- * against the organization's configured crm_webhook_secret.
- *
- * The organization is identified by the X-Organization-Id header.
+ * Receives CRM loan-closed events and triggers automated post-closing SMS.
+ * Validates HMAC-SHA256 signature via X-Webhook-Signature header.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -29,10 +24,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Read raw body for HMAC verification
     const rawBody = await request.text();
 
-    // Look up the org's webhook secret
     const supabase = createUntypedAdminClient();
     const { data: settings } = await supabase
       .from("sms_settings")
@@ -49,12 +42,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!settings.crm_trigger_enabled) {
       return NextResponse.json(
-        { error: "CRM SMS trigger is not enabled for this organization" },
+        { error: "CRM SMS trigger is not enabled" },
         { status: 403 }
       );
     }
 
-    // Verify HMAC signature
     const signature = request.headers.get("x-webhook-signature");
     if (!signature || !settings.crm_webhook_secret) {
       return NextResponse.json(
@@ -63,13 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const isValid = verifyCrmHmac(
-      settings.crm_webhook_secret,
-      signature,
-      rawBody
-    );
-
-    if (!isValid) {
+    if (!verifyCrmHmac(settings.crm_webhook_secret, signature, rawBody)) {
       console.warn(
         `[CRM SMS Trigger] Invalid HMAC signature for org ${organizationId}`
       );
@@ -79,7 +65,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Parse and validate payload
     let payload: unknown;
     try {
       payload = JSON.parse(rawBody);
@@ -104,7 +89,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Process the trigger
     const result = await handleCrmTrigger(organizationId, parsed.data);
 
     if (!result.success) {

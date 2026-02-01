@@ -6,8 +6,6 @@ import { toE164 } from "../phone-utils";
 import { ConsentService } from "../consent-service";
 import type { SmsSendResult } from "../types";
 
-// ── CRM Webhook Payload Schema ─────────────────────────────────────────
-
 export const crmWebhookPayloadSchema = z.object({
   borrower_name: z.string().min(1),
   borrower_phone: z.string().min(1),
@@ -26,8 +24,6 @@ export interface TriggerResult {
   error?: string;
 }
 
-// ── HMAC Signature Verification ────────────────────────────────────────
-
 export function verifyCrmHmac(
   secret: string,
   signature: string,
@@ -38,13 +34,11 @@ export function verifyCrmHmac(
   return timingSafeEqual(Buffer.from(computed), Buffer.from(signature));
 }
 
-// ── CRM Trigger Handler ────────────────────────────────────────────────
-
 /**
  * Process a CRM webhook for post-closing SMS.
  *
- * If the trigger delay is 0, sends immediately. Otherwise, queues
- * the message with scheduled_at set to closing_date + delay hours.
+ * If the scheduled time (closing_date + delay) is in the past, sends
+ * immediately. Otherwise, queues the message for future delivery.
  */
 export async function handleCrmTrigger(
   organizationId: string,
@@ -52,7 +46,6 @@ export async function handleCrmTrigger(
 ): Promise<TriggerResult> {
   const supabase = createUntypedAdminClient();
 
-  // Load org trigger settings (includes default_from_number to avoid a second query)
   const { data: settings } = await supabase
     .from("sms_settings")
     .select(
@@ -74,7 +67,6 @@ export async function handleCrmTrigger(
     return { success: false, error: "Invalid borrower phone number" };
   }
 
-  // Check consent before scheduling
   const consentService = new ConsentService();
   const hasConsent = await consentService.checkConsent(
     organizationId,
@@ -85,36 +77,59 @@ export async function handleCrmTrigger(
   }
 
   const delayHours = settings.crm_trigger_delay_hours ?? 24;
-
-  // Calculate scheduled send time based on closing date + delay
   const closingDate = new Date(payload.closing_date);
   const scheduledAt = new Date(
     closingDate.getTime() + delayHours * 60 * 60 * 1000
   );
 
-  // If scheduled time is in the past, send now
-  const now = new Date();
-  const shouldSendNow = scheduledAt <= now;
-
-  if (shouldSendNow) {
-    const smsService = await SmsService.forOrganization(organizationId);
-    const result: SmsSendResult = await smsService.sendReviewRequest({
-      borrowerId: payload.loan_officer_id, // CRM context: LO-linked
-      loanOfficerId: payload.loan_officer_id,
-      templateId: settings.crm_trigger_template_id,
-      borrowerPhone: normalizedPhone,
-      borrowerName: payload.borrower_name,
-    });
-    return {
-      success: result.success,
-      messageId: result.messageId,
-      scheduledAt: result.scheduledAt,
-      error: result.error,
-    };
+  if (scheduledAt <= new Date()) {
+    return sendImmediately(organizationId, settings, normalizedPhone, payload);
   }
 
-  // Queue for future delivery — use default from the already-fetched settings,
-  // falling back to the first active phone number.
+  return queueForLater(
+    supabase,
+    organizationId,
+    settings,
+    normalizedPhone,
+    payload,
+    scheduledAt
+  );
+}
+
+async function sendImmediately(
+  organizationId: string,
+  settings: { crm_trigger_template_id: string },
+  normalizedPhone: string,
+  payload: CrmWebhookPayload
+): Promise<TriggerResult> {
+  const smsService = await SmsService.forOrganization(organizationId);
+  const result: SmsSendResult = await smsService.sendReviewRequest({
+    borrowerId: payload.loan_officer_id,
+    loanOfficerId: payload.loan_officer_id,
+    templateId: settings.crm_trigger_template_id,
+    borrowerPhone: normalizedPhone,
+    borrowerName: payload.borrower_name,
+  });
+  return {
+    success: result.success,
+    messageId: result.messageId,
+    scheduledAt: result.scheduledAt,
+    error: result.error,
+  };
+}
+
+async function queueForLater(
+  supabase: ReturnType<typeof createUntypedAdminClient>,
+  organizationId: string,
+  settings: {
+    crm_trigger_template_id: string;
+    crm_field_mapping: unknown;
+    default_from_number: string | null;
+  },
+  normalizedPhone: string,
+  payload: CrmWebhookPayload,
+  scheduledAt: Date
+): Promise<TriggerResult> {
   const fromNumber =
     settings.default_from_number ??
     (await resolveActivePhoneNumber(supabase, organizationId));
@@ -122,7 +137,6 @@ export async function handleCrmTrigger(
     return { success: false, error: "No from number configured" };
   }
 
-  // Load and render template for the queued message
   const { data: template } = await supabase
     .from("sms_templates")
     .select("body")
@@ -135,36 +149,11 @@ export async function handleCrmTrigger(
     return { success: false, error: "Trigger template not found or inactive" };
   }
 
-  // Build merge fields from CRM payload + field mapping
-  const mergeValues: Record<string, string> = {
-    borrower_name: payload.borrower_name,
-    closing_date: payload.closing_date,
-    loan_type: payload.loan_type ?? "",
-    property_address: payload.property_address ?? "",
-  };
+  const body = renderTemplate(template.body, payload, settings.crm_field_mapping);
 
-  // Apply custom field mapping if configured
-  const fieldMapping = (settings.crm_field_mapping ?? {}) as Record<
-    string,
-    string
-  >;
-  for (const [crmField, mergeField] of Object.entries(fieldMapping)) {
-    const value = (payload as Record<string, unknown>)[crmField];
-    if (typeof value === "string") {
-      mergeValues[mergeField] = value;
-    }
-  }
-
-  let body = template.body;
-  for (const [key, value] of Object.entries(mergeValues)) {
-    body = body.replaceAll(`{{${key}}}`, value);
-  }
-
-  // Calculate segments for the rendered body
   const { calculateSegments } = await import("../segment-calculator");
   const segmentInfo = calculateSegments(body);
 
-  // Insert queued message
   const { data: message, error: insertError } = await supabase
     .from("sms_messages")
     .insert({
@@ -196,7 +185,32 @@ export async function handleCrmTrigger(
   };
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────
+function renderTemplate(
+  templateBody: string,
+  payload: CrmWebhookPayload,
+  fieldMapping: unknown
+): string {
+  const mergeValues: Record<string, string> = {
+    borrower_name: payload.borrower_name,
+    closing_date: payload.closing_date,
+    loan_type: payload.loan_type ?? "",
+    property_address: payload.property_address ?? "",
+  };
+
+  const mapping = (fieldMapping ?? {}) as Record<string, string>;
+  for (const [crmField, mergeField] of Object.entries(mapping)) {
+    const value = (payload as Record<string, unknown>)[crmField];
+    if (typeof value === "string") {
+      mergeValues[mergeField] = value;
+    }
+  }
+
+  let body = templateBody;
+  for (const [key, value] of Object.entries(mergeValues)) {
+    body = body.replaceAll(`{{${key}}}`, value);
+  }
+  return body;
+}
 
 async function resolveActivePhoneNumber(
   supabase: ReturnType<typeof createUntypedAdminClient>,

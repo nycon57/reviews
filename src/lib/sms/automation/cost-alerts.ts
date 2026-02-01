@@ -2,13 +2,14 @@ import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { CreditService } from "../credits/credit-service";
 import { ALERT_THRESHOLDS } from "../credits/constants";
 import type { AlertLevel } from "../credits/constants";
+import type { CreditBalance } from "../credits/types";
 
 /**
  * Check credit usage for an organization and send email notifications
  * at configured thresholds (75%, 90%, 100%, and first overage).
  *
- * Uses sms_cost_alert_log to track which alerts have already been sent
- * for the current billing period (prevents duplicate notifications).
+ * Uses sms_cost_alert_log to prevent duplicate notifications
+ * within a billing period.
  */
 export async function checkCostAlerts(
   organizationId: string
@@ -24,15 +25,11 @@ export async function checkCostAlerts(
   const alertsSent: string[] = [];
   const ratio = balance.used / balance.included;
 
-  // Determine which thresholds have been crossed
-  const thresholdsToCheck: { level: AlertLevel; threshold: number }[] = [
+  const thresholdsToCheck: { level: AlertLevel | "overage"; threshold: number }[] = [
     { level: "warning", threshold: ALERT_THRESHOLDS.warning },
     { level: "critical", threshold: ALERT_THRESHOLDS.critical },
     { level: "exceeded", threshold: ALERT_THRESHOLDS.exceeded },
   ];
-
-  // Check overage separately
-  const isOverage = balance.overage > 0;
 
   for (const { level, threshold } of thresholdsToCheck) {
     if (ratio < threshold) continue;
@@ -45,20 +42,19 @@ export async function checkCostAlerts(
     );
     if (alreadySent) continue;
 
-    await sendCostAlertEmail(organizationId, level, balance);
+    await sendCostAlertEmail(organizationId, level as AlertLevel, balance);
     await recordAlertSent(supabase, organizationId, balance.periodStart, level);
     alertsSent.push(level);
   }
 
-  // Overage alert
-  if (isOverage) {
-    const overageAlreadySent = await hasAlertBeenSent(
+  if (balance.overage > 0) {
+    const alreadySent = await hasAlertBeenSent(
       supabase,
       organizationId,
       balance.periodStart,
       "overage"
     );
-    if (!overageAlreadySent) {
+    if (!alreadySent) {
       await sendOverageAlertEmail(organizationId, balance);
       await recordAlertSent(
         supabase,
@@ -72,8 +68,6 @@ export async function checkCostAlerts(
 
   return { alertsSent };
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────
 
 async function hasAlertBeenSent(
   supabase: ReturnType<typeof createUntypedAdminClient>,
@@ -97,24 +91,11 @@ async function recordAlertSent(
   periodStart: string,
   alertLevel: string
 ): Promise<void> {
-  await supabase
-    .from("sms_cost_alert_log")
-    .insert({
-      organization_id: organizationId,
-      period_start: periodStart,
-      alert_level: alertLevel,
-    })
-    .select()
-    .single();
-}
-
-interface BalanceInfo {
-  used: number;
-  included: number;
-  overage: number;
-  overageRateCents: number;
-  periodStart: string;
-  periodEnd: string;
+  await supabase.from("sms_cost_alert_log").insert({
+    organization_id: organizationId,
+    period_start: periodStart,
+    alert_level: alertLevel,
+  });
 }
 
 async function getOrgAdminEmail(
@@ -156,7 +137,7 @@ async function sendAlertEmail(
 async function sendCostAlertEmail(
   organizationId: string,
   level: AlertLevel,
-  balance: BalanceInfo
+  balance: CreditBalance
 ): Promise<void> {
   const admin = await getOrgAdminEmail(organizationId);
   if (!admin) {
@@ -177,7 +158,7 @@ async function sendCostAlertEmail(
 
 async function sendOverageAlertEmail(
   organizationId: string,
-  balance: BalanceInfo
+  balance: CreditBalance
 ): Promise<void> {
   const admin = await getOrgAdminEmail(organizationId);
   if (!admin) return;
@@ -222,7 +203,7 @@ function getCostAlertSubject(level: AlertLevel, percentage: number): string {
 
 function getCostAlertBody(
   level: AlertLevel,
-  balance: BalanceInfo,
+  balance: CreditBalance,
   percentage: number
 ): string {
   const remaining = Math.max(0, balance.included - balance.used);
@@ -251,7 +232,7 @@ function getCostAlertBody(
   return lines.join("\n");
 }
 
-function estimateMonthlyOverage(balance: BalanceInfo): number {
+function estimateMonthlyOverage(balance: CreditBalance): number {
   const periodStart = new Date(balance.periodStart);
   const periodEnd = new Date(balance.periodEnd);
   const now = new Date();

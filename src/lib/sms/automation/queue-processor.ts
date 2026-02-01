@@ -14,14 +14,9 @@ export interface QueueProcessorResult {
 }
 
 /**
- * Process the SMS scheduled sends queue.
- *
- * Picks up messages where status = 'queued' and scheduled_at <= now(),
- * then sends each one through the standard SMS pipeline. Messages that
- * fall into quiet hours at execution time are rescheduled.
- *
- * Uses SELECT ... FOR UPDATE SKIP LOCKED (via a serialized approach)
- * to prevent concurrent cron runs from double-processing.
+ * Process queued SMS messages whose scheduled_at has arrived.
+ * Messages blocked by quiet hours are rescheduled; revoked consent
+ * or insufficient credits cause the message to fail.
  */
 export async function processScheduledQueue(
   batchSize: number = 100
@@ -29,7 +24,6 @@ export async function processScheduledQueue(
   const supabase = createUntypedAdminClient();
   const now = new Date().toISOString();
 
-  // Fetch queued messages ready to send
   const { data: messages, error: fetchError } = await supabase
     .from("sms_messages")
     .select(
@@ -68,12 +62,12 @@ export async function processScheduledQueue(
 
   for (const msg of messages) {
     try {
-      // Mark as processing (prevents re-pickup)
+      // Optimistic lock: only proceed if still queued
       const { error: lockError } = await supabase
         .from("sms_messages")
         .update({ status: "sent" })
         .eq("id", msg.id)
-        .eq("status", "queued"); // optimistic lock
+        .eq("status", "queued");
 
       if (lockError) {
         result.failed++;
@@ -81,14 +75,12 @@ export async function processScheduledQueue(
         continue;
       }
 
-      // Re-check quiet hours at execution time
       const quietResult = await quietHoursEngine.check(
         msg.organization_id,
         msg.to_number
       );
 
       if (quietResult.blocked && quietResult.nextValidTime) {
-        // Reschedule to next valid window
         await supabase
           .from("sms_messages")
           .update({
@@ -100,42 +92,25 @@ export async function processScheduledQueue(
         continue;
       }
 
-      // Re-check consent (may have opted out since queueing)
       const hasConsent = await consentService.checkConsent(
         msg.organization_id,
         msg.to_number
       );
 
       if (!hasConsent) {
-        await supabase
-          .from("sms_messages")
-          .update({
-            status: "failed",
-            error_code: "CONSENT_REVOKED",
-            error_message: "Recipient opted out after message was scheduled",
-          })
-          .eq("id", msg.id);
+        await markFailed(supabase, msg.id, "CONSENT_REVOKED", "Recipient opted out after message was scheduled");
         result.failed++;
         continue;
       }
 
-      // Check credits
       const creditService = new CreditService(msg.organization_id);
       const balance = await creditService.checkBalance();
       if (balance.remaining < msg.segments && !balance.overageAllowed) {
-        await supabase
-          .from("sms_messages")
-          .update({
-            status: "failed",
-            error_code: "NO_CREDITS",
-            error_message: "Insufficient credits at send time",
-          })
-          .eq("id", msg.id);
+        await markFailed(supabase, msg.id, "NO_CREDITS", "Insufficient credits at send time");
         result.failed++;
         continue;
       }
 
-      // Send via Twilio directly (message is already persisted and rendered)
       const twilioService = await TwilioService.forOrganization(
         msg.organization_id
       );
@@ -145,7 +120,6 @@ export async function processScheduledQueue(
         from: msg.from_number,
       });
 
-      // Update message with Twilio SID
       await supabase
         .from("sms_messages")
         .update({
@@ -155,10 +129,8 @@ export async function processScheduledQueue(
         })
         .eq("id", msg.id);
 
-      // Deduct credits
       await creditService.deductCredit(msg.segments);
 
-      // Check cost alerts after each send
       await checkCostAlerts(msg.organization_id).catch((err) =>
         console.error(`[SMS Queue] Cost alert check failed: ${err}`)
       );
@@ -169,7 +141,6 @@ export async function processScheduledQueue(
       result.failed++;
       result.errors.push(`Message ${msg.id}: ${errorMsg}`);
 
-      // Mark as failed (best-effort)
       try {
         await supabase
           .from("sms_messages")
@@ -179,10 +150,26 @@ export async function processScheduledQueue(
           })
           .eq("id", msg.id);
       } catch {
-        // Swallow — the message was already logged above
+        // Already logged above
       }
     }
   }
 
   return result;
+}
+
+async function markFailed(
+  supabase: ReturnType<typeof createUntypedAdminClient>,
+  messageId: string,
+  errorCode: string,
+  errorMessage: string
+): Promise<void> {
+  await supabase
+    .from("sms_messages")
+    .update({
+      status: "failed",
+      error_code: errorCode,
+      error_message: errorMessage,
+    })
+    .eq("id", messageId);
 }

@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyCronSecret } from "@/lib/cron/verify-secret";
 import { processScheduledQueue } from "@/lib/sms/automation/queue-processor";
 
 export const dynamic = "force-dynamic";
 
-function verifyCronSecret(request: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-  if (!cronSecret) {
-    return process.env.NODE_ENV === "development";
-  }
-  const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${cronSecret}`;
-}
-
 /**
  * POST /api/cron/process-sms-queue
  *
- * Processes the SMS scheduled sends queue. Should run every minute.
- * Picks up messages with status = 'queued' and scheduled_at <= now(),
- * sends them through the standard pipeline, and re-schedules any
- * that fall into quiet hours at execution time.
+ * Processes the SMS scheduled sends queue. Recommended: every minute.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!verifyCronSecret(request)) {

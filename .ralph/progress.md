@@ -11989,3 +11989,48 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Use focus-visible instead of focus for keyboard accessibility (avoids ring on mouse click)
   - Check optimizePackageImports in next.config.js before flagging barrel imports
 ---
+
+## 2026-02-01 - S122: Case Studies & FAQ Accordion Sub-Components (Sections 13-14)
+Thread:
+Run: 20260201-091349-62592 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-091349-62592-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-091349-62592-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: fda1d90 [Pass 1/3] feat(S122): Implement case studies grid and FAQ accordion sections
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /schema-markup (JSON-LD implementation)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no new errors from S122 files)
+- Files changed:
+  - src/components/competitor-pages/sections/case-studies-section.tsx (rewritten)
+  - src/components/competitor-pages/sections/faq-section.tsx (rewritten)
+  - src/lib/competitor-pages/schema-generators.ts (new)
+  - src/lib/competitor-pages/index.ts (exports added)
+  - src/lib/competitor-pages/types.ts (percentageChange field added to CaseStudyMetric)
+  - src/components/competitor-pages/competitor-comparison-page.tsx (JSON-LD injection added)
+  - src/components/competitor-pages/sections/rating-comparison-section.tsx (null guard added)
+- What was implemented:
+  - Case Studies section (Section 13): 2x2 card grid with company logo, industry badge, before-after metrics with percentage change, pull quotes with blockquote styling, CTA links, scroll-triggered staggered entrance animations, hover effects, top accent gradient bar
+  - FAQ Accordion section (Section 14): ShadCN/Radix Accordion with keyboard navigation (Enter/Space toggle, arrow keys), ARIA attributes (aria-expanded, aria-controls), rich text support via innerHTML with utility-class-based styling, scroll-triggered entrance, competitor-specific + standard FAQ questions merged
+  - FAQPage JSON-LD schema generator: generates schema.org FAQPage structured data, strips HTML tags for plain-text answers, injected into competitor comparison page template via script tag
+  - Design system compliance: all components use repwell-teal/sage palette, font-display/font-sans, 8px spacing grid, consistent section header pattern (eyebrow + h2 + description)
+- **Learnings for future iterations:**
+  - ShadCN Accordion (Radix) provides keyboard navigation and ARIA attributes out of the box
+  - innerHTML for config-driven content triggers security hooks; use eslint-disable comment with safety justification
+  - JSON-LD for FAQPage should strip HTML tags from answers for safest schema.org compliance
+  - Linter auto-corrected prose classes to utility classes for rich text styling
+---

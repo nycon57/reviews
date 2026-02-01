@@ -101,9 +101,11 @@ export default async function CompareSlugPage({
         type="font/woff2"
         crossOrigin="anonymous"
       />
-      {/* Preconnect + dns-prefetch for image CDN (fonts are self-hosted via next/font) */}
+      {/* Preconnect + dns-prefetch for image CDNs */}
       <link rel="preconnect" href="https://images.unsplash.com" crossOrigin="anonymous" />
+      <link rel="preconnect" href="https://temwotqafrafajehuiuh.supabase.co" crossOrigin="anonymous" />
       <link rel="dns-prefetch" href="https://images.unsplash.com" />
+      <link rel="dns-prefetch" href="https://temwotqafrafajehuiuh.supabase.co" />
       {/* FAQPage JSON-LD — safe: content sourced from static build-time competitor config, not user input */}
       <script
         type="application/ld+json"

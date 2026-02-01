@@ -316,6 +316,7 @@
 
 .logo-bar-scroll {
   animation: logo-scroll 30s linear infinite;
+  will-change: transform;
 }
 
 .logo-bar-mask {

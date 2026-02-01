@@ -43,6 +43,7 @@ export function MarketingNav() {
             alt="RepWell"
             width={140}
             height={32}
+            sizes="140px"
             className="h-8 w-auto"
             priority
           />

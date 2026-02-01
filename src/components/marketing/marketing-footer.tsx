@@ -101,7 +101,9 @@ export function MarketingFooter() {
                 alt="RepWell"
                 width={140}
                 height={32}
+                sizes="140px"
                 className="h-8 w-auto"
+                loading="lazy"
               />
             </Link>
             <p className="text-body-sm text-repwell-teal-400 max-w-xs mb-6">

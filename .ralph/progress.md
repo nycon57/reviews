@@ -11904,8 +11904,8 @@ Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201
 Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-085842-91189-iter-1.md
 - Guardrails reviewed: yes
 - No-commit run: false
-- Commit: (pending - will update after commit)
-- Post-commit status: (pending)
+- Commit: eabd6b5 [Pass 1/3] feat(S121): Implement migration steps and rating comparison sections
+- Post-commit status: clean
 - Skills invoked:
   - /feature-dev: no
   - /code-review: no

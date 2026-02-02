@@ -116,8 +116,7 @@ export function SerpPreview({ data }: SerpPreviewProps) {
       <div className="flex items-start gap-2 px-1">
         <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          This is a simulated preview of how your rich snippet may appear in
-          Google search results. Actual appearance depends on Google&apos;s
+          Simulated preview. Actual appearance depends on Google&apos;s
           rendering and eligibility requirements.
         </p>
       </div>

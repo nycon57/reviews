@@ -73,6 +73,22 @@ async function getOrgId(): Promise<ActionResult<string>> {
   return { success: true, data: data.organization_id };
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────
+
+function parseAddress(
+  raw: unknown
+): EntityData["address"] | undefined {
+  const addr = raw as Record<string, string | null> | null;
+  if (!addr) return undefined;
+  return {
+    street: addr.street ?? null,
+    city: addr.city ?? null,
+    state: addr.state ?? null,
+    zip: addr.zip ?? null,
+    country: addr.country ?? null,
+  };
+}
+
 // ── Entity + Review Fetching ─────────────────────────────────────────
 
 async function fetchEntityAndReviews(
@@ -116,16 +132,7 @@ async function fetchEntityAndReviews(
       entity.name = branch.name;
       entity.telephone = branch.phone;
       entity.url = branch.website_url;
-      const rawAddr = branch.address as Record<string, string | null> | null;
-      if (rawAddr) {
-        entity.address = {
-          street: rawAddr.street ?? null,
-          city: rawAddr.city ?? null,
-          state: rawAddr.state ?? null,
-          zip: rawAddr.zip ?? null,
-          country: rawAddr.country ?? null,
-        };
-      }
+      entity.address = parseAddress(branch.address);
     }
   } else {
     const { data: org } = await supabase
@@ -296,16 +303,7 @@ async function batchFetchEntitiesAndReviews(
         entity.name = branchData.name;
         entity.telephone = branchData.phone;
         entity.url = branchData.website_url;
-        const rawAddr = branchData.address as Record<string, string | null> | null;
-        if (rawAddr) {
-          entity.address = {
-            street: rawAddr.street ?? null,
-            city: rawAddr.city ?? null,
-            state: rawAddr.state ?? null,
-            zip: rawAddr.zip ?? null,
-            country: rawAddr.country ?? null,
-          };
-        }
+        entity.address = parseAddress(branchData.address);
       }
       widgetReviews = allReviews.slice(0, 50);
     } else {
@@ -623,16 +621,13 @@ export async function applyQuickFix(
     // Map quick-fix fields to widget_configs columns
     const update: Record<string, unknown> = {};
 
-    if (field === "@context") {
-      // @context is always correct in generated output; no DB change needed.
-    } else if (field === "structured_data_type" || field === "@type") {
-      if (typeof value === "string") {
-        update.structured_data_type = value;
-      }
-    } else if (field === "enable_structured_data") {
-      if (typeof value === "boolean") {
-        update.enable_structured_data = value;
-      }
+    if (
+      (field === "structured_data_type" || field === "@type") &&
+      typeof value === "string"
+    ) {
+      update.structured_data_type = value;
+    } else if (field === "enable_structured_data" && typeof value === "boolean") {
+      update.enable_structured_data = value;
     }
 
     if (Object.keys(update).length > 0) {

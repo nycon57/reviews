@@ -32,6 +32,18 @@ interface ValidationPanelProps {
   onDataUpdate?: (data: WidgetSeoData) => void;
 }
 
+function groupIssuesBySeverity(issues: ValidationIssue[]) {
+  const errors: ValidationIssue[] = [];
+  const warnings: ValidationIssue[] = [];
+  const infos: ValidationIssue[] = [];
+  for (const issue of issues) {
+    if (issue.severity === "error") errors.push(issue);
+    else if (issue.severity === "warning") warnings.push(issue);
+    else infos.push(issue);
+  }
+  return { errors, warnings, infos };
+}
+
 const SEVERITY_CONFIG: Record<
   ValidationSeverity,
   { icon: typeof XCircle; color: string; bgColor: string; label: string }
@@ -155,9 +167,7 @@ export function ValidationPanel({
     ? "Structured data is valid"
     : `${validation.errors} error${validation.errors !== 1 ? "s" : ""} found`;
 
-  const errors = validation.issues.filter((i) => i.severity === "error");
-  const warnings = validation.issues.filter((i) => i.severity === "warning");
-  const infos = validation.issues.filter((i) => i.severity === "info");
+  const { errors, warnings, infos } = groupIssuesBySeverity(validation.issues);
 
   return (
     <div className="space-y-4">

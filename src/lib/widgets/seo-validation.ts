@@ -152,7 +152,7 @@ function validateAggregateRating(
       severity: "info",
       field: "aggregateRating",
       message:
-        "No aggregateRating present. Rich snippets with star ratings require reviews.",
+        "No aggregateRating present. Add reviews to enable star-rated rich snippets.",
     });
     return;
   }
@@ -319,8 +319,12 @@ export function validateStructuredData(jsonLd: JsonLdOutput): ValidationResult {
   validateReviews(jsonLd, issues);
   validateTypeSpecificFields(jsonLd, issues);
 
-  const errors = issues.filter((i) => i.severity === "error").length;
-  const warnings = issues.filter((i) => i.severity === "warning").length;
+  let errors = 0;
+  let warnings = 0;
+  for (const issue of issues) {
+    if (issue.severity === "error") errors++;
+    else if (issue.severity === "warning") warnings++;
+  }
 
   return {
     valid: errors === 0,

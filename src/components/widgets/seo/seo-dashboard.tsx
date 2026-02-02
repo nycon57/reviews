@@ -37,6 +37,17 @@ import {
   type ValidationAlert,
 } from "@/lib/widgets/seo-actions";
 
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export function SeoDashboard() {
   const [report, setReport] = useState<BulkValidationReport | null>(null);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
@@ -99,14 +110,7 @@ export function SeoDashboard() {
       const result = await exportValidationCsv();
       if (result.success) {
         const blob = new Blob([result.data], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `seo-validation-report-${new Date().toISOString().split("T")[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        downloadBlob(blob, `seo-validation-report-${new Date().toISOString().split("T")[0]}.csv`);
       }
     });
   };
@@ -132,10 +136,6 @@ export function SeoDashboard() {
   const handleBackToOverview = () => {
     setSelectedWidgetId(null);
     setSelectedWidget(null);
-  };
-
-  const handleWidgetDataUpdate = (data: WidgetSeoData) => {
-    setSelectedWidget(data);
   };
 
   // Widget detail view
@@ -176,7 +176,7 @@ export function SeoDashboard() {
               data={selectedWidget}
               configId={selectedWidgetId}
               onRevalidate={() => loadWidgetDetail(selectedWidgetId)}
-              onDataUpdate={handleWidgetDataUpdate}
+              onDataUpdate={setSelectedWidget}
             />
           </TabsContent>
 
@@ -276,8 +276,8 @@ export function SeoDashboard() {
             No widgets to validate
           </h2>
           <p className="text-sm text-muted-foreground max-w-md mb-6">
-            Create a widget with structured data enabled to start monitoring
-            your JSON-LD health and rich snippet readiness.
+            Enable structured data on a widget to validate its JSON-LD and
+            track rich snippet readiness.
           </p>
           <Button asChild>
             <Link href="/dashboard/widgets/new" className="gap-2">

@@ -1,0 +1,36 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "repwell/widget",
+	"version": "1.0.0",
+	"title": "RepWell Widget",
+	"category": "embed",
+	"icon": "star-filled",
+	"description": "Embed a RepWell review widget.",
+	"keywords": [ "review", "widget", "repwell", "testimonial", "nps" ],
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	},
+	"attributes": {
+		"widgetId": {
+			"type": "string",
+			"default": ""
+		},
+		"width": {
+			"type": "string",
+			"default": ""
+		},
+		"height": {
+			"type": "string",
+			"default": ""
+		},
+		"className": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"textdomain": "repwell-widgets",
+	"editorScript": "repwell-widget-block",
+	"render": "file:./render.php"
+}

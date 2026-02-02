@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Copy, Check, Code2, Globe } from "lucide-react";
+import { Copy, Check, Code2, Globe, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
@@ -155,6 +156,30 @@ export function EmbedCodePanel({ widgetId }: EmbedCodePanelProps) {
               {widgetId}
             </code>
             <CopyButton text={widgetId} />
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <h4 className="text-xs font-semibold text-muted-foreground mb-2">
+            Platform Guides
+          </h4>
+          <div className="space-y-1">
+            {[
+              { label: "Google Tag Manager", hash: "gtm" },
+              { label: "Webflow", hash: "webflow" },
+              { label: "Squarespace", hash: "squarespace" },
+              { label: "Shopify", hash: "shopify" },
+              { label: "Iframe Embed", hash: "iframe" },
+            ].map((guide) => (
+              <Link
+                key={guide.hash}
+                href="/dashboard/widgets/integrations"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-repwell-teal-500 transition-colors py-0.5"
+              >
+                <ExternalLink size={10} />
+                {guide.label}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

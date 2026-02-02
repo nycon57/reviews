@@ -16689,3 +16689,50 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Zod .default().optional() changes the output type — keep optional when the runtime handles defaults
   - Always verify en.json strings match the original hardcoded English strings exactly
 ---
+
+## [2026-02-01] - S163: Google Tag Manager Template & Platform Integration Guides
+Thread: 
+Run: 20260201-220019-7883 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-220019-7883-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-220019-7883-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: a29771d feat(S163): [Pass 1/3] Add GTM template and platform integration guides
+- Post-commit status: clean (excluding pre-existing unstaged files)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run lint -> PASS (no new errors from S163 files)
+  - Command: npm run build -> PASS (integrations page included in build output)
+- Files changed:
+  - public/gtm/repwell-widget-template.tpl (new - GTM custom template)
+  - src/app/(dashboard)/dashboard/widgets/integrations/page.tsx (new - dashboard page)
+  - src/components/widgets/integrations/integration-card.tsx (new - shared components)
+  - src/components/widgets/integrations/integrations-page-content.tsx (new - page content)
+  - src/components/widgets/integrations/gtm-guide.tsx (new - GTM guide)
+  - src/components/widgets/integrations/webflow-guide.tsx (new - Webflow guide)
+  - src/components/widgets/integrations/squarespace-guide.tsx (new - Squarespace guide)
+  - src/components/widgets/integrations/shopify-guide.tsx (new - Shopify guide)
+  - src/components/widgets/integrations/iframe-guide.tsx (new - iframe fallback guide)
+  - src/components/widgets/embed-code-panel.tsx (modified - added platform guide links)
+- Implemented GTM template (.tpl) with Custom HTML tag pattern, widget_id input, trigger config
+- Created 5 platform integration guides (GTM, Webflow, Squarespace, Shopify, iframe)
+- Each guide has step-by-step instructions and troubleshooting section
+- Dashboard page at /dashboard/widgets/integrations with downloadable GTM template
+- Added contextual help links in embed code panel linking to integration guides
+- **Learnings for future iterations:**
+  - Pre-existing build error with sitemap route is intermittent (ENOENT on app-paths-manifest.json) - resolved by cleaning .next
+  - GTM templates use sandboxed JS with require() for permissions - different from standard JS
+  - Integration guides as React components (not markdown) allows interactive code blocks with copy buttons
+---

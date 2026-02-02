@@ -38,8 +38,8 @@ import { getOrgBrandColors, getFilteredReviewCount } from "@/lib/widgets/actions
 import { VersionList } from "./version-history/version-list";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType, WidgetStatus } from "@/lib/widgets/types";
-import { CustomCSSEditor } from "./controls/custom-css-editor";
-import { HooksDocumentation } from "./controls/hooks-documentation";
+import { CustomCSSEditor } from "./custom-css-editor";
+import { HooksDocumentation } from "./hooks-documentation";
 
 // ── Props ──────────────────────────────────────────────────────────────
 

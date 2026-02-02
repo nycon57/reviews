@@ -7551,7 +7551,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7581,9 +7581,7 @@
           "NMLS text explicitly excluded from translation per regulatory guidance"
         ]
       },
-      "startedAt": "2026-02-02T02:50:13.970758+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-02T02:50:13.971002+00:00"
+      "updatedAt": "2026-02-02T03:46:25.876098+00:00"
     },
     {
       "id": "S163",
@@ -7606,7 +7604,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7635,7 +7633,8 @@
           "Iframe embed fallback provided for platforms with strict CSP that block third-party scripts",
           "Guides include platform-specific screenshots stored in public/images/guides/"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T03:51:28.675743+00:00"
     },
     {
       "id": "S164",
@@ -7659,7 +7658,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7692,7 +7691,10 @@
           "Runtime config overrides are validated against a whitelist of safe fields before applying",
           "Code editor uses lightweight CodeMirror 6 (tree-shakeable) not full Monaco to keep bundle reasonable"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T03:56:33.711436+00:00",
+      "startedAt": "2026-02-02T03:56:33.711267+00:00",
+      "completedAt": null
     },
     {
       "id": "S165",

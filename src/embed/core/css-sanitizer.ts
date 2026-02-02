@@ -47,11 +47,12 @@ export function sanitizeCustomCSS(css: string): CSSValidationResult {
 
   // Strip dangerous patterns
   for (const { pattern, reason } of DANGEROUS_PATTERNS) {
-    if (pattern.test(sanitized)) {
+    pattern.lastIndex = 0;
+    const replaced = sanitized.replace(pattern, "/* blocked */");
+    if (replaced !== sanitized) {
       warnings.push(reason);
-      sanitized = sanitized.replace(pattern, "/* blocked */");
+      sanitized = replaced;
     }
-    // Reset lastIndex since we use global flag
     pattern.lastIndex = 0;
   }
 
@@ -71,30 +72,35 @@ export function validateCustomCSS(css: string): string[] {
     warnings.push("Exceeds 5000 character limit");
   }
 
+  BLOCKED_AT_RULES.lastIndex = 0;
   if (BLOCKED_AT_RULES.test(css)) {
     warnings.push("@import rules are not allowed — external stylesheets cannot be loaded");
-    BLOCKED_AT_RULES.lastIndex = 0;
   }
+  BLOCKED_AT_RULES.lastIndex = 0;
 
+  BLOCKED_DATA_URL.lastIndex = 0;
   if (BLOCKED_DATA_URL.test(css)) {
     warnings.push("data: URLs are not allowed in CSS");
-    BLOCKED_DATA_URL.lastIndex = 0;
   }
+  BLOCKED_DATA_URL.lastIndex = 0;
 
+  BLOCKED_EXPRESSION.lastIndex = 0;
   if (BLOCKED_EXPRESSION.test(css)) {
     warnings.push("CSS expressions are not allowed");
-    BLOCKED_EXPRESSION.lastIndex = 0;
   }
+  BLOCKED_EXPRESSION.lastIndex = 0;
 
+  BLOCKED_BEHAVIOR.lastIndex = 0;
   if (BLOCKED_BEHAVIOR.test(css)) {
     warnings.push("behavior property is not allowed");
-    BLOCKED_BEHAVIOR.lastIndex = 0;
   }
+  BLOCKED_BEHAVIOR.lastIndex = 0;
 
+  BLOCKED_JAVASCRIPT_URL.lastIndex = 0;
   if (BLOCKED_JAVASCRIPT_URL.test(css)) {
     warnings.push("javascript: URLs are not allowed");
-    BLOCKED_JAVASCRIPT_URL.lastIndex = 0;
   }
+  BLOCKED_JAVASCRIPT_URL.lastIndex = 0;
 
   // Soft warnings for potentially harmful but not blocked patterns
   if (/position\s*:\s*fixed/i.test(css)) {

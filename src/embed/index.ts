@@ -336,7 +336,8 @@ function configure(widgetId: string, overrides: RuntimeOverrides): void {
     if (instance.widgetId !== widgetId || !instance.config) continue;
     const cfg = instance.config.config;
     if (!cfg) continue;
-    if (overrides.theme?.colors && cfg.theme) {
+    if (overrides.theme?.colors) {
+      if (!cfg.theme) cfg.theme = {};
       cfg.theme.colors = { ...cfg.theme.colors, ...overrides.theme.colors };
     }
     if (overrides.content) {

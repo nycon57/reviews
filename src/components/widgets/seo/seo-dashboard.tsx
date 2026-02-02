@@ -19,6 +19,7 @@ import {
   FileText,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "@/hooks/use-toast";
 
 import { BulkValidation } from "./bulk-validation";
 import { ValidationPanel } from "./validation-panel";
@@ -52,6 +53,12 @@ export function SeoDashboard() {
       const result = await bulkValidateWidgets();
       if (result.success) {
         setReport(result.data);
+      } else {
+        toast({
+          title: "Validation failed",
+          description: result.error,
+          variant: "destructive",
+        });
       }
     });
   }, []);
@@ -76,6 +83,13 @@ export function SeoDashboard() {
       const result = await getWidgetSeoData(configId);
       if (result.success) {
         setSelectedWidget(result.data);
+      } else {
+        toast({
+          title: "Failed to load widget",
+          description: result.error,
+          variant: "destructive",
+        });
+        setSelectedWidgetId(null);
       }
     });
   }, []);

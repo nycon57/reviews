@@ -14,6 +14,7 @@ import {
   Lightbulb,
   Loader2,
 } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import {
   applyQuickFix,
   type WidgetSeoData,
@@ -130,10 +131,15 @@ export function ValidationPanel({
     startApplyTransition(async () => {
       const result = await applyQuickFix(configId, field, value);
       setApplyingField(null);
-      if (result.success && onDataUpdate) {
-        onDataUpdate(result.data);
+      if (result.success) {
+        if (onDataUpdate) onDataUpdate(result.data);
+        toast({ title: "Fix applied" });
       } else {
-        // Revalidate to show updated state
+        toast({
+          title: "Failed to apply fix",
+          description: result.error,
+          variant: "destructive",
+        });
         onRevalidate();
       }
     });

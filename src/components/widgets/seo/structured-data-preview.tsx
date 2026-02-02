@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Copy, Check } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import type { WidgetSeoData } from "@/lib/widgets/seo-actions";
 
 interface StructuredDataPreviewProps {
@@ -81,10 +82,18 @@ export function StructuredDataPreview({ data }: StructuredDataPreviewProps) {
   const highlighted = useMemo(() => highlightJson(jsonStr), [jsonStr]);
 
   const handleCopy = async () => {
-    const wrapper = `<script type="application/ld+json">\n${jsonStr}\n</` + "script>";
-    await navigator.clipboard.writeText(wrapper);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      const wrapper = `<script type="application/ld+json">\n${jsonStr}\n</` + "script>";
+      await navigator.clipboard.writeText(wrapper);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Check clipboard permissions or copy manually",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

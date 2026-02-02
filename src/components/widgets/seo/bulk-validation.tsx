@@ -180,8 +180,16 @@ export function BulkValidation({
                 return (
                   <TableRow
                     key={widget.widgetId}
-                    className="cursor-pointer hover:bg-repwell-sage-100/20"
+                    className="cursor-pointer hover:bg-repwell-sage-100/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-1"
                     onClick={() => onSelectWidget(widget.configId)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onSelectWidget(widget.configId);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
                   >
                     <TableCell>
                       <div>

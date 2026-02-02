@@ -7,7 +7,13 @@
  * Global API: window.RepWell = { init(), refresh(widgetId), destroy(widgetId) }
  */
 
-import type { RepWellAPI, WidgetInstance } from "./types";
+import type {
+  RepWellAPI,
+  WidgetInstance,
+  HookEvent,
+  HookCallback,
+  RuntimeOverrides,
+} from "./types";
 import { WidgetState } from "./types";
 import { discoverWidgets } from "./core/discovery";
 import { attachShadow, loadGoogleFontInShadow } from "./core/shadow-dom";
@@ -23,6 +29,13 @@ import { resolveAbVariant, clearAbAssignment } from "./core/ab-resolver";
 import { injectStructuredData, removeStructuredData } from "./seo/structured-data";
 import { setInstanceForRoot } from "./widgets/registry";
 import { setLocale } from "./i18n";
+import { sanitizeCustomCSS } from "./core/css-sanitizer";
+import {
+  addHookListener,
+  removeHookListener,
+  emitHookEvent,
+  clearHookListeners,
+} from "./core/hooks";
 
 // Widget type registrations (self-register on import)
 import "./widgets/lo-review";
@@ -116,7 +129,30 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     // Replace skeleton with rendered widget
     removeSkeleton(instance.shadowRoot);
     renderWidget(instance.shadowRoot, finalConfig, data.reviews, apiBase);
+
+    // Inject custom CSS into Shadow DOM (sanitized)
+    const customCSS = finalConfig.config?.advanced?.customCSS;
+    if (customCSS) {
+      const { sanitized } = sanitizeCustomCSS(customCSS);
+      if (sanitized) {
+        const customStyle = document.createElement("style");
+        customStyle.setAttribute("data-repwell-custom", "true");
+        customStyle.textContent = sanitized;
+        instance.shadowRoot.appendChild(customStyle);
+      }
+    }
+
     instance.state = WidgetState.Rendered;
+
+    // Emit hook events
+    emitHookEvent(instance.widgetId, "ready", {
+      widgetType: finalConfig.widget_type,
+      config: finalConfig.config,
+    });
+    emitHookEvent(instance.widgetId, "review-loaded", {
+      widgetType: finalConfig.widget_type,
+      config: finalConfig.config,
+    });
 
     // Inject JSON-LD structured data into host page <head>
     injectStructuredData(finalConfig, data.reviews, finalConfig.entity_profile);
@@ -151,9 +187,12 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     if (err instanceof DomainNotAllowedError) {
       renderError(instance.shadowRoot, "This widget is not authorized for this domain.");
       console.warn(`[RepWell] ${err.message}`);
+      emitHookEvent(instance.widgetId, "error", { error: err.message });
     } else {
       renderError(instance.shadowRoot);
+      const errorMsg = err instanceof Error ? err.message : "Unknown error";
       console.warn(`[RepWell] Failed to load widget "${instance.widgetId}":`, err);
+      emitHookEvent(instance.widgetId, "error", { error: errorMsg });
     }
   } finally {
     instance.abortController = null;
@@ -201,6 +240,9 @@ function initializeWidget(element: HTMLElement, widgetId: string, apiBase: strin
 function destroyInstance(instance: WidgetInstance): void {
   // Abort any in-flight requests
   instance.abortController?.abort();
+
+  // Clean up hook listeners for this widget
+  clearHookListeners(instance.widgetId);
 
   // Clean up scroll depth and conversion tracking
   instance._scrollCleanup?.();
@@ -280,10 +322,42 @@ function destroy(widgetId: string): void {
   }
 }
 
+function on(widgetId: string, event: HookEvent, callback: HookCallback): void {
+  addHookListener(widgetId, event, callback);
+}
+
+function off(widgetId: string, event: HookEvent, callback: HookCallback): void {
+  removeHookListener(widgetId, event, callback);
+}
+
+function configure(widgetId: string, overrides: RuntimeOverrides): void {
+  const apiBase = api._apiBase;
+  for (const instance of instances.values()) {
+    if (instance.widgetId \!== widgetId || \!instance.config) continue;
+    const cfg = instance.config.config;
+    if (\!cfg) continue;
+    if (overrides.theme?.colors && cfg.theme) {
+      cfg.theme.colors = { ...cfg.theme.colors, ...overrides.theme.colors };
+    }
+    if (overrides.content) {
+      cfg.content = { ...cfg.content, ...overrides.content };
+    }
+    const baseStyle = instance.shadowRoot.querySelector("style:not([data-repwell-custom])");
+    const customStyle = instance.shadowRoot.querySelector("[data-repwell-custom]");
+    while (instance.shadowRoot.firstChild) { instance.shadowRoot.firstChild.remove(); }
+    if (baseStyle) instance.shadowRoot.appendChild(baseStyle);
+    renderWidget(instance.shadowRoot, instance.config, instance.reviews, apiBase);
+    if (customStyle) instance.shadowRoot.appendChild(customStyle);
+  }
+}
+
 const api: RepWellAPI = {
   init,
   refresh,
   destroy,
+  on,
+  off,
+  configure,
   _instances: instances,
   _apiBase: resolveApiBase(),
 };

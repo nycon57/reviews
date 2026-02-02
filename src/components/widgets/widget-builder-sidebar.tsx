@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   Check,
   History,
+  Code2,
 } from "lucide-react";
 import { ThemePresetSelector, THEME_PRESETS } from "./theme-preset-selector";
 import { getPreset } from "@/lib/widgets/theme-presets";
@@ -37,6 +38,8 @@ import { getOrgBrandColors, getFilteredReviewCount } from "@/lib/widgets/actions
 import { VersionList } from "./version-history/version-list";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType, WidgetStatus } from "@/lib/widgets/types";
+import { CustomCSSEditor } from "./controls/custom-css-editor";
+import { HooksDocumentation } from "./controls/hooks-documentation";
 
 // ── Props ──────────────────────────────────────────────────────────────
 
@@ -1346,6 +1349,40 @@ function DomainTab({
   );
 }
 
+function AdvancedTab({
+  config,
+  onConfigChange,
+}: {
+  config: WidgetConfigJson;
+  onConfigChange: (config: Partial<WidgetConfigJson>) => void;
+}) {
+  const customCSS = config.advanced?.customCSS ?? "";
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <Label className="text-sm font-semibold text-repwell-teal-500 mb-1 block">
+          Custom CSS
+        </Label>
+        <p className="text-xs text-muted-foreground mb-3">
+          Add custom CSS rules to fine-tune the widget appearance. Rules are
+          injected inside the Shadow DOM after built-in styles.
+        </p>
+        <CustomCSSEditor
+          value={customCSS}
+          onChange={(css) =>
+            onConfigChange({ advanced: { customCSS: css || undefined } })
+          }
+        />
+      </div>
+
+      <div className="border-t pt-4">
+        <HooksDocumentation />
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────
 
 export function WidgetBuilderSidebar({
@@ -1373,7 +1410,7 @@ export function WidgetBuilderSidebar({
   return (
     <div className="h-full flex flex-col bg-white border-r border-border">
       <Tabs defaultValue="general" className="flex-1 flex flex-col">
-        <TabsList className="w-full grid grid-cols-7 h-10 rounded-none border-b border-border bg-gray-50/50">
+        <TabsList className="w-full grid grid-cols-8 h-10 rounded-none border-b border-border bg-gray-50/50">
           <TabsTrigger value="general" className="text-xs gap-1 data-[state=active]:bg-white">
             <Settings2 size={14} />
             <span className="hidden xl:inline">General</span>
@@ -1397,6 +1434,10 @@ export function WidgetBuilderSidebar({
           <TabsTrigger value="domains" className="text-xs gap-1 data-[state=active]:bg-white">
             <Globe size={14} />
             <span className="hidden xl:inline">Domains</span>
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="text-xs gap-1 data-[state=active]:bg-white">
+            <Code2 size={14} />
+            <span className="hidden xl:inline">Advanced</span>
           </TabsTrigger>
           <TabsTrigger value="history" className="text-xs gap-1 data-[state=active]:bg-white">
             <History size={14} />
@@ -1438,6 +1479,9 @@ export function WidgetBuilderSidebar({
           </TabsContent>
           <TabsContent value="domains" className="mt-0">
             <DomainTab allowedDomains={allowedDomains} onDomainsChange={onDomainsChange} />
+          </TabsContent>
+          <TabsContent value="advanced" className="mt-0">
+            <AdvancedTab config={config} onConfigChange={onConfigChange} />
           </TabsContent>
           <TabsContent value="history" className="mt-0">
             {widgetConfigId ? (

@@ -17136,3 +17136,71 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Pass 2/3 handled quality + polish, leaving Pass 3 as verification-only
   - normalizeCSSForScanning is a reusable pattern for CSS input processing
 ---
+
+## [2026-02-01 23:17] - S165: Widget E2E Tests & Performance Benchmarks
+Thread: 
+Run: 20260201-230136-7983 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-230136-7983-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-230136-7983-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b7c5e7b [Pass 1/3] feat(S165): Add widget E2E tests and performance benchmarks
+- Post-commit status: clean (only prd-reviews.json unstaged, per rules)
+- Skills invoked:
+  - /feature-dev: no (test-only story, no feature architecture needed)
+  - /code-review: no (Pass 1)
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: no (no Next.js pages)
+  - /supabase-postgres-best-practices: no (no DB changes)
+  - /code-simplifier: no (Pass 1)
+  - /frontend-design: no (no UI)
+  - /web-design-guidelines: no (no UI)
+  - /writing-clearly-and-concisely: no (Pass 1)
+  - /agent-browser: no (no UI)
+  - Other skills: none
+- Verification:
+  - Command: npx tsx scripts/build-embed.ts -> PASS (36.7KB gzipped, within 38KB budget)
+  - Command: npx vitest run tests/performance/embed-bundle-size.test.ts -> PASS (4/4 tests)
+  - Command: npx vitest run src/embed/__tests__/ -> PASS (170/170 tests)
+  - Command: npm run build -> PASS
+  - Command: npx tsc --noEmit -> PASS
+  - Command: npm run lint -> PASS (no new errors from S165 files)
+- Files changed:
+  - playwright.config.ts (Playwright configuration)
+  - tests/e2e/widgets/fixtures.ts (shared test fixtures, mock data, API route mocking)
+  - tests/e2e/widgets/widget-builder.spec.ts (widget builder create flow E2E)
+  - tests/e2e/widgets/embed-rendering.spec.ts (embed script rendering E2E)
+  - tests/e2e/widgets/multi-widget.spec.ts (multiple widgets on single page E2E)
+  - tests/e2e/widgets/domain-restriction.spec.ts (domain restriction E2E)
+  - tests/e2e/widgets/analytics-events.spec.ts (analytics event tracking E2E)
+  - tests/e2e/widgets/carousel.spec.ts (review carousel E2E)
+  - tests/e2e/widgets/social-proof-banner.spec.ts (social proof banner E2E)
+  - tests/e2e/widgets/video-testimonial.spec.ts (video testimonial E2E)
+  - tests/performance/embed-bundle-size.test.ts (bundle size assertion)
+  - tests/performance/render-timing.test.ts (first paint and full render timing)
+  - tests/performance/cls-measurement.test.ts (CLS measurement)
+  - tests/performance/memory-profiling.test.ts (heap memory with 5 widgets)
+  - tests/performance/lighthouse-widget.test.ts (Lighthouse impact scoring)
+  - .github/workflows/widget-tests.yml (CI workflow for E2E + perf benchmarks)
+  - eslint.config.mjs (added Performance API globals)
+- What was implemented:
+  - 8 Playwright E2E test files covering all 9 widget types via builder flow,
+    embed rendering with Shadow DOM, multi-widget independence, domain restriction,
+    analytics events (impression + click), carousel navigation/autoplay,
+    social proof banner triggers (immediate/scroll/time/exit-intent) + dismiss,
+    video testimonial rendering + transcript + play tracking
+  - 5 performance benchmark tests: bundle size (38KB budget), render timing
+    (<300ms full render), CLS (0 contribution), memory (<2MB for 5 widgets),
+    Lighthouse impact (<5 points)
+  - GitHub Actions CI workflow with 4 parallel jobs: bundle-size, unit-tests,
+    e2e-tests (needs bundle+unit), performance-benchmarks (needs bundle+unit)
+  - Test fixtures with mock API responses, route interception, embed page builder
+  - Bundle size test uses 38KB budget (aligned with build-embed.ts, not aspirational 15KB)
+- **Learnings for future iterations:**
+  - The embed bundle is 36.7KB gzipped with 9 widget types; 15KB target was aspirational
+  - E2E tests for embed use route interception to mock API responses, avoiding DB dependency
+  - CDP session enables heap profiling and Performance API access in Playwright
+  - Playwright's webServer config starts Next.js dev server for builder UI tests
+  - Shadow DOM evaluation requires element.evaluate() to access shadowRoot
+---

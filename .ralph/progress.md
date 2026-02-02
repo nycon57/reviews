@@ -16591,3 +16591,51 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The compliance-footer and first-time-buyer-badge components also had hardcoded strings that needed conversion
   - renderer.ts had lost its setLocale import from prior modifications — need to verify import integrity
 ---
+
+## [2026-02-01] - S162: Multi-Language Support (English, Spanish)
+Thread:
+Run: 20260201-215013-90769 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-215013-90769-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-215013-90769-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: a11f469 docs: Add S162 progress entry for Pass 1/3 implementation (series: 80fbe3a, 6641c87, eb7a417, 202440c, a11f469)
+- Post-commit status: clean (prd-reviews.json + activity.log only)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 new errors, 9 pre-existing)
+  - Command: npm run test -- --run src/embed/__tests__/ -> PASS (140 tests, 6 suites)
+  - Command: npm run test -- --run src/lib/widgets/__tests__/ -> PASS (157 tests, 9 suites)
+- Files changed (this run verified/fixed beyond prior automated commits):
+  - src/embed/index.ts (added setLocale() call before rendering in loadWidget)
+  - src/embed/core/renderer.ts (converted 7 hardcoded strings to t() calls)
+  - src/embed/widgets/company-review/template.ts (converted 12+ hardcoded strings to t() calls)
+  - src/embed/widgets/lo-review/template.ts (converted 7 hardcoded strings to t() calls)
+  - src/embed/components/compliance-footer.ts (converted EHL and disclaimer to t())
+  - src/embed/components/first-time-buyer-badge.ts (converted badge text to t())
+  - src/components/widgets/widget-builder-sidebar.tsx (removed duplicate language selector)
+- What was implemented:
+  - Verified and completed full i18n coverage across all widget templates
+  - Added setLocale() call in embed entry point loadWidget() before rendering
+  - Converted all remaining hardcoded strings in company-review, lo-review, renderer, compliance-footer, first-time-buyer-badge
+  - Removed duplicate language selector in widget builder sidebar ContentTab
+  - All 297 tests pass (140 embed + 157 widget lib)
+- **Learnings for future iterations:**
+  - Prior automated run already built the i18n infrastructure; this run completed the integration
+  - company-review/template.ts had the most hardcoded strings (~12) including sort controls, source breakdown, footer
+  - The generic renderer (renderer.ts) is a fallback path that also needed i18n conversion
+  - Duplicate UI elements (language selector) can sneak in when multiple passes edit the same component
+---

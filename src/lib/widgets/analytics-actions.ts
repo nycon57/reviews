@@ -463,10 +463,10 @@ export async function getWidgetDetailAnalytics(
       return { success: false, error: "Widget not found" };
     }
 
-    // Fetch all events for this widget in range
+    // Fetch all events for this widget in range (include metadata for enhanced analytics)
     const { data: events, error: eErr } = await supabase
       .from("widget_events")
-      .select("event_type, page_url, referrer, ip_hash, created_at")
+      .select("event_type, page_url, referrer, ip_hash, created_at, metadata, session_id")
       .eq("widget_id", widgetId)
       .gte("created_at", `${start}T00:00:00Z`)
       .lte("created_at", `${end}T23:59:59Z`)
@@ -500,14 +500,30 @@ export async function getWidgetDetailAnalytics(
     // IP hash counts (geographic proxy)
     const ipHashCounts = new Map<string, number>();
 
+    // Enhanced analytics accumulators
+    const scrollDepthCounts = new Map<number, Set<string>>();
+    let videoPlays = 0;
+    let videoCompletes = 0;
+    const videoMilestoneCounts = new Map<number, number>();
+    let totalVideoProgress = 0;
+    let videoProgressEvents = 0;
+    let totalImpressions = 0;
+    let totalClicks = 0;
+    let totalConversions = 0;
+    const uniqueImpressionSessions = new Set<string>();
+
     for (const event of events ?? []) {
       const day = event.created_at.slice(0, 10);
       const entry = dayMap.get(day) ?? { impressions: 0, clicks: 0 };
+      const meta = event.metadata as Record<string, unknown> | null;
 
       if (event.event_type === "impression") {
         entry.impressions++;
+        totalImpressions++;
+        if (event.session_id) uniqueImpressionSessions.add(event.session_id);
       } else if (CLICK_EVENTS.includes(event.event_type)) {
         entry.clicks++;
+        totalClicks++;
       }
       dayMap.set(day, entry);
 
@@ -531,6 +547,41 @@ export async function getWidgetDetailAnalytics(
       if (event.ip_hash) {
         const ic = ipHashCounts.get(event.ip_hash) ?? 0;
         ipHashCounts.set(event.ip_hash, ic + 1);
+      }
+
+      // Scroll depth tracking
+      if (event.event_type === "scroll_depth" && meta?.threshold) {
+        const threshold = Number(meta.threshold);
+        if (!scrollDepthCounts.has(threshold)) {
+          scrollDepthCounts.set(threshold, new Set());
+        }
+        const sessionKey = event.session_id ?? event.ip_hash ?? "unknown";
+        scrollDepthCounts.get(threshold)!.add(sessionKey);
+      }
+
+      // Video analytics (cast to string for event types not yet in DB enum)
+      const eventType = event.event_type as string;
+      if (eventType === "video_play") {
+        videoPlays++;
+      }
+      if (eventType === "video_complete") {
+        videoCompletes++;
+      }
+      if (eventType === "video_progress" && meta?.milestone) {
+        const milestone = Number(meta.milestone);
+        videoMilestoneCounts.set(
+          milestone,
+          (videoMilestoneCounts.get(milestone) ?? 0) + 1,
+        );
+        if (meta.current_time && meta.duration) {
+          totalVideoProgress += Number(meta.current_time);
+          videoProgressEvents++;
+        }
+      }
+
+      // Conversion tracking
+      if (eventType === "conversion") {
+        totalConversions++;
       }
     }
 
@@ -565,6 +616,44 @@ export async function getWidgetDetailAnalytics(
       .sort((a, b) => b.count - a.count)
       .slice(0, 20);
 
+    // Build enhanced analytics
+    const uniqueSessions = uniqueImpressionSessions.size || 1;
+    const scrollDepth: ScrollDepthData[] = [25, 50, 75, 100].map(
+      (threshold) => {
+        const visitors = scrollDepthCounts.get(threshold)?.size ?? 0;
+        return {
+          threshold,
+          visitors,
+          percentage:
+            uniqueSessions > 0
+              ? Math.round((visitors / uniqueSessions) * 100)
+              : 0,
+        };
+      },
+    );
+
+    const videoAnalytics: VideoAnalyticsData = {
+      totalImpressions,
+      totalPlays: videoPlays,
+      totalCompletes: videoCompletes,
+      playRate: totalImpressions > 0 ? Math.round((videoPlays / totalImpressions) * 10000) / 100 : 0,
+      completionRate: videoPlays > 0 ? Math.round((videoCompletes / videoPlays) * 10000) / 100 : 0,
+      averageWatchDuration: videoProgressEvents > 0 ? Math.round(totalVideoProgress / videoProgressEvents) : 0,
+      milestones: [25, 50, 75, 100].map((milestone) => ({
+        milestone,
+        count: videoMilestoneCounts.get(milestone) ?? 0,
+      })),
+    };
+
+    const conversionFunnel: ConversionFunnelData = {
+      impressions: totalImpressions,
+      clicks: totalClicks,
+      conversions: totalConversions,
+      impressionToClickRate: totalImpressions > 0 ? Math.round((totalClicks / totalImpressions) * 10000) / 100 : 0,
+      clickToConversionRate: totalClicks > 0 ? Math.round((totalConversions / totalClicks) * 10000) / 100 : 0,
+      overallConversionRate: totalImpressions > 0 ? Math.round((totalConversions / totalImpressions) * 10000) / 100 : 0,
+    };
+
     return {
       success: true,
       data: {
@@ -573,6 +662,11 @@ export async function getWidgetDetailAnalytics(
         topPageUrls,
         topReferrers,
         geographicBreakdown,
+        enhanced: {
+          scrollDepth,
+          video: videoAnalytics,
+          conversions: conversionFunnel,
+        },
       },
     };
   } catch (err) {
@@ -605,4 +699,68 @@ export async function getWidgetAnalyticsCsvData(
   );
 
   return { success: true, data: [header, ...rows].join("\n") };
+}
+
+// ── Event-Level CSV Export ──────────────────────────────────────────────
+
+export async function getWidgetEventLevelCsvData(
+  widgetId: string,
+  dateRange: string = "30d",
+  customStart?: string,
+  customEnd?: string
+): Promise<ActionResult<string>> {
+  try {
+    const ctx = await getAuthedContext();
+    if (!ctx.success) return ctx;
+
+    const { start, end } =
+      customStart && customEnd
+        ? { start: customStart, end: customEnd }
+        : getDateRange(dateRange);
+
+    const supabase = createAdminClient();
+
+    // Verify widget belongs to org
+    const { data: widget, error: wErr } = await supabase
+      .from("widget_configs")
+      .select("widget_id, name")
+      .eq("widget_id", widgetId)
+      .eq("organization_id", ctx.data.organizationId)
+      .maybeSingle();
+
+    if (wErr || !widget) {
+      return { success: false, error: "Widget not found" };
+    }
+
+    const { data: events, error: eErr } = await supabase
+      .from("widget_events")
+      .select("event_type, page_url, referrer, session_id, metadata, created_at")
+      .eq("widget_id", widgetId)
+      .gte("created_at", `${start}T00:00:00Z`)
+      .lte("created_at", `${end}T23:59:59Z`)
+      .order("created_at", { ascending: true })
+      .limit(10000);
+
+    if (eErr) {
+      return { success: false, error: eErr.message };
+    }
+
+    const header = "Timestamp,Event Type,Page URL,Referrer,Session ID,Metadata";
+    const rows = (events ?? []).map((e) => {
+      const meta = e.metadata ? JSON.stringify(e.metadata).replace(/"/g, '""') : "";
+      return [
+        e.created_at,
+        e.event_type,
+        e.page_url ? `"${e.page_url.replace(/"/g, '""')}"` : "",
+        e.referrer ? `"${e.referrer.replace(/"/g, '""')}"` : "",
+        e.session_id ?? "",
+        meta ? `"${meta}"` : "",
+      ].join(",");
+    });
+
+    return { success: true, data: [header, ...rows].join("\n") };
+  } catch (err) {
+    console.error("getWidgetEventLevelCsvData error:", err);
+    return { success: false, error: "Failed to export event data" };
+  }
 }

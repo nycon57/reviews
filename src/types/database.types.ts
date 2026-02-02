@@ -6078,6 +6078,72 @@ export type Database = {
           },
         ]
       }
+      widget_config_versions: {
+        Row: {
+          id: string
+          widget_config_id: string
+          version: number
+          config: Json
+          name: string
+          status: string
+          allowed_domains: string[]
+          enable_structured_data: boolean
+          structured_data_type: string
+          entity_id: string | null
+          changed_by: string | null
+          change_note: string | null
+          change_summary: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          widget_config_id: string
+          version: number
+          config?: Json
+          name: string
+          status?: string
+          allowed_domains?: string[]
+          enable_structured_data?: boolean
+          structured_data_type?: string
+          entity_id?: string | null
+          changed_by?: string | null
+          change_note?: string | null
+          change_summary?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          widget_config_id?: string
+          version?: number
+          config?: Json
+          name?: string
+          status?: string
+          allowed_domains?: string[]
+          enable_structured_data?: boolean
+          structured_data_type?: string
+          entity_id?: string | null
+          changed_by?: string | null
+          change_note?: string | null
+          change_summary?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_config_versions_widget_config_id_fkey"
+            columns: ["widget_config_id"]
+            isOneToOne: false
+            referencedRelation: "widget_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "widget_config_versions_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_events: {
         Row: {
           created_at: string

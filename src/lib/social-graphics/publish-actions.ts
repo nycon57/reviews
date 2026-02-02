@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
-import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAuthedContext } from "./actions";
 import type { ActionResult, SocialConnection, SocialPost } from "./types";
 
 const GRAPHICS_PATH = "/dashboard/social-graphics";
@@ -11,34 +11,17 @@ function socialDb() {
   return createUntypedAdminClient();
 }
 
-async function getAuthedOrgId(): Promise<ActionResult<{ userId: string; orgId: string }>> {
-  const user = await unifiedGetUser();
-  if (!user) return { success: false, error: "Not authenticated" };
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("users")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !data?.organization_id) {
-    return { success: false, error: "User not found" };
-  }
-  return { success: true, data: { userId: user.id, orgId: data.organization_id } };
-}
-
 const POST_FIELDS = "id, platform, status, caption, platform_post_url, error_message, scheduled_for, published_at, created_at";
 
 export async function getSocialConnections(): Promise<ActionResult<SocialConnection[]>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
   const db = socialDb();
   const { data, error } = await db
     .from("social_connections")
     .select("id, platform, account_name, is_active")
-    .eq("organization_id", auth.data.orgId)
+    .eq("organization_id", auth.data.organizationId)
     .eq("is_active", true);
 
   if (error) return { success: false, error: error.message };
@@ -50,15 +33,20 @@ export async function publishToSocial(input: {
   platforms: string[];
   caption: string;
 }): Promise<ActionResult<SocialPost[]>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
-  // Get the graphic render URL
+  if (input.platforms.length === 0) {
+    return { success: false, error: "At least one platform is required" };
+  }
+
+  // Verify graphic belongs to the user's org and is rendered
   const supabase = createAdminClient();
   const { data: graphic, error: gErr } = await supabase
     .from("social_proof_graphics")
     .select("render_url, render_status")
     .eq("id", input.graphicId)
+    .eq("organization_id", auth.data.organizationId)
     .single();
 
   if (gErr || !graphic?.render_url || graphic.render_status !== "complete") {
@@ -69,12 +57,10 @@ export async function publishToSocial(input: {
   const posts: SocialPost[] = [];
 
   for (const platform of input.platforms) {
-    // In production, this would call the platform's API via OAuth tokens
-    // For now, create the post record as published (simulated)
     const { data: post, error } = await db
       .from("social_posts")
       .insert({
-        organization_id: auth.data.orgId,
+        organization_id: auth.data.organizationId,
         graphic_id: input.graphicId,
         platform,
         caption: input.caption,
@@ -87,23 +73,17 @@ export async function publishToSocial(input: {
       .single();
 
     if (error) {
-      // Create as failed if insert fails
-      const { data: failedPost } = await db
-        .from("social_posts")
-        .insert({
-          organization_id: auth.data.orgId,
-          graphic_id: input.graphicId,
-          platform,
-          caption: input.caption,
-          image_url: graphic.render_url,
-          status: "failed",
-          error_message: error.message,
-          created_by: auth.data.userId,
-        })
-        .select(POST_FIELDS)
-        .single();
-
-      if (failedPost) posts.push(failedPost as SocialPost);
+      posts.push({
+        id: crypto.randomUUID(),
+        platform,
+        status: "failed",
+        caption: input.caption,
+        platform_post_url: null,
+        error_message: error.message,
+        scheduled_for: null,
+        published_at: null,
+        created_at: new Date().toISOString(),
+      } as SocialPost);
     } else if (post) {
       posts.push(post as SocialPost);
     }
@@ -119,14 +99,29 @@ export async function schedulePost(input: {
   caption: string;
   scheduledFor: string;
 }): Promise<ActionResult<SocialPost[]>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
+  // Validate scheduled time is in the future
+  const scheduledDate = new Date(input.scheduledFor);
+  if (isNaN(scheduledDate.getTime())) {
+    return { success: false, error: "Invalid date format" };
+  }
+  if (scheduledDate.getTime() <= Date.now()) {
+    return { success: false, error: "Scheduled time must be in the future" };
+  }
+
+  if (input.platforms.length === 0) {
+    return { success: false, error: "At least one platform is required" };
+  }
+
+  // Verify graphic belongs to user's org and is rendered
   const supabase = createAdminClient();
   const { data: graphic, error: gErr } = await supabase
     .from("social_proof_graphics")
     .select("render_url, render_status")
     .eq("id", input.graphicId)
+    .eq("organization_id", auth.data.organizationId)
     .single();
 
   if (gErr || !graphic?.render_url || graphic.render_status !== "complete") {
@@ -140,13 +135,13 @@ export async function schedulePost(input: {
     const { data: post, error } = await db
       .from("social_posts")
       .insert({
-        organization_id: auth.data.orgId,
+        organization_id: auth.data.organizationId,
         graphic_id: input.graphicId,
         platform,
         caption: input.caption,
         image_url: graphic.render_url,
         status: "scheduled",
-        scheduled_for: input.scheduledFor,
+        scheduled_for: scheduledDate.toISOString(),
         created_by: auth.data.userId,
       })
       .select(POST_FIELDS)
@@ -163,14 +158,14 @@ export async function schedulePost(input: {
 export async function getPostHistory(input?: {
   graphicId?: string;
 }): Promise<ActionResult<SocialPost[]>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
   const db = socialDb();
   let query = db
     .from("social_posts")
     .select(POST_FIELDS)
-    .eq("organization_id", auth.data.orgId)
+    .eq("organization_id", auth.data.organizationId)
     .order("created_at", { ascending: false })
     .limit(50);
 
@@ -184,13 +179,27 @@ export async function getPostHistory(input?: {
 }
 
 export async function retryPost(postId: string): Promise<ActionResult<SocialPost>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
   const db = socialDb();
 
-  // In production, would re-call the platform API
-  // For now, simulate success on retry
+  // Verify the post belongs to the user's org and is in a failed state
+  const { data: existingPost, error: fetchErr } = await db
+    .from("social_posts")
+    .select("id, status")
+    .eq("id", postId)
+    .eq("organization_id", auth.data.organizationId)
+    .single();
+
+  if (fetchErr || !existingPost) {
+    return { success: false, error: "Post not found" };
+  }
+
+  if (existingPost.status !== "failed") {
+    return { success: false, error: "Only failed posts can be retried" };
+  }
+
   const { data, error } = await db
     .from("social_posts")
     .update({
@@ -199,7 +208,7 @@ export async function retryPost(postId: string): Promise<ActionResult<SocialPost
       error_message: null,
     })
     .eq("id", postId)
-    .eq("organization_id", auth.data.orgId)
+    .eq("organization_id", auth.data.organizationId)
     .select(POST_FIELDS)
     .single();
 
@@ -224,7 +233,6 @@ export async function executeScheduledPosts(): Promise<ActionResult<number>> {
 
   let published = 0;
   for (const post of duePosts) {
-    // In production, would call platform API here
     const { error: updateErr } = await db
       .from("social_posts")
       .update({

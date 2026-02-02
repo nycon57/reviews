@@ -39,6 +39,7 @@
   "exclude": [
     "node_modules",
     "mobile",
-    "wordpress-plugin"
+    "wordpress-plugin",
+    "packages"
   ]
 }

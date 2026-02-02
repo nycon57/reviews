@@ -423,3 +423,57 @@ Ralph has failed on this story 3 times and has marked it as **blocked**.
 - To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
 
 ---
+
+## [2026-02-01 20:54:41] BLOCKED: S154: Enhanced Widget Analytics (Scroll Depth, Video, Conversion Attribution)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 20:59:44] BLOCKED: S155: @repwell/react-widgets NPM Package
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 21:04:47] BLOCKED: S156: WordPress Plugin (Shortcode-Based)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 21:09:50] BLOCKED: S157: Social Proof Editor (Drag-and-Drop Canvas)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 21:14:53] BLOCKED: S158: Template Library & Auto-Generation
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-01 21:19:55] BLOCKED: S159: Social Graphic Export & Social Publishing
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---

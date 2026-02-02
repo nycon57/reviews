@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const parsed = generateSchema.parse(body);
 
     const canvasSize = parsed.canvasWidth && parsed.canvasHeight
-      ? { width: parsed.canvasWidth, height: parsed.canvasHeight }
+      ? { width: parsed.canvasWidth, height: parsed.canvasHeight, name: `Custom ${parsed.canvasWidth}x${parsed.canvasHeight}` }
       : CANVAS_PRESETS[0];
 
     if (parsed.mode === "auto") {

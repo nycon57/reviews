@@ -7065,7 +7065,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7099,9 +7099,7 @@
           "Event rate limiting enforced both client-side (embed.js) and server-side (API) to prevent abuse"
         ]
       },
-      "updatedAt": "2026-02-01T23:48:42.647955+00:00",
-      "startedAt": "2026-02-01T23:48:42.647795+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-02T01:54:41.793397+00:00"
     },
     {
       "id": "S155",
@@ -7126,7 +7124,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7173,7 +7171,8 @@
           "React components wrap the same rendering logic as embed.js but using React DOM instead of manual DOM manipulation",
           "useWidgetConfig hook handles API fetching with SWR-like caching for React context"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T01:59:44.317654+00:00"
     },
     {
       "id": "S156",
@@ -7196,7 +7195,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "WordPress plugin validation",
         "PHP lint"
@@ -7224,7 +7223,8 @@
           "Gutenberg block uses ServerSideRender for editor preview",
           "Plugin is a thin wrapper; all rendering logic lives in embed.js"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T02:04:47.473744+00:00"
     },
     {
       "id": "S157",
@@ -7248,7 +7248,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7285,7 +7285,8 @@
           "Undo/redo implemented as a state history stack in useHistory custom hook",
           "Elements stored as JSON array in social_proof_graphics.elements for server-side rendering"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T02:09:50.307803+00:00"
     },
     {
       "id": "S158",
@@ -7309,7 +7310,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7350,7 +7351,8 @@
           "Scheduled generation uses Vercel Cron (or similar) hitting /api/cron/social-graphics weekly",
           "Holiday template has seasonally-appropriate assets (snowflakes Dec, flowers Spring) selected by current month"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T02:14:53.115944+00:00"
     },
     {
       "id": "S159",
@@ -7375,7 +7377,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7412,7 +7414,8 @@
           "AI captions use same OpenAI integration pattern as src/lib/ai/response-suggestions.ts",
           "Social publishing reuses existing social_connections OAuth infrastructure for token management"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T02:19:55.654126+00:00"
     },
     {
       "id": "S160",
@@ -7435,7 +7438,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7466,7 +7469,10 @@
           "No actual Google Search Console API integration in this story (guidance only); future story could add it",
           "Validation re-runs on every widget config save to keep status current"
         ]
-      }
+      },
+      "startedAt": "2026-02-02T02:19:57.881219+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-02T02:19:57.881414+00:00"
     },
     {
       "id": "S161",

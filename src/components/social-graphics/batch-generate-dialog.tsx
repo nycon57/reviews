@@ -130,13 +130,15 @@ export function BatchGenerateDialog({
                 No approved reviews available
               </p>
             ) : (
-              <div className="max-h-[400px] space-y-2 overflow-y-auto pr-1">
+              <div className="max-h-[400px] space-y-2 overflow-y-auto pr-1" role="listbox" aria-multiselectable="true" aria-label="Select reviews for batch generation">
                 {reviews.map((review) => {
                   const isSelected = selectedReviewIds.has(review.id);
                   return (
                     <button
                       key={review.id}
                       type="button"
+                      role="option"
+                      aria-selected={isSelected}
                       onClick={() => toggleReview(review.id)}
                       className={`w-full rounded-lg border p-3 text-left transition-colors ${
                         isSelected

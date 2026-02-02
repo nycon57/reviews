@@ -1,27 +1,10 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAuthedContext } from "./actions";
 import type { ActionResult, ExportFormat, RenderResult } from "./types";
 
 const STORAGE_BUCKET = "social-graphics";
-
-async function getAuthedOrgId(): Promise<ActionResult<{ userId: string; orgId: string }>> {
-  const user = await unifiedGetUser();
-  if (!user) return { success: false, error: "Not authenticated" };
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("users")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (error || !data?.organization_id) {
-    return { success: false, error: "User not found" };
-  }
-  return { success: true, data: { userId: user.id, orgId: data.organization_id } };
-}
 
 export async function uploadRenderedGraphic(input: {
   graphicId: string;
@@ -30,17 +13,30 @@ export async function uploadRenderedGraphic(input: {
   width: number;
   height: number;
 }): Promise<ActionResult<RenderResult>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
-  const { orgId } = auth.data;
+  const { organizationId: orgId } = auth.data;
   const supabase = createAdminClient();
+
+  // Verify graphic belongs to the user's organization
+  const { data: graphic, error: fetchErr } = await supabase
+    .from("social_proof_graphics")
+    .select("id")
+    .eq("id", input.graphicId)
+    .eq("organization_id", orgId)
+    .single();
+
+  if (fetchErr || !graphic) {
+    return { success: false, error: "Graphic not found" };
+  }
 
   // Update status to rendering
   await supabase
     .from("social_proof_graphics")
-    .update({ render_status: "rendering" as never })
-    .eq("id", input.graphicId);
+    .update({ render_status: "rendering" })
+    .eq("id", input.graphicId)
+    .eq("organization_id", orgId);
 
   try {
     // Decode base64 and upload to storage
@@ -56,8 +52,9 @@ export async function uploadRenderedGraphic(input: {
     if (uploadError) {
       await supabase
         .from("social_proof_graphics")
-        .update({ render_status: "failed" as never })
-        .eq("id", input.graphicId);
+        .update({ render_status: "failed" })
+        .eq("id", input.graphicId)
+        .eq("organization_id", orgId);
       return { success: false, error: `Upload failed: ${uploadError.message}` };
     }
 
@@ -70,9 +67,10 @@ export async function uploadRenderedGraphic(input: {
       .from("social_proof_graphics")
       .update({
         render_url: urlData.publicUrl,
-        render_status: "complete" as never,
-      } as never)
-      .eq("id", input.graphicId);
+        render_status: "complete",
+      })
+      .eq("id", input.graphicId)
+      .eq("organization_id", orgId);
 
     return {
       success: true,
@@ -86,8 +84,9 @@ export async function uploadRenderedGraphic(input: {
   } catch (err) {
     await supabase
       .from("social_proof_graphics")
-      .update({ render_status: "failed" as never })
-      .eq("id", input.graphicId);
+      .update({ render_status: "failed" })
+      .eq("id", input.graphicId)
+      .eq("organization_id", orgId);
     return { success: false, error: err instanceof Error ? err.message : "Render failed" };
   }
 }
@@ -95,7 +94,7 @@ export async function uploadRenderedGraphic(input: {
 export async function getRenderStatus(
   graphicId: string
 ): Promise<ActionResult<{ status: string; url: string | null }>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
   const supabase = createAdminClient();
@@ -103,6 +102,7 @@ export async function getRenderStatus(
     .from("social_proof_graphics")
     .select("render_status, render_url")
     .eq("id", graphicId)
+    .eq("organization_id", auth.data.organizationId)
     .single();
 
   if (error) return { success: false, error: error.message };
@@ -115,7 +115,7 @@ export async function getRenderStatus(
 export async function getDownloadUrl(
   graphicId: string
 ): Promise<ActionResult<{ url: string; filename: string }>> {
-  const auth = await getAuthedOrgId();
+  const auth = await getAuthedContext();
   if (!auth.success) return auth;
 
   const supabase = createAdminClient();
@@ -123,6 +123,7 @@ export async function getDownloadUrl(
     .from("social_proof_graphics")
     .select("name, render_url, render_status")
     .eq("id", graphicId)
+    .eq("organization_id", auth.data.organizationId)
     .single();
 
   if (error) return { success: false, error: error.message };

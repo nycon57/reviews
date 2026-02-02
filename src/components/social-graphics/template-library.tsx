@@ -46,11 +46,13 @@ export function TemplateLibrary({
       </div>
 
       {/* Category filter */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-1.5" role="radiogroup" aria-label="Filter templates by category">
         {CATEGORIES.map((cat) => (
           <button
             key={cat.id}
             type="button"
+            role="radio"
+            aria-checked={categoryFilter === cat.id}
             onClick={() => setCategoryFilter(cat.id)}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",

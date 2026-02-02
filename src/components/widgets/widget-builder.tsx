@@ -32,6 +32,7 @@ interface BuilderState {
   structuredDataType: string;
   widgetId: string | null;
   dbId: string | null;
+  currentVersion: number;
   isDirty: boolean;
 }
 
@@ -44,7 +45,7 @@ type BuilderAction =
   | { type: "SET_ENTITY_ID"; payload: string | null }
   | { type: "SET_STRUCTURED_DATA"; payload: boolean }
   | { type: "SET_STRUCTURED_DATA_TYPE"; payload: string }
-  | { type: "SAVED"; payload: { widgetId: string; dbId: string } };
+  | { type: "SAVED"; payload: { widgetId: string; dbId: string; version: number } };
 
 function builderReducer(state: BuilderState, action: BuilderAction): BuilderState {
   switch (action.type) {
@@ -90,6 +91,7 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
         ...state,
         widgetId: action.payload.widgetId,
         dbId: action.payload.dbId,
+        currentVersion: action.payload.version,
         isDirty: false,
       };
 
@@ -113,6 +115,7 @@ function getInitialState(widget?: WidgetConfig | null): BuilderState {
       structuredDataType: widget.structured_data_type ?? "LocalBusiness",
       widgetId: widget.widget_id,
       dbId: widget.id,
+      currentVersion: widget.version ?? 1,
       isDirty: false,
     };
   }
@@ -149,6 +152,7 @@ function getInitialState(widget?: WidgetConfig | null): BuilderState {
     structuredDataType: "LocalBusiness",
     widgetId: null,
     dbId: null,
+    currentVersion: 1,
     isDirty: false,
   };
 }
@@ -210,7 +214,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
         });
 
         if (result.success) {
-          dispatch({ type: "SAVED", payload: { widgetId: result.data.widget_id, dbId: result.data.id } });
+          dispatch({ type: "SAVED", payload: { widgetId: result.data.widget_id, dbId: result.data.id, version: result.data.version ?? 1 } });
           toast({ title: "Widget saved", description: "Your changes have been saved." });
         } else {
           toast({ title: "Save failed", description: result.error, variant: "destructive" });
@@ -229,7 +233,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
         });
 
         if (result.success) {
-          dispatch({ type: "SAVED", payload: { widgetId: result.data.widget_id, dbId: result.data.id } });
+          dispatch({ type: "SAVED", payload: { widgetId: result.data.widget_id, dbId: result.data.id, version: result.data.version ?? 1 } });
           toast({ title: "Widget created", description: "Your widget has been created." });
           router.replace(`/dashboard/widgets/${result.data.id}`);
         } else {
@@ -238,6 +242,10 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
       }
     });
   }, [state, router, toast]);
+
+  const handleRollbackComplete = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   const sidebarProps = {
     config: state.config,
@@ -249,6 +257,8 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     enableStructuredData: state.enableStructuredData,
     structuredDataType: state.structuredDataType,
     allowedDomains: state.allowedDomains,
+    widgetConfigId: state.dbId ?? undefined,
+    currentVersion: state.currentVersion,
     onConfigChange: handleConfigChange,
     onDomainsChange: (domains: string[]) => dispatch({ type: "SET_DOMAINS", payload: domains }),
     onNameChange: (name: string) => dispatch({ type: "SET_NAME", payload: name }),
@@ -257,6 +267,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     onEntityIdChange: (entityId: string | null) => dispatch({ type: "SET_ENTITY_ID", payload: entityId }),
     onStructuredDataChange: (enabled: boolean) => dispatch({ type: "SET_STRUCTURED_DATA", payload: enabled }),
     onStructuredDataTypeChange: (type: string) => dispatch({ type: "SET_STRUCTURED_DATA_TYPE", payload: type }),
+    onRollbackComplete: handleRollbackComplete,
   };
 
   return (

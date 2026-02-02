@@ -122,18 +122,20 @@ export async function executeScheduledGeneration(
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-  // Get review IDs already used in graphics
+  // Get review IDs already used in graphics (capped to recent 500 to limit data transfer)
   const { data: existingGraphics } = await supabase
     .from("social_proof_graphics")
     .select("review_ids")
     .eq("organization_id", organizationId)
-    .not("review_ids", "is", null);
+    .not("review_ids", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(500);
 
   const usedReviewIds = new Set<string>();
   for (const g of existingGraphics ?? []) {
     if (Array.isArray(g.review_ids)) {
       for (const rid of g.review_ids) {
-        usedReviewIds.add(rid);
+        if (typeof rid === "string") usedReviewIds.add(rid);
       }
     }
   }

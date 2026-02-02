@@ -15,13 +15,13 @@ const GRAPHICS_PATH = "/dashboard/social-graphics";
 
 // ── Auth Helper ──────────────────────────────────────────────────────────
 
-interface AuthedContext {
+export interface AuthedContext {
   userId: string;
   organizationId: string;
   role: string;
 }
 
-async function getAuthedContext(): Promise<ActionResult<AuthedContext>> {
+export async function getAuthedContext(): Promise<ActionResult<AuthedContext>> {
   const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };

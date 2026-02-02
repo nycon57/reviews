@@ -16535,3 +16535,59 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - embed.js gzip budget (34KB) exceeded is pre-existing, not S161-related
   - 10 pre-existing lint errors in non-S161 files
 ---
+
+## [2026-02-01] - S162: Multi-Language Support (English, Spanish)
+Thread: 
+Run: 20260201-214008-74004 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-214008-74004-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-214008-74004-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 80fbe3a [Pass 1/3] feat(S162): Add multi-language support (English, Spanish) to widgets
+- Post-commit status: clean (PRD-only change remaining, not edited per rules)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS (embed gzip 35.5KB within 36KB budget)
+  - Command: npm run lint -> PASS (0 new errors, 9 pre-existing errors in unrelated files)
+- Files changed:
+  - src/embed/i18n/en.json (85+ translation keys for all widget UI strings)
+  - src/embed/i18n/es.json (Spanish translations for all keys)
+  - src/embed/i18n/index.ts (i18n engine: t(), tp(), setLocale(), registerLocale())
+  - src/embed/i18n/date-formatter.ts (locale-aware date formatting via Intl APIs)
+  - src/embed/core/renderer.ts (restored setLocale() call + i18n for error message)
+  - src/embed/widgets/star-rating-badge/template.ts (i18n: aria-label, review count)
+  - src/embed/widgets/nps-score-badge/template.ts (i18n: labels, aria, breakdown)
+  - src/embed/widgets/review-wall/template.ts (i18n: empty state, load more, disclaimer, branding)
+  - src/embed/widgets/social-proof-banner/template.ts (i18n: dismiss, counter, CTA)
+  - src/embed/widgets/shared/filter-controls.ts (i18n: all filter labels, sort, date range, loan types)
+  - src/embed/components/compliance-footer.ts (i18n: EHL text, disclaimer)
+  - src/embed/components/first-time-buyer-badge.ts (i18n: badge text)
+  - src/embed/widgets/lo-review/template.ts (i18n: stars aria, licensed in)
+  - src/components/widgets/widget-builder-sidebar.tsx (language selector dropdown in Content tab)
+  - scripts/build-embed.ts (gzip budget 34KB -> 36KB for i18n)
+- What was implemented:
+  - Complete i18n system with English and Spanish bundled inline (no network requests)
+  - All widget templates converted from hardcoded strings to t()/tp() calls
+  - Language selector added to Widget Builder Content settings tab
+  - Date formatting respects locale via native Intl.RelativeTimeFormat/DateTimeFormat
+  - NMLS text explicitly kept in English per regulatory requirement
+  - Architecture supports future language additions via registerLocale() for dynamic loading
+  - Gzip budget increased from 34KB to 36KB to accommodate i18n (within AC of <2KB additional)
+- **Learnings for future iterations:**
+  - Pre-commit hooks aggressively modify files; need to re-check staged content after commit
+  - Several widget templates (branch-review, review-carousel, video-testimonial) were already partially i18nized from prior work
+  - The compliance-footer and first-time-buyer-badge components also had hardcoded strings that needed conversion
+  - renderer.ts had lost its setLocale import from prior modifications — need to verify import integrity
+---

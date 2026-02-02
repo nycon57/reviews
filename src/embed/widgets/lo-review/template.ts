@@ -24,11 +24,12 @@ import { buildLoanTypeTag } from "../../components/loan-type-tag";
 import { buildFirstTimeBuyerBadge } from "../../components/first-time-buyer-badge";
 import type { WidgetInstance } from "../../types";
 import { buildFilterControls } from "../shared/filter-controls";
+import { t } from "../../i18n";
 
 function starsRow(rating: number, filledColor: string, emptyColor: string, className: string): HTMLElement {
   const row = el("div", className);
   row.setAttribute("role", "img");
-  row.setAttribute("aria-label", `${rating} out of 5 stars`);
+  row.setAttribute("aria-label", t("starsAriaLabel", { rating }));
   for (let i = 1; i <= 5; i++) {
     row.appendChild(starSVG(i <= rating, filledColor, emptyColor));
   }
@@ -59,7 +60,7 @@ function buildProfileHeader(profile: EntityProfile, config: PublicWidgetConfig, 
   if (nmlsBadge) info.appendChild(nmlsBadge);
 
   if (profile.licensing_states && profile.licensing_states.length > 0) {
-    const statesText = `Licensed in ${profile.licensing_states.join(", ")}`;
+    const statesText = `${t("licensedIn")} ${profile.licensing_states.join(", ")}`;
     info.appendChild(text("div", statesText, "rw-lo-profile__licensed-states"));
   }
 
@@ -68,7 +69,7 @@ function buildProfileHeader(profile: EntityProfile, config: PublicWidgetConfig, 
     ratingRow.appendChild(text("span", profile.average_rating.toFixed(1), "rw-lo-profile__rating-value"));
     ratingRow.appendChild(starsRow(Math.round(profile.average_rating), starFilled, starEmpty, "rw-review__stars"));
     if (profile.total_reviews != null) {
-      ratingRow.appendChild(text("span", `${profile.total_reviews} review${profile.total_reviews === 1 ? "" : "s"}`, "rw-lo-profile__rating-count"));
+      ratingRow.appendChild(text("span", `${profile.total_reviews} ${profile.total_reviews === 1 ? t("review") : t("reviews")}`, "rw-lo-profile__rating-count"));
     }
     info.appendChild(ratingRow);
   }
@@ -82,7 +83,7 @@ function buildReviewCard(review: PublicReview, config: PublicWidgetConfig, starF
   const cardStyle = content?.cardStyle ?? "bordered";
   const card = el("div", `rw-lo-review rw-lo-review--${cardStyle}`);
   card.setAttribute("role", "article");
-  card.setAttribute("aria-label", `Review by ${review.reviewer_name ?? "Anonymous"}`);
+  card.setAttribute("aria-label", t("reviewByAriaLabel", { name: review.reviewer_name ?? t("anonymous") }));
 
   const header = el("div", "rw-lo-review__header");
   if (content?.showAvatar !== false) {
@@ -129,7 +130,7 @@ function buildReviewCard(review: PublicReview, config: PublicWidgetConfig, starF
 
   const tags = el("div", "rw-lo-review__tags");
   let hasTags = false;
-  if (content?.showSource !== false && review.source) { tags.appendChild(text("span", `via ${review.source}`, "rw-lo-review__source")); hasTags = true; }
+  if (content?.showSource !== false && review.source) { tags.appendChild(text("span", `${t("via")} ${review.source}`, "rw-lo-review__source")); hasTags = true; }
   if (review.loan_type) { tags.appendChild(buildLoanTypeTag(review.loan_type, "rw-lo-review")); hasTags = true; }
   if (review.first_time_homebuyer) {
     tags.appendChild(buildFirstTimeBuyerBadge("rw-lo-review__fthb-badge"));
@@ -185,7 +186,7 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
   }
 
   if (reviews.length === 0) {
-    container.appendChild(text("div", "No reviews yet.", "rw-empty"));
+    container.appendChild(text("div", t("noReviewsYet"), "rw-empty"));
   } else {
     renderCards(reviews);
     container.appendChild(grid);
@@ -208,7 +209,7 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
     if (content?.showWriteReview && content.writeReviewUrl) {
       const writeBtn = document.createElement("a");
       writeBtn.className = "rw-lo-actions__write-review";
-      writeBtn.textContent = "Write a Review";
+      writeBtn.textContent = t("writeReview");
       writeBtn.href = content.writeReviewUrl;
       writeBtn.target = "_blank";
       writeBtn.rel = "noopener noreferrer";
@@ -229,7 +230,7 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
 
   if (content?.showBranding !== false) {
     const branding = el("div", "rw-branding");
-    branding.textContent = "Powered by ";
+    branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
     link.href = "https://repwell.com";
     link.target = "_blank";

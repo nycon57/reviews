@@ -16083,3 +16083,78 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - All mutations should call revalidatePath per CLAUDE.md conventions
   - Keyboard accessibility on interactive table rows requires role, tabIndex, and onKeyDown for Enter/Space
 ---
+
+## [2026-02-01] - S155: @repwell/react-widgets NPM Package
+Thread:
+Run: 20260201-205443-94947 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-205443-94947-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-205443-94947-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5bf2455 [Pass 1/3] feat(S155): @repwell/react-widgets NPM package
+- Post-commit status: clean (for S155 files; other stories have uncommitted work)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no (Pass 2)
+  - /next-best-practices: no (not applicable - standalone package)
+  - /supabase-postgres-best-practices: no (no DB work)
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no (library, not UI page)
+  - /web-design-guidelines: no (Pass 2)
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no (library, not UI page)
+  - Other skills: none
+- Verification:
+  - Command: npx tsup -> PASS (ESM 57KB, CJS 60KB, DTS 12KB)
+  - Command: npx vitest run -> PASS (31 tests, 1 file)
+  - Command: npx tsc --noEmit -> PASS
+  - Command: gzip -c dist/index.js | wc -c -> PASS (~10KB gzipped total bundle)
+  - Command: npm run lint -> PASS (lint errors are pre-existing in src/remotion/)
+  - Command: npm run build -> FAIL (pre-existing timeout/OOM in next build, not caused by S155)
+- Files changed:
+  - packages/react-widgets/package.json
+  - packages/react-widgets/tsconfig.json
+  - packages/react-widgets/tsup.config.ts
+  - packages/react-widgets/vitest.config.ts
+  - packages/react-widgets/src/index.ts
+  - packages/react-widgets/src/types.ts
+  - packages/react-widgets/src/styles.css
+  - packages/react-widgets/src/hooks/useWidgetConfig.ts
+  - packages/react-widgets/src/hooks/useWidgetEvents.ts
+  - packages/react-widgets/src/utils/helpers.ts
+  - packages/react-widgets/src/utils/Stars.tsx
+  - packages/react-widgets/src/utils/WidgetShell.tsx
+  - packages/react-widgets/src/utils/ReviewCard.tsx
+  - packages/react-widgets/src/components/LOReviewWidget.tsx
+  - packages/react-widgets/src/components/BranchReviewWidget.tsx
+  - packages/react-widgets/src/components/CompanyReviewWidget.tsx
+  - packages/react-widgets/src/components/ReviewCarousel.tsx
+  - packages/react-widgets/src/components/StarRatingBadge.tsx
+  - packages/react-widgets/src/components/VideoTestimonialWidget.tsx
+  - packages/react-widgets/src/components/ReviewWall.tsx
+  - packages/react-widgets/src/components/NPSScoreBadge.tsx
+  - packages/react-widgets/src/components/SocialProofBanner.tsx
+  - packages/react-widgets/__tests__/widgets.test.tsx
+  - packages/react-widgets/README.md
+  - .github/workflows/publish-react-widgets.yml
+- Built @repwell/react-widgets NPM package at packages/react-widgets/ with:
+  - 9 React components matching all embed.js widget types
+  - useWidgetConfig hook with API fetching, in-memory caching (5min TTL), and abort controller
+  - useWidgetEvents hook for impression/click/CTA/carousel event emission
+  - Full TypeScript types exported for all config schemas, props, and events
+  - Shared internal components: Stars (with partial fill), ReviewCard, WidgetShell (loading/error)
+  - ESM + CJS dual output via tsup with sideEffects: false for tree-shaking
+  - CSS stylesheet importable as @repwell/react-widgets/styles.css
+  - 31 unit tests covering render, config loading, event emission for all 9 components
+  - README with Next.js SSR, Vite, CRA examples and TypeScript usage
+  - GitHub Actions CI/CD with test + bundle size check + npm publish on tag
+  - Peer deps: react >=18, react-dom >=18 only (no other deps)
+  - ~10KB gzipped total bundle; individual components much smaller with tree-shaking
+- **Learnings for future iterations:**
+  - With jsx: "react-jsx" transform, explicit React imports aren't needed for JSX — only import when using React.CSSProperties etc.
+  - tsup is simpler than rollup for library builds while still producing ESM + CJS + DTS
+  - next build has pre-existing timeout issue in this repo (not related to packages/ changes)
+  - Standalone packages in packages/ don't need to be included in main project's lint/build scope
+---

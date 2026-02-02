@@ -24,8 +24,48 @@ import type {
   WidgetConfig,
   WidgetConfigInsert,
 } from "./types";
+import { computeDiff, generateChangeSummary } from "./config-diff";
 
 const WIDGETS_PATH = "/dashboard/widgets";
+
+// ── Internal version snapshot (non-blocking) ─────────────────────────────
+
+async function createVersionSnapshotInternal(
+  supabase: ReturnType<typeof createAdminClient>,
+  widgetConfigId: string,
+  userId: string,
+  widgetData: WidgetConfig,
+  prevConfig: Record<string, unknown> | null,
+  changeNote?: string
+): Promise<void> {
+  try {
+    const currentConfig = (widgetData.config ?? {}) as Record<string, unknown>;
+    let changeSummary = "Initial version";
+
+    if (prevConfig) {
+      const diffs = computeDiff(prevConfig, currentConfig);
+      changeSummary = generateChangeSummary(diffs);
+    }
+
+    await supabase.from("widget_config_versions").insert({
+      widget_config_id: widgetConfigId,
+      version: widgetData.version ?? 1,
+      config: currentConfig as unknown as Json,
+      name: widgetData.name,
+      status: widgetData.status,
+      allowed_domains: widgetData.allowed_domains ?? [],
+      enable_structured_data: widgetData.enable_structured_data ?? true,
+      structured_data_type: widgetData.structured_data_type ?? "LocalBusiness",
+      entity_id: widgetData.entity_id,
+      changed_by: userId,
+      change_note: changeNote ?? null,
+      change_summary: changeSummary,
+    });
+  } catch (err) {
+    // Non-fatal: version snapshot failure should not block widget operations
+    console.error("Version snapshot failed:", err);
+  }
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
@@ -143,6 +183,9 @@ export async function createWidget(
       return { success: false, error: error.message };
     }
 
+    // Create initial version snapshot
+    await createVersionSnapshotInternal(supabase, data.id, ctx.data.userId, data, null, "Initial version");
+
     revalidatePath(WIDGETS_PATH);
     return { success: true, data };
   } catch (err) {
@@ -183,6 +226,9 @@ export async function updateWidget(
     const inputConfig = (validated.data.config ?? {}) as Record<string, unknown>;
     const mergedConfig = deepMerge(existingConfig, inputConfig);
 
+    // Capture pre-update config for diff
+    const preUpdateConfig = existingConfig;
+
     const updatePayload: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
       version: (existing.version ?? 1) + 1,
@@ -211,6 +257,16 @@ export async function updateWidget(
     if (error) {
       return { success: false, error: error.message };
     }
+
+    // Create version snapshot
+    await createVersionSnapshotInternal(
+      supabase,
+      data.id,
+      ctx.data.userId,
+      data,
+      preUpdateConfig,
+      undefined
+    );
 
     revalidatePath(WIDGETS_PATH);
     return { success: true, data };
@@ -438,6 +494,9 @@ export async function duplicateWidget(
     if (error) {
       return { success: false, error: error.message };
     }
+
+    // Create initial version snapshot for the duplicate
+    await createVersionSnapshotInternal(supabase, data.id, ctx.data.userId, data, null, "Duplicated widget");
 
     revalidatePath(WIDGETS_PATH);
     return { success: true, data };

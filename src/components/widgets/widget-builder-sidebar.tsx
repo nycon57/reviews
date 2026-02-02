@@ -26,6 +26,7 @@ import {
   X,
   AlertTriangle,
   Check,
+  History,
 } from "lucide-react";
 import { ThemePresetSelector, THEME_PRESETS } from "./theme-preset-selector";
 import { getPreset } from "@/lib/widgets/theme-presets";
@@ -33,6 +34,7 @@ import { DomainAllowlistEditor } from "./domain-allowlist-editor";
 import { EntitySelector } from "./entity-selector";
 import { FONT_OPTIONS, getContrastWarnings, buildBrandMatchPreset } from "@/lib/widgets/theme-utils";
 import { getOrgBrandColors, getFilteredReviewCount } from "@/lib/widgets/actions";
+import { VersionList } from "./version-history/version-list";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType, WidgetStatus } from "@/lib/widgets/types";
 
@@ -48,6 +50,9 @@ interface WidgetBuilderSidebarProps {
   enableStructuredData: boolean;
   structuredDataType: string;
   allowedDomains: string[];
+  widgetConfigId?: string;
+  currentVersion?: number;
+  onRollbackComplete?: () => void;
   onConfigChange: (config: Partial<WidgetConfigJson>) => void;
   onDomainsChange: (domains: string[]) => void;
   onNameChange: (name: string) => void;
@@ -935,7 +940,7 @@ function FiltersTab({
           {isCountLoading ? (
             <span className="inline-block w-6 h-4 bg-repwell-sage-200/40 rounded animate-pulse" />
           ) : (
-            matchCount ?? "—"
+            matchCount ?? "\u2014"
           )}
         </span>
       </div>
@@ -1334,6 +1339,9 @@ export function WidgetBuilderSidebar({
   enableStructuredData,
   structuredDataType,
   allowedDomains,
+  widgetConfigId,
+  currentVersion,
+  onRollbackComplete,
   onConfigChange,
   onDomainsChange,
   onNameChange,
@@ -1346,7 +1354,7 @@ export function WidgetBuilderSidebar({
   return (
     <div className="h-full flex flex-col bg-white border-r border-border">
       <Tabs defaultValue="general" className="flex-1 flex flex-col">
-        <TabsList className="w-full grid grid-cols-6 h-10 rounded-none border-b border-border bg-gray-50/50">
+        <TabsList className="w-full grid grid-cols-7 h-10 rounded-none border-b border-border bg-gray-50/50">
           <TabsTrigger value="general" className="text-xs gap-1 data-[state=active]:bg-white">
             <Settings2 size={14} />
             <span className="hidden xl:inline">General</span>
@@ -1370,6 +1378,10 @@ export function WidgetBuilderSidebar({
           <TabsTrigger value="domains" className="text-xs gap-1 data-[state=active]:bg-white">
             <Globe size={14} />
             <span className="hidden xl:inline">Domains</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs gap-1 data-[state=active]:bg-white">
+            <History size={14} />
+            <span className="hidden xl:inline">History</span>
           </TabsTrigger>
         </TabsList>
 
@@ -1407,6 +1419,22 @@ export function WidgetBuilderSidebar({
           </TabsContent>
           <TabsContent value="domains" className="mt-0">
             <DomainTab allowedDomains={allowedDomains} onDomainsChange={onDomainsChange} />
+          </TabsContent>
+          <TabsContent value="history" className="mt-0">
+            {widgetConfigId ? (
+              <VersionList
+                widgetConfigId={widgetConfigId}
+                currentVersion={currentVersion ?? 1}
+                onRollbackComplete={onRollbackComplete}
+              />
+            ) : (
+              <div className="text-center py-8">
+                <History size={32} className="mx-auto text-muted-foreground/40 mb-2" />
+                <p className="text-xs text-muted-foreground">
+                  Save the widget to start tracking version history.
+                </p>
+              </div>
+            )}
           </TabsContent>
         </div>
       </Tabs>

@@ -8,6 +8,34 @@
 
 _No stories completed yet._
 
+### S161: Widget Version History & Rollback
+- **Epic**: Widget System
+- **Priority**: P1
+- **Pass**: 1/3 (Implementation)
+- **Status**: Pass 1 Complete - Awaiting Pass 2
+- **Files Created**:
+  - `supabase/migrations/20260201000012_widget_config_versions.sql`
+  - `src/lib/widgets/config-diff.ts`
+  - `src/lib/widgets/version-actions.ts`
+  - `src/app/api/dashboard/widgets/[id]/versions/route.ts`
+  - `src/app/api/dashboard/widgets/[id]/rollback/[version]/route.ts`
+  - `src/components/widgets/version-history/version-list.tsx`
+  - `src/components/widgets/version-history/version-diff.tsx`
+  - `src/components/widgets/version-history/rollback-dialog.tsx`
+  - `src/lib/widgets/__tests__/config-diff.test.ts`
+  - `src/lib/widgets/__tests__/version-actions.test.ts`
+- **Files Modified**:
+  - `src/lib/widgets/actions.ts` (auto-snapshot on create/update)
+  - `src/components/widgets/widget-builder-sidebar.tsx` (History tab)
+- **Features**:
+  - Version snapshots auto-created on widget create/update
+  - Version history panel in sidebar with scrollable list
+  - JSONB field-level diff viewer (color-coded: green/red/amber)
+  - One-click rollback with confirmation dialog (non-destructive, creates new version)
+  - Auto-prune trigger keeps max 50 versions per widget
+  - API: GET /api/dashboard/widgets/:id/versions, POST /api/dashboard/widgets/:id/rollback/:version
+  - 23 passing tests (17 config-diff + 6 version-actions)
+
 ## In Progress
 
 ### S093: Abandoned Action Recovery Emails

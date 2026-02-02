@@ -16,6 +16,25 @@ interface VersionListProps {
   onRollbackComplete?: () => void;
 }
 
+function formatRelativeDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+}
+
 export function VersionList({
   widgetConfigId,
   currentVersion,
@@ -56,25 +75,6 @@ export function VersionList({
       setCompareVersions({ from, to });
       setCompareSelection(null);
     }
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-    });
   };
 
   if (isLoading && versions.length === 0) {
@@ -124,16 +124,17 @@ export function VersionList({
               const isCompareSelected =
                 compareSelection?.version === version.version;
 
+              let itemStyle = "border-border hover:border-repwell-sage-200 hover:bg-gray-50/50";
+              if (isCurrent) {
+                itemStyle = "border-repwell-teal-200 bg-repwell-sage-100/20";
+              } else if (isCompareSelected) {
+                itemStyle = "border-blue-300 bg-blue-50/50";
+              }
+
               return (
                 <div
                   key={version.id}
-                  className={`group relative rounded-lg border p-3 transition-all ${
-                    isCurrent
-                      ? "border-repwell-teal-200 bg-repwell-sage-100/20"
-                      : isCompareSelected
-                        ? "border-blue-300 bg-blue-50/50"
-                        : "border-border hover:border-repwell-sage-200 hover:bg-gray-50/50"
-                  }`}
+                  className={`group relative rounded-lg border p-3 transition-all ${itemStyle}`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
@@ -163,7 +164,7 @@ export function VersionList({
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-[10px] text-muted-foreground/60">
-                          {formatDate(version.created_at)}
+                          {formatRelativeDate(version.created_at)}
                         </span>
                         {version.changed_by_name && (
                           <>
@@ -213,10 +214,8 @@ export function VersionList({
           key={selectedForRollback.version}
           widgetConfigId={widgetConfigId}
           version={selectedForRollback}
-          open={!!selectedForRollback}
-          onOpenChange={(open) => {
-            if (!open) setSelectedForRollback(null);
-          }}
+          open
+          onOpenChange={() => setSelectedForRollback(null)}
           onRollbackComplete={() => {
             setSelectedForRollback(null);
             fetchVersions();
@@ -229,10 +228,8 @@ export function VersionList({
         <VersionDiff
           fromVersion={compareVersions.from}
           toVersion={compareVersions.to}
-          open={!!compareVersions}
-          onOpenChange={(open) => {
-            if (!open) setCompareVersions(null);
-          }}
+          open
+          onOpenChange={() => setCompareVersions(null)}
         />
       )}
     </>

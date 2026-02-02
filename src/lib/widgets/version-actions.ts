@@ -185,29 +185,28 @@ export async function listWidgetVersions(
     }
 
     // Fetch user names for changed_by
+    const versionRows = versions ?? [];
     const userIds = [
       ...new Set(
-        (versions ?? [])
+        versionRows
           .map((v) => v.changed_by)
           .filter((id): id is string => id !== null)
       ),
     ];
 
-    let userMap: Record<string, string> = {};
+    const userMap: Record<string, string> = {};
     if (userIds.length > 0) {
       const { data: users } = await supabase
         .from("users")
         .select("id, full_name")
         .in("id", userIds);
 
-      if (users) {
-        userMap = Object.fromEntries(
-          users.map((u) => [u.id, u.full_name ?? "Unknown"])
-        );
+      for (const u of users ?? []) {
+        userMap[u.id] = u.full_name ?? "Unknown";
       }
     }
 
-    const enriched: WidgetVersion[] = (versions ?? []).map((v) => ({
+    const enriched: WidgetVersion[] = versionRows.map((v) => ({
       ...(v as WidgetVersion),
       changed_by_name: v.changed_by ? (userMap[v.changed_by] ?? null) : null,
     }));

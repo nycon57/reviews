@@ -4,13 +4,17 @@ import { listWidgetVersions, getWidgetVersion } from "@/lib/widgets/version-acti
 
 export const revalidate = 0; // No caching for version history
 
+function errorResponse(error: string, fallbackStatus: number): NextResponse {
+  const status = error === "Not authenticated" ? 401 : fallbackStatus;
+  return NextResponse.json({ error }, { status });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   const { id } = await params;
-  const searchParams = request.nextUrl.searchParams;
-  const version = searchParams.get("version");
+  const version = request.nextUrl.searchParams.get("version");
 
   // If a specific version is requested, return that single version
   if (version) {
@@ -24,10 +28,7 @@ export async function GET(
 
     const result = await getWidgetVersion(id, versionNum);
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: result.error === "Not authenticated" ? 401 : 404 }
-      );
+      return errorResponse(result.error, 404);
     }
 
     return NextResponse.json(result.data);
@@ -36,10 +37,7 @@ export async function GET(
   // Otherwise return the full version list
   const result = await listWidgetVersions(id);
   if (!result.success) {
-    return NextResponse.json(
-      { error: result.error },
-      { status: result.error === "Not authenticated" ? 401 : 400 }
-    );
+    return errorResponse(result.error, 400);
   }
 
   return NextResponse.json(result.data);

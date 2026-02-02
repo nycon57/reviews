@@ -17,12 +17,12 @@ export async function POST(
 
   const result = await rollbackToVersion(id, versionNum);
   if (!result.success) {
-    const status =
-      result.error === "Not authenticated"
-        ? 401
-        : result.error === "Widget not found" || result.error === "Target version not found"
-          ? 404
-          : 400;
+    const errorStatusMap: Record<string, number> = {
+      "Not authenticated": 401,
+      "Widget not found": 404,
+      "Target version not found": 404,
+    };
+    const status = errorStatusMap[result.error] ?? 400;
     return NextResponse.json({ error: result.error }, { status });
   }
 

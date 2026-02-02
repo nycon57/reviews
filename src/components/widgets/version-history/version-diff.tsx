@@ -37,6 +37,35 @@ function DiffBadge({ type }: { type: DiffEntry["type"] }) {
   );
 }
 
+const diffLineStyles = {
+  red: {
+    sign: "text-[10px] text-red-500 font-medium shrink-0 w-6 mt-px",
+    code: "text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-mono break-all",
+  },
+  green: {
+    sign: "text-[10px] text-green-500 font-medium shrink-0 w-6 mt-px",
+    code: "text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-mono break-all",
+  },
+} as const;
+
+function DiffValueLine({
+  sign,
+  value,
+  color,
+}: {
+  sign: string;
+  value: unknown;
+  color: "red" | "green";
+}) {
+  const styles = diffLineStyles[color];
+  return (
+    <div className="flex items-start gap-2">
+      <span className={styles.sign}>{sign}</span>
+      <code className={styles.code}>{formatDiffValue(value)}</code>
+    </div>
+  );
+}
+
 function DiffRow({ entry }: { entry: DiffEntry }) {
   const pathParts = entry.path.split(".");
   const fieldName = pathParts[pathParts.length - 1];
@@ -57,45 +86,11 @@ function DiffRow({ entry }: { entry: DiffEntry }) {
           </span>
         </div>
         <div className="mt-1 space-y-0.5">
-          {entry.type === "changed" && (
-            <>
-              <div className="flex items-start gap-2">
-                <span className="text-[10px] text-red-500 font-medium shrink-0 w-6 mt-px">
-                  &minus;
-                </span>
-                <code className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-mono break-all">
-                  {formatDiffValue(entry.oldValue)}
-                </code>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-[10px] text-green-500 font-medium shrink-0 w-6 mt-px">
-                  +
-                </span>
-                <code className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-mono break-all">
-                  {formatDiffValue(entry.newValue)}
-                </code>
-              </div>
-            </>
+          {(entry.type === "changed" || entry.type === "removed") && (
+            <DiffValueLine sign="−" value={entry.oldValue} color="red" />
           )}
-          {entry.type === "added" && (
-            <div className="flex items-start gap-2">
-              <span className="text-[10px] text-green-500 font-medium shrink-0 w-6 mt-px">
-                +
-              </span>
-              <code className="text-[10px] text-green-600 bg-green-50 px-1.5 py-0.5 rounded font-mono break-all">
-                {formatDiffValue(entry.newValue)}
-              </code>
-            </div>
-          )}
-          {entry.type === "removed" && (
-            <div className="flex items-start gap-2">
-              <span className="text-[10px] text-red-500 font-medium shrink-0 w-6 mt-px">
-                &minus;
-              </span>
-              <code className="text-[10px] text-red-600 bg-red-50 px-1.5 py-0.5 rounded font-mono break-all">
-                {formatDiffValue(entry.oldValue)}
-              </code>
-            </div>
+          {(entry.type === "changed" || entry.type === "added") && (
+            <DiffValueLine sign="+" value={entry.newValue} color="green" />
           )}
         </div>
       </div>

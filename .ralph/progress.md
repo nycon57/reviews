@@ -16186,3 +16186,57 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - next build has pre-existing timeout issue in this repo (not related to packages/ changes)
   - Standalone packages in packages/ don't need to be included in main project's lint/build scope
 ---
+
+## [2026-02-01] - S156: WordPress Plugin (Shortcode-Based)
+Thread: 
+Run: 20260201-205946-4502 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-205946-4502-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-205946-4502-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 136387b [Pass 1/3] feat(S156): WordPress Plugin (Shortcode-Based)
+- Post-commit status: other stories have uncommitted changes; S156 files clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: yes (code-reviewer agent)
+  - /vercel-react-best-practices: no (pure PHP/JS plugin)
+  - /next-best-practices: no (pure PHP/JS plugin)
+  - /supabase-postgres-best-practices: no (no database work)
+  - /code-simplifier: yes (via code-reviewer)
+  - /frontend-design: no (WP admin UI only)
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint -> PASS (13 pre-existing errors, none from S156)
+  - Command: npm run build -> Compilation PASS, Turbopack finalization FAIL (pre-existing ENOENT race condition)
+- Files changed:
+  - packages/wordpress-plugin/repwell-widgets.php (main plugin file)
+  - packages/wordpress-plugin/includes/class-repwell-settings.php (WP Admin settings)
+  - packages/wordpress-plugin/includes/class-repwell-shortcode.php (shortcode handler)
+  - packages/wordpress-plugin/blocks/repwell-widget/block.json (Gutenberg block metadata)
+  - packages/wordpress-plugin/blocks/repwell-widget/index.js (Gutenberg block editor)
+  - packages/wordpress-plugin/blocks/repwell-widget/render.php (server-side block render)
+  - packages/wordpress-plugin/assets/js/tinymce-plugin.js (Classic Editor button)
+  - packages/wordpress-plugin/uninstall.php (cleanup on removal)
+  - packages/wordpress-plugin/readme.txt (installation & usage docs)
+- What was implemented:
+  - WordPress plugin installable via zip upload
+  - Settings page in WP Admin for API base URL and optional API key
+  - Shortcode [repwell_widget id='widget_id'] with width, height, class attributes
+  - embed.js loaded once per page via wp_footer (deduplication via static flag)
+  - Gutenberg block 'RepWell Widget' with widget_id input and ServerSideRender preview
+  - Classic Editor TinyMCE button with insert dialog for shortcode generation
+  - Block render.php delegates to shortcode for shared embed.js enqueue logic
+  - uninstall.php cleans up both options from wp_options
+  - readme.txt with installation, usage, FAQ sections
+  - PHP 7.4+ compatible, WordPress 6.0+ minimum
+- **Learnings for future iterations:**
+  - Turbopack has a race condition on _buildManifest.js.tmp / _ssgManifest.js during finalization — pre-existing, not caused by changes
+  - Block render.php delegates to shortcode via do_shortcode() to share embed.js deduplication logic
+  - wp_localize_script is unnecessary when block uses ServerSideRender (PHP handles data directly)
+  - WordPress plugin is in packages/ directory, outside the Next.js src/ ESLint scope
+---

@@ -16736,3 +16736,58 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - GTM templates use sandboxed JS with require() for permissions - different from standard JS
   - Integration guides as React components (not markdown) allows interactive code blocks with copy buttons
 ---
+
+## [2026-02-01] - S163: Google Tag Manager Template & Platform Integration Guides
+Thread:
+Run: 20260201-220521-16081 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-220521-16081-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-220521-16081-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: a29771d feat(S163): [Pass 1/3] Add GTM template and platform integration guides
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no errors in S163 files; 9 pre-existing errors in unrelated files)
+- Files changed:
+  - public/gtm/repwell-widget-template.tpl
+  - src/app/(dashboard)/dashboard/widgets/integrations/page.tsx
+  - src/components/widgets/embed-code-panel.tsx
+  - src/components/widgets/integrations/gtm-guide.tsx
+  - src/components/widgets/integrations/iframe-guide.tsx
+  - src/components/widgets/integrations/integration-card.tsx
+  - src/components/widgets/integrations/integrations-page-content.tsx
+  - src/components/widgets/integrations/shopify-guide.tsx
+  - src/components/widgets/integrations/squarespace-guide.tsx
+  - src/components/widgets/integrations/webflow-guide.tsx
+- All 12 acceptance criteria verified as implemented:
+  1. GTM template with widget_id input field
+  2. GTM template injects embed.js via injectScript API
+  3. GTM template supports DOM Ready/Page Load/Immediate triggers
+  4. GTM template valid .tpl format for GTM preview mode
+  5. GTM template downloadable from integrations page
+  6. Webflow guide with Embed element, Custom Code, Collection-level
+  7. Squarespace guide with Code Injection and Code Block
+  8. Shopify guide with theme.liquid and section template
+  9. Iframe guide with basic, responsive, and auto-resize variants
+  10. Platform guide links in widget builder embed code panel
+  11. Each guide has troubleshooting section (CSP, script blocking, styling)
+  12. Dashboard page at /dashboard/widgets/integrations
+- **Learnings for future iterations:**
+  - S163 files were already implemented in a prior uncommitted session and committed as a29771d
+  - .next directory can get corrupted requiring full clean before build
+  - All integration guides follow consistent IntegrationCard pattern with shared components
+---

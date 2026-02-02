@@ -25,7 +25,6 @@ async function GraphicEditorLoader({ id }: { id: string }) {
 
   const graphic = graphicResult.data;
 
-  // Fetch the first associated review for caption generation context
   let reviewText: string | null = null;
   let customerName: string | null = null;
   let rating: number | undefined;
@@ -61,17 +60,20 @@ export default async function EditGraphicPage({
   const { id } = await params;
 
   return (
-    <div className="flex-1 py-8">
-      <Suspense
-        fallback={
-          <div className="space-y-6">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-[600px] w-full rounded-xl" />
+    <Suspense
+      fallback={
+        <div className="flex h-[calc(100vh-4rem)] flex-col">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <div className="flex flex-1">
+            <Skeleton className="hidden h-full w-52 lg:block" />
+            <Skeleton className="flex-1" />
+            <Skeleton className="hidden h-full w-64 lg:block" />
           </div>
-        }
-      >
-        <GraphicEditorLoader id={id} />
-      </Suspense>
-    </div>
+        </div>
+      }
+    >
+      <GraphicEditorLoader id={id} />
+    </Suspense>
   );
 }

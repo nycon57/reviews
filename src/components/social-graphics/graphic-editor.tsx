@@ -1,19 +1,31 @@
 "use client";
 
-import { useState, useRef, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { updateGraphic } from "@/lib/social-graphics/actions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { updateGraphic, duplicateGraphic } from "@/lib/social-graphics/actions";
 import {
   parseElements,
   parseCanvasSize,
   type SocialProofGraphic,
-  type CanvasElement,
 } from "@/lib/social-graphics/types";
 import { ExportDialog } from "./export-dialog";
 import { PublishDialog } from "./publish-dialog";
 import { PostHistory } from "./post-history";
+import { useEditorState } from "./editor/use-editor-state";
+import { EditorCanvas } from "./editor/canvas";
+import { EditorToolbar } from "./editor/toolbar";
+import { ElementPalette } from "./editor/element-palette";
+import { PropertyPanel } from "./editor/property-panel";
+import { LayerPanel } from "./editor/layer-panel";
+import {
+  ArrowLeft,
+  Download,
+  Share2,
+  Copy,
+  History,
+} from "lucide-react";
 
 interface GraphicEditorProps {
   graphic: SocialProofGraphic;
@@ -24,8 +36,9 @@ interface GraphicEditorProps {
 }
 
 /**
- * Graphic viewer/editor with S159 export & publish capabilities.
- * Full drag-and-drop canvas editing is S157 scope.
+ * Full drag-and-drop Social Proof Editor (S157).
+ * Includes canvas workspace, element palette, property panel, layer management,
+ * undo/redo, zoom, and save/load/duplicate.
  */
 export function GraphicEditor({
   graphic,
@@ -37,12 +50,6 @@ export function GraphicEditor({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState(graphic.name);
-  const [elements] = useState<CanvasElement[]>(
-    parseElements(graphic.elements)
-  );
-  const canvasSize = parseCanvasSize(graphic.canvas_size);
-  const canvasRef = useRef<HTMLDivElement>(null);
-
   const [saved, setSaved] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [publishOpen, setPublishOpen] = useState(false);
@@ -50,244 +57,156 @@ export function GraphicEditor({
     graphic.render_url ?? null
   );
 
+  const initialElements = parseElements(graphic.elements);
+  const initialCanvasSize = parseCanvasSize(graphic.canvas_size);
+
+  const editor = useEditorState(initialElements, initialCanvasSize);
+
   const handleSave = useCallback(() => {
     startTransition(async () => {
-      const result = await updateGraphic(graphic.id, { name });
+      const result = await updateGraphic(graphic.id, {
+        name,
+        canvasSize: editor.state.canvasSize,
+        elements: editor.state.elements,
+      });
       if (result.success) {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }
     });
-  }, [graphic.id, name]);
+  }, [graphic.id, name, editor.state.canvasSize, editor.state.elements]);
 
-  const renderElement = (el: CanvasElement) => {
-    const style: React.CSSProperties = {
-      position: "absolute",
-      left: `${el.x * 100}%`,
-      top: `${el.y * 100}%`,
-      width: `${el.width * 100}%`,
-      height: `${el.height * 100}%`,
-      opacity: el.opacity,
-      transform: el.rotation ? `rotate(${el.rotation}deg)` : undefined,
-      zIndex: el.zIndex,
-      overflow: "hidden",
-    };
+  const handleDuplicate = useCallback(() => {
+    startTransition(async () => {
+      const result = await duplicateGraphic(graphic.id);
+      if (result.success) {
+        router.push(`/dashboard/social-graphics/${result.data.id}`);
+      }
+    });
+  }, [graphic.id, router]);
 
-    if (el.type === "shape") {
-      return (
-        <div
-          key={el.id}
-          style={{
-            ...style,
-            backgroundColor: el.backgroundColor ?? "transparent",
-            borderRadius:
-              el.shape === "circle"
-                ? "50%"
-                : el.shape === "rounded-rect"
-                  ? `${el.borderRadius ?? 8}px`
-                  : undefined,
-            border: el.borderWidth
-              ? `${el.borderWidth}px solid ${el.borderColor ?? "transparent"}`
-              : undefined,
-          }}
-        />
-      );
-    }
-
-    if (el.type === "text") {
-      return (
-        <div
-          key={el.id}
-          style={{
-            ...style,
-            color: el.color ?? "#000",
-            fontSize: el.fontSize ? `${el.fontSize * 0.6}px` : "12px",
-            fontFamily: el.fontFamily ?? "Inter, sans-serif",
-            fontWeight: el.fontWeight ?? "400",
-            textAlign:
-              (el.textAlign as React.CSSProperties["textAlign"]) ?? "left",
-            lineHeight: el.lineHeight ?? 1.4,
-            letterSpacing: el.letterSpacing
-              ? `${el.letterSpacing}px`
-              : undefined,
-            display: "flex",
-            alignItems: "flex-start",
-          }}
-        >
-          <span className="whitespace-pre-wrap break-words">
-            {el.text ?? ""}
-          </span>
-        </div>
-      );
-    }
-
-    if (el.type === "rating") {
-      const stars = el.rating ?? 5;
-      return (
-        <div
-          key={el.id}
-          style={{
-            ...style,
-            color: el.starColor ?? "#f5c518",
-            fontSize: `${(el.starSize ?? 16) * 0.6}px`,
-            display: "flex",
-            alignItems: "center",
-            gap: "2px",
-          }}
-        >
-          {"\u2605".repeat(stars)}
-          {"\u2606".repeat(5 - stars)}
-        </div>
-      );
-    }
-
-    if (el.type === "stats") {
-      return (
-        <div
-          key={el.id}
-          style={{
-            ...style,
-            color: el.color ?? "#333",
-            fontSize: `${(el.fontSize ?? 12) * 0.6}px`,
-            fontFamily: el.fontFamily ?? "Inter, sans-serif",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <span style={{ fontWeight: "700", fontSize: "1.2em" }}>
-            {el.statValue ?? "0"}
-          </span>
-          <span style={{ opacity: 0.7, fontSize: "0.85em" }}>
-            {el.statLabel ?? ""}
-          </span>
-        </div>
-      );
-    }
-
-    return <div key={el.id} style={style} />;
-  };
+  const [rightTab, setRightTab] = useState<string>("properties");
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <div className="flex h-[calc(100vh-4rem)] flex-col">
+      {/* Top Toolbar */}
+      <div className="flex items-center justify-between border-b border-border bg-background px-3 py-1.5">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
+            className="h-8 gap-1 text-xs"
             onClick={() => router.push("/dashboard/social-graphics")}
           >
-            &larr; Back
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back
           </Button>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="max-w-xs text-lg font-semibold"
-          />
+          {graphic.template_id && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {graphic.template_id}
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {renderUrl && (
             <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800">
               Rendered
             </span>
           )}
-          {saved && (
-            <span className="text-xs text-repwell-sage-200">Saved</span>
-          )}
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={handleSave}
+            className="h-8 gap-1 text-xs"
+            onClick={handleDuplicate}
             disabled={isPending}
           >
-            {isPending ? "Saving..." : "Save"}
+            <Copy className="h-3.5 w-3.5" />
+            Duplicate
           </Button>
           <Button
             variant="outline"
             size="sm"
+            className="h-8 gap-1 text-xs"
             onClick={() => setExportOpen(true)}
           >
+            <Download className="h-3.5 w-3.5" />
             Export
           </Button>
-          <Button size="sm" onClick={() => setPublishOpen(true)}>
+          <Button
+            size="sm"
+            className="h-8 gap-1 text-xs"
+            onClick={() => setPublishOpen(true)}
+          >
+            <Share2 className="h-3.5 w-3.5" />
             Publish
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-        <span>
-          {canvasSize.name ?? "Custom"} ({canvasSize.width}x{canvasSize.height})
-        </span>
-        {graphic.template_id && (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-xs">
-            {graphic.template_id}
-          </span>
-        )}
-        <span>{elements.length} elements</span>
-      </div>
+      {/* Editor Toolbar */}
+      <EditorToolbar
+        editor={editor}
+        graphicName={name}
+        onNameChange={setName}
+        onSave={handleSave}
+        isSaving={isPending}
+        saved={saved}
+      />
 
-      <div className="flex justify-center">
-        <div
-          ref={canvasRef}
-          className="relative overflow-hidden rounded-lg border bg-white shadow-sm"
-          style={{
-            width: Math.min(canvasSize.width * 0.5, 600),
-            height:
-              Math.min(canvasSize.width * 0.5, 600) *
-              (canvasSize.height / canvasSize.width),
-          }}
-        >
-          {elements
-            .filter((el) => el.visible)
-            .sort((a, b) => a.zIndex - b.zIndex)
-            .map(renderElement)}
+      {/* Main Layout: Left Palette | Canvas | Right Panel */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Element Palette */}
+        <div className="hidden w-52 shrink-0 border-r border-border bg-background lg:block">
+          <ElementPalette editor={editor} />
+        </div>
+
+        {/* Canvas Area */}
+        <EditorCanvas editor={editor} />
+
+        {/* Right Sidebar - Properties / Layers / History */}
+        <div className="hidden w-64 shrink-0 border-l border-border bg-background lg:block">
+          <Tabs value={rightTab} onValueChange={setRightTab} className="flex h-full flex-col">
+            <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-2">
+              <TabsTrigger value="properties" className="text-xs">
+                Properties
+              </TabsTrigger>
+              <TabsTrigger value="layers" className="text-xs">
+                Layers
+              </TabsTrigger>
+              <TabsTrigger value="history" className="text-xs">
+                <History className="mr-1 h-3 w-3" />
+                Posts
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent
+              value="properties"
+              className="mt-0 flex-1 overflow-hidden"
+            >
+              <PropertyPanel editor={editor} />
+            </TabsContent>
+            <TabsContent
+              value="layers"
+              className="mt-0 flex-1 overflow-hidden"
+            >
+              <LayerPanel editor={editor} />
+            </TabsContent>
+            <TabsContent
+              value="history"
+              className="mt-0 flex-1 overflow-auto p-3"
+            >
+              <PostHistory graphicId={graphic.id} />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
-      <div className="rounded-xl border">
-        <div className="border-b px-4 py-3">
-          <h3 className="text-sm font-semibold text-foreground">
-            Elements ({elements.length})
-          </h3>
-        </div>
-        <div className="divide-y">
-          {elements.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-              No elements. Use the full editor (coming soon) to add elements.
-            </div>
-          ) : (
-            elements
-              .sort((a, b) => b.zIndex - a.zIndex)
-              .map((el) => (
-                <div
-                  key={el.id}
-                  className="flex items-center gap-3 px-4 py-2"
-                >
-                  <span className="w-16 rounded bg-muted px-1.5 py-0.5 text-center text-[10px] font-medium text-muted-foreground">
-                    {el.type}
-                  </span>
-                  <span className="flex-1 truncate text-xs text-foreground">
-                    {el.text ?? el.statLabel ?? el.shape ?? el.type}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground">
-                    z:{el.zIndex}
-                  </span>
-                </div>
-              ))
-          )}
-        </div>
-      </div>
-
-      <PostHistory graphicId={graphic.id} />
-
+      {/* Dialogs */}
       <ExportDialog
         open={exportOpen}
         onOpenChange={setExportOpen}
         graphicId={graphic.id}
-        elements={elements}
-        canvasSize={canvasSize}
+        elements={editor.state.elements}
+        canvasSize={editor.state.canvasSize}
         onRenderComplete={(url) => setRenderUrl(url)}
       />
 

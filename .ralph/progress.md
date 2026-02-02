@@ -16791,3 +16791,52 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - .next directory can get corrupted requiring full clean before build
   - All integration guides follow consistent IntegrationCard pattern with shared components
 ---
+
+## [2026-02-01] - S163: Google Tag Manager Template & Platform Integration Guides
+Thread:
+Run: 20260201-221024-25429 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-221024-25429-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-221024-25429-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 7875e7d [Pass 3/3] fix(S163): Polish GTM template and integration guides
+- Post-commit status: clean (pre-existing unstaged files in unrelated areas)
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes
+  - /agent-browser: no
+  - Other skills: /copywriting (via writing skill)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (no errors in S163 files; 9 pre-existing errors in unrelated files)
+  - Command: npx eslint src/components/widgets/integrations/ src/components/widgets/embed-code-panel.tsx -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - public/gtm/repwell-widget-template.tpl (added custom event trigger, removed unused vars)
+  - src/components/widgets/embed-code-panel.tsx (hash anchor deep links)
+  - src/components/widgets/integrations/integration-card.tsx (id prop, aria-expanded)
+  - src/components/widgets/integrations/gtm-guide.tsx (id, custom event example)
+  - src/components/widgets/integrations/webflow-guide.tsx (id)
+  - src/components/widgets/integrations/squarespace-guide.tsx (id)
+  - src/components/widgets/integrations/shopify-guide.tsx (id)
+  - src/components/widgets/integrations/iframe-guide.tsx (id, tightened warning copy)
+- What was implemented:
+  - Added custom event trigger option to GTM template with conditional event name field
+  - Added anchor IDs to all guide cards for deep linking from embed code panel
+  - Updated embed code panel links to use hash anchors (#gtm, #webflow, etc.)
+  - Removed unused variables (containerId, createQueue, callInWindow) from GTM sandboxed JS
+  - Added aria-expanded accessibility attribute to troubleshooting toggle buttons
+  - Tightened iframe guide warning copy for clarity (active voice, positive form)
+  - All 12 acceptance criteria verified and passing
+- **Learnings for future iterations:**
+  - GTM sandboxed JS API is limited — cannot inject DOM elements, only scripts via injectScript
+  - CopyButton component is duplicated between integration-card.tsx and embed-code-panel.tsx — future refactor opportunity
+  - Hardcoded base URL (https://app.repwell.com) appears in multiple guide files — could extract to shared constant
+---

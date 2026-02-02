@@ -16294,8 +16294,59 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Existing element coordinates are fractional (0-1) representing % of canvas, not pixels
 ---
 
+## [2026-02-01] - S158: Template Library & Auto-Generation
+Thread:
+Run: 20260201-210952-24175 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-210952-24175-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-210952-24175-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 30fb025 (fixes already included in S159 Pass 2 commit which addressed shared S158/S159 code)
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (comprehensive review of all S158 files)
+  - /vercel-react-best-practices: yes (applied during review)
+  - /next-best-practices: yes (applied during review)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit -> PASS
+  - Command: npx eslint (S158 files) -> PASS
+  - Command: npx next build -> PASS
+- Files reviewed (fixes already committed in 30fb025):
+  - src/app/api/cron/social-graphics/route.ts (security: fail-closed cron auth)
+  - src/app/api/dashboard/social-graphics/generate/route.ts (canvas size name field)
+  - src/components/social-graphics/auto-generate-dialog.tsx (a11y: listbox/option)
+  - src/components/social-graphics/batch-generate-dialog.tsx (a11y: listbox/option)
+  - src/components/social-graphics/template-library.tsx (a11y: radiogroup/radio)
+  - src/lib/social-graphics/schedule-actions.ts (perf: capped query + type guard)
+- What was reviewed and verified:
+  - **Security (CRITICAL)**: Cron endpoint auth bypass when CRON_SECRET unset — now fails closed
+  - **Performance**: Scheduled generation fetched ALL graphics for org — capped to 500 recent + added type guard
+  - **Accessibility**: Template category filter missing ARIA radiogroup — added role="radiogroup" + role="radio" + aria-checked
+  - **Accessibility**: Review selection lists missing ARIA listbox — added role="listbox/option" + aria-selected in both auto and batch dialogs
+  - **Data consistency**: Custom canvas dimensions missing name field — added name for display consistency
+  - **Verified**: All 8 templates generate valid CanvasElement arrays with proportional 0-1 coordinates
+  - **Verified**: Auto-generate correctly pulls reviewer name, rating, text, LO info, dates
+  - **Verified**: Batch generation creates one graphic per review with shared template
+  - **Verified**: Schedule system picks top unfeature review from past week
+  - **Verified**: Template library has category filtering with visual previews
+  - **Verified**: All acceptance criteria met
+- **Learnings for future iterations:**
+  - S158/S159 share cron and action files — quality fixes for shared code may be committed under either story
+  - The cron auth pattern `if (cronSecret && ...)` is a common security anti-pattern — always check `if (!cronSecret || ...)`
+  - ARIA listbox/option is needed for custom multi-select UIs that don't use native checkboxes
+---
+
 ## [2026-02-01] - S159: Social Graphic Export & Social Publishing
-Thread: 
+Thread:
 Run: 20260201-211455-33800 (iteration 1)
 Pass: 2/3 - Quality Review
 Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-211455-33800-iter-1.log

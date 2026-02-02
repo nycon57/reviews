@@ -16454,3 +16454,50 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Empty conditional branches (if/else doing nothing) are easy to miss in review — always collapse or remove
   - Lucide icons are the de facto standard in this codebase despite design system specifying Phosphor Icons
 ---
+
+## [2026-02-01] - S161: Widget Version History & Rollback
+Thread: 
+Run: 20260201-213002-57873 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-213002-57873-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-213002-57873-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f6789f8 [Pass 3/3] refactor(S161): Polish Widget Version History & Rollback - code simplification & writing clarity
+- Post-commit status: clean (S161 files only)
+- Skills invoked:
+  - /feature-dev: no (Pass 3 - polish only)
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (manual review of user-facing text)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx next build -> PASS
+  - Command: npm run lint (S161 files) -> PASS (0 errors in S161 files)
+  - Command: npx vitest run version-actions + config-diff tests -> PASS (23/23 tests)
+- Files changed:
+  - src/components/widgets/version-history/version-diff.tsx
+  - src/components/widgets/version-history/version-list.tsx
+  - src/app/api/dashboard/widgets/[id]/versions/route.ts
+  - src/app/api/dashboard/widgets/[id]/rollback/[version]/route.ts
+  - src/lib/widgets/version-actions.ts
+- What was implemented:
+  - Pass 3 polish: code simplification via /code-simplifier
+  - Extracted DiffValueLine component to eliminate repeated diff markup
+  - Replaced nested ternaries with status maps and if/else assignments
+  - Extracted formatRelativeDate to module scope
+  - Simplified dialog prop patterns
+  - Extracted errorResponse helper in versions API route
+  - Simplified user map construction in version-actions
+  - Verified all 12 acceptance criteria pass
+- **Learnings for future iterations:**
+  - S161 was fully implemented in Pass 1 and quality-reviewed in Pass 2; Pass 3 focused on structural cleanup
+  - Code simplifier correctly identified repeated markup patterns and nested ternaries as simplification targets
+  - embed.js gzip budget (34KB) is exceeded pre-existing (~35.4KB) - not an S161 issue
+---

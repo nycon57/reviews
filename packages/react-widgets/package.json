@@ -1,0 +1,65 @@
+{
+  "name": "@repwell/react-widgets",
+  "version": "0.1.0",
+  "description": "React component library for RepWell embeddable review widgets with TypeScript, SSR support, and tree-shaking",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^27.4.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.2",
+    "vitest": "^4.0.17"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/repwell/repwell",
+    "directory": "packages/react-widgets"
+  },
+  "keywords": [
+    "react",
+    "widgets",
+    "reviews",
+    "nps",
+    "testimonials",
+    "embeddable",
+    "repwell"
+  ]
+}

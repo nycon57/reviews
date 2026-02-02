@@ -7658,7 +7658,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7692,9 +7692,7 @@
           "Code editor uses lightweight CodeMirror 6 (tree-shakeable) not full Monaco to keep bundle reasonable"
         ]
       },
-      "updatedAt": "2026-02-02T03:56:33.711436+00:00",
-      "startedAt": "2026-02-02T03:56:33.711267+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-02T04:01:34.025631+00:00"
     },
     {
       "id": "S165",
@@ -7719,7 +7717,7 @@
       ],
       "priority": "P1",
       "estimate": "XL",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run test:e2e",
         "performance benchmarks pass"
@@ -7769,7 +7767,10 @@
           "Memory profiling uses Chrome DevTools Protocol heap snapshot via Playwright",
           "Test fixtures include seeded widget configs and review data"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T04:06:38.780099+00:00",
+      "startedAt": "2026-02-02T04:06:38.779941+00:00",
+      "completedAt": null
     }
   ],
   "phases": [

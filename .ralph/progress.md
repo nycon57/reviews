@@ -16639,3 +16639,53 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The generic renderer (renderer.ts) is a fallback path that also needed i18n conversion
   - Duplicate UI elements (language selector) can sneak in when multiple passes edit the same component
 ---
+
+## [2026-02-01] - S162: Multi-Language Support (English, Spanish)
+Thread:
+Run: 20260201-215516-98765 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-215516-98765-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-215516-98765-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: eef8532 [Pass 2/3] fix(S162): Security and quality improvements for Multi-Language Support
+- Post-commit status: clean (prd-reviews.json + activity.log only — not part of S162)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review of full diff)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run type-check -> PASS
+  - Command: npm run lint (changed files only) -> PASS (0 errors, 2 pre-existing warnings)
+  - Command: npx vitest run src/embed/__tests__/i18n.test.ts -> PASS (20 tests)
+  - Command: npm run build -> FAIL (pre-existing SSG manifest error, not S162-related)
+- Files changed:
+  - src/components/widgets/widget-builder-sidebar.tsx (removed duplicate language selector, kept one with help text)
+  - src/embed/i18n/en.json (removed duplicate averageFromCount key, fixed firstTimeBuyer text)
+  - src/embed/i18n/es.json (removed duplicate averageFromCount key, fixed firstTimeBuyer text)
+  - src/embed/widgets/shared/filter-controls.ts (fixed loan type pills to use data-value for API values)
+  - src/embed/widgets/shared/filter-engine.ts (fixed resetFilters to use index instead of textContent)
+  - src/embed/widgets/social-proof-banner/template.ts (consolidated averageFromCount -> averageFrom)
+  - src/lib/widgets/schemas.ts (reverted language field to optional, default handled in embed runtime)
+- What was implemented:
+  - Fixed 5 bugs/issues from Pass 1 code review:
+    1. Duplicate language selector in widget-builder-sidebar (rendered twice)
+    2. Loan type filter sent translated strings as API filter values — broke filtering in Spanish
+    3. resetFilters() checked btn.textContent === "All" which failed in Spanish ("Todos")
+    4. Duplicate translation key averageFromCount / averageFrom with identical values
+    5. firstTimeBuyer en.json said "First-Time Homebuyer" but original code used "First-Time Buyer"
+  - Reverted Zod schema change (.default("en").optional() → .optional()) since it made language a required property in TypeScript types
+- **Learnings for future iterations:**
+  - When filter UI displays translated labels, always use data attributes for API values
+  - resetFilters() string comparison with textContent breaks with i18n — use index-based checks
+  - Zod .default().optional() changes the output type — keep optional when the runtime handles defaults
+  - Always verify en.json strings match the original hardcoded English strings exactly
+---

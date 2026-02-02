@@ -100,6 +100,11 @@ export default [
         crypto: "readonly",
         TextEncoder: "readonly",
         TextDecoder: "readonly",
+        // Performance APIs
+        performance: "readonly",
+        PerformanceObserver: "readonly",
+        PerformanceEntry: "readonly",
+        getComputedStyle: "readonly",
       },
     },
     plugins: {

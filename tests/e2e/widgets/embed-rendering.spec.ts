@@ -25,7 +25,7 @@ test.describe("Embed Rendering", () => {
     await expect(widgetHost).toHaveAttribute("data-repwell-initialized", /.+/);
 
     // Verify Shadow DOM is attached and contains rendered content
-    const hasShadowContent = await widgetHost.evaluate((el) => {
+    const _hasShadowContent = await widgetHost.evaluate((el) => {
       const shadow = el.shadowRoot;
       if (!shadow) return false;
       // Widget should have content beyond just a skeleton

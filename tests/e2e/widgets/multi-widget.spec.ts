@@ -103,7 +103,8 @@ test.describe("Multiple Widgets on Single Page", () => {
 
     // Destroy widget 1
     await page.evaluate((wid) => {
-      window.RepWell.destroy(wid);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).RepWell.destroy(wid);
     }, MOCK_WIDGET_ID);
 
     // Widget 1 should be cleaned up

@@ -170,6 +170,10 @@ export interface WidgetAnalyticsConfig {
   conversionUrl?: string;
 }
 
+export interface WidgetAdvanced {
+  customCSS?: string;
+}
+
 export interface WidgetConfigJson {
   theme?: WidgetTheme;
   content?: WidgetContent;
@@ -183,6 +187,7 @@ export interface WidgetConfigJson {
   socialProofBanner?: WidgetSocialProofBanner;
   seo?: { title?: string; description?: string; keywords?: string[] };
   analytics?: WidgetAnalyticsConfig;
+  advanced?: WidgetAdvanced;
 }
 
 export interface PublicWidgetConfig {
@@ -334,12 +339,52 @@ export interface WidgetInstance {
   _conversionCleanup?: (() => void) | null;
 }
 
+
+// ── JS Hooks ──────────────────────────────────────────────────────────
+
+export type HookEvent =
+  | "ready"
+  | "review-loaded"
+  | "review-clicked"
+  | "cta-clicked"
+  | "error";
+
+export interface HookEventData {
+  widgetId: string;
+  widgetType?: string;
+  event: HookEvent;
+  review?: PublicReview | null;
+  config?: WidgetConfigJson | null;
+  error?: string | null;
+}
+
+export type HookCallback = (data: HookEventData) => void;
+
+export interface RuntimeOverrides {
+  theme?: {
+    colors?: Partial<WidgetThemeColors>;
+  };
+  content?: {
+    showHeader?: boolean;
+    showCTA?: boolean;
+    ctaText?: string;
+    ctaUrl?: string;
+    showBranding?: boolean;
+    showSource?: boolean;
+    showDate?: boolean;
+    showAvatar?: boolean;
+  };
+}
+
 // ── Global API ────────────────────────────────────────────────────────
 
 export interface RepWellAPI {
   init: () => void;
   refresh: (widgetId: string) => void;
   destroy: (widgetId: string) => void;
+  on: (widgetId: string, event: HookEvent, callback: HookCallback) => void;
+  off: (widgetId: string, event: HookEvent, callback: HookCallback) => void;
+  configure: (widgetId: string, overrides: RuntimeOverrides) => void;
   /** Internal: all active widget instances, keyed by instance ID. */
   _instances: Map<string, WidgetInstance>;
   /** Internal: the API base URL resolved from the script tag. */

@@ -5,11 +5,10 @@
 
 import { sendEvent } from "./api-client";
 import { canSendEvent } from "./session-rate-limiter";
-import type { HookEvent } from "../types";
 import { emitHookEvent } from "./hooks";
 
 /** Maps analytics event types to JS hook events. */
-const HOOK_EVENT_MAP: Record<string, HookEvent> = {
+const HOOK_EVENT_MAP: Record<string, "review-clicked" | "cta-clicked"> = {
   click_review: "review-clicked",
   click_cta: "cta-clicked",
 };
@@ -44,8 +43,6 @@ export function trackClick(
     ...metadata,
     session_id: getSessionId(),
   });
-
-  // Emit corresponding JS hook event if mapped
   const hookEvent = HOOK_EVENT_MAP[eventType];
   if (hookEvent) {
     emitHookEvent(widgetId, hookEvent, metadata ?? {});

@@ -222,6 +222,9 @@ export const widgetConfigJsonSchema = z.object({
   nps: npsSchema,
   seo: seoSchema,
   analytics: analyticsConfigSchema,
+  advanced: z.object({
+    customCSS: z.string().max(5000).optional(),
+  }).optional(),
 });
 
 export type WidgetConfigJson = z.infer<typeof widgetConfigJsonSchema>;

@@ -333,9 +333,9 @@ function off(widgetId: string, event: HookEvent, callback: HookCallback): void {
 function configure(widgetId: string, overrides: RuntimeOverrides): void {
   const apiBase = api._apiBase;
   for (const instance of instances.values()) {
-    if (instance.widgetId \!== widgetId || \!instance.config) continue;
+    if (instance.widgetId !== widgetId || !instance.config) continue;
     const cfg = instance.config.config;
-    if (\!cfg) continue;
+    if (!cfg) continue;
     if (overrides.theme?.colors && cfg.theme) {
       cfg.theme.colors = { ...cfg.theme.colors, ...overrides.theme.colors };
     }

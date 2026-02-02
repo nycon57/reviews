@@ -107,7 +107,7 @@ export const contentSchema = z
     showAvatar: z.boolean().optional(),
     showBranding: z.boolean().optional(),
     truncateLength: z.number().int().min(0).max(1000).optional(),
-    language: z.string().min(2).max(10).default("en").optional(),
+    language: z.string().min(2).max(10).optional(),
     showNMLS: z.boolean().optional(),
     showDisclaimer: z.boolean().optional(),
     disclaimerText: z.string().max(500).optional(),

@@ -20,8 +20,17 @@ function getRatingOpts(): [string, number][] {
 function getSortOpts(): [string, string][] {
   return [[t("newest"), "newest"], [t("oldest"), "oldest"], [t("highest"), "highest"], [t("lowest"), "lowest"]];
 }
-function getLoanTypes(): string[] {
-  return [t("loanTypePurchase"), t("loanTypeRefinance"), t("loanTypeVA"), t("loanTypeFHA"), t("loanTypeJumbo"), t("loanTypeUSDA"), t("loanTypeConventional")];
+/** Loan type pills: [display label, API value]. API values are always English. */
+function getLoanTypeOpts(): [string, string][] {
+  return [
+    [t("loanTypePurchase"), "Purchase"],
+    [t("loanTypeRefinance"), "Refinance"],
+    [t("loanTypeVA"), "VA"],
+    [t("loanTypeFHA"), "FHA"],
+    [t("loanTypeJumbo"), "Jumbo"],
+    [t("loanTypeUSDA"), "USDA"],
+    [t("loanTypeConventional"), "Conventional"],
+  ];
 }
 function getDateOpts(): [string, string][] {
   return [[t("allTime"), ""], [t("thirtyDays"), "last_30d"], [t("ninetyDays"), "last_90d"], [t("year"), "last_year"]];
@@ -173,18 +182,19 @@ function buildLoanTypePills(toolbar: HTMLElement, ctx: FilterEngineContext): voi
   group.setAttribute("role", "group");
   group.setAttribute("aria-label", t("loanType"));
 
-  for (const lt of getLoanTypes()) {
+  for (const [label, apiValue] of getLoanTypeOpts()) {
     const pill = document.createElement("button");
     pill.className = "rw-filter-pill";
-    pill.textContent = lt;
+    pill.textContent = label;
     pill.type = "button";
+    pill.dataset.value = apiValue;
     pill.setAttribute("aria-pressed", "false");
     pill.addEventListener("click", () => {
       const pressed = pill.getAttribute("aria-pressed") === "true";
       pill.setAttribute("aria-pressed", pressed ? "false" : "true");
       const selected: string[] = [];
-      for (const p of group.querySelectorAll(".rw-filter-pill[aria-pressed='true']")) {
-        selected.push(p.textContent ?? "");
+      for (const p of group.querySelectorAll<HTMLElement>(".rw-filter-pill[aria-pressed='true']")) {
+        selected.push(p.dataset.value ?? "");
       }
       applyFilterChange(ctx, "loanTypes", selected.length > 0 ? selected : undefined);
     });

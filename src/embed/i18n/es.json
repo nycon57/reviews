@@ -60,7 +60,7 @@
   "via": "vía",
   "for": "para",
   "lo": "Oficial:",
-  "firstTimeBuyer": "Comprador primerizo de vivienda",
+  "firstTimeBuyer": "Comprador primerizo",
   "readReviews": "Leer reseñas",
   "averageFrom": "promedio de {count} reseñas",
   "today": "Hoy",
@@ -80,6 +80,5 @@
   "loanTypeJumbo": "Jumbo",
   "loanTypeUSDA": "USDA",
   "loanTypeConventional": "Convencional",
-  "averageFromCount": "promedio de {count} reseñas",
   "unableToLoadReviews": "No se pudieron cargar las reseñas. Inténtelo de nuevo más tarde."
 }

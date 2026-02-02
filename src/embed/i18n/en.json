@@ -60,7 +60,7 @@
   "via": "via",
   "for": "for",
   "lo": "LO:",
-  "firstTimeBuyer": "First-Time Homebuyer",
+  "firstTimeBuyer": "First-Time Buyer",
   "readReviews": "Read Reviews",
   "averageFrom": "average from {count} reviews",
   "today": "Today",
@@ -80,6 +80,5 @@
   "loanTypeJumbo": "Jumbo",
   "loanTypeUSDA": "USDA",
   "loanTypeConventional": "Conventional",
-  "averageFromCount": "average from {count} reviews",
   "unableToLoadReviews": "Unable to load reviews. Please try again later."
 }

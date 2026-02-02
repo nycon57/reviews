@@ -206,7 +206,7 @@ function buildCounterBar(ctx: BannerContext): HTMLElement {
   // Text
   const countText = text(
     "span",
-    t("averageFromCount", { count: totalReviews.toLocaleString() }),
+    t("averageFrom", { count: totalReviews.toLocaleString() }),
     "rw-spb-counter__text"
   );
   bar.appendChild(countText);

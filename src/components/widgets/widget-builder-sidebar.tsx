@@ -757,9 +757,12 @@ function ContentTab({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="en">English</SelectItem>
-            <SelectItem value="es">{`Espa\u00f1ol (Spanish)`}</SelectItem>
+            <SelectItem value="es">Español (Spanish)</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Controls widget UI labels and date formatting. Review text stays in its original language.
+        </p>
       </div>
 
       <SwitchField
@@ -804,25 +807,6 @@ function ContentTab({
         checked={content.showFilters === true}
         onChange={(v) => update("showFilters", v)}
       />
-
-      <div>
-        <Label className="text-xs text-muted-foreground">Language</Label>
-        <Select
-          value={content.language ?? "en"}
-          onValueChange={(v) => update("language", v)}
-        >
-          <SelectTrigger className="h-8 text-xs mt-1">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="es">Español (Spanish)</SelectItem>
-          </SelectContent>
-        </Select>
-        <p className="text-[10px] text-muted-foreground mt-1">
-          Controls widget UI labels and date formatting. Review text stays in its original language.
-        </p>
-      </div>
 
       <div>
         <Label className="text-xs text-muted-foreground">

@@ -83,10 +83,10 @@ export function resetFilters(ctx: FilterEngineContext): void {
 
   // Reset toolbar UI controls to default visual state
   if (ctx.toolbar) {
-    for (const btn of ctx.toolbar.querySelectorAll(".rw-filter-star-btn")) {
-      (btn as HTMLElement).setAttribute("aria-pressed",
-        btn.textContent === "All" ? "true" : "false");
-    }
+    const starBtns = ctx.toolbar.querySelectorAll(".rw-filter-star-btn");
+    starBtns.forEach((btn, i) => {
+      (btn as HTMLElement).setAttribute("aria-pressed", i === 0 ? "true" : "false");
+    });
     for (const sel of ctx.toolbar.querySelectorAll<HTMLSelectElement>(".rw-filter-select")) {
       sel.selectedIndex = 0;
     }

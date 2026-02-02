@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useRef, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,9 @@ import {
   type SocialProofGraphic,
   type CanvasElement,
 } from "@/lib/social-graphics/types";
+import { ExportDialog } from "./export-dialog";
+import { PublishDialog } from "./publish-dialog";
+import { PostHistory } from "./post-history";
 
 interface GraphicEditorProps {
   graphic: SocialProofGraphic;
@@ -21,10 +24,16 @@ interface GraphicEditorProps {
 }
 
 /**
- * Graphic viewer/editor for S158. Renders template elements on a canvas preview.
+ * Graphic viewer/editor with S159 export & publish capabilities.
  * Full drag-and-drop canvas editing is S157 scope.
  */
-export function GraphicEditor({ graphic }: GraphicEditorProps) {
+export function GraphicEditor({
+  graphic,
+  orgName,
+  reviewText,
+  customerName,
+  rating,
+}: GraphicEditorProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState(graphic.name);
@@ -32,8 +41,14 @@ export function GraphicEditor({ graphic }: GraphicEditorProps) {
     parseElements(graphic.elements)
   );
   const canvasSize = parseCanvasSize(graphic.canvas_size);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
   const [saved, setSaved] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [renderUrl, setRenderUrl] = useState<string | null>(
+    graphic.render_url ?? null
+  );
 
   const handleSave = useCallback(() => {
     startTransition(async () => {
@@ -172,6 +187,11 @@ export function GraphicEditor({ graphic }: GraphicEditorProps) {
           />
         </div>
         <div className="flex items-center gap-2">
+          {renderUrl && (
+            <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-800">
+              Rendered
+            </span>
+          )}
           {saved && (
             <span className="text-xs text-repwell-sage-200">Saved</span>
           )}
@@ -182,6 +202,16 @@ export function GraphicEditor({ graphic }: GraphicEditorProps) {
             disabled={isPending}
           >
             {isPending ? "Saving..." : "Save"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setExportOpen(true)}
+          >
+            Export
+          </Button>
+          <Button size="sm" onClick={() => setPublishOpen(true)}>
+            Publish
           </Button>
         </div>
       </div>
@@ -200,6 +230,7 @@ export function GraphicEditor({ graphic }: GraphicEditorProps) {
 
       <div className="flex justify-center">
         <div
+          ref={canvasRef}
           className="relative overflow-hidden rounded-lg border bg-white shadow-sm"
           style={{
             width: Math.min(canvasSize.width * 0.5, 600),
@@ -248,6 +279,28 @@ export function GraphicEditor({ graphic }: GraphicEditorProps) {
           )}
         </div>
       </div>
+
+      <PostHistory graphicId={graphic.id} />
+
+      <ExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        graphicId={graphic.id}
+        elements={elements}
+        canvasSize={canvasSize}
+        onRenderComplete={(url) => setRenderUrl(url)}
+      />
+
+      <PublishDialog
+        open={publishOpen}
+        onOpenChange={setPublishOpen}
+        graphicId={graphic.id}
+        renderUrl={renderUrl}
+        orgName={orgName}
+        reviewText={reviewText}
+        customerName={customerName}
+        rating={rating}
+      />
     </div>
   );
 }

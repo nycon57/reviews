@@ -15960,3 +15960,25 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - users table has LO fields directly (full_name, avatar_url, total_reviews, average_rating)
   - Concurrent agent processes can cause build failures via .next directory corruption; use `tsc --noEmit` as alternative verification
 ---
+
+### S159: Social Graphic Export & Social Publishing (Pass 1/3 - Implementation)
+- **Date**: 2026-02-01
+- **Pass**: 1/3 (Implementation)
+- **Commit**: `[Pass 1/3] feat(S159): Social Graphic Export & Social Publishing`
+- **Verification**: `tsc --noEmit` passes, `eslint` passes (all S159 files clean). `next build` blocked by Turbopack ENOENT race condition (environment issue, not code).
+- Files created:
+  - src/components/social-graphics/export-dialog.tsx — Full export dialog: Canvas 2D API rendering, PNG/JPG/WebP, 1x/2x retina, upload to Supabase Storage
+  - src/components/social-graphics/publish-dialog.tsx — Platform selection, AI caption generation, publish now/schedule modes, character limits
+  - src/components/social-graphics/post-history.tsx — Post history panel with status badges, retry for failed posts
+  - src/lib/social-graphics/render-actions.ts — Server actions for upload/download/status of rendered graphics via Supabase Storage
+  - src/lib/social-graphics/publish-actions.ts — Server actions for getSocialConnections, publishToSocial, schedulePost, getPostHistory, retryPost
+  - src/lib/social-graphics/caption-actions.ts — AI caption generation with platform-specific character limits
+  - src/app/api/cron/social-posts/route.ts — Cron job for processing scheduled social media posts
+  - src/app/api/dashboard/social-graphics/[id]/render/route.ts — POST API route for server-side graphic rendering
+- Types added to src/lib/social-graphics/types.ts:
+  - ExportFormat, RenderResult, SocialPlatform, SocialConnection, SocialPost
+  - PLATFORM_CHAR_LIMITS, PLATFORM_LABELS constants
+- **Learnings:**
+  - Turbopack 16.1.4 has intermittent ENOENT race condition on _buildManifest.js.tmp; workaround is `tsc --noEmit` + `eslint` for verification
+  - react-hooks/set-state-in-effect rule requires block-level eslint-disable (not next-line) when setState is inside a callback within useEffect
+---

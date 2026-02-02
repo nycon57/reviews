@@ -17204,3 +17204,54 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Playwright's webServer config starts Next.js dev server for builder UI tests
   - Shadow DOM evaluation requires element.evaluate() to access shadowRoot
 ---
+
+## [2026-02-01 23:30] - S165: Widget E2E Tests & Performance Benchmarks
+Thread: 
+Run: 20260201-230638-16402 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-230638-16402-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-230638-16402-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 2d739a6 [Pass 2/3] fix(S165): Quality review improvements for widget E2E tests
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer agent)
+  - /vercel-react-best-practices: no (no React components)
+  - /next-best-practices: no (test-only changes)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no (Pass 3)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no (Pass 3)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit --skipLibCheck (test files) -> PASS
+  - Command: npx eslint tests/ (changed files) -> PASS
+  - Command: npm run build -> FAIL (pre-existing Next.js 16 SSG manifest issue, not from S165 changes)
+- Files changed:
+  - tests/e2e/widgets/analytics-events.spec.ts (fix conditional assertion)
+  - tests/e2e/widgets/carousel.spec.ts (add missing assertions for arrows, dots, auto-play)
+  - tests/e2e/widgets/embed-rendering.spec.ts (replace waitForTimeout with waitForFunction, add content assertion)
+  - tests/e2e/widgets/fixtures.ts (move eslint-disable to correct line)
+  - tests/e2e/widgets/multi-widget.spec.ts (use constants instead of hard-coded IDs)
+  - tests/e2e/widgets/social-proof-banner.spec.ts (fix always-passing assertion, add exit-intent and dismiss persistence tests)
+  - tests/e2e/widgets/video-testimonial.spec.ts (add assertions for video content and transcript)
+  - tests/e2e/widgets/widget-builder.spec.ts (minor flow improvements from prior pass)
+  - tests/performance/lighthouse-widget.test.ts (add TBT delta assertion)
+  - tests/performance/render-timing.test.ts (fix variable naming, remove unused variable)
+- Quality issues found and fixed:
+  - Always-passing assertion: `expect(x || true).toBe(true)` in dismiss persistence test
+  - 6 unused variables representing missing test assertions
+  - Conditional assertion that silently passed when no impression event found
+  - Misleading variable name `configResponseTime` (was set in reviews handler, not config)
+  - Hard-coded widget IDs duplicating constants
+  - Missing exit-intent trigger test per acceptance criteria
+  - Replaced flaky waitForTimeout with waitForFunction in embed rendering
+- **Learnings for future iterations:**
+  - The Next.js 16 build has an intermittent _ssgManifest.js ENOENT error (pre-existing)
+  - E2E tests need careful assertion verification — unused variables often indicate missing checks
+  - Playwright's `page.evaluate` requires passing IDs as args, not referencing outer-scope constants
+---

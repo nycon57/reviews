@@ -50,6 +50,7 @@ const IFRAME_AUTO_RESIZE = `<iframe
 export function IframeGuide() {
   return (
     <IntegrationCard
+      id="iframe"
       icon={<MonitorSmartphone size={20} className="text-repwell-teal-500" />}
       title="Iframe Embed"
       description="For platforms that restrict script tags. Works on any site that allows iframes."
@@ -57,9 +58,9 @@ export function IframeGuide() {
       <div className="space-y-6">
         <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p className="text-xs text-amber-800">
-            The iframe method is a fallback for platforms with strict Content
-            Security Policies. The script tag method is preferred for better
-            performance and automatic resizing.
+            Use the script tag method when possible — it loads faster and
+            resizes automatically. Use iframe only on platforms with strict
+            Content Security Policies that block third-party scripts.
           </p>
         </div>
 

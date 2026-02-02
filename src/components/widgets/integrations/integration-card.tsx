@@ -112,6 +112,7 @@ export function TroubleshootingSection({
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
         className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors"
       >
         Troubleshooting
@@ -132,6 +133,7 @@ export function TroubleshootingSection({
 }
 
 interface IntegrationCardProps {
+  id?: string;
   icon: React.ReactNode;
   title: string;
   description: string;
@@ -139,13 +141,14 @@ interface IntegrationCardProps {
 }
 
 export function IntegrationCard({
+  id,
   icon,
   title,
   description,
   children,
 }: IntegrationCardProps) {
   return (
-    <Card>
+    <Card id={id} className="scroll-mt-6">
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center">

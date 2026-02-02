@@ -20,6 +20,7 @@ const WEBFLOW_COLLECTION_CODE = `<script src="https://app.repwell.com/embed.js" 
 export function WebflowGuide() {
   return (
     <IntegrationCard
+      id="webflow"
       icon={<Globe size={20} className="text-repwell-teal-500" />}
       title="Webflow"
       description="Add review widgets to Webflow sites using Embed elements or Custom Code."

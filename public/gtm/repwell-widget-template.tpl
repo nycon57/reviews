@@ -48,11 +48,26 @@ ___TEMPLATE_PARAMETERS___
     "selectItems": [
       { "value": "domReady", "displayValue": "DOM Ready" },
       { "value": "pageLoad", "displayValue": "Page Load (Window Loaded)" },
-      { "value": "immediate", "displayValue": "Immediate" }
+      { "value": "immediate", "displayValue": "Immediate" },
+      { "value": "customEvent", "displayValue": "Custom Event" }
     ],
     "simpleValueType": true,
     "defaultValue": "domReady",
-    "help": "When to inject the widget. DOM Ready is recommended for most sites."
+    "help": "When to inject the widget. DOM Ready is recommended for most sites. Choose Custom Event to fire on a specific dataLayer event."
+  },
+  {
+    "type": "TEXT",
+    "name": "customEventName",
+    "displayName": "Custom Event Name",
+    "simpleValueType": true,
+    "help": "The dataLayer event name that triggers the widget load (e.g., 'show_reviews'). Only used when Load Trigger is set to Custom Event.",
+    "enablingConditions": [
+      {
+        "paramName": "loadTrigger",
+        "paramValue": "customEvent",
+        "type": "EQUALS"
+      }
+    ]
   }
 ]
 
@@ -61,16 +76,10 @@ ___SANDBOXED_JS_FOR_WEB_TEMPLATE___
 
 const injectScript = require('injectScript');
 const queryPermission = require('queryPermission');
-const createQueue = require('createQueue');
-const callInWindow = require('callInWindow');
 const log = require('logToConsole');
 
-const widgetId = data.widgetId;
 const hostUrl = data.hostUrl || 'https://app.repwell.com';
 const scriptUrl = hostUrl + '/embed.js';
-
-// Create the widget container element
-const containerId = 'repwell-widget-' + widgetId;
 
 // Inject the embed script
 if (queryPermission('inject_script', scriptUrl)) {

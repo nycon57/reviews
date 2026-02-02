@@ -17,6 +17,7 @@ const GTM_SCRIPT_TAG = `<script src="https://app.repwell.com/embed.js" async></s
 export function GtmGuide() {
   return (
     <IntegrationCard
+      id="gtm"
       icon={<Tags size={20} className="text-repwell-teal-500" />}
       title="Google Tag Manager"
       description="Deploy the widget via GTM using a custom template or Custom HTML tag."
@@ -47,7 +48,7 @@ export function GtmGuide() {
               <ul className="list-disc pl-4 text-xs space-y-1">
                 <li><strong>DOM Ready</strong> — recommended for most sites</li>
                 <li><strong>Page View</strong> — fires immediately on page load</li>
-                <li><strong>Custom Event</strong> — fire on a specific dataLayer event</li>
+                <li><strong>Custom Event</strong> — fire on a specific dataLayer event (e.g., <code className="text-xs bg-muted px-1 rounded">show_reviews</code>)</li>
               </ul>
             </Step>
             <Step number={5} title="Preview and publish">

@@ -16,6 +16,7 @@ const SQUARESPACE_CODE_BLOCK = `<div data-repwell-widget="YOUR_WIDGET_ID"></div>
 export function SquarespaceGuide() {
   return (
     <IntegrationCard
+      id="squarespace"
       icon={<LayoutGrid size={20} className="text-repwell-teal-500" />}
       title="Squarespace"
       description="Embed widgets via Code Injection or per-page Code Blocks."

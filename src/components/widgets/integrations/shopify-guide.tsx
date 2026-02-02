@@ -45,6 +45,7 @@ const SHOPIFY_SECTION_TEMPLATE = `{% comment %}
 export function ShopifyGuide() {
   return (
     <IntegrationCard
+      id="shopify"
       icon={<ShoppingBag size={20} className="text-repwell-teal-500" />}
       title="Shopify"
       description="Add review widgets to your Shopify store via theme.liquid or custom sections."

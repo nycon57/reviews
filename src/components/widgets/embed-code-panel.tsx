@@ -173,7 +173,7 @@ export function EmbedCodePanel({ widgetId }: EmbedCodePanelProps) {
             ].map((guide) => (
               <Link
                 key={guide.hash}
-                href="/dashboard/widgets/integrations"
+                href={`/dashboard/widgets/integrations#${guide.hash}`}
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-repwell-teal-500 transition-colors py-0.5"
               >
                 <ExternalLink size={10} />

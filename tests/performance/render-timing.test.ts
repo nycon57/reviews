@@ -9,6 +9,8 @@ import {
   mockWidgetApiRoutes,
   loadEmbedPage,
   MOCK_WIDGET_ID,
+  mockWidgetConfig,
+  mockReviewsResponse,
 } from "../e2e/widgets/fixtures";
 
 test.describe("Widget Render Timing", () => {
@@ -35,7 +37,6 @@ test.describe("Widget Render Timing", () => {
       const widget = document.querySelector('[data-repwell-widget]');
       if (!widget?.shadowRoot) return null;
 
-      const _navStart = performance.timing.navigationStart;
       const entries = performance.getEntriesByType("mark");
 
       // Check if the embed script set any performance marks
@@ -83,33 +84,30 @@ test.describe("Widget Render Timing", () => {
   test("full render completes within 300ms of API response", async ({
     page,
   }) => {
-    let configResponseTime = 0;
+    let lastApiResponseTime = 0;
 
-    // Track when API responds
+    // Track when the last API response is fulfilled
     await page.route(
       `**/api/v1/widgets/${MOCK_WIDGET_ID}/config`,
       async (route) => {
+        lastApiResponseTime = Date.now();
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           headers: { "Access-Control-Allow-Origin": "*" },
-          body: JSON.stringify(
-            (await import("../e2e/widgets/fixtures")).mockWidgetConfig()
-          ),
+          body: JSON.stringify(mockWidgetConfig()),
         });
       }
     );
     await page.route(
       `**/api/v1/widgets/${MOCK_WIDGET_ID}/reviews**`,
       async (route) => {
-        configResponseTime = Date.now();
+        lastApiResponseTime = Date.now();
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           headers: { "Access-Control-Allow-Origin": "*" },
-          body: JSON.stringify(
-            (await import("../e2e/widgets/fixtures")).mockReviewsResponse()
-          ),
+          body: JSON.stringify(mockReviewsResponse()),
         });
       }
     );
@@ -133,10 +131,11 @@ test.describe("Widget Render Timing", () => {
 
     const renderComplete = Date.now();
 
-    // Full render (from API response to DOM update) should be under 300ms
+    // Full render (from last API response to DOM update) should be under 300ms
     // Since we're mocking API calls (instant), total time should be well under 300ms
-    if (configResponseTime > 0) {
-      const renderTime = renderComplete - configResponseTime;
+    expect(lastApiResponseTime).toBeGreaterThan(0);
+    if (lastApiResponseTime > 0) {
+      const renderTime = renderComplete - lastApiResponseTime;
       console.log(`  Render time after API: ${renderTime}ms`);
       expect(renderTime).toBeLessThan(300);
     }

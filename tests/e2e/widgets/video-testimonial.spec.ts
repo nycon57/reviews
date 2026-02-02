@@ -88,12 +88,8 @@ test.describe("Video Testimonial Widget", () => {
       return !!video || !!videoContainer;
     });
 
-    // Widget should render content (may or may not have a <video> element)
-    const isRendered = await widgetHost.evaluate((el) => {
-      return (el.shadowRoot?.children.length ?? 0) > 0;
-    });
-
-    expect(isRendered).toBe(true);
+    // Widget should render a video element or video container
+    expect(hasVideoContent).toBe(true);
   });
 
   test("shows reviewer name and rating", async ({ page }) => {
@@ -120,7 +116,7 @@ test.describe("Video Testimonial Widget", () => {
       `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
     );
 
-    const _hasTranscript = await widgetHost.evaluate((el) => {
+    const hasTranscript = await widgetHost.evaluate((el) => {
       const shadow = el.shadowRoot;
       if (!shadow) return false;
       const text = shadow.textContent ?? "";
@@ -132,12 +128,8 @@ test.describe("Video Testimonial Widget", () => {
       );
     });
 
-    // Transcript may or may not be visible depending on implementation
-    const isRendered = await widgetHost.evaluate((el) => {
-      return (el.shadowRoot?.children.length ?? 0) > 0;
-    });
-
-    expect(isRendered).toBe(true);
+    // Transcript should render with expected content
+    expect(hasTranscript).toBe(true);
   });
 
   test("video play triggers event tracking", async ({ page }) => {

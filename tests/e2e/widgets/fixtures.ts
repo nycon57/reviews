@@ -254,7 +254,6 @@ type WidgetFixtures = {
 };
 
 export const test = base.extend<WidgetFixtures>({
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   embedPage: async ({ page }, use) => {
     const fn = async (
       widgets: Array<{ id: string; extraAttrs?: Record<string, string> }>,
@@ -266,6 +265,7 @@ export const test = base.extend<WidgetFixtures>({
       }
       await loadEmbedPage(page, widgets);
     };
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(fn);
   },
 });

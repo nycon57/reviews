@@ -65,7 +65,7 @@ test.describe("Review Carousel Widget", () => {
       `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
     );
 
-    const _hasArrows = await widgetHost.evaluate((el) => {
+    const hasArrows = await widgetHost.evaluate((el) => {
       const shadow = el.shadowRoot;
       if (!shadow) return false;
       const arrows = shadow.querySelectorAll(
@@ -74,13 +74,8 @@ test.describe("Review Carousel Widget", () => {
       return arrows.length >= 1;
     });
 
-    // Carousel should render with some navigation element
-    const hasContent = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      return (shadow?.children.length ?? 0) > 0;
-    });
-
-    expect(hasContent).toBe(true);
+    // Carousel should render with navigation arrows
+    expect(hasArrows).toBe(true);
   });
 
   test("renders carousel with dots/indicators", async ({ page }) => {
@@ -91,7 +86,7 @@ test.describe("Review Carousel Widget", () => {
       `[data-repwell-widget="${MOCK_WIDGET_ID}"]`
     );
 
-    const _hasDots = await widgetHost.evaluate((el) => {
+    const hasDots = await widgetHost.evaluate((el) => {
       const shadow = el.shadowRoot;
       if (!shadow) return false;
       // Look for dot indicators
@@ -101,12 +96,8 @@ test.describe("Review Carousel Widget", () => {
       return dots.length > 0;
     });
 
-    // Even if dots are styled differently, the carousel should have content
-    const rendered = await widgetHost.evaluate((el) => {
-      return !!el.shadowRoot && el.shadowRoot.children.length > 0;
-    });
-
-    expect(rendered).toBe(true);
+    // Carousel should render with dot indicators
+    expect(hasDots).toBe(true);
   });
 
   test("auto-play advances slides", async ({ page }) => {
@@ -126,14 +117,29 @@ test.describe("Review Carousel Widget", () => {
     // Wait for auto-play interval (3s + buffer)
     await page.waitForTimeout(4000);
 
-    // Capture text after auto-play
-    const _afterAutoPlayText = await widgetHost.evaluate((el) => {
+    // Capture carousel state after auto-play
+    const afterAutoPlayIndex = await widgetHost.evaluate((el) => {
       const shadow = el.shadowRoot;
-      return shadow?.textContent?.substring(0, 300) ?? "";
+      if (!shadow) return -1;
+      // Check for an active dot or active slide indicator
+      const activeDot = shadow.querySelector(
+        '.rw-carousel-dot[aria-selected="true"], .rw-carousel-dot.active, [data-carousel-dot].active'
+      );
+      if (activeDot) {
+        const dots = Array.from(
+          shadow.querySelectorAll(".rw-carousel-dot, [data-carousel-dot]")
+        );
+        return dots.indexOf(activeDot);
+      }
+      return -1;
     });
 
-    // The carousel content should have been rendered
+    // Content should have been rendered
     expect(initialText.length).toBeGreaterThan(0);
+    // Auto-play should have advanced past the first slide
+    if (afterAutoPlayIndex >= 0) {
+      expect(afterAutoPlayIndex).toBeGreaterThan(0);
+    }
   });
 
   test("clicking navigation arrow changes slide", async ({ page }) => {

@@ -378,8 +378,17 @@ test.describe("Social Proof Banner Widget", () => {
       return false;
     });
 
-    // Frequency manager should have stored dismiss state
-    // (exact behavior depends on frequency setting)
-    expect(hasDismissState || true).toBe(true);
+    // Frequency manager stores dismiss state in localStorage or sessionStorage.
+    // With frequency "every_visit", dismiss state uses sessionStorage (rw_spb_ prefix).
+    // Verify some storage was written after dismiss.
+    const hasSessionDismiss = await page.evaluate(() => {
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key?.startsWith("rw_spb_")) return true;
+      }
+      return false;
+    });
+
+    expect(hasDismissState || hasSessionDismiss).toBe(true);
   });
 });

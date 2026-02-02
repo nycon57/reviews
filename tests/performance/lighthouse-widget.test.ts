@@ -152,8 +152,9 @@ test.describe("Lighthouse Widget Impact", () => {
     const tbtDelta = widgetMetrics.tbt - baselineMetrics.tbt;
     console.log(`  TBT delta: ${tbtDelta.toFixed(0)}ms`);
 
-    // The widget should not add more than 200ms to any core metric
-    // This roughly correlates with < 5 Lighthouse points impact
+    // The widget should not add more than 200ms TBT — correlates with < 5 Lighthouse points
+    expect(tbtDelta).toBeLessThan(200);
+    // Absolute TBT with widget should remain reasonable
     expect(widgetMetrics.tbt).toBeLessThan(300);
   });
 });

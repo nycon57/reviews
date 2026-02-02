@@ -24,18 +24,16 @@ test.describe("Embed Rendering", () => {
     const widgetHost = page.locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`);
     await expect(widgetHost).toHaveAttribute("data-repwell-initialized", /.+/);
 
-    // Verify Shadow DOM is attached and contains rendered content
-    const _hasShadowContent = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      if (!shadow) return false;
-      // Widget should have content beyond just a skeleton
-      const skeleton = shadow.querySelector(".rw-skeleton");
-      const hasContent = shadow.children.length > 0;
-      return hasContent && !skeleton;
-    });
-
-    // Allow time for async rendering
-    await page.waitForTimeout(2000);
+    // Wait for async rendering to complete (skeleton removed)
+    await page.waitForFunction(
+      (wid) => {
+        const el = document.querySelector(`[data-repwell-widget="${wid}"]`);
+        if (!el?.shadowRoot) return false;
+        return !el.shadowRoot.querySelector(".rw-skeleton") && el.shadowRoot.children.length > 0;
+      },
+      MOCK_WIDGET_ID,
+      { timeout: 10_000 }
+    );
 
     const rendered = await widgetHost.evaluate((el) => {
       const shadow = el.shadowRoot;
@@ -49,6 +47,8 @@ test.describe("Embed Rendering", () => {
 
     expect(rendered.hasShadow).toBe(true);
     expect(rendered.childCount).toBeGreaterThan(0);
+    // Verify rendered content includes review data from mock
+    expect(rendered.text).toContain("Reviewer");
   });
 
   test("shows skeleton loader initially", async ({ page }) => {

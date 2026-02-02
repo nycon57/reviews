@@ -121,9 +121,8 @@ test.describe("Widget Analytics Events", () => {
       }
     });
 
-    if (impressionEvent) {
-      const data = JSON.parse(impressionEvent.body);
-      expect(data.metadata?.session_id ?? data.session_id).toBeTruthy();
-    }
+    expect(impressionEvent).toBeDefined();
+    const data = JSON.parse(impressionEvent!.body);
+    expect(data.metadata?.session_id ?? data.session_id).toBeTruthy();
   });
 });

@@ -42,18 +42,17 @@ test.describe("Multiple Widgets on Single Page", () => {
     await expect(widget2).toHaveAttribute("data-repwell-initialized", /.+/);
 
     // Each widget should have its own Shadow DOM
-    const shadows = await page.evaluate(() => {
-      const w1 = document.querySelector(
-        '[data-repwell-widget="test-widget-001"]'
-      );
-      const w2 = document.querySelector(
-        '[data-repwell-widget="test-widget-002"]'
-      );
-      return {
-        w1HasShadow: !!w1?.shadowRoot,
-        w2HasShadow: !!w2?.shadowRoot,
-      };
-    });
+    const shadows = await page.evaluate(
+      ([id1, id2]) => {
+        const w1 = document.querySelector(`[data-repwell-widget="${id1}"]`);
+        const w2 = document.querySelector(`[data-repwell-widget="${id2}"]`);
+        return {
+          w1HasShadow: !!w1?.shadowRoot,
+          w2HasShadow: !!w2?.shadowRoot,
+        };
+      },
+      [MOCK_WIDGET_ID, MOCK_WIDGET_ID_2]
+    );
 
     expect(shadows.w1HasShadow).toBe(true);
     expect(shadows.w2HasShadow).toBe(true);
@@ -70,18 +69,17 @@ test.describe("Multiple Widgets on Single Page", () => {
 
     await page.waitForTimeout(2000);
 
-    const ids = await page.evaluate(() => {
-      const w1 = document.querySelector(
-        '[data-repwell-widget="test-widget-001"]'
-      );
-      const w2 = document.querySelector(
-        '[data-repwell-widget="test-widget-002"]'
-      );
-      return {
-        id1: w1?.getAttribute("data-repwell-initialized"),
-        id2: w2?.getAttribute("data-repwell-initialized"),
-      };
-    });
+    const ids = await page.evaluate(
+      ([id1, id2]) => {
+        const w1 = document.querySelector(`[data-repwell-widget="${id1}"]`);
+        const w2 = document.querySelector(`[data-repwell-widget="${id2}"]`);
+        return {
+          id1: w1?.getAttribute("data-repwell-initialized"),
+          id2: w2?.getAttribute("data-repwell-initialized"),
+        };
+      },
+      [MOCK_WIDGET_ID, MOCK_WIDGET_ID_2]
+    );
 
     expect(ids.id1).toBeTruthy();
     expect(ids.id2).toBeTruthy();

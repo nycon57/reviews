@@ -10,6 +10,7 @@
 import type { PublicWidgetConfig, NpsData, WidgetNps } from "../../types";
 import { el, text } from "../../core/dom-helpers";
 import { trackClick } from "../../core/event-tracker";
+import { t, tp } from "../../i18n";
 
 // ── NPS Zone Helpers ────────────────────────────────────────────────
 
@@ -206,9 +207,9 @@ function buildBreakdown(npsData: NpsData): HTMLElement {
   const labels = el("div", "rw-nps__breakdown-labels");
 
   const items: { label: string; pct: number; color: string }[] = [
-    { label: "Promoters", pct: npsData.promoterPct, color: "#22c55e" },
-    { label: "Passives", pct: npsData.passivePct, color: "#eab308" },
-    { label: "Detractors", pct: npsData.detractorPct, color: "#ef4444" },
+    { label: t("promoters"), pct: npsData.promoterPct, color: "#22c55e" },
+    { label: t("passives"), pct: npsData.passivePct, color: "#eab308" },
+    { label: t("detractors"), pct: npsData.detractorPct, color: "#ef4444" },
   ];
 
   for (const item of items) {
@@ -258,8 +259,8 @@ export function buildNpsScoreBadgeDOM(
   const showBreakdown = npsCfg.showBreakdown !== false;
   const showCount = npsCfg.showCount !== false;
   const showPeriod = npsCfg.showPeriod !== false;
-  const labelText = npsCfg.labelText ?? "Net Promoter Score";
-  const periodText = npsCfg.periodText ?? "Last 12 months";
+  const labelText = npsCfg.labelText ?? t("netPromoterScore");
+  const periodText = npsCfg.periodText ?? t("last12Months");
 
   // Build container
   const badge = cfg?.badge;
@@ -284,7 +285,7 @@ export function buildNpsScoreBadgeDOM(
   container.setAttribute("role", "img");
   container.setAttribute(
     "aria-label",
-    `Net Promoter Score is ${formatNpsScore(npsData.score)} based on ${npsData.totalResponses} response${npsData.totalResponses === 1 ? "" : "s"}`,
+    tp("npsAriaLabel", npsData.totalResponses, { score: formatNpsScore(npsData.score), count: npsData.totalResponses }),
   );
 
   // Display mode
@@ -302,7 +303,7 @@ export function buildNpsScoreBadgeDOM(
     container.appendChild(
       text(
         "div",
-        `Based on ${npsData.totalResponses} response${npsData.totalResponses === 1 ? "" : "s"}`,
+        tp("basedOnResponses", npsData.totalResponses, { count: npsData.totalResponses }),
         "rw-nps__count",
       ),
     );

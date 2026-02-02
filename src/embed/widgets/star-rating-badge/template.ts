@@ -8,6 +8,7 @@
 import type { PublicWidgetConfig, WidgetBadge } from "../../types";
 import { el, text, starSVG } from "../../core/dom-helpers";
 import { trackClick } from "../../core/event-tracker";
+import { t, tp } from "../../i18n";
 
 // ── Partial Star Helper ─────────────────────────────────────────────
 
@@ -173,7 +174,7 @@ export function buildStarRatingBadgeDOM(
   container.setAttribute("role", "img");
   container.setAttribute(
     "aria-label",
-    `Rated ${averageRating.toFixed(1)} out of 5 based on ${totalReviews} review${totalReviews === 1 ? "" : "s"}`
+    tp("ratedAriaLabel", totalReviews, { rating: averageRating.toFixed(1), count: totalReviews }),
   );
 
   // Apply badge dimensions
@@ -201,7 +202,7 @@ export function buildStarRatingBadgeDOM(
       info.appendChild(
         text(
           "span",
-          `${totalReviews} review${totalReviews === 1 ? "" : "s"}`,
+          `${totalReviews} ${totalReviews === 1 ? t("review") : t("reviews")}`,
           "rw-srb__count"
         )
       );

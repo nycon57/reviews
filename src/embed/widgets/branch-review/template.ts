@@ -17,6 +17,7 @@ import {
 } from "../../core/dom-helpers";
 import { buildNmlsBadge } from "../../components/nmls-badge";
 import { trackClick } from "../../core/event-tracker";
+import { t } from "../../i18n";
 import {
   starsRow,
   buildRatingDistribution,
@@ -95,7 +96,7 @@ function buildBranchHeader(
     row.appendChild(text("span", profile.average_rating.toFixed(1), "rw-br-header__rating-value"));
     row.appendChild(starsRow(Math.round(profile.average_rating), starFilled, starEmpty, "rw-br-header__stars"));
     if (profile.total_reviews != null) {
-      row.appendChild(text("span", `${profile.total_reviews} review${profile.total_reviews === 1 ? "" : "s"}`, "rw-br-header__rating-count"));
+      row.appendChild(text("span", `${profile.total_reviews} ${profile.total_reviews === 1 ? t("review") : t("reviews")}`, "rw-br-header__rating-count"));
     }
     info.appendChild(row);
   }
@@ -108,7 +109,7 @@ function buildBranchHeader(
 
 function buildTeamGrid(members: TeamMember[], starFilled: string, starEmpty: string): HTMLElement {
   const section = el("div", "rw-br-team");
-  section.appendChild(text("h4", "Our Team", "rw-br-team__title"));
+  section.appendChild(text("h4", t("ourTeam"), "rw-br-team__title"));
   const grid = el("div", "rw-br-team__grid");
 
   for (const m of members) {
@@ -184,11 +185,11 @@ export function buildBranchReviewDOM(
   // Reviews list (reuses shared builder with branch-specific empty state)
   const emptyNode = (() => {
     const empty = el("div", "rw-br-empty");
-    empty.appendChild(text("div", "No reviews yet for this branch.", "rw-br-empty__text"));
+    empty.appendChild(text("div", t("noReviewsBranch"), "rw-br-empty__text"));
     if (content?.showWriteReview && content.writeReviewUrl) {
       const cta = document.createElement("a");
       cta.className = "rw-br-empty__cta";
-      cta.textContent = "Be the first to leave a review";
+      cta.textContent = t("beFirstReview");
       cta.href = content.writeReviewUrl;
       cta.target = "_blank";
       cta.rel = "noopener noreferrer";

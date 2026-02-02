@@ -8,6 +8,7 @@ import type { PublicWidgetConfig, PublicReview } from "../../types";
 import { trackClick } from "../../core/event-tracker";
 import { el, text } from "../../core/dom-helpers";
 import { buildReviewCard } from "../company-review/template";
+import { t } from "../../i18n";
 
 // ── Scroll Depth Tracking ───────────────────────────────────────────
 
@@ -104,7 +105,7 @@ export function buildReviewWallDOM(
   container.setAttribute("role", "region");
   container.setAttribute(
     "aria-label",
-    content?.headerText ?? "Review Wall",
+    content?.headerText ?? t("reviewWall"),
   );
 
   const starFilled = colors?.starFilled ?? "#f59e0b";
@@ -122,7 +123,7 @@ export function buildReviewWallDOM(
   // Empty state
   if (reviews.length === 0) {
     container.appendChild(
-      text("div", "No reviews yet.", "rw-empty"),
+      text("div", t("noReviewsYet"), "rw-empty"),
     );
     return container;
   }
@@ -235,7 +236,7 @@ export function buildReviewWallDOM(
     if (loadMoreMode === "button") {
       const loadMoreBtn = document.createElement("button");
       loadMoreBtn.className = "rw-wall__load-more";
-      loadMoreBtn.textContent = "Load More Reviews";
+      loadMoreBtn.textContent = t("loadMore");
       loadMoreBtn.type = "button";
       loadMoreBtn.addEventListener("click", () => {
         const prevCount = visibleCount;
@@ -293,16 +294,16 @@ export function buildReviewWallDOM(
   if (content?.showDisclaimer) {
     const disclaimer = el("div", "rw-wall__disclaimer");
     const ehlLabel = el("div", "rw-wall__disclaimer-ehl");
-    ehlLabel.textContent = "Equal Housing Lender";
+    ehlLabel.textContent = t("equalHousingLender");
     disclaimer.appendChild(ehlLabel);
     disclaimer.appendChild(
       text(
         "div",
-        content.disclaimerText ||
-          "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.",
+        content.disclaimerText || t("defaultDisclaimer"),
         "rw-wall__disclaimer-text",
       ),
     );
+    // NMLS text remains in English (regulatory requirement)
     const nmlsLink = document.createElement("a");
     nmlsLink.className = "rw-wall__disclaimer-nmls";
     nmlsLink.href = "https://www.nmlsconsumeraccess.org";
@@ -316,7 +317,7 @@ export function buildReviewWallDOM(
   // Branding
   if (content?.showBranding !== false) {
     const branding = el("div", "rw-wall__branding");
-    branding.textContent = "Powered by ";
+    branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
     link.href = "https://repwell.com";
     link.target = "_blank";

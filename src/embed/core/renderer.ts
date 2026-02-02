@@ -15,6 +15,7 @@ import {
   applyTheme,
 } from "./dom-helpers";
 import { createEqualHousingLenderSVG } from "../assets/equal-housing-lender";
+import { setLocale, t } from "../i18n";
 
 // ── Main render ─────────────────────────────────────────────────────
 
@@ -24,6 +25,9 @@ export function renderWidget(
   reviews: PublicReview[],
   apiBase?: string
 ): void {
+  // Set locale from widget config before rendering any content
+  setLocale(config.config?.content?.language ?? "en");
+
   // Dispatch to type-specific renderer if registered
   const typeRenderer = getWidgetRenderer(config.widget_type);
   if (typeRenderer && apiBase) {
@@ -41,17 +45,17 @@ export function renderWidget(
 
   const container = el("div", "rw-widget");
   container.setAttribute("role", "region");
-  container.setAttribute("aria-label", content?.headerText ?? "Customer Reviews");
+  container.setAttribute("aria-label", content?.headerText ?? t("customerReviews"));
 
   // Header
   if (content?.showHeader !== false) {
     const header = el("div", "rw-widget__header");
-    header.appendChild(text("h3", content?.headerText ?? "Customer Reviews", "rw-widget__title"));
+    header.appendChild(text("h3", content?.headerText ?? t("customerReviews"), "rw-widget__title"));
 
     if (reviews.length > 0) {
       const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
       header.appendChild(
-        text("p", `${avg.toFixed(1)} average from ${reviews.length} reviews`, "rw-widget__subtitle")
+        text("p", `${avg.toFixed(1)} ${t("averageFrom", { count: reviews.length })}`, "rw-widget__subtitle")
       );
     }
     container.appendChild(header);
@@ -59,7 +63,7 @@ export function renderWidget(
 
   // Reviews list
   if (reviews.length === 0) {
-    container.appendChild(text("div", "No reviews yet.", "rw-empty"));
+    container.appendChild(text("div", t("noReviewsYet"), "rw-empty"));
   } else {
     const list = el("div", "rw-reviews");
     const starFilled = colors?.starFilled ?? "#f59e0b";
@@ -90,7 +94,7 @@ export function renderWidget(
 
       // Stars
       const stars = el("div", "rw-review__stars");
-      stars.setAttribute("aria-label", `${review.rating} out of 5 stars`);
+      stars.setAttribute("aria-label", t("starsAriaLabel", { rating: review.rating }));
       for (let i = 1; i <= 5; i++) {
         stars.appendChild(starSVG(i <= review.rating, starFilled, starEmpty));
       }
@@ -106,7 +110,7 @@ export function renderWidget(
 
       // Source badge
       if (content?.showSource !== false && review.source) {
-        card.appendChild(text("span", `via ${review.source}`, "rw-review__source"));
+        card.appendChild(text("span", `${t("via")} ${review.source}`, "rw-review__source"));
       }
 
       list.appendChild(card);
@@ -131,10 +135,9 @@ export function renderWidget(
     const disclaimer = el("div", "rw-disclaimer");
     const ehlRow = el("div", "rw-disclaimer__ehl");
     ehlRow.appendChild(createEqualHousingLenderSVG(16));
-    ehlRow.appendChild(document.createTextNode("Equal Housing Lender"));
+    ehlRow.appendChild(document.createTextNode(t("equalHousingLender")));
     disclaimer.appendChild(ehlRow);
-    const defaultDisclaimer = "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.";
-    disclaimer.appendChild(text("div", content?.disclaimerText || defaultDisclaimer));
+    disclaimer.appendChild(text("div", content?.disclaimerText || t("defaultDisclaimer")));
     const nmlsLink = document.createElement("a");
     nmlsLink.href = "https://www.nmlsconsumeraccess.org";
     nmlsLink.target = "_blank";
@@ -150,7 +153,7 @@ export function renderWidget(
   // Branding
   if (content?.showBranding !== false) {
     const branding = el("div", "rw-branding");
-    branding.textContent = "Powered by ";
+    branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
     link.href = "https://repwell.com";
     link.target = "_blank";
@@ -166,6 +169,6 @@ export function renderWidget(
 export function renderError(root: ShadowRoot, message?: string): void {
   const err = el("div", "rw-error");
   err.setAttribute("role", "alert");
-  err.textContent = message ?? "Unable to load reviews. Please try again later.";
+  err.textContent = message ?? t("unableToLoadReviews");
   root.appendChild(err);
 }

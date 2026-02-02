@@ -5,6 +5,10 @@
 
 import type { WidgetThemeColors, WidgetThemeLayout, WidgetThemeTypography } from "../types";
 import { applyTheme as applyThemeEngine } from "../styles/theme-engine";
+import {
+  formatAbsoluteDate as formatAbsoluteDateI18n,
+  formatRelativeDate as formatRelativeDateI18n,
+} from "../i18n/date-formatter";
 
 const STAR_PATH =
   "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z";
@@ -48,29 +52,11 @@ export function truncateText(str: string, max: number): { text: string; truncate
 }
 
 export function formatAbsoluteDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
+  return formatAbsoluteDateI18n(dateStr);
 }
 
 export function formatRelativeDate(dateStr: string): string {
-  try {
-    const diffDays = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-  } catch {
-    return dateStr;
-  }
+  return formatRelativeDateI18n(dateStr);
 }
 
 /**

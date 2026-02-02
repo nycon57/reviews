@@ -7,6 +7,7 @@
 import type { PublicWidgetConfig, PublicReview } from "../../types";
 import { trackClick } from "../../core/event-tracker";
 import { el, text } from "../../core/dom-helpers";
+import { t } from "../../i18n";
 import { buildReviewCard } from "../company-review/template";
 import { CarouselEngine } from "./carousel-engine";
 import { applyTransition, type TransitionMode } from "./transitions";
@@ -42,7 +43,7 @@ export function buildReviewCarouselDOM(
 
   const container = el("div", "rw-carousel");
   container.setAttribute("role", "region");
-  container.setAttribute("aria-label", content?.headerText ?? "Customer Reviews");
+  container.setAttribute("aria-label", content?.headerText ?? t("customerReviews"));
   container.setAttribute("aria-roledescription", "carousel");
 
   const starFilled = colors?.starFilled ?? "#f59e0b";
@@ -55,7 +56,7 @@ export function buildReviewCarouselDOM(
   }
 
   if (reviews.length === 0) {
-    container.appendChild(text("div", "No reviews yet.", "rw-empty"));
+    container.appendChild(text("div", t("noReviewsYet"), "rw-empty"));
     return container;
   }
 
@@ -112,14 +113,14 @@ export function buildReviewCarouselDOM(
     const prevBtn = document.createElement("button");
     prevBtn.className = "rw-carousel__arrow rw-carousel__arrow--prev";
     prevBtn.type = "button";
-    prevBtn.setAttribute("aria-label", "Previous reviews");
+    prevBtn.setAttribute("aria-label", t("previousReviews"));
     prevBtn.appendChild(createArrowSVG("left"));
     prevBtn.addEventListener("click", () => engine.prev());
 
     const nextBtn = document.createElement("button");
     nextBtn.className = "rw-carousel__arrow rw-carousel__arrow--next";
     nextBtn.type = "button";
-    nextBtn.setAttribute("aria-label", "Next reviews");
+    nextBtn.setAttribute("aria-label", t("nextReviews"));
     nextBtn.appendChild(createArrowSVG("right"));
     nextBtn.addEventListener("click", () => engine.next());
 
@@ -152,14 +153,14 @@ export function buildReviewCarouselDOM(
   if (showDots && dotCount > 1) {
     const dotsNav = el("div", "rw-carousel__dots");
     dotsNav.setAttribute("role", "tablist");
-    dotsNav.setAttribute("aria-label", "Review slides");
+    dotsNav.setAttribute("aria-label", t("reviewSlides"));
 
     for (let i = 0; i < dotCount; i++) {
       const dot = document.createElement("button");
       dot.className = `rw-carousel__dot${i === 0 ? " rw-carousel__dot--active" : ""}`;
       dot.type = "button";
       dot.setAttribute("role", "tab");
-      dot.setAttribute("aria-label", `Go to slide ${i + 1}`);
+      dot.setAttribute("aria-label", t("goToSlide", { n: i + 1 }));
       dot.setAttribute("aria-selected", String(i === 0));
       dot.addEventListener("click", () => engine.goTo(i, "dot"));
       dotsNav.appendChild(dot);
@@ -227,9 +228,9 @@ export function buildReviewCarouselDOM(
   if (content?.showDisclaimer) {
     const disclaimer = el("div", "rw-carousel__disclaimer");
     const ehl = el("div", "rw-carousel__disclaimer-ehl");
-    ehl.textContent = "Equal Housing Lender";
+    ehl.textContent = t("equalHousingLender");
     disclaimer.appendChild(ehl);
-    disclaimer.appendChild(text("div", content.disclaimerText || "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.", "rw-carousel__disclaimer-text"));
+    disclaimer.appendChild(text("div", content.disclaimerText || t("defaultDisclaimer"), "rw-carousel__disclaimer-text"));
     const nmlsLink = document.createElement("a");
     nmlsLink.className = "rw-carousel__disclaimer-nmls";
     nmlsLink.href = "https://www.nmlsconsumeraccess.org";
@@ -243,7 +244,7 @@ export function buildReviewCarouselDOM(
   // Branding
   if (content?.showBranding !== false) {
     const branding = el("div", "rw-carousel__branding");
-    branding.textContent = "Powered by ";
+    branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
     link.href = "https://repwell.com";
     link.target = "_blank";

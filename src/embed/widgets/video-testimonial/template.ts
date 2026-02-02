@@ -12,6 +12,7 @@ import type {
 } from "../../types";
 import { el, text, starSVG, getInitials } from "../../core/dom-helpers";
 import { createEqualHousingLenderSVG } from "../../assets/equal-housing-lender";
+import { t } from "../../i18n";
 import { buildVideoPlayer } from "./player";
 import { buildTranscript } from "./transcript";
 
@@ -117,7 +118,7 @@ function buildVideoItem(
   if (testimonial.rating > 0) {
     const starsWrap = el("div", "rw-vt__stars");
     starsWrap.setAttribute("role", "img");
-    starsWrap.setAttribute("aria-label", `${testimonial.rating} out of 5 stars`);
+    starsWrap.setAttribute("aria-label", t("starsAriaLabel", { rating: testimonial.rating }));
     for (let i = 1; i <= 5; i++) {
       starsWrap.appendChild(starSVG(i <= testimonial.rating, starFilled, starEmpty));
     }
@@ -190,7 +191,7 @@ export function buildVideoTestimonialDOM(
   container.setAttribute("role", "region");
   container.setAttribute(
     "aria-label",
-    content?.headerText ?? "Video Testimonials",
+    content?.headerText ?? t("videoTestimonials"),
   );
 
   const starFilled = colors?.starFilled ?? "#f59e0b";
@@ -203,7 +204,7 @@ export function buildVideoTestimonialDOM(
 
   if (testimonials.length === 0) {
     container.appendChild(
-      text("div", "No video testimonials available.", "rw-empty"),
+      text("div", t("noVideoTestimonials"), "rw-empty"),
     );
   } else {
     const listContainer = el(
@@ -230,10 +231,9 @@ export function buildVideoTestimonialDOM(
     const disclaimer = el("div", "rw-vt__disclaimer");
     const ehl = el("div", "rw-vt__disclaimer-ehl");
     ehl.appendChild(createEqualHousingLenderSVG(18));
-    ehl.appendChild(document.createTextNode("Equal Housing Lender"));
+    ehl.appendChild(document.createTextNode(t("equalHousingLender")));
     disclaimer.appendChild(ehl);
-    const defaultDisclaimer =
-      "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.";
+    const defaultDisclaimer = t("defaultDisclaimer");
     disclaimer.appendChild(
       text(
         "div",
@@ -254,7 +254,7 @@ export function buildVideoTestimonialDOM(
   // Branding footer
   if (content?.showBranding !== false) {
     const branding = el("div", "rw-branding");
-    branding.textContent = "Powered by ";
+    branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
     link.href = "https://repwell.com";
     link.target = "_blank";

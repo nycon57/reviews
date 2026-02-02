@@ -4,6 +4,7 @@ import type { PublicReview, PublicWidgetConfig, WidgetInstance } from "../../typ
 import { applyFilterChange, resetFilters } from "./filter-engine";
 import type { FilterEngineContext } from "./filter-engine";
 import { FILTER_STYLES } from "./filter-styles";
+import { t } from "../../i18n";
 
 export interface FilterControlsOptions {
   instance: WidgetInstance;
@@ -13,10 +14,18 @@ export interface FilterControlsOptions {
   renderReviews: (reviews: PublicReview[]) => void;
 }
 
-const R_OPTS: [string, number][] = [["All", 0], ["5\u2605", 5], ["4\u2605+", 4], ["3\u2605+", 3]];
-const S_OPTS: [string, string][] = [["Newest", "newest"], ["Oldest", "oldest"], ["Highest", "highest"], ["Lowest", "lowest"]];
-const L_TYPES = ["Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional"];
-const D_OPTS: [string, string][] = [["All Time", ""], ["30 Days", "last_30d"], ["90 Days", "last_90d"], ["Year", "last_year"]];
+function getRatingOpts(): [string, number][] {
+  return [[t("all"), 0], ["5\u2605", 5], ["4\u2605+", 4], ["3\u2605+", 3]];
+}
+function getSortOpts(): [string, string][] {
+  return [[t("newest"), "newest"], [t("oldest"), "oldest"], [t("highest"), "highest"], [t("lowest"), "lowest"]];
+}
+function getLoanTypes(): string[] {
+  return [t("loanTypePurchase"), t("loanTypeRefinance"), t("loanTypeVA"), t("loanTypeFHA"), t("loanTypeJumbo"), t("loanTypeUSDA"), t("loanTypeConventional")];
+}
+function getDateOpts(): [string, string][] {
+  return [[t("allTime"), ""], [t("thirtyDays"), "last_30d"], [t("ninetyDays"), "last_90d"], [t("year"), "last_year"]];
+}
 
 export function buildFilterControls(opts: FilterControlsOptions): HTMLElement {
   const { instance, config, apiBase, reviewsContainer, renderReviews } = opts;
@@ -27,7 +36,7 @@ export function buildFilterControls(opts: FilterControlsOptions): HTMLElement {
   const toolbar = document.createElement("div");
   toolbar.className = "rw-filter-toolbar";
   toolbar.setAttribute("role", "toolbar");
-  toolbar.setAttribute("aria-label", "Filter reviews");
+  toolbar.setAttribute("aria-label", t("filterReviews"));
 
   const ctx: FilterEngineContext = {
     instance,
@@ -79,9 +88,9 @@ function buildRatingFilter(toolbar: HTMLElement, ctx: FilterEngineContext): void
   const group = document.createElement("div");
   group.className = "rw-filter-stars";
   group.setAttribute("role", "group");
-  group.setAttribute("aria-label", "Minimum rating");
+  group.setAttribute("aria-label", t("minimumRating"));
 
-  for (const [label, value] of R_OPTS) {
+  for (const [label, value] of getRatingOpts()) {
     const btn = document.createElement("button");
     btn.className = "rw-filter-star-btn";
     btn.textContent = label;
@@ -108,9 +117,9 @@ function buildSortDropdown(
 ): void {
   const select = document.createElement("select");
   select.className = "rw-filter-select";
-  select.setAttribute("aria-label", "Sort reviews");
+  select.setAttribute("aria-label", t("sortReviews"));
 
-  for (const [label, value] of S_OPTS) {
+  for (const [label, value] of getSortOpts()) {
     const o = document.createElement("option");
     o.value = value; o.textContent = label;
     select.appendChild(o);
@@ -134,11 +143,11 @@ function buildSourceDropdown(
 ): void {
   const select = document.createElement("select");
   select.className = "rw-filter-select";
-  select.setAttribute("aria-label", "Filter by source");
+  select.setAttribute("aria-label", t("filterBySource"));
 
   const allOpt = document.createElement("option");
   allOpt.value = "";
-  allOpt.textContent = "All Sources";
+  allOpt.textContent = t("allSources");
   select.appendChild(allOpt);
 
   for (const src of sources) {
@@ -162,9 +171,9 @@ function buildLoanTypePills(toolbar: HTMLElement, ctx: FilterEngineContext): voi
   const group = document.createElement("div");
   group.className = "rw-filter-pills";
   group.setAttribute("role", "group");
-  group.setAttribute("aria-label", "Loan type");
+  group.setAttribute("aria-label", t("loanType"));
 
-  for (const lt of L_TYPES) {
+  for (const lt of getLoanTypes()) {
     const pill = document.createElement("button");
     pill.className = "rw-filter-pill";
     pill.textContent = lt;
@@ -193,9 +202,9 @@ function buildDateRangeDropdown(
 ): void {
   const select = document.createElement("select");
   select.className = "rw-filter-select";
-  select.setAttribute("aria-label", "Filter by date range");
+  select.setAttribute("aria-label", t("filterByDateRange"));
 
-  for (const [label, value] of D_OPTS) {
+  for (const [label, value] of getDateOpts()) {
     const o = document.createElement("option");
     o.value = value; o.textContent = label;
     select.appendChild(o);
@@ -219,8 +228,8 @@ function buildKeywordSearch(
   const input = document.createElement("input");
   input.type = "text";
   input.className = "rw-filter-search";
-  input.placeholder = "Search reviews\u2026";
-  input.setAttribute("aria-label", "Search reviews by keyword");
+  input.placeholder = t("searchReviews");
+  input.setAttribute("aria-label", t("searchByKeyword"));
 
   // Set initial value if keywords exist
   const currentKeywords = ctx.instance.activeFilters.keywords;
@@ -264,12 +273,12 @@ function showEmptyState(container: HTMLElement, ctx: FilterEngineContext): void 
   empty.className = "rw-filter-empty";
 
   const msg = document.createElement("p");
-  msg.textContent = "No reviews match your filters.";
+  msg.textContent = t("noReviewsMatch");
   empty.appendChild(msg);
 
   const resetBtn = document.createElement("button");
   resetBtn.className = "rw-filter-reset-btn";
-  resetBtn.textContent = "Reset Filters";
+  resetBtn.textContent = t("resetFilters");
   resetBtn.type = "button";
   resetBtn.addEventListener("click", () => {
     resetFilters(ctx);

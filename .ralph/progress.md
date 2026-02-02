@@ -16501,3 +16501,37 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Code simplifier correctly identified repeated markup patterns and nested ternaries as simplification targets
   - embed.js gzip budget (34KB) is exceeded pre-existing (~35.4KB) - not an S161 issue
 ---
+
+## [2026-02-01 21:46] - S161: Widget Version History & Rollback
+Thread: 
+Run: 20260201-214510-81942 (iteration 1)
+Pass: 3/3 - Polish & Finalize (verification)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-214510-81942-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-214510-81942-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (all 3 passes already committed; this is a verification run)
+- Post-commit status: uncommitted changes exist from other stories (i18n), not S161
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none (verification pass only)
+- Verification:
+  - Command: npx next build -> PASS
+  - Command: npm run lint (S161 files) -> PASS (0 errors in S161 files)
+- Files changed:
+  - (none - verification only)
+- S161 was fully implemented in Pass 1, quality-reviewed in Pass 2, and polished in Pass 3. This run verified all passes are complete.
+- **Learnings for future iterations:**
+  - All 3 passes were already completed before this run
+  - embed.js gzip budget (34KB) exceeded is pre-existing, not S161-related
+  - 10 pre-existing lint errors in non-S161 files
+---

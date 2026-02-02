@@ -7438,7 +7438,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "in_progress",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7470,9 +7470,7 @@
           "Validation re-runs on every widget config save to keep status current"
         ]
       },
-      "startedAt": "2026-02-02T02:19:57.881219+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-02-02T02:19:57.881414+00:00"
+      "updatedAt": "2026-02-02T02:45:08.741563+00:00"
     },
     {
       "id": "S161",
@@ -7495,7 +7493,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "blocked",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7527,7 +7525,8 @@
           "Rollback is always forward (creates new version) to maintain audit trail",
           "JSONB diff algorithm: deep object comparison with path-based change tracking"
         ]
-      }
+      },
+      "updatedAt": "2026-02-02T02:50:11.703705+00:00"
     },
     {
       "id": "S162",
@@ -7552,7 +7551,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "open",
+      "status": "in_progress",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7581,7 +7580,10 @@
           "Date formatting uses Intl.DateTimeFormat and Intl.RelativeTimeFormat (native browser APIs, no library)",
           "NMLS text explicitly excluded from translation per regulatory guidance"
         ]
-      }
+      },
+      "startedAt": "2026-02-02T02:50:13.970758+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-02-02T02:50:13.971002+00:00"
     },
     {
       "id": "S163",

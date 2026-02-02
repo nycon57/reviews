@@ -22,6 +22,7 @@ import { DomainNotAllowedError, fetchWithDomainCheck } from "./core/domain-check
 import { resolveAbVariant, clearAbAssignment } from "./core/ab-resolver";
 import { injectStructuredData, removeStructuredData } from "./seo/structured-data";
 import { setInstanceForRoot } from "./widgets/registry";
+import { setLocale } from "./i18n";
 
 // Widget type registrations (self-register on import)
 import "./widgets/lo-review";
@@ -102,6 +103,9 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     );
     if (controller.signal.aborted) return;
     instance.reviews = data.reviews;
+
+    // Set locale from widget config before rendering
+    setLocale(finalConfig.config?.content?.language ?? "en");
 
     // Load Google Font inside Shadow DOM if a non-system font is selected
     loadGoogleFontInShadow(instance.shadowRoot, finalConfig.config?.theme?.typography?.fontFamily);

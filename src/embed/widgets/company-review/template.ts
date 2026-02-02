@@ -28,13 +28,14 @@ import {
 } from "../../core/dom-helpers";
 import { createEqualHousingLenderSVG, createHouseIconSVG } from "../../assets/equal-housing-lender";
 import { buildFilterControls } from "../shared/filter-controls";
+import { t } from "../../i18n";
 
 // ── Shared Helpers (exported for branch-review) ─────────────────────
 
 export function starsRow(rating: number, filledColor: string, emptyColor: string, className: string): HTMLElement {
   const row = el("div", className);
   row.setAttribute("role", "img");
-  row.setAttribute("aria-label", `${rating} out of 5 stars`);
+  row.setAttribute("aria-label", t("starsAriaLabel", { rating }));
   for (let i = 1; i <= 5; i++) {
     row.appendChild(starSVG(i <= rating, filledColor, emptyColor));
   }
@@ -111,7 +112,7 @@ function buildOrgHeader(
     ratingRow.appendChild(text("span", profile.average_rating.toFixed(1), "rw-co-header__rating-value"));
     ratingRow.appendChild(starsRow(Math.round(profile.average_rating), starFilled, starEmpty, "rw-co-header__stars"));
     if (profile.total_reviews != null) {
-      ratingRow.appendChild(text("span", `${profile.total_reviews} review${profile.total_reviews === 1 ? "" : "s"}`, "rw-co-header__rating-count"));
+      ratingRow.appendChild(text("span", `${profile.total_reviews} ${profile.total_reviews === 1 ? t("review") : t("reviews")}`, "rw-co-header__rating-count"));
     }
     info.appendChild(ratingRow);
   }
@@ -130,7 +131,7 @@ export function buildRatingDistribution(
 ): HTMLElement {
   const section = el("div", "rw-co-distribution");
   section.setAttribute("role", "figure");
-  section.setAttribute("aria-label", "Rating distribution");
+  section.setAttribute("aria-label", t("ratingDistribution"));
 
   for (let star = 5; star >= 1; star--) {
     const count = distribution[star as keyof RatingDistribution] ?? 0;
@@ -163,7 +164,7 @@ export function buildSourceBreakdown(
   starEmpty: string
 ): HTMLElement {
   const section = el("div", "rw-co-sources");
-  section.appendChild(text("h4", "Reviews by Source", "rw-co-sources__title"));
+  section.appendChild(text("h4", t("reviewsBySource"), "rw-co-sources__title"));
 
   const list = el("div", "rw-co-sources__list");
   for (const src of sources) {
@@ -176,7 +177,7 @@ export function buildSourceBreakdown(
     info.appendChild(text("span", SOURCE_LABELS[src.source] ?? src.source, "rw-co-sources__name"));
 
     const meta = el("span", "rw-co-sources__meta");
-    meta.textContent = `${src.count} reviews \u00B7 ${src.average.toFixed(1)} avg`;
+    meta.textContent = `${src.count} ${src.count === 1 ? t("review") : t("reviews")} \u00B7 ${src.average.toFixed(1)} ${t("avgSuffix")}`;
     info.appendChild(meta);
     item.appendChild(info);
 
@@ -200,12 +201,12 @@ export function buildSortControls(
 ): HTMLElement {
   const section = el("div", "rw-co-filters");
   section.setAttribute("role", "toolbar");
-  section.setAttribute("aria-label", "Sort reviews");
+  section.setAttribute("aria-label", t("sortReviews"));
 
   const options: { value: SortOption; label: string }[] = [
-    { value: "newest", label: "Most Recent" },
-    { value: "highest", label: "Highest Rated" },
-    { value: "lowest", label: "Lowest Rated" },
+    { value: "newest", label: t("mostRecent") },
+    { value: "highest", label: t("highestRated") },
+    { value: "lowest", label: t("lowestRated") },
   ];
 
   for (const opt of options) {
@@ -237,7 +238,7 @@ export function buildReviewCard(
   const cardStyle = content?.cardStyle ?? "bordered";
   const card = el("div", `rw-co-review rw-co-review--${safeClassName(cardStyle)}`);
   card.setAttribute("role", "article");
-  card.setAttribute("aria-label", `Review by ${review.reviewer_name ?? "Anonymous"}`);
+  card.setAttribute("aria-label", t("reviewByAriaLabel", { name: review.reviewer_name ?? t("anonymous") }));
 
   const header = el("div", "rw-co-review__header");
   if (content?.showAvatar !== false) {
@@ -285,7 +286,7 @@ export function buildReviewCard(
   const tags = el("div", "rw-co-review__tags");
   let hasTags = false;
   if (content?.showSource !== false && review.source) {
-    tags.appendChild(text("span", `via ${SOURCE_LABELS[review.source] ?? review.source}`, "rw-co-review__source"));
+    tags.appendChild(text("span", `${t("via")} ${SOURCE_LABELS[review.source] ?? review.source}`, "rw-co-review__source"));
     hasTags = true;
   }
   if (review.loan_type) {
@@ -295,12 +296,12 @@ export function buildReviewCard(
   if (review.first_time_homebuyer) {
     const fthb = el("span", "rw-co-review__fthb-badge");
     fthb.appendChild(createHouseIconSVG(11));
-    fthb.appendChild(document.createTextNode("First-Time Buyer"));
+    fthb.appendChild(document.createTextNode(t("firstTimeBuyer")));
     tags.appendChild(fthb);
     hasTags = true;
   }
   if (review.loan_officer_name) {
-    tags.appendChild(text("span", `LO: ${review.loan_officer_name}`, "rw-co-review__lo-attr"));
+    tags.appendChild(text("span", `${t("lo")} ${review.loan_officer_name}`, "rw-co-review__lo-attr"));
     hasTags = true;
   }
   if (hasTags) card.appendChild(tags);
@@ -383,7 +384,7 @@ export function appendWidgetFooter(
     if (content?.showWriteReview && content.writeReviewUrl) {
       const w = document.createElement("a");
       w.className = "rw-co-actions__write-review";
-      w.textContent = "Write a Review";
+      w.textContent = t("writeReview");
       w.href = content.writeReviewUrl;
       w.target = "_blank";
       w.rel = "noopener noreferrer";
@@ -397,9 +398,9 @@ export function appendWidgetFooter(
     const disclaimer = el("div", "rw-co-disclaimer");
     const ehl = el("div", "rw-co-disclaimer__ehl");
     ehl.appendChild(createEqualHousingLenderSVG(18));
-    ehl.appendChild(document.createTextNode("Equal Housing Lender"));
+    ehl.appendChild(document.createTextNode(t("equalHousingLender")));
     disclaimer.appendChild(ehl);
-    disclaimer.appendChild(text("div", content.disclaimerText || "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.", "rw-co-disclaimer__text"));
+    disclaimer.appendChild(text("div", content.disclaimerText || t("defaultDisclaimer"), "rw-co-disclaimer__text"));
     const nmlsLink = document.createElement("a");
     nmlsLink.className = "rw-co-disclaimer__nmls-link";
     nmlsLink.href = "https://www.nmlsconsumeraccess.org";
@@ -412,7 +413,7 @@ export function appendWidgetFooter(
 
   if (content?.showBranding !== false) {
     const branding = el("div", "rw-branding");
-    branding.textContent = "Powered by ";
+    branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
     link.href = "https://repwell.com";
     link.target = "_blank";
@@ -497,7 +498,7 @@ export function buildReviewListSection(
 
   if (reviews.length === 0) {
     if (emptyNode) container.appendChild(emptyNode);
-    else container.appendChild(text("div", "No reviews yet.", "rw-empty"));
+    else container.appendChild(text("div", t("noReviewsYet"), "rw-empty"));
     return;
   }
 
@@ -507,7 +508,7 @@ export function buildReviewListSection(
   if (currentReviews.length > perPage) {
     loadMoreBtn = document.createElement("button");
     loadMoreBtn.className = "rw-co-load-more";
-    loadMoreBtn.textContent = "Load More Reviews";
+    loadMoreBtn.textContent = t("loadMore");
     loadMoreBtn.type = "button";
     loadMoreBtn.addEventListener("click", () => {
       visibleCount = Math.min(visibleCount + perPage, currentReviews.length);

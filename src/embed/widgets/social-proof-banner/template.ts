@@ -18,6 +18,7 @@ import {
   formatRelativeDate,
 } from "../../core/dom-helpers";
 import { trackClick } from "../../core/event-tracker";
+import { t } from "../../i18n";
 import { registerTrigger } from "./trigger-engine";
 import {
   shouldShow,
@@ -75,7 +76,7 @@ function buildCloseButton(
 ): HTMLButtonElement {
   const btn = document.createElement("button");
   btn.className = "rw-spb-close";
-  btn.setAttribute("aria-label", "Dismiss banner");
+  btn.setAttribute("aria-label", t("dismissBanner"));
   btn.appendChild(closeSVG());
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -110,7 +111,7 @@ function buildNotificationCard(
   const name = text("span", review.reviewer_name ?? "Anonymous", "rw-spb-notification__name");
   header.appendChild(name);
   if (review.loan_officer_name) {
-    const lo = text("span", `for ${review.loan_officer_name}`, "rw-spb-notification__lo");
+    const lo = text("span", `${t("for")} ${review.loan_officer_name}`, "rw-spb-notification__lo");
     header.appendChild(lo);
   }
   body.appendChild(header);
@@ -205,13 +206,13 @@ function buildCounterBar(ctx: BannerContext): HTMLElement {
   // Text
   const countText = text(
     "span",
-    `average from ${totalReviews.toLocaleString()} reviews`,
+    t("averageFromCount", { count: totalReviews.toLocaleString() }),
     "rw-spb-counter__text"
   );
   bar.appendChild(countText);
 
   // CTA
-  const ctaText = ctx.spb.ctaText ?? "Read Reviews";
+  const ctaText = ctx.spb.ctaText ?? t("readReviews");
   const ctaUrl = ctx.spb.ctaUrl;
   if (ctaUrl && (ctaUrl.startsWith("http://") || ctaUrl.startsWith("https://"))) {
     const cta = document.createElement("a");

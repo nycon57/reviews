@@ -180,13 +180,13 @@ describe("LO Review Widget", () => {
     expect(tagTexts).toContain("VA");
   });
 
-  it("renders First-Time Homebuyer badge on applicable reviews", async () => {
+  it("renders First-Time Buyer badge on applicable reviews", async () => {
     const { buildLoReviewDOM } = await import("../widgets/lo-review/template");
     const dom = buildLoReviewDOM(mockConfig, mockReviews, "https://api.test");
 
     const fthbBadges = dom.querySelectorAll(".rw-lo-review__fthb-badge");
     expect(fthbBadges).toHaveLength(1);
-    expect(fthbBadges[0].textContent).toContain("First-Time Homebuyer");
+    expect(fthbBadges[0].textContent).toContain("First-Time Buyer");
   });
 
   it("renders disclaimer when showDisclaimer is true", async () => {

@@ -272,7 +272,7 @@ describe("Company Review Widget", () => {
 
     const fthbBadges = dom.querySelectorAll(".rw-co-review__fthb-badge");
     expect(fthbBadges.length).toBeGreaterThanOrEqual(1);
-    expect(fthbBadges[0].textContent).toContain("First-Time Homebuyer");
+    expect(fthbBadges[0].textContent).toContain("First-Time Buyer");
   });
 
   it("truncates review text per config", async () => {

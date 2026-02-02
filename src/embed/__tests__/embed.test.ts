@@ -581,7 +581,7 @@ describe("LO Review Widget", () => {
 
     const fthb = shadow.querySelectorAll(".rw-lo-review__fthb-badge");
     expect(fthb).toHaveLength(1);
-    expect(fthb[0].textContent).toBe("First-Time Homebuyer");
+    expect(fthb[0].textContent).toBe("First-Time Buyer");
   });
 
   it("renders star ratings correctly", async () => {

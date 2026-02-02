@@ -16293,3 +16293,50 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Inline resize logic within pointer move handler to avoid forward reference
   - Existing element coordinates are fractional (0-1) representing % of canvas, not pixels
 ---
+
+## [2026-02-01] - S159: Social Graphic Export & Social Publishing
+Thread: 
+Run: 20260201-211455-33800 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-211455-33800-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-211455-33800-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 30fb025 [Pass 2/3] fix(S159): Security and quality improvements for Social Graphic Export & Publishing
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (manual review)
+  - /vercel-react-best-practices: yes (applied during review)
+  - /next-best-practices: yes (applied during review)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit -> PASS
+  - Command: npx eslint (S159 files) -> PASS
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (0 errors in S159 files; pre-existing errors in other files)
+- Files changed:
+  - src/lib/social-graphics/actions.ts (exported getAuthedContext)
+  - src/lib/social-graphics/render-actions.ts (security + type fixes)
+  - src/lib/social-graphics/publish-actions.ts (security + validation fixes)
+  - src/components/social-graphics/export-dialog.tsx (image rendering + type fixes)
+- What was implemented:
+  - **Security (HIGH)**: Added organization ownership verification to uploadRenderedGraphic, getRenderStatus, getDownloadUrl, publishToSocial, schedulePost — previously any authenticated user could operate on any graphic by ID
+  - **Security (MEDIUM)**: Added status check before retry — previously any post could be retried regardless of status
+  - **DRY**: Extracted and reused shared `getAuthedContext` from actions.ts instead of duplicating `getAuthedOrgId` in render-actions.ts and publish-actions.ts
+  - **Type safety**: Removed all `as never` type casts in render-actions.ts — the enum types (`render_status`) are properly defined and don't need force-casting
+  - **Validation**: Added schedule date validation (must be in the future, must be valid date) and platform count validation (at least one platform required)
+  - **Bug fix**: Added image element rendering in export dialog — `image` type elements were completely ignored during canvas export, now supports cover/contain/fill with fallback placeholder
+  - **Error handling**: Improved failed publish error handling — instead of attempting a second database insert on failure, returns a client-side error object
+- **Learnings for future iterations:**
+  - The `createUntypedAdminClient` is used for `social_posts` table which isn't in generated types — consider running `npm run db:types` to regenerate
+  - All org-scoped queries should include `.eq("organization_id", orgId)` for multi-tenant security — easy to miss on first pass
+  - Canvas 2D API browser globals (`Image`, `CanvasTextDrawingStyles`) need eslint-disable comments due to the no-undef rule
+  - The `as never` pattern is a code smell — if types don't match, fix the types or use the untyped client
+---

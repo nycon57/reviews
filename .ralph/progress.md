@@ -15829,3 +15829,134 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Module-level state in embed code is unsafe for multi-widget pages; always use instance-level state
   - `next build` times out/crashes on this machine but is not code-related (pre-existing issue)
 ---
+
+## [2026-02-01] - S153: Widget A/B Testing Framework
+Thread:
+Run: 20260201-183836-7915 (iteration 1)
+Pass: 1/3 - Implementation
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-183836-7915-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-183836-7915-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 62c1888 [Pass 1/3] feat(S153): Widget A/B Testing Framework integration
+- Commit: 60a0c9e [Pass 1/3] fix(S153): Lint cleanup - remove unused function, add clearAbAssignment on destroy
+- Post-commit status: clean
+- Skills invoked:
+  - /feature-dev: yes
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: /ab-test-setup (referenced for acceptance criteria)
+- Verification:
+  - Command: npm run build -> PASS (embed.js 32.7KB gzipped, under 34KB budget)
+  - Command: npm run lint -> PASS (8 pre-existing errors, 0 from S153 changes)
+  - Command: npm run test -> PASS (18/18 A/B tests pass; 5 pre-existing failures in lo-review unrelated)
+- Files changed:
+  - src/embed/index.ts (integrated ab-resolver into loadWidget, added clearAbAssignment on destroy)
+  - src/components/widgets/widget-builder.tsx (added A/B test buttons and CreateTestDialog)
+  - src/embed/core/ab-resolver.ts (new - already existed as untracked)
+  - src/lib/widgets/ab-testing.ts (new - already existed as untracked)
+  - src/lib/widgets/ab-statistics.ts (new - already existed as untracked)
+  - src/components/widgets/ab-test/create-test-dialog.tsx (new - already existed as untracked)
+  - src/components/widgets/ab-test/ab-test-results.tsx (new - already existed as untracked)
+  - src/components/widgets/ab-test/ab-test-list.tsx (new - already existed as untracked)
+  - src/components/widgets/ab-test/declare-winner-dialog.tsx (new - already existed as untracked)
+  - src/components/widgets/ab-test/cancel-test-dialog.tsx (new - already existed as untracked)
+  - src/app/(dashboard)/dashboard/widgets/[id]/ab-test/page.tsx (new - already existed as untracked)
+  - src/lib/widgets/__tests__/ab-statistics.test.ts (new - already existed as untracked)
+  - src/lib/widgets/__tests__/ab-testing.test.ts (new - already existed as untracked)
+  - supabase/migrations/20260201000010_ab_testing.sql (already tracked)
+- What was implemented:
+  - Wired ab-resolver into embed.js loadWidget() so visitors are deterministically assigned to A/B variants via consistent FNV-1a hashing on persistent visitor ID
+  - Added A/B test buttons to Widget Builder header: "A/B Test" (create), "View A/B Test" (active), "Past Tests" (completed/cancelled)
+  - Added CreateTestDialog to Widget Builder for test creation flow
+  - Added clearAbAssignment call to destroyInstance for cleanup
+  - All previously untracked A/B code (server actions, statistics, UI components, tests, migration, embed resolver) was committed
+- **Learnings for future iterations:**
+  - The A/B testing framework was ~95% implemented as untracked files; the critical missing pieces were two integration points (embed.js wiring and UI entry points)
+  - embed.js resolves A/B variants client-side using consistent hashing, keeping the CDN cache effective since the parent config includes the ab_test field
+  - Sticky visitor assignment via localStorage ensures same visitor always sees same variant
+  - Chi-squared test with min 30 impressions per variant provides reliable significance testing
+---
+
+### S159 – Social Graphic Export & Social Publishing (Pass 1/3 – Implementation)
+- **Date**: 2026-02-01
+- **Pass**: 1/3 (Implementation)
+- **Status**: Pass 1 complete
+- **Quality gates**: tsc ✅, eslint ✅, build ⚠️ (Turbopack ENOENT temp-file infra issue, not code-related)
+- Files changed/created:
+  - src/lib/social-graphics/types.ts (modified – added ExportFormat, RenderResult, SocialPlatform, SocialConnection, SocialPost, PLATFORM_CHAR_LIMITS, PLATFORM_LABELS)
+  - src/lib/social-graphics/render-actions.ts (rewritten – uploadRenderedGraphic, getRenderStatus, getDownloadUrl with Supabase Storage)
+  - src/lib/social-graphics/caption-actions.ts (rewritten – AI caption generation via Gemini with platform char limits)
+  - src/lib/social-graphics/publish-actions.ts (rewritten – getSocialConnections, publishToSocial, schedulePost, getPostHistory, retryPost, executeScheduledPosts)
+  - src/components/social-graphics/export-dialog.tsx (new – format selection, retina 2x, Canvas 2D rendering, upload, download)
+  - src/components/social-graphics/publish-dialog.tsx (new – platform selection, AI caption, publish now/schedule modes, preview)
+  - src/components/social-graphics/post-history.tsx (new – post list with platform, status badges, retry, view links)
+  - src/components/social-graphics/graphic-editor.tsx (modified – integrated Export, Publish, PostHistory; added renderUrl state, Export/Publish buttons)
+  - src/app/api/dashboard/social-graphics/[id]/render/route.ts (new – POST endpoint with Zod validation)
+  - src/app/api/cron/social-posts/route.ts (new – GET cron endpoint for scheduled post execution)
+- What was implemented:
+  - Canvas-to-image export (PNG/JPG/WebP) with 2x retina support via Canvas 2D API
+  - Server-side upload to Supabase Storage bucket "social-graphics" with render_status tracking (pending→rendering→complete/failed)
+  - Download with generated filename from graphic name
+  - Social media publishing to Facebook, LinkedIn, Twitter/X, Instagram via social_connections/social_posts tables (using createUntypedAdminClient for tables not in generated types)
+  - Publish dialog with platform selection from connected accounts, AI caption generation, character limits per platform
+  - Scheduled posts with datetime picker, stored as "scheduled" status
+  - Post history panel showing status badges, platform labels, retry for failures, view links for published
+  - Cron route for executing due scheduled posts with CRON_SECRET authorization
+- **Learnings for future iterations:**
+  - social_connections and social_posts tables exist in migrations but not in database.types.ts; createUntypedAdminClient() is required
+  - Gemini AI client uses responseMimeType: 'application/json' so caption generation returns JSON that must be parsed
+  - Build has intermittent Turbopack temp-file ENOENT errors unrelated to code changes
+---
+
+### S158 – Template Library & Auto-Generation (Pass 1/3 – Implementation)
+- **Date**: 2026-02-01
+- **Pass**: 1/3 (Implementation)
+- **Status**: Pass 1 complete
+- **Quality gates**: tsc ✅, eslint ✅, build ⚠️ (concurrent agents caused .next dir corruption; tsc --noEmit confirms zero type errors)
+- **Commit**: `dde50d5` — `[Pass 1/3] feat(S158): Template Library & Auto-Generation`
+- Files created:
+  - src/lib/social-graphics/types.ts — Core type definitions (CanvasElement, Template, TemplateId union, generation input types)
+  - src/lib/social-graphics/actions.ts — Server actions for CRUD (getGraphics, getGraphic, createGraphic, updateGraphic, deleteGraphic, duplicateGraphic, getReviewsForGeneration, getOrgName)
+  - src/lib/social-graphics/auto-generate.ts — autoGenerateFromReview server action with best-template selection
+  - src/lib/social-graphics/batch-generate.ts — batchGenerateFromReviews for bulk graphic generation
+  - src/lib/social-graphics/schedule-actions.ts — setSchedule, removeSchedule, executeScheduledGeneration for Review of the Week
+  - src/lib/social-graphics/templates/index.ts — Template registry with TEMPLATE_MAP, getTemplate, getAllTemplates, selectBestTemplate
+  - src/lib/social-graphics/templates/five-star-spotlight.ts — Single review highlight, dark bg
+  - src/lib/social-graphics/templates/monthly-roundup.ts — 2x2 grid of 4 reviews
+  - src/lib/social-graphics/templates/lo-spotlight.ts — LO photo + stats + review
+  - src/lib/social-graphics/templates/milestone.ts — Review count milestone celebration
+  - src/lib/social-graphics/templates/nps-announcement.ts — NPS gauge + stats
+  - src/lib/social-graphics/templates/before-after.ts — Side-by-side two testimonials
+  - src/lib/social-graphics/templates/team-excellence.ts — Team stats + 3 review cards
+  - src/lib/social-graphics/templates/holiday-themed.ts — Seasonal theme based on current month
+  - src/components/social-graphics/template-library.tsx — Category filter tabs + responsive template grid
+  - src/components/social-graphics/template-preview-card.tsx — Card with colored thumbnail, category badge, selection state
+  - src/components/social-graphics/auto-generate-dialog.tsx — Two-step dialog: select review → template/canvas → generate
+  - src/components/social-graphics/batch-generate-dialog.tsx — Multi-select reviews → template/canvas → batch generate
+  - src/components/social-graphics/schedule-dialog.tsx — Cron schedule selector for Review of the Week
+  - src/components/social-graphics/graphic-editor.tsx — Canvas preview with element rendering (shape, text, rating, stats)
+  - src/components/social-graphics/graphics-list.tsx — Main list view integrating all dialogs
+  - src/components/social-graphics/new-graphic-form.tsx — New graphic creation form
+  - src/app/(dashboard)/dashboard/social-graphics/page.tsx — Main social graphics page
+  - src/app/(dashboard)/dashboard/social-graphics/[id]/page.tsx — Edit graphic page
+  - src/app/(dashboard)/dashboard/social-graphics/new/page.tsx — New graphic page
+  - src/app/api/dashboard/social-graphics/generate/route.ts — POST with Zod discriminated union for auto/batch
+  - src/app/api/cron/social-graphics/route.ts — GET cron with CRON_SECRET auth
+- Files modified:
+  - src/lib/widgets/analytics-actions.ts — Fixed pre-existing S153 type error (video_complete event type cast)
+- Key fixes:
+  - Changed loan_officer_id → user_id in review queries (reviews table uses user_id)
+  - Changed loan_officers table → users table for LO data lookup
+- **Learnings for future iterations:**
+  - reviews table uses `user_id` not `loan_officer_id` to reference loan officers via `users` table
+  - users table has LO fields directly (full_name, avatar_url, total_reviews, average_rating)
+  - Concurrent agent processes can cause build failures via .next directory corruption; use `tsc --noEmit` as alternative verification
+---

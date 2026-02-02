@@ -757,7 +757,7 @@ function ContentTab({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="en">English</SelectItem>
-            <SelectItem value="es">Espa\u00f1ol (Spanish)</SelectItem>
+            <SelectItem value="es">{`Espa\u00f1ol (Spanish)`}</SelectItem>
           </SelectContent>
         </Select>
       </div>

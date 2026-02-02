@@ -9,9 +9,7 @@
 
 import { el, text } from "../core/dom-helpers";
 import { createEqualHousingLenderSVG } from "../assets/equal-housing-lender";
-
-const DEFAULT_DISCLAIMER =
-  "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.";
+import { t } from "../i18n";
 
 export interface ComplianceFooterOptions {
   /** CSS class prefix for the disclaimer container (e.g. "rw-lo-disclaimer" or "rw-co-disclaimer") */
@@ -33,11 +31,11 @@ export function buildComplianceFooter(
   // Equal Housing Lender line
   const ehl = el("div", `${classPrefix}__ehl`);
   ehl.appendChild(createEqualHousingLenderSVG(18));
-  ehl.appendChild(document.createTextNode("Equal Housing Lender"));
+  ehl.appendChild(document.createTextNode(t("equalHousingLender")));
   container.appendChild(ehl);
 
   // Disclaimer text
-  const disclaimerContent = disclaimerText || DEFAULT_DISCLAIMER;
+  const disclaimerContent = disclaimerText || t("defaultDisclaimer");
   container.appendChild(text("div", disclaimerContent, `${classPrefix}__text`));
 
   // NMLS Consumer Access link

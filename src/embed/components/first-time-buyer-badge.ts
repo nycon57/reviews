@@ -5,6 +5,7 @@
 
 import { el } from "../core/dom-helpers";
 import { createHouseIconSVG } from "../assets/equal-housing-lender";
+import { t } from "../i18n";
 
 /**
  * Build the first-time homebuyer badge element.
@@ -13,6 +14,6 @@ import { createHouseIconSVG } from "../assets/equal-housing-lender";
 export function buildFirstTimeBuyerBadge(className: string): HTMLElement {
   const badge = el("span", className);
   badge.appendChild(createHouseIconSVG(11));
-  badge.appendChild(document.createTextNode("First-Time Buyer"));
+  badge.appendChild(document.createTextNode(t("firstTimeBuyer")));
   return badge;
 }

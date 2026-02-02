@@ -60,8 +60,12 @@ function buildProfileHeader(profile: EntityProfile, config: PublicWidgetConfig, 
   if (nmlsBadge) info.appendChild(nmlsBadge);
 
   if (profile.licensing_states && profile.licensing_states.length > 0) {
-    const statesText = `${t("licensedIn")} ${profile.licensing_states.join(", ")}`;
-    info.appendChild(text("div", statesText, "rw-lo-profile__licensed-states"));
+    const statesRow = el("div", "rw-lo-profile__states");
+    statesRow.appendChild(text("span", t("licensedIn"), "rw-lo-profile__states-label"));
+    for (const state of profile.licensing_states) {
+      statesRow.appendChild(text("span", state, "rw-lo-profile__state-tag"));
+    }
+    info.appendChild(statesRow);
   }
 
   if (profile.average_rating != null) {

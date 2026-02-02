@@ -11,30 +11,48 @@ _No stories completed yet._
 ### S161: Widget Version History & Rollback
 - **Epic**: Widget System
 - **Priority**: P1
-- **Pass**: 1/3 (Implementation)
-- **Status**: Pass 1 Complete - Awaiting Pass 2
-- **Files Created**:
-  - `supabase/migrations/20260201000012_widget_config_versions.sql`
-  - `src/lib/widgets/config-diff.ts`
-  - `src/lib/widgets/version-actions.ts`
-  - `src/app/api/dashboard/widgets/[id]/versions/route.ts`
-  - `src/app/api/dashboard/widgets/[id]/rollback/[version]/route.ts`
-  - `src/components/widgets/version-history/version-list.tsx`
-  - `src/components/widgets/version-history/version-diff.tsx`
-  - `src/components/widgets/version-history/rollback-dialog.tsx`
-  - `src/lib/widgets/__tests__/config-diff.test.ts`
-  - `src/lib/widgets/__tests__/version-actions.test.ts`
-- **Files Modified**:
-  - `src/lib/widgets/actions.ts` (auto-snapshot on create/update)
-  - `src/components/widgets/widget-builder-sidebar.tsx` (History tab)
-- **Features**:
-  - Version snapshots auto-created on widget create/update
-  - Version history panel in sidebar with scrollable list
-  - JSONB field-level diff viewer (color-coded: green/red/amber)
-  - One-click rollback with confirmation dialog (non-destructive, creates new version)
-  - Auto-prune trigger keeps max 50 versions per widget
-  - API: GET /api/dashboard/widgets/:id/versions, POST /api/dashboard/widgets/:id/rollback/:version
-  - 23 passing tests (17 config-diff + 6 version-actions)
+- **Pass**: 2/3 (Quality Review)
+- **Status**: Pass 2 Complete - Awaiting Pass 3
+
+## [2026-02-01] - S161: Widget Version History & Rollback
+Thread:
+Run: 20260201-212500-50269 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-212500-50269-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-212500-50269-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: d17e5a1 [Pass 2/3] fix(S161): Security and quality improvements for Widget Version History & Rollback
+- Post-commit status: clean (3 untracked files from other stories)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer agent)
+  - /vercel-react-best-practices: yes (reviewed React components)
+  - /next-best-practices: yes (reviewed API routes)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (changed files) -> PASS (0 errors in S161 files)
+  - Command: npm run test -- --run src/lib/widgets/__tests__/ -> PASS (157 tests, 9 suites)
+- Files changed:
+  - src/lib/widgets/version-actions.ts (optimistic locking in rollbackToVersion)
+  - src/lib/widgets/actions.ts (improved version snapshot error handling)
+  - src/components/widgets/version-history/version-list.tsx (key prop on RollbackDialog)
+- Fixes applied:
+  - Added optimistic locking to rollbackToVersion: `.eq("version", currentVersion)` prevents concurrent overwrite race conditions
+  - Improved createVersionSnapshotInternal: returns boolean success/failure instead of silently swallowing all errors
+  - Added key prop to RollbackDialog to reset error state when switching between versions
+- **Learnings for future iterations:**
+  - Race conditions in concurrent update operations should always use optimistic locking with version checks
+  - Silent error swallowing in non-blocking operations should still return status for monitoring
+  - React component state persistence across prop changes can be handled with key prop forcing remount
+---
 
 ## In Progress
 

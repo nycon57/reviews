@@ -210,6 +210,7 @@ export function VersionList({
 
       {selectedForRollback && (
         <RollbackDialog
+          key={selectedForRollback.version}
           widgetConfigId={widgetConfigId}
           version={selectedForRollback}
           open={!!selectedForRollback}

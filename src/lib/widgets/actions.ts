@@ -37,7 +37,7 @@ async function createVersionSnapshotInternal(
   widgetData: WidgetConfig,
   prevConfig: Record<string, unknown> | null,
   changeNote?: string
-): Promise<void> {
+): Promise<boolean> {
   try {
     const currentConfig = (widgetData.config ?? {}) as Record<string, unknown>;
     let changeSummary = "Initial version";
@@ -47,7 +47,7 @@ async function createVersionSnapshotInternal(
       changeSummary = generateChangeSummary(diffs);
     }
 
-    await supabase.from("widget_config_versions").insert({
+    const { error } = await supabase.from("widget_config_versions").insert({
       widget_config_id: widgetConfigId,
       version: widgetData.version ?? 1,
       config: currentConfig as unknown as Json,
@@ -61,9 +61,16 @@ async function createVersionSnapshotInternal(
       change_note: changeNote ?? null,
       change_summary: changeSummary,
     });
+
+    if (error) {
+      console.error("Version snapshot insert failed:", error.message);
+      return false;
+    }
+    return true;
   } catch (err) {
     // Non-fatal: version snapshot failure should not block widget operations
     console.error("Version snapshot failed:", err);
+    return false;
   }
 }
 

@@ -302,10 +302,11 @@ export async function rollbackToVersion(
       return { success: false, error: "Target version not found" };
     }
 
-    const newVersionNumber = (widget.version ?? 1) + 1;
+    const currentVersion = widget.version ?? 1;
+    const newVersionNumber = currentVersion + 1;
 
-    // Update widget_configs with the restored config
-    const { error: updateError } = await supabase
+    // Update widget_configs with optimistic locking (version check prevents concurrent overwrites)
+    const { data: updatedRows, error: updateError } = await supabase
       .from("widget_configs")
       .update({
         config: targetVersionData.config,
@@ -319,10 +320,19 @@ export async function rollbackToVersion(
         updated_at: new Date().toISOString(),
       })
       .eq("id", widgetConfigId)
-      .eq("organization_id", ctx.data.organizationId);
+      .eq("organization_id", ctx.data.organizationId)
+      .eq("version", currentVersion)
+      .select("id");
 
     if (updateError) {
       return { success: false, error: updateError.message };
+    }
+
+    if (!updatedRows || updatedRows.length === 0) {
+      return {
+        success: false,
+        error: "Widget was modified by another user. Please refresh and try again.",
+      };
     }
 
     // Create a new version snapshot for the rollback

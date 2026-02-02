@@ -17049,3 +17049,50 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - The hooks module uses a key-based map pattern (widgetId:event -> Set<callback>) which is cleaner than nested maps
   - CodeMirror packages need @codemirror/view, @codemirror/state, @codemirror/lang-css, @codemirror/language, @codemirror/commands
 ---
+
+## [2026-02-01] - S164: Advanced Customization: Custom CSS Injection & JS Hooks
+Thread:
+Run: 20260201-225130-91588 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-225130-91588-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260201-225130-91588-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b8bae71 [Pass 2/3] fix(S164): Security and quality improvements for Custom CSS & JS Hooks
+- Post-commit status: clean (except .ralph/, .agents/ tracking files)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer agent)
+  - /vercel-react-best-practices: no (no new React components)
+  - /next-best-practices: no (no new pages/routes)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run test -- --run src/embed/__tests__/custom-css.test.ts src/embed/__tests__/hooks-api.test.ts -> PASS (30 tests)
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S164 files) -> PASS (0 errors, 2 pre-existing warnings)
+- Files changed:
+  - src/embed/core/css-sanitizer.ts (CSS normalization for unicode/comment bypass prevention, regex race fix)
+  - src/embed/core/event-tracker.ts (minor: direct export instead of separate export statement)
+  - src/embed/index.ts (configure() runtime validation whitelist, theme null check)
+  - src/lib/widgets/actions.ts (server-side CSS sanitization in createWidget/updateWidget)
+  - src/lib/widgets/css-validation.ts (regex lastIndex race fix)
+  - src/embed/__tests__/custom-css.test.ts (7 new tests for bypass detection, repeated calls)
+- What was implemented:
+  - **SECURITY FIX**: CSS sanitizer now normalizes input (strips CSS comments, decodes unicode escapes) before pattern matching, preventing obfuscation bypasses like `@\69mport` or `@im/**/port`
+  - **SECURITY FIX**: Added server-side CSS sanitization in createWidget and updateWidget actions for defense-in-depth
+  - **SECURITY FIX**: configure() now validates overrides against safe field whitelists with type checks and length limits
+  - **BUG FIX**: Fixed global regex lastIndex race condition where test() would advance lastIndex before replace(), causing missed matches
+  - **BUG FIX**: configure() now creates cfg.theme if it doesn't exist when applying theme color overrides
+  - Added 7 new test cases covering unicode escape bypasses, comment bypasses, and repeated-call state bugs
+- **Learnings for future iterations:**
+  - Global regex patterns with /g flag have stateful lastIndex — always reset before test() and replace()
+  - CSS sanitization must normalize unicode escapes and strip comments before pattern matching
+  - Client-side sanitization alone is insufficient — always add server-side validation (defense-in-depth)
+  - configure() public API must whitelist fields since TypeScript types don't enforce at runtime
+---

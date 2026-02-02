@@ -18,6 +18,7 @@ import {
   type DuplicateWidgetInput,
 } from "./schemas";
 import type { Json } from "@/types/database.types";
+import { sanitizeCustomCSS } from "@/embed/core/css-sanitizer";
 import type {
   ActionResult,
   PaginatedResult,
@@ -162,6 +163,12 @@ export async function createWidget(
     const ctx = await getAuthedUserContext(supabase);
     if (!ctx.success) return ctx;
 
+    // Server-side CSS sanitization (defense-in-depth)
+    if (validated.data.config?.advanced?.customCSS) {
+      const { sanitized } = sanitizeCustomCSS(validated.data.config.advanced.customCSS);
+      validated.data.config.advanced.customCSS = sanitized;
+    }
+
     const widgetId = await generateUniqueWidgetId(supabase, validated.data.name);
 
     const insertRow: WidgetConfigInsert = {
@@ -226,6 +233,12 @@ export async function updateWidget(
 
     if (fetchError || !existing) {
       return { success: false, error: "Widget not found" };
+    }
+
+    // Server-side CSS sanitization (defense-in-depth)
+    if (validated.data.config?.advanced?.customCSS) {
+      const { sanitized } = sanitizeCustomCSS(validated.data.config.advanced.customCSS);
+      validated.data.config.advanced.customCSS = sanitized;
     }
 
     // Merge config JSONB: deep-merge new config onto existing

@@ -15,17 +15,14 @@ const HOOK_EVENT_MAP: Record<string, "review-clicked" | "cta-clicked"> = {
 
 let sessionId: string | null = null;
 
-function getSessionId(): string {
+export function getSessionId(): string {
   if (!sessionId) {
-    // Simple random session ID (no crypto dependency for size)
     sessionId =
       Date.now().toString(36) +
       Math.random().toString(36).slice(2, 10);
   }
   return sessionId;
 }
-
-export { getSessionId };
 
 export function trackImpression(apiBase: string, widgetId: string): void {
   if (!canSendEvent(widgetId)) return;

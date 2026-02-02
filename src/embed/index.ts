@@ -330,19 +330,51 @@ function off(widgetId: string, event: HookEvent, callback: HookCallback): void {
   removeHookListener(widgetId, event, callback);
 }
 
+/** Safe color fields that configure() is allowed to override. */
+const SAFE_COLOR_KEYS = new Set([
+  "primary", "secondary", "background", "text", "accent", "border", "starFilled", "starEmpty",
+]);
+
+/** Safe content fields that configure() is allowed to override. */
+const SAFE_CONTENT_KEYS = new Set([
+  "showHeader", "showCTA", "ctaText", "ctaUrl", "showBranding", "showSource", "showDate", "showAvatar",
+]);
+
 function configure(widgetId: string, overrides: RuntimeOverrides): void {
+  if (!overrides || typeof overrides !== "object") return;
+
   const apiBase = api._apiBase;
   for (const instance of instances.values()) {
     if (instance.widgetId !== widgetId || !instance.config) continue;
     const cfg = instance.config.config;
     if (!cfg) continue;
-    if (overrides.theme?.colors) {
+
+    // Apply only safe color overrides
+    if (overrides.theme?.colors && typeof overrides.theme.colors === "object") {
       if (!cfg.theme) cfg.theme = {};
-      cfg.theme.colors = { ...cfg.theme.colors, ...overrides.theme.colors };
+      const safeColors: Record<string, string> = {};
+      for (const [k, v] of Object.entries(overrides.theme.colors)) {
+        if (SAFE_COLOR_KEYS.has(k) && typeof v === "string" && v.length <= 50) {
+          safeColors[k] = v;
+        }
+      }
+      cfg.theme.colors = { ...cfg.theme.colors, ...safeColors };
     }
-    if (overrides.content) {
-      cfg.content = { ...cfg.content, ...overrides.content };
+
+    // Apply only safe content overrides
+    if (overrides.content && typeof overrides.content === "object") {
+      const safeContent: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(overrides.content)) {
+        if (!SAFE_CONTENT_KEYS.has(k)) continue;
+        if (typeof v === "boolean") {
+          safeContent[k] = v;
+        } else if (typeof v === "string" && v.length <= 500) {
+          safeContent[k] = v;
+        }
+      }
+      cfg.content = { ...cfg.content, ...safeContent };
     }
+
     const baseStyle = instance.shadowRoot.querySelector("style:not([data-repwell-custom])");
     const customStyle = instance.shadowRoot.querySelector("[data-repwell-custom]");
     while (instance.shadowRoot.firstChild) { instance.shadowRoot.firstChild.remove(); }

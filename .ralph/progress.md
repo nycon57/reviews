@@ -17489,3 +17489,162 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Defensive icon fallback patterns should use nullish coalescing rather than conditional rendering to keep JSX simpler
   - Pass 3 polish is the right time to catch config-to-component contract mismatches
 ---
+
+## 2026-02-05 - S125: Birdeye Competitor Page Configuration & Content
+Thread:
+Run: 20260205-173925-93707 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-173925-93707-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-173925-93707-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5a5e865 [Pass 3/3] polish(S125): Copy polish and Prettier formatting for Birdeye config
+- Post-commit status: clean (remaining modified files are pre-existing unrelated changes)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (via subagent - Prettier formatting applied)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (via subagent - 8 copy improvements)
+  - /agent-browser: no (not a UI story)
+  - Other skills: /copywriting (writing review subagent)
+- Verification:
+  - Command: npx tsc --noEmit -> PASS (0 errors)
+  - Command: ./node_modules/.bin/eslint src/lib/competitor-pages/configs/birdeye.ts -> PASS (0 errors)
+  - Command: npm run build -> PARTIAL (compiled OK, Turbopack temp-file race condition on finalization - pre-existing infra issue)
+- Files changed:
+  - src/lib/competitor-pages/configs/birdeye.ts
+- What was implemented:
+  - Pass 3 copy polish: 8 text improvements applied
+  - HIGH: Replaced unsubstantiated "3x" hero stat with defensible "50% avg. cost savings" (backed by case study data)
+  - HIGH: Replaced unprovable "Birdeye will never build" footer claim with "generic tools don't offer"
+  - MEDIUM: Replaced snarky AI description ("doesn't know TILA from RESPA") with professional tone
+  - MEDIUM: Replaced unsourced FAQ ranking claim with honest hedge ("most-requested among teams we talk to")
+  - MEDIUM: Replaced competitor dig in migration step 5 with concrete benefit
+  - LOW: Replaced redundant restaurant analogy in enterprise pricing with concrete pricing problem
+  - LOW: Changed "borrowed" to "adapted" in mortgage section headline for accuracy
+  - LOW: Replaced repetitive "every feature fits your workflow" with fresh phrasing
+  - Prettier formatting applied to integration entries exceeding 100-char printWidth
+- All acceptance criteria verified:
+  - Config exports complete CompetitorPageConfig ✓
+  - Slug "birdeye-alternative" ✓
+  - SEO fields with Birdeye Alternative title ✓
+  - Hero H1 "Birdeye vs RepWell" ✓
+  - 3 pricing tabs ✓
+  - Transition section with migration benefits ✓
+  - 3 testimonials mentioning Birdeye ✓
+  - 3 differentiators (mortgage-native, LOS integrations, compliance) ✓
+  - 8 feature cards ✓
+  - 3 AI capability tabs ✓
+  - 15 integration logos ✓
+  - 6 mortgage-specific features ✓
+  - 5 migration steps ✓
+  - Rating comparison with G2/Capterra scores ✓
+  - 4 case studies ✓
+  - 13 FAQs (5 standard + 8 Birdeye-specific) ✓
+  - 16 social proof cards ✓
+  - Footer CTA about upgrading to mortgage-native ✓
+  - Type-checks against CompetitorPageConfig ✓
+- **Learnings for future iterations:**
+  - Hero stats must be backed by data on the page (case studies, pricing comparisons)
+  - Never make claims about what competitors "will never" do - stick to current feature gaps
+  - Competitor copy should maintain professional tone throughout - snark undermines credibility
+  - Watch for repeated phrases/analogies across sections (restaurants mentioned 4x before fix)
+  - Turbopack build has intermittent temp-file race condition; TypeScript check is reliable alternative
+---
+
+## 2026-02-05 17:40 - S124: Experience.com Competitor Page Configuration & Content
+Thread:
+Run: 20260205-173422-83572 (iteration 1)
+Pass: 3+/3 - Verification (all 3 passes previously completed)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-173422-83572-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-173422-83572-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (no changes needed — S124 fully complete from prior passes 1-3)
+- Post-commit status: clean (experience-com.ts unchanged)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no (data-only story)
+  - /next-best-practices: no (data-only story)
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npx tsc --noEmit -> PASS
+  - Command: npx eslint experience-com.ts index.ts -> PASS (0 errors)
+  - Command: npx tsx config verification script -> PASS (22/22 sections present)
+  - Command: npm run build -> FAIL (pre-existing infra: ENOENT temp file race condition in Turbopack, unrelated to S124)
+- Files changed: none
+- What was verified:
+  - All 22 config sections present and populated
+  - 3 testimonials mentioning Experience.com
+  - 3 pricing tabs (Starter/Professional/Enterprise)
+  - 5 standard + 7 competitor-specific FAQs (12 total)
+  - 4 case studies with before/after metrics
+  - 16 social proof cards
+  - 6 feature comparison categories
+  - 15 integrations
+  - 8 feature cards
+  - 3 AI capability tabs
+  - 5 migration steps
+  - Corrected node_modules corruption (reinstalled deps)
+- **Learnings for future iterations:**
+  - node_modules can become corrupted with ENOTEMPTY errors; moving aside and reinstalling is the fix
+  - Turbopack build has persistent temp-file race condition; TypeScript check is reliable alternative for code verification
+  - S124 was already fully complete with all 3 passes; this run confirmed no regression
+---
+
+## [2026-02-05] - S132: Widget Database Schema & Migrations
+Thread: 
+Run: 20260205-174427-2889 (iteration 1)
+Pass: 3/3 - Polish & Finalize (verification pass)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-174427-2889-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-174427-2889-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (all S132 work already committed in prior passes: 74023b6, 4e67d61, 20982dd)
+- Post-commit status: clean (no S132 file changes)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: yes (audit of migration files)
+  - /code-simplifier: yes (confirmed migrations are clean, no edits needed)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint -> PASS (8 pre-existing errors in unrelated files, 0 in S132 files)
+  - Acceptance criteria audit -> PASS (all 12 criteria verified with line-number evidence)
+  - Supabase best practices audit -> PASS (composite indexes cover FK columns, RLS uses helper functions, BRIN/GIN indexes correct)
+  - Code simplifier review -> PASS (both migrations clean, follow project conventions)
+- Files changed:
+  - none (verification-only pass)
+- What was implemented:
+  - Verification-only pass: confirmed all 12 acceptance criteria are met
+  - All 3 tables (widget_configs, widget_events, social_proof_graphics) correct with proper enums, columns, defaults
+  - All indexes present: GIN on config, composite on events, BRIN on created_at, org+status composite, parent FK
+  - RLS policies use codebase helper functions (get_user_organization_id, user_has_role)
+  - Public anon policies correctly scoped (active widgets SELECT, events INSERT)
+  - Service role full access policies present
+  - updated_at triggers on widget_configs and social_proof_graphics
+  - Types regenerated in src/types/database.types.ts
+- **Learnings for future iterations:**
+  - Composite indexes (e.g. org_id, status) cover FK lookups on the leading column — no separate single-column index needed
+  - Migration files are immutable once applied; cosmetic edits add risk for no gain
+  - BRIN indexes on timestamptz columns are specifically for time-range-only queries; composite B-tree handles filtered queries
+---

@@ -7,6 +7,7 @@
 import type { PublicWidgetConfig, PublicReview } from "../../types";
 import { trackClick } from "../../core/event-tracker";
 import { el, text } from "../../core/dom-helpers";
+import { createEqualHousingLenderSVG } from "../../assets/equal-housing-lender";
 import { t } from "../../i18n";
 import { buildReviewCard } from "../company-review/template";
 import { CarouselEngine } from "./carousel-engine";
@@ -228,7 +229,8 @@ export function buildReviewCarouselDOM(
   if (content?.showDisclaimer) {
     const disclaimer = el("div", "rw-carousel__disclaimer");
     const ehl = el("div", "rw-carousel__disclaimer-ehl");
-    ehl.textContent = t("equalHousingLender");
+    ehl.appendChild(createEqualHousingLenderSVG(18));
+    ehl.appendChild(document.createTextNode(t("equalHousingLender")));
     disclaimer.appendChild(ehl);
     disclaimer.appendChild(text("div", content.disclaimerText || t("defaultDisclaimer"), "rw-carousel__disclaimer-text"));
     const nmlsLink = document.createElement("a");

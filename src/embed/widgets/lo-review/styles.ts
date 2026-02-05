@@ -47,15 +47,36 @@ export const LO_REVIEW_STYLES = /* css */ `
     line-height: 1.3;
   }
 
-  .rw-lo-profile__title { font-size: 13px; color: #6b7280; margin-bottom: 4px; }
-  .rw-lo-profile__nmls { font-size: 12px; color: #6b7280; }
+  .rw-lo-profile__title { font-size: 13px; color: var(--rw-text, #6b7280); opacity: 0.7; margin-bottom: 4px; }
+  .rw-lo-profile__nmls { font-size: 12px; color: var(--rw-text, #6b7280); opacity: 0.7; }
   .rw-lo-profile__nmls a { color: var(--rw-primary, #52796f); text-decoration: none; }
   .rw-lo-profile__nmls a:hover { text-decoration: underline; }
 
-  .rw-lo-profile__licensed-states {
+  .rw-lo-profile__states {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
     font-size: 12px;
-    color: #6b7280;
+    color: var(--rw-text, #6b7280);
     margin-top: 4px;
+  }
+
+  .rw-lo-profile__states-label {
+    font-weight: 500;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.7;
+  }
+
+  .rw-lo-profile__state-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--rw-bg, #f3f4f6);
+    border: 1px solid var(--rw-border, #e5e7eb);
+    border-radius: 4px;
+    color: var(--rw-text, #374151);
   }
 
   .rw-lo-profile__rating { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
@@ -169,12 +190,13 @@ export const LO_REVIEW_STYLES = /* css */ `
   .rw-lo-disclaimer {
     margin-top: 16px;
     padding: 10px 14px;
-    font-size: 10px;
+    font-size: var(--rw-disclaimer-size, 10px);
     line-height: 1.5;
-    color: #6b7280;
-    background: #f9fafb;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.8;
+    background: var(--rw-bg, #f9fafb);
     border-radius: 4px;
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--rw-border, #f3f4f6);
   }
 
   .rw-lo-disclaimer__ehl {
@@ -184,13 +206,14 @@ export const LO_REVIEW_STYLES = /* css */ `
     margin-bottom: 4px;
     font-weight: 600;
     font-size: 11px;
-    color: #4b5563;
+    color: var(--rw-text, #4b5563);
   }
 
   .rw-lo-disclaimer__text {
-    font-size: 10px;
+    font-size: var(--rw-disclaimer-size, 10px);
     line-height: 1.5;
-    color: #6b7280;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.8;
     margin-bottom: 4px;
   }
 

@@ -127,12 +127,13 @@ export const REVIEW_WALL_STYLES = /* css */ `
   .rw-wall__disclaimer {
     margin-top: 12px;
     padding: 8px 12px;
-    font-size: 10px;
+    font-size: var(--rw-disclaimer-size, 10px);
     line-height: 1.5;
-    color: #6b7280;
-    background: #f9fafb;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.8;
+    background: var(--rw-bg, #f9fafb);
     border-radius: 4px;
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--rw-border, #f3f4f6);
   }
 
   .rw-wall__disclaimer-ehl {
@@ -142,13 +143,14 @@ export const REVIEW_WALL_STYLES = /* css */ `
     margin-bottom: 4px;
     font-weight: 600;
     font-size: 11px;
-    color: #4b5563;
+    color: var(--rw-text, #4b5563);
   }
 
   .rw-wall__disclaimer-text {
-    font-size: 10px;
+    font-size: var(--rw-disclaimer-size, 10px);
     line-height: 1.5;
-    color: #6b7280;
+    color: var(--rw-text, #6b7280);
+    opacity: 0.8;
     margin-bottom: 4px;
   }
 

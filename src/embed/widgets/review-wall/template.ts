@@ -7,6 +7,7 @@
 import type { PublicWidgetConfig, PublicReview } from "../../types";
 import { trackClick } from "../../core/event-tracker";
 import { el, text } from "../../core/dom-helpers";
+import { createEqualHousingLenderSVG } from "../../assets/equal-housing-lender";
 import { buildReviewCard } from "../company-review/template";
 import { t } from "../../i18n";
 
@@ -294,7 +295,8 @@ export function buildReviewWallDOM(
   if (content?.showDisclaimer) {
     const disclaimer = el("div", "rw-wall__disclaimer");
     const ehlLabel = el("div", "rw-wall__disclaimer-ehl");
-    ehlLabel.textContent = t("equalHousingLender");
+    ehlLabel.appendChild(createEqualHousingLenderSVG(18));
+    ehlLabel.appendChild(document.createTextNode(t("equalHousingLender")));
     disclaimer.appendChild(ehlLabel);
     disclaimer.appendChild(
       text(

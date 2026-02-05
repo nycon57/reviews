@@ -13,7 +13,7 @@ export const BRANCH_REVIEW_STYLES = /* css */ `
 .rw-br-header__phone{font-size:13px;margin-bottom:4px}
 .rw-br-header__phone a{color:var(--rw-primary,#52796f);text-decoration:none}
 .rw-br-header__phone a:hover{text-decoration:underline}
-.rw-br-header__nmls{font-size:12px;color:#6b7280;margin-bottom:4px}
+.rw-br-header__nmls{font-size:12px;color:var(--rw-text,#6b7280);opacity:0.7;margin-bottom:4px}
 .rw-br-header__nmls a{color:var(--rw-primary,#52796f);text-decoration:none}
 .rw-br-header__nmls a:hover{text-decoration:underline}
 .rw-br-header__rating{display:flex;align-items:center;gap:8px;margin-top:4px}

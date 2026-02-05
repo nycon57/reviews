@@ -17292,3 +17292,47 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
 - **Learnings for future iterations:**
   - When all 3 passes are already complete, just verify build/lint and output COMPLETE
 ---
+
+## 2026-02-05 17:15 - S119: Feature Showcase & AI Features Tabs Sub-Components (Sections 7-8)
+Thread:
+Run: 20260205-170907-2087 (iteration 2)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-170907-2087-iter-2.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-170907-2087-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 40ae000 [Pass 3/3] polish(S119): Design system compliance and code simplification
+- Post-commit status: clean (pre-existing unstaged files from other stories)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: yes (via code-reviewer subagent)
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes (via subagent)
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes (verified default headlines and text)
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npm run lint (S119 files) -> PASS (0 errors, 0 warnings)
+- Files changed:
+  - src/components/competitor-pages/sections/feature-showcase-section.tsx
+  - src/components/competitor-pages/sections/ai-feature-tabs-section.tsx
+- Polish fixes applied:
+  - Fixed hover shadow from shadow-lg to shadow-md per design system card hover spec
+  - Fixed AI tab H3 typography: font-display → font-sans, text-2xl → text-xl, font-bold → font-semibold per DS H3 spec
+  - Removed unnecessary useCallback wrapper around setActiveTab (code-simplifier)
+  - Condensed verbose JSDoc blocks to concise single-line summaries (code-simplifier)
+  - Removed unused useCallback import (code-simplifier)
+- All acceptance criteria verified:
+  - Feature showcase: responsive 3/2/1 grid, cards with hover shadow+translate, badge pills, lazy images with blur, scroll-reveal
+  - AI tabs: 3-tab animated switching, ARIA tablist with keyboard nav, min-height CLS prevention, lazy illustrations
+  - Both: config-driven content, proper alt text, reduced motion support
+- **Learnings for future iterations:**
+  - Design system specifies H3+ must use font-sans, not font-display — always check DS typography hierarchy
+  - hover:shadow-md is the DS standard for card hover, not shadow-lg
+  - useCallback wrapping a bare setState call is unnecessary since setState is already stable
+---

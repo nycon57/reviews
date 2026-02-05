@@ -29,7 +29,7 @@ import {
   History,
   Code2,
 } from "lucide-react";
-import { ThemePresetSelector, THEME_PRESETS } from "./theme-preset-selector";
+import { ThemePresetSelector } from "./theme-preset-selector";
 import { getPreset } from "@/lib/widgets/theme-presets";
 import { DomainAllowlistEditor } from "./domain-allowlist-editor";
 import { EntitySelector } from "./entity-selector";

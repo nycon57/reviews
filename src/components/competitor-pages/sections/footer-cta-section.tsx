@@ -8,37 +8,36 @@ import {
   Lock,
   Clock,
   CheckCircle,
+  CreditCard,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
 
 // ---------------------------------------------------------------------------
-// Trust badge icon mapping
+// Trust badge icon mapping — keys are normalised (lowercase, no hyphens)
+// so both PascalCase ("ShieldCheck") and kebab-case ("shield-check") resolve.
 // ---------------------------------------------------------------------------
 
 const trustIconMap: Record<string, PhosphorIcon> = {
+  shieldcheck: ShieldCheck,
   shield: ShieldCheck,
-  "shield-check": ShieldCheck,
   lock: Lock,
   clock: Clock,
   check: CheckCircle,
-  "check-circle": CheckCircle,
+  checkcircle: CheckCircle,
+  creditcard: CreditCard,
 };
 
 function TrustBadgeItem({ badge }: { badge: TrustBadge }) {
-  const IconComponent = trustIconMap[badge.icon?.toLowerCase() ?? "check"];
+  const key = badge.icon?.toLowerCase().replace(/-/g, "") ?? "check";
+  const IconComponent = trustIconMap[key] ?? CheckCircle;
 
   return (
     <div className="flex items-center gap-2">
-      <span
-        className="flex h-6 w-6 items-center justify-center"
+      <IconComponent
+        weight="duotone"
+        className="h-5 w-5 text-white/70"
         aria-hidden="true"
-      >
-        {IconComponent ? (
-          <IconComponent weight="duotone" className="h-5 w-5 text-white/70" />
-        ) : (
-          <CheckCircle weight="duotone" className="h-5 w-5 text-white/70" />
-        )}
-      </span>
+      />
       <span className="font-sans text-sm font-medium text-white/80">
         {badge.label}
       </span>

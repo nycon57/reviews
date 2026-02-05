@@ -10,7 +10,6 @@ import { Star, User } from "@phosphor-icons/react";
 // ---------------------------------------------------------------------------
 
 function PlatformBadge({ platform }: { platform: string }) {
-
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-repwell-teal-300/15 bg-repwell-teal-300/5 px-2 py-0.5 font-sans text-[10px] font-medium text-repwell-teal-300">
       {platform}

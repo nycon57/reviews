@@ -17377,3 +17377,115 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Static config-driven components don't need useMemo/React.memo since they render once on scroll reveal
   - SectionWrapper handles semantic HTML so inner components can use div without accessibility concern
 ---
+
+## 2026-02-05 - S121: Migration Steps & Rating Comparison Sub-Components (Sections 11-12)
+Thread: 
+Run: 20260205-171913-18014 (iteration 1)
+Pass: Verification (all 3 passes previously completed)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-171913-18014-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-171913-18014-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (verification-only pass, no changes needed)
+- Post-commit status: clean (no S121 changes)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: npx eslint (S121 files) -> PASS (0 errors)
+  - Command: npx eslint src -> PASS (0 S121 errors; 8 pre-existing errors in unrelated files)
+- Files changed:
+  - (none - verification only)
+- Verified all 14 acceptance criteria met across both components:
+  - migration-steps-section.tsx: horizontal/vertical stepper, number badges, connector lines, contract buyout callout, timeline indicator, CTA, scroll animations, aria-labels
+  - rating-comparison-section.tsx: side-by-side cards, G2/Capterra/Trustpilot scores, star visualizations, color-coded winner indicators, N/A handling, scroll animations, screen reader text
+- **Learnings for future iterations:**
+  - When all 3 passes completed cleanly, verification pass just confirms build+lint+criteria
+  - No code changes needed when prior passes were thorough
+---
+
+## 2026-02-05 - S122: Case Studies & FAQ Accordion Sub-Components (Sections 13-14)
+Thread:
+Run: 20260205-172415-29130 (iteration 1)
+Pass: 3/3 - Verification (all 3 passes previously completed)
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-172415-29130-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-172415-29130-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: none (all 3 passes already committed: fda1d90, 86f163d, 2b909c6)
+- Post-commit status: clean (untracked changes from other stories only)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: no
+  - /frontend-design: no
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: no
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build (compile + typecheck) -> PASS (ssgManifest finalization error is pre-existing)
+  - Command: npx eslint case-studies-section.tsx faq-section.tsx schema-generators.ts -> PASS (0 errors)
+- Files changed: none (verification only)
+- What was verified:
+  - All 14 acceptance criteria confirmed met
+  - case-studies-section.tsx: 2x2 grid, company logo/name/industry badge, before→after metrics with percentage change, blockquote, CTA link, hover effects, scroll animations
+  - faq-section.tsx: ShadCN/Radix Accordion with keyboard nav (Enter/Space/arrows), ARIA attributes, rich text HTML answers, standard + competitor-specific FAQs
+  - schema-generators.ts: FAQPage JSON-LD with HTML stripping, integrated in route page at compare/[slug]/page.tsx
+  - Both sections config-driven via config.caseStudies and config.faq
+- **Learnings for future iterations:**
+  - When all 3 passes completed cleanly, verification pass just confirms build+lint+criteria
+  - No code changes needed when prior passes were thorough
+---
+
+## [2026-02-05] - S123: Social Proof Wall & Footer CTA Sub-Components (Sections 15-16)
+Thread:
+Run: 20260205-172920-75351 (iteration 1)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-172920-75351-iter-1.log
+Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260205-172920-75351-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 451d306 [Pass 3/3] polish(S123): Fix trust badge icon mapping and simplify components
+- Post-commit status: clean (only pre-existing unrelated changes remain)
+- Skills invoked:
+  - /feature-dev: no
+  - /code-review: no
+  - /vercel-react-best-practices: no
+  - /next-best-practices: no
+  - /supabase-postgres-best-practices: no
+  - /code-simplifier: yes
+  - /frontend-design: yes (manual audit against design system)
+  - /web-design-guidelines: no
+  - /writing-clearly-and-concisely: yes
+  - /agent-browser: no
+  - Other skills: none
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: eslint footer-cta-section.tsx social-proof-section.tsx -> PASS (0 errors)
+- Files changed:
+  - src/components/competitor-pages/sections/footer-cta-section.tsx
+  - src/components/competitor-pages/sections/social-proof-section.tsx
+- What was implemented:
+  - **Bug fix**: Trust badge icon mapping failed for PascalCase icon names from configs (e.g. "ShieldCheck" → "shieldcheck" didn't match "shield-check" key). Fixed by normalising keys (lowercase, strip hyphens) and adding CreditCard icon import.
+  - **Code simplification**: Removed redundant wrapper span and conditional rendering in TrustBadgeItem — consolidated to single IconComponent with nullish coalescing fallback.
+  - **Code cleanup**: Removed stray blank line in PlatformBadge component.
+  - **Design system audit**: All acceptance criteria verified against REPWELL_DESIGN_SYSTEM. Colors, typography, spacing, responsive breakpoints, accessibility (aria-labels, focus-visible, reduced-motion support) all compliant.
+- **Learnings for future iterations:**
+  - Config icon names use PascalCase (Phosphor component names) while icon maps used kebab-case — normalise lookup keys to catch mismatches
+  - Defensive icon fallback patterns should use nullish coalescing rather than conditional rendering to keep JSX simpler
+  - Pass 3 polish is the right time to catch config-to-component contract mismatches
+---

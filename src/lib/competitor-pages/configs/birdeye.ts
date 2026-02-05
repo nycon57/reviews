@@ -50,8 +50,8 @@ export const birdeyeConfig: CompetitorPageConfig = {
     primaryCta: { label: "Start Free Trial", href: "/signup" },
     secondaryCta: { label: "See Pricing", href: "/pricing" },
     stat: {
-      value: "3x",
-      label: "more mortgage-specific features than generic platforms",
+      value: "50%",
+      label: "avg. cost savings vs. per-location pricing models",
     },
   },
 
@@ -144,7 +144,7 @@ export const birdeyeConfig: CompetitorPageConfig = {
     {
       tabLabel: "Enterprise",
       headline: "Enterprise mortgage tools at a fair price",
-      body: "Birdeye's enterprise plans are priced for multi-location restaurant chains. RepWell delivers enterprise mortgage features — multi-branch management, compliance tools, and regional benchmarking — without the per-location markup.",
+      body: "Birdeye charges per location, which adds up fast for multi-branch lenders. RepWell delivers enterprise mortgage features — multi-branch management, compliance tools, and regional benchmarking — without the per-location markup.",
       comparisonRows: [
         {
           feature: "Monthly price per user",
@@ -249,18 +249,15 @@ export const birdeyeConfig: CompetitorPageConfig = {
         "RepWell connects directly to Encompass, Byte, Calyx, and your CRM to trigger reviews and surveys at the right moment in the loan lifecycle.",
       repwellValue:
         "Native integrations with Encompass, Byte, Calyx, LendingPad, Salesforce, HubSpot",
-      competitorValue:
-        "Generic integrations via Zapier or API — no LOS-specific connectors",
+      competitorValue: "Generic integrations via Zapier or API — no LOS-specific connectors",
     },
     {
       icon: "ShieldCheck",
       title: "Compliance built in, not bolted on",
       description:
         "NMLS numbers on every profile, mortgage-compliant AI response suggestions, and advertising guideline checks — all standard, no custom configuration needed.",
-      repwellValue:
-        "NMLS display, compliant AI responses, mortgage ad guideline checks included",
-      competitorValue:
-        "No mortgage compliance features — manual compliance review required",
+      repwellValue: "NMLS display, compliant AI responses, mortgage ad guideline checks included",
+      competitorValue: "No mortgage compliance features — manual compliance review required",
     },
   ],
 
@@ -341,7 +338,7 @@ export const birdeyeConfig: CompetitorPageConfig = {
       tabLabel: "Compliant Responses",
       headline: "AI responses that follow mortgage ad guidelines",
       description:
-        "Birdeye's generic AI doesn't know TILA from RESPA. RepWell generates response suggestions that follow mortgage advertising regulations — no compliance review bottleneck.",
+        "Generic AI tools lack mortgage compliance context. RepWell generates response suggestions that follow TILA, RESPA, and mortgage advertising regulations — no compliance review bottleneck.",
       features: [
         "Mortgage-compliant response drafts for every review",
         "Automatic flagging of risky language before publishing",
@@ -377,12 +374,20 @@ export const birdeyeConfig: CompetitorPageConfig = {
     { name: "HubSpot", logoUrl: "/images/integrations/hubspot.svg", category: "CRM" },
     { name: "Velocify", logoUrl: "/images/integrations/velocify.svg", category: "CRM" },
     { name: "BNTouch", logoUrl: "/images/integrations/bntouch.svg", category: "CRM" },
-    { name: "Google Business", logoUrl: "/images/integrations/google-business.svg", category: "Reviews" },
+    {
+      name: "Google Business",
+      logoUrl: "/images/integrations/google-business.svg",
+      category: "Reviews",
+    },
     { name: "Zillow", logoUrl: "/images/integrations/zillow.svg", category: "Reviews" },
     { name: "Facebook", logoUrl: "/images/integrations/facebook.svg", category: "Social" },
     { name: "LinkedIn", logoUrl: "/images/integrations/linkedin.svg", category: "Social" },
     { name: "Slack", logoUrl: "/images/integrations/slack.svg", category: "Communication" },
-    { name: "Microsoft Teams", logoUrl: "/images/integrations/teams.svg", category: "Communication" },
+    {
+      name: "Microsoft Teams",
+      logoUrl: "/images/integrations/teams.svg",
+      category: "Communication",
+    },
     { name: "Zapier", logoUrl: "/images/integrations/zapier.svg", category: "Automation" },
   ],
 
@@ -431,9 +436,9 @@ export const birdeyeConfig: CompetitorPageConfig = {
     },
   ],
   mortgageSectionConfig: {
-    headline: "Built for mortgage — not borrowed from a generic platform",
+    headline: "Built for mortgage — not adapted from a generic platform",
     description:
-      "Birdeye serves restaurants, healthcare, auto dealers, and dozens of other industries with the same tools. RepWell is purpose-built for mortgage, so every feature fits your workflow.",
+      "Birdeye serves dozens of industries with the same tools. RepWell is purpose-built for mortgage, so nothing is bolted on and nothing is missing.",
     cta: { label: "See Mortgage Features", href: "/features/mortgage" },
     stat: { value: "500+", label: "mortgage companies use RepWell" },
   },
@@ -471,7 +476,7 @@ export const birdeyeConfig: CompetitorPageConfig = {
         number: 5,
         title: "Go live with mortgage-native tools",
         description:
-          "Your migration specialist stays on for 30 days post-launch. Start collecting reviews with features Birdeye never offered.",
+          "Your migration specialist stays on for 30 days post-launch to handle any issues and optimize your setup.",
       },
     ],
     contractBuyoutNote:
@@ -675,7 +680,7 @@ export const birdeyeConfig: CompetitorPageConfig = {
       {
         question: "Does Birdeye have loan officer profiles?",
         answer:
-          "No. Birdeye is built around business locations, not individual professionals. RepWell gives every loan officer a branded, NMLS-compliant profile page with their reviews, ratings, credentials, and a direct contact form — a feature mortgage companies consistently rank as their top need.",
+          "No. Birdeye is built around business locations, not individual professionals. RepWell gives every loan officer a branded, NMLS-compliant profile page with their reviews, ratings, credentials, and a direct contact form — one of the most-requested features among mortgage teams we talk to.",
       },
       {
         question: "Can Birdeye connect to Encompass or other LOS platforms?",
@@ -862,7 +867,7 @@ export const birdeyeConfig: CompetitorPageConfig = {
   footerCta: {
     headline: "Ready to upgrade from generic to mortgage-native?",
     subhead:
-      "Join hundreds of mortgage companies that switched from general review platforms to RepWell — for features Birdeye will never build.",
+      "Join hundreds of mortgage companies that switched from general review platforms to RepWell — for mortgage features generic tools don't offer.",
     primaryCta: { label: "Start Your Free Trial", href: "/signup" },
     secondaryCta: { label: "Book a Demo", href: "/demo" },
     trustBadges: [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { CheckCircle } from "@phosphor-icons/react";
 import type { AICapabilityTab } from "@/lib/competitor-pages";
@@ -75,7 +75,7 @@ function TabPanel({
       <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-12">
         {/* Text content */}
         <div>
-          <h3 className="font-display text-2xl font-bold text-repwell-teal-500 md:text-3xl">
+          <h3 className="font-sans text-xl font-semibold text-repwell-teal-500 md:text-2xl">
             {capability.headline}
           </h3>
           <p className="mt-3 font-sans text-base leading-relaxed text-repwell-teal-400">
@@ -116,28 +116,13 @@ function TabPanel({
   );
 }
 
-/**
- * Section 8: AI capabilities tabbed section.
- *
- * Renders 3 tabs (e.g. Convert More, Smarter Decisions, Respond Faster)
- * with animated switching. Each tab shows a headline, description,
- * feature bullet list, and an illustration/screenshot.
- *
- * Tab content area has consistent min-height to prevent layout shift.
- * Illustrations are lazy-loaded with blur-up placeholder.
- *
- * All content driven by the `capabilities` config array.
- */
+/** Section 8: AI capabilities — tabbed layout with animated panel switching. */
 export function AIFeatureTabsSection({
   capabilities,
   headline = "AI-Powered Intelligence",
 }: AIFeatureTabsSectionProps) {
   const { ref: sectionRef, isVisible } = useScrollReveal();
   const [activeTab, setActiveTab] = useState(0);
-
-  const handleTabChange = useCallback((index: number) => {
-    setActiveTab(index);
-  }, []);
 
   if (capabilities.length === 0) return null;
 
@@ -163,12 +148,12 @@ export function AIFeatureTabsSection({
           if (e.key === "ArrowRight") {
             e.preventDefault();
             const next = (activeTab + 1) % count;
-            handleTabChange(next);
+            setActiveTab(next);
             (e.currentTarget.children[next] as HTMLElement)?.focus();
           } else if (e.key === "ArrowLeft") {
             e.preventDefault();
             const prev = (activeTab - 1 + count) % count;
-            handleTabChange(prev);
+            setActiveTab(prev);
             (e.currentTarget.children[prev] as HTMLElement)?.focus();
           }
         }}
@@ -178,7 +163,7 @@ export function AIFeatureTabsSection({
             key={cap.tabLabel}
             label={cap.tabLabel}
             isActive={i === activeTab}
-            onClick={() => handleTabChange(i)}
+            onClick={() => setActiveTab(i)}
             id={`ai-tab-${i}`}
             panelId={`ai-panel-${i}`}
           />

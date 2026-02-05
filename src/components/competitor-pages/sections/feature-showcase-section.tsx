@@ -23,7 +23,7 @@ function FeatureCardItem({
   return (
     <article
       className={cn(
-        "group relative overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-[transform,box-shadow,opacity] duration-500 hover:shadow-lg hover:-translate-y-1",
+        "group relative overflow-hidden rounded-xl border border-border bg-white shadow-sm transition-[transform,box-shadow,opacity] duration-500 hover:shadow-md hover:-translate-y-1",
         isVisible ? "translate-y-0 opacity-100" : "translate-y-6 opacity-0",
       )}
       style={{
@@ -64,17 +64,7 @@ function FeatureCardItem({
   );
 }
 
-/**
- * Section 7: Feature showcase grid.
- *
- * Renders 6-8 visual cards in a responsive grid layout.
- * Desktop: 3 columns. Tablet: 2 columns. Mobile: 1 column.
- * Each card shows a screenshot/illustration, title, description,
- * and an optional badge pill overlaying the top-right of the image.
- *
- * Cards animate in with staggered fade-up on scroll.
- * All content driven by the `features` config array.
- */
+/** Section 7: Responsive feature card grid with staggered scroll-reveal. */
 export function FeatureShowcaseSection({
   features,
   headline = "Everything You Need to Grow",

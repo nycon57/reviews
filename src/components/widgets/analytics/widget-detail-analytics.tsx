@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import {
   Card,
   CardContent,
@@ -10,7 +10,18 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, ExternalLink, MapPin } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  ExternalLink,
+  MapPin,
+  Play,
+  CheckCircle2,
+  Clock,
+  ArrowDownRight,
+  MousePointerClick,
+  Target,
+} from "lucide-react";
 import { format } from "date-fns";
 import {
   XAxis,
@@ -25,7 +36,12 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import type { WidgetDetailAnalytics as DetailData } from "@/lib/widgets/analytics-actions";
+import type {
+  WidgetDetailAnalytics as DetailData,
+  EnhancedAnalytics,
+} from "@/lib/widgets/analytics-actions";
+import { getWidgetEventLevelCsvData } from "@/lib/widgets/analytics-actions";
+import { useToast } from "@/hooks/use-toast";
 
 const EVENT_COLORS: Record<string, string> = {
   impression: "#52796f",
@@ -74,6 +90,8 @@ export const WidgetDetailAnalyticsPanel = memo(
     const [data, setData] = useState<DetailData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isExporting, startExport] = useTransition();
+    const { toast } = useToast();
 
     const fetchData = useCallback(async () => {
       setIsLoading(true);
@@ -111,6 +129,29 @@ export const WidgetDetailAnalyticsPanel = memo(
       const interval = setInterval(fetchData, 60_000);
       return () => clearInterval(interval);
     }, [fetchData]);
+
+    const handleEventExport = useCallback(() => {
+      startExport(async () => {
+        const result = await getWidgetEventLevelCsvData(
+          widgetId,
+          dateRange,
+          customStart,
+          customEnd
+        );
+        if (!result.success) {
+          toast({ title: "Export failed", description: result.error, variant: "destructive" });
+          return;
+        }
+        const blob = new Blob([result.data], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `widget-events-${widgetId}-${dateRange}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast({ title: "Export complete", description: "Event-level CSV downloaded." });
+      });
+    }, [widgetId, dateRange, customStart, customEnd, toast]);
 
     const chartData = useMemo(
       () =>
@@ -166,23 +207,35 @@ export const WidgetDetailAnalyticsPanel = memo(
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onBack}
+              className="gap-2"
+            >
+              <ArrowLeft size={14} /> Back
+            </Button>
+            <div>
+              <h2 className="text-lg font-semibold text-repwell-teal-500">
+                {widgetName ?? widgetId}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Detailed performance analytics
+              </p>
+            </div>
+          </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={onBack}
+            onClick={handleEventExport}
+            disabled={isExporting}
             className="gap-2"
           >
-            <ArrowLeft size={14} /> Back
+            <Download size={14} />
+            {isExporting ? "Exporting..." : "Export Events CSV"}
           </Button>
-          <div>
-            <h2 className="text-lg font-semibold text-repwell-teal-500">
-              {widgetName ?? widgetId}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Detailed performance analytics
-            </p>
-          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -468,7 +521,288 @@ export const WidgetDetailAnalyticsPanel = memo(
             )}
           </CardContent>
         </Card>
+
+        {/* Enhanced Analytics Sections */}
+        {data?.enhanced && <EnhancedAnalyticsSection enhanced={data.enhanced} />}
       </div>
     );
   }
 );
+
+// ── Enhanced Analytics Sub-components ─────────────────────────────────
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
+function EnhancedAnalyticsSection({ enhanced }: { enhanced: EnhancedAnalytics }) {
+  const hasScrollData = enhanced.scrollDepth.some((d) => d.visitors > 0);
+  const hasVideoData = enhanced.video.totalPlays > 0;
+  const hasConversionData = enhanced.conversions.impressions > 0;
+
+  if (!hasScrollData && !hasVideoData && !hasConversionData) return null;
+
+  return (
+    <>
+      {hasScrollData && <ScrollDepthHeatmap data={enhanced.scrollDepth} />}
+      {hasVideoData && <VideoAnalyticsCard data={enhanced.video} />}
+      {hasConversionData && <ConversionFunnelCard data={enhanced.conversions} />}
+    </>
+  );
+}
+
+function ScrollDepthHeatmap({ data }: { data: EnhancedAnalytics["scrollDepth"] }) {
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <ArrowDownRight size={16} className="text-repwell-teal-300" />
+          <div>
+            <CardTitle className="text-base">Scroll Depth</CardTitle>
+            <CardDescription>
+              Percentage of visitors reaching each depth threshold
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {data.map((item) => (
+            <div key={item.threshold} className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-foreground">
+                  {item.threshold}%
+                </span>
+                <span className="text-muted-foreground tabular-nums">
+                  {item.visitors.toLocaleString()} visitors ({item.percentage}%)
+                </span>
+              </div>
+              <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${item.percentage}%`,
+                    backgroundColor:
+                      item.threshold <= 25
+                        ? "#84a98c"
+                        : item.threshold <= 50
+                          ? "#52796f"
+                          : item.threshold <= 75
+                            ? "#354f52"
+                            : "#2f3e46",
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Accessible table for SR */}
+        <table className="sr-only">
+          <caption>Scroll depth breakdown</caption>
+          <thead>
+            <tr>
+              <th>Threshold</th>
+              <th>Visitors</th>
+              <th>Percentage</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((item) => (
+              <tr key={item.threshold}>
+                <td>{item.threshold}%</td>
+                <td>{item.visitors}</td>
+                <td>{item.percentage}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+function VideoAnalyticsCard({ data }: { data: EnhancedAnalytics["video"] }) {
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Play size={16} className="text-repwell-teal-300" />
+          <div>
+            <CardTitle className="text-base">Video Analytics</CardTitle>
+            <CardDescription>
+              Play rate, completion rate, and watch duration
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 sm:grid-cols-3 mb-6">
+          <div className="rounded-lg border border-border p-4 text-center">
+            <Play size={14} className="mx-auto mb-1.5 text-repwell-teal-300" />
+            <div className="text-xl font-semibold tabular-nums text-foreground">
+              {data.playRate}%
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">Play Rate</div>
+            <div className="text-[10px] text-muted-foreground">
+              {data.totalPlays.toLocaleString()} / {data.totalImpressions.toLocaleString()}
+            </div>
+          </div>
+          <div className="rounded-lg border border-border p-4 text-center">
+            <CheckCircle2 size={14} className="mx-auto mb-1.5 text-repwell-teal-300" />
+            <div className="text-xl font-semibold tabular-nums text-foreground">
+              {data.completionRate}%
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Completion Rate
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              {data.totalCompletes.toLocaleString()} / {data.totalPlays.toLocaleString()}
+            </div>
+          </div>
+          <div className="rounded-lg border border-border p-4 text-center">
+            <Clock size={14} className="mx-auto mb-1.5 text-repwell-teal-300" />
+            <div className="text-xl font-semibold tabular-nums text-foreground">
+              {formatDuration(data.averageWatchDuration)}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Avg Watch Time
+            </div>
+          </div>
+        </div>
+
+        {/* Video milestones */}
+        <div>
+          <h4 className="text-xs font-medium text-muted-foreground mb-2">
+            Viewer Milestones
+          </h4>
+          <div className="space-y-2">
+            {data.milestones.map((m) => {
+              const pct =
+                data.totalPlays > 0
+                  ? Math.round((m.count / data.totalPlays) * 100)
+                  : 0;
+              return (
+                <div key={m.milestone} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-foreground">
+                      {m.milestone}% watched
+                    </span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {m.count.toLocaleString()} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-repwell-teal-400 transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ConversionFunnelCard({
+  data,
+}: {
+  data: EnhancedAnalytics["conversions"];
+}) {
+  const steps = [
+    {
+      label: "Impressions",
+      value: data.impressions,
+      icon: Target,
+    },
+    {
+      label: "Clicks",
+      value: data.clicks,
+      rate: data.impressionToClickRate,
+      icon: MousePointerClick,
+    },
+    {
+      label: "Conversions",
+      value: data.conversions,
+      rate: data.clickToConversionRate,
+      icon: CheckCircle2,
+    },
+  ];
+
+  return (
+    <Card className="border-border">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Target size={16} className="text-repwell-teal-300" />
+          <div>
+            <CardTitle className="text-base">Conversion Funnel</CardTitle>
+            <CardDescription>
+              Impressions to clicks to conversions with drop-off rates
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-stretch gap-2 sm:gap-4">
+          {steps.map((step, i) => {
+            const Icon = step.icon;
+            return (
+              <div key={step.label} className="flex items-center gap-2 sm:gap-4 flex-1">
+                <div className="flex-1 rounded-lg border border-border p-3 sm:p-4 text-center">
+                  <Icon
+                    size={14}
+                    className="mx-auto mb-1.5 text-repwell-teal-300"
+                  />
+                  <div className="text-lg font-semibold tabular-nums text-foreground">
+                    {step.value.toLocaleString()}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {step.label}
+                  </div>
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="text-xs text-muted-foreground font-medium whitespace-nowrap">
+                    →
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-lg bg-muted/50 p-3 text-center">
+            <div className="text-sm font-semibold tabular-nums text-foreground">
+              {data.impressionToClickRate}%
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              Impression → Click
+            </div>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3 text-center">
+            <div className="text-sm font-semibold tabular-nums text-foreground">
+              {data.clickToConversionRate}%
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              Click → Conversion
+            </div>
+          </div>
+          <div className="rounded-lg bg-muted/50 p-3 text-center">
+            <div className="text-sm font-semibold tabular-nums text-foreground">
+              {data.overallConversionRate}%
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              Overall Conversion
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

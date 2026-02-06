@@ -214,6 +214,8 @@ export function buildVideoPlayer(
               trackClick(apiBase, widgetId, "video_progress", {
                 video_id: testimonial.id,
                 milestone: m,
+                current_time: Math.round(video.currentTime),
+                duration: Math.round(video.duration),
               });
               callbacks?.onProgress?.(testimonial.id, m);
             }
@@ -225,7 +227,10 @@ export function buildVideoPlayer(
         updatePlayPauseIcon(false);
         playBtn.classList.remove("rw-vt__play-btn--hidden");
         controls.classList.remove("rw-vt__controls--visible");
-        trackClick(apiBase, widgetId, "video_complete", { video_id: testimonial.id });
+        trackClick(apiBase, widgetId, "video_complete", {
+          video_id: testimonial.id,
+          duration: Math.round(video!.duration),
+        });
         callbacks?.onComplete?.(testimonial.id);
       });
 
@@ -287,7 +292,11 @@ export function buildVideoPlayer(
       video.play();
     } else {
       video.pause();
-      trackClick(apiBase, widgetId, "video_pause", { video_id: testimonial.id });
+      trackClick(apiBase, widgetId, "video_pause", {
+        video_id: testimonial.id,
+        current_time: Math.round(video.currentTime),
+        duration: Math.round(video.duration),
+      });
       callbacks?.onPause?.(testimonial.id);
     }
   });

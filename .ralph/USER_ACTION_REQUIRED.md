@@ -522,3 +522,111 @@ Ralph has failed on this story 3 times and has marked it as **blocked**.
 - To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
 
 ---
+
+## [2026-02-01 23:31:50] BLOCKED: S165: Widget E2E Tests & Performance Benchmarks
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:14:08] BLOCKED: S119: Feature Showcase & AI Features Tabs Sub-Components (Sections 7-8)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:19:11] BLOCKED: S120: Integration Logos & Mortgage-Specific Sub-Components (Sections 9-10)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:24:13] BLOCKED: S121: Migration Steps & Rating Comparison Sub-Components (Sections 11-12)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:29:17] BLOCKED: S122: Case Studies & FAQ Accordion Sub-Components (Sections 13-14)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:34:20] BLOCKED: S123: Social Proof Wall & Footer CTA Sub-Components (Sections 15-16)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:39:22] BLOCKED: S124: Experience.com Competitor Page Configuration & Content
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:44:25] BLOCKED: S125: Birdeye Competitor Page Configuration & Content
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 17:49:28] BLOCKED: S132: Widget Database Schema & Migrations
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 18:49:34] BLOCKED: S140: Theme Presets & Style Controls System
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 18:54:16] BLOCKED: S141: NMLS Compliance & Mortgage-Specific Display
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---
+
+## [2026-02-05 18:59:18] BLOCKED: S154: Enhanced Widget Analytics (Scroll Depth, Video, Conversion Attribution)
+
+Ralph has failed on this story 3 times and has marked it as **blocked**.
+- Failure type: crashed (process dead)
+- Ralph will skip this story on future runs.
+- To unblock: manually fix the issue and set the story status back to `open` in the PRD JSON.
+
+---

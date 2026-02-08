@@ -1,150 +1,112 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+RepWell - customer experience & review management platform for mortgage/financial services (replaces Experience.com/Birdeye).
 
-## Build & Development Commands
+## Commands
 
 ```bash
-npm run dev              # Development server
+npm run dev              # Dev server
 npm run build            # Production build (required before PR)
-npm run lint             # ESLint check (required before PR)
-npm run lint:fix         # Auto-fix lint issues
-npm run type-check       # TypeScript type checking
-npm run format           # Prettier formatting
-
+npm run lint             # ESLint (required before PR)
+npm run lint:fix         # Auto-fix lint
+npm run type-check       # TypeScript check
+npm run format           # Prettier
 npm run test             # Vitest unit tests
-npm run test:watch       # Watch mode
 npm run test:e2e         # Playwright E2E tests
-
-npm run db:types         # Generate TypeScript types from Supabase schema
-npm run db:push          # Push migrations to Supabase
-npm run db:generate      # Create new migration
-
-npx shadcn@latest add <component>  # Add ShadCN components
+npm run db:types         # Generate types from Supabase schema
+npm run db:push          # Push migrations
+npm run db:generate      # New migration
+npx shadcn@latest add <component>
 ```
 
 **Quality Gates:** `npm run build` and `npm run lint` must pass before completing any story.
 
-## Project Overview
-
-RepWell is a customer experience & review management platform for mortgage/financial services. It replaces Experience.com/Birdeye with internal CRM capabilities including:
-- Survey distribution & NPS tracking
-- Review aggregation (Google, Zillow, internal)
-- Testimonial management & social publishing
-- Team leaderboards & gamification
-- AI-powered sentiment analysis & insights
-- Business listing optimization (Google Business Profile)
-
 ## Design System (MANDATORY)
 
-**CRITICAL:** Read and strictly follow `docs/design/REPWELL_DESIGN_SYSTEM` for ALL design, component, and UI work.
+**CRITICAL:** Read and strictly follow `docs/design/REPWELL_DESIGN_SYSTEM` for ALL UI work. Read the full document before creating or modifying ANY UI. Never deviate without explicit user approval.
 
-- Read the full document before creating or modifying ANY UI
-- Follow all specifications exactly (colors, typography, spacing, components, motion, responsive patterns)
-- Never deviate from the design system without explicit user approval
+## Workflow Orchestration
 
-## Architecture
+### 1. Plan Mode Default
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately - don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
 
-**Stack:** Next.js 16 (App Router) + TypeScript + Supabase (PostgreSQL) + Tailwind/ShadCN
+### 2. Subagent Strategy
+- Use subagents liberally to keep main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
 
-### Authentication Pattern
-- **Server client:** `src/lib/supabase/server.ts` - Cookie-based, use for server components/actions
-- **Browser client:** `src/lib/supabase/client.ts` - Public anon key only
-- **Admin client:** `src/lib/supabase/admin.ts` - Service role, bypasses RLS (server-only)
-- **User roles:** `admin`, `manager`, `user`
+### 3. Self-Improvement Loop
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
 
-### Data Patterns
-- **Server Actions** (`src/lib/*/actions.ts`): Primary pattern for mutations. Use Zod validation, call `revalidatePath` after changes.
-- **React Query**: Client-side data fetching for complex dashboard queries
-- **Database types**: Auto-generated in `src/types/database.types.ts` via `npm run db:types`
+### 4. Verification Before Done
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
 
-### Route Groups
-- `(dashboard)/` - Protected dashboard routes requiring auth
-- `(auth)/` - Authentication pages (login, signup, callbacks)
-- `(marketing)/` - Public marketing pages
-- `(public)/` - Public survey submission pages
-- `api/` - API routes for webhooks, cron jobs, integrations
+### 5. Demand Elegance (Balanced)
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes - don't over-engineer
+- Challenge your own work before presenting it
 
-### Key Integrations
-- **OpenAI**: Sentiment analysis, key phrase extraction, response suggestions (`src/lib/ai/`)
-- **Google Business Profile**: Review sync, OAuth in `src/app/api/auth/google/`
-- **Resend**: Email delivery for surveys & notifications
-- **Social OAuth**: Facebook, LinkedIn, Twitter for auto-publishing
+### 6. Autonomous Bug Fixing
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests - then resolve them
+- Zero context switching required from the user
+- Go fix failing CI tests without being told how
 
-## Database
+## Task Management
 
-Supabase PostgreSQL with Row Level Security (RLS) for multi-tenant isolation. Migrations in `supabase/migrations/`.
+1. **Plan First:** Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan:** Check in before starting implementation
+3. **Track Progress:** Mark items complete as you go
+4. **Explain Changes:** High-level summary at each step
+5. **Document Results:** Add review section to `tasks/todo.md`
+6. **Capture Lessons:** Update `tasks/lessons.md` after corrections
 
-Key tables: `organizations`, `users`, `loan_officers`, `survey_templates`, `surveys`, `survey_responses`, `reviews`, `testimonials`, `leaderboards`, `social_connections`, `business_listings`
+## Core Principles
 
-## Development Workflow
+- **Simplicity First:** Make every change as simple as possible. Impact minimal code.
+- **No Laziness:** Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact:** Changes should only touch what's necessary. Avoid introducing bugs.
 
-1. Check `.agents/tasks/prd-reviews.json` for available stories
-2. Create feature branch from main
-3. Run `npm run db:types` after any schema changes
-4. Ensure build and lint pass before PR
+## Development Pipeline
 
-## Automatic Skill & Plugin Invocation
+Follow the full 6-phase lifecycle in `.claude/dev-pipeline.md`:
+**Ideation** → **Design** → **Development** → **Testing** → **Code Review** → **Commit & Ship**
 
-**IMPORTANT:** Proactively invoke skills and MCP plugins without being asked. Do not wait for explicit requests.
+### Skill Auto-Invocation (No Exceptions)
 
-### Skills - Invoke Automatically
+| Phase | Skills (invoke automatically) |
+|---|---|
+| ANY UI work | `frontend-design` → `next-best-practices` → `vercel-react-best-practices` |
+| ANY DB work | `supabase-postgres-best-practices` + Supabase MCP |
+| ANY new feature | `feature-dev:feature-dev` at start |
+| ANY auth work | `better-auth-best-practices` |
+| Before library use | Context7 `query-docs` |
+| After coding | `coderabbit:code-review` or `code-review:code-review` |
+| After UI changes | `agent-browser` for visual verification |
+| Ready to ship | `commit-commands:commit-push-pr` |
 
-| Skill | Trigger Conditions |
-|-------|-------------------|
-| `vercel-react-best-practices` | ANY React/Next.js work: writing components, reviewing code, refactoring, fixing bugs, adding features. Use on EVERY component change. |
-| `frontend-design:frontend-design` | Creating ANY new UI: pages, components, layouts, modals, forms. Always use for visual work. Must follow design system. |
-| `feature-dev:feature-dev` | Starting ANY new feature implementation. Use at the beginning of feature work. |
-| `commit` | After completing ANY task, fixing bugs, or when code is in a good state. Proactively offer to commit. |
-| `commit-commands:commit-push-pr` | When feature is complete and ready for review. |
-| `code-review:code-review` | Before merging, after completing features, or when user mentions "review", "PR", or "check". |
-| `web-design-guidelines` | After creating UI, reviewing components, or when user mentions "accessibility", "UX", "design review". |
-| `prd` | When user discusses new features, requirements, planning, or mentions "PRD", "spec", "requirements". |
-| `cartographer:cartographer` | When onboarding, exploring unfamiliar code, or user asks about codebase structure. |
-| `dev-browser` | ANY browser interaction: testing UI, filling forms, screenshots, navigating sites, web automation. |
+## Reference
 
-### MCP Plugins - Use Proactively
-
-#### Supabase Plugin (`mcp__plugin_supabase_supabase__*`)
-- **Database queries**: Use `execute_sql` for reading data, checking schema, debugging
-- **Migrations**: Use `apply_migration` for ANY schema changes (tables, columns, indexes, RLS policies)
-- **Type generation**: After migrations, remind to run `npm run db:types`
-- **Logs**: Use `get_logs` when debugging errors, checking auth issues, or investigating bugs
-- **Advisors**: Use `get_advisors` after DDL changes to check for security/performance issues
-- **Edge Functions**: Use `deploy_edge_function` for serverless functions
-
-#### GitHub Plugin (`mcp__plugin_github_github__*`)
-- **PRs**: Use `create_pull_request` after pushing feature branches
-- **Issues**: Use `list_issues`, `search_issues` when discussing bugs or features
-- **Code Search**: Use `search_code` to find patterns across the repo
-- **Reviews**: Use `pull_request_read` and `pull_request_review_write` for PR reviews
-- **Branches**: Use `list_branches`, `create_branch` for branch management
-
-#### Context7 Plugin (`mcp__plugin_context7_context7__*`)
-- **Documentation lookup**: Use `resolve-library-id` then `query-docs` when:
-  - Implementing features with external libraries (React Query, Zod, Supabase, etc.)
-  - Uncertain about API usage or best practices
-  - User asks "how do I..." for any library
-  - Debugging library-specific issues
-- **Always check docs** for: Next.js, Supabase, TanStack Query, Zod, Radix UI, Tailwind, Framer Motion
-
-#### Browser Automation (`mcp__claude-in-chrome__*`)
-- Use for ANY request involving:
-  - Testing the app in browser
-  - Taking screenshots
-  - Filling out forms
-  - Navigating websites
-  - Web scraping or data extraction
-  - Visual verification of UI changes
-
-### Invocation Rules
-
-1. **Don't ask permission** - Invoke skills/plugins when conditions are met
-2. **Chain skills** - Use multiple skills in sequence (e.g., `feature-dev` → code → `vercel-react-best-practices` → `commit`)
-3. **Lookup before implementing** - Use Context7 to check library docs before writing integration code
-4. **Verify with Supabase plugin** - Query database directly to verify schema, test queries, check RLS
-5. **Always review** - Use `code-review` or `web-design-guidelines` after significant changes
-6. **Always follow design system** - Read and strictly follow `docs/design/REPWELL_DESIGN_SYSTEM` before ANY UI/component work.
+| File | Contents |
+|---|---|
+| `.claude/architecture.md` | Stack, auth, data patterns, route groups, integrations |
+| `.claude/database.md` | Supabase, key tables, RLS, migrations |
+| `.claude/skills-and-plugins.md` | Detailed skill triggers & MCP plugin reference |
+| `.claude/dev-pipeline.md` | Full 6-phase development lifecycle |
+| `tasks/todo.md` | Current task tracking |
+| `tasks/lessons.md` | Self-improvement log |
+| `.agents/tasks/prd-reviews.json` | Available stories |
 
 ## Plan Mode
 

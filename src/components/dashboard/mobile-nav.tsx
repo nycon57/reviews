@@ -15,93 +15,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { List as Menu, Lock } from "@phosphor-icons/react";
 import {
-  List as Menu,
-  House as Home,
-  Star,
-  FileText,
-  ChartBar as BarChart3,
-  Users,
-  Gear as Settings,
-  Question as HelpCircle,
-  TrendUp as TrendingUp,
-  Trophy,
-  PaperPlaneRight as Send,
-  Envelope as Mail,
-} from "@phosphor-icons/react";
-
-interface NavItem {
-  title: string;
-  href: string;
-  icon: React.ReactNode;
-}
-
-const mainNavItems: NavItem[] = [
-  {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: <Home className="h-5 w-5" />,
-  },
-  {
-    title: "Reviews",
-    href: "/dashboard/reviews",
-    icon: <Star className="h-5 w-5" />,
-  },
-  {
-    title: "Surveys",
-    href: "/dashboard/surveys",
-    icon: <FileText className="h-5 w-5" />,
-  },
-];
-
-const analyticsItems: NavItem[] = [
-  {
-    title: "Analytics Overview",
-    href: "/dashboard/analytics",
-    icon: <BarChart3 className="h-5 w-5" />,
-  },
-  {
-    title: "Trends",
-    href: "/dashboard/analytics/trends",
-    icon: <TrendingUp className="h-5 w-5" />,
-  },
-  {
-    title: "Leaderboard",
-    href: "/dashboard/analytics/leaderboard",
-    icon: <Trophy className="h-5 w-5" />,
-  },
-];
-
-const distributionItems: NavItem[] = [
-  {
-    title: "Email Campaigns",
-    href: "/dashboard/campaigns",
-    icon: <Mail className="h-5 w-5" />,
-  },
-  {
-    title: "Send Survey",
-    href: "/dashboard/send",
-    icon: <Send className="h-5 w-5" />,
-  },
-];
-
-const bottomNavItems: NavItem[] = [
-  {
-    title: "Team",
-    href: "/dashboard/team",
-    icon: <Users className="h-5 w-5" />,
-  },
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: <Settings className="h-5 w-5" />,
-  },
-  {
-    title: "Help & Support",
-    href: "/dashboard/help",
-    icon: <HelpCircle className="h-5 w-5" />,
-  },
-];
+  useFilteredNav,
+  ICON_MAP,
+  type FilteredNavItem,
+} from "@/lib/nav";
 
 interface MobileNavProps {
   className?: string;
@@ -110,6 +29,7 @@ interface MobileNavProps {
 export function MobileNav({ className }: MobileNavProps) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
+  const { coreItems, sections, bottomItems } = useFilteredNav();
 
   const isActive = (href: string) => {
     if (href === "/dashboard") {
@@ -148,8 +68,8 @@ export function MobileNav({ className }: MobileNavProps) {
         </SheetHeader>
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <nav className="flex flex-col gap-1 p-4" aria-label="Mobile navigation">
-            {/* Main navigation */}
-            {mainNavItems.map((item) => (
+            {/* Core items */}
+            {coreItems.map((item) => (
               <MobileNavLink
                 key={item.href}
                 item={item}
@@ -158,40 +78,28 @@ export function MobileNav({ className }: MobileNavProps) {
               />
             ))}
 
-            <Separator className="my-3" />
-
-            {/* Analytics */}
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Analytics
-            </p>
-            {analyticsItems.map((item) => (
-              <MobileNavLink
-                key={item.href}
-                item={item}
-                isActive={isActive(item.href)}
-                onClick={handleNavClick}
-              />
+            {/* Sections with labels */}
+            {sections.map((section) => (
+              <React.Fragment key={section.label}>
+                <Separator className="my-3" />
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70 px-3">
+                  {section.label}
+                </p>
+                {section.items.map((item) => (
+                  <MobileNavLink
+                    key={item.href}
+                    item={item}
+                    isActive={isActive(item.href)}
+                    onClick={handleNavClick}
+                  />
+                ))}
+              </React.Fragment>
             ))}
 
             <Separator className="my-3" />
 
-            {/* Distribution */}
-            <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Distribution
-            </p>
-            {distributionItems.map((item) => (
-              <MobileNavLink
-                key={item.href}
-                item={item}
-                isActive={isActive(item.href)}
-                onClick={handleNavClick}
-              />
-            ))}
-
-            <Separator className="my-3" />
-
-            {/* Bottom navigation */}
-            {bottomNavItems.map((item) => (
+            {/* Bottom items */}
+            {bottomItems.map((item) => (
               <MobileNavLink
                 key={item.href}
                 item={item}
@@ -207,28 +115,68 @@ export function MobileNav({ className }: MobileNavProps) {
 }
 
 interface MobileNavLinkProps {
-  item: NavItem;
+  item: FilteredNavItem;
   isActive: boolean;
   onClick: () => void;
 }
 
 function MobileNavLink({ item, isActive, onClick }: MobileNavLinkProps) {
+  const { isProLocked } = item;
+  const href = isProLocked ? "/dashboard/settings/billing" : item.href;
+  const IconComponent = ICON_MAP[item.icon];
+
   return (
     <Link
-      href={item.href}
+      href={href}
       onClick={onClick}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-        "hover:bg-accent hover:text-accent-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        isActive
-          ? "bg-accent text-accent-foreground"
-          : "text-muted-foreground"
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30",
+        isActive && !isProLocked
+          ? "bg-repwell-sage-100 text-repwell-teal-300"
+          : isProLocked
+            ? "text-repwell-teal-400/60 hover:bg-repwell-sage-100/30"
+            : "text-repwell-teal-400 hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500"
       )}
-      aria-current={isActive ? "page" : undefined}
+      aria-current={isActive && !isProLocked ? "page" : undefined}
     >
-      {item.icon}
-      <span>{item.title}</span>
+      <span className={cn(
+        "transition-colors duration-150",
+        isActive && !isProLocked
+          ? "text-repwell-teal-300"
+          : isProLocked
+            ? "text-repwell-teal-400/60"
+            : "text-repwell-teal-400"
+      )}>
+        {IconComponent ? <IconComponent className="h-5 w-5" /> : null}
+      </span>
+      <span className="flex-1">{item.title}</span>
+
+      {/* Pro lock icon */}
+      {isProLocked && (
+        <Lock className="h-3.5 w-3.5 text-repwell-teal-400/50" />
+      )}
+
+      {/* NEW badge - don't show if Pro locked */}
+      {item.isNew && !isProLocked && (
+        <span className="rounded-full bg-warning px-2 py-0.5 text-[10px] font-bold text-black uppercase tracking-wide shadow-sm">
+          New
+        </span>
+      )}
+
+      {/* Pro badge for locked items */}
+      {isProLocked && (
+        <span className="rounded-full bg-repwell-teal-300/10 px-2 py-0.5 text-[10px] font-bold text-repwell-teal-300 uppercase tracking-wide">
+          Pro
+        </span>
+      )}
+
+      {/* Badge count */}
+      {item.badge && !isProLocked && (
+        <span className="rounded-full bg-repwell-sage-100 px-2 py-0.5 text-xs font-semibold text-repwell-teal-300">
+          {item.badge}
+        </span>
+      )}
     </Link>
   );
 }

@@ -7,3 +7,7 @@ export { RecommendationsCard } from "./recommendations-card";
 export { BenchmarksCard } from "./benchmarks-card";
 export { SentimentDistribution } from "./sentiment-distribution";
 export { ExportInsightsButton } from "./export-insights-button";
+export { SmartActionsCard } from "./smart-actions-card";
+export { PerformanceScorecard } from "./performance-scorecard";
+export { TeamActivityMonitorCard } from "./team-activity-monitor";
+export { ChannelEffectivenessCard } from "./channel-effectiveness-card";

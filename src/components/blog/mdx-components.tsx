@@ -1,25 +1,26 @@
 import { type MDXComponents } from "mdx/types";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export const mdxComponents: MDXComponents = {
   // Headings
-  h1: ({ children }) => (
-    <h1 className="text-3xl md:text-4xl font-bold mt-8 mb-4 scroll-mt-20">
+  h1: ({ children, className, ...props }) => (
+    <h1 className={cn("text-3xl md:text-4xl font-bold mt-8 mb-4", className)} {...props}>
       {children}
     </h1>
   ),
-  h2: ({ children }) => (
-    <h2 className="text-2xl md:text-3xl font-semibold mt-8 mb-4 scroll-mt-20">
+  h2: ({ children, className, ...props }) => (
+    <h2 className={cn("text-2xl md:text-3xl font-semibold mt-8 mb-4", className)} {...props}>
       {children}
     </h2>
   ),
-  h3: ({ children }) => (
-    <h3 className="text-xl md:text-2xl font-semibold mt-6 mb-3 scroll-mt-20">
+  h3: ({ children, className, ...props }) => (
+    <h3 className={cn("text-xl md:text-2xl font-semibold mt-6 mb-3", className)} {...props}>
       {children}
     </h3>
   ),
-  h4: ({ children }) => (
-    <h4 className="text-lg font-semibold mt-4 mb-2">{children}</h4>
+  h4: ({ children, className, ...props }) => (
+    <h4 className={cn("text-lg font-semibold mt-4 mb-2", className)} {...props}>{children}</h4>
   ),
 
   // Paragraphs

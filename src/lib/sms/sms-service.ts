@@ -81,6 +81,12 @@ export class SmsService {
       // 1. Validate consent (mandatory per TCPA)
       await this.consentService.requireConsent(this.organizationId, normalizedPhone);
 
+      // 1b. Gate on 10DLC registration status
+      const registrationCheck = await this.require10DLCRegistration();
+      if (!registrationCheck.allowed) {
+        return { success: false, error: registrationCheck.error!, errorCode: "REGISTRATION_INCOMPLETE" };
+      }
+
       // 2. Check quiet hours (queues if blocked)
       const quietResult = await this.quietHoursEngine.check(
         this.organizationId,
@@ -193,6 +199,12 @@ export class SmsService {
 
     try {
       await this.consentService.requireConsent(this.organizationId, normalizedPhone);
+
+      // Gate on 10DLC registration status
+      const registrationCheck = await this.require10DLCRegistration();
+      if (!registrationCheck.allowed) {
+        return { success: false, error: registrationCheck.error!, errorCode: "REGISTRATION_INCOMPLETE" };
+      }
 
       const quietResult = await this.quietHoursEngine.check(
         this.organizationId,
@@ -329,6 +341,27 @@ export class SmsService {
       segments: opts.segments,
       scheduledAt: opts.scheduledAt,
     };
+  }
+
+  /**
+   * Check that the org has completed 10DLC registration before allowing sends.
+   */
+  private async require10DLCRegistration(): Promise<{ allowed: boolean; error?: string }> {
+    const supabase = createUntypedAdminClient();
+    const { data: settings } = await supabase
+      .from("sms_settings")
+      .select("registration_status")
+      .eq("organization_id", this.organizationId)
+      .single();
+
+    if (!settings || settings.registration_status !== "fully_registered") {
+      return {
+        allowed: false,
+        error: "SMS registration not complete. Complete 10DLC registration in Settings.",
+      };
+    }
+
+    return { allowed: true };
   }
 
   private async resolveTemplate(

@@ -9,13 +9,22 @@ import {
   AISummaryCard,
   KeyPhrasesCard,
   RecommendationsCard,
-  BenchmarksCard,
   SentimentDistribution,
   ExportInsightsButton,
+  SmartActionsCard,
+  PerformanceScorecard,
+  TeamActivityMonitorCard,
+  ChannelEffectivenessCard,
 } from "@/components/insights";
-import { getAIInsightsData } from "@/lib/ai";
+import {
+  getAIInsightsData,
+  getSmartActionItems,
+  getLOPerformanceScorecard,
+  getTeamActivityMonitor,
+  getChannelEffectiveness,
+} from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
-import { requireProTier, type AccessContext } from "@/lib/access";
+import { requireProTier, isManagerOrAbove, type AccessContext } from "@/lib/access";
 
 export const metadata = {
   title: "AI Insights | RepWell",
@@ -37,6 +46,50 @@ async function getCurrentUserId(ctx: AccessContext): Promise<string | undefined>
     .single();
 
   return userData?.id;
+}
+
+// Server component for smart action items
+async function SmartActionsSection({ userId }: { userId?: string }) {
+  const result = await getSmartActionItems(userId);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <SmartActionsCard data={result.data} />;
+}
+
+// Server component for performance scorecard
+async function PerformanceScorecardSection({ userId }: { userId: string }) {
+  const result = await getLOPerformanceScorecard(userId);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <PerformanceScorecard data={result.data} />;
+}
+
+// Server component for team activity monitor (managers/admins only)
+async function TeamActivitySection() {
+  const result = await getTeamActivityMonitor();
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <TeamActivityMonitorCard data={result.data} />;
+}
+
+// Server component for channel effectiveness
+async function ChannelEffectivenessSection({ userId }: { userId?: string }) {
+  const result = await getChannelEffectiveness(userId);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <ChannelEffectivenessCard data={result.data} />;
 }
 
 // Server component for sentiment distribution
@@ -116,17 +169,6 @@ async function RecommendationsSection({ userId }: { userId?: string }) {
   return <RecommendationsCard data={result.data.recommendations} />;
 }
 
-// Server component for benchmarks
-async function BenchmarksSection({ userId }: { userId?: string }) {
-  const result = await getAIInsightsData(userId, 6);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <BenchmarksCard data={result.data.benchmarks} />;
-}
-
 // Server component for export button
 async function ExportSection({ userId }: { userId?: string }) {
   const result = await getAIInsightsData(userId, 6);
@@ -142,6 +184,7 @@ export default async function AIInsightsPage() {
   // Check access - requires Pro tier (pro or enterprise subscription)
   const ctx = await requireProTier();
   const userId = await getCurrentUserId(ctx);
+  const isManager = isManagerOrAbove(ctx);
 
   return (
     <div className="flex-1 space-y-6">
@@ -160,6 +203,25 @@ export default async function AIInsightsPage() {
           <ExportSection userId={userId} />
         </Suspense>
       </div>
+
+      {/* Smart action items (most actionable = most visible) */}
+      <Suspense fallback={<CardSkeleton className="h-[200px]" />}>
+        <SmartActionsSection userId={userId} />
+      </Suspense>
+
+      {/* Performance scorecard (for individual LOs, or if manager viewing org-wide) */}
+      {userId && (
+        <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
+          <PerformanceScorecardSection userId={userId} />
+        </Suspense>
+      )}
+
+      {/* Team activity monitor (managers/admins only) */}
+      {isManager && (
+        <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
+          <TeamActivitySection />
+        </Suspense>
+      )}
 
       {/* Summary and distribution row */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -186,9 +248,9 @@ export default async function AIInsightsPage() {
         </Suspense>
       </div>
 
-      {/* Industry benchmarks */}
-      <Suspense fallback={<CardSkeleton className="h-[500px]" />}>
-        <BenchmarksSection userId={userId} />
+      {/* Channel effectiveness */}
+      <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
+        <ChannelEffectivenessSection userId={userId} />
       </Suspense>
 
       {/* Improvement recommendations */}

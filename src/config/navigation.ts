@@ -259,20 +259,6 @@ export const compareNavItems: CompareNavItem[] = [
     href: "/compare/birdeye-alternative",
   },
   {
-    slug: "socialsurvey",
-    title: "RepWell vs SocialSurvey",
-    description: "Modern AI-powered alternative",
-    icon: "Swap",
-    href: "/compare/socialsurvey-alternative",
-  },
-  {
-    slug: "total-expert",
-    title: "RepWell vs Total Expert",
-    description: "Focused on reviews & reputation",
-    icon: "Swap",
-    href: "/compare/total-expert-alternative",
-  },
-  {
     slug: "trustpilot",
     title: "RepWell vs Trustpilot",
     description: "Built for mortgage professionals",

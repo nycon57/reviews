@@ -8,8 +8,7 @@ import {
 } from "@/lib/video-testimonials/analytics-actions";
 import { getUsersForVideoRequests } from "@/lib/video-testimonials/actions";
 import { getResponseAnalytics } from "@/lib/reviews/response-actions";
-import { UnifiedAnalyticsDashboard } from "@/components/analytics";
-import { AnalyticsTabsWrapper } from "@/components/analytics/analytics-tabs-wrapper";
+import { AnalyticsPageClient } from "@/components/analytics/analytics-page-client";
 
 export const metadata = {
   title: "Analytics | RepWell",
@@ -98,26 +97,14 @@ export default async function AnalyticsPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6">
-      {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-muted-foreground">
-          Track your performance metrics and insights
-        </p>
-      </div>
-
-      <AnalyticsTabsWrapper teamMembers={users} userRole={userRole}>
-        <UnifiedAnalyticsDashboard
-          initialVideoMetrics={videoMetrics}
-          initialVideoTrends={videoTrends}
-          initialLoStats={userStats}
-          initialReviewSummary={reviewSummary}
-          initialResponseAnalytics={responseAnalytics}
-          teamMembers={users}
-          userRole={userRole}
-        />
-      </AnalyticsTabsWrapper>
-    </div>
+    <AnalyticsPageClient
+      userRole={userRole}
+      initialVideoMetrics={videoMetrics}
+      initialVideoTrends={videoTrends}
+      initialLoStats={userStats}
+      initialReviewSummary={reviewSummary}
+      initialResponseAnalytics={responseAnalytics}
+      teamMembers={users}
+    />
   );
 }

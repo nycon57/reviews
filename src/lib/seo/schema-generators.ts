@@ -58,6 +58,7 @@ export interface SchemaBranch {
   id: string;
   name: string;
   slug: string;
+  global_slug?: string | null;
   description: string | null;
   address?: Json;
   phone: string | null;
@@ -406,7 +407,7 @@ export function generateLocalBusinessSchema(
   professionals: SchemaBranchProfessional[],
   baseUrl: string
 ): LocalBusinessSchema {
-  const profileUrl = `${baseUrl}/branch/${branch.id}`;
+  const profileUrl = `${baseUrl}/branch/${branch.global_slug || branch.id}`;
 
   // Parse address if available
   const address = branch.address as BranchAddress | null;
@@ -530,7 +531,7 @@ export function generateBranchReviewSchema(
     itemReviewed: {
       "@type": "LocalBusiness",
       name: branch.name,
-      url: `${baseUrl}/branch/${branch.id}`,
+      url: `${baseUrl}/branch/${branch.global_slug || branch.id}`,
     },
     author: {
       "@type": "Person",
@@ -584,7 +585,7 @@ export function generateBranchProfilePageSchema(
     generateBreadcrumbSchema([
       { name: "Home", url: baseUrl },
       { name: "Branches", url: `${baseUrl}/branch` },
-      { name: branch.name, url: `${baseUrl}/branch/${branch.id}` },
+      { name: branch.name, url: `${baseUrl}/branch/${branch.global_slug || branch.id}` },
     ])
   );
 
@@ -629,6 +630,7 @@ export interface SchemaOrganizationFull {
 export interface SchemaOrgBranch {
   id: string;
   name: string;
+  global_slug?: string | null;
   address?: Json;
 }
 
@@ -763,7 +765,7 @@ export function generateOrganizationWithRatingSchema(
       } = {
         "@type": "LocalBusiness",
         name: branch.name,
-        url: `${baseUrl}/branch/${branch.id}`,
+        url: `${baseUrl}/branch/${branch.global_slug || branch.id}`,
       };
 
       if (branchAddress && (branchAddress.city || branchAddress.state)) {

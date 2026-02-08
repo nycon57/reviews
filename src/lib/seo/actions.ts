@@ -12,12 +12,14 @@ export interface PublicBranch {
   id: string;
   name: string;
   slug: string;
+  global_slug: string | null;
   description: string | null;
   address: Branch["address"];
   phone: string | null;
   email: string | null;
   website_url: string | null;
   hours_of_operation: Branch["hours_of_operation"];
+  manager_id: string | null;
   manager_name: string | null;
   google_maps_url: string | null;
   photo_url: string | null;
@@ -30,6 +32,7 @@ export interface PublicBranch {
 
 export interface PublicBranchProfessional {
   id: string;
+  slug: string | null;
   full_name: string;
   title: string | null;
   photo_url: string | null;
@@ -55,6 +58,7 @@ export interface PublicBranchReview {
   response_text: string | null;
   loan_officer: {
     id: string;
+    slug: string | null;
     full_name: string;
     photo_url: string | null;
   };
@@ -62,7 +66,7 @@ export interface PublicBranchReview {
 
 export interface PublicBranchProfileData {
   branch: PublicBranch;
-  organization: Pick<Organization, "id" | "name" | "logo_url" | "domain"> | null;
+  organization: (Pick<Organization, "id" | "name" | "logo_url" | "domain"> & { slug: string }) | null;
   professionals: PublicBranchProfessional[];
   reviews: PublicBranchReview[];
 }
@@ -510,13 +514,18 @@ export async function getAllOrganizationSlugs(): Promise<string[]> {
 }
 
 /**
- * Get a public Branch profile by ID
+ * Get a public Branch profile by ID or global slug
+ * @param slugOrId Either a branch UUID or a global_slug (e.g., "boston-downtown-summit-mortgage-group")
+ * @returns Branch profile data, with redirectSlug if UUID was used and branch has a global_slug
  */
 export async function getPublicBranchProfile(
-  branchId: string
-): Promise<{ success: boolean; data?: PublicBranchProfileData; error?: string }> {
+  slugOrId: string
+): Promise<{ success: boolean; data?: PublicBranchProfileData; redirectSlug?: string; error?: string }> {
   try {
     const supabase = createAdminClient();
+
+    // Determine if we're looking up by ID or global_slug
+    const lookupField = isUUID(slugOrId) ? "id" : "global_slug";
 
     // Fetch the branch
     const { data: branch, error: branchError } = await supabase
@@ -526,6 +535,7 @@ export async function getPublicBranchProfile(
         id,
         name,
         slug,
+        global_slug,
         description,
         address,
         phone,
@@ -545,7 +555,7 @@ export async function getPublicBranchProfile(
         organization_id
       `
       )
-      .eq("id", branchId)
+      .eq(lookupField, slugOrId)
       .eq("is_active", true)
       .eq("is_public", true)
       .single();
@@ -557,9 +567,12 @@ export async function getPublicBranchProfile(
     // Fetch the organization
     const { data: organization } = await supabase
       .from("organizations")
-      .select("id, name, logo_url, domain")
+      .select("id, name, logo_url, domain, slug")
       .eq("id", branch.organization_id)
       .single();
+
+    // If UUID lookup resolved and branch has a global_slug, signal redirect
+    const redirectSlug = (lookupField === "id" && branch.global_slug) ? branch.global_slug : undefined;
 
     // Fetch professionals at this branch
     const { data: branchUsers } = await supabase
@@ -567,6 +580,7 @@ export async function getPublicBranchProfile(
       .select(
         `
         id,
+        slug,
         full_name,
         title,
         photo_url,
@@ -578,7 +592,7 @@ export async function getPublicBranchProfile(
         total_reviews
       `
       )
-      .eq("branch_id", branchId)
+      .eq("branch_id", branch.id)
       .eq("is_active", true)
       .order("average_rating", { ascending: false, nullsFirst: false })
       .limit(50);
@@ -623,7 +637,7 @@ export async function getPublicBranchProfile(
         const userMap = new Map(
           professionals.map((user) => [
             user.id,
-            { id: user.id, full_name: user.full_name || "Unknown", photo_url: user.photo_url },
+            { id: user.id, slug: user.slug, full_name: user.full_name || "Unknown", photo_url: user.photo_url },
           ])
         );
 
@@ -639,8 +653,9 @@ export async function getPublicBranchProfile(
           response_text: r.response_text,
           loan_officer: (r.user_id ? userMap.get(r.user_id) : undefined) || {
             id: r.user_id || "",
-            full_name: "Unknown",
-            photo_url: null,
+            slug: null as string | null,
+            full_name: "Unknown" as string,
+            photo_url: null as string | null,
           },
         }));
       }
@@ -648,17 +663,20 @@ export async function getPublicBranchProfile(
 
     return {
       success: true,
+      redirectSlug,
       data: {
         branch: {
           id: branch.id,
           name: branch.name,
           slug: branch.slug,
+          global_slug: branch.global_slug,
           description: branch.description,
           address: branch.address,
           phone: branch.phone,
           email: branch.email,
           website_url: branch.website_url,
           hours_of_operation: branch.hours_of_operation,
+          manager_id: null,
           manager_name: branch.manager_name,
           google_maps_url: branch.google_maps_url,
           photo_url: branch.photo_url,
@@ -680,6 +698,7 @@ export async function getPublicBranchProfile(
 
 /**
  * Get all public branch IDs for sitemap generation
+ * @deprecated Use getAllPublicBranchSlugs instead for SEO-friendly URLs
  */
 export async function getAllPublicBranchIds(): Promise<string[]> {
   try {
@@ -696,6 +715,31 @@ export async function getAllPublicBranchIds(): Promise<string[]> {
     }
 
     return data.map((branch) => branch.id);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get all public branch global slugs for sitemap generation
+ * Returns global_slug for branches that have them, for SEO-friendly URLs
+ */
+export async function getAllPublicBranchSlugs(): Promise<string[]> {
+  try {
+    const supabase = createAdminClient();
+
+    const { data, error } = await supabase
+      .from("branches")
+      .select("global_slug")
+      .eq("is_active", true)
+      .eq("is_public", true)
+      .not("global_slug", "is", null);
+
+    if (error || !data) {
+      return [];
+    }
+
+    return data.map((b) => b.global_slug).filter((slug): slug is string => slug !== null);
   } catch {
     return [];
   }
@@ -735,6 +779,7 @@ export interface PublicOrgBranch {
   id: string;
   name: string;
   slug: string;
+  global_slug: string | null;
   address: Branch["address"];
   phone: string | null;
   photo_url: string | null;
@@ -766,14 +811,18 @@ export interface PublicOrgTestimonial {
   text: string | null;
   title: string | null;
   review_date: string;
+  source?: string;
+  response_text?: string | null;
   loan_officer: {
     id: string;
+    slug: string | null;
     full_name: string;
     photo_url: string | null;
   };
   branch: {
     id: string;
     name: string;
+    global_slug: string | null;
   } | null;
 }
 
@@ -846,6 +895,7 @@ export async function getPublicOrganizationProfile(
         id,
         name,
         slug,
+        global_slug,
         address,
         phone,
         photo_url,
@@ -928,6 +978,8 @@ export async function getPublicOrganizationProfile(
           text,
           title,
           review_date,
+          source,
+          response_text,
           user_id
         `
         )
@@ -945,13 +997,13 @@ export async function getPublicOrganizationProfile(
         const userMap = new Map(
           allProfessionals.map((user) => [
             user.id,
-            { id: user.id, full_name: user.full_name || "Unknown", photo_url: user.photo_url, branch_name: user.branch },
+            { id: user.id, slug: user.slug, full_name: user.full_name || "Unknown", photo_url: user.photo_url, branch_name: user.branch },
           ])
         );
 
         // Create a branch lookup by name
         const branchByName = new Map(
-          allBranches.map((b) => [b.name, { id: b.id, name: b.name }])
+          allBranches.map((b) => [b.name, { id: b.id, name: b.name, global_slug: b.global_slug }])
         );
 
         testimonials = reviewsData.map((r) => {
@@ -965,9 +1017,11 @@ export async function getPublicOrganizationProfile(
             text: r.text,
             title: r.title,
             review_date: r.review_date,
+            source: r.source,
+            response_text: r.response_text,
             loan_officer: user
-              ? { id: user.id, full_name: user.full_name, photo_url: user.photo_url }
-              : { id: r.user_id || "", full_name: "Team Member", photo_url: null },
+              ? { id: user.id, slug: user.slug, full_name: user.full_name, photo_url: user.photo_url }
+              : { id: r.user_id || "", slug: null, full_name: "Team Member", photo_url: null },
             branch: branch || null,
           };
         });
@@ -998,6 +1052,7 @@ export async function getPublicOrganizationProfile(
           id: b.id,
           name: b.name,
           slug: b.slug,
+          global_slug: b.global_slug,
           address: b.address,
           phone: b.phone,
           photo_url: b.photo_url,

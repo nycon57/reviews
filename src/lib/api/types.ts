@@ -163,6 +163,7 @@ export interface BranchResource {
   phone: string | null;
   email: string | null;
   website_url: string | null;
+  manager_id: string | null;
   manager_name: string | null;
   manager_email: string | null;
   region: string | null;

@@ -670,16 +670,6 @@ export function PricingPageClient() {
                   tagline: "Mortgage-native, not generic",
                 },
                 {
-                  name: "SocialSurvey",
-                  href: "/compare/socialsurvey-alternative",
-                  tagline: "Modern AI-powered alternative",
-                },
-                {
-                  name: "Total Expert",
-                  href: "/compare/total-expert-alternative",
-                  tagline: "Focused on reviews & reputation",
-                },
-                {
                   name: "Trustpilot",
                   href: "/compare/trustpilot-alternative",
                   tagline: "Built for mortgage professionals",

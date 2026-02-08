@@ -5,6 +5,7 @@ import {
   validateTwilioSignature,
   buildWebhookUrl,
 } from "@/lib/sms/webhook-validation";
+import { toE164 } from "@/lib/sms/phone-utils";
 import { KeywordHandler } from "@/lib/sms/keyword-handler";
 import { incrementDailyStat } from "@/lib/sms/daily-stats";
 
@@ -41,10 +42,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const from = params.From;
-    const to = params.To;
+    const rawFrom = params.From;
+    const rawTo = params.To;
     const body = params.Body ?? "";
     const messageSid = params.MessageSid;
+
+    // Normalize to E.164 — fall back to raw value if normalization fails
+    // (Twilio always sends E.164 but we guard defensively)
+    const from = toE164(rawFrom) ?? (() => {
+      console.warn(`[SMS Inbound Webhook] Could not normalize From number: ${rawFrom}`);
+      return rawFrom;
+    })();
+    const to = toE164(rawTo) ?? (() => {
+      console.warn(`[SMS Inbound Webhook] Could not normalize To number: ${rawTo}`);
+      return rawTo;
+    })();
 
     if (!from || !to) {
       return NextResponse.json(

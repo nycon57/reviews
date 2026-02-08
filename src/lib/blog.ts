@@ -1,14 +1,57 @@
-import fs from "fs";
-import path from "path";
-import matter from "gray-matter";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
   BlogPost,
   BlogPostMeta,
-  BlogPostFrontmatter,
   BlogCategory,
+  BlogAuthor,
 } from "@/types/blog";
 
-const CONTENT_DIR = path.join(process.cwd(), "content/blog");
+interface BlogPostRow {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  content: string;
+  date: string;
+  author: BlogAuthor;
+  category: BlogCategory;
+  tags: string[];
+  image: string | null;
+  featured: boolean;
+  reading_time: number;
+  status: string;
+}
+
+function rowToPost(row: BlogPostRow): BlogPost {
+  return {
+    title: row.title,
+    description: row.description,
+    date: row.date,
+    author: row.author as BlogAuthor,
+    category: row.category,
+    tags: row.tags,
+    image: row.image ?? undefined,
+    featured: row.featured,
+    slug: row.slug,
+    content: row.content,
+    readingTime: row.reading_time,
+  };
+}
+
+function rowToMeta(row: BlogPostRow): BlogPostMeta {
+  return {
+    title: row.title,
+    description: row.description,
+    date: row.date,
+    author: row.author as BlogAuthor,
+    category: row.category,
+    tags: row.tags,
+    image: row.image ?? undefined,
+    featured: row.featured,
+    slug: row.slug,
+    readingTime: row.reading_time,
+  };
+}
 
 /**
  * Calculate reading time in minutes based on word count
@@ -23,97 +66,123 @@ export function calculateReadingTime(content: string): number {
 /**
  * Get all blog post slugs
  */
-export function getAllPostSlugs(): string[] {
-  if (!fs.existsSync(CONTENT_DIR)) {
-    return [];
-  }
+export async function getAllPostSlugs(): Promise<string[]> {
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("slug")
+    .eq("status", "published")
+    .order("date", { ascending: false });
 
-  const files = fs.readdirSync(CONTENT_DIR);
-  return files
-    .filter((file) => file.endsWith(".mdx"))
-    .map((file) => file.replace(/\.mdx$/, ""));
+  if (error || !data) return [];
+  return data.map((row) => row.slug);
 }
 
 /**
  * Get a single blog post by slug
  */
-export function getPostBySlug(slug: string): BlogPost | null {
-  const fullPath = path.join(CONTENT_DIR, `${slug}.mdx`);
+export async function getPostBySlug(
+  slug: string
+): Promise<BlogPost | null> {
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select("*")
+    .eq("slug", slug)
+    .eq("status", "published")
+    .single();
 
-  if (!fs.existsSync(fullPath)) {
-    return null;
-  }
-
-  const fileContents = fs.readFileSync(fullPath, "utf8");
-  const { data, content } = matter(fileContents);
-  const frontmatter = data as BlogPostFrontmatter;
-
-  return {
-    ...frontmatter,
-    slug,
-    content,
-    readingTime: calculateReadingTime(content),
-  };
+  if (error || !data) return null;
+  return rowToPost(data as unknown as BlogPostRow);
 }
 
 /**
  * Get all blog posts with metadata only (no content)
  */
-export function getAllPosts(): BlogPostMeta[] {
-  const slugs = getAllPostSlugs();
-  const posts = slugs
-    .map((slug) => {
-      const post = getPostBySlug(slug);
-      if (!post) return null;
+export async function getAllPosts(): Promise<BlogPostMeta[]> {
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select(
+      "id, slug, title, description, date, author, category, tags, image, featured, reading_time, status"
+    )
+    .eq("status", "published")
+    .order("date", { ascending: false });
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { content, ...meta } = post;
-      return meta;
-    })
-    .filter((post): post is BlogPostMeta => post !== null);
-
-  // Sort by date descending
-  return posts.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  if (error || !data) return [];
+  return (data as unknown as BlogPostRow[]).map(rowToMeta);
 }
 
 /**
  * Get posts by category
  */
-export function getPostsByCategory(category: BlogCategory): BlogPostMeta[] {
-  return getAllPosts().filter((post) => post.category === category);
+export async function getPostsByCategory(
+  category: BlogCategory
+): Promise<BlogPostMeta[]> {
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select(
+      "id, slug, title, description, date, author, category, tags, image, featured, reading_time, status"
+    )
+    .eq("status", "published")
+    .eq("category", category)
+    .order("date", { ascending: false });
+
+  if (error || !data) return [];
+  return (data as unknown as BlogPostRow[]).map(rowToMeta);
 }
 
 /**
  * Get posts by tag
  */
-export function getPostsByTag(tag: string): BlogPostMeta[] {
-  return getAllPosts().filter((post) =>
-    post.tags.map((t) => t.toLowerCase()).includes(tag.toLowerCase())
-  );
+export async function getPostsByTag(tag: string): Promise<BlogPostMeta[]> {
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select(
+      "id, slug, title, description, date, author, category, tags, image, featured, reading_time, status"
+    )
+    .eq("status", "published")
+    .contains("tags", [tag.toLowerCase()])
+    .order("date", { ascending: false });
+
+  if (error || !data) return [];
+  return (data as unknown as BlogPostRow[]).map(rowToMeta);
 }
 
 /**
  * Get featured posts
  */
-export function getFeaturedPosts(): BlogPostMeta[] {
-  return getAllPosts().filter((post) => post.featured);
+export async function getFeaturedPosts(): Promise<BlogPostMeta[]> {
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("blog_posts")
+    .select(
+      "id, slug, title, description, date, author, category, tags, image, featured, reading_time, status"
+    )
+    .eq("status", "published")
+    .eq("featured", true)
+    .order("date", { ascending: false });
+
+  if (error || !data) return [];
+  return (data as unknown as BlogPostRow[]).map(rowToMeta);
 }
 
 /**
  * Get related posts based on category and tags
  */
-export function getRelatedPosts(
+export async function getRelatedPosts(
   currentSlug: string,
   category: BlogCategory,
   tags: string[],
   limit: number = 3
-): BlogPostMeta[] {
-  const allPosts = getAllPosts().filter((post) => post.slug !== currentSlug);
+): Promise<BlogPostMeta[]> {
+  const allPosts = await getAllPosts();
+  const filtered = allPosts.filter((post) => post.slug !== currentSlug);
 
   // Score each post based on matching category and tags
-  const scoredPosts = allPosts.map((post) => {
+  const scoredPosts = filtered.map((post) => {
     let score = 0;
 
     // Category match is worth 2 points
@@ -142,8 +211,8 @@ export function getRelatedPosts(
 /**
  * Get all unique tags from all posts
  */
-export function getAllTags(): string[] {
-  const posts = getAllPosts();
+export async function getAllTags(): Promise<string[]> {
+  const posts = await getAllPosts();
   const tagSet = new Set<string>();
 
   posts.forEach((post) => {
@@ -153,39 +222,3 @@ export function getAllTags(): string[] {
   return Array.from(tagSet).sort();
 }
 
-/**
- * Generate RSS feed XML
- */
-export function generateRssFeed(siteUrl: string): string {
-  const posts = getAllPosts();
-
-  const rssItems = posts
-    .slice(0, 20) // Limit to 20 most recent posts
-    .map(
-      (post) => `
-    <item>
-      <title><![CDATA[${post.title}]]></title>
-      <link>${siteUrl}/blog/${post.slug}</link>
-      <guid isPermaLink="true">${siteUrl}/blog/${post.slug}</guid>
-      <description><![CDATA[${post.description}]]></description>
-      <pubDate>${new Date(post.date).toUTCString()}</pubDate>
-      <category>${post.category}</category>
-      ${post.tags.map((tag) => `<category>${tag}</category>`).join("\n      ")}
-      <author>noreply@repwell.com (${post.author.name})</author>
-    </item>`
-    )
-    .join("");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>RepWell Blog</title>
-    <link>${siteUrl}/blog</link>
-    <description>Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.</description>
-    <language>en-us</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${siteUrl}/blog/rss.xml" rel="self" type="application/rss+xml" />
-    ${rssItems}
-  </channel>
-</rss>`;
-}

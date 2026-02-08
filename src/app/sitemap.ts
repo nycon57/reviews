@@ -1,5 +1,5 @@
 import { MetadataRoute } from "next";
-import { getAllPublicUserSlugs, getAllOrganizationSlugs } from "@/lib/seo/actions";
+import { getAllPublicUserSlugs, getAllOrganizationSlugs, getAllPublicBranchSlugs } from "@/lib/seo/actions";
 import { getBaseUrl } from "@/lib/seo";
 import { industryFilterConfig } from "@/components/directory/industry-filter";
 import { competitorSlugs } from "@/lib/competitor-pages";
@@ -11,6 +11,7 @@ import { competitorSlugs } from "@/lib/competitor-pages";
  * - Industry directory pages
  * - Professional profile pages
  * - Organization profile pages
+ * - Branch profile pages
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl();
@@ -64,6 +65,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
+  // Branch profile pages
+  const branchSlugs = await getAllPublicBranchSlugs();
+  const branchPages: MetadataRoute.Sitemap = branchSlugs.map((slug) => ({
+    url: `${baseUrl}/branch/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
   // Competitor comparison pages
   const comparisonPages: MetadataRoute.Sitemap = competitorSlugs.map((slug) => ({
     url: `${baseUrl}/compare/${slug}`,
@@ -72,5 +82,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...industryPages, ...comparisonPages, ...professionalPages, ...orgPages];
+  return [...staticPages, ...industryPages, ...comparisonPages, ...professionalPages, ...orgPages, ...branchPages];
 }

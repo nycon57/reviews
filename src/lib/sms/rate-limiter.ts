@@ -35,9 +35,9 @@ export async function checkPerNumberRateLimit(
     .gte("created_at", windowStart);
 
   if (error) {
-    // Fail open: if we cannot check, allow the send but log the error
+    // Fail closed: if we cannot check, deny the send and log the error
     console.error("[SMS RateLimit] Failed to check per-number rate:", error.message);
-    return { allowed: true };
+    return { allowed: false, reason: "Rate limit check unavailable" };
   }
 
   if ((count ?? 0) >= limit) {
@@ -71,8 +71,9 @@ export async function checkOrgRateLimit(
     .gte("created_at", windowStart);
 
   if (error) {
+    // Fail closed: if we cannot check, deny the send and log the error
     console.error("[SMS RateLimit] Failed to check org rate:", error.message);
-    return { allowed: true };
+    return { allowed: false, reason: "Rate limit check unavailable" };
   }
 
   if ((count ?? 0) >= limit) {

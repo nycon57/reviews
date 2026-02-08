@@ -108,3 +108,118 @@ export interface InsightsReport {
   organizationName: string;
   insights: AIInsightsData;
 }
+
+// ============================================================================
+// Smart Action Items
+// ============================================================================
+
+export type ActionItemType =
+  | "respond_review"
+  | "pending_responses"
+  | "send_requests"
+  | "theme_alert"
+  | "milestone"
+  | "improvement";
+
+export interface SmartActionItem {
+  id: string;
+  priority: "high" | "medium" | "low";
+  actionType: ActionItemType;
+  title: string;
+  description: string;
+  actionUrl?: string;
+  dismissible: boolean;
+}
+
+// ============================================================================
+// LO Performance Scorecard
+// ============================================================================
+
+export interface MetricTrend {
+  current: number;
+  previous: number;
+  direction: "up" | "down" | "stable";
+}
+
+export interface LOPerformanceScorecard {
+  loanOfficerId: string;
+  loanOfficerName: string;
+  reviewVelocity: MetricTrend;
+  avgRating: {
+    current: number;
+    days30: number;
+    days60: number;
+    days90: number;
+  };
+  responseRate: { rate: number; orgAverage: number };
+  avgResponseTimeHours: number;
+  sentimentTrajectory: "improving" | "stable" | "declining";
+  surveyCompletionRate: number;
+  requestToReviewConversion: number;
+  topPositiveThemes: string[];
+  riskThemes: string[];
+  npsTrend: MetricTrend;
+  coachingBrief?: string;
+  generatedAt: Date;
+}
+
+// ============================================================================
+// Manager Activity Monitor
+// ============================================================================
+
+export type ActivityStatus = "active" | "slowing" | "inactive";
+
+export type AlertType =
+  | "unresponded_reviews"
+  | "low_request_rate"
+  | "response_time_increase"
+  | "negative_spike"
+  | "engagement_drop"
+  | "rating_decline";
+
+export interface ActivityAlert {
+  type: AlertType;
+  message: string;
+  severity: "warning" | "critical";
+}
+
+export interface LOActivityStatus {
+  userId: string;
+  userName: string;
+  activityStatus: ActivityStatus;
+  unrespondedReviewCount: number;
+  reviewRequestsThisWeek: number;
+  orgAvgRequestsPerWeek: number;
+  avgResponseTimeHours: number;
+  responseTimeTrend: "improving" | "stable" | "worsening";
+  negativeReviewsLast7Days: number;
+  ratingTrend: { avg30Day: number; avg60Day: number };
+  alerts: ActivityAlert[];
+}
+
+export interface TeamActivityMonitor {
+  teamMembers: LOActivityStatus[];
+  orgMetrics: {
+    avgResponseTimeHours: number;
+    avgRequestsPerWeek: number;
+    activeCount: number;
+    slowingCount: number;
+    inactiveCount: number;
+  };
+}
+
+// ============================================================================
+// Channel Effectiveness
+// ============================================================================
+
+export interface ChannelMetrics {
+  channel: string;
+  reviewCount: number;
+  avgRating: number;
+  sentimentDistribution: {
+    positive: number;
+    neutral: number;
+    negative: number;
+  };
+  conversionRate?: number;
+}

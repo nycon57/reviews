@@ -1,16 +1,9 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import {
-  RssSimple as Rss,
-  ArrowRight,
-} from "@phosphor-icons/react";
 import { fadeInUp, staggerChildrenDelayed, blobFloat, blobFloatRotate } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface BlogHeroProps {
@@ -20,10 +13,6 @@ interface BlogHeroProps {
   title?: React.ReactNode;
   /** Supporting description */
   description?: string;
-  /** Show newsletter form (UI only, no backend) */
-  showNewsletter?: boolean;
-  /** Show RSS link */
-  showRss?: boolean;
   /** Additional className */
   className?: string;
 }
@@ -36,18 +25,8 @@ export function BlogHero({
     </>
   ),
   description = "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.",
-  showNewsletter = true,
-  showRss = true,
   className,
 }: BlogHeroProps) {
-  const [email, setEmail] = React.useState("");
-
-  const handleNewsletterSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // UI only - no backend integration
-    setEmail("");
-  };
-
   return (
     <section
       className={cn(
@@ -106,39 +85,6 @@ export function BlogHero({
             </motion.p>
           )}
 
-          {/* Newsletter + RSS */}
-          <motion.div
-            variants={fadeInUp}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            {showNewsletter && (
-              <form
-                onSubmit={handleNewsletterSubmit}
-                className="flex w-full sm:w-auto gap-2"
-              >
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full sm:w-64 bg-white border-repwell-sage-100"
-                />
-                <Button type="submit" className="gap-2 whitespace-nowrap">
-                  Subscribe
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </form>
-            )}
-
-            {showRss && (
-              <Link href="/blog/rss.xml" target="_blank">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Rss className="h-4 w-4" />
-                  RSS Feed
-                </Button>
-              </Link>
-            )}
-          </motion.div>
         </motion.div>
       </div>
     </section>

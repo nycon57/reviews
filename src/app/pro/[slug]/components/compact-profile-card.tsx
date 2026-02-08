@@ -8,7 +8,6 @@ import {
   BuildingOffice as Building2,
   Medal as Award,
 } from "@phosphor-icons/react";
-import { morphSpring } from "@/lib/motion";
 
 interface CompactProfileCardProps {
   fullName: string;
@@ -60,50 +59,41 @@ export function CompactProfileCard({
 
   return (
     <motion.div
-      layoutId="profile-card"
+      key="compact-card"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
       className="bg-white rounded-xl shadow-md p-4 mb-4"
-      transition={morphSpring}
     >
       <div className="flex items-start gap-3">
         {/* Compact Avatar */}
-        <motion.div layoutId="profile-avatar" transition={morphSpring}>
+        <div>
           <Avatar className="h-12 w-12 border-2 border-white shadow">
             <AvatarImage src={photoUrl || undefined} alt={fullName} />
             <AvatarFallback className="text-sm font-semibold bg-repwell-sage-100 text-repwell-teal-400">
               {getInitials(fullName)}
             </AvatarFallback>
           </Avatar>
-        </motion.div>
+        </div>
 
         {/* Compact Info */}
         <div className="flex-1 min-w-0">
-          <motion.h2
-            layoutId="profile-name"
-            className="text-base font-display font-bold text-repwell-teal-500 truncate"
-            transition={morphSpring}
-          >
+          <h2 className="text-base font-display font-bold text-repwell-teal-500 truncate">
             {fullName}
-          </motion.h2>
+          </h2>
 
           <div className="flex items-center gap-1 text-sm text-repwell-teal-400">
-            <motion.span
-              layoutId="profile-title"
-              className="truncate"
-              transition={morphSpring}
-            >
+            <span className="truncate">
               {title || "Professional"}
-            </motion.span>
+            </span>
             {organizationName && (
               <>
                 <span className="text-repwell-teal-300">@</span>
-                <motion.span
-                  layoutId="profile-org"
-                  className="truncate flex items-center gap-1"
-                  transition={morphSpring}
-                >
+                <span className="truncate flex items-center gap-1">
                   <Building2 className="h-3 w-3 shrink-0" />
                   {organizationName}
-                </motion.span>
+                </span>
               </>
             )}
           </div>
@@ -111,49 +101,37 @@ export function CompactProfileCard({
           {/* Stats Row */}
           <div className="flex flex-wrap items-center gap-2 mt-2">
             {averageRating && totalReviews ? (
-              <motion.div
-                layoutId="profile-rating"
-                className="flex items-center gap-1.5"
-                transition={morphSpring}
-              >
+              <div className="flex items-center gap-1.5">
                 <CompactStarRating rating={Math.round(rating)} />
                 <span className="text-sm font-medium text-repwell-teal-500">
                   {rating.toFixed(1)}
                 </span>
-              </motion.div>
+              </div>
             ) : null}
 
             {totalReviews ? (
-              <motion.div layoutId="profile-review-badge" transition={morphSpring}>
-                <Badge
-                  variant="secondary"
-                  className="bg-repwell-sage-100 text-repwell-teal-400 text-xs px-1.5 py-0"
-                >
-                  {totalReviews} {totalReviews === 1 ? "Review" : "Reviews"}
-                </Badge>
-              </motion.div>
+              <Badge
+                variant="secondary"
+                className="bg-repwell-sage-100 text-repwell-teal-400 text-xs px-1.5 py-0"
+              >
+                {totalReviews} {totalReviews === 1 ? "Review" : "Reviews"}
+              </Badge>
             ) : null}
 
             {npsScore !== null && (
-              <motion.div layoutId="profile-nps-badge" transition={morphSpring}>
-                <Badge
-                  variant="outline"
-                  className="border-repwell-sage-200 text-repwell-teal-400 text-xs px-1.5 py-0"
-                >
-                  NPS: {npsScore}
-                </Badge>
-              </motion.div>
+              <Badge
+                variant="outline"
+                className="border-repwell-sage-200 text-repwell-teal-400 text-xs px-1.5 py-0"
+              >
+                NPS: {npsScore}
+              </Badge>
             )}
 
             {nmlsId && (
-              <motion.div
-                layoutId="profile-nmls"
-                className="flex items-center gap-1 text-xs text-repwell-teal-300"
-                transition={morphSpring}
-              >
+              <div className="flex items-center gap-1 text-xs text-repwell-teal-300">
                 <Award className="h-3 w-3" />
                 NMLS# {nmlsId}
-              </motion.div>
+              </div>
             )}
           </div>
         </div>

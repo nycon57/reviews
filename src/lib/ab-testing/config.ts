@@ -64,62 +64,6 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
     },
   },
 
-  "socialsurvey-alternative": {
-    slug: "socialsurvey-alternative",
-    h1Test: {
-      id: "socialsurvey-h1",
-      name: "SocialSurvey H1 Headline",
-      type: "h1",
-      variantA: "The Modern SocialSurvey Alternative for Mortgage",
-      variantB: "RepWell vs SocialSurvey — Built for Today's Mortgage Teams",
-      enabled: true,
-    },
-    ctaCopyTest: {
-      id: "socialsurvey-cta-copy",
-      name: "SocialSurvey CTA Copy",
-      type: "cta_copy",
-      variantA: "Start Free Trial",
-      variantB: "Try RepWell Free",
-      enabled: true,
-    },
-    ctaColorTest: {
-      id: "socialsurvey-cta-color",
-      name: "SocialSurvey CTA Color",
-      type: "cta_color",
-      variantA: "bg-repwell-teal-300 hover:bg-repwell-teal-400",
-      variantB: "bg-indigo-600 hover:bg-indigo-700",
-      enabled: false,
-    },
-  },
-
-  "total-expert-alternative": {
-    slug: "total-expert-alternative",
-    h1Test: {
-      id: "total-expert-h1",
-      name: "Total Expert H1 Headline",
-      type: "h1",
-      variantA: "The Review-Focused Total Expert Alternative",
-      variantB: "Total Expert Does Marketing — RepWell Does Reviews Better",
-      enabled: true,
-    },
-    ctaCopyTest: {
-      id: "total-expert-cta-copy",
-      name: "Total Expert CTA Copy",
-      type: "cta_copy",
-      variantA: "Start Free Trial",
-      variantB: "Compare Plans",
-      enabled: true,
-    },
-    ctaColorTest: {
-      id: "total-expert-cta-color",
-      name: "Total Expert CTA Color",
-      type: "cta_color",
-      variantA: "bg-repwell-teal-300 hover:bg-repwell-teal-400",
-      variantB: "bg-violet-600 hover:bg-violet-700",
-      enabled: false,
-    },
-  },
-
   "trustpilot-alternative": {
     slug: "trustpilot-alternative",
     h1Test: {

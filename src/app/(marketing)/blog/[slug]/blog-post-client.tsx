@@ -24,8 +24,6 @@ import {
   Link as Link2,
   Check,
   ArrowRight,
-  Envelope as Mail,
-  SpinnerGap as Loader2,
 } from "@phosphor-icons/react";
 import { BlogPost, BlogPostMeta } from "@/types/blog";
 import {
@@ -35,7 +33,6 @@ import {
 } from "@/components/blog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -49,6 +46,7 @@ import {
   viewportOnce,
 } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import GithubSlugger from "github-slugger";
 
 interface BlogPostClientProps {
   post: BlogPost;
@@ -61,16 +59,13 @@ interface BlogPostClientProps {
 function extractHeadings(content: string) {
   const headingRegex = /^(#{2,3})\s+(.+)$/gm;
   const headings: { id: string; text: string; level: number }[] = [];
+  const slugger = new GithubSlugger();
   let match;
 
   while ((match = headingRegex.exec(content)) !== null) {
     const level = match[1].length;
     const text = match[2].trim();
-    // Generate ID from text (same as rehype-slug does)
-    const id = text
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-");
+    const id = slugger.slug(text);
     headings.push({ id, text, level });
   }
 
@@ -233,96 +228,6 @@ function InlineSocialShare({ url, title }: { url: string; title: string }) {
         )}
       </button>
     </div>
-  );
-}
-
-// Newsletter CTA
-function NewsletterCTA() {
-  const [email, setEmail] = React.useState("");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isSubmitted, setIsSubmitted] = React.useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-      setEmail("");
-    }, 1000);
-  };
-
-  return (
-    <section className="py-16 md:py-24 bg-repwell-teal-500">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          variants={staggerContainer}
-          className="text-center max-w-2xl mx-auto"
-        >
-          <motion.div variants={fadeInUp} className="mb-4">
-            <Mail className="h-12 w-12 text-repwell-sage-100 mx-auto" />
-          </motion.div>
-
-          <motion.h2
-            variants={fadeInUp}
-            className="font-display text-3xl md:text-4xl font-bold text-white mb-4"
-          >
-            Want More Insights?
-          </motion.h2>
-
-          <motion.p
-            variants={fadeInUp}
-            className="text-lg text-repwell-sage-100 mb-8"
-          >
-            Subscribe to our newsletter for the latest tips and best practices.
-          </motion.p>
-
-          <motion.div variants={fadeInUp}>
-            {isSubmitted ? (
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <p className="text-white font-medium">
-                  Thanks for subscribing! Check your inbox for confirmation.
-                </p>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-              >
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white"
-                />
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-white text-repwell-teal-500 hover:bg-repwell-sage-100 whitespace-nowrap"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Subscribing...
-                    </>
-                  ) : (
-                    <>
-                      Subscribe
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            )}
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
   );
 }
 
@@ -597,8 +502,6 @@ export function BlogPostClient({
       {/* Related Posts */}
       <RelatedPostsPremium posts={relatedPosts} />
 
-      {/* Newsletter CTA */}
-      <NewsletterCTA />
     </>
   );
 }

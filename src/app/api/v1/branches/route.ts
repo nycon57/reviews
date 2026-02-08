@@ -31,6 +31,7 @@ function mapBranchRow(row: Record<string, unknown>): BranchResource {
     phone: row.phone as string | null,
     email: row.email as string | null,
     website_url: row.website_url as string | null,
+    manager_id: row.manager_id as string | null,
     manager_name: row.manager_name as string | null,
     manager_email: row.manager_email as string | null,
     region: row.region as string | null,
@@ -152,6 +153,23 @@ async function handlePost(
     );
   }
 
+  // Validate manager_id if provided
+  if (input.manager_id) {
+    const { data: managerUser, error: managerError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', input.manager_id)
+      .eq('is_active', true)
+      .single();
+
+    if (managerError || !managerUser) {
+      return apiValidationError(
+        [{ field: 'manager_id', message: 'Manager must be an active user' }],
+        context.requestId
+      );
+    }
+  }
+
   // Create branch
   const { data: branch, error: createError } = await supabase
     .from('branches')
@@ -163,6 +181,7 @@ async function handlePost(
       phone: input.phone,
       email: input.email,
       website_url: input.website_url,
+      manager_id: input.manager_id,
       manager_name: input.manager_name,
       manager_email: input.manager_email,
       region: input.region,

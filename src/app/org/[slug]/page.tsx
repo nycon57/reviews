@@ -71,6 +71,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
     branches.map((b) => ({
       id: b.id,
       name: b.name,
+      global_slug: b.global_slug,
       address: b.address,
     })),
     featuredProfessionals.map((member) => ({

@@ -57,123 +57,106 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
       ? [professional.branch_info.address.city, professional.branch_info.address.state].filter(Boolean).join(", ")
       : [professional.branch, professional.region].filter(Boolean).join(", ");
 
-  // List variant - horizontal, compact layout
+  // List variant - compact sidebar layout
   if (variant === "list") {
     return (
       <Card className={cn(
         "group transition-all hover:shadow-md hover:border-primary/50",
-        isHovered && "shadow-md border-repwell-teal-300 bg-repwell-sage-100/30"
+        isHovered && "shadow-md border-repwell-teal-300"
       )}>
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            {/* Avatar + Main Info */}
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-              <Link href={`/pro/${professional.slug || professional.id}`} className="shrink-0">
-                <Avatar className="h-14 w-14 border-2 border-muted transition-transform group-hover:scale-105">
-                  <AvatarImage
-                    src={professional.photo_url || undefined}
-                    alt={professional.full_name}
-                  />
-                  <AvatarFallback className="text-base font-semibold bg-primary/10 text-primary">
-                    {getInitials(professional.full_name)}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
+        <CardContent className="p-4 pt-4">
+          <div className="flex items-start gap-3">
+            {/* Avatar */}
+            <Link href={`/pro/${professional.slug || professional.id}`} className="shrink-0">
+              <Avatar className="h-11 w-11 border-2 border-muted transition-transform group-hover:scale-105">
+                <AvatarImage
+                  src={professional.photo_url || undefined}
+                  alt={professional.full_name}
+                />
+                <AvatarFallback className="text-sm font-semibold bg-primary/10 text-primary">
+                  {getInitials(professional.full_name)}
+                </AvatarFallback>
+              </Avatar>
+            </Link>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                  <Link href={`/pro/${professional.slug || professional.id}`}>
-                    <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
-                      {professional.full_name}
-                    </h3>
-                  </Link>
-                  {/* Rating inline on desktop */}
-                  {professional.average_rating && professional.total_reviews ? (
-                    <div className="hidden sm:flex items-center gap-1.5">
-                      <StarRating rating={Math.round(Number(professional.average_rating))} />
-                      <span className="font-semibold text-sm">
-                        {Number(professional.average_rating).toFixed(1)}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({professional.total_reviews})
-                      </span>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-sm text-muted-foreground">
-                  <span className="truncate">{professional.title || "Professional"}</span>
-                  {professional.organization && (
-                    <>
-                      <span className="hidden sm:inline text-muted-foreground/50">·</span>
-                      <span className="flex items-center gap-1">
-                        <Building2 className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{professional.organization.name}</span>
-                      </span>
-                    </>
-                  )}
-                  {location && (
-                    <>
-                      <span className="hidden sm:inline text-muted-foreground/50">·</span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        <span className="truncate">{location}</span>
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* Rating on mobile */}
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2">
+                <Link href={`/pro/${professional.slug || professional.id}`} className="min-w-0">
+                  <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                    {professional.full_name}
+                  </h3>
+                </Link>
                 {professional.average_rating && professional.total_reviews ? (
-                  <div className="flex sm:hidden items-center gap-1.5 mt-2">
-                    <StarRating rating={Math.round(Number(professional.average_rating))} />
-                    <span className="font-semibold text-sm">
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold text-xs">
                       {Number(professional.average_rating).toFixed(1)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({professional.total_reviews} {professional.total_reviews === 1 ? "review" : "reviews"})
+                    <span className="text-[11px] text-muted-foreground">
+                      ({professional.total_reviews})
                     </span>
                   </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground mt-2 sm:hidden">No reviews yet</span>
+                ) : null}
+              </div>
+
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {professional.title || "Professional"}
+              </p>
+
+              <div className="flex flex-wrap items-center gap-x-2 mt-0.5 text-xs text-muted-foreground">
+                {professional.organization && (
+                  <span className="flex items-center gap-1 truncate">
+                    <Building2 className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{professional.organization.name}</span>
+                  </span>
+                )}
+                {professional.organization && location && (
+                  <span className="text-muted-foreground/50">·</span>
+                )}
+                {location && (
+                  <span className="flex items-center gap-1 truncate">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{location}</span>
+                  </span>
                 )}
               </div>
             </div>
+          </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 sm:shrink-0">
-              {professional.phone && (
-                <a
-                  href={`tel:${professional.phone}`}
-                  title="Call"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3"
-                  )}
-                >
-                  <Phone className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Call</span>
-                </a>
-              )}
-              {professional.email && (
-                <a
-                  href={`mailto:${professional.email}`}
-                  title="Email"
-                  className={cn(
-                    buttonVariants({ variant: "outline", size: "sm" }),
-                    "h-9 w-9 p-0 sm:h-9 sm:w-auto sm:px-3"
-                  )}
-                >
-                  <Mail className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Email</span>
-                </a>
-              )}
-              <Button variant="default" size="sm" asChild className="h-9 flex-1 sm:flex-none">
-                <Link href={`/pro/${professional.slug || professional.id}`}>
-                  View Profile
-                </Link>
-              </Button>
-            </div>
+          {/* Actions */}
+          <div className="flex items-center gap-2 mt-3 ml-[56px]">
+            {professional.phone && (
+              <a
+                href={`tel:${professional.phone}`}
+                title="Call"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "h-7 px-2.5 text-xs"
+                )}
+              >
+                <Phone className="h-3.5 w-3.5 mr-1" />
+                Call
+              </a>
+            )}
+            {professional.email && (
+              <a
+                href={`mailto:${professional.email}`}
+                title="Email"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "h-7 px-2.5 text-xs"
+                )}
+              >
+                <Mail className="h-3.5 w-3.5 mr-1" />
+                Email
+              </a>
+            )}
+            <Button variant="default" size="sm" asChild className="h-7 text-xs ml-auto">
+              <Link href={`/pro/${professional.slug || professional.id}`}>
+                View Profile
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

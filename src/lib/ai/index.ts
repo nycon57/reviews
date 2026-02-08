@@ -25,6 +25,16 @@ export type {
   AIInsightsData,
   InsightsExportOptions,
   InsightsReport,
+  SmartActionItem,
+  ActionItemType,
+  LOPerformanceScorecard,
+  MetricTrend,
+  ActivityStatus,
+  AlertType,
+  ActivityAlert,
+  LOActivityStatus,
+  TeamActivityMonitor,
+  ChannelMetrics,
 } from "./insights-types";
 
 // Client
@@ -58,6 +68,10 @@ export {
   getImprovementRecommendations,
   getIndustryBenchmarks,
   getAIInsightsData,
+  getSmartActionItems,
+  getLOPerformanceScorecard,
+  getTeamActivityMonitor,
+  getChannelEffectiveness,
 } from "./insights-actions";
 
 // Response Suggestions

@@ -4865,7 +4865,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "Per-LO numbers route correctly for outbound and inbound messages",
         "Branded short domains resolve and redirect correctly",
@@ -4914,7 +4914,9 @@
           "Monthly compliance report uses Resend email with PDF attachment generated server-side"
         ]
       },
-      "updatedAt": "2026-02-01T10:43:08.635898+00:00"
+      "updatedAt": "2026-02-05T22:12:40.966164+00:00",
+      "startedAt": "2026-02-05T22:09:07.957736+00:00",
+      "completedAt": "2026-02-05T22:12:40.966340+00:00"
     },
     {
       "id": "S114",
@@ -5178,7 +5180,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5200,7 +5202,7 @@
           "Set min-height on tab panels to tallest content to prevent CLS"
         ]
       },
-      "updatedAt": "2026-02-01T13:43:32.658087+00:00"
+      "updatedAt": "2026-02-05T22:14:08.353412+00:00"
     },
     {
       "id": "S120",
@@ -5224,7 +5226,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -5245,7 +5247,7 @@
           "Use ShadCN Card components for mortgage feature cards"
         ]
       },
-      "updatedAt": "2026-02-01T13:58:40.449831+00:00"
+      "updatedAt": "2026-02-05T22:19:11.019250+00:00"
     },
     {
       "id": "S121",
@@ -5270,7 +5272,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes"
@@ -5291,7 +5293,7 @@
           "Handle N/A scores with a muted badge rather than hiding the row"
         ]
       },
-      "updatedAt": "2026-02-01T14:13:47.715491+00:00"
+      "updatedAt": "2026-02-05T22:24:13.636876+00:00"
     },
     {
       "id": "S122",
@@ -5316,7 +5318,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5340,7 +5342,7 @@
           "FAQ answers rendered with dangerouslySetInnerHTML or a markdown renderer for rich content"
         ]
       },
-      "updatedAt": "2026-02-01T14:28:55.869226+00:00"
+      "updatedAt": "2026-02-05T22:29:17.143885+00:00"
     },
     {
       "id": "S123",
@@ -5365,7 +5367,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5387,7 +5389,7 @@
           "Trust badge icons from lucide-react icon library"
         ]
       },
-      "updatedAt": "2026-02-01T14:44:03.209070+00:00"
+      "updatedAt": "2026-02-05T22:34:20.465517+00:00"
     },
     {
       "id": "S124",
@@ -5417,7 +5419,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run type-check passes",
         "All config fields populated (no empty arrays or placeholder text)"
@@ -5436,7 +5438,7 @@
           "FAQ should address contract concerns since Experience.com uses long-term contracts"
         ]
       },
-      "updatedAt": "2026-02-01T14:59:10.615039+00:00"
+      "updatedAt": "2026-02-05T22:39:22.915572+00:00"
     },
     {
       "id": "S125",
@@ -5466,7 +5468,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run type-check passes",
         "All config fields populated"
@@ -5485,7 +5487,7 @@
           "FAQ should address feature gaps for mortgage use cases"
         ]
       },
-      "updatedAt": "2026-02-01T15:14:18.377129+00:00"
+      "updatedAt": "2026-02-05T22:44:25.542828+00:00"
     },
     {
       "id": "S126",
@@ -5511,7 +5513,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes with static generation",
         "JSON-LD validates in Google Rich Results Test",
@@ -5565,7 +5567,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "All 5 redirects work correctly",
@@ -5612,7 +5614,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5665,7 +5667,7 @@
       ],
       "priority": "P1",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run type-check passes",
         "All 3 config files complete with no placeholder content",
@@ -5715,7 +5717,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "Lighthouse Performance >= 90 on all 5 pages",
         "LCP < 2.5s measured via Lighthouse",
@@ -5774,7 +5776,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build passes",
         "npm run lint passes",
@@ -5830,7 +5832,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -5870,7 +5872,7 @@
           "Version column + parent_widget_id enables version history without separate table"
         ]
       },
-      "updatedAt": "2026-02-01T18:10:53.669894+00:00"
+      "updatedAt": "2026-02-05T22:49:28.123004+00:00"
     },
     {
       "id": "S133",
@@ -5893,7 +5895,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -5947,7 +5949,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6008,7 +6010,7 @@
       ],
       "priority": "P0",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6069,7 +6071,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6124,7 +6126,7 @@
       ],
       "priority": "P0",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6177,7 +6179,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6231,7 +6233,7 @@
       ],
       "priority": "P0",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6324,7 +6326,7 @@
           "Theme presets defined in shared module importable by both embed.js and dashboard for consistency"
         ]
       },
-      "updatedAt": "2026-02-01T19:31:46.412787+00:00"
+      "updatedAt": "2026-02-05T23:49:34.001053+00:00"
     },
     {
       "id": "S141",
@@ -6379,7 +6381,7 @@
           "10px minimum disclaimer font enforced at theme engine level, not just UI validation"
         ]
       },
-      "updatedAt": "2026-02-01T19:46:57.903402+00:00"
+      "updatedAt": "2026-02-05T23:54:16.415068+00:00"
     },
     {
       "id": "S142",
@@ -6402,7 +6404,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6458,7 +6460,7 @@
       ],
       "priority": "P0",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6510,7 +6512,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -6619,7 +6621,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6675,7 +6677,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6730,7 +6732,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6787,7 +6789,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6841,7 +6843,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6896,7 +6898,7 @@
       ],
       "priority": "P1",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -6950,7 +6952,7 @@
       ],
       "priority": "P1",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7004,7 +7006,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7099,7 +7101,7 @@
           "Event rate limiting enforced both client-side (embed.js) and server-side (API) to prevent abuse"
         ]
       },
-      "updatedAt": "2026-02-02T01:54:41.793397+00:00"
+      "updatedAt": "2026-02-05T23:59:18.953432+00:00"
     },
     {
       "id": "S155",
@@ -7124,7 +7126,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7195,7 +7197,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "WordPress plugin validation",
         "PHP lint"
@@ -7248,7 +7250,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7310,7 +7312,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7377,7 +7379,7 @@
       ],
       "priority": "P2",
       "estimate": "XL",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7438,7 +7440,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7493,7 +7495,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7551,7 +7553,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7604,7 +7606,7 @@
       ],
       "priority": "P2",
       "estimate": "M",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint"
@@ -7658,7 +7660,7 @@
       ],
       "priority": "P2",
       "estimate": "L",
-      "status": "blocked",
+      "status": "done",
       "gates": [
         "npm run build",
         "npm run lint",
@@ -7717,7 +7719,7 @@
       ],
       "priority": "P1",
       "estimate": "XL",
-      "status": "in_progress",
+      "status": "done",
       "gates": [
         "npm run test:e2e",
         "performance benchmarks pass"
@@ -7768,9 +7770,7 @@
           "Test fixtures include seeded widget configs and review data"
         ]
       },
-      "updatedAt": "2026-02-02T04:06:38.780099+00:00",
-      "startedAt": "2026-02-02T04:06:38.779941+00:00",
-      "completedAt": null
+      "updatedAt": "2026-02-02T04:31:50.772331+00:00"
     }
   ],
   "phases": [

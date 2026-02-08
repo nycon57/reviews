@@ -9,8 +9,6 @@ import {
   Calendar,
   Clock,
   ArrowRight,
-  Envelope as Mail,
-  SpinnerGap as Loader2,
   Image as ImageIcon,
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
@@ -26,7 +24,6 @@ import {
 } from "@/lib/motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface BlogArchiveClientProps {
@@ -176,98 +173,6 @@ function BlogCardPremium({ post, index }: { post: BlogPostMeta; index: number })
         </div>
       </Link>
     </motion.article>
-  );
-}
-
-// Newsletter CTA Section
-function NewsletterCTA() {
-  const [email, setEmail] = React.useState("");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isSubmitted, setIsSubmitted] = React.useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    // UI only - simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-      setEmail("");
-    }, 1000);
-  };
-
-  return (
-    <section className="py-16 md:py-24 bg-repwell-teal-500">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={viewportOnce}
-          variants={staggerContainer}
-          className="text-center max-w-2xl mx-auto"
-        >
-          <motion.div variants={fadeInUp} className="mb-4">
-            <Mail className="h-12 w-12 text-repwell-sage-100 mx-auto" />
-          </motion.div>
-
-          <motion.h2
-            variants={fadeInUp}
-            className="font-display text-3xl md:text-4xl font-bold text-white mb-4"
-          >
-            Stay in the Loop
-          </motion.h2>
-
-          <motion.p
-            variants={fadeInUp}
-            className="text-lg text-repwell-sage-100 mb-8"
-          >
-            Get the latest insights on customer experience and review management
-            delivered to your inbox.
-          </motion.p>
-
-          <motion.div variants={fadeInUp}>
-            {isSubmitted ? (
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
-                <p className="text-white font-medium">
-                  Thanks for subscribing! Check your inbox for confirmation.
-                </p>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-              >
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="flex-1 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white focus:ring-white"
-                />
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-white text-repwell-teal-500 hover:bg-repwell-sage-100 whitespace-nowrap"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Subscribing...
-                    </>
-                  ) : (
-                    <>
-                      Subscribe
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
-            )}
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
   );
 }
 
@@ -437,8 +342,6 @@ export function BlogArchiveClient({
         </div>
       </section>
 
-      {/* Newsletter CTA */}
-      <NewsletterCTA />
     </>
   );
 }

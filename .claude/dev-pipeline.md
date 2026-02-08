@@ -1,0 +1,75 @@
+# Development Pipeline
+
+Full 6-phase lifecycle for every feature. Chain skills in order.
+
+---
+
+## Phase 1: Ideation & Planning
+
+| Step | Skill/Tool | Action |
+|---|---|---|
+| Understand requirements | `feature-dev:code-explorer` | Analyze existing code related to the task |
+| Check PRD | Read `.agents/tasks/prd-reviews.json` | Get story details |
+| Plan | `feature-dev:code-architect` | Design implementation approach |
+| Write plan | Write to `tasks/todo.md` | Checkable items per Task Management rules |
+
+---
+
+## Phase 2: Design
+
+| Step | Skill/Tool | Action |
+|---|---|---|
+| Read design system | Read `docs/design/REPWELL_DESIGN_SYSTEM` | BEFORE any UI work |
+| Design UI | `frontend-design` | Generate UI designs following design system |
+| Check Next.js patterns | `next-best-practices` | RSC boundaries, data patterns, async APIs |
+| Check React patterns | `vercel-react-best-practices` | Composition, performance, rendering |
+| Check composition | `vercel-composition-patterns` | When refactoring components |
+
+---
+
+## Phase 3: Development
+
+| Step | Skill/Tool | Action |
+|---|---|---|
+| Database work | `supabase-postgres-best-practices` | Before writing queries/schema changes |
+| Database changes | Supabase MCP `apply_migration` | Schema changes, then `npm run db:types` |
+| Auth work | `better-auth-best-practices` | Any auth-related code |
+| Stripe work | `stripe-best-practices` | Payment integration |
+| Library docs | Context7 `resolve-library-id` → `query-docs` | Before using any external API |
+| Email work | `react-email` / `send-email` | Transactional emails |
+
+---
+
+## Phase 4: Testing
+
+| Step | Skill/Tool | Action |
+|---|---|---|
+| Browser testing | `agent-browser` or `dev-browser` | Test UI, fill forms, take screenshots |
+| Visual verification | `agent-browser` | Screenshot comparison, responsive checks |
+| Run tests | `npm run test` / `npm run test:e2e` | Unit + E2E tests |
+| Quality gates | `npm run lint` && `npm run build` | Must pass before proceeding |
+| Check logs | Supabase MCP `get_logs` | Debug any runtime errors |
+| Supabase advisors | Supabase MCP `get_advisors` | After any DDL changes |
+
+---
+
+## Phase 5: Code Review & QA
+
+| Step | Skill/Tool | Action |
+|---|---|---|
+| Self-review | `code-review:code-review` | Review own changes before committing |
+| CodeRabbit review | `coderabbit:code-review` | AI review for bugs, security, quality |
+| Code simplification | `code-simplifier` (Task agent) | Simplify/refine recently modified code |
+| Design review | `web-design-guidelines` | Check accessibility, UX compliance |
+| Feature review | `feature-dev:code-reviewer` | Check for bugs, logic errors, security |
+
+---
+
+## Phase 6: Commit & Ship
+
+| Step | Skill/Tool | Action |
+|---|---|---|
+| Commit | `commit` or `commit-commands:commit` | Conventional commit with clear description |
+| Push + PR | `commit-commands:commit-push-pr` | Push and create PR with summary |
+| PR template | GitHub MCP `create_pull_request` | Use repo PR template if exists |
+| Update lessons | Write to `tasks/lessons.md` | If any corrections were made |

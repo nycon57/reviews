@@ -19,17 +19,30 @@ import type {
   SmsPhoneNumber,
 } from "./types";
 
-// ── Singleton client cache ─────────────────────────────────────────────
+// ── Singleton client cache with TTL ───────────────────────────────────
 
-const clientCache = new Map<string, Twilio.Twilio>();
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+interface CachedClient {
+  client: Twilio.Twilio;
+  authToken: string;
+  createdAt: number;
+}
+
+const clientCache = new Map<string, CachedClient>();
 
 function getOrCreateClient(accountSid: string, authToken: string): Twilio.Twilio {
   const key = accountSid;
-  let client = clientCache.get(key);
-  if (!client) {
-    client = Twilio(accountSid, authToken);
-    clientCache.set(key, client);
+  const now = Date.now();
+
+  // Evict stale entries on access; also evict if authToken changed
+  const existing = clientCache.get(key);
+  if (existing && now - existing.createdAt < CACHE_TTL_MS && existing.authToken === authToken) {
+    return existing.client;
   }
+
+  const client = Twilio(accountSid, authToken);
+  clientCache.set(key, { client, authToken, createdAt: now });
   return client;
 }
 

@@ -1,22 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUntypedAdminClient } from '@/lib/supabase/admin';
 import { checkRegistrationStatus, deriveRegistrationUpdate } from '@/lib/sms/registration/twilio-a2p';
+import { verifyCronSecret } from '@/lib/cron/verify-secret';
 
 /**
  * Cron job: Check 10DLC registration status for all pending organizations.
  * Should run hourly to detect brand/campaign approval or rejection from Twilio.
  */
-
-function verifyCronSecret(request: NextRequest): boolean {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret && process.env.NODE_ENV === 'development') {
-    return true;
-  }
-
-  return authHeader === `Bearer ${cronSecret}`;
-}
 
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {

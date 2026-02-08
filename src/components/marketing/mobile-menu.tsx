@@ -24,7 +24,6 @@ import {
   featureNavItems,
   solutionNavItems,
   industryNavItems,
-  compareNavItems,
 } from "@/config/navigation";
 
 interface MobileMenuProps {
@@ -224,25 +223,6 @@ export function MobileMenu({ className }: MobileMenuProps) {
                     name={item.icon}
                     className="h-3.5 w-3.5 text-primary"
                   />
-                  <span>{item.title}</span>
-                </Link>
-              ))}
-            </div>
-          </MobileAccordion>
-
-          {/* Compare Accordion */}
-          <MobileAccordion title="Compare">
-            <div className="flex flex-col gap-1">
-              {compareNavItems.map((item) => (
-                <Link
-                  key={item.slug}
-                  href={item.href}
-                  onClick={handleNavClick}
-                  className={cn(
-                    linkStyles,
-                    isActive(item.href) && "bg-accent text-accent-foreground"
-                  )}
-                >
                   <span>{item.title}</span>
                 </Link>
               ))}

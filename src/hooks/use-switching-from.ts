@@ -10,8 +10,6 @@ import { useSearchParams } from "next/navigation";
 const VALID_SLUGS = new Set([
   "experience-com",
   "birdeye",
-  "socialsurvey",
-  "total-expert",
   "trustpilot",
 ]);
 

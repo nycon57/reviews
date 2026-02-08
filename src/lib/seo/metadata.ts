@@ -31,6 +31,7 @@ interface MetadataProfessional {
 interface MetadataBranch {
   id: string;
   name: string;
+  global_slug?: string | null;
   description: string | null;
   photo_url: string | null;
   cover_image_url?: string | null;
@@ -235,7 +236,7 @@ export function generateBranchProfileMetadata(
     branch.description ||
     `Visit ${branch.name}${locationStr ? ` in ${locationStr}` : ""}. Meet our team of ${loCount} experienced professionals. ${reviewCount} customer reviews${avgRating ? ` with ${avgRating} average rating` : ""}.`;
 
-  const profileUrl = `${baseUrl}/branch/${branch.id}`;
+  const profileUrl = `${baseUrl}/branch/${branch.global_slug || branch.id}`;
 
   const metadata: Metadata = {
     title,

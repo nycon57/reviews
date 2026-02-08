@@ -4,6 +4,8 @@ import { getAllPosts, getFeaturedPosts } from "@/lib/blog";
 import { BlogCategory } from "@/types/blog";
 import { BlogArchiveClient } from "./blog-archive-client";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Blog | RepWell",
   description:
@@ -21,11 +23,6 @@ export const metadata: Metadata = {
     description:
       "Insights on customer experience, review management, and AI-powered analytics for mortgage professionals.",
   },
-  alternates: {
-    types: {
-      "application/rss+xml": "/blog/rss.xml",
-    },
-  },
 };
 
 interface BlogPageProps {
@@ -36,8 +33,8 @@ interface BlogPageProps {
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const params = await searchParams;
-  const allPosts = getAllPosts();
-  const featuredPosts = getFeaturedPosts();
+  const allPosts = await getAllPosts();
+  const featuredPosts = await getFeaturedPosts();
 
   // Filter by category if provided
   const filteredPosts = params.category

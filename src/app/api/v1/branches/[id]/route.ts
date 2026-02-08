@@ -24,6 +24,7 @@ function mapBranchRow(row: Record<string, unknown>): BranchResource {
     phone: row.phone as string | null,
     email: row.email as string | null,
     website_url: row.website_url as string | null,
+    manager_id: row.manager_id as string | null,
     manager_name: row.manager_name as string | null,
     manager_email: row.manager_email as string | null,
     region: row.region as string | null,
@@ -123,6 +124,26 @@ async function handlePatch(
   }
   if (validation.data.website_url !== undefined) {
     updateData.website_url = validation.data.website_url;
+  }
+  if (validation.data.manager_id !== undefined) {
+    if (validation.data.manager_id !== null) {
+      // Validate manager is an active user at this branch
+      const { data: managerUser, error: managerError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', validation.data.manager_id)
+        .eq('branch_id', id)
+        .eq('is_active', true)
+        .single();
+
+      if (managerError || !managerUser) {
+        return apiValidationError(
+          [{ field: 'manager_id', message: 'Manager must be an active user assigned to this branch' }],
+          context.requestId
+        );
+      }
+    }
+    updateData.manager_id = validation.data.manager_id;
   }
   if (validation.data.manager_name !== undefined) {
     updateData.manager_name = validation.data.manager_name;

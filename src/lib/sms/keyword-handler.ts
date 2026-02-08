@@ -163,25 +163,8 @@ export class KeywordHandler {
     phone: string,
     settings: OrgKeywordSettings
   ): Promise<KeywordResult> {
-    if (!settings.doubleOptInEnabled) {
-      // If double opt-in is not enabled, treat YES as a regular opt-in
-      return this.handleOptIn(organizationId, phone, settings);
-    }
-
-    const confirmed = await this.consentService.confirmDoubleOptIn(
-      organizationId,
-      phone
-    );
-
-    if (confirmed) {
-      return {
-        type: "double_opt_in_confirm",
-        response: "Thank you! You are now subscribed. Reply STOP to unsubscribe.",
-        consentUpdated: true,
-      };
-    }
-
-    // No pending consent found — treat as regular opt-in
+    // Whether double opt-in is disabled, Twilio Verify handles OTP via web UI,
+    // or legacy keyword confirmation — all paths re-opt-in the user.
     return this.handleOptIn(organizationId, phone, settings);
   }
 

@@ -19,6 +19,7 @@ import type {
   BranchAddress,
 } from './types';
 import type { Json } from '@/types/database.types';
+import { ensureUniqueBranchSlug } from '@/lib/users/slug-utils';
 
 // Zod schemas for validation
 const addressSchema = z.object({
@@ -41,6 +42,7 @@ const createBranchSchema = z.object({
   email: z.string().email().optional(),
   websiteUrl: z.string().url().optional(),
   googlePlaceId: z.string().max(100).optional(),
+  managerId: z.string().uuid().optional(),
   managerName: z.string().max(200).optional(),
   managerEmail: z.string().email().optional(),
   region: z.string().max(100).optional(),
@@ -54,6 +56,7 @@ const updateBranchSchema = z.object({
   email: z.string().email().optional().nullable(),
   websiteUrl: z.string().url().optional().nullable(),
   googlePlaceId: z.string().max(100).optional().nullable(),
+  managerId: z.string().uuid().optional().nullable(),
   managerName: z.string().max(200).optional().nullable(),
   managerEmail: z.string().email().optional().nullable(),
   region: z.string().max(100).optional().nullable(),
@@ -68,12 +71,14 @@ interface BranchRow {
   organization_id: string;
   name: string;
   slug: string;
+  global_slug: string | null;
   address: Json | null;
   phone: string | null;
   email: string | null;
   website_url: string | null;
   google_place_id: string | null;
   google_maps_url: string | null;
+  manager_id: string | null;
   manager_name: string | null;
   manager_email: string | null;
   region: string | null;
@@ -99,12 +104,14 @@ function mapRowToBranch(row: BranchRow): Branch {
     organizationId: row.organization_id,
     name: row.name,
     slug: row.slug,
+    globalSlug: row.global_slug,
     address: row.address as BranchAddress | null,
     phone: row.phone,
     email: row.email,
     websiteUrl: row.website_url,
     googlePlaceId: row.google_place_id,
     googleMapsUrl: row.google_maps_url,
+    managerId: row.manager_id,
     managerName: row.manager_name,
     managerEmail: row.manager_email,
     region: row.region,
@@ -390,6 +397,33 @@ export async function createBranch(
       }
     }
 
+    // Generate global_slug for SEO-friendly URLs
+    let globalSlug: string | null = null;
+    const { data: orgData } = await adminSupabase
+      .from('organizations')
+      .select('slug')
+      .eq('id', auth.organizationId)
+      .single();
+
+    if (orgData?.slug) {
+      const baseGlobalSlug = `${slug}-${orgData.slug}`;
+      globalSlug = await ensureUniqueBranchSlug(baseGlobalSlug);
+    }
+
+    // Validate manager_id if provided
+    if (validated.data.managerId) {
+      const { data: managerUser, error: managerError } = await adminSupabase
+        .from('users')
+        .select('id')
+        .eq('id', validated.data.managerId)
+        .eq('is_active', true)
+        .single();
+
+      if (managerError || !managerUser) {
+        return { success: false, error: 'Manager must be an active user' };
+      }
+    }
+
     // Geocode the address if provided
     const coords = await geocodeBranchAddress(validated.data.address);
 
@@ -400,11 +434,13 @@ export async function createBranch(
         organization_id: auth.organizationId,
         name: validated.data.name,
         slug,
+        global_slug: globalSlug,
         address: validated.data.address as Json,
         phone: validated.data.phone,
         email: validated.data.email,
         website_url: validated.data.websiteUrl,
         google_place_id: validated.data.googlePlaceId,
+        manager_id: validated.data.managerId,
         manager_name: validated.data.managerName,
         manager_email: validated.data.managerEmail,
         region: validated.data.region,
@@ -471,6 +507,20 @@ export async function updateBranch(
 
     if (validated.data.name !== undefined) {
       updateData.name = validated.data.name;
+      // Regenerate slug and global_slug when name changes
+      const newSlug = generateSlug(validated.data.name);
+      updateData.slug = newSlug;
+
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('slug')
+        .eq('id', auth.organizationId)
+        .single();
+
+      if (orgData?.slug) {
+        const baseGlobalSlug = `${newSlug}-${orgData.slug}`;
+        updateData.global_slug = await ensureUniqueBranchSlug(baseGlobalSlug, id);
+      }
     }
     if (validated.data.address !== undefined) {
       updateData.address = validated.data.address as Json;
@@ -490,6 +540,23 @@ export async function updateBranch(
     }
     if (validated.data.googlePlaceId !== undefined) {
       updateData.google_place_id = validated.data.googlePlaceId;
+    }
+    if (validated.data.managerId !== undefined) {
+      if (validated.data.managerId !== null) {
+        // Validate manager is an active user at this branch
+        const { data: managerUser, error: managerError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', validated.data.managerId)
+          .eq('branch_id', id)
+          .eq('is_active', true)
+          .single();
+
+        if (managerError || !managerUser) {
+          return { success: false, error: 'Manager must be an active user assigned to this branch' };
+        }
+      }
+      updateData.manager_id = validated.data.managerId;
     }
     if (validated.data.managerName !== undefined) {
       updateData.manager_name = validated.data.managerName;

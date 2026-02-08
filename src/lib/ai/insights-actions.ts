@@ -16,6 +16,12 @@ import type {
   ImprovementRecommendation,
   IndustryBenchmark,
   AIInsightsSummary,
+  SmartActionItem,
+  LOPerformanceScorecard,
+  TeamActivityMonitor,
+  LOActivityStatus,
+  ActivityAlert,
+  ChannelMetrics,
 } from "./insights-types";
 import type { ReviewTheme, SentimentLabel } from "./types";
 import { createChatCompletion, isAIEnabled } from "./client";
@@ -1073,4 +1079,933 @@ export async function getAIInsightsData(
       periodEnd: endDate,
     },
   };
+}
+
+// ============================================================================
+// Smart Action Items
+// ============================================================================
+
+/**
+ * Get prioritized action items for a loan officer
+ */
+export async function getSmartActionItems(
+  loanOfficerId?: string
+): Promise<ActionResult<SmartActionItem[]>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = createAdminClient();
+  const actions: SmartActionItem[] = [];
+  const targetLO = loanOfficerId || context.loanOfficerId;
+
+  const now = new Date();
+  const oneDayAgo = new Date(now);
+  oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const sixtyDaysAgo = new Date(now);
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+  // Run independent queries in parallel
+  const [unrespondedResult, weeklyReviewsResult, prevWeeklyResult, negativeResult, ratingResult] =
+    await Promise.all([
+      // 1. Unresponded reviews > 24h (org-wide initial fetch; filtered by LO below if needed)
+      supabase
+        .from("reviews")
+        .select("id, customer_name, review_date, rating")
+        .eq("organization_id", context.organizationId)
+        .is("response_text", null)
+        .lt("review_date", oneDayAgo.toISOString())
+        .order("review_date", { ascending: true })
+        .limit(10),
+
+      // 2. Reviews received this week (for velocity check)
+      (() => {
+        let q = supabase
+          .from("surveys")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", context.organizationId)
+          .gte("sent_at", sevenDaysAgo.toISOString());
+        if (targetLO) q = q.eq("user_id", targetLO);
+        return q;
+      })(),
+
+      // 3. Reviews received previous week (for comparison)
+      (() => {
+        const twoWeeksAgo = new Date(now);
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+        let q = supabase
+          .from("surveys")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", context.organizationId)
+          .gte("sent_at", twoWeeksAgo.toISOString())
+          .lt("sent_at", sevenDaysAgo.toISOString());
+        if (targetLO) q = q.eq("user_id", targetLO);
+        return q;
+      })(),
+
+      // 4. Negative reviews last 7 days
+      (() => {
+        let q = supabase
+          .from("reviews")
+          .select("id, themes")
+          .eq("organization_id", context.organizationId)
+          .eq("sentiment_label", "negative")
+          .gte("review_date", sevenDaysAgo.toISOString());
+        if (targetLO) q = q.eq("user_id", targetLO);
+        return q;
+      })(),
+
+      // 5. Rating improvement check (30 vs 60 day avg)
+      (() => {
+        let q = supabase
+          .from("reviews")
+          .select("rating, review_date")
+          .eq("organization_id", context.organizationId)
+          .gte("review_date", sixtyDaysAgo.toISOString())
+          .not("rating", "is", null);
+        if (targetLO) q = q.eq("user_id", targetLO);
+        return q;
+      })(),
+    ]);
+
+  // Also get unresponded with user filter if needed
+  let unrespondedReviews = unrespondedResult.data || [];
+  if (targetLO) {
+    const { data } = await supabase
+      .from("reviews")
+      .select("id, customer_name, review_date, rating")
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", targetLO)
+      .is("response_text", null)
+      .lt("review_date", oneDayAgo.toISOString())
+      .order("review_date", { ascending: true })
+      .limit(10);
+    unrespondedReviews = data || [];
+  }
+
+  // HIGH PRIORITY: Individual unresponded reviews (show up to 3)
+  for (const review of unrespondedReviews.slice(0, 3)) {
+    const name = review.customer_name || "a customer";
+    const daysAgo = Math.floor(
+      (now.getTime() - new Date(review.review_date).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    actions.push({
+      id: `respond-${review.id}`,
+      priority: "high",
+      actionType: "respond_review",
+      title: `Respond to review from ${name}`,
+      description: `This ${review.rating}-star review has been waiting ${daysAgo} day${daysAgo !== 1 ? "s" : ""} for a response. Timely responses boost your reputation.`,
+      actionUrl: `/dashboard/reviews?highlight=${review.id}`,
+      dismissible: false,
+    });
+  }
+
+  // HIGH PRIORITY: Pending response count (if more than shown individually)
+  if (unrespondedReviews.length > 3) {
+    actions.push({
+      id: "pending-responses",
+      priority: "high",
+      actionType: "pending_responses",
+      title: `You have ${unrespondedReviews.length} reviews awaiting response`,
+      description:
+        "Responding to reviews shows customers you value their feedback and improves your overall reputation score.",
+      actionUrl: "/dashboard/reviews?filter=needs_response",
+      dismissible: false,
+    });
+  }
+
+  // MEDIUM PRIORITY: Survey send rate declining
+  const thisWeekSurveys = weeklyReviewsResult.count || 0;
+  const lastWeekSurveys = prevWeeklyResult.count || 0;
+  if (lastWeekSurveys > 0 && thisWeekSurveys < lastWeekSurveys * 0.6) {
+    const pctBelow = Math.round((1 - thisWeekSurveys / lastWeekSurveys) * 100);
+    actions.push({
+      id: "send-requests",
+      priority: "medium",
+      actionType: "send_requests",
+      title: `Send review requests — you're ${pctBelow}% below last week`,
+      description: `You sent ${thisWeekSurveys} review requests this week vs ${lastWeekSurveys} last week. Consistent outreach drives steady review growth.`,
+      actionUrl: "/dashboard/surveys/send",
+      dismissible: true,
+    });
+  }
+
+  // MEDIUM PRIORITY: Negative theme spike
+  const negativeReviews = negativeResult.data || [];
+  if (negativeReviews.length >= 3) {
+    // Find most common negative theme
+    const themeCounts = new Map<string, number>();
+    for (const review of negativeReviews) {
+      for (const theme of (review.themes as string[]) || []) {
+        themeCounts.set(theme, (themeCounts.get(theme) || 0) + 1);
+      }
+    }
+    const topTheme = Array.from(themeCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+    if (topTheme) {
+      actions.push({
+        id: "theme-alert",
+        priority: "medium",
+        actionType: "theme_alert",
+        title: `Your "${topTheme[0]}" ratings are trending down`,
+        description: `${negativeReviews.length} negative reviews in the past 7 days mention ${topTheme[0]}. Review the recommendations section for specific improvement tips.`,
+        actionUrl: "/dashboard/insights#recommendations",
+        dismissible: true,
+      });
+    }
+  }
+
+  // LOW PRIORITY: Response time improvement
+  const ratingData = ratingResult.data || [];
+  if (ratingData.length >= 5) {
+    const recent = ratingData.filter(
+      (r) => new Date(r.review_date) >= thirtyDaysAgo
+    );
+    const older = ratingData.filter(
+      (r) =>
+        new Date(r.review_date) < thirtyDaysAgo &&
+        new Date(r.review_date) >= sixtyDaysAgo
+    );
+
+    const recentAvg =
+      recent.length > 0
+        ? recent.reduce((sum, r) => sum + r.rating!, 0) / recent.length
+        : 0;
+    const olderAvg =
+      older.length > 0
+        ? older.reduce((sum, r) => sum + r.rating!, 0) / older.length
+        : 0;
+
+    if (olderAvg > 0 && recentAvg > olderAvg + 0.2) {
+      const improvement = Math.round((recentAvg - olderAvg) * 10) / 10;
+      actions.push({
+        id: "improvement-celebration",
+        priority: "low",
+        actionType: "improvement",
+        title: `Your average rating improved by ${improvement} stars`,
+        description: `Your 30-day average (${Math.round(recentAvg * 10) / 10}) is up from last month (${Math.round(olderAvg * 10) / 10}). Keep up the great work!`,
+        dismissible: true,
+      });
+    }
+  }
+
+  // Sort by priority
+  const priorityOrder = { high: 0, medium: 1, low: 2 };
+  actions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+  return { success: true, data: actions };
+}
+
+// ============================================================================
+// LO Performance Scorecard
+// ============================================================================
+
+/**
+ * Get performance scorecard for a specific loan officer
+ */
+export async function getLOPerformanceScorecard(
+  loanOfficerId: string
+): Promise<ActionResult<LOPerformanceScorecard>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = createAdminClient();
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const sixtyDaysAgo = new Date(now);
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  const ninetyDaysAgo = new Date(now);
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  const prevMonthStart = new Date(now);
+  prevMonthStart.setDate(prevMonthStart.getDate() - 60);
+
+  // Parallelize all queries
+  const [
+    loUserResult,
+    reviewsResult,
+    orgResponseResult,
+    surveysResult,
+    npsResult,
+    cachedBriefResult,
+  ] = await Promise.all([
+    // LO name
+    supabase
+      .from("users")
+      .select("full_name")
+      .eq("id", loanOfficerId)
+      .single(),
+
+    // All reviews for last 90 days
+    supabase
+      .from("reviews")
+      .select(
+        "id, rating, review_date, response_text, response_at, sentiment_score, sentiment_label, themes"
+      )
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", loanOfficerId)
+      .gte("review_date", ninetyDaysAgo.toISOString())
+      .order("review_date", { ascending: false }),
+
+    // Org-wide response rate for comparison
+    supabase
+      .from("reviews")
+      .select("id, response_text")
+      .eq("organization_id", context.organizationId)
+      .gte("review_date", thirtyDaysAgo.toISOString()),
+
+    // Surveys for completion rate
+    supabase
+      .from("surveys")
+      .select("id, status")
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", loanOfficerId)
+      .gte("created_at", ninetyDaysAgo.toISOString()),
+
+    // NPS data
+    supabase
+      .from("survey_responses")
+      .select("nps_score, submitted_at, surveys!inner(user_id)")
+      .not("nps_score", "is", null)
+      .gte("submitted_at", ninetyDaysAgo.toISOString()),
+
+    // Cached coaching brief
+    supabase
+      .from("metrics_snapshots")
+      .select("metrics, computed_at")
+      .eq("organization_id", context.organizationId)
+      .eq("user_id", loanOfficerId)
+      .eq("period_type", "daily")
+      .order("computed_at", { ascending: false })
+      .limit(1),
+  ]);
+
+  const loName = loUserResult.data?.full_name || "Unknown";
+  const reviews = reviewsResult.data || [];
+  const orgReviews = orgResponseResult.data || [];
+  const surveys = surveysResult.data || [];
+
+  // Review velocity: this month vs last month
+  const thisMonthReviews = reviews.filter(
+    (r) => new Date(r.review_date) >= thirtyDaysAgo
+  );
+  const lastMonthReviews = reviews.filter(
+    (r) =>
+      new Date(r.review_date) >= sixtyDaysAgo &&
+      new Date(r.review_date) < thirtyDaysAgo
+  );
+
+  const currentVelocity = thisMonthReviews.length;
+  const previousVelocity = lastMonthReviews.length;
+  const velocityDirection =
+    currentVelocity > previousVelocity
+      ? "up"
+      : currentVelocity < previousVelocity
+        ? "down"
+        : ("stable" as const);
+
+  // Rating averages by period
+  const ratingsForPeriod = (startDate: Date, endDate?: Date) => {
+    const filtered = reviews.filter((r) => {
+      const d = new Date(r.review_date);
+      return d >= startDate && (endDate ? d < endDate : true) && r.rating != null;
+    });
+    if (filtered.length === 0) return 0;
+    return (
+      Math.round(
+        (filtered.reduce((sum, r) => sum + r.rating!, 0) / filtered.length) * 10
+      ) / 10
+    );
+  };
+
+  const allRatings = reviews.filter((r) => r.rating != null);
+  const currentRating =
+    allRatings.length > 0
+      ? Math.round(
+          (allRatings.reduce((sum, r) => sum + r.rating!, 0) / allRatings.length) *
+            10
+        ) / 10
+      : 0;
+
+  // Response rate
+  const respondedCount = thisMonthReviews.filter(
+    (r) => r.response_text != null
+  ).length;
+  const loResponseRate =
+    thisMonthReviews.length > 0
+      ? Math.round((respondedCount / thisMonthReviews.length) * 100)
+      : 0;
+
+  const orgResponded = orgReviews.filter((r) => r.response_text != null).length;
+  const orgResponseRate =
+    orgReviews.length > 0
+      ? Math.round((orgResponded / orgReviews.length) * 100)
+      : 0;
+
+  // Average response time (hours)
+  const responseTimes = reviews
+    .filter((r) => r.response_at && r.review_date)
+    .map((r) => {
+      const diff =
+        new Date(r.response_at!).getTime() - new Date(r.review_date).getTime();
+      return diff / (1000 * 60 * 60); // hours
+    })
+    .filter((h) => h > 0 && h < 720); // filter outliers > 30 days
+
+  const avgResponseTime =
+    responseTimes.length > 0
+      ? Math.round(
+          responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length
+        )
+      : 0;
+
+  // Sentiment trajectory
+  const recentSentiments = thisMonthReviews
+    .filter((r) => r.sentiment_score != null)
+    .map((r) => r.sentiment_score!);
+  const olderSentiments = lastMonthReviews
+    .filter((r) => r.sentiment_score != null)
+    .map((r) => r.sentiment_score!);
+
+  const recentAvgSentiment =
+    recentSentiments.length > 0
+      ? recentSentiments.reduce((a, b) => a + b, 0) / recentSentiments.length
+      : 0;
+  const olderAvgSentiment =
+    olderSentiments.length > 0
+      ? olderSentiments.reduce((a, b) => a + b, 0) / olderSentiments.length
+      : 0;
+
+  const sentimentTrajectory =
+    recentAvgSentiment > olderAvgSentiment + 0.05
+      ? "improving"
+      : recentAvgSentiment < olderAvgSentiment - 0.05
+        ? "declining"
+        : ("stable" as const);
+
+  // Survey completion rate
+  const completedSurveys = surveys.filter(
+    (s) => s.status === "completed"
+  ).length;
+  const sentSurveys = surveys.filter((s) =>
+    ["sent", "opened", "completed", "expired"].includes(s.status || "")
+  ).length;
+  const surveyCompletionRate =
+    sentSurveys > 0 ? Math.round((completedSurveys / sentSurveys) * 100) : 0;
+
+  // Request-to-review conversion
+  const reviewsFromSurveys = thisMonthReviews.length;
+  const surveysThisMonth = surveys.filter(
+    (s) => s.status !== "draft"
+  ).length;
+  const conversionRate =
+    surveysThisMonth > 0
+      ? Math.round((reviewsFromSurveys / surveysThisMonth) * 100)
+      : 0;
+
+  // Top themes
+  const positiveThemes = new Map<string, number>();
+  const negativeThemes = new Map<string, number>();
+  for (const review of reviews) {
+    const themes = (review.themes as string[]) || [];
+    for (const theme of themes) {
+      if (review.sentiment_label === "positive") {
+        positiveThemes.set(theme, (positiveThemes.get(theme) || 0) + 1);
+      } else if (review.sentiment_label === "negative") {
+        negativeThemes.set(theme, (negativeThemes.get(theme) || 0) + 1);
+      }
+    }
+  }
+
+  const topPositive = Array.from(positiveThemes.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([t]) => t);
+  const riskThemes = Array.from(negativeThemes.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([t]) => t);
+
+  // NPS trend
+  const loNps = (npsResult.data || []).filter((r) => {
+    const survey = r.surveys as unknown as { user_id: string };
+    return survey.user_id === loanOfficerId;
+  });
+
+  const calculateNPS = (scores: number[]) => {
+    if (scores.length === 0) return 0;
+    const promoters = scores.filter((s) => s >= 9).length;
+    const detractors = scores.filter((s) => s <= 6).length;
+    return Math.round(((promoters - detractors) / scores.length) * 100);
+  };
+
+  const recentNpsScores = loNps
+    .filter((r) => new Date(r.submitted_at!) >= thirtyDaysAgo)
+    .map((r) => r.nps_score!);
+  const olderNpsScores = loNps
+    .filter(
+      (r) =>
+        new Date(r.submitted_at!) >= sixtyDaysAgo &&
+        new Date(r.submitted_at!) < thirtyDaysAgo
+    )
+    .map((r) => r.nps_score!);
+
+  const currentNPS = calculateNPS(recentNpsScores);
+  const previousNPS = calculateNPS(olderNpsScores);
+
+  // Check for cached coaching brief
+  const cachedBrief = cachedBriefResult.data?.[0];
+  let coachingBrief: string | undefined;
+  if (cachedBrief?.metrics) {
+    const metrics = cachedBrief.metrics as Record<string, unknown>;
+    if (
+      metrics.coachingBrief &&
+      cachedBrief.computed_at &&
+      new Date(cachedBrief.computed_at).getTime() > now.getTime() - 24 * 60 * 60 * 1000
+    ) {
+      coachingBrief = metrics.coachingBrief as string;
+    }
+  }
+
+  return {
+    success: true,
+    data: {
+      loanOfficerId,
+      loanOfficerName: loName,
+      reviewVelocity: {
+        current: currentVelocity,
+        previous: previousVelocity,
+        direction: velocityDirection,
+      },
+      avgRating: {
+        current: currentRating,
+        days30: ratingsForPeriod(thirtyDaysAgo),
+        days60: ratingsForPeriod(sixtyDaysAgo, thirtyDaysAgo),
+        days90: ratingsForPeriod(ninetyDaysAgo, sixtyDaysAgo),
+      },
+      responseRate: { rate: loResponseRate, orgAverage: orgResponseRate },
+      avgResponseTimeHours: avgResponseTime,
+      sentimentTrajectory,
+      surveyCompletionRate,
+      requestToReviewConversion: conversionRate,
+      topPositiveThemes: topPositive,
+      riskThemes,
+      npsTrend: {
+        current: currentNPS,
+        previous: previousNPS,
+        direction:
+          currentNPS > previousNPS
+            ? "up"
+            : currentNPS < previousNPS
+              ? "down"
+              : "stable",
+      },
+      coachingBrief,
+      generatedAt: now,
+    },
+  };
+}
+
+// ============================================================================
+// Manager Activity Monitor
+// ============================================================================
+
+/**
+ * Get team activity monitor data (managers/admins only)
+ */
+export async function getTeamActivityMonitor(): Promise<
+  ActionResult<TeamActivityMonitor>
+> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // Only managers and admins can view team activity
+  if (context.role !== "admin" && context.role !== "manager") {
+    return { success: false, error: "Forbidden" };
+  }
+
+  const supabase = createAdminClient();
+  const now = new Date();
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const fourteenDaysAgo = new Date(now);
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+  const thirtyDaysAgo = new Date(now);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const sixtyDaysAgo = new Date(now);
+  sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+  const twoDaysAgo = new Date(now);
+  twoDaysAgo.setHours(twoDaysAgo.getHours() - 48);
+
+  // Get all LOs in the org
+  const { data: loUsers } = await supabase
+    .from("users")
+    .select("id, full_name")
+    .eq("organization_id", context.organizationId)
+    .eq("is_active", true);
+
+  if (!loUsers || loUsers.length === 0) {
+    return {
+      success: true,
+      data: {
+        teamMembers: [],
+        orgMetrics: {
+          avgResponseTimeHours: 0,
+          avgRequestsPerWeek: 0,
+          activeCount: 0,
+          slowingCount: 0,
+          inactiveCount: 0,
+        },
+      },
+    };
+  }
+
+  // Fetch all org data in parallel
+  const [reviewsResult, surveysThisWeekResult, surveysPrevWeekResult] =
+    await Promise.all([
+      supabase
+        .from("reviews")
+        .select(
+          "id, user_id, rating, review_date, response_text, response_at, sentiment_label"
+        )
+        .eq("organization_id", context.organizationId)
+        .gte("review_date", sixtyDaysAgo.toISOString()),
+
+      supabase
+        .from("surveys")
+        .select("id, user_id")
+        .eq("organization_id", context.organizationId)
+        .gte("sent_at", sevenDaysAgo.toISOString()),
+
+      supabase
+        .from("surveys")
+        .select("id, user_id")
+        .eq("organization_id", context.organizationId)
+        .gte("sent_at", fourteenDaysAgo.toISOString())
+        .lt("sent_at", sevenDaysAgo.toISOString()),
+    ]);
+
+  const allReviews = reviewsResult.data || [];
+  const surveysThisWeek = surveysThisWeekResult.data || [];
+  const surveysPrevWeek = surveysPrevWeekResult.data || [];
+
+  // Compute org averages
+  const orgSurveysPerWeek = surveysThisWeek.length;
+  const orgResponseTimes: number[] = [];
+  for (const r of allReviews) {
+    if (r.response_at && r.review_date) {
+      const diff =
+        (new Date(r.response_at).getTime() -
+          new Date(r.review_date).getTime()) /
+        (1000 * 60 * 60);
+      if (diff > 0 && diff < 720) orgResponseTimes.push(diff);
+    }
+  }
+  const orgAvgResponseTime =
+    orgResponseTimes.length > 0
+      ? Math.round(
+          orgResponseTimes.reduce((a, b) => a + b, 0) /
+            orgResponseTimes.length
+        )
+      : 0;
+
+  const avgRequestsPerLO =
+    loUsers.length > 0
+      ? Math.round(orgSurveysPerWeek / loUsers.length)
+      : 0;
+
+  // Build per-LO activity status
+  const teamMembers: LOActivityStatus[] = [];
+
+  for (const lo of loUsers) {
+    const loReviews = allReviews.filter((r) => r.user_id === lo.id);
+    const loSurveysThisWeek = surveysThisWeek.filter(
+      (s) => s.user_id === lo.id
+    ).length;
+    const loSurveysPrevWeek = surveysPrevWeek.filter(
+      (s) => s.user_id === lo.id
+    ).length;
+
+    // Unresponded reviews > 48h
+    const unresponded = loReviews.filter(
+      (r) =>
+        !r.response_text && new Date(r.review_date) < twoDaysAgo
+    ).length;
+
+    // Response times
+    const loResponseTimes: number[] = [];
+    const recentResponseTimes: number[] = [];
+    const olderResponseTimes: number[] = [];
+
+    for (const r of loReviews) {
+      if (r.response_at && r.review_date) {
+        const diff =
+          (new Date(r.response_at).getTime() -
+            new Date(r.review_date).getTime()) /
+          (1000 * 60 * 60);
+        if (diff > 0 && diff < 720) {
+          loResponseTimes.push(diff);
+          if (new Date(r.review_date) >= thirtyDaysAgo) {
+            recentResponseTimes.push(diff);
+          } else {
+            olderResponseTimes.push(diff);
+          }
+        }
+      }
+    }
+
+    const avgResponseTime =
+      loResponseTimes.length > 0
+        ? Math.round(
+            loResponseTimes.reduce((a, b) => a + b, 0) /
+              loResponseTimes.length
+          )
+        : 0;
+
+    const recentAvgRT =
+      recentResponseTimes.length > 0
+        ? recentResponseTimes.reduce((a, b) => a + b, 0) /
+          recentResponseTimes.length
+        : 0;
+    const olderAvgRT =
+      olderResponseTimes.length > 0
+        ? olderResponseTimes.reduce((a, b) => a + b, 0) /
+          olderResponseTimes.length
+        : 0;
+
+    const responseTimeTrend =
+      olderAvgRT > 0 && recentAvgRT > olderAvgRT * 1.2
+        ? "worsening"
+        : olderAvgRT > 0 && recentAvgRT < olderAvgRT * 0.8
+          ? "improving"
+          : ("stable" as const);
+
+    // Negative reviews last 7 days
+    const negativeRecent = loReviews.filter(
+      (r) =>
+        r.sentiment_label === "negative" &&
+        new Date(r.review_date) >= sevenDaysAgo
+    ).length;
+
+    // Rating trend (30 vs 60 day)
+    const reviews30 = loReviews.filter(
+      (r) => new Date(r.review_date) >= thirtyDaysAgo && r.rating != null
+    );
+    const reviews60 = loReviews.filter(
+      (r) =>
+        new Date(r.review_date) >= sixtyDaysAgo &&
+        new Date(r.review_date) < thirtyDaysAgo &&
+        r.rating != null
+    );
+
+    const avg30 =
+      reviews30.length > 0
+        ? Math.round(
+            (reviews30.reduce((s, r) => s + r.rating!, 0) / reviews30.length) *
+              10
+          ) / 10
+        : 0;
+    const avg60 =
+      reviews60.length > 0
+        ? Math.round(
+            (reviews60.reduce((s, r) => s + r.rating!, 0) / reviews60.length) *
+              10
+          ) / 10
+        : 0;
+
+    // Determine activity status
+    const recentActivity =
+      loReviews.filter((r) => new Date(r.review_date) >= sevenDaysAgo).length +
+      loSurveysThisWeek;
+    const prevActivity =
+      loReviews.filter(
+        (r) =>
+          new Date(r.review_date) >= fourteenDaysAgo &&
+          new Date(r.review_date) < sevenDaysAgo
+      ).length + loSurveysPrevWeek;
+
+    let activityStatus: "active" | "slowing" | "inactive" = "active";
+    if (recentActivity === 0 && prevActivity === 0) {
+      activityStatus = "inactive";
+    } else if (
+      prevActivity > 0 &&
+      recentActivity < prevActivity * 0.6
+    ) {
+      activityStatus = "slowing";
+    }
+
+    // Generate alerts
+    const alerts: ActivityAlert[] = [];
+    if (unresponded >= 2) {
+      alerts.push({
+        type: "unresponded_reviews",
+        message: `${unresponded} reviews waiting 48+ hours for response`,
+        severity: unresponded >= 5 ? "critical" : "warning",
+      });
+    }
+    if (avgRequestsPerLO > 0 && loSurveysThisWeek < avgRequestsPerLO * 0.5) {
+      alerts.push({
+        type: "low_request_rate",
+        message: `Sent ${loSurveysThisWeek} requests vs org avg of ${avgRequestsPerLO}`,
+        severity: "warning",
+      });
+    }
+    if (responseTimeTrend === "worsening") {
+      alerts.push({
+        type: "response_time_increase",
+        message: "Response time trending up vs previous period",
+        severity: "warning",
+      });
+    }
+    if (negativeRecent >= 3) {
+      alerts.push({
+        type: "negative_spike",
+        message: `${negativeRecent} negative reviews in the past 7 days`,
+        severity: "critical",
+      });
+    }
+    if (avg60 > 0 && avg30 < avg60 - 0.3) {
+      alerts.push({
+        type: "rating_decline",
+        message: `Rating dropped from ${avg60} to ${avg30} (30-day avg)`,
+        severity: "warning",
+      });
+    }
+
+    teamMembers.push({
+      userId: lo.id,
+      userName: lo.full_name || "Unknown",
+      activityStatus,
+      unrespondedReviewCount: unresponded,
+      reviewRequestsThisWeek: loSurveysThisWeek,
+      orgAvgRequestsPerWeek: avgRequestsPerLO,
+      avgResponseTimeHours: avgResponseTime,
+      responseTimeTrend,
+      negativeReviewsLast7Days: negativeRecent,
+      ratingTrend: { avg30Day: avg30, avg60Day: avg60 },
+      alerts,
+    });
+  }
+
+  // Sort: critical alerts first, then slowing, then inactive, then active
+  teamMembers.sort((a, b) => {
+    const aHasCritical = a.alerts.some((al) => al.severity === "critical");
+    const bHasCritical = b.alerts.some((al) => al.severity === "critical");
+    if (aHasCritical !== bHasCritical) return aHasCritical ? -1 : 1;
+
+    const statusOrder = { inactive: 0, slowing: 1, active: 2 };
+    return statusOrder[a.activityStatus] - statusOrder[b.activityStatus];
+  });
+
+  return {
+    success: true,
+    data: {
+      teamMembers,
+      orgMetrics: {
+        avgResponseTimeHours: orgAvgResponseTime,
+        avgRequestsPerWeek: orgSurveysPerWeek,
+        activeCount: teamMembers.filter((m) => m.activityStatus === "active")
+          .length,
+        slowingCount: teamMembers.filter(
+          (m) => m.activityStatus === "slowing"
+        ).length,
+        inactiveCount: teamMembers.filter(
+          (m) => m.activityStatus === "inactive"
+        ).length,
+      },
+    },
+  };
+}
+
+// ============================================================================
+// Channel Effectiveness
+// ============================================================================
+
+/**
+ * Get review effectiveness metrics grouped by source channel
+ */
+export async function getChannelEffectiveness(
+  loanOfficerId?: string
+): Promise<ActionResult<ChannelMetrics[]>> {
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = createAdminClient();
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 6);
+
+  let query = supabase
+    .from("reviews")
+    .select("source, rating, sentiment_label")
+    .eq("organization_id", context.organizationId)
+    .gte("review_date", startDate.toISOString());
+
+  if (loanOfficerId) {
+    query = query.eq("user_id", loanOfficerId);
+  }
+
+  const { data: reviews, error } = await query;
+
+  if (error) {
+    console.error("Error fetching channel data:", error);
+    return { success: false, error: "Failed to fetch channel data" };
+  }
+
+  // Group by source channel
+  const channelMap = new Map<
+    string,
+    {
+      ratings: number[];
+      positive: number;
+      neutral: number;
+      negative: number;
+    }
+  >();
+
+  for (const review of reviews || []) {
+    const source = review.source || "unknown";
+    if (!channelMap.has(source)) {
+      channelMap.set(source, {
+        ratings: [],
+        positive: 0,
+        neutral: 0,
+        negative: 0,
+      });
+    }
+    const entry = channelMap.get(source)!;
+    if (review.rating != null) entry.ratings.push(review.rating);
+    const sentiment = (review.sentiment_label as SentimentLabel) || "neutral";
+    entry[sentiment]++;
+  }
+
+  const channels: ChannelMetrics[] = Array.from(channelMap.entries())
+    .map(([channel, data]) => ({
+      channel,
+      reviewCount: data.positive + data.neutral + data.negative,
+      avgRating:
+        data.ratings.length > 0
+          ? Math.round(
+              (data.ratings.reduce((a, b) => a + b, 0) / data.ratings.length) *
+                10
+            ) / 10
+          : 0,
+      sentimentDistribution: {
+        positive: data.positive,
+        neutral: data.neutral,
+        negative: data.negative,
+      },
+    }))
+    .sort((a, b) => b.reviewCount - a.reviewCount);
+
+  return { success: true, data: channels };
 }

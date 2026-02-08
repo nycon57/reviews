@@ -1,17 +1,13 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   LinkedinLogo as Linkedin,
   TwitterLogo as Twitter,
-  SpinnerGap as Loader2,
 } from "@phosphor-icons/react";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface FooterLink {
   label: string;
@@ -38,8 +34,6 @@ const footerSections: FooterSection[] = [
     links: [
       { label: "vs Experience.com", href: "/compare/experience-com-alternative" },
       { label: "vs Birdeye", href: "/compare/birdeye-alternative" },
-      { label: "vs SocialSurvey", href: "/compare/socialsurvey-alternative" },
-      { label: "vs Total Expert", href: "/compare/total-expert-alternative" },
       { label: "vs Trustpilot", href: "/compare/trustpilot-alternative" },
     ],
   },
@@ -67,21 +61,6 @@ const socialLinks: FooterLink[] = [
 
 export function MarketingFooter() {
   const currentYear = new Date().getFullYear();
-  const [email, setEmail] = React.useState("");
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [subscribed, setSubscribed] = React.useState(false);
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email) return;
-
-    setIsSubmitting(true);
-    // Simulate API call - in production, connect to Resend or other email service
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setSubscribed(true);
-    setIsSubmitting(false);
-    setEmail("");
-  };
 
   return (
     <motion.footer
@@ -125,41 +104,6 @@ export function MarketingFooter() {
                   {link.label === "Twitter" && <Twitter className="h-5 w-5" />}
                 </a>
               ))}
-            </div>
-
-            {/* Newsletter Signup */}
-            <div>
-              <h3 className="font-semibold text-body-sm text-repwell-teal-500 mb-3">Stay Updated</h3>
-              {subscribed ? (
-                <p className="text-body-sm text-success font-medium">
-                  Thanks for subscribing!
-                </p>
-              ) : (
-                <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-                  <Input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-10 text-body-sm"
-                    required
-                    aria-label="Email address"
-                  />
-                  <Button
-                    type="submit"
-                    size="sm"
-                    variant="default"
-                    disabled={isSubmitting}
-                    className="shrink-0 h-10"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "Subscribe"
-                    )}
-                  </Button>
-                </form>
-              )}
             </div>
           </motion.div>
 

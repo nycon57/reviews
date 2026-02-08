@@ -12,11 +12,9 @@ import {
   featureNavItems,
   solutionNavItems,
   industryNavItems,
-  compareNavItems,
   type FeatureNavItem,
   type SolutionNavItem,
   type IndustryNavItem,
-  type CompareNavItem,
 } from "@/config/navigation";
 
 // Dynamic icon component
@@ -150,46 +148,6 @@ function IndustriesDropdown() {
   );
 }
 
-// Compare link item with icon
-function CompareLinkItem({ item }: { item: CompareNavItem }) {
-  return (
-    <NavigationMenu.Link asChild>
-      <Link
-        href={item.href}
-        className="group flex items-start gap-3 rounded-lg p-3 transition-colors hover:bg-repwell-sage-100/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/20"
-      >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-repwell-sage-100/70 text-repwell-teal-400 transition-colors group-hover:bg-repwell-teal-300 group-hover:text-white">
-          <DynamicIcon name={item.icon} className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <span className="font-sans text-sm font-semibold text-repwell-teal-500 group-hover:text-repwell-teal-400">
-            {item.title}
-          </span>
-          <span className="block font-sans text-xs text-repwell-teal-400/80">
-            {item.description}
-          </span>
-        </div>
-      </Link>
-    </NavigationMenu.Link>
-  );
-}
-
-// Compare dropdown content
-function CompareDropdown() {
-  return (
-    <div className="p-4 w-[420px]">
-      <div className="mb-3 font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70">
-        Compare RepWell
-      </div>
-      <div className="grid grid-cols-1 gap-1">
-        {compareNavItems.map((item) => (
-          <CompareLinkItem key={item.slug} item={item} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // Navigation trigger with chevron
 function NavTrigger({
   children,
@@ -273,14 +231,6 @@ export function MegaMenu() {
           <NavTrigger>Industries</NavTrigger>
           <NavigationMenu.Content>
             <IndustriesDropdown />
-          </NavigationMenu.Content>
-        </NavigationMenu.Item>
-
-        {/* Compare */}
-        <NavigationMenu.Item>
-          <NavTrigger>Compare</NavTrigger>
-          <NavigationMenu.Content>
-            <CompareDropdown />
           </NavigationMenu.Content>
         </NavigationMenu.Item>
 

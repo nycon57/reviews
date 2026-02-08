@@ -102,6 +102,37 @@ export function buildCompanyBreadcrumbs(organization: {
 }
 
 /**
+ * Helper to build breadcrumb items for a branch profile
+ */
+export function buildBranchBreadcrumbs(
+  branch: { name: string; global_slug: string | null; id: string },
+  organization?: {
+    slug: string;
+    name: string;
+  } | null
+): DirectoryBreadcrumbItem[] {
+  const items: DirectoryBreadcrumbItem[] = [];
+
+  // Add company if available
+  if (organization) {
+    items.push({
+      label: organization.name,
+      href: `/org/${organization.slug}`,
+      type: "company",
+    });
+  }
+
+  // Add branch (current page)
+  items.push({
+    label: branch.name,
+    href: `/branch/${branch.global_slug || branch.id}`,
+    type: "company",
+  });
+
+  return items;
+}
+
+/**
  * Helper to build breadcrumb items for an industry directory page
  */
 export function buildIndustryBreadcrumbs(

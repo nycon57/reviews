@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { ChartSkeleton, CardSkeleton } from "@/components/shared";
-import { TrendsDashboard } from "./trends-dashboard";
+import { TrendsPageClient } from "@/components/analytics/trends-page-client";
 
 export const metadata = {
   title: "Analytics Trends | RepWell",
@@ -28,11 +28,16 @@ async function checkAccess() {
     redirect("/dashboard");
   }
 
-  return { role: userData.role };
+  const allowedRoles = ["admin", "manager", "user"] as const;
+  const role = allowedRoles.includes(userData.role as (typeof allowedRoles)[number])
+    ? (userData.role as "admin" | "manager" | "user")
+    : "user";
+
+  return { role };
 }
 
 export default async function TrendsPage() {
-  await checkAccess();
+  const { role } = await checkAccess();
 
   return (
     <div className="flex-1">
@@ -56,7 +61,7 @@ export default async function TrendsPage() {
           </div>
         }
       >
-        <TrendsDashboard />
+        <TrendsPageClient userRole={role} />
       </Suspense>
     </div>
   );

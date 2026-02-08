@@ -180,6 +180,7 @@ const BranchSchema = z
     phone: z.string().nullable(),
     email: z.string().email().nullable(),
     website_url: z.string().url().nullable(),
+    manager_id: z.string().uuid().nullable(),
     manager_name: z.string().nullable(),
     manager_email: z.string().email().nullable(),
     region: z.string().nullable(),
@@ -205,6 +206,9 @@ const CreateBranchSchema = z
     phone: z.string().optional().openapi({ example: '+1 (555) 123-4567' }),
     email: z.string().email().optional().openapi({ example: 'downtown@example.com' }),
     website_url: z.string().url().optional(),
+    manager_id: z.string().uuid().optional().openapi({
+      description: 'UUID of an active user to set as branch manager',
+    }),
     manager_name: z.string().max(200).optional(),
     manager_email: z.string().email().optional(),
     region: z.string().max(100).optional().openapi({ example: 'West Coast' }),

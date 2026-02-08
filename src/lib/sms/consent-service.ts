@@ -1,6 +1,8 @@
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import type { UntypedSupabaseClient } from "@/lib/supabase/admin";
 import { toE164, maskPhone } from "./phone-utils";
+import { TwilioVerifyService } from "./verify/twilio-verify";
+import type { VerifyChannel } from "./verify/twilio-verify";
 import type {
   SmsConsentStatus,
   SmsConsentMethod,
@@ -238,17 +240,29 @@ export class ConsentService {
   }
 
   /**
-   * Initiate the double opt-in flow. Sends a confirmation message and sets
-   * consent status to "pending" until the recipient replies YES.
+   * Initiate the double opt-in flow using Twilio Verify.
    *
-   * Returns the consent record in pending state.
+   * Sends a 6-digit OTP via SMS (or voice) to the phone number, then
+   * sets the consent record to "pending" in our sms_consent table for
+   * the audit trail.
+   *
+   * The caller should then collect the OTP from the user and call
+   * `confirmDoubleOptIn()` to validate it.
+   *
+   * @param orgId   - Organization ID
+   * @param phone   - Phone number (any US format, normalized to E.164)
+   * @param method  - Consent method for audit trail
+   * @param source  - Optional source identifier
+   * @param ip      - Optional IP address for audit
+   * @param channel - Twilio Verify channel: "sms" (default) or "call"
    */
   async initiateDoubleOptIn(
     orgId: string,
     phone: string,
     method: SmsConsentMethod,
     source?: string,
-    ip?: string
+    ip?: string,
+    channel: VerifyChannel = "sms"
   ): Promise<ConsentRecord> {
     const normalized = toE164(phone);
     if (!normalized) {
@@ -257,6 +271,7 @@ export class ConsentService {
 
     const now = new Date().toISOString();
 
+    // Check for existing consent record
     const { data: existing } = await this.supabase
       .from("sms_consent")
       .select("id, status")
@@ -265,7 +280,7 @@ export class ConsentService {
       .maybeSingle();
 
     if (existing) {
-      // If already opted in, return the existing record
+      // If already opted in, return the existing record — no OTP needed
       if (existing.status === "opted_in") {
         const { data, error: fetchErr } = await this.supabase
           .from("sms_consent")
@@ -278,7 +293,11 @@ export class ConsentService {
         return mapToConsentRecord(data);
       }
 
-      // Update to pending
+      // Send OTP via Twilio Verify
+      const verifyService = await TwilioVerifyService.forOrganization(orgId);
+      await verifyService.startVerification(normalized, channel);
+
+      // Update consent record to pending (write-through for audit trail)
       const { data, error } = await this.supabase
         .from("sms_consent")
         .update({
@@ -298,7 +317,12 @@ export class ConsentService {
       return mapToConsentRecord(data);
     }
 
-    // Create new pending consent record
+    // Send OTP via Twilio Verify before creating the consent record,
+    // so we don't write a pending record for a number that can't receive OTPs.
+    const verifyService = await TwilioVerifyService.forOrganization(orgId);
+    await verifyService.startVerification(normalized, channel);
+
+    // Create new pending consent record (write-through for audit trail)
     const { data, error } = await this.supabase
       .from("sms_consent")
       .insert({
@@ -359,13 +383,33 @@ export class ConsentService {
   }
 
   /**
-   * Confirm double opt-in after receiving a YES reply.
-   * Transitions consent from "pending" to "opted_in".
+   * Confirm double opt-in by validating the OTP code via Twilio Verify.
+   *
+   * If the code is valid (status: "approved"), transitions consent from
+   * "pending" to "opted_in" in our sms_consent table.
+   *
+   * @param orgId - Organization ID
+   * @param phone - Phone number (any US format)
+   * @param code  - The 6-digit OTP code the user entered
+   * @returns true if the code was valid and consent was confirmed
    */
-  async confirmDoubleOptIn(orgId: string, phone: string): Promise<boolean> {
+  async confirmDoubleOptIn(orgId: string, phone: string, code: string): Promise<boolean> {
     const normalized = toE164(phone);
     if (!normalized) return false;
 
+    // Validate the OTP via Twilio Verify
+    const verifyService = await TwilioVerifyService.forOrganization(orgId);
+    const result = await verifyService.checkVerification(normalized, code);
+
+    if (!result.valid || result.status !== "approved") {
+      console.warn(
+        `[ConsentService] confirmDoubleOptIn: verification not approved for ${maskPhone(normalized)}. ` +
+          `status=${result.status} valid=${result.valid}`
+      );
+      return false;
+    }
+
+    // OTP validated — transition consent to opted_in (write-through for audit trail)
     const now = new Date().toISOString();
 
     const { data, error } = await this.supabase
@@ -382,7 +426,7 @@ export class ConsentService {
       .maybeSingle();
 
     if (error) {
-      console.error("[ConsentService] confirmDoubleOptIn failed:", error.message);
+      console.error("[ConsentService] confirmDoubleOptIn DB update failed:", error.message);
       return false;
     }
 

@@ -59,8 +59,12 @@ export async function submitBrandRegistration(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
-    const msg = errorData?.message || errorData?.detail || `Brand registration failed (${response.status})`;
-    throw new Error(msg);
+    console.error("[A2P] Brand registration failed:", {
+      status: response.status,
+      error: errorData?.message || errorData?.detail,
+      code: errorData?.code,
+    });
+    throw new Error("Brand registration failed. Please try again or contact support.");
   }
 
   const data = await response.json();
@@ -114,9 +118,12 @@ export async function submitCampaignRegistration(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => null);
-    const msg =
-      errorData?.message || errorData?.detail || `Campaign registration failed (${response.status})`;
-    throw new Error(msg);
+    console.error("[A2P] Campaign registration failed:", {
+      status: response.status,
+      error: errorData?.message || errorData?.detail,
+      code: errorData?.code,
+    });
+    throw new Error("Campaign registration failed. Please try again or contact support.");
   }
 
   const data = await response.json();

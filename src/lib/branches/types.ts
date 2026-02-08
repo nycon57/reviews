@@ -16,12 +16,14 @@ export interface Branch {
   organizationId: string;
   name: string;
   slug: string;
+  globalSlug: string | null;
   address: BranchAddress | null;
   phone: string | null;
   email: string | null;
   websiteUrl: string | null;
   googlePlaceId: string | null;
   googleMapsUrl: string | null;
+  managerId: string | null;
   managerName: string | null;
   managerEmail: string | null;
   region: string | null;
@@ -48,6 +50,7 @@ export interface CreateBranchInput {
   email?: string;
   websiteUrl?: string;
   googlePlaceId?: string;
+  managerId?: string;
   managerName?: string;
   managerEmail?: string;
   region?: string;
@@ -61,6 +64,7 @@ export interface UpdateBranchInput {
   email?: string | null;
   websiteUrl?: string | null;
   googlePlaceId?: string | null;
+  managerId?: string | null;
   managerName?: string | null;
   managerEmail?: string | null;
   region?: string | null;

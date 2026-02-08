@@ -23,8 +23,6 @@ import {
   Users,
   CaretLeft as ChevronLeft,
   CaretRight as ChevronRight,
-  GridFour as LayoutGrid,
-  List,
 } from "@phosphor-icons/react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
@@ -58,8 +56,6 @@ export function DirectorySearch({
   // Core state
   const [results, setResults] = useState<DirectoryProfessional[]>(initialResults);
   const [totalCount, setTotalCount] = useState(initialCount);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
-
   // Form state
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [city, setCity] = useState(searchParams.get("city") || "");
@@ -430,45 +426,11 @@ export function DirectorySearch({
               )}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            {totalPages > 1 && (
-              <span className="text-xs text-muted-foreground">
-                {page}/{totalPages}
-              </span>
-            )}
-            <div className="flex rounded-md border border-border bg-muted/30 p-0.5">
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`
-                  inline-flex items-center justify-center rounded-sm px-2 py-1
-                  text-sm transition-all duration-200
-                  ${viewMode === "list"
-                    ? "bg-white text-repwell-teal-500 shadow-sm"
-                    : "text-repwell-teal-400 hover:text-repwell-teal-500"
-                  }
-                `}
-                aria-label="List view"
-              >
-                <List className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className={`
-                  inline-flex items-center justify-center rounded-sm px-2 py-1
-                  text-sm transition-all duration-200
-                  ${viewMode === "grid"
-                    ? "bg-white text-repwell-teal-500 shadow-sm"
-                    : "text-repwell-teal-400 hover:text-repwell-teal-500"
-                  }
-                `}
-                aria-label="Grid view"
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
+          {totalPages > 1 && (
+            <span className="text-xs text-muted-foreground">
+              {page}/{totalPages}
+            </span>
+          )}
         </div>
 
         {/* Scrollable Results List */}
@@ -494,7 +456,7 @@ export function DirectorySearch({
               ))}
             </div>
           ) : displayedProfessionals.length > 0 ? (
-            <div className={viewMode === "grid" ? "grid grid-cols-1 gap-3" : "space-y-3"}>
+            <div className="space-y-3">
               {displayedProfessionals.map((professional) => (
                 <div
                   key={professional.id}

@@ -207,6 +207,65 @@ export function validateSlugFormat(slug: string): SlugValidationResult {
 }
 
 /**
+ * Ensure a branch global_slug is unique by checking the database and appending numeric suffix if needed
+ * @param baseSlug The base global slug to check (e.g., "boston-downtown-summit-mortgage-group")
+ * @param excludeBranchId Optional branch ID to exclude from uniqueness check (for updates)
+ * @returns A unique global slug
+ */
+export async function ensureUniqueBranchSlug(
+  baseSlug: string,
+  excludeBranchId?: string
+): Promise<string> {
+  if (!baseSlug) {
+    throw new Error("Base slug cannot be empty");
+  }
+
+  const supabase = createAdminClient();
+  let slug = baseSlug;
+
+  // Check if slug is reserved
+  if (isReservedSlug(slug)) {
+    slug = `${slug}-1`;
+  }
+
+  // Check if slug already exists
+  let query = supabase.from("branches").select("id").eq("global_slug", slug);
+
+  if (excludeBranchId) {
+    query = query.neq("id", excludeBranchId);
+  }
+
+  const { data: existing } = await query.maybeSingle();
+
+  if (!existing) {
+    return slug;
+  }
+
+  // Find a unique slug by appending numbers
+  let counter = 1;
+  while (counter < 100) {
+    const newSlug = `${baseSlug}-${counter}`;
+
+    let checkQuery = supabase.from("branches").select("id").eq("global_slug", newSlug);
+
+    if (excludeBranchId) {
+      checkQuery = checkQuery.neq("id", excludeBranchId);
+    }
+
+    const { data } = await checkQuery.maybeSingle();
+
+    if (!data) {
+      return newSlug;
+    }
+
+    counter++;
+  }
+
+  // Fallback: append timestamp if somehow we hit 100 duplicates
+  return `${baseSlug}-${Date.now()}`;
+}
+
+/**
  * Check if a user slug is available (unique)
  * @param slug The slug to check
  * @param excludeUserId Optional user ID to exclude from uniqueness check

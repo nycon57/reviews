@@ -75,3 +75,6 @@ export const ENV_TWILIO_AUTH_TOKEN = "TWILIO_AUTH_TOKEN";
 
 /** Encryption key env var for decrypting Twilio tokens stored in sms_settings */
 export const ENV_SMS_ENCRYPTION_KEY = "SMS_ENCRYPTION_KEY";
+
+/** Twilio Verify Service SID for OTP-based double opt-in */
+export const ENV_TWILIO_VERIFY_SERVICE_SID = "TWILIO_VERIFY_SERVICE_SID";

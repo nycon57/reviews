@@ -14,11 +14,10 @@ import {
   Medal as Award,
   Users,
 } from "@phosphor-icons/react";
-import { motion, LayoutGroup, useScroll, useMotionValueEvent } from "framer-motion";
+import { AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import type { PublicProfessional, PublicReview, BusinessHours } from "@/lib/seo/actions";
 import type { Tables } from "@/types/database.types";
 import type { IndustryType } from "@/lib/industry/types";
-import { morphSpring } from "@/lib/motion";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import {
   ProfileHeroBanner,
@@ -95,7 +94,11 @@ export function ProProfileContent({
   const { scrollY } = useScroll();
 
   useMotionValueEvent(scrollY, "change", (latest) => {
-    setIsCompact(latest > SCROLL_THRESHOLD);
+    setIsCompact((prev) => {
+      if (!prev && latest > SCROLL_THRESHOLD) return true;
+      if (prev && latest < SCROLL_THRESHOLD - 100) return false;
+      return prev;
+    });
   });
 
   const shouldMorph = isDesktop && isCompact;
@@ -126,7 +129,7 @@ export function ProProfileContent({
   }, []);
 
   return (
-    <LayoutGroup id="profile-morph">
+    <>
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
         {/* Hero Banner with overlaid breadcrumbs — flush to viewport top */}
         <div className="relative">
@@ -149,119 +152,87 @@ export function ProProfileContent({
           )}
         </div>
 
-        {/* Header Section - Overlaps Banner (shows when NOT compact on desktop, always shows on mobile) */}
-        {!shouldMorph && (
-          <div className="relative -mt-16 z-10">
-            <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-              <motion.div
-                layoutId="profile-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl shadow-lg p-6 md:p-8"
-                transition={morphSpring}
-              >
-                <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
-                  {/* Avatar */}
-                  <motion.div layoutId="profile-avatar" transition={morphSpring}>
-                    <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-white shadow-lg -mt-16 sm:-mt-20">
-                      <AvatarImage src={professional.photo_url || undefined} alt={professional.full_name} />
-                      <AvatarFallback className="text-2xl md:text-3xl font-semibold bg-repwell-sage-100 text-repwell-teal-400">
-                        {getInitials(professional.full_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                  </motion.div>
+        {/* Header Section - always visible, scrolls off naturally */}
+        <div className="relative -mt-16 z-10">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                  <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+                    {/* Avatar */}
+                    <div>
+                      <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-white shadow-lg -mt-16 sm:-mt-20">
+                        <AvatarImage src={professional.photo_url || undefined} alt={professional.full_name} />
+                        <AvatarFallback className="text-2xl md:text-3xl font-semibold bg-repwell-sage-100 text-repwell-teal-400">
+                          {getInitials(professional.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </div>
 
-                  {/* Profile Info */}
-                  <div className="flex-1 text-center sm:text-left min-w-0">
-                    <motion.h1
-                      layoutId="profile-name"
-                      className="text-2xl md:text-3xl font-display font-bold text-repwell-teal-500 tracking-tight"
-                      transition={morphSpring}
-                    >
-                      {professional.full_name}
-                    </motion.h1>
-                    <motion.p
-                      layoutId="profile-title"
-                      className="text-lg text-repwell-teal-400"
-                      transition={morphSpring}
-                    >
-                      {professional.title || "Professional"}
-                    </motion.p>
+                    {/* Profile Info */}
+                    <div className="flex-1 text-center sm:text-left min-w-0">
+                      <h1 className="text-2xl md:text-3xl font-display font-bold text-repwell-teal-500 tracking-tight">
+                        {professional.full_name}
+                      </h1>
+                      <p className="text-lg text-repwell-teal-400">
+                        {professional.title || "Professional"}
+                      </p>
 
-                    {organization && (
-                      <motion.div
-                        layoutId="profile-org"
-                        className="mt-2 flex items-center justify-center gap-2 sm:justify-start"
-                        transition={morphSpring}
-                      >
-                        <Building2 className="h-4 w-4 text-repwell-teal-300" />
-                        <span className="text-repwell-teal-400">{organization.name}</span>
-                      </motion.div>
-                    )}
+                      {organization && (
+                        <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
+                          <Building2 className="h-4 w-4 text-repwell-teal-300" />
+                          <span className="text-repwell-teal-400">{organization.name}</span>
+                        </div>
+                      )}
 
-                    {/* Rating Summary */}
-                    {professional.average_rating && professional.total_reviews ? (
-                      <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-                        <motion.div
-                          layoutId="profile-rating"
-                          className="flex items-center gap-2"
-                          transition={morphSpring}
-                        >
-                          <StarRating rating={Math.round(Number(professional.average_rating))} />
-                          <span className="text-lg font-semibold text-repwell-teal-500">
-                            {Number(professional.average_rating).toFixed(1)}
-                          </span>
-                        </motion.div>
-                        <motion.div layoutId="profile-review-badge" transition={morphSpring}>
+                      {/* Rating Summary */}
+                      {professional.average_rating && professional.total_reviews ? (
+                        <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
+                          <div className="flex items-center gap-2">
+                            <StarRating rating={Math.round(Number(professional.average_rating))} />
+                            <span className="text-lg font-semibold text-repwell-teal-500">
+                              {Number(professional.average_rating).toFixed(1)}
+                            </span>
+                          </div>
                           <Badge variant="secondary" className="bg-repwell-sage-100 text-repwell-teal-400">
                             {professional.total_reviews} {professional.total_reviews === 1 ? "Review" : "Reviews"}
                           </Badge>
-                        </motion.div>
-                        {professional.nps_score !== null && (
-                          <motion.div layoutId="profile-nps-badge" transition={morphSpring}>
+                          {professional.nps_score !== null && (
                             <Badge variant="outline" className="border-repwell-sage-200 text-repwell-teal-400">
                               NPS: {professional.nps_score}
                             </Badge>
-                          </motion.div>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="mt-4 text-sm text-repwell-teal-300">No reviews yet</p>
-                    )}
+                          )}
+                        </div>
+                      ) : (
+                        <p className="mt-4 text-sm text-repwell-teal-300">No reviews yet</p>
+                      )}
 
-                    {/* NMLS Badge */}
-                    {professional.nmls_id && (
-                      <motion.div
-                        layoutId="profile-nmls"
-                        className="mt-3 flex items-center justify-center gap-2 sm:justify-start"
-                        transition={morphSpring}
-                      >
-                        <Award className="h-4 w-4 text-repwell-teal-300" />
-                        <span className="text-sm text-repwell-teal-400">
-                          NMLS# {professional.nmls_id}
-                        </span>
-                      </motion.div>
+                      {/* NMLS Badge */}
+                      {professional.nmls_id && (
+                        <div className="mt-3 flex items-center justify-center gap-2 sm:justify-start">
+                          <Award className="h-4 w-4 text-repwell-teal-300" />
+                          <span className="text-sm text-repwell-teal-400">
+                            NMLS# {professional.nmls_id}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Organization Logo */}
+                    {organization?.logo_url && (
+                      <div className="hidden sm:block shrink-0">
+                        <div className="relative h-16 w-16 md:h-20 md:w-20 overflow-hidden">
+                          <Image
+                            src={organization.logo_url}
+                            alt={organization.name || "Organization logo"}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
-
-                  {/* Organization Logo */}
-                  {organization?.logo_url && (
-                    <div className="hidden sm:block shrink-0">
-                      <div className="relative h-16 w-16 md:h-20 md:w-20 overflow-hidden">
-                        <Image
-                          src={organization.logo_url}
-                          alt={organization.name || "Organization logo"}
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </motion.div>
-            </div>
-          </div>
-        )}
+              </div>
+        </div>
 
         {/* Featured Reviews Carousel */}
         {featuredReviews.length > 0 && (
@@ -280,20 +251,22 @@ export function ProProfileContent({
         <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Sidebar */}
-            <div className="lg:sticky lg:top-4 lg:self-start space-y-6 lg:col-span-1">
+            <div className="lg:sticky lg:top-20 lg:self-start space-y-6 lg:col-span-1">
               {/* Compact Profile Card - shows when scrolled on desktop */}
-              {shouldMorph && (
-                <CompactProfileCard
-                  fullName={professional.full_name}
-                  photoUrl={professional.photo_url}
-                  title={professional.title}
-                  organizationName={organization?.name || null}
-                  averageRating={professional.average_rating}
-                  totalReviews={professional.total_reviews}
-                  npsScore={professional.nps_score}
-                  nmlsId={professional.nmls_id}
-                />
-              )}
+              <AnimatePresence>
+                {shouldMorph && (
+                  <CompactProfileCard
+                    fullName={professional.full_name}
+                    photoUrl={professional.photo_url}
+                    title={professional.title}
+                    organizationName={organization?.name || null}
+                    averageRating={professional.average_rating}
+                    totalReviews={professional.total_reviews}
+                    npsScore={professional.nps_score}
+                    nmlsId={professional.nmls_id}
+                  />
+                )}
+              </AnimatePresence>
 
               {/* Contact CTA Card */}
               <ContactCTACard
@@ -398,15 +371,6 @@ export function ProProfileContent({
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="border-t bg-white py-6 mt-8">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-            <p className="text-center text-sm text-repwell-teal-300">
-              Powered by RepWell - Customer Experience Management
-            </p>
-          </div>
-        </footer>
-
         {/* Modals */}
         <ReferFriendModal
           open={isReferModalOpen}
@@ -422,6 +386,6 @@ export function ProProfileContent({
           loanOfficerName={professional.full_name}
         />
       </div>
-    </LayoutGroup>
+    </>
   );
 }

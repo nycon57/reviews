@@ -236,6 +236,9 @@ export function buildVideoPlayer(
 
       video.addEventListener("play", () => {
         updatePlayPauseIcon(true);
+        if (video!.currentTime === 0) {
+          milestonesSent.clear();
+        }
       });
 
       video.addEventListener("pause", () => {

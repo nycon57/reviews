@@ -148,7 +148,7 @@ export const WidgetDetailAnalyticsPanel = memo(
         link.href = url;
         link.download = `widget-events-${widgetId}-${dateRange}.csv`;
         link.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast({ title: "Export complete", description: "Event-level CSV downloaded." });
       });
     }, [widgetId, dateRange, customStart, customEnd, toast]);
@@ -234,7 +234,7 @@ export const WidgetDetailAnalyticsPanel = memo(
             className="gap-2"
           >
             <Download size={14} />
-            {isExporting ? "Exporting..." : "Export Events CSV"}
+            {isExporting ? "Exporting\u2026" : "Export Events CSV"}
           </Button>
         </div>
 
@@ -251,104 +251,125 @@ export const WidgetDetailAnalyticsPanel = memo(
                   No data for this period
                 </div>
               ) : (
-                <div className="h-[250px] w-full" aria-hidden="true">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={chartData}
-                      margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                    >
-                      <defs>
-                        <linearGradient
-                          id="detail-grad-imp"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#52796f"
-                            stopOpacity={0.3}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#52796f"
-                            stopOpacity={0}
-                          />
-                        </linearGradient>
-                        <linearGradient
-                          id="detail-grad-clk"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="#84a98c"
-                            stopOpacity={0.3}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="#84a98c"
-                            stopOpacity={0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        strokeDasharray="3 3"
-                        vertical={false}
-                        stroke="hsl(var(--border))"
-                      />
-                      <XAxis
-                        dataKey="label"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fontSize: 11,
-                          fill: "hsl(var(--muted-foreground))",
-                        }}
-                        dy={10}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{
-                          fontSize: 11,
-                          fill: "hsl(var(--muted-foreground))",
-                        }}
-                        dx={-10}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--popover))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                        }}
-                      />
-                      <Legend verticalAlign="top" height={36} />
-                      <Area
-                        type="monotone"
-                        dataKey="impressions"
-                        name="Impressions"
-                        stroke="#52796f"
-                        strokeWidth={2}
-                        fill="url(#detail-grad-imp)"
-                        connectNulls
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="clicks"
-                        name="Clicks"
-                        stroke="#84a98c"
-                        strokeWidth={2}
-                        fill="url(#detail-grad-clk)"
-                        connectNulls
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
+                <>
+                  <div className="h-[250px] w-full" aria-hidden="true">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={chartData}
+                        margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                      >
+                        <defs>
+                          <linearGradient
+                            id="detail-grad-imp"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#52796f"
+                              stopOpacity={0.3}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#52796f"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                          <linearGradient
+                            id="detail-grad-clk"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#84a98c"
+                              stopOpacity={0.3}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#84a98c"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          vertical={false}
+                          stroke="hsl(var(--border))"
+                        />
+                        <XAxis
+                          dataKey="label"
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{
+                            fontSize: 11,
+                            fill: "hsl(var(--muted-foreground))",
+                          }}
+                          dy={10}
+                        />
+                        <YAxis
+                          axisLine={false}
+                          tickLine={false}
+                          tick={{
+                            fontSize: 11,
+                            fill: "hsl(var(--muted-foreground))",
+                          }}
+                          dx={-10}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--popover))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                          }}
+                        />
+                        <Legend verticalAlign="top" height={36} />
+                        <Area
+                          type="monotone"
+                          dataKey="impressions"
+                          name="Impressions"
+                          stroke="#52796f"
+                          strokeWidth={2}
+                          fill="url(#detail-grad-imp)"
+                          connectNulls
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="clicks"
+                          name="Clicks"
+                          stroke="#84a98c"
+                          strokeWidth={2}
+                          fill="url(#detail-grad-clk)"
+                          connectNulls
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <table className="sr-only">
+                    <caption>Daily impressions and clicks</caption>
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Impressions</th>
+                        <th>Clicks</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {chartData.map((d) => (
+                        <tr key={d.date}>
+                          <td>{d.label}</td>
+                          <td>{d.impressions}</td>
+                          <td>{d.clicks}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </CardContent>
           </Card>
@@ -365,43 +386,62 @@ export const WidgetDetailAnalyticsPanel = memo(
                   No events recorded
                 </div>
               ) : (
-                <div className="h-[250px] w-full" aria-hidden="true">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={100}
-                        paddingAngle={2}
-                        dataKey="value"
-                        nameKey="name"
-                      >
-                        {pieData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--popover))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                        }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        formatter={(value: string) => (
-                          <span className="text-xs text-muted-foreground">
-                            {value}
-                          </span>
-                        )}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <>
+                  <div className="h-[250px] w-full" aria-hidden="true">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={100}
+                          paddingAngle={2}
+                          dataKey="value"
+                          nameKey="name"
+                        >
+                          {pieData.map((entry) => (
+                            <Cell key={entry.name} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--popover))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+                          }}
+                        />
+                        <Legend
+                          verticalAlign="bottom"
+                          height={36}
+                          formatter={(value: string) => (
+                            <span className="text-xs text-muted-foreground">
+                              {value}
+                            </span>
+                          )}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <table className="sr-only">
+                    <caption>Event type breakdown</caption>
+                    <thead>
+                      <tr>
+                        <th>Event Type</th>
+                        <th>Count</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pieData.map((entry) => (
+                        <tr key={entry.name}>
+                          <td>{entry.name}</td>
+                          <td>{entry.value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </CardContent>
           </Card>
@@ -489,7 +529,7 @@ export const WidgetDetailAnalyticsPanel = memo(
                   Geographic Breakdown
                 </CardTitle>
                 <CardDescription>
-                  Unique visitors by IP hash
+                  Unique visitor distribution
                 </CardDescription>
               </div>
             </div>
@@ -510,7 +550,7 @@ export const WidgetDetailAnalyticsPanel = memo(
                       className="text-xs text-muted-foreground font-mono truncate max-w-[70%]"
                       title={item.ipHash}
                     >
-                      {item.ipHash.slice(0, 8)}...
+                      {item.ipHash.slice(0, 8)}&hellip;
                     </span>
                     <span className="text-xs font-medium tabular-nums text-repwell-teal-500">
                       {item.count.toLocaleString()}

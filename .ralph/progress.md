@@ -17786,3 +17786,88 @@ Run summary: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-2026
   - Video player already tracked all event types but lacked timing metadata needed for average watch duration calculation
   - Enhanced analytics data was already computed by getWidgetDetailAnalytics but never rendered in the UI
 ---
+
+## [2026-02-15] - S140: Theme Presets & Style Controls System
+Run: 20260215-223507-66224 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260215-223507-66224-iter-1.log
+- No-commit run: false
+- Commit: 210832b [Pass 2/3] fix(S140): Improve a11y and copy in theme/style controls
+- Post-commit status: dirty (pre-existing changes from other stories)
+- Skills loaded: /next-best-practices, /vercel-react-best-practices, /code-review (manual), /web-design-guidelines, /writing-clearly-and-concisely
+- Skills skipped with reason: /supabase-postgres-best-practices (no DB work in this pass), /frontend-design (Pass 2 uses web-design-guidelines instead)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: eslint (S140 files) -> PASS (0 errors, 1 pre-existing warning)
+- Files changed:
+  - src/components/widgets/theme-preset-selector.tsx (added aria-pressed to preset buttons)
+  - src/components/widgets/widget-builder-sidebar.tsx (aria-pressed on card style/source/loan type toggle buttons, fixed HTML entity, replaced ASCII ellipses with typographic ellipsis)
+- What was done:
+  - Code review: Reviewed all 7 S140 files for bugs, security, performance, and a11y issues
+  - Web design guidelines audit: Checked all UI components against Vercel web interface guidelines
+  - Writing review: Checked all user-facing text for clarity and typographic correctness
+  - Fixed 3 categories of issues:
+    1. Accessibility: Added aria-pressed to 4 groups of toggle buttons (theme presets, card style, source filters, loan type filters)
+    2. Typography: Replaced ASCII triple-dot `...` with proper ellipsis `…` in 5 placeholders per web interface guidelines
+    3. Copy: Simplified `&amp;` HTML entity to `&` in JSX attribute
+  - No bugs, security issues, or logic errors found in core theme/style system
+  - All 11 acceptance criteria remain verified from Pass 1
+---
+
+## S141 — Pass 2/3 (Quality Review)
+- Date: 2026-02-15
+- Commit: 3ec8485
+- Skills loaded: next-best-practices, vercel-react-best-practices, code-review (feature-dev:code-reviewer), web-design-guidelines, writing-clearly-and-concisely
+- Quality gates:
+  - Command: npm run build -> PASS
+  - Command: eslint (S141 files) -> PASS (0 errors)
+- Files changed:
+  - src/embed/widgets/company-review/template.ts (replaced inline NMLS badge, loan tags, FTHB badge, compliance footer with shared components)
+  - src/embed/widgets/review-carousel/template.ts (replaced inline disclaimer with buildComplianceFooter)
+  - src/embed/widgets/review-carousel/styles.ts (fixed BEM class names: -ehl → __ehl, -text → __text, -nmls → __nmls-link)
+  - src/embed/widgets/review-wall/template.ts (replaced inline disclaimer with buildComplianceFooter)
+  - src/embed/widgets/review-wall/styles.ts (fixed BEM class names: same pattern as carousel)
+  - src/embed/widgets/video-testimonial/template.ts (replaced inline NMLS badge and disclaimer with shared components)
+  - src/embed/widgets/video-testimonial/styles.ts (fixed BEM class names: -ehl → __ehl, -text → __text, -link → __nmls-link)
+- What was done:
+  - Code review: Found 4/6 widget types duplicated compliance element construction instead of using shared components (buildNmlsBadge, buildComplianceFooter, buildLoanTypeTag, buildFirstTimeBuyerBadge)
+  - Refactored company-review template: removed duplicate getLoanTagClass function, NMLS_COMPANY_BASE constant, inline NMLS badge, loan type tags, FTHB badges, and compliance footer — all replaced with shared component calls
+  - Refactored carousel/wall/video templates: replaced createEqualHousingLenderSVG imports and inline disclaimer DOM construction with buildComplianceFooter
+  - Refactored video-testimonial: replaced inline NMLS badge with buildNmlsBadge
+  - Fixed critical BEM class name mismatch: shared buildComplianceFooter generates ${classPrefix}__ehl (double underscore) but carousel/wall/video CSS used single-hyphen (-ehl). Updated all 3 style files to match.
+  - Web design guidelines review: No additional issues found
+  - Writing review: No text clarity issues found
+  - Net result: -75 lines of duplicated code, consistent component reuse across all 6 widget types
+  - All 13 acceptance criteria remain verified from Pass 1
+---
+
+## [2026-02-15] - S141: NMLS Compliance & Mortgage-Specific Display
+Run: 20260215-230016-93154 (iteration 2)
+Pass: 3/3 - Polish & Finalize
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260215-230016-93154-iter-2.log
+- No-commit run: false
+- Commit: 9e19fc9 [Pass 3/3] refactor(S141): Extract shared disclaimer CSS into reusable generator
+- Post-commit status: clean (S141 files only; pre-existing changes remain in working tree)
+- Skills loaded: /next-best-practices, /vercel-react-best-practices, /writing-clearly-and-concisely
+- Skills skipped with reason: /supabase-postgres-best-practices (no DB work), /frontend-design (CSS-only refactor, no new UI), /agent-browser (no visual changes to verify — CSS output is identical)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: eslint (S141 files) -> PASS (0 errors)
+  - Security audit: PASS (encodeURIComponent on NMLS IDs, noopener noreferrer, no innerHTML)
+  - Performance audit: PASS (disclaimerStyles called once at module init, not per-render)
+  - Regression audit: PASS (generated CSS identical to hand-written originals)
+- Files changed:
+  - src/embed/styles/compliance.ts (new: shared disclaimerStyles() generator)
+  - src/embed/widgets/lo-review/styles.ts (replaced 37 lines of inline disclaimer CSS with disclaimerStyles call)
+  - src/embed/widgets/company-review/styles.ts (replaced 5 lines of inline disclaimer CSS with disclaimerStyles call)
+  - src/embed/widgets/review-carousel/styles.ts (replaced 37 lines with disclaimerStyles call, preserves 12px margin / 8px 12px padding)
+  - src/embed/widgets/review-wall/styles.ts (replaced 37 lines with disclaimerStyles call, preserves 12px margin / 8px 12px padding)
+  - src/embed/widgets/video-testimonial/styles.ts (replaced 5 lines with disclaimerStyles call)
+- What was done:
+  - Created src/embed/styles/compliance.ts with disclaimerStyles() function that generates the 5 disclaimer CSS rules (.container, __ehl, __text, __nmls-link, __nmls-link:hover) from a class prefix
+  - Supports optional marginTop/padding overrides for carousel/wall widgets (12px/8px 12px vs default 16px/10px 14px)
+  - Replaced duplicated disclaimer CSS in all 5 widget style files with single-line function calls
+  - Net reduction: -81 lines of duplicated CSS
+  - User-facing text review: all compliance text is standard regulatory language, i18n strings match between embed and React preview
+  - All 8 acceptance criteria verified as PASS
+---

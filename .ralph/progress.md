@@ -17871,3 +17871,36 @@ Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260215
   - User-facing text review: all compliance text is standard regulatory language, i18n strings match between embed and React preview
   - All 8 acceptance criteria verified as PASS
 ---
+
+## [2026-02-16] - S154: Enhanced Widget Analytics (Scroll Depth, Video, Conversion Attribution)
+Run: 20260215-234019-38693 (iteration 1)
+Pass: 2/3 - Quality Review
+Run log: /Users/jarrettstanley/Desktop/websites/reviews/.ralph/runs/run-20260215-234019-38693-iter-1.log
+- No-commit run: false
+- Commit: e337465 [Pass 2/3] fix(S154): Improve a11y, security, and reliability in widget analytics
+- Post-commit status: dirty (pre-existing changes from other stories)
+- Skills loaded: /next-best-practices, /vercel-react-best-practices, /web-design-guidelines, /writing-clearly-and-concisely, code-review (feature-dev:code-reviewer subagent)
+- Skills skipped with reason: /supabase-postgres-best-practices (no DB work in this pass), /frontend-design (Pass 2 uses web-design-guidelines instead)
+- Verification:
+  - Command: npm run build -> PASS
+  - Command: eslint (S154 files) -> PASS (0 errors)
+- Files changed:
+  - src/app/api/dashboard/widgets/[id]/analytics/route.ts (added independent auth check, improved error status mapping)
+  - src/components/widgets/analytics/widget-detail-analytics.tsx (a11y SR tables, typography, memory safety, stable keys, copy)
+  - src/embed/widgets/video-testimonial/player.ts (milestone reset on replay)
+- What was done:
+  - Code review: Reviewed all 4 S154 files for bugs, security, performance, a11y
+  - Web design guidelines audit: Checked all UI against Vercel web interface guidelines
+  - Writing review: Checked all user-facing text for clarity
+  - Fixed 6 categories of issues:
+    1. Accessibility: Added SR-only data tables for daily chart and pie chart (WCAG 1.1.1)
+    2. Security: Added independent auth check in API route (defense-in-depth)
+    3. Typography: Replaced ASCII `...` with typographic `…` in 2 locations per web guidelines
+    4. Memory safety: Deferred URL.revokeObjectURL by 1s so browser can start download
+    5. Stability: Replaced array-index key with stable entry.name key for pie chart Cells
+    6. Copy: Replaced "Unique visitors by IP hash" with "Unique visitor distribution"
+    7. Logic: Reset video milestones when replay starts from beginning
+  - Improved API route error mapping: "Widget not found" now returns 404
+  - No regressions found; all acceptance criteria remain verified from Pass 1
+- **Noted for future (not in S154 scope):** TypeScript DB types missing video_pause/video_complete/video_progress/conversion — run `npm run db:types` when DB connection available
+---

@@ -4,6 +4,8 @@
  * Fallback: flex-wrap grid for browsers without CSS columns.
  */
 
+import { disclaimerStyles } from "../../styles/compliance";
+
 export const REVIEW_WALL_STYLES = /* css */ `
   /* ── Wall Container ──────────────────────────────────────────── */
 
@@ -124,45 +126,7 @@ export const REVIEW_WALL_STYLES = /* css */ `
 
   /* ── Disclaimer ──────────────────────────────────────────────── */
 
-  .rw-wall__disclaimer {
-    margin-top: 12px;
-    padding: 8px 12px;
-    font-size: var(--rw-disclaimer-size, 10px);
-    line-height: 1.5;
-    color: var(--rw-text, #6b7280);
-    opacity: 0.8;
-    background: var(--rw-bg, #f9fafb);
-    border-radius: 4px;
-    border: 1px solid var(--rw-border, #f3f4f6);
-  }
-
-  .rw-wall__disclaimer__ehl {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-    font-weight: 600;
-    font-size: 11px;
-    color: var(--rw-text, #4b5563);
-  }
-
-  .rw-wall__disclaimer__text {
-    font-size: var(--rw-disclaimer-size, 10px);
-    line-height: 1.5;
-    color: var(--rw-text, #6b7280);
-    opacity: 0.8;
-    margin-bottom: 4px;
-  }
-
-  .rw-wall__disclaimer__nmls-link {
-    font-size: 10px;
-    color: var(--rw-primary, #52796f);
-    text-decoration: none;
-  }
-
-  .rw-wall__disclaimer__nmls-link:hover {
-    text-decoration: underline;
-  }
+  ${disclaimerStyles({ prefix: "rw-wall__disclaimer", marginTop: "12px", padding: "8px 12px" })}
 
   /* ── CTA ─────────────────────────────────────────────────────── */
 

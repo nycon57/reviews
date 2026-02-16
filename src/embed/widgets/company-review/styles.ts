@@ -3,6 +3,8 @@
  * Pre-minified to stay within the 15KB gzipped embed budget.
  */
 
+import { disclaimerStyles } from "../../styles/compliance";
+
 export const COMPANY_REVIEW_STYLES = /* css */ `
 .rw-co-header{display:flex;align-items:center;gap:16px;padding:20px;margin-bottom:16px;background:var(--rw-bg,#fff);border:1px solid var(--rw-border,#e5e7eb);border-radius:var(--rw-radius,8px)}
 .rw-co-header__logo{width:56px;height:56px;border-radius:8px;object-fit:contain;flex-shrink:0;background:#f9fafb}
@@ -78,10 +80,6 @@ export const COMPANY_REVIEW_STYLES = /* css */ `
 .rw-co-actions{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
 .rw-co-actions__write-review{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:500;color:var(--rw-primary,#52796f);background:transparent;border:1px solid var(--rw-primary,#52796f);border-radius:6px;text-decoration:none;cursor:pointer;transition:background .15s ease,color .15s ease}
 .rw-co-actions__write-review:hover{background:var(--rw-primary,#52796f);color:#fff}
-.rw-co-disclaimer{margin-top:16px;padding:10px 14px;font-size:var(--rw-disclaimer-size,10px);line-height:1.5;color:var(--rw-text,#6b7280);opacity:0.8;background:var(--rw-bg,#f9fafb);border-radius:4px;border:1px solid var(--rw-border,#f3f4f6)}
-.rw-co-disclaimer__ehl{display:flex;align-items:center;gap:6px;margin-bottom:4px;font-weight:600;font-size:11px;color:var(--rw-text,#4b5563)}
-.rw-co-disclaimer__text{font-size:var(--rw-disclaimer-size,10px);line-height:1.5;color:var(--rw-text,#6b7280);opacity:0.8;margin-bottom:4px}
-.rw-co-disclaimer__nmls-link{font-size:10px;color:var(--rw-primary,#52796f);text-decoration:none}
-.rw-co-disclaimer__nmls-link:hover{text-decoration:underline}
+${disclaimerStyles({ prefix: "rw-co-disclaimer" })}
 @media(max-width:480px){.rw-co-header{flex-direction:column;text-align:center}.rw-co-header__rating{justify-content:center}.rw-co-reviews{grid-template-columns:1fr!important}.rw-co-filters{justify-content:center}.rw-co-actions{flex-direction:column}.rw-co-actions__write-review,.rw-cta{width:100%;text-align:center;justify-content:center}.rw-co-sources__item{flex-wrap:wrap}}
 `;

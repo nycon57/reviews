@@ -2,6 +2,8 @@
  * LO Review Widget styles — injected into Shadow DOM alongside BASE_STYLES.
  */
 
+import { disclaimerStyles } from "../../styles/compliance";
+
 export const LO_REVIEW_STYLES = /* css */ `
   .rw-lo-profile {
     display: flex;
@@ -187,43 +189,7 @@ export const LO_REVIEW_STYLES = /* css */ `
 
   .rw-lo-actions__write-review:hover { background: var(--rw-primary, #52796f); color: #fff; }
 
-  .rw-lo-disclaimer {
-    margin-top: 16px;
-    padding: 10px 14px;
-    font-size: var(--rw-disclaimer-size, 10px);
-    line-height: 1.5;
-    color: var(--rw-text, #6b7280);
-    opacity: 0.8;
-    background: var(--rw-bg, #f9fafb);
-    border-radius: 4px;
-    border: 1px solid var(--rw-border, #f3f4f6);
-  }
-
-  .rw-lo-disclaimer__ehl {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
-    font-weight: 600;
-    font-size: 11px;
-    color: var(--rw-text, #4b5563);
-  }
-
-  .rw-lo-disclaimer__text {
-    font-size: var(--rw-disclaimer-size, 10px);
-    line-height: 1.5;
-    color: var(--rw-text, #6b7280);
-    opacity: 0.8;
-    margin-bottom: 4px;
-  }
-
-  .rw-lo-disclaimer__nmls-link {
-    font-size: 10px;
-    color: var(--rw-primary, #52796f);
-    text-decoration: none;
-  }
-
-  .rw-lo-disclaimer__nmls-link:hover { text-decoration: underline; }
+  ${disclaimerStyles({ prefix: "rw-lo-disclaimer" })}
 
   @media (max-width: 480px) {
     .rw-lo-profile { flex-direction: column; text-align: center; }

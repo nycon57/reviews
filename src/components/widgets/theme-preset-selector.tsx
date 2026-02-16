@@ -103,6 +103,7 @@ export function ThemePresetSelector({ value, onChange }: ThemePresetSelectorProp
           <button
             key={key}
             type="button"
+            aria-pressed={isSelected}
             onClick={() => onChange(key)}
             className={`
               flex flex-col gap-1.5 p-2 rounded-lg border text-left

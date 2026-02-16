@@ -338,7 +338,7 @@ function FontFamilySelect({
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search fonts..."
+            placeholder="Search fonts\u2026"
             className="h-7 text-xs"
             onKeyDown={(e) => e.stopPropagation()}
           />
@@ -708,6 +708,7 @@ function ThemeTab({
                   <button
                     key={style.value}
                     type="button"
+                    aria-pressed={isActive}
                     onClick={() => updateLayout("cardStyle", style.value)}
                     className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
                       isActive
@@ -851,7 +852,7 @@ function ContentTab({
                 value={content.ctaUrl ?? ""}
                 onChange={(e) => update("ctaUrl", e.target.value)}
                 className="h-8 text-xs mt-1"
-                placeholder="https://..."
+                placeholder="https://\u2026"
               />
             </div>
           </div>
@@ -876,7 +877,7 @@ function ContentTab({
             />
           )}
           <SwitchField
-            label="Show Disclaimer &amp; Equal Housing"
+            label="Show Disclaimer & Equal Housing"
             checked={content.showDisclaimer === true}
             onChange={(v) => update("showDisclaimer", v)}
           />
@@ -887,7 +888,7 @@ function ContentTab({
                 value={content.disclaimerText ?? ""}
                 onChange={(e) => update("disclaimerText", e.target.value)}
                 className="h-8 text-xs mt-1"
-                placeholder="This is not a commitment to lend..."
+                placeholder="This is not a commitment to lend\u2026"
               />
               <p className="text-[10px] text-muted-foreground mt-1">
                 Leave empty for default compliance text. Minimum 10px font enforced.
@@ -1028,6 +1029,7 @@ function FiltersTab({
               <button
                 key={source}
                 type="button"
+                aria-pressed={isActive}
                 onClick={() => {
                   const current = filters.sources ?? ["google", "zillow", "internal", "facebook"];
                   if (isActive) {
@@ -1110,7 +1112,7 @@ function FiltersTab({
         <ChipInput
           values={filters.keywords ?? []}
           onChange={(v) => update("keywords", v)}
-          placeholder="Add keyword..."
+          placeholder="Add keyword\u2026"
         />
       </div>
 
@@ -1124,6 +1126,7 @@ function FiltersTab({
               <button
                 key={loanType}
                 type="button"
+                aria-pressed={isActive}
                 onClick={() => {
                   if (isActive) {
                     update("loanTypes", currentTypes.filter((t) => t !== loanType));
@@ -1309,7 +1312,7 @@ function SeoJsonLdPreview({
         author: { "@type": "Person", name: "Jane D." },
         datePublished: new Date().toISOString().split("T")[0],
         reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 },
-        reviewBody: "Excellent service...",
+        reviewBody: "Excellent service\u2026",
       },
     ];
 

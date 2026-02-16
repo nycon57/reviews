@@ -26,7 +26,10 @@ import {
   formatRelativeDate,
   formatAbsoluteDate,
 } from "../../core/dom-helpers";
-import { createEqualHousingLenderSVG, createHouseIconSVG } from "../../assets/equal-housing-lender";
+import { buildNmlsBadge } from "../../components/nmls-badge";
+import { buildComplianceFooter } from "../../components/compliance-footer";
+import { buildLoanTypeTag } from "../../components/loan-type-tag";
+import { buildFirstTimeBuyerBadge } from "../../components/first-time-buyer-badge";
 import { buildFilterControls } from "../shared/filter-controls";
 import { t } from "../../i18n";
 
@@ -40,12 +43,6 @@ export function starsRow(rating: number, filledColor: string, emptyColor: string
     row.appendChild(starSVG(i <= rating, filledColor, emptyColor));
   }
   return row;
-}
-
-function getLoanTagClass(loanType: string): string {
-  const normalized = loanType.toLowerCase().replace(/\s+/g, "");
-  const m: Record<string, string> = { purchase: "purchase", refinance: "refinance", va: "va", fha: "fha", jumbo: "jumbo", usda: "usda", conventional: "conventional" };
-  return m[normalized] ?? "default";
 }
 
 const SOURCE_ICONS: Record<string, string> = {
@@ -64,8 +61,6 @@ const SOURCE_LABELS: Record<string, string> = {
   zillow: "Zillow",
   internal: "RepWell",
 };
-
-const NMLS_COMPANY_BASE = "https://www.nmlsconsumeraccess.org/EntityDetails.aspx/COMPANY/";
 
 // ── Organization Header ──────────────────────────────────────────────
 
@@ -94,18 +89,8 @@ function buildOrgHeader(
   if (orgName) info.appendChild(text("h3", orgName, "rw-co-header__name"));
 
   // Company NMLS number in header
-  if (profile.nmls_id) {
-    const nmlsWrapper = el("div", "rw-co-header__nmls");
-    nmlsWrapper.textContent = "NMLS# ";
-    const nmlsLink = document.createElement("a");
-    nmlsLink.textContent = profile.nmls_id;
-    nmlsLink.href = `${NMLS_COMPANY_BASE}${encodeURIComponent(profile.nmls_id)}`;
-    nmlsLink.target = "_blank";
-    nmlsLink.rel = "noopener noreferrer";
-    nmlsLink.setAttribute("aria-label", `Company NMLS ID ${profile.nmls_id} - view on NMLS Consumer Access`);
-    nmlsWrapper.appendChild(nmlsLink);
-    info.appendChild(nmlsWrapper);
-  }
+  const nmlsBadge = buildNmlsBadge(profile.nmls_id, "company", "rw-co-header__nmls");
+  if (nmlsBadge) info.appendChild(nmlsBadge);
 
   if (profile.average_rating != null) {
     const ratingRow = el("div", "rw-co-header__rating");
@@ -290,14 +275,11 @@ export function buildReviewCard(
     hasTags = true;
   }
   if (review.loan_type) {
-    tags.appendChild(text("span", review.loan_type, `rw-co-review__loan-tag rw-co-review__loan-tag--${getLoanTagClass(review.loan_type)}`));
+    tags.appendChild(buildLoanTypeTag(review.loan_type, "rw-co-review"));
     hasTags = true;
   }
   if (review.first_time_homebuyer) {
-    const fthb = el("span", "rw-co-review__fthb-badge");
-    fthb.appendChild(createHouseIconSVG(11));
-    fthb.appendChild(document.createTextNode(t("firstTimeBuyer")));
-    tags.appendChild(fthb);
+    tags.appendChild(buildFirstTimeBuyerBadge("rw-co-review__fthb-badge"));
     hasTags = true;
   }
   if (review.loan_officer_name) {
@@ -395,20 +377,12 @@ export function appendWidgetFooter(
   }
 
   if (content?.showDisclaimer) {
-    const disclaimer = el("div", "rw-co-disclaimer");
-    const ehl = el("div", "rw-co-disclaimer__ehl");
-    ehl.appendChild(createEqualHousingLenderSVG(18));
-    ehl.appendChild(document.createTextNode(t("equalHousingLender")));
-    disclaimer.appendChild(ehl);
-    disclaimer.appendChild(text("div", content.disclaimerText || t("defaultDisclaimer"), "rw-co-disclaimer__text"));
-    const nmlsLink = document.createElement("a");
-    nmlsLink.className = "rw-co-disclaimer__nmls-link";
-    nmlsLink.href = "https://www.nmlsconsumeraccess.org";
-    nmlsLink.target = "_blank";
-    nmlsLink.rel = "noopener noreferrer";
-    nmlsLink.textContent = "NMLS Consumer Access";
-    disclaimer.appendChild(nmlsLink);
-    container.appendChild(disclaimer);
+    container.appendChild(
+      buildComplianceFooter({
+        classPrefix: "rw-co-disclaimer",
+        disclaimerText: content.disclaimerText,
+      }),
+    );
   }
 
   if (content?.showBranding !== false) {

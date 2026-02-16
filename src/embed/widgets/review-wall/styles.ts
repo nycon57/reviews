@@ -136,7 +136,7 @@ export const REVIEW_WALL_STYLES = /* css */ `
     border: 1px solid var(--rw-border, #f3f4f6);
   }
 
-  .rw-wall__disclaimer-ehl {
+  .rw-wall__disclaimer__ehl {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -146,7 +146,7 @@ export const REVIEW_WALL_STYLES = /* css */ `
     color: var(--rw-text, #4b5563);
   }
 
-  .rw-wall__disclaimer-text {
+  .rw-wall__disclaimer__text {
     font-size: var(--rw-disclaimer-size, 10px);
     line-height: 1.5;
     color: var(--rw-text, #6b7280);
@@ -154,13 +154,13 @@ export const REVIEW_WALL_STYLES = /* css */ `
     margin-bottom: 4px;
   }
 
-  .rw-wall__disclaimer-nmls {
+  .rw-wall__disclaimer__nmls-link {
     font-size: 10px;
     color: var(--rw-primary, #52796f);
     text-decoration: none;
   }
 
-  .rw-wall__disclaimer-nmls:hover {
+  .rw-wall__disclaimer__nmls-link:hover {
     text-decoration: underline;
   }
 

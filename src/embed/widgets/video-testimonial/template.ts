@@ -11,12 +11,11 @@ import type {
   EntityProfile,
 } from "../../types";
 import { el, text, starSVG, getInitials } from "../../core/dom-helpers";
-import { createEqualHousingLenderSVG } from "../../assets/equal-housing-lender";
+import { buildNmlsBadge } from "../../components/nmls-badge";
+import { buildComplianceFooter } from "../../components/compliance-footer";
 import { t } from "../../i18n";
 import { buildVideoPlayer } from "./player";
 import { buildTranscript } from "./transcript";
-
-const NMLS_INDIVIDUAL_BASE = "https://www.nmlsconsumeraccess.org/EntityDetails.aspx/INDIVIDUAL/";
 
 function buildLOSection(
   profile: EntityProfile,
@@ -41,18 +40,8 @@ function buildLOSection(
   const info = el("div", "rw-vt__lo-info");
   if (profile.full_name) info.appendChild(text("div", profile.full_name, "rw-vt__lo-name"));
 
-  if (profile.nmls_id) {
-    const nmlsWrap = el("div", "rw-vt__lo-nmls");
-    nmlsWrap.textContent = "NMLS# ";
-    const nmlsLink = document.createElement("a");
-    nmlsLink.textContent = profile.nmls_id;
-    nmlsLink.href = `${NMLS_INDIVIDUAL_BASE}${encodeURIComponent(profile.nmls_id)}`;
-    nmlsLink.target = "_blank";
-    nmlsLink.rel = "noopener noreferrer";
-    nmlsLink.setAttribute("aria-label", `NMLS ID ${profile.nmls_id}`);
-    nmlsWrap.appendChild(nmlsLink);
-    info.appendChild(nmlsWrap);
-  }
+  const nmlsBadge = buildNmlsBadge(profile.nmls_id, "individual", "rw-vt__lo-nmls");
+  if (nmlsBadge) info.appendChild(nmlsBadge);
 
   section.appendChild(info);
 
@@ -228,27 +217,12 @@ export function buildVideoTestimonialDOM(
 
   // Compliance disclaimer
   if (content?.showDisclaimer) {
-    const disclaimer = el("div", "rw-vt__disclaimer");
-    const ehl = el("div", "rw-vt__disclaimer-ehl");
-    ehl.appendChild(createEqualHousingLenderSVG(18));
-    ehl.appendChild(document.createTextNode(t("equalHousingLender")));
-    disclaimer.appendChild(ehl);
-    const defaultDisclaimer = t("defaultDisclaimer");
-    disclaimer.appendChild(
-      text(
-        "div",
-        content.disclaimerText || defaultDisclaimer,
-        "rw-vt__disclaimer-text",
-      ),
+    container.appendChild(
+      buildComplianceFooter({
+        classPrefix: "rw-vt__disclaimer",
+        disclaimerText: content.disclaimerText,
+      }),
     );
-    const nmlsLink = document.createElement("a");
-    nmlsLink.className = "rw-vt__disclaimer-link";
-    nmlsLink.href = "https://www.nmlsconsumeraccess.org";
-    nmlsLink.target = "_blank";
-    nmlsLink.rel = "noopener noreferrer";
-    nmlsLink.textContent = "NMLS Consumer Access";
-    disclaimer.appendChild(nmlsLink);
-    container.appendChild(disclaimer);
   }
 
   // Branding footer

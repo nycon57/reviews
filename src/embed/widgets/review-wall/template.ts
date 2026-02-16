@@ -7,7 +7,7 @@
 import type { PublicWidgetConfig, PublicReview } from "../../types";
 import { trackClick } from "../../core/event-tracker";
 import { el, text } from "../../core/dom-helpers";
-import { createEqualHousingLenderSVG } from "../../assets/equal-housing-lender";
+import { buildComplianceFooter } from "../../components/compliance-footer";
 import { buildReviewCard } from "../company-review/template";
 import { t } from "../../i18n";
 
@@ -293,27 +293,12 @@ export function buildReviewWallDOM(
 
   // Disclaimer
   if (content?.showDisclaimer) {
-    const disclaimer = el("div", "rw-wall__disclaimer");
-    const ehlLabel = el("div", "rw-wall__disclaimer-ehl");
-    ehlLabel.appendChild(createEqualHousingLenderSVG(18));
-    ehlLabel.appendChild(document.createTextNode(t("equalHousingLender")));
-    disclaimer.appendChild(ehlLabel);
-    disclaimer.appendChild(
-      text(
-        "div",
-        content.disclaimerText || t("defaultDisclaimer"),
-        "rw-wall__disclaimer-text",
-      ),
+    container.appendChild(
+      buildComplianceFooter({
+        classPrefix: "rw-wall__disclaimer",
+        disclaimerText: content.disclaimerText,
+      }),
     );
-    // NMLS text remains in English (regulatory requirement)
-    const nmlsLink = document.createElement("a");
-    nmlsLink.className = "rw-wall__disclaimer-nmls";
-    nmlsLink.href = "https://www.nmlsconsumeraccess.org";
-    nmlsLink.target = "_blank";
-    nmlsLink.rel = "noopener noreferrer";
-    nmlsLink.textContent = "NMLS Consumer Access";
-    disclaimer.appendChild(nmlsLink);
-    container.appendChild(disclaimer);
   }
 
   // Branding

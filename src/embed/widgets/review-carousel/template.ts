@@ -7,7 +7,7 @@
 import type { PublicWidgetConfig, PublicReview } from "../../types";
 import { trackClick } from "../../core/event-tracker";
 import { el, text } from "../../core/dom-helpers";
-import { createEqualHousingLenderSVG } from "../../assets/equal-housing-lender";
+import { buildComplianceFooter } from "../../components/compliance-footer";
 import { t } from "../../i18n";
 import { buildReviewCard } from "../company-review/template";
 import { CarouselEngine } from "./carousel-engine";
@@ -227,20 +227,12 @@ export function buildReviewCarouselDOM(
 
   // Disclaimer
   if (content?.showDisclaimer) {
-    const disclaimer = el("div", "rw-carousel__disclaimer");
-    const ehl = el("div", "rw-carousel__disclaimer-ehl");
-    ehl.appendChild(createEqualHousingLenderSVG(18));
-    ehl.appendChild(document.createTextNode(t("equalHousingLender")));
-    disclaimer.appendChild(ehl);
-    disclaimer.appendChild(text("div", content.disclaimerText || t("defaultDisclaimer"), "rw-carousel__disclaimer-text"));
-    const nmlsLink = document.createElement("a");
-    nmlsLink.className = "rw-carousel__disclaimer-nmls";
-    nmlsLink.href = "https://www.nmlsconsumeraccess.org";
-    nmlsLink.target = "_blank";
-    nmlsLink.rel = "noopener noreferrer";
-    nmlsLink.textContent = "NMLS Consumer Access";
-    disclaimer.appendChild(nmlsLink);
-    container.appendChild(disclaimer);
+    container.appendChild(
+      buildComplianceFooter({
+        classPrefix: "rw-carousel__disclaimer",
+        disclaimerText: content.disclaimerText,
+      }),
+    );
   }
 
   // Branding

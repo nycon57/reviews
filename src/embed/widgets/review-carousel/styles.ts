@@ -178,7 +178,7 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
     border: 1px solid var(--rw-border, #f3f4f6);
   }
 
-  .rw-carousel__disclaimer-ehl {
+  .rw-carousel__disclaimer__ehl {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -188,7 +188,7 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
     color: var(--rw-text, #4b5563);
   }
 
-  .rw-carousel__disclaimer-text {
+  .rw-carousel__disclaimer__text {
     font-size: var(--rw-disclaimer-size, 10px);
     line-height: 1.5;
     color: var(--rw-text, #6b7280);
@@ -196,13 +196,13 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
     margin-bottom: 4px;
   }
 
-  .rw-carousel__disclaimer-nmls {
+  .rw-carousel__disclaimer__nmls-link {
     font-size: 10px;
     color: var(--rw-primary, #52796f);
     text-decoration: none;
   }
 
-  .rw-carousel__disclaimer-nmls:hover { text-decoration: underline; }
+  .rw-carousel__disclaimer__nmls-link:hover { text-decoration: underline; }
 
   /* ── Responsive ─────────────────────────────────────────────────── */
 

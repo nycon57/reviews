@@ -3,3 +3,4 @@ export { UserComparisonTable } from "./user-comparison-table";
 export { PerformanceLeaderboard } from "./performance-leaderboard";
 export { PerformanceAlerts } from "./performance-alerts";
 export { TeamFilters } from "./team-filters";
+export { ManagerDashboardClient } from "./manager-dashboard-client";

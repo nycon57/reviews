@@ -8,7 +8,6 @@ export { MobileNav, MobileNavTrigger } from "./mobile-nav";
 export { UserStatsCards } from "./user-stats-cards";
 export { UserTrendChart } from "./user-trend-chart";
 export { UserRecentReviews } from "./user-recent-reviews";
-export { UserProfileCompletion } from "./user-profile-completion";
 export { UserQuickActions } from "./user-quick-actions";
 
 // Manager Dashboard Components
@@ -18,4 +17,5 @@ export {
   PerformanceLeaderboard,
   PerformanceAlerts,
   TeamFilters,
+  ManagerDashboardClient,
 } from "./manager";

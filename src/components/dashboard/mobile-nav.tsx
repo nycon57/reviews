@@ -58,7 +58,7 @@ export function MobileNav({ className }: MobileNavProps) {
         <SheetHeader className="border-b px-4 py-3">
           <SheetTitle className="flex items-center">
             <Image
-              src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+              src="/branding/RepWell-Logo-Full-Color.png"
               alt="RepWell"
               width={120}
               height={28}

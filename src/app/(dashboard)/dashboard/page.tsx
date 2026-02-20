@@ -7,6 +7,7 @@ import {
   UserRecentReviews,
   UserQuickActions,
 } from "@/components/dashboard";
+import { ManagerDashboardClient } from "@/components/dashboard/manager";
 import {
   GamificationStatsCard,
   BadgeShowcase,
@@ -20,8 +21,11 @@ import {
   getUserRecentReviews,
   getRatingTrend,
   getNPSTrend,
+  getUserComparison,
+  getFilterOptions,
 } from "@/lib/dashboard";
 import { getCurrentUser } from "@/lib/users/actions";
+import { getAccessContext, isManagerOrAbove } from "@/lib/access";
 
 export const metadata = {
   title: "Dashboard | RepWell",
@@ -37,23 +41,8 @@ function isNewUser(metrics: { totalReviews: number; averageRating: number; npsSc
 async function DashboardStats() {
   const result = await getUserMetrics();
 
-  if (!result.success) {
-    // Show empty state for new users instead of error
-    return (
-      <EmptyState
-        iconName="bar-chart"
-        title="Your stats will appear here"
-        description="Once you start collecting reviews and survey responses, you'll see your performance metrics displayed here."
-        actions={[
-          { label: "Send Your First Survey", href: "/dashboard/requests", iconName: "send" },
-          { label: "Import Reviews", href: "/dashboard/reviews", variant: "outline" },
-        ]}
-      />
-    );
-  }
-
-  // Check if user has no data yet (new user)
-  if (result.data && isNewUser(result.data)) {
+  const isEmpty = !result.success || (result.data != null && isNewUser(result.data));
+  if (isEmpty) {
     return (
       <EmptyState
         iconName="bar-chart"
@@ -68,6 +57,23 @@ async function DashboardStats() {
   }
 
   return <UserStatsCards metrics={result.data!} />;
+}
+
+// Server component that fetches data and renders the manager team overview
+async function ManagerDashboardSection() {
+  const [comparisonResult, filterResult] = await Promise.all([
+    getUserComparison(),
+    getFilterOptions(),
+  ]);
+
+  if (!comparisonResult.success || !filterResult.success) return null;
+
+  return (
+    <ManagerDashboardClient
+      initialComparison={comparisonResult.data ?? []}
+      filterOptions={filterResult.data!}
+    />
+  );
 }
 
 // Server component for rating trend chart
@@ -136,8 +142,12 @@ async function RecentReviewsList() {
 
 
 export default async function DashboardPage() {
-  const userResult = await getCurrentUser();
+  const [userResult, ctx] = await Promise.all([
+    getCurrentUser(),
+    getAccessContext(),
+  ]);
   const userName = userResult.success ? userResult.data?.fullName : null;
+  const isManager = ctx != null && isManagerOrAbove(ctx);
 
   return (
     <div className="flex-1 space-y-8">
@@ -149,8 +159,19 @@ export default async function DashboardPage() {
         <DashboardStats />
       </Suspense>
 
+      {/* Manager team overview — shown for admin/manager roles */}
+      {isManager && (
+        <section>
+          <Suspense fallback={<div className="h-32 animate-pulse rounded-lg bg-muted" />}>
+            <ManagerDashboardSection />
+          </Suspense>
+        </section>
+      )}
+
       {/* Gamification progress */}
-      <GamificationStatsCard />
+      <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+        <GamificationStatsCard />
+      </Suspense>
 
       {/* Charts grid */}
       <section>
@@ -175,19 +196,29 @@ export default async function DashboardPage() {
             <RecentReviewsList />
           </Suspense>
 
-          <ReputationBreakdownCard />
+          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+            <ReputationBreakdownCard />
+          </Suspense>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <ImprovementTipsCard />
-            <BadgeShowcase />
+            <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+              <ImprovementTipsCard />
+            </Suspense>
+            <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+              <BadgeShowcase />
+            </Suspense>
           </div>
         </div>
 
         {/* Sidebar - quick actions and profile completion */}
         <div className="space-y-6">
           <UserQuickActions />
-          <ProfileCompletionCard showMilestones={true} showTips={true} />
-          <CompactProfileLeaderboard limit={5} />
+          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+            <ProfileCompletionCard showMilestones={true} showTips={true} />
+          </Suspense>
+          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+            <CompactProfileLeaderboard limit={5} />
+          </Suspense>
         </div>
       </div>
     </div>

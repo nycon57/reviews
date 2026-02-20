@@ -24,10 +24,9 @@ import {
 interface SidebarProps {
   className?: string;
   collapsed?: boolean;
-  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export function Sidebar({ className, collapsed = false, onCollapsedChange: _onCollapsedChange }: SidebarProps) {
+export function Sidebar({ className, collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const { shouldShowUpgradeCTA } = usePermissions();
   const { coreItems, sections, bottomItems } = useFilteredNav();
@@ -75,7 +74,7 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange: _onCo
                 exit={{ opacity: 0 }}
               >
                 <Image
-                  src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
+                  src="/branding/RepWell-Logo-Full-Color.png"
                   alt="RepWell"
                   width={130}
                   height={32}
@@ -115,7 +114,7 @@ export function Sidebar({ className, collapsed = false, onCollapsedChange: _onCo
       {/* Upgrade CTA - Only show for individual Basic users */}
       {!collapsed && shouldShowUpgradeCTA() && (
         <div className="px-3 pb-3">
-          <div className="rounded-xl bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-300 p-4 text-white shadow-lg">
+          <div className="rounded-xl bg-gradient-to-br from-repwell-teal-500 to-repwell-teal-300 p-4 text-white shadow-lg">
             <div className="flex items-center gap-2 mb-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
                 <Zap className="h-4 w-4" />

@@ -7,9 +7,9 @@
  * Strips null bytes and control characters, truncates to a safe length.
  */
 export function sanitizeExternalText(text: string, maxLength = 2000): string {
-  return text
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
-    .slice(0, maxLength);
+  // eslint-disable-next-line no-control-regex
+  const sanitized = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  return sanitized.slice(0, maxLength);
 }
 
 /**

@@ -34,24 +34,21 @@ const TIER_LEVELS: Record<SubscriptionTier, number> = {
 // Routes that require specific roles, subscription tiers, or account types
 const roleProtectedRoutes: RouteConfig[] = [
   // Enterprise-only management routes (hidden from individual users)
-  { path: "/dashboard/manager", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/team", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/campaigns", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
+  { path: "/dashboard/approvals", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/ex-surveys", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/recognition", requiresEnterprise: true },
   { path: "/dashboard/analytics/leaderboard", requiresEnterprise: true },
 
   // Enterprise admin only routes
   { path: "/dashboard/organization", requiresEnterpriseAdmin: true },
+  { path: "/dashboard/surveys", requiresEnterpriseAdmin: true },
 
   // Pro tier features (available to pro individuals and all enterprise users)
   { path: "/dashboard/insights", minTier: "pro" },
   { path: "/dashboard/geo", minTier: "pro" },
   { path: "/dashboard/analytics/website", minTier: "pro" },
-
-  // API integrations require pro tier
-  { path: "/integrations/api", minTier: "pro" },
-  { path: "/integrations/webhooks", minTier: "pro" },
 ];
 
 // Paths that are part of the onboarding flow
@@ -319,7 +316,8 @@ export async function middleware(request: NextRequest) {
         const userLevel = TIER_LEVELS[subscriptionTier];
 
         if (userLevel < requiredLevel) {
-          const redirectUrl = new URL("/dashboard/settings/billing", request.url);
+          const redirectUrl = new URL("/dashboard/settings", request.url);
+          redirectUrl.searchParams.set("tab", "billing");
           redirectUrl.searchParams.set("upgrade", routeConfig.minTier);
           redirectUrl.searchParams.set("feature", request.nextUrl.pathname);
           return NextResponse.redirect(redirectUrl);

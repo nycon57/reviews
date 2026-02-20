@@ -22,6 +22,7 @@ import {
   getLOPerformanceScorecard,
   getTeamActivityMonitor,
   getChannelEffectiveness,
+  type AIInsightsData,
 } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
 import { requireProTier, isManagerOrAbove, type AccessContext } from "@/lib/access";
@@ -92,92 +93,84 @@ async function ChannelEffectivenessSection({ userId }: { userId?: string }) {
   return <ChannelEffectivenessCard data={result.data} />;
 }
 
-// Server component for sentiment distribution
-async function SentimentDistributionSection({ userId }: { userId?: string }) {
+// ---- Synchronous section components that receive pre-fetched data ----
+
+function SentimentDistributionSection({ data }: { data: AIInsightsData }) {
+  return (
+    <SentimentDistribution
+      positive={data.sentimentDistribution.positive}
+      neutral={data.sentimentDistribution.neutral}
+      negative={data.sentimentDistribution.negative}
+      total={data.sentimentDistribution.total}
+    />
+  );
+}
+
+function SentimentTrendSection({ data }: { data: AIInsightsData }) {
+  return <SentimentTrendChart data={data.sentimentTrend} />;
+}
+
+function ThemeCloudSection({ data }: { data: AIInsightsData }) {
+  return <ThemeCloud data={data.themeFrequencies} />;
+}
+
+function KeyPhrasesSection({ data }: { data: AIInsightsData }) {
+  return <KeyPhrasesCard data={data.topKeyPhrases} />;
+}
+
+function AISummarySection({ data }: { data: AIInsightsData }) {
+  return <AISummaryCard summary={data.summary} />;
+}
+
+function RecommendationsSection({ data }: { data: AIInsightsData }) {
+  return <RecommendationsCard data={data.recommendations} />;
+}
+
+function ExportSection({ data }: { data: AIInsightsData }) {
+  return <ExportInsightsButton data={data} />;
+}
+
+// ---- Top-level async wrapper that fetches once and renders sections ----
+
+async function InsightsSections({ userId }: { userId?: string; isManager: boolean }) {
   const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-        Failed to load sentiment distribution.
+        Failed to load AI insights data.
       </div>
     );
   }
 
+  const data = result.data;
+
   return (
-    <SentimentDistribution
-      positive={result.data.sentimentDistribution.positive}
-      neutral={result.data.sentimentDistribution.neutral}
-      negative={result.data.sentimentDistribution.negative}
-      total={result.data.sentimentDistribution.total}
-    />
+    <>
+      {/* Export button */}
+      <div className="flex justify-end">
+        <ExportSection data={data} />
+      </div>
+
+      {/* Summary and distribution row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <AISummarySection data={data} />
+        <SentimentDistributionSection data={data} />
+      </div>
+
+      {/* Sentiment trend chart */}
+      <SentimentTrendSection data={data} />
+
+      {/* Theme and key phrases row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ThemeCloudSection data={data} />
+        <KeyPhrasesSection data={data} />
+      </div>
+
+      {/* Improvement recommendations */}
+      <RecommendationsSection data={data} />
+    </>
   );
-}
-
-// Server component for sentiment trend
-async function SentimentTrendSection({ userId }: { userId?: string }) {
-  const result = await getAIInsightsData(userId, 6);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <SentimentTrendChart data={result.data.sentimentTrend} />;
-}
-
-// Server component for theme cloud
-async function ThemeCloudSection({ userId }: { userId?: string }) {
-  const result = await getAIInsightsData(userId, 6);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <ThemeCloud data={result.data.themeFrequencies} />;
-}
-
-// Server component for key phrases
-async function KeyPhrasesSection({ userId }: { userId?: string }) {
-  const result = await getAIInsightsData(userId, 6);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <KeyPhrasesCard data={result.data.topKeyPhrases} />;
-}
-
-// Server component for AI summary
-async function AISummarySection({ userId }: { userId?: string }) {
-  const result = await getAIInsightsData(userId, 6);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <AISummaryCard summary={result.data.summary} />;
-}
-
-// Server component for recommendations
-async function RecommendationsSection({ userId }: { userId?: string }) {
-  const result = await getAIInsightsData(userId, 6);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <RecommendationsCard data={result.data.recommendations} />;
-}
-
-// Server component for export button
-async function ExportSection({ userId }: { userId?: string }) {
-  const result = await getAIInsightsData(userId, 6);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <ExportInsightsButton data={result.data} />;
 }
 
 export default async function AIInsightsPage() {
@@ -199,9 +192,6 @@ export default async function AIInsightsPage() {
             AI-powered analysis of your customer feedback and performance trends
           </p>
         </div>
-        <Suspense fallback={<div className="h-10 w-32 animate-pulse rounded-md bg-muted" />}>
-          <ExportSection userId={userId} />
-        </Suspense>
       </div>
 
       {/* Smart action items (most actionable = most visible) */}
@@ -223,39 +213,32 @@ export default async function AIInsightsPage() {
         </Suspense>
       )}
 
-      {/* Summary and distribution row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
-          <AISummarySection userId={userId} />
-        </Suspense>
-        <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
-          <SentimentDistributionSection userId={userId} />
-        </Suspense>
-      </div>
-
-      {/* Sentiment trend chart */}
-      <Suspense fallback={<ChartSkeleton />}>
-        <SentimentTrendSection userId={userId} />
-      </Suspense>
-
-      {/* Theme and key phrases row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-          <ThemeCloudSection userId={userId} />
-        </Suspense>
-        <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-          <KeyPhrasesSection userId={userId} />
-        </Suspense>
-      </div>
-
       {/* Channel effectiveness */}
       <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
         <ChannelEffectivenessSection userId={userId} />
       </Suspense>
 
-      {/* Improvement recommendations */}
-      <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-        <RecommendationsSection userId={userId} />
+      {/* All sections that share getAIInsightsData — fetched once */}
+      <Suspense
+        fallback={
+          <div className="space-y-6">
+            <div className="flex justify-end">
+              <div className="h-10 w-32 animate-pulse rounded-md bg-muted" />
+            </div>
+            <div className="grid gap-6 lg:grid-cols-2">
+              <CardSkeleton className="h-[350px]" />
+              <CardSkeleton className="h-[350px]" />
+            </div>
+            <ChartSkeleton />
+            <div className="grid gap-6 lg:grid-cols-2">
+              <CardSkeleton className="h-[400px]" />
+              <CardSkeleton className="h-[400px]" />
+            </div>
+            <CardSkeleton className="h-[400px]" />
+          </div>
+        }
+      >
+        <InsightsSections userId={userId} isManager={isManager} />
       </Suspense>
     </div>
   );

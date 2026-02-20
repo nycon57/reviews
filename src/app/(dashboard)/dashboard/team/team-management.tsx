@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -83,6 +84,9 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
   // Dialog state for role-based actions
   const [recognitionMember, setRecognitionMember] = useState<OrganizationMember | null>(null);
   const [editMember, setEditMember] = useState<OrganizationMember | null>(null);
+  // Confirmation state for destructive actions
+  const [memberToDeactivate, setMemberToDeactivate] = useState<string | null>(null);
+  const [inviteToRevoke, setInviteToRevoke] = useState<string | null>(null);
 
   const isAdmin = userRole === "admin";
   const showInviteButton = canInviteTeam();
@@ -567,7 +571,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => handleDeactivate(member.id)}
+                              onSelect={(e) => { e.preventDefault(); setMemberToDeactivate(member.id); }}
                             >
                               <UserX className="mr-2 h-4 w-4" />
                               Deactivate
@@ -637,7 +641,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-destructive"
-                        onClick={() => handleRevokeInvitation(invite.id)}
+                        onClick={() => setInviteToRevoke(invite.id)}
                         disabled={isPending}
                       >
                         <X className="h-4 w-4" />
@@ -755,6 +759,64 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
           }}
         />
       )}
+
+      {/* Deactivate Member Confirmation */}
+      <AlertDialog
+        open={!!memberToDeactivate}
+        onOpenChange={(open) => !open && setMemberToDeactivate(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate team member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will revoke their access to the dashboard. You can reactivate them later from this page.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (memberToDeactivate) {
+                  handleDeactivate(memberToDeactivate);
+                  setMemberToDeactivate(null);
+                }
+              }}
+            >
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Revoke Invitation Confirmation */}
+      <AlertDialog
+        open={!!inviteToRevoke}
+        onOpenChange={(open) => !open && setInviteToRevoke(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke invitation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel the pending invitation. The invitee will no longer be able to use the invite link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (inviteToRevoke) {
+                  handleRevokeInvitation(inviteToRevoke);
+                  setInviteToRevoke(null);
+                }
+              }}
+            >
+              Revoke
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

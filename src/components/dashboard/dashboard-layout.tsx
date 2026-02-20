@@ -34,7 +34,6 @@ export function DashboardLayout({ children, user, userContext, onSignOut }: Dash
         <div className="hidden md:block">
           <Sidebar
             collapsed={sidebarCollapsed}
-            onCollapsedChange={setSidebarCollapsed}
           />
         </div>
 

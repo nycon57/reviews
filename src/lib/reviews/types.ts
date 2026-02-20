@@ -116,6 +116,21 @@ export interface AutoApprovalRule {
   };
 }
 
+// Auto-reply settings stored in organization settings JSON
+export interface AutoReplySettings {
+  auto_reply_enabled: boolean;
+  auto_reply_tone: "professional" | "friendly" | "empathetic";
+  auto_reply_delay_hours: number;
+  auto_reply_min_rating: 1 | 3 | 4;
+}
+
+export const DEFAULT_AUTO_REPLY_SETTINGS: AutoReplySettings = {
+  auto_reply_enabled: false,
+  auto_reply_tone: "professional",
+  auto_reply_delay_hours: 24,
+  auto_reply_min_rating: 4,
+};
+
 // Default auto-approval rules stored in organization settings
 export const DEFAULT_AUTO_APPROVAL_RULES: AutoApprovalRule[] = [
   {

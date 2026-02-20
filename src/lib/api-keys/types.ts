@@ -37,6 +37,12 @@ export const API_KEY_SCOPES = [
   'webhooks:trigger',
   'webhooks:manage',
 
+  // Share Studio operations
+  'share-studio:read',
+  'share-studio:write',
+  'share-studio:publish',
+  'share-studio:render',
+
   // Admin scope - grants all permissions
   'admin',
 ] as const;

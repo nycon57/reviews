@@ -80,6 +80,10 @@ export default async function DashboardRootLayout({
       }
     : null;
 
+  if (!userContext) {
+    redirect("/onboarding");
+  }
+
   return (
     <DashboardLayout user={user} userContext={userContext} onSignOut={unifiedSignOut}>
       {children}

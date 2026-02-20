@@ -36,6 +36,7 @@ import {
   getTeamMetrics,
   getTeamRatingTrend,
   getTeamNPSTrend,
+  getReviewVolumeTrend,
   type TeamMetrics,
   type TrendDataPoint,
 } from "@/lib/dashboard";
@@ -122,10 +123,11 @@ export function AdminTrendsDashboard() {
     startTransition(async () => {
       const months = getMonths(timeRange);
 
-      const [metricsResult, ratingResult, npsResult] = await Promise.all([
+      const [metricsResult, ratingResult, npsResult, volumeResult] = await Promise.all([
         getTeamMetrics(),
         getTeamRatingTrend(months),
         getTeamNPSTrend(months),
+        getReviewVolumeTrend(undefined, months),
       ]);
 
       if (metricsResult.success && metricsResult.data) {
@@ -134,17 +136,14 @@ export function AdminTrendsDashboard() {
 
       if (ratingResult.success && ratingResult.data) {
         setRatingTrend(ratingResult.data);
-
-        // Generate mock review volume data based on rating trend
-        const volumeData = ratingResult.data.map((d, i) => ({
-          date: d.date,
-          value: Math.floor(Math.random() * 50) + 10 + i * 3,
-        }));
-        setReviewVolumeTrend(volumeData);
       }
 
       if (npsResult.success && npsResult.data) {
         setNpsTrend(npsResult.data);
+      }
+
+      if (volumeResult.success && volumeResult.data) {
+        setReviewVolumeTrend(volumeResult.data);
       }
     });
   }

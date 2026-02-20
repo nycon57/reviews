@@ -6,6 +6,7 @@ export {
   getNPSTrend,
   getUserProfile,
   getProfileCompletion,
+  getReviewVolumeTrend,
 } from "./user-actions";
 
 export type {

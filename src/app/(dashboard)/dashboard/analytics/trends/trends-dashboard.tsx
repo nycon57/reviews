@@ -32,7 +32,7 @@ import {
   ChartBar as BarChart3,
   Chats as MessageSquare,
 } from "@phosphor-icons/react";
-import { getRatingTrend, getNPSTrend, type TrendDataPoint } from "@/lib/dashboard";
+import { getRatingTrend, getNPSTrend, getReviewVolumeTrend, type TrendDataPoint } from "@/lib/dashboard";
 import { getTeamRatingTrend, getFilterOptions, type FilterOptions } from "@/lib/dashboard";
 
 type TimeRange = "3m" | "6m" | "12m";
@@ -115,11 +115,12 @@ export function TrendsDashboard() {
     startTransition(async () => {
       const months = getMonths(timeRange);
 
-      const [ratingResult, npsResult, teamRatingResult, filtersResult] = await Promise.all([
+      const [ratingResult, npsResult, teamRatingResult, filtersResult, volumeResult] = await Promise.all([
         getRatingTrend(undefined, months),
         getNPSTrend(undefined, months),
         getTeamRatingTrend(months),
         getFilterOptions(),
+        getReviewVolumeTrend(undefined, months),
       ]);
 
       if (ratingResult.success && ratingResult.data) {
@@ -134,13 +135,9 @@ export function TrendsDashboard() {
       if (filtersResult.success && filtersResult.data) {
         setFilterOptions(filtersResult.data);
       }
-
-      // Generate mock review volume data based on rating trend
-      const volumeData = ratingTrend.map((d, i) => ({
-        date: d.date,
-        value: Math.floor(Math.random() * 50) + 10 + i * 5,
-      }));
-      setReviewVolumeTrend(volumeData);
+      if (volumeResult.success && volumeResult.data) {
+        setReviewVolumeTrend(volumeResult.data);
+      }
     });
   }
 

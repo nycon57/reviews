@@ -515,6 +515,64 @@ export async function getUserProfile(
   };
 }
 
+// Get review volume trend data (monthly count)
+export async function getReviewVolumeTrend(
+  userId?: string,
+  months: number = 6
+): Promise<ActionResult<Array<{ date: string; value: number }>>> {
+  try {
+    const supabase = createAdminClient();
+    const user = await unifiedGetUser();
+    if (!user) return { success: false, error: "Not authenticated" };
+
+    const { data: userData } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userData?.organization_id) return { success: false, error: "No organization" };
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+
+    let query = supabase
+      .from("reviews")
+      .select("created_at")
+      .eq("organization_id", userData.organization_id)
+      .gte("created_at", startDate.toISOString());
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data, error } = await query;
+    if (error) return { success: false, error: error.message };
+
+    // Group by month
+    const monthCounts: Record<string, number> = {};
+    (data || []).forEach((row) => {
+      if (!row.created_at) return;
+      const month = row.created_at.slice(0, 7); // "YYYY-MM"
+      monthCounts[month] = (monthCounts[month] || 0) + 1;
+    });
+
+    // Fill in all months including zeros
+    const points: Array<{ date: string; value: number }> = [];
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const key = d.toISOString().slice(0, 7);
+      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+      points.push({ date: label, value: monthCounts[key] || 0 });
+    }
+
+    return { success: true, data: points };
+  } catch {
+    return { success: false, error: "Failed to fetch review volume" };
+  }
+}
+
 // Calculate profile completion
 export async function getProfileCompletion(
   userId?: string

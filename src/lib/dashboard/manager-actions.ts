@@ -99,7 +99,6 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
     .eq("organization_id", context.organizationId);
 
   if (teamError) {
-    console.error("Error fetching team members:", teamError);
     return { success: false, error: "Failed to fetch team data" };
   }
 
@@ -232,7 +231,6 @@ export async function getUserComparison(
   const { data: users, error } = await query;
 
   if (error) {
-    console.error("Error fetching users:", error);
     return { success: false, error: "Failed to fetch users" };
   }
 
@@ -326,7 +324,6 @@ export async function getFilterOptions(): Promise<ActionResult<FilterOptions>> {
     .eq("organization_id", context.organizationId);
 
   if (error) {
-    console.error("Error fetching filter options:", error);
     return { success: false, error: "Failed to fetch filter options" };
   }
 
@@ -383,7 +380,6 @@ export async function getLeaderboard(
     .limit(limit);
 
   if (error) {
-    console.error("Error fetching leaderboard:", error);
     return { success: false, error: "Failed to fetch leaderboard" };
   }
 
@@ -451,7 +447,6 @@ export async function getTeamNPSTrend(
     .gte("submitted_at", startDate.toISOString());
 
   if (error) {
-    console.error("Error fetching team NPS trend:", error);
     return { success: false, error: "Failed to fetch team NPS trend" };
   }
 
@@ -535,7 +530,6 @@ export async function getTeamRatingTrend(
     .order("review_date", { ascending: true });
 
   if (error) {
-    console.error("Error fetching team rating trend:", error);
     return { success: false, error: "Failed to fetch team rating trend" };
   }
 

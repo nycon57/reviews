@@ -42,6 +42,8 @@ export interface RecentReview {
   status: string;
   isPublished: boolean;
   source: string;
+  sourceUrl: string | null;
+  userSlug: string | null;
 }
 
 export interface TrendDataPoint {
@@ -126,7 +128,6 @@ export async function getUserMetrics(
     .single();
 
   if (userError) {
-    console.error("Error fetching user:", userError);
     return { success: false, error: "Failed to fetch user data" };
   }
 
@@ -230,6 +231,13 @@ export async function getUserRecentReviews(
     return { success: true, data: [] };
   }
 
+  // Fetch user's slug for profile URL construction
+  const { data: userSlugRecord } = await supabase
+    .from("users")
+    .select("slug")
+    .eq("id", targetUserId)
+    .single();
+
   const { data, error } = await supabase
     .from("reviews")
     .select(`
@@ -240,7 +248,8 @@ export async function getUserRecentReviews(
       review_date,
       status,
       is_published,
-      source
+      source,
+      source_url
     `)
     .eq("user_id", targetUserId)
     .eq("organization_id", context.organizationId)
@@ -248,9 +257,10 @@ export async function getUserRecentReviews(
     .limit(limit);
 
   if (error) {
-    console.error("Error fetching reviews:", error);
     return { success: false, error: "Failed to fetch reviews" };
   }
+
+  const userSlug = userSlugRecord?.slug ?? null;
 
   const reviews: RecentReview[] = (data || []).map((r) => ({
     id: r.id,
@@ -261,6 +271,8 @@ export async function getUserRecentReviews(
     status: r.status || "pending",
     isPublished: r.is_published || false,
     source: r.source,
+    sourceUrl: r.source_url ?? null,
+    userSlug,
   }));
 
   return { success: true, data: reviews };
@@ -301,7 +313,6 @@ export async function getRatingTrend(
     .order("review_date", { ascending: true });
 
   if (error) {
-    console.error("Error fetching rating trend:", error);
     return { success: false, error: "Failed to fetch rating trend" };
   }
 
@@ -381,7 +392,6 @@ export async function getNPSTrend(
     .gte("submitted_at", startDate.toISOString());
 
   if (error) {
-    console.error("Error fetching NPS trend:", error);
     return { success: false, error: "Failed to fetch NPS trend" };
   }
 
@@ -487,7 +497,6 @@ export async function getUserProfile(
     .single();
 
   if (error) {
-    console.error("Error fetching user profile:", error);
     return { success: false, error: "Failed to fetch profile" };
   }
 

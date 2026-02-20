@@ -40,7 +40,7 @@ export function UserQuickActions() {
     {
       icon: <Share2 className="h-5 w-5" />,
       title: "Share Profile",
-      description: "Get your review request link",
+      description: "View and share your public profile page",
       href: "/dashboard/profile",
     },
   ];

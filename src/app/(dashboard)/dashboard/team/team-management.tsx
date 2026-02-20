@@ -467,7 +467,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                           <p className="font-medium">{member.full_name || "No name"}</p>
                           {member.role === "user" && (
                             <Link
-                              href={`/dashboard/team/${member.id}`}
+                              href={`/dashboard/analytics/member/${member.id}`}
                               className="text-muted-foreground hover:text-foreground"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />

@@ -13,9 +13,11 @@ import {
   Star,
 } from "@phosphor-icons/react";
 import type { ChannelMetrics } from "@/lib/ai";
+import { ChartSkeleton } from "@/components/shared/skeletons";
 
 interface ChannelEffectivenessCardProps {
   data: ChannelMetrics[];
+  isLoading?: boolean;
 }
 
 // Friendly channel names
@@ -62,29 +64,46 @@ function ChannelBar({ channel, maxCount }: { channel: ChannelMetrics; maxCount: 
       </div>
 
       {/* Stacked bar */}
-      <div className="flex h-3 overflow-hidden rounded-full bg-muted" style={{ width: `${Math.max(widthPercent, 15)}%` }}>
+      <div
+        className="flex h-3 overflow-hidden rounded-full bg-muted"
+        style={{ width: `${Math.max(widthPercent, 15)}%` }}
+        role="img"
+        aria-label={`${channelLabels[channel.channel] || channel.channel} sentiment: ${Math.round(positivePercent)}% positive, ${Math.round(neutralPercent)}% neutral, ${Math.round(negativePercent)}% negative`}
+      >
         {positivePercent > 0 && (
           <div
             className="bg-green-500 transition-all"
             style={{ width: `${positivePercent}%` }}
+            role="progressbar"
+            aria-valuenow={Math.round(positivePercent)}
+            aria-valuemax={100}
+            aria-label={`Positive sentiment: ${Math.round(positivePercent)}%`}
           />
         )}
         {neutralPercent > 0 && (
           <div
             className="bg-blue-400 transition-all"
             style={{ width: `${neutralPercent}%` }}
+            role="progressbar"
+            aria-valuenow={Math.round(neutralPercent)}
+            aria-valuemax={100}
+            aria-label={`Neutral sentiment: ${Math.round(neutralPercent)}%`}
           />
         )}
         {negativePercent > 0 && (
           <div
             className="bg-red-400 transition-all"
             style={{ width: `${negativePercent}%` }}
+            role="progressbar"
+            aria-valuenow={Math.round(negativePercent)}
+            aria-valuemax={100}
+            aria-label={`Negative sentiment: ${Math.round(negativePercent)}%`}
           />
         )}
       </div>
 
       {/* Sentiment labels */}
-      <div className="flex gap-3 text-[10px] text-muted-foreground">
+      <div className="flex gap-3 text-xs text-muted-foreground">
         {channel.sentimentDistribution.positive > 0 && (
           <span className="flex items-center gap-0.5">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
@@ -108,7 +127,9 @@ function ChannelBar({ channel, maxCount }: { channel: ChannelMetrics; maxCount: 
   );
 }
 
-export function ChannelEffectivenessCard({ data }: ChannelEffectivenessCardProps) {
+export function ChannelEffectivenessCard({ data, isLoading }: ChannelEffectivenessCardProps) {
+  if (isLoading) return <ChartSkeleton />;
+
   if (data.length === 0) {
     return (
       <Card>

@@ -1,14 +1,8 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   XAxis,
   YAxis,
@@ -25,162 +19,122 @@ import {
 import {
   SpinnerGap as Loader2,
   Star,
-  TrendUp as TrendingUp,
-  TrendDown as TrendingDown,
-  Minus,
-  Users,
   ChartBar as BarChart3,
   Chats as MessageSquare,
 } from "@phosphor-icons/react";
-import { getRatingTrend, getNPSTrend, getReviewVolumeTrend, type TrendDataPoint } from "@/lib/dashboard";
-import { getTeamRatingTrend, getFilterOptions, type FilterOptions } from "@/lib/dashboard";
+import {
+  getRatingTrend,
+  getNPSTrend,
+  getReviewVolumeTrend,
+  getTeamRatingTrend,
+  getTeamNPSTrend,
+  type TrendDataPoint,
+} from "@/lib/dashboard";
+import { calculateTrendStats } from "@/components/analytics/trend-utils";
+import { TrendIndicator } from "@/components/analytics/trend-indicator";
+import type { AnalyticsScope } from "@/components/analytics/scope-selector";
+import type { TimeRange } from "@/components/analytics/trends-page-client";
 
-type TimeRange = "3m" | "6m" | "12m";
-
-interface TrendStats {
-  current: number;
-  previous: number;
-  change: number;
-  trend: "up" | "down" | "stable";
+interface TrendsDashboardProps {
+  scope: AnalyticsScope;
+  timeRange: TimeRange;
 }
 
-function calculateTrendStats(data: TrendDataPoint[]): TrendStats {
-  if (data.length < 2) {
-    const current = data[0]?.value || 0;
-    return { current, previous: 0, change: 0, trend: "stable" };
-  }
-
-  const nonZeroData = data.filter(d => d.value !== 0);
-  if (nonZeroData.length < 2) {
-    const current = nonZeroData[nonZeroData.length - 1]?.value || 0;
-    return { current, previous: 0, change: 0, trend: "stable" };
-  }
-
-  const current = nonZeroData[nonZeroData.length - 1].value;
-  const previous = nonZeroData[nonZeroData.length - 2].value;
-  const change = previous !== 0 ? ((current - previous) / Math.abs(previous)) * 100 : 0;
-  const trend = change > 5 ? "up" : change < -5 ? "down" : "stable";
-
-  return { current, previous, change: Math.round(change), trend };
-}
-
-function TrendIndicator({ stats }: { stats: TrendStats }) {
-  if (stats.trend === "up") {
-    return (
-      <div className="flex items-center gap-1 text-green-600">
-        <TrendingUp className="h-4 w-4" />
-        <span className="text-sm font-medium">+{stats.change}%</span>
-      </div>
-    );
-  }
-  if (stats.trend === "down") {
-    return (
-      <div className="flex items-center gap-1 text-red-600">
-        <TrendingDown className="h-4 w-4" />
-        <span className="text-sm font-medium">{stats.change}%</span>
-      </div>
-    );
-  }
-  return (
-    <div className="flex items-center gap-1 text-muted-foreground">
-      <Minus className="h-4 w-4" />
-      <span className="text-sm font-medium">Stable</span>
-    </div>
-  );
-}
-
-export function TrendsDashboard() {
+export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
   const [isPending, startTransition] = useTransition();
-  const [timeRange, setTimeRange] = useState<TimeRange>("6m");
+  const [error, setError] = useState<string | null>(null);
   const [ratingTrend, setRatingTrend] = useState<TrendDataPoint[]>([]);
   const [npsTrend, setNpsTrend] = useState<TrendDataPoint[]>([]);
-  const [teamRatingTrend, setTeamRatingTrend] = useState<TrendDataPoint[]>([]);
   const [reviewVolumeTrend, setReviewVolumeTrend] = useState<TrendDataPoint[]>([]);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ branches: [], regions: [] });
+
+  const isTeamScope = scope === "team";
 
   const getMonths = (range: TimeRange): number => {
     switch (range) {
       case "3m": return 3;
       case "6m": return 6;
       case "12m": return 12;
+      case "24m": return 24;
     }
   };
 
+  const loadData = useCallback(async () => {
+    const months = getMonths(timeRange);
+
+    const [ratingResult, npsResult, volumeResult] = await Promise.all([
+      isTeamScope ? getTeamRatingTrend(months) : getRatingTrend(undefined, months),
+      isTeamScope ? getTeamNPSTrend(months) : getNPSTrend(undefined, months),
+      getReviewVolumeTrend(undefined, months),
+    ]);
+
+    if (ratingResult.success && ratingResult.data) {
+      setRatingTrend(ratingResult.data);
+    }
+    if (npsResult.success && npsResult.data) {
+      setNpsTrend(npsResult.data);
+    }
+    if (volumeResult.success && volumeResult.data) {
+      setReviewVolumeTrend(volumeResult.data);
+    }
+  }, [timeRange, isTeamScope]);
+
   useEffect(() => {
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeRange]);
-
-  function loadData() {
     startTransition(async () => {
-      const months = getMonths(timeRange);
-
-      const [ratingResult, npsResult, teamRatingResult, filtersResult, volumeResult] = await Promise.all([
-        getRatingTrend(undefined, months),
-        getNPSTrend(undefined, months),
-        getTeamRatingTrend(months),
-        getFilterOptions(),
-        getReviewVolumeTrend(undefined, months),
-      ]);
-
-      if (ratingResult.success && ratingResult.data) {
-        setRatingTrend(ratingResult.data);
-      }
-      if (npsResult.success && npsResult.data) {
-        setNpsTrend(npsResult.data);
-      }
-      if (teamRatingResult.success && teamRatingResult.data) {
-        setTeamRatingTrend(teamRatingResult.data);
-      }
-      if (filtersResult.success && filtersResult.data) {
-        setFilterOptions(filtersResult.data);
-      }
-      if (volumeResult.success && volumeResult.data) {
-        setReviewVolumeTrend(volumeResult.data);
+      setError(null);
+      try {
+        await loadData();
+      } catch (e) {
+        console.error("Failed to load trends data:", e);
+        setError("Failed to load trends data. Please try again.");
       }
     });
-  }
+  }, [loadData]);
 
   const ratingStats = calculateTrendStats(ratingTrend);
   const npsStats = calculateTrendStats(npsTrend);
-  const teamRatingStats = calculateTrendStats(teamRatingTrend);
 
   const hasRatingData = ratingTrend.some(d => d.value !== 0);
   const hasNpsData = npsTrend.some(d => d.value !== 0);
-  const hasTeamData = teamRatingTrend.some(d => d.value !== 0);
+  const hasVolumeData = reviewVolumeTrend.some(d => d.value !== 0);
 
   return (
     <div className="space-y-6">
-      {/* Page header with time range selector */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <TrendingUp className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Analytics Trends</h1>
-            <p className="text-muted-foreground">
-              Track performance metrics and trends over time
-            </p>
-          </div>
+      {/* Loading indicator */}
+      {isPending && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm">Loading trends...</span>
         </div>
-        <div className="flex items-center gap-2">
-          {isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3m">Last 3 months</SelectItem>
-              <SelectItem value="6m">Last 6 months</SelectItem>
-              <SelectItem value="12m">Last 12 months</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <Card className="border-destructive">
+          <CardContent className="flex items-center justify-between p-4">
+            <p className="text-sm text-destructive">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setError(null);
+                startTransition(async () => {
+                  try {
+                    await loadData();
+                  } catch (e) {
+                    console.error("Failed to load trends data:", e);
+                    setError("Failed to load trends data. Please try again.");
+                  }
+                });
+              }}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -189,7 +143,9 @@ export function TrendsDashboard() {
                   <Star className="h-5 w-5 text-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Avg Rating</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isTeamScope ? "Team Avg Rating" : "Avg Rating"}
+                  </p>
                   <p className="text-xl font-bold">
                     {ratingStats.current.toFixed(1)}
                   </p>
@@ -208,30 +164,13 @@ export function TrendsDashboard() {
                   <BarChart3 className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">NPS Score</p>
+                  <p className="text-xs text-muted-foreground">
+                    {isTeamScope ? "Team NPS" : "NPS Score"}
+                  </p>
                   <p className="text-xl font-bold">{npsStats.current}</p>
                 </div>
               </div>
               <TrendIndicator stats={npsStats} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100">
-                  <Users className="h-5 w-5 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Team Avg</p>
-                  <p className="text-xl font-bold">
-                    {teamRatingStats.current.toFixed(1)}
-                  </p>
-                </div>
-              </div>
-              <TrendIndicator stats={teamRatingStats} />
             </div>
           </CardContent>
         </Card>
@@ -263,7 +202,7 @@ export function TrendsDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Star className="h-5 w-5 text-yellow-500" />
-              Rating Trend
+              {isTeamScope ? "Team Rating Trend" : "Rating Trend"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -280,42 +219,16 @@ export function TrendsDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={ratingTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="ratingGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="user-ratingGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
                         <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dy={10}
-                    />
-                    <YAxis
-                      domain={[0, 5]}
-                      ticks={[1, 2, 3, 4, 5]}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dx={-10}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => [`${value.toFixed(1)} stars`, "Avg Rating"]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="hsl(var(--chart-1))"
-                      strokeWidth={2}
-                      fill="url(#ratingGradient)"
-                    />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
+                    <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [`${value.toFixed(1)} stars`, isTeamScope ? "Team Avg" : "Avg Rating"]} />
+                    <Area type="monotone" dataKey="value" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#user-ratingGradient)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -328,7 +241,7 @@ export function TrendsDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-blue-500" />
-              NPS Score Trend
+              {isTeamScope ? "Team NPS Trend" : "NPS Score Trend"}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -345,38 +258,10 @@ export function TrendsDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={npsTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dy={10}
-                    />
-                    <YAxis
-                      domain={[-100, 100]}
-                      ticks={[-100, -50, 0, 50, 100]}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dx={-10}
-                      tickFormatter={(value) => (value > 0 ? `+${value}` : value.toString())}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => [`${value > 0 ? "+" : ""}${value}`, "NPS Score"]}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      stroke="hsl(var(--chart-2))"
-                      strokeWidth={2}
-                      dot={{ fill: "hsl(var(--chart-2))", r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
+                    <YAxis domain={[-100, 100]} ticks={[-100, -50, 0, 50, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} tickFormatter={(value) => (value > 0 ? `+${value}` : value.toString())} />
+                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [`${value > 0 ? "+" : ""}${value}`, "NPS Score"]} />
+                    <Line type="monotone" dataKey="value" stroke="hsl(var(--chart-2))" strokeWidth={2} dot={{ fill: "hsl(var(--chart-2))", r: 4 }} activeDot={{ r: 6 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -385,130 +270,38 @@ export function TrendsDashboard() {
         </Card>
       </div>
 
-      {/* Charts row 2 */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Team Rating Trend */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Users className="h-5 w-5 text-green-500" />
-              Team Performance Trend
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!hasTeamData ? (
-              <div className="flex h-[250px] items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <Users className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm">No team data available yet</p>
-                  <p className="text-xs mt-1">Team metrics will appear as reviews are collected</p>
-                </div>
+      {/* Review Volume */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg font-semibold flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-purple-500" />
+            Review Volume
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!hasVolumeData ? (
+            <div className="flex h-[250px] items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">No review data available yet</p>
+                <p className="text-xs mt-1">Review volume will appear as reviews are collected</p>
               </div>
-            ) : (
-              <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={teamRatingTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="teamGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(var(--chart-3))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dy={10}
-                    />
-                    <YAxis
-                      domain={[0, 5]}
-                      ticks={[1, 2, 3, 4, 5]}
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                      dx={-10}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--popover))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                      formatter={(value: number) => [`${value.toFixed(1)} stars`, "Team Avg"]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke="hsl(var(--chart-3))"
-                      strokeWidth={2}
-                      fill="url(#teamGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Review Volume */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-purple-500" />
-              Review Volume
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+            </div>
+          ) : (
             <div className="h-[250px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={reviewVolumeTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis
-                    dataKey="date"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    dy={10}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                    dx={-10}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(var(--popover))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px",
-                    }}
-                    formatter={(value: number) => [value, "Reviews"]}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill="hsl(var(--chart-4))"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
+                  <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [value, "Reviews"]} />
+                  <Bar dataKey="value" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters info */}
-      {(filterOptions.branches.length > 0 || filterOptions.regions.length > 0) && (
-        <Card className="bg-muted/30">
-          <CardContent className="py-3 px-4">
-            <p className="text-xs text-muted-foreground">
-              Available filters: {filterOptions.branches.length} branches, {filterOptions.regions.length} regions.
-              Use the Leaderboard page for filtered views.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -168,23 +168,21 @@ export async function getUserMetrics(
     ? Math.round(((recentCount - previousCount) / previousCount) * 100)
     : recentCount > 0 ? 100 : 0;
 
-  // Calculate NPS from recent survey responses
+  // Calculate NPS from recent survey responses (DB-level org + user filter)
   const { data: surveyResponses } = await supabase
     .from("survey_responses")
     .select(`
       nps_score,
       surveys!inner (
-        user_id
+        user_id,
+        organization_id
       )
     `)
+    .eq("surveys.organization_id", context.organizationId)
+    .eq("surveys.user_id", targetUserId)
     .not("nps_score", "is", null);
 
-  const filteredResponses = surveyResponses?.filter(
-    (r) => {
-      const survey = r.surveys as unknown as { user_id: string };
-      return survey.user_id === targetUserId;
-    }
-  ) || [];
+  const filteredResponses = surveyResponses || [];
 
   let npsScore = userRecord?.nps_score || 0;
   if (filteredResponses.length > 0) {
@@ -301,8 +299,9 @@ export async function getRatingTrend(
     return { success: true, data: [] };
   }
 
-  // Calculate start date
+  // Calculate start date (set to 1st to avoid month rollover)
   const startDate = new Date();
+  startDate.setDate(1);
   startDate.setMonth(startDate.getMonth() - months);
 
   const { data, error } = await supabase
@@ -334,10 +333,10 @@ export async function getRatingTrend(
 
   // Convert to array and fill in missing months
   const trendData: TrendDataPoint[] = [];
-  const currentDate = new Date();
 
   for (let i = months - 1; i >= 0; i--) {
-    const date = new Date(currentDate);
+    const date = new Date();
+    date.setDate(1);
     date.setMonth(date.getMonth() - i);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
@@ -375,19 +374,24 @@ export async function getNPSTrend(
     return { success: true, data: [] };
   }
 
-  // Calculate start date
+  // Calculate start date (set to 1st to avoid month rollover)
   const startDate = new Date();
+  startDate.setDate(1);
   startDate.setMonth(startDate.getMonth() - months);
 
+  // DB-level org + user filter
   const { data, error } = await supabase
     .from("survey_responses")
     .select(`
       nps_score,
       submitted_at,
       surveys!inner (
-        user_id
+        user_id,
+        organization_id
       )
     `)
+    .eq("surveys.organization_id", context.organizationId)
+    .eq("surveys.user_id", targetUserId)
     .not("nps_score", "is", null)
     .gte("submitted_at", startDate.toISOString());
 
@@ -395,17 +399,14 @@ export async function getNPSTrend(
     return { success: false, error: "Failed to fetch NPS trend" };
   }
 
-  // Filter to only this user's responses
-  const filteredData = (data || []).filter((r) => {
-    const survey = r.surveys as unknown as { user_id: string };
-    return survey.user_id === targetUserId;
-  });
+  const filteredData = data || [];
 
   // Group by month and calculate NPS
   const monthlyData = new Map<string, { promoters: number; passives: number; detractors: number }>();
 
   for (const response of filteredData) {
-    const date = new Date(response.submitted_at!);
+    if (!response.submitted_at) continue;
+    const date = new Date(response.submitted_at);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
     if (!monthlyData.has(monthKey)) {
@@ -426,10 +427,10 @@ export async function getNPSTrend(
 
   // Convert to array with NPS calculation
   const trendData: TrendDataPoint[] = [];
-  const currentDate = new Date();
 
   for (let i = months - 1; i >= 0; i--) {
-    const date = new Date(currentDate);
+    const date = new Date();
+    date.setDate(1);
     date.setMonth(date.getMonth() - i);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
@@ -529,57 +530,58 @@ export async function getReviewVolumeTrend(
   userId?: string,
   months: number = 6
 ): Promise<ActionResult<Array<{ date: string; value: number }>>> {
-  try {
-    const supabase = createAdminClient();
-    const user = await unifiedGetUser();
-    if (!user) return { success: false, error: "Not authenticated" };
+  const context = await getUserContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
 
-    const { data: userData } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
+  // For regular users, they can only view their own data
+  if (context.role === "user" && userId && userId !== context.professionalId) {
+    return { success: false, error: "Unauthorized" };
+  }
 
-    if (!userData?.organization_id) return { success: false, error: "No organization" };
+  const supabase = createAdminClient();
 
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - months);
+  const startDate = new Date();
+  startDate.setDate(1);
+  startDate.setMonth(startDate.getMonth() - months);
 
-    let query = supabase
-      .from("reviews")
-      .select("created_at")
-      .eq("organization_id", userData.organization_id)
-      .gte("created_at", startDate.toISOString());
+  let query = supabase
+    .from("reviews")
+    .select("review_date")
+    .eq("organization_id", context.organizationId)
+    .gte("review_date", startDate.toISOString());
 
-    if (userId) {
-      query = query.eq("user_id", userId);
-    }
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
 
-    const { data, error } = await query;
-    if (error) return { success: false, error: error.message };
-
-    // Group by month
-    const monthCounts: Record<string, number> = {};
-    (data || []).forEach((row) => {
-      if (!row.created_at) return;
-      const month = row.created_at.slice(0, 7); // "YYYY-MM"
-      monthCounts[month] = (monthCounts[month] || 0) + 1;
-    });
-
-    // Fill in all months including zeros
-    const points: Array<{ date: string; value: number }> = [];
-    for (let i = months - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      const key = d.toISOString().slice(0, 7);
-      const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-      points.push({ date: label, value: monthCounts[key] || 0 });
-    }
-
-    return { success: true, data: points };
-  } catch {
+  const { data, error } = await query;
+  if (error) {
     return { success: false, error: "Failed to fetch review volume" };
   }
+
+  // Group by month
+  const monthCounts: Record<string, number> = {};
+  for (const row of data || []) {
+    if (!row.review_date) continue;
+    const date = new Date(row.review_date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+  }
+
+  // Fill in all months including zeros
+  const points: Array<{ date: string; value: number }> = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    points.push({ date: label, value: monthCounts[monthKey] || 0 });
+  }
+
+  return { success: true, data: points };
 }
 
 // Calculate profile completion

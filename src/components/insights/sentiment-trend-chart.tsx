@@ -12,12 +12,16 @@ import {
   Legend,
 } from "recharts";
 import type { SentimentTrendPoint } from "@/lib/ai";
+import { ChartSkeleton } from "@/components/shared/skeletons";
 
 interface SentimentTrendChartProps {
   data: SentimentTrendPoint[];
+  isLoading?: boolean;
 }
 
-export function SentimentTrendChart({ data }: SentimentTrendChartProps) {
+export function SentimentTrendChart({ data, isLoading }: SentimentTrendChartProps) {
+  if (isLoading) return <ChartSkeleton />;
+
   const hasData = data.some((d) => d.totalReviews > 0);
 
   if (!hasData) {
@@ -46,7 +50,7 @@ export function SentimentTrendChart({ data }: SentimentTrendChartProps) {
         <CardDescription>Track how customer sentiment changes over time</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[280px] w-full">
+        <div className="h-[280px] w-full" role="img" aria-label="Sentiment trend over time">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={data}

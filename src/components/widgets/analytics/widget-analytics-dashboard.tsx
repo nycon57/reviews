@@ -72,8 +72,8 @@ export function WidgetAnalyticsDashboard() {
       ]);
 
       if (summaryRes.success) setSummary(summaryRes.data);
-      if (dailyRes.success) setDaily(dailyRes.data);
-      if (tableRes.success) setTableData(tableRes.data);
+      if (dailyRes.success) setDaily(dailyRes.data.data);
+      if (tableRes.success) setTableData(tableRes.data.data);
     });
   }, [dateRange, customStart, customEnd]);
 

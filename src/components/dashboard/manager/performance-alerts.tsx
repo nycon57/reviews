@@ -11,6 +11,12 @@ import {
   CaretRight as ChevronRight,
 } from "@phosphor-icons/react";
 import type { UserComparison } from "@/lib/dashboard";
+import {
+  ALERT_RATING_THRESHOLD,
+  ALERT_NPS_THRESHOLD,
+  LOW_REVIEW_COUNT_THRESHOLD,
+  LOW_RESPONSE_RATE_THRESHOLD,
+} from "@/lib/analytics/constants";
 
 interface PerformanceAlertsProps {
   data: UserComparison[];
@@ -29,16 +35,16 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
   const getAlertReason = (user: UserComparison) => {
     const reasons: string[] = [];
 
-    if (user.averageRating < 3.5) {
-      reasons.push(`Rating below 3.5 (${user.averageRating.toFixed(1)})`);
+    if (user.averageRating < ALERT_RATING_THRESHOLD) {
+      reasons.push(`Rating below ${ALERT_RATING_THRESHOLD} (${user.averageRating.toFixed(1)})`);
     }
-    if (user.npsScore < 0) {
+    if (user.npsScore < ALERT_NPS_THRESHOLD) {
       reasons.push(`Negative NPS (${user.npsScore})`);
     }
-    if (user.totalReviews < 5) {
+    if (user.totalReviews < LOW_REVIEW_COUNT_THRESHOLD) {
       reasons.push(`Low review count (${user.totalReviews})`);
     }
-    if (user.responseRate < 30) {
+    if (user.responseRate < LOW_RESPONSE_RATE_THRESHOLD) {
       reasons.push(`Low response rate (${user.responseRate}%)`);
     }
 

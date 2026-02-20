@@ -24,30 +24,12 @@ import {
   getChannelEffectiveness,
   type AIInsightsData,
 } from "@/lib/ai";
-import { createClient } from "@/lib/supabase/server";
-import { requireProTier, isManagerOrAbove, type AccessContext } from "@/lib/access";
+import { requireProTier, isManagerOrAbove } from "@/lib/access";
 
 export const metadata = {
   title: "AI Insights | RepWell",
   description: "AI-powered insights and analytics for your reviews",
 };
-
-// Server component to fetch current user's ID for filtering
-async function getCurrentUserId(ctx: AccessContext): Promise<string | undefined> {
-  // If not a regular user, return undefined (get org-wide data)
-  if (ctx.role !== "user") {
-    return undefined;
-  }
-
-  const supabase = await createClient();
-  const { data: userData } = await supabase
-    .from("users")
-    .select("id")
-    .eq("id", ctx.userId)
-    .single();
-
-  return userData?.id;
-}
 
 // Server component for smart action items
 async function SmartActionsSection({ userId }: { userId?: string }) {
@@ -132,7 +114,7 @@ function ExportSection({ data }: { data: AIInsightsData }) {
 
 // ---- Top-level async wrapper that fetches once and renders sections ----
 
-async function InsightsSections({ userId }: { userId?: string; isManager: boolean }) {
+async function InsightsSections({ userId }: { userId?: string }) {
   const result = await getAIInsightsData(userId, 6);
 
   if (!result.success || !result.data) {
@@ -168,7 +150,9 @@ async function InsightsSections({ userId }: { userId?: string; isManager: boolea
       </div>
 
       {/* Improvement recommendations */}
-      <RecommendationsSection data={data} />
+      <div id="recommendations">
+        <RecommendationsSection data={data} />
+      </div>
     </>
   );
 }
@@ -176,7 +160,9 @@ async function InsightsSections({ userId }: { userId?: string; isManager: boolea
 export default async function AIInsightsPage() {
   // Check access - requires Pro tier (pro or enterprise subscription)
   const ctx = await requireProTier();
-  const userId = await getCurrentUserId(ctx);
+  // Regular users see their own data; managers/admins see org-wide data for insights
+  // but still get a scorecard for their own profile
+  const userId = ctx.role === "user" ? ctx.userId : undefined;
   const isManager = isManagerOrAbove(ctx);
 
   return (
@@ -199,12 +185,10 @@ export default async function AIInsightsPage() {
         <SmartActionsSection userId={userId} />
       </Suspense>
 
-      {/* Performance scorecard (for individual LOs, or if manager viewing org-wide) */}
-      {userId && (
-        <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
-          <PerformanceScorecardSection userId={userId} />
-        </Suspense>
-      )}
+      {/* Performance scorecard — shown for all authenticated users (managers see their own) */}
+      <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
+        <PerformanceScorecardSection userId={ctx.userId} />
+      </Suspense>
 
       {/* Team activity monitor (managers/admins only) */}
       {isManager && (
@@ -238,7 +222,7 @@ export default async function AIInsightsPage() {
           </div>
         }
       >
-        <InsightsSections userId={userId} isManager={isManager} />
+        <InsightsSections userId={userId} />
       </Suspense>
     </div>
   );

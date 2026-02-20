@@ -7,6 +7,11 @@ import {
   SmileyMeh as Frown,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import {
+  EXCELLENT_SENTIMENT_PERCENT,
+  GOOD_SENTIMENT_PERCENT,
+  SENTIMENT_BAR_LABEL_MIN_PERCENT,
+} from "@/lib/analytics/constants";
 
 interface SentimentDistributionProps {
   positive: number;
@@ -23,7 +28,7 @@ export function SentimentDistribution({
 }: SentimentDistributionProps) {
   const positivePercent = total > 0 ? Math.round((positive / total) * 100) : 0;
   const neutralPercent = total > 0 ? Math.round((neutral / total) * 100) : 0;
-  const negativePercent = total > 0 ? Math.round((negative / total) * 100) : 0;
+  const negativePercent = total > 0 ? 100 - positivePercent - neutralPercent : 0;
 
   if (total === 0) {
     return (
@@ -52,13 +57,17 @@ export function SentimentDistribution({
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Visual bar */}
-        <div className="flex h-6 overflow-hidden rounded-full">
+        <div className="flex h-6 overflow-hidden rounded-full" role="img" aria-label={`${positivePercent}% positive, ${neutralPercent}% neutral, ${negativePercent}% negative`}>
           {positivePercent > 0 && (
             <div
               className="flex items-center justify-center bg-green-500 transition-all"
               style={{ width: `${positivePercent}%` }}
+              role="progressbar"
+              aria-valuenow={positivePercent}
+              aria-valuemax={100}
+              aria-label={`Positive: ${positivePercent}%`}
             >
-              {positivePercent >= 10 && (
+              {positivePercent >= SENTIMENT_BAR_LABEL_MIN_PERCENT && (
                 <span className="text-xs font-medium text-white">{positivePercent}%</span>
               )}
             </div>
@@ -67,8 +76,12 @@ export function SentimentDistribution({
             <div
               className="flex items-center justify-center bg-gray-400 transition-all"
               style={{ width: `${neutralPercent}%` }}
+              role="progressbar"
+              aria-valuenow={neutralPercent}
+              aria-valuemax={100}
+              aria-label={`Neutral: ${neutralPercent}%`}
             >
-              {neutralPercent >= 10 && (
+              {neutralPercent >= SENTIMENT_BAR_LABEL_MIN_PERCENT && (
                 <span className="text-xs font-medium text-white">{neutralPercent}%</span>
               )}
             </div>
@@ -77,8 +90,12 @@ export function SentimentDistribution({
             <div
               className="flex items-center justify-center bg-red-500 transition-all"
               style={{ width: `${negativePercent}%` }}
+              role="progressbar"
+              aria-valuenow={negativePercent}
+              aria-valuemax={100}
+              aria-label={`Negative: ${negativePercent}%`}
             >
-              {negativePercent >= 10 && (
+              {negativePercent >= SENTIMENT_BAR_LABEL_MIN_PERCENT && (
                 <span className="text-xs font-medium text-white">{negativePercent}%</span>
               )}
             </div>
@@ -118,17 +135,17 @@ export function SentimentDistribution({
         {/* Health indicator */}
         <div className={cn(
           "rounded-lg p-3 text-sm",
-          positivePercent >= 70 && "bg-green-50 text-green-800",
-          positivePercent >= 50 && positivePercent < 70 && "bg-amber-50 text-amber-800",
-          positivePercent < 50 && "bg-red-50 text-red-800"
+          positivePercent >= EXCELLENT_SENTIMENT_PERCENT
+            ? "bg-green-50 text-green-800"
+            : positivePercent >= GOOD_SENTIMENT_PERCENT
+              ? "bg-amber-50 text-amber-800"
+              : "bg-red-50 text-red-800"
         )}>
-          {positivePercent >= 70 && (
+          {positivePercent >= EXCELLENT_SENTIMENT_PERCENT ? (
             <p>Your sentiment score is excellent. Most customers have a positive experience.</p>
-          )}
-          {positivePercent >= 50 && positivePercent < 70 && (
+          ) : positivePercent >= GOOD_SENTIMENT_PERCENT ? (
             <p>Your sentiment score is good. There may be opportunities to improve customer experience.</p>
-          )}
-          {positivePercent < 50 && (
+          ) : (
             <p>Your sentiment score needs attention. Review negative feedback for improvement areas.</p>
           )}
         </div>

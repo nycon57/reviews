@@ -63,7 +63,6 @@ const plans: PlanOption[] = [
       "Everything in Basic",
       "AI-powered insights",
       "AI visibility reports",
-      "Website analytics & SEO audit",
       "Advanced analytics",
       "API access",
       "Priority support",

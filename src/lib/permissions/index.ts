@@ -50,8 +50,6 @@ export const PERMISSIONS = {
   // Pro tier features
   VIEW_AI_INSIGHTS: "view:ai_insights",
   VIEW_GEO_VISIBILITY: "view:geo_visibility",
-  VIEW_WEBSITE_ANALYTICS: "view:website_analytics",
-
   // Basic features (all users)
   VIEW_DASHBOARD: "view:dashboard",
   VIEW_REVIEWS: "view:reviews",
@@ -116,7 +114,6 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
     // === Pro tier features ===
     case PERMISSIONS.VIEW_AI_INSIGHTS:
     case PERMISSIONS.VIEW_GEO_VISIBILITY:
-    case PERMISSIONS.VIEW_WEBSITE_ANALYTICS:
       // Requires Pro subscription (individuals) or Enterprise tier
       return isPro;
 

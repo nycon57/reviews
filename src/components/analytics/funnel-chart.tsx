@@ -90,7 +90,7 @@ export const FunnelVisualization = memo(function FunnelVisualization({
         <CardTitle className="text-lg">Video Funnel Overview</CardTitle>
         <CardDescription>Video testimonial journey from request to publication</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent role="img" aria-label="Review funnel chart">
         <div className="space-y-4" role="list" aria-label="Video testimonial funnel stages">
           {stages.map((stage, index) => {
             const percentage = maxValue > 0 ? (stage.value / maxValue) * 100 : 0;

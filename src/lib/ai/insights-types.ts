@@ -75,7 +75,6 @@ export interface AIInsightsData {
   topKeyPhrases: KeyPhraseData[];
   summary: AIInsightsSummary | null;
   recommendations: ImprovementRecommendation[];
-  benchmarks: IndustryBenchmark[];
   sentimentDistribution: {
     positive: number;
     neutral: number;

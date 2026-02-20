@@ -5,6 +5,7 @@
  * Fetch and process AI-generated insights data
  */
 
+import { cache } from "react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
@@ -28,10 +29,17 @@ import { createChatCompletion, isAIEnabled } from "./client";
 import { THEME_DESCRIPTIONS } from "./types";
 import { randomUUID } from "crypto";
 
+/** Safely subtract months without day-of-month overflow (e.g. Mar 31 - 1 month) */
+function subtractMonths(date: Date, months: number): void {
+  date.setDate(1);
+  date.setMonth(date.getMonth() - months);
+}
+
 /**
- * Get user context for analytics operations - parallelized queries
+ * Get user context for analytics operations.
+ * Wrapped with cache() to deduplicate within a single RSC request.
  */
-async function getUserContext() {
+const getUserContext = cache(async function getUserContextInner() {
   const user = await unifiedGetUser();
 
   if (!user) {
@@ -39,33 +47,38 @@ async function getUserContext() {
   }
 
   const supabase = createAdminClient();
-  // Parallelize independent queries
-  const [userDataResult, loanOfficerResult] = await Promise.all([
-    supabase
-      .from("users")
-      .select("id, organization_id, role")
-      .eq("id", user.id)
-      .single(),
-    supabase
-      .from("users")
-      .select("id, full_name")
-      .eq("user_id", user.id)
-      .single(),
-  ]);
 
-  const userData = userDataResult.data;
-  if (!userData) {
+  const { data: userData } = await supabase
+    .from("users")
+    .select(
+      "id, organization_id, role, full_name, organizations(subscription_tier, account_type)"
+    )
+    .eq("id", user.id)
+    .single();
+
+  if (!userData || !userData.organization_id) {
+    return null;
+  }
+
+  // Enforce Pro tier at action level (defense-in-depth)
+  const org = userData.organizations as {
+    subscription_tier?: string;
+    account_type?: string;
+  } | null;
+  const subscriptionTier = org?.subscription_tier || "basic";
+  if (subscriptionTier !== "pro" && subscriptionTier !== "enterprise") {
     return null;
   }
 
   return {
     userId: userData.id,
-    organizationId: userData.organization_id!,
+    organizationId: userData.organization_id,
     role: userData.role,
-    loanOfficerId: loanOfficerResult.data?.id || null,
-    loanOfficerName: loanOfficerResult.data?.full_name || null,
+    accountType: (org?.account_type || "individual") as string,
+    loanOfficerId: userData.id,
+    loanOfficerName: userData.full_name || null,
   };
-}
+});
 
 /**
  * Get sentiment trend data over time
@@ -81,7 +94,7 @@ export async function getSentimentTrend(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - months);
+  subtractMonths(startDate, months);
 
   let query = supabase
     .from("reviews")
@@ -109,7 +122,7 @@ export async function getSentimentTrend(
 
   for (const review of data || []) {
     const date = new Date(review.review_date);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 
     if (!monthlyData.has(monthKey)) {
       monthlyData.set(monthKey, {
@@ -134,8 +147,9 @@ export async function getSentimentTrend(
 
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date(now);
+    date.setDate(1);
     date.setMonth(date.getMonth() - i);
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthKey = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
     const monthLabel = date.toLocaleDateString("en-US", {
       month: "short",
       year: "2-digit",
@@ -180,7 +194,7 @@ export async function getThemeFrequencies(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - months);
+  subtractMonths(startDate, months);
 
   // Get current period data
   let query = supabase
@@ -202,7 +216,7 @@ export async function getThemeFrequencies(
 
   // Get previous period for trend comparison
   const prevStartDate = new Date(startDate);
-  prevStartDate.setMonth(prevStartDate.getMonth() - months);
+  subtractMonths(prevStartDate, months);
 
   let prevQuery = supabase
     .from("reviews")
@@ -314,10 +328,10 @@ export async function getTopKeyPhrases(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 3); // Last 3 months
+  subtractMonths(startDate, 3); // Last 3 months
 
   const recentDate = new Date();
-  recentDate.setMonth(recentDate.getMonth() - 1); // Last month for "recent"
+  subtractMonths(recentDate, 1); // Last month for "recent"
 
   let query = supabase
     .from("reviews")
@@ -410,7 +424,7 @@ export async function getSentimentDistribution(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - months);
+  subtractMonths(startDate, months);
 
   let query = supabase
     .from("reviews")
@@ -454,7 +468,7 @@ export async function generateAISummary(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - months);
+  subtractMonths(startDate, months);
   const endDate = new Date();
 
   // Get recent reviews with sentiment data
@@ -534,7 +548,7 @@ export async function generateAISummary(
   // Count key phrase frequencies
   const phraseCounts = new Map<string, number>();
   for (const phrase of allKeyPhrases) {
-    const normalized = phrase.toLowerCase();
+    const normalized = phrase.toLowerCase().trim();
     phraseCounts.set(normalized, (phraseCounts.get(normalized) || 0) + 1);
   }
   const topPhrases = Array.from(phraseCounts.entries())
@@ -581,8 +595,64 @@ ${reviewSamples}
 
 Generate a monthly performance summary.`;
 
-      const response = await createChatCompletion(systemPrompt, userPrompt);
-      const parsed = JSON.parse(response);
+      // Returns true for transient errors (network / 5xx) that warrant a retry.
+      // 4xx client errors should not be retried.
+      const isTransientError = (err: unknown): boolean => {
+        if (err instanceof Error) {
+          const msg = err.message.toLowerCase();
+          return (
+            msg.includes("network") ||
+            msg.includes("econnreset") ||
+            msg.includes("etimedout") ||
+            msg.includes("fetch failed") ||
+            msg.includes("500") ||
+            msg.includes("502") ||
+            msg.includes("503") ||
+            msg.includes("504")
+          );
+        }
+        return false;
+      };
+
+      const attemptAICall = async (): Promise<string> => {
+        try {
+          return await createChatCompletion(systemPrompt, userPrompt);
+        } catch (callErr) {
+          if (isTransientError(callErr)) {
+            // Single retry after 1 second delay for transient failures
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            return await createChatCompletion(systemPrompt, userPrompt);
+          }
+          throw callErr;
+        }
+      };
+
+      const response = await attemptAICall();
+
+      let parsed: {
+        summary?: string;
+        highlights?: unknown;
+        areasOfImprovement?: unknown;
+      };
+      try {
+        parsed = JSON.parse(response);
+      } catch {
+        console.error("AI summary JSON parse failed, using fallback");
+        return {
+          success: true,
+          data: {
+            id: randomUUID(),
+            loanOfficerId: loanOfficerId || null,
+            organizationId: context.organizationId,
+            periodStart: startDate,
+            periodEnd: endDate,
+            summary: "Unable to generate AI insights at this time.",
+            highlights: [],
+            areasOfImprovement: [],
+            generatedAt: new Date(),
+          },
+        };
+      }
 
       return {
         success: true,
@@ -662,7 +732,7 @@ export async function getImprovementRecommendations(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 3);
+  subtractMonths(startDate, 3);
 
   // Get negative and neutral reviews for analysis
   let query = supabase
@@ -881,7 +951,7 @@ export async function getIndustryBenchmarks(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 3);
+  subtractMonths(startDate, 3);
 
   // Fetch current metrics
   let query = supabase
@@ -918,7 +988,7 @@ export async function getIndustryBenchmarks(
   const total = reviews?.length || 0;
   const positiveRate = total > 0 ? (sentiments.positive / total) * 100 : 0;
 
-  // Get NPS from survey responses
+  // Get NPS from survey responses (org-filtered at DB level)
   let npsQuery = supabase
     .from("survey_responses")
     .select(
@@ -931,20 +1001,16 @@ export async function getIndustryBenchmarks(
     `
     )
     .not("nps_score", "is", null)
+    .eq("surveys.organization_id", context.organizationId)
     .gte("submitted_at", startDate.toISOString());
+
+  if (loanOfficerId) {
+    npsQuery = npsQuery.eq("surveys.user_id", loanOfficerId);
+  }
 
   const { data: npsData } = await npsQuery;
 
-  const filteredNps = (npsData || []).filter((r) => {
-    const survey = r.surveys as unknown as {
-      user_id: string;
-      organization_id: string;
-    };
-    if (loanOfficerId) {
-      return survey.user_id === loanOfficerId;
-    }
-    return survey.organization_id === context.organizationId;
-  });
+  const filteredNps = npsData || [];
 
   const npsScores = filteredNps.map((r) => r.nps_score!);
   let nps = 0;
@@ -1038,7 +1104,7 @@ export async function getAIInsightsData(
   }
 
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - months);
+  subtractMonths(startDate, months);
   const endDate = new Date();
 
   // Fetch all insights data in parallel
@@ -1049,7 +1115,6 @@ export async function getAIInsightsData(
     distributionResult,
     summaryResult,
     recommendationsResult,
-    benchmarksResult,
   ] = await Promise.all([
     getSentimentTrend(loanOfficerId, months),
     getThemeFrequencies(loanOfficerId, months),
@@ -1057,7 +1122,6 @@ export async function getAIInsightsData(
     getSentimentDistribution(loanOfficerId, months),
     generateAISummary(loanOfficerId, 1),
     getImprovementRecommendations(loanOfficerId),
-    getIndustryBenchmarks(loanOfficerId),
   ]);
 
   return {
@@ -1068,7 +1132,6 @@ export async function getAIInsightsData(
       topKeyPhrases: keyPhrasesResult.data || [],
       summary: summaryResult.data || null,
       recommendations: recommendationsResult.data || [],
-      benchmarks: benchmarksResult.data || [],
       sentimentDistribution: distributionResult.data || {
         positive: 0,
         neutral: 0,
@@ -1113,15 +1176,19 @@ export async function getSmartActionItems(
   // Run independent queries in parallel
   const [unrespondedResult, weeklyReviewsResult, prevWeeklyResult, negativeResult, ratingResult] =
     await Promise.all([
-      // 1. Unresponded reviews > 24h (org-wide initial fetch; filtered by LO below if needed)
-      supabase
-        .from("reviews")
-        .select("id, customer_name, review_date, rating")
-        .eq("organization_id", context.organizationId)
-        .is("response_text", null)
-        .lt("review_date", oneDayAgo.toISOString())
-        .order("review_date", { ascending: true })
-        .limit(10),
+      // 1. Unresponded reviews > 24h (LO-filtered if applicable)
+      (() => {
+        let q = supabase
+          .from("reviews")
+          .select("id, customer_name, review_date, rating")
+          .eq("organization_id", context.organizationId)
+          .is("response_text", null)
+          .lt("review_date", oneDayAgo.toISOString())
+          .order("review_date", { ascending: true })
+          .limit(10);
+        if (targetLO) q = q.eq("user_id", targetLO);
+        return q;
+      })(),
 
       // 2. Reviews received this week (for velocity check)
       (() => {
@@ -1173,20 +1240,7 @@ export async function getSmartActionItems(
       })(),
     ]);
 
-  // Also get unresponded with user filter if needed
-  let unrespondedReviews = unrespondedResult.data || [];
-  if (targetLO) {
-    const { data } = await supabase
-      .from("reviews")
-      .select("id, customer_name, review_date, rating")
-      .eq("organization_id", context.organizationId)
-      .eq("user_id", targetLO)
-      .is("response_text", null)
-      .lt("review_date", oneDayAgo.toISOString())
-      .order("review_date", { ascending: true })
-      .limit(10);
-    unrespondedReviews = data || [];
-  }
+  const unrespondedReviews = unrespondedResult.data || [];
 
   // HIGH PRIORITY: Individual unresponded reviews (show up to 3)
   for (const review of unrespondedReviews.slice(0, 3)) {
@@ -1335,11 +1389,12 @@ export async function getLOPerformanceScorecard(
     npsResult,
     cachedBriefResult,
   ] = await Promise.all([
-    // LO name
+    // LO name (org-scoped to prevent cross-org access)
     supabase
       .from("users")
       .select("full_name")
       .eq("id", loanOfficerId)
+      .eq("organization_id", context.organizationId)
       .single(),
 
     // All reviews for last 90 days
@@ -1360,19 +1415,21 @@ export async function getLOPerformanceScorecard(
       .eq("organization_id", context.organizationId)
       .gte("review_date", thirtyDaysAgo.toISOString()),
 
-    // Surveys for completion rate
+    // Surveys for completion rate + conversion
     supabase
       .from("surveys")
-      .select("id, status")
+      .select("id, status, created_at")
       .eq("organization_id", context.organizationId)
       .eq("user_id", loanOfficerId)
       .gte("created_at", ninetyDaysAgo.toISOString()),
 
-    // NPS data
+    // NPS data (org-filtered at DB level)
     supabase
       .from("survey_responses")
-      .select("nps_score, submitted_at, surveys!inner(user_id)")
+      .select("nps_score, submitted_at, surveys!inner(user_id, organization_id)")
       .not("nps_score", "is", null)
+      .eq("surveys.organization_id", context.organizationId)
+      .eq("surveys.user_id", loanOfficerId)
       .gte("submitted_at", ninetyDaysAgo.toISOString()),
 
     // Cached coaching brief
@@ -1386,7 +1443,12 @@ export async function getLOPerformanceScorecard(
       .limit(1),
   ]);
 
-  const loName = loUserResult.data?.full_name || "Unknown";
+  // If LO not found in this org, deny access
+  if (!loUserResult.data) {
+    return { success: false, error: "Forbidden" };
+  }
+
+  const loName = loUserResult.data.full_name || "Unknown";
   const reviews = reviewsResult.data || [];
   const orgReviews = orgResponseResult.data || [];
   const surveys = surveysResult.data || [];
@@ -1499,14 +1561,15 @@ export async function getLOPerformanceScorecard(
   const surveyCompletionRate =
     sentSurveys > 0 ? Math.round((completedSurveys / sentSurveys) * 100) : 0;
 
-  // Request-to-review conversion
-  const reviewsFromSurveys = thisMonthReviews.length;
-  const surveysThisMonth = surveys.filter(
-    (s) => s.status !== "draft"
+  // Request-to-review conversion (aligned 30-day window)
+  const surveysLast30d = surveys.filter(
+    (s) =>
+      s.status !== "draft" &&
+      new Date(s.created_at!) >= thirtyDaysAgo
   ).length;
   const conversionRate =
-    surveysThisMonth > 0
-      ? Math.round((reviewsFromSurveys / surveysThisMonth) * 100)
+    surveysLast30d > 0
+      ? Math.round((thisMonthReviews.length / surveysLast30d) * 100)
       : 0;
 
   // Top themes
@@ -1532,11 +1595,8 @@ export async function getLOPerformanceScorecard(
     .slice(0, 3)
     .map(([t]) => t);
 
-  // NPS trend
-  const loNps = (npsResult.data || []).filter((r) => {
-    const survey = r.surveys as unknown as { user_id: string };
-    return survey.user_id === loanOfficerId;
-  });
+  // NPS trend (already org+LO filtered at DB level)
+  const loNps = npsResult.data || [];
 
   const calculateNPS = (scores: number[]) => {
     if (scores.length === 0) return 0;
@@ -1627,8 +1687,11 @@ export async function getTeamActivityMonitor(): Promise<
     return { success: false, error: "Unauthorized" };
   }
 
-  // Only managers and admins can view team activity
-  if (context.role !== "admin" && context.role !== "manager") {
+  // Only enterprise managers and admins can view team activity
+  if (
+    context.accountType !== "enterprise" ||
+    (context.role !== "admin" && context.role !== "manager")
+  ) {
     return { success: false, error: "Forbidden" };
   }
 
@@ -1911,7 +1974,7 @@ export async function getTeamActivityMonitor(): Promise<
       teamMembers,
       orgMetrics: {
         avgResponseTimeHours: orgAvgResponseTime,
-        avgRequestsPerWeek: orgSurveysPerWeek,
+        avgRequestsPerWeek: avgRequestsPerLO,
         activeCount: teamMembers.filter((m) => m.activityStatus === "active")
           .length,
         slowingCount: teamMembers.filter(
@@ -1942,7 +2005,7 @@ export async function getChannelEffectiveness(
 
   const supabase = createAdminClient();
   const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 6);
+  subtractMonths(startDate, 6);
 
   let query = supabase
     .from("reviews")

@@ -19,6 +19,26 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import type { ResponseAnalytics } from "@/lib/reviews/response-actions";
+import {
+  FAST_RESPONSE_TIME_HOURS,
+  GOOD_RESPONSE_TIME_HOURS,
+  WARNING_RESPONSE_TIME_HOURS,
+} from "@/lib/analytics/constants";
+
+/** Format response time in hours to a human-readable label */
+export function getResponseTimeLabel(hours: number): string {
+  if (hours < FAST_RESPONSE_TIME_HOURS) return "< 1 hour";
+  if (hours < GOOD_RESPONSE_TIME_HOURS) return `${Math.round(hours)} hours`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days !== 1 ? "s" : ""}`;
+}
+
+/** Return a Tailwind color class based on response time */
+export function getResponseTimeColor(hours: number): string {
+  if (hours < GOOD_RESPONSE_TIME_HOURS) return "text-green-600";
+  if (hours < WARNING_RESPONSE_TIME_HOURS) return "text-yellow-600";
+  return "text-red-600";
+}
 
 export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
   analytics,
@@ -34,19 +54,6 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
       </Card>
     );
   }
-
-  const getResponseTimeLabel = (hours: number): string => {
-    if (hours < 1) return "< 1 hour";
-    if (hours < 24) return `${Math.round(hours)} hours`;
-    const days = Math.round(hours / 24);
-    return `${days} day${days !== 1 ? "s" : ""}`;
-  };
-
-  const getResponseTimeColor = (hours: number): string => {
-    if (hours < 24) return "text-green-600";
-    if (hours < 48) return "text-yellow-600";
-    return "text-red-600";
-  };
 
   return (
     <div className="space-y-6">
@@ -117,7 +124,7 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
           </CardHeader>
           <CardContent>
             {Object.keys(analytics.platformBreakdown).length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3" role="img" aria-label="Response distribution by platform">
                 {Object.entries(analytics.platformBreakdown).map(([platform, count]) => {
                   const total = Object.values(analytics.platformBreakdown).reduce((a, b) => a + b, 0);
                   const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
@@ -125,14 +132,22 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
                     internal: "bg-blue-500", google: "bg-red-500", zillow: "bg-purple-500",
                     facebook: "bg-indigo-500", yelp: "bg-orange-500",
                   };
+                  const displayName = platform === "internal" ? "Survey" : platform;
                   return (
                     <div key={platform} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="capitalize">{platform === "internal" ? "Survey" : platform}</span>
+                        <span className="capitalize">{displayName}</span>
                         <span className="text-muted-foreground">{count} ({percentage}%)</span>
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <div className={`h-full ${colors[platform] || "bg-gray-500"}`} style={{ width: `${percentage}%` }} />
+                        <div
+                          className={`h-full ${colors[platform] || "bg-gray-500"}`}
+                          style={{ width: `${percentage}%` }}
+                          role="progressbar"
+                          aria-valuenow={percentage}
+                          aria-valuemax={100}
+                          aria-label={`${displayName}: ${percentage}%`}
+                        />
                       </div>
                     </div>
                   );

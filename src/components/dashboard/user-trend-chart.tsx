@@ -11,12 +11,14 @@ import {
   AreaChart,
 } from "recharts";
 import type { TrendDataPoint } from "@/lib/dashboard";
+import { ChartSkeleton } from "@/components/shared/skeletons";
 
 interface TrendChartProps {
   data: TrendDataPoint[];
   title: string;
   color?: string;
   type?: "rating" | "nps";
+  isLoading?: boolean;
 }
 
 export function UserTrendChart({
@@ -24,7 +26,10 @@ export function UserTrendChart({
   title,
   color = "hsl(var(--primary))",
   type = "rating",
+  isLoading,
 }: TrendChartProps) {
+  if (isLoading) return <ChartSkeleton />;
+
   // Don't render chart if no data
   const hasData = data.some((d) => d.value !== 0);
 

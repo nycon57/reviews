@@ -90,7 +90,7 @@ async function generateUniqueWidgetId(
   name: string
 ): Promise<string> {
   const base = slugify(name);
-  const suffix = Math.random().toString(36).slice(2, 8);
+  const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 6);
   const candidate = `${base}-${suffix}`;
 
   const { data } = await supabase
@@ -101,7 +101,7 @@ async function generateUniqueWidgetId(
 
   if (data) {
     // Collision; try again with longer suffix
-    return `${base}-${Math.random().toString(36).slice(2, 10)}`;
+    return `${base}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
   }
 
   return candidate;

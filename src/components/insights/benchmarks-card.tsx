@@ -104,8 +104,8 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
                   </div>
                 </div>
 
-                {/* Marker zones */}
-                <div className="flex h-full w-full items-center px-2">
+                {/* Marker zones - hidden on small screens to avoid overlap */}
+                <div className="hidden sm:flex h-full w-full items-center px-2">
                   {/* Industry average marker */}
                   <div
                     className="absolute flex flex-col items-center"
@@ -113,7 +113,7 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
                   >
                     <div className="h-8 w-0.5 bg-gray-400/50" />
                     <Target className="mt-1 h-3 w-3 text-muted-foreground" />
-                    <span className="text-[10px] text-muted-foreground">Avg: {benchmark.industryAverage}</span>
+                    <span className="text-xs text-muted-foreground">Avg: {benchmark.industryAverage}</span>
                   </div>
 
                   {/* Top performers marker */}
@@ -123,7 +123,7 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
                   >
                     <div className="h-8 w-0.5 bg-green-400/50" />
                     <Award className="mt-1 h-3 w-3 text-green-600" />
-                    <span className="text-[10px] text-green-600">Top: {benchmark.topPerformers}</span>
+                    <span className="text-xs text-green-600">Top: {benchmark.topPerformers}</span>
                   </div>
                 </div>
               </div>
@@ -132,7 +132,7 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
               <div
                 className="absolute inset-0 rounded-lg pointer-events-none"
                 style={{
-                  background: "linear-gradient(to right, hsl(0, 84%, 60%, 0.15), hsl(45, 93%, 47%, 0.15), hsl(142, 76%, 36%, 0.15))",
+                  background: "linear-gradient(to right, hsl(var(--destructive) / 0.15), hsl(var(--warning) / 0.15), hsl(var(--success) / 0.15))",
                 }}
               />
             </div>

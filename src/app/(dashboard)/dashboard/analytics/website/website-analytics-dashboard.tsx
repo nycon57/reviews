@@ -35,6 +35,7 @@ import {
   ArrowSquareOut as ExternalLink,
   Info,
 } from "@phosphor-icons/react";
+import { AnalyticsErrorBoundary } from "@/components/analytics/analytics-error-boundary";
 import {
   getWebsiteAnalytics,
   getWebsiteSEOOverview,
@@ -251,7 +252,7 @@ function TopPagesTable({ pages }: { pages: WebsiteAnalyticsOverview["topPages"] 
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-muted-foreground w-4">{i + 1}</span>
             <div>
-              <p className="text-sm font-medium truncate max-w-[200px]">{page.pageTitle || page.pagePath}</p>
+              <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px] lg:max-w-none">{page.pageTitle || page.pagePath}</p>
               <p className="text-xs text-muted-foreground">{page.pagePath}</p>
             </div>
           </div>
@@ -532,6 +533,7 @@ export function WebsiteAnalyticsDashboard() {
       {activeTab === "overview" && analyticsData && (
         <div className="space-y-6">
           {/* Key metrics */}
+          <AnalyticsErrorBoundary fallbackMessage="Failed to load key metrics">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard
               title="Page Views"
@@ -567,8 +569,10 @@ export function WebsiteAnalyticsDashboard() {
               icon={<Clock className="h-5 w-5 text-repwell-teal-300" />}
             />
           </div>
+          </AnalyticsErrorBoundary>
 
           {/* Traffic & device breakdown */}
+          <AnalyticsErrorBoundary fallbackMessage="Failed to load traffic data">
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
@@ -590,8 +594,10 @@ export function WebsiteAnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
+          </AnalyticsErrorBoundary>
 
           {/* Top pages & search queries */}
+          <AnalyticsErrorBoundary fallbackMessage="Failed to load page data">
           <div className="grid gap-6 lg:grid-cols-2">
             <Card>
               <CardHeader>
@@ -613,8 +619,10 @@ export function WebsiteAnalyticsDashboard() {
               </CardContent>
             </Card>
           </div>
+          </AnalyticsErrorBoundary>
 
           {/* Geographic distribution */}
+          <AnalyticsErrorBoundary fallbackMessage="Failed to load geographic data">
           <Card>
             <CardHeader>
               <CardTitle>Geographic Distribution</CardTitle>
@@ -624,6 +632,7 @@ export function WebsiteAnalyticsDashboard() {
               <GeographicMap data={analyticsData.geographicData} />
             </CardContent>
           </Card>
+          </AnalyticsErrorBoundary>
         </div>
       )}
 

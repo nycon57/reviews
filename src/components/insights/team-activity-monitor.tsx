@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,6 +9,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   UsersThree,
   Warning,
@@ -75,7 +77,19 @@ function LORow({ member }: { member: LOActivityStatus }) {
             <span className="truncate text-sm font-medium">
               {member.userName}
             </span>
-            <Badge variant="secondary" className={cn("text-[10px]", status.class)}>
+            <Badge
+              variant="secondary"
+              className={cn("text-[10px]", status.class)}
+              title={
+                member.activityStatus === "active"
+                  ? "This team member is actively responding to reviews"
+                  : member.activityStatus === "slowing"
+                    ? "This team member's activity has decreased recently"
+                    : member.activityStatus === "inactive"
+                      ? "This team member has not been active recently"
+                      : "Activity status is unknown"
+              }
+            >
               {status.label}
             </Badge>
           </div>
@@ -113,9 +127,9 @@ function LORow({ member }: { member: LOActivityStatus }) {
       {/* Alerts */}
       {member.alerts.length > 0 && (
         <div className="mt-2 space-y-1">
-          {member.alerts.map((alert, i) => (
+          {member.alerts.map((alert) => (
             <div
-              key={i}
+              key={alert.type}
               className={cn(
                 "flex items-center gap-1.5 rounded px-2 py-1 text-xs",
                 alert.severity === "critical"
@@ -137,7 +151,11 @@ function LORow({ member }: { member: LOActivityStatus }) {
   );
 }
 
+const VISIBLE_MEMBER_LIMIT = 10;
+
 export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
+  const [showAll, setShowAll] = useState(false);
+
   if (data.teamMembers.length === 0) {
     return (
       <Card>
@@ -195,9 +213,21 @@ export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        {data.teamMembers.map((member) => (
+        {(showAll ? data.teamMembers : data.teamMembers.slice(0, VISIBLE_MEMBER_LIMIT)).map((member) => (
           <LORow key={member.userId} member={member} />
         ))}
+        {data.teamMembers.length > VISIBLE_MEMBER_LIMIT && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => setShowAll((prev) => !prev)}
+          >
+            {showAll
+              ? "Show less"
+              : `Show ${data.teamMembers.length - VISIBLE_MEMBER_LIMIT} more members`}
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

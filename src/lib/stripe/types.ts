@@ -91,7 +91,6 @@ export const PRICING_TIERS: PricingTier[] = [
       "Everything in Basic",
       "AI-powered insights",
       "Geo visibility tracking",
-      "Website analytics",
       "500 surveys/month",
       "API access",
       "Priority support",

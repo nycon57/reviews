@@ -17,7 +17,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy,
   Medal,
-  Medal as Award,
   Star,
   TrendUp as TrendingUp,
   TrendDown as TrendingDown,
@@ -25,12 +24,14 @@ import {
   DownloadSimple as Download,
   Funnel as Filter,
   Crown,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import type {
   EnhancedLeaderboardEntry,
   LeaderboardPeriod,
 } from "@/lib/gamification/types";
 import { getEnhancedLeaderboard } from "@/lib/gamification/actions";
+import { getInitials } from "@/lib/utils";
 import type { FilterOptions } from "@/lib/dashboard";
 
 interface EnhancedLeaderboardProps {
@@ -44,14 +45,17 @@ export function EnhancedLeaderboard({
 }: EnhancedLeaderboardProps) {
   const [data, setData] = useState<EnhancedLeaderboardEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<LeaderboardPeriod>(initialPeriod);
   const [branch, setBranch] = useState<string>("all");
   const [region, setRegion] = useState<string>("all");
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     async function loadLeaderboard() {
       setIsLoading(true);
+      setError(null);
       const result = await getEnhancedLeaderboard({
         period,
         branch: branch !== "all" ? branch : undefined,
@@ -61,6 +65,8 @@ export function EnhancedLeaderboard({
       if (!cancelled) {
         if (result.success && result.data) {
           setData(result.data);
+        } else {
+          setError(result.error || "Failed to load leaderboard");
         }
         setIsLoading(false);
       }
@@ -69,16 +75,7 @@ export function EnhancedLeaderboard({
     return () => {
       cancelled = true;
     };
-  }, [period, branch, region]);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  }, [period, branch, region, retryCount]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -87,7 +84,7 @@ export function EnhancedLeaderboard({
       case 2:
         return <Medal className="h-5 w-5 text-gray-400" />;
       case 3:
-        return <Award className="h-5 w-5 text-amber-600" />;
+        return <Trophy className="h-5 w-5 text-amber-600" />;
       default:
         return (
           <span className="flex h-5 w-5 items-center justify-center text-sm font-semibold text-muted-foreground">
@@ -134,19 +131,6 @@ export function EnhancedLeaderboard({
     );
   };
 
-  const getPeriodLabel = (p: LeaderboardPeriod) => {
-    switch (p) {
-      case "monthly":
-        return "This Month";
-      case "quarterly":
-        return "This Quarter";
-      case "yearly":
-        return "This Year";
-      case "all_time":
-        return "All Time";
-    }
-  };
-
   const exportLeaderboard = () => {
     const csv = [
       ["Rank", "Name", "Reviews", "Rating", "NPS", "Reputation Score"].join(
@@ -169,8 +153,10 @@ export function EnhancedLeaderboard({
     const a = document.createElement("a");
     a.href = url;
     a.download = `leaderboard-${period}-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   const renderLeaderboardContent = () => {
@@ -190,6 +176,27 @@ export function EnhancedLeaderboard({
               <div className="h-8 w-16 bg-muted rounded" />
             </div>
           ))}
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+          <div className="text-center">
+            <WarningCircle className="h-12 w-12 mx-auto mb-3 text-destructive opacity-60" />
+            <p className="text-sm text-destructive">{error}</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                setRetryCount((c) => c + 1);
+              }}
+              className="mt-2 text-xs font-medium text-primary underline hover:no-underline"
+            >
+              Try again
+            </button>
+          </div>
         </div>
       );
     }
@@ -246,7 +253,7 @@ export function EnhancedLeaderboard({
                 </span>
                 {entry.badges.length > 0 && (
                   <span className="flex items-center gap-0.5">
-                    <Award className="h-3 w-3 text-purple-500" />
+                    <Trophy className="h-3 w-3 text-purple-500" />
                     {entry.badges.length}
                   </span>
                 )}
@@ -372,7 +379,7 @@ export function EnhancedLeaderboard({
 
       {/* Period indicator */}
       <div className="px-6 py-3 border-t bg-muted/30 text-xs text-muted-foreground text-center">
-        Showing rankings for {getPeriodLabel(period).toLowerCase()}
+        Rank changes compared to previous {period === "all_time" ? "snapshot" : period.replace("_", " ")}. Rankings reflect overall reputation.
         {(branch !== "all" || region !== "all") && (
           <span>
             {" "}

@@ -68,21 +68,6 @@ export function ExportInsightsButton({
     }
     rows.push([]);
 
-    // Industry Benchmarks
-    rows.push(["Industry Benchmarks"]);
-    rows.push(["Metric", "Your Value", "Industry Average", "Top Performers", "Percentile", "Status"]);
-    for (const benchmark of data.benchmarks) {
-      rows.push([
-        benchmark.metric,
-        String(benchmark.yourValue),
-        String(benchmark.industryAverage),
-        String(benchmark.topPerformers),
-        `${benchmark.percentile}th`,
-        benchmark.trend,
-      ]);
-    }
-    rows.push([]);
-
     // Summary
     if (data.summary) {
       rows.push(["AI Summary"]);
@@ -118,7 +103,6 @@ export function ExportInsightsButton({
       sentimentTrend: data.sentimentTrend,
       themeFrequencies: data.themeFrequencies,
       topKeyPhrases: data.topKeyPhrases,
-      benchmarks: data.benchmarks,
       summary: data.summary,
       recommendations: data.recommendations,
     };

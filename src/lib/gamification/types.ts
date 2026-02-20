@@ -83,7 +83,6 @@ export interface EnhancedLeaderboardEntry {
   npsScore: number;
   reputationScore: number;
   badges: UserBadge[];
-  streak: number; // consecutive months in top 10
 }
 
 // Leaderboard filters

@@ -14,6 +14,7 @@ import {
   Scales,
   CurrencyDollar,
   FileText,
+  LinkSimple,
 } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
 import { ProfileTab } from './profile-tab';
@@ -27,10 +28,11 @@ import { ComplianceTab } from '@/components/settings/sms/compliance-tab';
 import { SmsBillingTab } from '@/components/settings/sms/billing-tab';
 import { SmsTemplatesTab } from '@/components/settings/sms/templates-tab';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SmartLinksTab } from './smart-links-tab';
 
-type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'sms' | 'sms-registration' | 'sms-compliance' | 'sms-billing' | 'sms-templates';
+type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'smart-links' | 'sms' | 'sms-registration' | 'sms-compliance' | 'sms-billing' | 'sms-templates';
 
-const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'sms', 'sms-registration', 'sms-compliance', 'sms-billing', 'sms-templates'];
+const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'smart-links', 'sms', 'sms-registration', 'sms-compliance', 'sms-billing', 'sms-templates'];
 
 function isSettingsTab(value: string | null): value is SettingsTab {
   return value !== null && VALID_TABS.includes(value as SettingsTab);
@@ -42,6 +44,7 @@ const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
   { value: 'integrations', label: 'Integrations', icon: Link2 },
   { value: 'api', label: 'API', icon: Key },
   { value: 'notifications', label: 'Notifications', icon: Bell },
+  { value: 'smart-links', label: 'Smart Links', icon: LinkSimple },
   { value: 'sms', label: 'SMS', icon: ChatTeardropDots },
   { value: 'sms-registration', label: '10DLC', icon: ShieldCheck },
   { value: 'sms-compliance', label: 'Compliance', icon: Scales },
@@ -182,6 +185,12 @@ export function SettingsTabs({
         <TabsContent value="notifications" className="m-0 animate-fade-in">
           <Suspense fallback={<TabSkeleton />}>
             <NotificationsTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="smart-links" className="m-0 animate-fade-in">
+          <Suspense fallback={<TabSkeleton />}>
+            <SmartLinksTab />
           </Suspense>
         </TabsContent>
 

@@ -113,7 +113,7 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
     ? avgRatings.reduce((sum, m) => sum + (m.average_rating || 0), 0) / avgRatings.length
     : 0;
 
-  // Calculate team NPS from survey responses
+  // Calculate team NPS from survey responses (DB-level org filter)
   const { data: surveyResponses } = await supabase
     .from("survey_responses")
     .select(`
@@ -122,14 +122,10 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
         organization_id
       )
     `)
+    .eq("surveys.organization_id", context.organizationId)
     .not("nps_score", "is", null);
 
-  const filteredResponses = surveyResponses?.filter(
-    (r) => {
-      const survey = r.surveys as unknown as { organization_id: string };
-      return survey.organization_id === context.organizationId;
-    }
-  ) || [];
+  const filteredResponses = surveyResponses || [];
 
   let teamNPS = 0;
   if (filteredResponses.length > 0) {
@@ -431,9 +427,10 @@ export async function getTeamNPSTrend(
   const supabase = createAdminClient();
 
   const startDate = new Date();
+  startDate.setDate(1);
   startDate.setMonth(startDate.getMonth() - months);
 
-  // Fetch all NPS responses for the organization
+  // Fetch NPS responses with DB-level org filter
   const { data: surveyResponses, error } = await supabase
     .from("survey_responses")
     .select(`
@@ -443,6 +440,7 @@ export async function getTeamNPSTrend(
         organization_id
       )
     `)
+    .eq("surveys.organization_id", context.organizationId)
     .not("nps_score", "is", null)
     .gte("submitted_at", startDate.toISOString());
 
@@ -450,11 +448,7 @@ export async function getTeamNPSTrend(
     return { success: false, error: "Failed to fetch team NPS trend" };
   }
 
-  // Filter responses for this organization
-  const filteredResponses = surveyResponses?.filter((r) => {
-    const survey = r.surveys as unknown as { organization_id: string };
-    return survey.organization_id === context.organizationId;
-  }) || [];
+  const filteredResponses = surveyResponses || [];
 
   // Group by month and calculate NPS
   const monthlyData = new Map<
@@ -485,10 +479,10 @@ export async function getTeamNPSTrend(
 
   // Convert to array and fill in missing months
   const trendData: { date: string; value: number }[] = [];
-  const currentDate = new Date();
 
   for (let i = months - 1; i >= 0; i--) {
-    const date = new Date(currentDate);
+    const date = new Date();
+    date.setDate(1);
     date.setMonth(date.getMonth() - i);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
@@ -520,6 +514,7 @@ export async function getTeamRatingTrend(
   const supabase = createAdminClient();
 
   const startDate = new Date();
+  startDate.setDate(1);
   startDate.setMonth(startDate.getMonth() - months);
 
   const { data, error } = await supabase
@@ -551,10 +546,10 @@ export async function getTeamRatingTrend(
 
   // Convert to array and fill in missing months
   const trendData: { date: string; value: number }[] = [];
-  const currentDate = new Date();
 
   for (let i = months - 1; i >= 0; i--) {
-    const date = new Date(currentDate);
+    const date = new Date();
+    date.setDate(1);
     date.setMonth(date.getMonth() - i);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
     const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });

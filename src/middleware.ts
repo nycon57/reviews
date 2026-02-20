@@ -48,7 +48,6 @@ const roleProtectedRoutes: RouteConfig[] = [
   // Pro tier features (available to pro individuals and all enterprise users)
   { path: "/dashboard/insights", minTier: "pro" },
   { path: "/dashboard/geo", minTier: "pro" },
-  { path: "/dashboard/analytics/website", minTier: "pro" },
 ];
 
 // Paths that are part of the onboarding flow

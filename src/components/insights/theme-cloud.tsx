@@ -9,9 +9,11 @@ import {
 import type { ThemeFrequency } from "@/lib/ai";
 import { THEME_DESCRIPTIONS } from "@/lib/ai";
 import { cn } from "@/lib/utils";
+import { ChartSkeleton } from "@/components/shared/skeletons";
 
 interface ThemeCloudProps {
   data: ThemeFrequency[];
+  isLoading?: boolean;
 }
 
 const themeColors: Record<string, string> = {
@@ -37,7 +39,9 @@ function TrendIcon({ trend }: { trend: "increasing" | "stable" | "decreasing" })
   return <Minus className="h-3 w-3 text-muted-foreground" />;
 }
 
-export function ThemeCloud({ data }: ThemeCloudProps) {
+export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
+  if (isLoading) return <ChartSkeleton />;
+
   if (data.length === 0) {
     return (
       <Card>
@@ -114,18 +118,22 @@ export function ThemeCloud({ data }: ThemeCloudProps) {
                   <span className="capitalize">{theme.theme}</span>
                   <span className="text-muted-foreground">{theme.percentage}% of reviews</span>
                 </div>
-                <div className="flex h-2 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="flex h-2 overflow-hidden rounded-full bg-muted"
+                  role="img"
+                  aria-label={`${theme.theme} sentiment breakdown: ${theme.sentimentBreakdown.positive} positive, ${theme.sentimentBreakdown.neutral} neutral, ${theme.sentimentBreakdown.negative} negative`}
+                >
                   <div
                     className="bg-green-500 transition-all"
-                    style={{ width: `${(theme.sentimentBreakdown.positive / theme.count) * 100}%` }}
+                    style={{ width: `${theme.count > 0 ? (theme.sentimentBreakdown.positive / theme.count) * 100 : 0}%` }}
                   />
                   <div
                     className="bg-gray-400 transition-all"
-                    style={{ width: `${(theme.sentimentBreakdown.neutral / theme.count) * 100}%` }}
+                    style={{ width: `${theme.count > 0 ? (theme.sentimentBreakdown.neutral / theme.count) * 100 : 0}%` }}
                   />
                   <div
                     className="bg-red-500 transition-all"
-                    style={{ width: `${(theme.sentimentBreakdown.negative / theme.count) * 100}%` }}
+                    style={{ width: `${theme.count > 0 ? (theme.sentimentBreakdown.negative / theme.count) * 100 : 0}%` }}
                   />
                 </div>
               </div>

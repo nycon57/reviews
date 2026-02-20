@@ -22,6 +22,10 @@ import {
 } from "recharts";
 import type { DailyMetric } from "@/lib/widgets/analytics-actions";
 
+// Design system color tokens (from tailwind.config.ts)
+const REPWELL_TEAL_300 = "#52796f";
+const REPWELL_SAGE_200 = "#84a98c";
+
 interface ImpressionsChartProps {
   data: DailyMetric[];
   isLoading: boolean;
@@ -98,7 +102,7 @@ export const ImpressionsChart = memo(function ImpressionsChart({
             </tbody>
           </table>
         </div>
-        <div className="h-[300px] w-full" aria-hidden="true">
+        <div className="h-[300px] w-full" role="img" aria-label="Impressions over time chart">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={chartData}
@@ -112,8 +116,8 @@ export const ImpressionsChart = memo(function ImpressionsChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#52796f" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#52796f" stopOpacity={0} />
+                  <stop offset="5%" stopColor={REPWELL_TEAL_300} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={REPWELL_TEAL_300} stopOpacity={0} />
                 </linearGradient>
                 <linearGradient
                   id="gradient-clicks"
@@ -122,8 +126,8 @@ export const ImpressionsChart = memo(function ImpressionsChart({
                   x2="0"
                   y2="1"
                 >
-                  <stop offset="5%" stopColor="#84a98c" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#84a98c" stopOpacity={0} />
+                  <stop offset="5%" stopColor={REPWELL_SAGE_200} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={REPWELL_SAGE_200} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid
@@ -164,7 +168,7 @@ export const ImpressionsChart = memo(function ImpressionsChart({
                 type="monotone"
                 dataKey="impressions"
                 name="Impressions"
-                stroke="#52796f"
+                stroke={REPWELL_TEAL_300}
                 strokeWidth={2}
                 fill="url(#gradient-impressions)"
                 connectNulls
@@ -173,7 +177,7 @@ export const ImpressionsChart = memo(function ImpressionsChart({
                 type="monotone"
                 dataKey="clicks"
                 name="Clicks"
-                stroke="#84a98c"
+                stroke={REPWELL_SAGE_200}
                 strokeWidth={2}
                 fill="url(#gradient-clicks)"
                 connectNulls

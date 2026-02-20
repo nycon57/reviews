@@ -182,7 +182,6 @@ export async function fetchWeeklyTeamMetrics(
       reviewsThisWeekResult,
       reviewsLastWeekResult,
       pendingApprovalsResult,
-      _leaderboardResult,
     ] = await Promise.all([
       // Team reviews this week
       supabase
@@ -206,16 +205,6 @@ export async function fetchWeeklyTeamMetrics(
         .select("id", { count: "exact" })
         .eq("organization_id", organizationId)
         .eq("status", "pending_approval"),
-
-      // Leaderboard for top performers
-      supabase
-        .from("leaderboard_snapshots")
-        .select("user_id, rank, reputation_score, average_rating, total_reviews")
-        .eq("organization_id", organizationId)
-        .eq("period_type", "monthly")
-        .order("snapshot_date", { ascending: false })
-        .order("rank", { ascending: true })
-        .limit(20),
     ]);
 
     // Process team reviews this week

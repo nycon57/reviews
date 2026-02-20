@@ -136,18 +136,20 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
           <MetricCard
             icon={Star}
             label="Avg Rating"
-            value={data.avgRating.current || "N/A"}
+            value={data.avgRating.current > 0 ? data.avgRating.current : "N/A"}
             subtext={
               data.avgRating.days60 > 0
                 ? `60-day: ${data.avgRating.days60}`
                 : undefined
             }
             trend={
-              data.avgRating.days30 > data.avgRating.days60
-                ? "up"
-                : data.avgRating.days30 < data.avgRating.days60
-                  ? "down"
-                  : "stable"
+              data.avgRating.days60 > 0
+                ? data.avgRating.days30 > data.avgRating.days60
+                  ? "up"
+                  : data.avgRating.days30 < data.avgRating.days60
+                    ? "down"
+                    : "stable"
+                : "stable"
             }
           />
           <MetricCard
@@ -232,7 +234,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
             <TrendIndicator
               direction={data.npsTrend.direction}
               value={
-                data.npsTrend.previous !== 0
+                data.npsTrend.previous != null
                   ? `vs ${data.npsTrend.previous} last period`
                   : undefined
               }

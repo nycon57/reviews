@@ -2,7 +2,6 @@ import {
   Sparkle as Sparkles,
 } from "@phosphor-icons/react/dist/ssr";
 import { ChartSkeleton, CardSkeleton } from "@/components/shared";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function InsightsLoading() {
   return (
@@ -18,7 +17,20 @@ export default function InsightsLoading() {
             AI-powered analysis of your customer feedback and performance trends
           </p>
         </div>
-        <Skeleton className="h-10 w-32" />
+      </div>
+
+      {/* Smart Actions skeleton */}
+      <CardSkeleton className="h-[200px]" />
+
+      {/* Performance Scorecard skeleton */}
+      <CardSkeleton className="h-[350px]" />
+
+      {/* Channel Effectiveness skeleton */}
+      <CardSkeleton className="h-[400px]" />
+
+      {/* Export button placeholder */}
+      <div className="flex justify-end">
+        <div className="h-10 w-32 animate-pulse rounded-md bg-muted" />
       </div>
 
       {/* Summary and distribution row */}

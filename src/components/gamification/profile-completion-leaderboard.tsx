@@ -20,7 +20,7 @@ import {
   Star,
   Users,
 } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { getProfileCompletionLeaderboard } from "@/lib/gamification/profile-completion-actions";
 import type { ProfileCompletionLeaderboardEntry } from "@/lib/gamification/profile-completion-types";
 
@@ -39,25 +39,22 @@ export function ProfileCompletionLeaderboard({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     async function loadData() {
       setIsLoading(true);
       const result = await getProfileCompletionLeaderboard(limit);
-      if (result.success && result.data) {
-        setEntries(result.data);
+      if (!cancelled) {
+        if (result.success && result.data) {
+          setEntries(result.data);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     loadData();
+    return () => {
+      cancelled = true;
+    };
   }, [limit]);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   if (isLoading) {
     return (
@@ -122,7 +119,7 @@ export function ProfileCompletionLeaderboard({
             {/* Second Place */}
             {topThree[1] && (
               <div className="order-1 sm:order-1">
-                <PodiumCard entry={topThree[1]} getInitials={getInitials} />
+                <PodiumCard entry={topThree[1]} />
               </div>
             )}
 
@@ -131,7 +128,6 @@ export function ProfileCompletionLeaderboard({
               <div className="order-first sm:order-2">
                 <PodiumCard
                   entry={topThree[0]}
-                  getInitials={getInitials}
                   isWinner
                 />
               </div>
@@ -140,7 +136,7 @@ export function ProfileCompletionLeaderboard({
             {/* Third Place */}
             {topThree[2] && (
               <div className="order-2 sm:order-3">
-                <PodiumCard entry={topThree[2]} getInitials={getInitials} />
+                <PodiumCard entry={topThree[2]} />
               </div>
             )}
           </div>
@@ -246,11 +242,9 @@ export function ProfileCompletionLeaderboard({
 // Podium Card Component
 function PodiumCard({
   entry,
-  getInitials,
   isWinner = false,
 }: {
   entry: ProfileCompletionLeaderboardEntry;
-  getInitials: (name: string) => string;
   isWinner?: boolean;
 }) {
   const rankIcon =
@@ -370,24 +364,21 @@ export function CompactProfileLeaderboard({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     async function loadData() {
       const result = await getProfileCompletionLeaderboard(limit);
-      if (result.success && result.data) {
-        setEntries(result.data);
+      if (!cancelled) {
+        if (result.success && result.data) {
+          setEntries(result.data);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     loadData();
+    return () => {
+      cancelled = true;
+    };
   }, [limit]);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   if (isLoading) {
     return (

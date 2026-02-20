@@ -75,6 +75,12 @@ export interface WidgetDetailAnalytics {
   enhanced?: EnhancedAnalytics;
 }
 
+export interface PaginatedEventResult<T> {
+  data: T;
+  total: number;
+  hasMore: boolean;
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────
 
 interface AuthedContext {
@@ -239,8 +245,10 @@ export async function getWidgetAnalyticsSummary(
 export async function getWidgetDailyMetrics(
   dateRange: string = "30d",
   customStart?: string,
-  customEnd?: string
-): Promise<ActionResult<DailyMetric[]>> {
+  customEnd?: string,
+  limit: number = 1000,
+  offset: number = 0
+): Promise<ActionResult<PaginatedEventResult<DailyMetric[]>>> {
   try {
     const ctx = await getAuthedContext();
     if (!ctx.success) return ctx;
@@ -258,24 +266,10 @@ export async function getWidgetDailyMetrics(
       .eq("organization_id", ctx.data.organizationId);
 
     if (!widgets || widgets.length === 0) {
-      return { success: true, data: [] };
+      return { success: true, data: { data: [], total: 0, hasMore: false } };
     }
 
     const widgetIds = widgets.map((w) => w.widget_id);
-
-    // Fetch all events in range and aggregate client-side by date
-    // This is more efficient than N separate date queries
-    const { data: events, error } = await supabase
-      .from("widget_events")
-      .select("event_type, created_at")
-      .in("widget_id", widgetIds)
-      .gte("created_at", `${start}T00:00:00Z`)
-      .lte("created_at", `${end}T23:59:59Z`)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
 
     // Group by date
     const dayMap = new Map<string, { impressions: number; clicks: number }>();
@@ -291,23 +285,50 @@ export async function getWidgetDailyMetrics(
       current.setDate(current.getDate() + 1);
     }
 
-    for (const event of events ?? []) {
-      const day = event.created_at.slice(0, 10);
-      const entry = dayMap.get(day) ?? { impressions: 0, clicks: 0 };
-      if (event.event_type === "impression") {
-        entry.impressions++;
-      } else if (CLICK_EVENTS.includes(event.event_type)) {
-        entry.clicks++;
+    // Fetch events in batches to avoid unbounded memory usage
+    const BATCH_SIZE = 10000;
+    let fetchOffset = 0;
+    let hasMoreEvents = true;
+
+    while (hasMoreEvents) {
+      const { data: batch, error } = await supabase
+        .from("widget_events")
+        .select("event_type, created_at")
+        .in("widget_id", widgetIds)
+        .gte("created_at", `${start}T00:00:00Z`)
+        .lte("created_at", `${end}T23:59:59Z`)
+        .order("created_at", { ascending: true })
+        .range(fetchOffset, fetchOffset + BATCH_SIZE - 1);
+
+      if (error) {
+        return { success: false, error: error.message };
       }
-      dayMap.set(day, entry);
+
+      for (const event of batch ?? []) {
+        const day = event.created_at.slice(0, 10);
+        const entry = dayMap.get(day) ?? { impressions: 0, clicks: 0 };
+        if (event.event_type === "impression") {
+          entry.impressions++;
+        } else if (CLICK_EVENTS.includes(event.event_type)) {
+          entry.clicks++;
+        }
+        dayMap.set(day, entry);
+      }
+
+      hasMoreEvents = (batch?.length ?? 0) === BATCH_SIZE;
+      fetchOffset += BATCH_SIZE;
     }
 
-    const metrics: DailyMetric[] = [];
+    const allMetrics: DailyMetric[] = [];
     for (const [date, counts] of dayMap) {
-      metrics.push({ date, ...counts });
+      allMetrics.push({ date, ...counts });
     }
 
-    return { success: true, data: metrics };
+    const total = allMetrics.length;
+    const paged = allMetrics.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
+    return { success: true, data: { data: paged, total, hasMore } };
   } catch (err) {
     console.error("getWidgetDailyMetrics error:", err);
     return { success: false, error: "Failed to load daily metrics" };
@@ -319,8 +340,10 @@ export async function getWidgetDailyMetrics(
 export async function getWidgetTableData(
   dateRange: string = "30d",
   customStart?: string,
-  customEnd?: string
-): Promise<ActionResult<WidgetTableRow[]>> {
+  customEnd?: string,
+  limit: number = 1000,
+  offset: number = 0
+): Promise<ActionResult<PaginatedEventResult<WidgetTableRow[]>>> {
   try {
     const ctx = await getAuthedContext();
     if (!ctx.success) return ctx;
@@ -344,24 +367,12 @@ export async function getWidgetTableData(
     }
 
     if (widgets.length === 0) {
-      return { success: true, data: [] };
+      return { success: true, data: { data: [], total: 0, hasMore: false } };
     }
 
     const widgetIds = widgets.map((w) => w.widget_id);
 
-    // Fetch all events for all org widgets in range
-    const { data: events, error: eErr } = await supabase
-      .from("widget_events")
-      .select("widget_id, event_type, referrer")
-      .in("widget_id", widgetIds)
-      .gte("created_at", `${start}T00:00:00Z`)
-      .lte("created_at", `${end}T23:59:59Z`);
-
-    if (eErr) {
-      return { success: false, error: eErr.message };
-    }
-
-    // Aggregate per widget
+    // Aggregate per widget — fetch events in batches to avoid unbounded memory usage
     const statsMap = new Map<
       string,
       {
@@ -371,25 +382,46 @@ export async function getWidgetTableData(
       }
     >();
 
-    for (const event of events ?? []) {
-      const entry = statsMap.get(event.widget_id) ?? {
-        impressions: 0,
-        clicks: 0,
-        referrerCounts: new Map(),
-      };
+    const BATCH_SIZE = 10000;
+    let fetchOffset = 0;
+    let hasMoreBatches = true;
 
-      if (event.event_type === "impression") {
-        entry.impressions++;
-      } else if (CLICK_EVENTS.includes(event.event_type)) {
-        entry.clicks++;
+    while (hasMoreBatches) {
+      const { data: batch, error: eErr } = await supabase
+        .from("widget_events")
+        .select("widget_id, event_type, referrer")
+        .in("widget_id", widgetIds)
+        .gte("created_at", `${start}T00:00:00Z`)
+        .lte("created_at", `${end}T23:59:59Z`)
+        .range(fetchOffset, fetchOffset + BATCH_SIZE - 1);
+
+      if (eErr) {
+        return { success: false, error: eErr.message };
       }
 
-      if (event.referrer) {
-        const count = entry.referrerCounts.get(event.referrer) ?? 0;
-        entry.referrerCounts.set(event.referrer, count + 1);
+      for (const event of batch ?? []) {
+        const entry = statsMap.get(event.widget_id) ?? {
+          impressions: 0,
+          clicks: 0,
+          referrerCounts: new Map(),
+        };
+
+        if (event.event_type === "impression") {
+          entry.impressions++;
+        } else if (CLICK_EVENTS.includes(event.event_type)) {
+          entry.clicks++;
+        }
+
+        if (event.referrer) {
+          const count = entry.referrerCounts.get(event.referrer) ?? 0;
+          entry.referrerCounts.set(event.referrer, count + 1);
+        }
+
+        statsMap.set(event.widget_id, entry);
       }
 
-      statsMap.set(event.widget_id, entry);
+      hasMoreBatches = (batch?.length ?? 0) === BATCH_SIZE;
+      fetchOffset += BATCH_SIZE;
     }
 
     const rows: WidgetTableRow[] = widgets.map((w) => {
@@ -425,7 +457,11 @@ export async function getWidgetTableData(
     // Sort by impressions descending by default
     rows.sort((a, b) => b.impressions - a.impressions);
 
-    return { success: true, data: rows };
+    const total = rows.length;
+    const paged = rows.slice(offset, offset + limit);
+    const hasMore = offset + limit < total;
+
+    return { success: true, data: { data: paged, total, hasMore } };
   } catch (err) {
     console.error("getWidgetTableData error:", err);
     return { success: false, error: "Failed to load widget table data" };
@@ -438,8 +474,10 @@ export async function getWidgetDetailAnalytics(
   widgetId: string,
   dateRange: string = "30d",
   customStart?: string,
-  customEnd?: string
-): Promise<ActionResult<WidgetDetailAnalytics>> {
+  customEnd?: string,
+  limit: number = 1000,
+  offset: number = 0
+): Promise<ActionResult<PaginatedEventResult<WidgetDetailAnalytics>>> {
   try {
     const ctx = await getAuthedContext();
     if (!ctx.success) return ctx;
@@ -463,18 +501,25 @@ export async function getWidgetDetailAnalytics(
       return { success: false, error: "Widget not found" };
     }
 
-    // Fetch all events for this widget in range (include metadata for enhanced analytics)
-    const { data: events, error: eErr } = await supabase
+    // Fetch events for this widget in range with pagination (include metadata for enhanced analytics)
+    const { data: events, error: eErr, count } = await supabase
       .from("widget_events")
-      .select("event_type, page_url, referrer, ip_hash, created_at, metadata, session_id")
+      .select(
+        "event_type, page_url, referrer, ip_hash, created_at, metadata, session_id",
+        { count: "exact" }
+      )
       .eq("widget_id", widgetId)
       .gte("created_at", `${start}T00:00:00Z`)
       .lte("created_at", `${end}T23:59:59Z`)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: true })
+      .range(offset, offset + limit - 1);
 
     if (eErr) {
       return { success: false, error: eErr.message };
     }
+
+    const total = count ?? 0;
+    const hasMore = offset + limit < total;
 
     // Daily metrics
     const dayMap = new Map<string, { impressions: number; clicks: number }>();
@@ -657,16 +702,20 @@ export async function getWidgetDetailAnalytics(
     return {
       success: true,
       data: {
-        daily,
-        eventBreakdown,
-        topPageUrls,
-        topReferrers,
-        geographicBreakdown,
-        enhanced: {
-          scrollDepth,
-          video: videoAnalytics,
-          conversions: conversionFunnel,
+        data: {
+          daily,
+          eventBreakdown,
+          topPageUrls,
+          topReferrers,
+          geographicBreakdown,
+          enhanced: {
+            scrollDepth,
+            video: videoAnalytics,
+            conversions: conversionFunnel,
+          },
         },
+        total,
+        hasMore,
       },
     };
   } catch (err) {
@@ -686,7 +735,7 @@ export async function getWidgetAnalyticsCsvData(
   if (!result.success) return result;
 
   const header = "Widget Name,Type,Impressions,Clicks,CTR (%),Top Referrer,Status";
-  const rows = result.data.map((r) =>
+  const rows = result.data.data.map((r) =>
     [
       `"${r.name.replace(/"/g, '""')}"`,
       r.widgetType,

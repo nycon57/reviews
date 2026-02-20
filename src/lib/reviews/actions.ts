@@ -909,3 +909,76 @@ export async function getUsersForFilter(): Promise<
 
 /** @deprecated Use getUsersForFilter instead */
 export const getLoanOfficersForFilter = getUsersForFilter;
+
+export async function getReviewSummary(opts: {
+  startDate?: string;
+  endDate?: string;
+}): Promise<
+  ActionResult<{
+    totalReviews: number;
+    averageRating: number;
+    responseRate: number;
+    npsScore: number;
+  }>
+> {
+  const context = await requireManagerRole();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const supabase = createAdminClient();
+  let query = supabase
+    .from("reviews")
+    .select("rating, response_text", { count: "exact" })
+    .eq("organization_id", context.organizationId)
+    .eq("status", "approved");
+
+  if (opts.startDate) query = query.gte("created_at", opts.startDate);
+  if (opts.endDate) query = query.lte("created_at", opts.endDate);
+
+  const { data, count, error } = await query;
+
+  if (error) {
+    console.error("Error fetching review summary:", error);
+    return { success: false, error: "Failed to fetch review summary" };
+  }
+
+  const reviews = data || [];
+  const totalReviews = count ?? reviews.length;
+
+  const ratingsOnly = reviews.filter((r) => r.rating != null);
+  const averageRating =
+    ratingsOnly.length > 0
+      ? Math.round(
+          (ratingsOnly.reduce((sum, r) => sum + (r.rating as number), 0) /
+            ratingsOnly.length) *
+            10
+        ) / 10
+      : 0;
+
+  const withResponse = reviews.filter(
+    (r) => r.response_text && r.response_text.trim().length > 0
+  ).length;
+  const responseRate =
+    totalReviews > 0 ? Math.round((withResponse / totalReviews) * 1000) / 10 : 0;
+
+  // NPS: 5-star mapping — 5 = promoter, 4 = passive, 1-3 = detractor
+  let promoters = 0;
+  let detractors = 0;
+  for (const r of ratingsOnly) {
+    const rating = r.rating as number;
+    if (rating >= 5) promoters++;
+    else if (rating <= 3) detractors++;
+  }
+  const npsScore =
+    ratingsOnly.length > 0
+      ? Math.round(
+          ((promoters - detractors) / ratingsOnly.length) * 100
+        )
+      : 0;
+
+  return {
+    success: true,
+    data: { totalReviews, averageRating, responseRate, npsScore },
+  };
+}

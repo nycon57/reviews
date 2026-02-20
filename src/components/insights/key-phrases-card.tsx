@@ -38,8 +38,6 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
   // Group phrases by sentiment
   const positiveData = data.filter((p) => p.sentiment === "positive").slice(0, 8);
   const negativeData = data.filter((p) => p.sentiment === "negative").slice(0, 5);
-  // Note: neutralData available for future use if needed
-  const _neutralData = data.filter((p) => p.sentiment === "neutral").slice(0, 5);
 
   return (
     <Card>
@@ -50,9 +48,9 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
       <CardContent className="space-y-4">
         {/* Word cloud style display */}
         <div className="flex flex-wrap gap-2">
-          {data.slice(0, 15).map((phrase, i) => (
+          {data.slice(0, 15).map((phrase) => (
             <Badge
-              key={i}
+              key={phrase.phrase}
               variant="secondary"
               className={cn(
                 "cursor-default transition-colors",
@@ -74,9 +72,9 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
                 Positive Mentions
               </h4>
               <ul className="space-y-1">
-                {positiveData.map((phrase, i) => (
+                {positiveData.map((phrase) => (
                   <li
-                    key={i}
+                    key={phrase.phrase}
                     className="flex items-center justify-between text-sm"
                   >
                     <span className="truncate text-muted-foreground">
@@ -98,9 +96,9 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
                 Areas of Concern
               </h4>
               <ul className="space-y-1">
-                {negativeData.map((phrase, i) => (
+                {negativeData.map((phrase) => (
                   <li
-                    key={i}
+                    key={phrase.phrase}
                     className="flex items-center justify-between text-sm"
                   >
                     <span className="truncate text-muted-foreground">
@@ -126,9 +124,9 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
               {data
                 .filter((p) => p.recentOccurrences > 0)
                 .slice(0, 8)
-                .map((phrase, i) => (
+                .map((phrase) => (
                   <Badge
-                    key={i}
+                    key={phrase.phrase}
                     variant="outline"
                     className="text-xs"
                   >

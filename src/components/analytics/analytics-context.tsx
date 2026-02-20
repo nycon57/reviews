@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { subDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { useDebounce } from "@/hooks/use-debounce";
 import { toast } from "@/hooks/use-toast";
 import type {
   VideoTestimonialFunnelMetrics,
@@ -26,6 +27,7 @@ import {
   getResponseAnalytics,
   type ResponseAnalytics,
 } from "@/lib/reviews/response-actions";
+import { getReviewSummary } from "@/lib/reviews/actions";
 
 // ============================================================================
 // Types
@@ -115,7 +117,7 @@ export function AnalyticsProvider({
   const [videoMetrics, setVideoMetrics] = useState<VideoTestimonialFunnelMetrics | null>(initialVideoMetrics);
   const [videoTrends, setVideoTrends] = useState<VideoTestimonialTrendDataPoint[]>(initialVideoTrends);
   const [loStats, setLoStats] = useState<UserVideoStats[]>(initialLoStats);
-  const [reviewSummary] = useState<ReviewSummary>(initialReviewSummary);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary>(initialReviewSummary);
   const [responseAnalytics, setResponseAnalytics] = useState<ResponseAnalytics | null>(initialResponseAnalytics);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -124,6 +126,10 @@ export function AnalyticsProvider({
   const [selectedMember, setSelectedMember] = useState<string>("all");
 
   const canViewTeamStats = userRole === "admin" || userRole === "manager";
+
+  const debouncedDateRange = useDebounce(dateRange, 300);
+  const debouncedTrendPeriod = useDebounce(trendPeriod, 300);
+  const debouncedSelectedMember = useDebounce(selectedMember, 300);
 
   const getDateRangeValues = useCallback((range: DateRange) => {
     const now = new Date();
@@ -152,29 +158,31 @@ export function AnalyticsProvider({
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { startDate, endDate } = getDateRangeValues(dateRange);
-      const loFilter = selectedMember !== "all" ? selectedMember : undefined;
+      const { startDate, endDate } = getDateRangeValues(debouncedDateRange);
+      const loFilter = debouncedSelectedMember !== "all" ? debouncedSelectedMember : undefined;
 
-      const [videoMetricsResult, videoTrendsResult, loStatsResult, responseAnalyticsResult] = await Promise.all([
+      const [videoMetricsResult, videoTrendsResult, loStatsResult, responseAnalyticsResult, reviewSummaryResult] = await Promise.all([
         getVideoTestimonialFunnelMetrics({ startDate, endDate, userId: loFilter }),
-        getVideoTestimonialTrends({ startDate, endDate, period: trendPeriod, userId: loFilter }),
+        getVideoTestimonialTrends({ startDate, endDate, period: debouncedTrendPeriod, userId: loFilter }),
         canViewTeamStats && !loFilter
           ? getVideoTestimonialStatsByUser({ startDate, endDate })
           : Promise.resolve({ success: true, data: [] }),
         getResponseAnalytics({ startDate, endDate, userId: loFilter }),
+        getReviewSummary({ startDate, endDate }),
       ]);
 
       if (videoMetricsResult.success && videoMetricsResult.data) setVideoMetrics(videoMetricsResult.data);
       if (videoTrendsResult.success && videoTrendsResult.data) setVideoTrends(videoTrendsResult.data);
       if (loStatsResult.success && loStatsResult.data) setLoStats(loStatsResult.data);
       if (responseAnalyticsResult.success && responseAnalyticsResult.data) setResponseAnalytics(responseAnalyticsResult.data);
+      if (reviewSummaryResult.success && reviewSummaryResult.data) setReviewSummary(reviewSummaryResult.data);
     } catch (error) {
       console.error("Error fetching analytics:", error);
       toast({ title: "Error", description: "Failed to fetch analytics data", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
-  }, [dateRange, trendPeriod, selectedMember, canViewTeamStats, getDateRangeValues]);
+  }, [debouncedDateRange, debouncedTrendPeriod, debouncedSelectedMember, canViewTeamStats, getDateRangeValues]);
 
   const isInitialRender = useRef(true);
   useEffect(() => {

@@ -84,55 +84,6 @@ export {
   type ReviewContext,
 } from "./response-suggestions";
 
-// Testimonial Types
-export type {
-  TestimonialFormat,
-  TestimonialStatus,
-  Testimonial,
-  TestimonialGraphic,
-  TestimonialTemplate,
-  TestimonialReviewContext,
-  GeneratedTestimonial,
-  TestimonialGenerationResult,
-  GraphicGenerationOptions,
-  GeneratedGraphic,
-  ExportFormat,
-  ExportPlatform,
-  TestimonialExportOptions,
-  TestimonialExportResult,
-  TestimonialFilters,
-  TestimonialStats,
-  TestimonialActionResult,
-  BatchGenerationRequest,
-  BatchGenerationResult,
-} from "./testimonial-types";
-
-// Testimonial Generator
-export {
-  generateTestimonial,
-  generateMultipleFormats,
-  generateTestimonialGraphic,
-  isReviewSuitableForTestimonial,
-  analyzeBestTestimonialOpportunities,
-} from "./testimonial-generator";
-
-// Testimonial Actions
-export {
-  generateTestimonialFromReview,
-  generateMultipleTestimonialFormats,
-  batchGenerateTestimonials,
-  getTestimonials,
-  getTestimonialStats,
-  updateTestimonialStatus,
-  bulkUpdateTestimonialStatus,
-  updateTestimonialContent,
-  deleteTestimonial,
-  generateGraphicForTestimonial,
-  exportTestimonial,
-  getBestTestimonialCandidates,
-  getTestimonialTemplates,
-} from "./testimonial-actions";
-
 // OpenAI Client (for Whisper transcription)
 export {
   getOpenAIClient,

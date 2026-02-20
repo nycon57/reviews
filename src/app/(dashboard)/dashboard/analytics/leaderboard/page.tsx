@@ -5,7 +5,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { LeaderboardDashboard } from "./leaderboard-dashboard";
 import { getFilterOptions } from "@/lib/dashboard";
-import { requireEnterprise } from "@/lib/access";
+import { requireEnterpriseManager } from "@/lib/access";
 
 export const metadata = {
   title: "Leaderboard | RepWell",
@@ -18,8 +18,8 @@ async function getInitialFilters() {
 }
 
 export default async function LeaderboardPage() {
-  // Check access - requires enterprise account (all enterprise users can view)
-  await requireEnterprise();
+  // Check access - requires enterprise manager (server actions also require manager/admin)
+  await requireEnterpriseManager();
   const filters = await getInitialFilters();
 
   return (

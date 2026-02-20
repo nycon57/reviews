@@ -457,8 +457,8 @@ export async function getEnhancedLeaderboard(
   const entries: EnhancedLeaderboardEntry[] = (users || []).map(
     (user, index) => {
       const rank = index + 1;
-      const previousRank = previousRankMap.get(user.id) || null;
-      const rankChange = previousRank ? previousRank - rank : 0;
+      const previousRank = previousRankMap.get(user.id) ?? null;
+      const rankChange = previousRank !== null ? previousRank - rank : 0;
 
       return {
         rank,
@@ -474,7 +474,6 @@ export async function getEnhancedLeaderboard(
         npsScore: user.nps_score || 0,
         reputationScore: user.reputation_score || 0,
         badges: badgesByUser.get(user.id) || [],
-        streak: 0, // Would need historical data to calculate
       };
     }
   );
@@ -511,8 +510,8 @@ export async function getReputationBreakdown(
     return { success: false, error: "User not found" };
   }
 
-  // Get survey stats for CSAT and response rate
-  const { data: responses } = await supabase
+  // Get survey stats for CSAT and response rate (scoped to target user)
+  const { data: userResponses } = await supabase
     .from("survey_responses")
     .select(
       `
@@ -523,22 +522,15 @@ export async function getReputationBreakdown(
       )
     `
     )
+    .eq("surveys.user_id", targetLoId)
     .not("overall_rating", "is", null);
 
-  const userResponses = (responses || []).filter((r) => {
-    const survey = r.surveys as unknown as {
-      user_id: string;
-      status: string;
-    };
-    return survey.user_id === targetLoId;
-  });
-
-  const satisfiedCount = userResponses.filter(
+  const satisfiedCount = (userResponses || []).filter(
     (r) => (r.overall_rating || 0) >= 4
   ).length;
   const csatScore =
-    userResponses.length > 0
-      ? Math.round((satisfiedCount / userResponses.length) * 100)
+    (userResponses || []).length > 0
+      ? Math.round((satisfiedCount / (userResponses || []).length) * 100)
       : 0;
 
   // Get survey stats for response rate

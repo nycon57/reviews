@@ -55,9 +55,9 @@ export const NAV_CONFIG: NavConfig = {
       permission: PERMISSIONS.SEND_SURVEY,
     },
     {
-      title: "Testimonials",
-      href: "/dashboard/testimonials",
-      icon: "Quotes",
+      title: "Share Studio",
+      href: "/dashboard/share-studio",
+      icon: "ShareNetwork",
       permission: PERMISSIONS.VIEW_TESTIMONIALS,
     },
     {
@@ -103,13 +103,6 @@ export const NAV_CONFIG: NavConfig = {
           href: "/dashboard/insights",
           icon: "Sparkle",
           permission: PERMISSIONS.VIEW_AI_INSIGHTS,
-          requiresPro: true,
-        },
-        {
-          title: "Website Analytics",
-          href: "/dashboard/analytics/website",
-          icon: "Globe",
-          permission: PERMISSIONS.VIEW_WEBSITE_ANALYTICS,
           requiresPro: true,
         },
         // {

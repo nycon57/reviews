@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,10 +24,12 @@ import {
   Chats as MessageSquare,
   Eye,
   Sparkle as Sparkles,
+  ShareNetwork,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import type { Review, AggregatedReview } from "@/lib/reviews/types";
 import { useReviewQueue } from "./review-queue-context";
+import { CreateSmartLinkModal } from "@/components/share-studio/create-smart-link-modal";
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -72,6 +75,7 @@ function getSourceBadge(source: string) {
 
 export function ReviewListItem({ review }: { review: Review | AggregatedReview }) {
   const { state, actions } = useReviewQueue();
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const aggregatedReview = review as AggregatedReview;
   const isFeatured = "featured" in review && aggregatedReview.featured;
@@ -171,6 +175,16 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                 <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); actions.openReviewDetail(review); }}>
                   <Eye className="mr-1 h-3 w-3" />View
                 </Button>
+                {review.status === "approved" && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => { e.stopPropagation(); setShareModalOpen(true); }}
+                    title="Create Smart Link"
+                  >
+                    <ShareNetwork className="h-3 w-3" />
+                  </Button>
+                )}
                 {sourceUrl && (
                   <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); window.open(sourceUrl, "_blank"); }}>
                     <ExternalLink className="h-3 w-3" />
@@ -226,6 +240,12 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
           </div>
         </div>
       </div>
+      <CreateSmartLinkModal
+        open={shareModalOpen}
+        onOpenChange={setShareModalOpen}
+        reviewId={review.id}
+        reviewTitle={`${review.customerName || "Customer"} review`}
+      />
     </div>
   );
 }

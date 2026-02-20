@@ -27,7 +27,6 @@ import {
   ChatCircle,
   Buildings,
   Trophy,
-  Globe,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 
@@ -175,14 +174,6 @@ const quickLinks: SearchResult[] = [
     description: "Team performance rankings",
     href: "/dashboard/analytics/leaderboard",
     icon: Trophy,
-    category: "Pages",
-  },
-  {
-    id: "website-analytics",
-    title: "Website Analytics",
-    description: "Track website traffic and engagement",
-    href: "/dashboard/analytics/website",
-    icon: Globe,
     category: "Pages",
   },
 ];

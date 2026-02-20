@@ -2,38 +2,19 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Sparkle as Sparkles,
-  ArrowsClockwise as RefreshCw,
   CheckCircle,
   WarningCircle as AlertCircle,
   Calendar,
 } from "@phosphor-icons/react";
 import type { AIInsightsSummary } from "@/lib/ai";
-import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 interface AISummaryCardProps {
   summary: AIInsightsSummary | null;
-  onRefresh?: () => Promise<void>;
-  isLoading?: boolean;
 }
 
-export function AISummaryCard({ summary, onRefresh, isLoading }: AISummaryCardProps) {
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    if (onRefresh) {
-      setRefreshing(true);
-      try {
-        await onRefresh();
-      } finally {
-        setRefreshing(false);
-      }
-    }
-  };
-
+export function AISummaryCard({ summary }: AISummaryCardProps) {
   if (!summary) {
     return (
       <Card className="border-dashed">
@@ -75,17 +56,6 @@ export function AISummaryCard({ summary, onRefresh, isLoading }: AISummaryCardPr
             <Sparkles className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg font-semibold">AI Summary</CardTitle>
           </div>
-          {onRefresh && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing || isLoading}
-            >
-              <RefreshCw className={cn("mr-1 h-3 w-3", (refreshing || isLoading) && "animate-spin")} />
-              Refresh
-            </Button>
-          )}
         </div>
         <CardDescription className="flex items-center gap-1.5">
           <Calendar className="h-3 w-3" />

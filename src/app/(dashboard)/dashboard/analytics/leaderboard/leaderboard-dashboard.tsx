@@ -6,11 +6,13 @@ import { EnhancedLeaderboard, ProfileCompletionLeaderboard } from "@/components/
 import {
   Crown,
   Medal,
-  Medal as Award,
+  Trophy,
   Users,
   SpinnerGap as Loader2,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import { getEnhancedLeaderboard } from "@/lib/gamification/actions";
+import { getInitials } from "@/lib/utils";
 import type { FilterOptions } from "@/lib/dashboard";
 import type { EnhancedLeaderboardEntry } from "@/lib/gamification/types";
 
@@ -21,6 +23,7 @@ interface LeaderboardDashboardProps {
 export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardProps) {
   const [isPending, startTransition] = useTransition();
   const [topPerformers, setTopPerformers] = useState<EnhancedLeaderboardEntry[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const loadTopPerformers = useCallback(() => {
     startTransition(async () => {
@@ -30,6 +33,9 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
       });
       if (result.success && result.data) {
         setTopPerformers(result.data);
+        setError(null);
+      } else {
+        setError(result.error || "Failed to load leaderboard data");
       }
     });
   }, []);
@@ -37,15 +43,6 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
   useEffect(() => {
     loadTopPerformers();
   }, [loadTopPerformers]);
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   return (
     <div className="space-y-6">
@@ -81,10 +78,16 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
               </div>
             ) : (
               <div className="flex flex-col items-center text-center py-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-                  <Medal className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">2nd Place</p>
+                {isPending ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                ) : (
+                  <>
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Medal className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">2nd Place</p>
+                  </>
+                )}
               </div>
             )}
           </CardContent>
@@ -154,7 +157,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                       </span>
                     )}
                   </div>
-                  <Award className="absolute -bottom-1 -right-1 h-6 w-6 text-amber-600" />
+                  <Trophy className="absolute -bottom-1 -right-1 h-6 w-6 text-amber-600" />
                 </div>
                 <p className="font-semibold truncate max-w-full">{topPerformers[2].fullName}</p>
                 <p className="text-xs text-muted-foreground">3rd Place</p>
@@ -165,15 +168,41 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
               </div>
             ) : (
               <div className="flex flex-col items-center text-center py-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-                  <Award className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">3rd Place</p>
+                {isPending ? (
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                ) : (
+                  <>
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+                      <Trophy className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="mt-3 text-sm text-muted-foreground">3rd Place</p>
+                  </>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Error state */}
+      {error && (
+        <Card className="border-destructive/50 bg-destructive/5">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <WarningCircle className="h-5 w-5 text-destructive" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-destructive">{error}</p>
+              </div>
+              <button
+                onClick={loadTopPerformers}
+                className="text-sm font-medium text-destructive underline hover:no-underline"
+              >
+                Retry
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -185,7 +214,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
               </div>
               <div>
                 <p className="text-2xl font-bold">{topPerformers.length > 0 ? topPerformers.length : "-"}</p>
-                <p className="text-xs text-muted-foreground">Top Performers</p>
+                <p className="text-xs text-muted-foreground">Podium</p>
               </div>
             </div>
           </CardContent>
@@ -211,13 +240,13 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                <Award className="h-5 w-5 text-green-600" />
+                <Trophy className="h-5 w-5 text-green-600" />
               </div>
               <div>
                 <p className="text-2xl font-bold">
                   {topPerformers.reduce((sum, p) => sum + p.badges.length, 0) || "-"}
                 </p>
-                <p className="text-xs text-muted-foreground">Badges Earned</p>
+                <p className="text-xs text-muted-foreground">Top 3 Badges</p>
               </div>
             </div>
           </CardContent>
@@ -233,7 +262,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                 <p className="text-2xl font-bold">
                   {topPerformers.reduce((sum, p) => sum + p.totalReviews, 0) || "-"}
                 </p>
-                <p className="text-xs text-muted-foreground">Total Reviews</p>
+                <p className="text-xs text-muted-foreground">Top 3 Reviews</p>
               </div>
             </div>
           </CardContent>

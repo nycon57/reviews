@@ -239,27 +239,52 @@ export async function getProfileCompletionScore(
     responseRate
   );
 
-  // Get rank among all users in organization
+  // Get rank among all users in organization (single query, no N+1)
   const { data: allUsers } = await supabase
     .from("users")
-    .select("id")
+    .select(`
+      id,
+      photo_url,
+      full_name,
+      email,
+      phone,
+      title,
+      bio,
+      branch,
+      region,
+      address,
+      nmls_id,
+      linkedin_url,
+      zillow_profile_url,
+      google_place_id
+    `)
     .eq("organization_id", userData.organization_id)
     .eq("is_active", true);
 
-  // Calculate rankings based on profile completion
+  // Calculate rankings based on profile completion (in-memory scoring)
   let rank: number | null = null;
   if (allUsers && allUsers.length > 0) {
-    // For now, use a simple rank calculation
-    // In production, you might want to cache this or use a view
-    const allScores = await Promise.all(
-      allUsers.map(async (user) => {
-        if (user.id === targetLoId) {
-          return { id: user.id, score: earnedPoints };
-        }
-        const result = await getSimpleProfileScore(user.id);
-        return { id: user.id, score: result };
-      })
-    );
+    const allScores = allUsers.map((user) => {
+      if (user.id === targetLoId) {
+        return { id: user.id, score: earnedPoints };
+      }
+      // Inline scoring using already-fetched data
+      let score = 0;
+      if (user.photo_url) score += 50;
+      if (user.full_name) score += 25;
+      if (user.email) score += 25;
+      if (user.phone) score += 25;
+      if (user.title) score += 25;
+      if (user.bio && user.bio.length >= 50) score += 75;
+      if (user.branch) score += 25;
+      if (user.region) score += 25;
+      if (hasJsonContent(user.address)) score += 25;
+      if (user.nmls_id) score += 50;
+      if (user.linkedin_url) score += 50;
+      if (user.zillow_profile_url) score += 100;
+      if (user.google_place_id) score += 100;
+      return { id: user.id, score };
+    });
 
     allScores.sort((a, b) => b.score - a.score);
     const myPosition = allScores.findIndex((s) => s.id === targetLoId);
@@ -301,52 +326,6 @@ export async function getProfileCompletionScore(
       milestones,
     },
   };
-}
-
-// Helper to get simple profile score for ranking
-async function getSimpleProfileScore(userId: string): Promise<number> {
-  const supabase = createUntypedAdminClient();
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select(`
-      photo_url,
-      full_name,
-      email,
-      phone,
-      title,
-      bio,
-      branch,
-      region,
-      address,
-      nmls_id,
-      linkedin_url,
-      zillow_profile_url,
-      google_place_id
-    `)
-    .eq("id", userId)
-    .single();
-
-  if (!userData) return 0;
-
-  let score = 0;
-
-  // Simple scoring based on field presence
-  if (userData.photo_url) score += 50;
-  if (userData.full_name) score += 25;
-  if (userData.email) score += 25;
-  if (userData.phone) score += 25;
-  if (userData.title) score += 25;
-  if (userData.bio && userData.bio.length >= 50) score += 75;
-  if (userData.branch) score += 25;
-  if (userData.region) score += 25;
-  if (hasJsonContent(userData.address)) score += 25;
-  if (userData.nmls_id) score += 50;
-  if (userData.linkedin_url) score += 50;
-  if (userData.zillow_profile_url) score += 100;
-  if (userData.google_place_id) score += 100;
-
-  return score;
 }
 
 // Calculate search rank score (0-850)
@@ -391,7 +370,7 @@ export async function getProfileCompletionLeaderboard(
 
   const supabase = createUntypedAdminClient();
 
-  // Get all active users
+  // Get all active users (no duplicate columns)
   const { data: users, error } = await supabase
     .from("users")
     .select(`
@@ -399,8 +378,6 @@ export async function getProfileCompletionLeaderboard(
       full_name,
       photo_url,
       branch,
-      photo_url,
-      full_name,
       email,
       phone,
       title,
@@ -422,43 +399,100 @@ export async function getProfileCompletionLeaderboard(
     return { success: false, error: "Failed to fetch users" };
   }
 
+  const userIds = (users || []).map((u) => u.id);
+
+  // Batch-fetch survey response rates for all users
+  let allSurveys: { user_id: string; status: string }[] | null = [];
+  let allTestimonials: { user_id: string }[] | null = [];
+
+  if (userIds.length > 0) {
+    const { data: surveyData } = await supabase
+      .from("surveys")
+      .select("user_id, status")
+      .in("user_id", userIds);
+    allSurveys = surveyData;
+
+    // Batch-fetch testimonial counts
+    const { data: testimonialData } = await supabase
+      .from("testimonials")
+      .select("user_id")
+      .in("user_id", userIds)
+      .eq("status", "approved");
+    allTestimonials = testimonialData;
+  }
+
+  // Build lookup maps
+  const surveysByUser = new Map<string, Array<{ status: string }>>();
+  for (const s of allSurveys || []) {
+    const list = surveysByUser.get(s.user_id) || [];
+    list.push(s);
+    surveysByUser.set(s.user_id, list);
+  }
+
+  const testimonialUsers = new Set(
+    (allTestimonials || []).map((t) => t.user_id)
+  );
+
   // Calculate scores for each user
   const entries: ProfileCompletionLeaderboardEntry[] = (users || []).map(
     (user) => {
       let earnedPoints = 0;
       let completedSections = 0;
 
-      // Calculate points based on field completion
+      // Basic info fields (150 pts max)
       if (user.photo_url) earnedPoints += 50;
       if (user.full_name) earnedPoints += 25;
       if (user.email) earnedPoints += 25;
       if (user.phone) earnedPoints += 25;
       if (user.title) earnedPoints += 25;
+
+      // Professional details (200 pts max)
       if (user.bio && user.bio.length >= 50) earnedPoints += 75;
+      if (user.nmls_id) earnedPoints += 50;
       if (user.branch) earnedPoints += 25;
       if (user.region) earnedPoints += 25;
       if (hasJsonContent(user.address)) earnedPoints += 25;
-      if (user.nmls_id) earnedPoints += 50;
-      if (user.linkedin_url) earnedPoints += 50;
-      if (user.zillow_profile_url) earnedPoints += 100;
+
+      // External connections (300 pts max) — includes has_social_connection
       if (user.google_place_id) earnedPoints += 100;
+      if (user.zillow_profile_url) earnedPoints += 100;
+      if (user.linkedin_url) earnedPoints += 50;
+      // has_social_connection (+50) — skipped in lightweight query (would need social_connections table)
+
+      // Social presence fields (200 pts max)
+      const hasReviews = (user.total_reviews || 0) >= 5;
+      const hasTestimonials = testimonialUsers.has(user.id);
+      if (hasReviews) earnedPoints += 75;
+      if (hasTestimonials) earnedPoints += 50;
+      // has_published_posts (+50) — skipped (would need social_posts table)
+
+      // Survey response rate
+      const userSurveys = surveysByUser.get(user.id) || [];
+      const totalSent = userSurveys.filter((s) =>
+        s.status && ["sent", "opened", "completed", "expired"].includes(s.status)
+      ).length;
+      const completedSurveys = userSurveys.filter((s) => s.status === "completed").length;
+      const responseRate = totalSent > 0 ? Math.round((completedSurveys / totalSent) * 100) : 0;
+      if (responseRate >= 50) earnedPoints += 25;
 
       const percentage = Math.round((earnedPoints / MAX_PROFILE_POINTS) * 100);
 
-      // Calculate section completion (simplified)
+      // Calculate section completion
       const basicInfoComplete = user.photo_url && user.full_name && user.email && user.phone && user.title;
       const professionalComplete = user.bio && user.nmls_id && user.branch && user.region;
       const externalComplete = user.google_place_id && user.zillow_profile_url && user.linkedin_url;
+      const socialPresenceComplete = hasReviews && hasTestimonials && responseRate >= 50;
 
       if (basicInfoComplete) completedSections++;
       if (professionalComplete) completedSections++;
       if (externalComplete) completedSections++;
+      if (socialPresenceComplete) completedSections++;
 
       const searchRankScore = calculateSearchRankScore(
         percentage,
         user.total_reviews || 0,
         user.average_rating || 0,
-        50 // Default response rate for leaderboard
+        responseRate
       );
 
       return {

@@ -66,7 +66,7 @@ export function MobileNav({ className }: MobileNavProps) {
             />
           </SheetTitle>
         </SheetHeader>
-        <ScrollArea className="h-[calc(100vh-4rem)]">
+        <ScrollArea className="h-[calc(100svh-3.25rem)]">
           <nav className="flex flex-col gap-1 p-4" aria-label="Mobile navigation">
             {/* Core items */}
             {coreItems.map((item) => (

@@ -105,6 +105,13 @@ export const NAV_CONFIG: NavConfig = {
           permission: PERMISSIONS.VIEW_AI_INSIGHTS,
           requiresPro: true,
         },
+        {
+          title: "Website Analytics",
+          href: "/dashboard/analytics/website",
+          icon: "Globe",
+          permission: PERMISSIONS.VIEW_WEBSITE_ANALYTICS,
+          requiresPro: true,
+        },
         // {
         //   title: "AI Visibility",
         //   href: "/dashboard/geo",
@@ -152,6 +159,12 @@ export const NAV_CONFIG: NavConfig = {
           href: "/dashboard/organization",
           icon: "Buildings",
           permission: PERMISSIONS.VIEW_ORGANIZATION,
+        },
+        {
+          title: "Widgets",
+          href: "/dashboard/widgets",
+          icon: "Code",
+          permission: PERMISSIONS.VIEW_DASHBOARD,
         },
       ],
     },

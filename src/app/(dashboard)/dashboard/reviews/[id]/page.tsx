@@ -27,8 +27,13 @@ async function checkAccess() {
     redirect("/dashboard");
   }
 
+  const validRoles = ["admin", "manager", "user"] as const;
+  type UserRole = typeof validRoles[number];
+  const rawRole = userData.role;
+  const role: UserRole = validRoles.includes(rawRole as UserRole) ? (rawRole as UserRole) : "user";
+
   return {
-    role: userData.role as "admin" | "manager" | "user",
+    role,
     organizationId: userData.organization_id,
   };
 }

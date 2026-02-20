@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAccessContext } from "@/lib/access";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import {
   createSurveyTemplateSchema,
   updateSurveyTemplateSchema,
@@ -19,6 +21,15 @@ export interface ActionResult<T = void> {
   success: boolean;
   data?: T;
   error?: string;
+}
+
+async function requireSurveyTemplatePermission(): Promise<ActionResult | null> {
+  const ctx = await getAccessContext();
+  if (!ctx) return { success: false, error: "Not authenticated" };
+  if (!hasPermission(ctx, PERMISSIONS.MANAGE_SURVEY_TEMPLATES)) {
+    return { success: false, error: "Insufficient permissions" };
+  }
+  return null; // No error — access granted
 }
 
 // Get all survey templates for the current organization
@@ -81,10 +92,22 @@ export async function getSurveyTemplate(id: string): Promise<ActionResult<Survey
       return { success: false, error: "Not authenticated" };
     }
 
+    // Resolve caller's org to prevent cross-tenant reads
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
     const { data, error } = await supabase
       .from("survey_templates")
       .select("*")
       .eq("id", id)
+      .eq("organization_id", userData.organization_id)
       .single();
 
     if (error) {
@@ -118,6 +141,9 @@ export async function createSurveyTemplate(
   input: CreateSurveyTemplateInput
 ): Promise<ActionResult<SurveyTemplate>> {
   try {
+    const permError = await requireSurveyTemplatePermission();
+    if (permError) return permError as ActionResult<SurveyTemplate>;
+
     const validated = createSurveyTemplateSchema.safeParse(input);
     if (!validated.success) {
       return { success: false, error: validated.error.errors[0]?.message || "Validation failed" };
@@ -188,6 +214,9 @@ export async function updateSurveyTemplate(
   input: UpdateSurveyTemplateInput
 ): Promise<ActionResult<SurveyTemplate>> {
   try {
+    const permError = await requireSurveyTemplatePermission();
+    if (permError) return permError as ActionResult<SurveyTemplate>;
+
     const validated = updateSurveyTemplateSchema.safeParse(input);
     if (!validated.success) {
       return { success: false, error: validated.error.errors[0]?.message || "Validation failed" };
@@ -246,6 +275,9 @@ export async function updateSurveyTemplate(
 // Delete a survey template
 export async function deleteSurveyTemplate(id: string): Promise<ActionResult> {
   try {
+    const permError = await requireSurveyTemplatePermission();
+    if (permError) return permError;
+
     const supabase = createAdminClient();
 
     const user = await unifiedGetUser();
@@ -287,6 +319,9 @@ export async function deleteSurveyTemplate(id: string): Promise<ActionResult> {
 // Duplicate a survey template
 export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<SurveyTemplate>> {
   try {
+    const permError = await requireSurveyTemplatePermission();
+    if (permError) return permError as ActionResult<SurveyTemplate>;
+
     const supabase = createAdminClient();
 
     const user = await unifiedGetUser();
@@ -294,11 +329,23 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
       return { success: false, error: "Not authenticated" };
     }
 
-    // Fetch the original template
+    // Resolve caller's org to prevent cross-tenant duplication
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Fetch the original template — scoped to caller's org
     const { data: original, error: fetchError } = await supabase
       .from("survey_templates")
       .select("*")
       .eq("id", id)
+      .eq("organization_id", userData.organization_id)
       .single();
 
     if (fetchError || !original) {
@@ -316,7 +363,7 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
         thank_you_config: original.thank_you_config,
         is_active: false, // Start as inactive
         is_default: false,
-        organization_id: original.organization_id,
+        organization_id: userData.organization_id,
         created_by: user.id,
       })
       .select()
@@ -349,6 +396,9 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
 // Toggle template active status
 export async function toggleTemplateStatus(id: string, isActive: boolean): Promise<ActionResult> {
   try {
+    const permError = await requireSurveyTemplatePermission();
+    if (permError) return permError;
+
     const supabase = createAdminClient();
 
     const user = await unifiedGetUser();
@@ -356,10 +406,22 @@ export async function toggleTemplateStatus(id: string, isActive: boolean): Promi
       return { success: false, error: "Not authenticated" };
     }
 
+    // Resolve caller's org to prevent cross-tenant writes
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData?.organization_id) {
+      return { success: false, error: "Organization not found" };
+    }
+
     const { error } = await supabase
       .from("survey_templates")
       .update({ is_active: isActive, updated_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("organization_id", userData.organization_id);
 
     if (error) {
       return { success: false, error: error.message };
@@ -378,11 +440,16 @@ export async function createFromDefaultTemplate(
   templateKey: keyof typeof DEFAULT_TEMPLATES
 ): Promise<ActionResult<SurveyTemplate>> {
   try {
+    const permError = await requireSurveyTemplatePermission();
+    if (permError) return permError as ActionResult<SurveyTemplate>;
+
     const defaultTemplate = DEFAULT_TEMPLATES[templateKey];
     if (!defaultTemplate) {
       return { success: false, error: "Invalid template key" };
     }
 
+    // Note: createSurveyTemplate also checks permission, but we check here
+    // early to fail fast before any template lookup
     return createSurveyTemplate({
       name: defaultTemplate.name,
       description: defaultTemplate.description,

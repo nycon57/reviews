@@ -45,7 +45,7 @@ async function DashboardStats() {
         title="Your stats will appear here"
         description="Once you start collecting reviews and survey responses, you'll see your performance metrics displayed here."
         actions={[
-          { label: "Send Your First Survey", href: "/dashboard/send", iconName: "send" },
+          { label: "Send Your First Survey", href: "/dashboard/requests", iconName: "send" },
           { label: "Import Reviews", href: "/dashboard/reviews", variant: "outline" },
         ]}
       />
@@ -60,7 +60,7 @@ async function DashboardStats() {
         title="Your stats will appear here"
         description="Once you start collecting reviews and survey responses, you'll see your performance metrics displayed here."
         actions={[
-          { label: "Send Your First Survey", href: "/dashboard/send", iconName: "send" },
+          { label: "Send Your First Survey", href: "/dashboard/requests", iconName: "send" },
           { label: "Import Reviews", href: "/dashboard/reviews", variant: "outline" },
         ]}
       />

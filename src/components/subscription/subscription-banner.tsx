@@ -52,7 +52,7 @@ const BANNER_CONFIGS: Record<string, BannerConfig> = {
     description: "Please update your payment method to avoid service interruption.",
     action: {
       label: "Update Payment",
-      href: "/dashboard/settings/billing",
+      href: "/dashboard/settings?tab=billing",
     },
   },
   canceled: {
@@ -74,7 +74,7 @@ const BANNER_CONFIGS: Record<string, BannerConfig> = {
     description: "Your last payment failed. Please update your payment method.",
     action: {
       label: "Update Payment",
-      href: "/dashboard/settings/billing",
+      href: "/dashboard/settings?tab=billing",
     },
   },
 };

@@ -215,7 +215,7 @@ export function WelcomeBanner({
 }: WelcomeBannerProps) {
   const steps = [
     { label: "Complete your profile", href: "/dashboard/settings", done: completionPercent > 25 },
-    { label: "Send your first survey", href: "/dashboard/send", done: false },
+    { label: "Send your first survey", href: "/dashboard/requests", done: false },
     { label: "Connect review sources", href: "/dashboard/settings#integrations", done: false },
   ];
 

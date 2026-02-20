@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -18,6 +26,11 @@ import {
   Funnel as Filter,
   PaperPlaneRight as Send,
   Plus,
+  LinkedinLogo,
+  XLogo,
+  FacebookLogo,
+  Copy,
+  Link as LinkIcon,
 } from "@phosphor-icons/react";
 import { formatDistanceToNow } from "date-fns";
 import type { RecentReview } from "@/lib/dashboard";
@@ -50,21 +63,74 @@ export function UserRecentReviews({
     });
   };
 
-  const handleShare = async (review: RecentReview) => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Review from ${review.customerName || "Customer"}`,
-          text: review.text || "",
-        });
-      } catch {
-        // User cancelled or share failed - silently ignore
-      }
-    } else {
-      // Fallback: copy to clipboard
-      const text = `"${review.text}" - ${review.customerName || "Anonymous"}, ${review.rating} stars`;
-      await navigator.clipboard.writeText(text);
+  const router = useRouter();
+
+  const buildShareText = (review: RecentReview) => {
+    const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
+    const name = review.customerName || "A customer";
+    const quote = review.text ? `"${review.text}"` : "";
+    return quote ? `${stars} ${quote} — ${name}` : `${stars} — ${name}`;
+  };
+
+  const buildReviewPublicUrl = (_review: RecentReview): string | null => {
+    // No public URL field on RecentReview yet — user should create a Smart Link
+    return null;
+  };
+
+  const handleShareToLinkedIn = (review: RecentReview) => {
+    const url = buildReviewPublicUrl(review);
+    if (!url) {
+      handleCreateSmartLink(review);
+      return;
     }
+    window.open(
+      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  const handleShareToX = (review: RecentReview) => {
+    const text = encodeURIComponent(buildShareText(review));
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank", "noopener,noreferrer");
+  };
+
+  const handleShareToFacebook = (review: RecentReview) => {
+    const url = buildReviewPublicUrl(review);
+    if (!url) {
+      handleCreateSmartLink(review);
+      return;
+    }
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  const handleCopyReview = async (review: RecentReview) => {
+    const text = buildShareText(review);
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = text;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+    } catch (err) {
+      console.error("[handleCopyReview] Failed to copy review text:", err);
+      alert("Failed to copy to clipboard. Please copy the text manually.");
+    }
+  };
+
+  const handleCreateSmartLink = (review: RecentReview) => {
+    router.push(`/dashboard/share-studio?reviewId=${review.id}`);
   };
 
   return (
@@ -116,7 +182,7 @@ export function UserRecentReviews({
             </p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               <Button variant="default" size="sm" asChild>
-                <a href="/dashboard/send">
+                <a href="/dashboard/requests">
                   <Send className="mr-1.5 h-3.5 w-3.5" />
                   Send Survey
                 </a>
@@ -189,15 +255,41 @@ export function UserRecentReviews({
                       )}
                     </span>
                     <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleShare(review)}
-                        title="Share review"
-                      >
-                        <Share2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            title="Share review"
+                          >
+                            <Share2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleShareToLinkedIn(review)}>
+                            <LinkedinLogo className="mr-2 h-4 w-4" />
+                            Share to LinkedIn
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleShareToX(review)}>
+                            <XLogo className="mr-2 h-4 w-4" />
+                            Share to X
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleShareToFacebook(review)}>
+                            <FacebookLogo className="mr-2 h-4 w-4" />
+                            Share to Facebook
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleCopyReview(review)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy review text
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleCreateSmartLink(review)}>
+                            <LinkIcon className="mr-2 h-4 w-4" />
+                            Create Smart Link
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <Button
                         variant="ghost"
                         size="icon"

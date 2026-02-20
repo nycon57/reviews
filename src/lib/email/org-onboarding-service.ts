@@ -732,7 +732,7 @@ async function sendOrgOnboardingEmail(
 
       const data: OrgOnboarding5BillingEmailData = {
         ...baseData,
-        billingUrl: `${baseUrl}/dashboard/settings/billing`,
+        billingUrl: `${baseUrl}/dashboard/settings?tab=billing`,
         pricingUrl: `${baseUrl}/pricing`,
         currentPlan: org?.subscription_tier || "Free Trial",
         trialEndsAt: trialInfo.trialEndsAt,

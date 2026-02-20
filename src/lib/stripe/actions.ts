@@ -253,7 +253,7 @@ export async function cancelSubscription(
       });
     }
 
-    revalidatePath("/dashboard/settings/billing");
+    revalidatePath("/dashboard/settings");
     return { success: true };
   } catch (error) {
     console.error("Error canceling subscription:", error);
@@ -293,7 +293,7 @@ export async function resumeSubscription(
       cancel_at_period_end: false,
     });
 
-    revalidatePath("/dashboard/settings/billing");
+    revalidatePath("/dashboard/settings");
     return { success: true };
   } catch (error) {
     console.error("Error resuming subscription:", error);
@@ -382,7 +382,7 @@ export async function updateSubscription(
       updateParams as Parameters<typeof stripe.subscriptions.update>[1]
     );
 
-    revalidatePath("/dashboard/settings/billing");
+    revalidatePath("/dashboard/settings");
     return { success: true };
   } catch (error) {
     console.error("Error updating subscription:", error);

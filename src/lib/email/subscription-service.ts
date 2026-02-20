@@ -127,7 +127,7 @@ const DEFAULT_OFFBOARDING_CHECKLIST = [
   {
     title: "Save video testimonials",
     description: "Download your video testimonials.",
-    actionUrl: "/dashboard/testimonials",
+    actionUrl: "/dashboard/share-studio",
   },
   {
     title: "Update integrations",
@@ -320,7 +320,7 @@ function buildBaseUrls(organizationId: string): {
   return {
     baseUrl,
     dashboardUrl: `${baseUrl}/dashboard`,
-    billingUrl: `${baseUrl}/dashboard/settings/billing`,
+    billingUrl: `${baseUrl}/dashboard/settings?tab=billing`,
     unsubscribeUrl: `${baseUrl}/api/email/unsubscribe?org=${organizationId}`,
   };
 }

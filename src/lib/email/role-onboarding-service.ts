@@ -751,7 +751,7 @@ async function sendRoleOnboardingEmail(
         ...baseData,
         reviewsUrl: `${baseUrl}/dashboard/reviews`,
         shareSettingsUrl: `${baseUrl}/dashboard/settings/sharing`,
-        testimonialsUrl: `${baseUrl}/dashboard/testimonials`,
+        testimonialsUrl: `${baseUrl}/dashboard/share-studio`,
         hasSharedReview: false,
       });
       break;
@@ -887,9 +887,9 @@ async function sendRoleOnboardingEmail(
     case "role_onboarding_admin_4_billing":
       emailContent = getRoleOnboardingAdmin4BillingEmail({
         ...baseData,
-        billingUrl: `${baseUrl}/dashboard/settings/billing`,
+        billingUrl: `${baseUrl}/dashboard/settings?tab=billing`,
         plansUrl: `${baseUrl}/pricing`,
-        invoicesUrl: `${baseUrl}/dashboard/settings/billing/invoices`,
+        invoicesUrl: `${baseUrl}/dashboard/settings?tab=billing`,
         currentPlan: "Free Trial",
         billingConfigured: false,
       });

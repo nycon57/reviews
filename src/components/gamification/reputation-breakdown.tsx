@@ -97,7 +97,7 @@ export function ReputationBreakdownCard({
               Your reputation score is calculated from NPS, customer satisfaction, response rates, and reviews. Start collecting feedback to see your breakdown.
             </p>
             <Button variant="default" size="sm" className="mt-4" asChild>
-              <a href="/dashboard/send">
+              <a href="/dashboard/requests">
                 <Send className="mr-1.5 h-3.5 w-3.5" />
                 Send Survey
               </a>

@@ -526,7 +526,7 @@ async function sendRecoveryEmail(
         targetPlan: safeString(context.target_plan),
         currentPlan: safeString(context.current_plan),
         pricingUrl: `${baseUrl}/pricing`,
-        upgradeUrl: `${baseUrl}/dashboard/settings/billing/upgrade`,
+        upgradeUrl: `${baseUrl}/dashboard/settings?tab=billing`,
         featuresHighlight: safeStringArray(context.features_highlight),
         specialOffer: safeSpecialOffer(context.special_offer),
       };

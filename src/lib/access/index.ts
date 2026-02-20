@@ -141,7 +141,7 @@ export async function checkPageAccess(
 
     if (userLevel < requiredLevel) {
       // Redirect to billing with upgrade prompt
-      const upgradeUrl = `/dashboard/settings/billing?upgrade=${minTier}`;
+      const upgradeUrl = `/dashboard/settings?tab=billing&upgrade=${minTier}`;
       redirect(redirectTo || upgradeUrl);
     }
   }

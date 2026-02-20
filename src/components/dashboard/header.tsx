@@ -246,7 +246,7 @@ function UserMenu({ user, onSignOut, role, accountType }: UserMenuProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild className="text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 cursor-pointer">
-          <Link href="/dashboard/settings/billing" className="flex items-center">
+          <Link href="/dashboard/settings?tab=billing" className="flex items-center">
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Billing</span>
           </Link>

@@ -46,7 +46,7 @@ export const NAV_CONFIG: NavConfig = {
       title: "Surveys",
       href: "/dashboard/surveys",
       icon: "FileText",
-      permission: PERMISSIONS.VIEW_SURVEYS,
+      permission: PERMISSIONS.MANAGE_SURVEY_TEMPLATES,
     },
     {
       title: "Requests",

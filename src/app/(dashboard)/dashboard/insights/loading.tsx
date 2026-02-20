@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function InsightsLoading() {
   return (
-    <div className="flex-1 space-y-6 p-6">
+    <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -35,9 +35,6 @@ export default function InsightsLoading() {
         <CardSkeleton className="h-[400px]" />
         <CardSkeleton className="h-[400px]" />
       </div>
-
-      {/* Industry benchmarks */}
-      <CardSkeleton className="h-[500px]" />
 
       {/* Improvement recommendations */}
       <CardSkeleton className="h-[400px]" />

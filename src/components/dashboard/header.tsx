@@ -18,7 +18,6 @@ import { InviteTeamDialog } from "@/components/dashboard/invite-team-dialog";
 import {
   MagnifyingGlass as Search,
   SignOut as LogOut,
-  User as UserIcon,
   Gear as Settings,
   CreditCard,
   UserPlus,
@@ -225,12 +224,6 @@ function UserMenu({ user, onSignOut, role, accountType }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-border" />
-        <DropdownMenuItem asChild className="text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 cursor-pointer">
-          <Link href="/dashboard/settings" className="flex items-center">
-            <UserIcon className="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </Link>
-        </DropdownMenuItem>
         {(user.slug || user.loanOfficerId) && (
           <DropdownMenuItem asChild className="text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 cursor-pointer">
             <Link href={`/pro/${user.slug || user.loanOfficerId}`} target="_blank" className="flex items-center">

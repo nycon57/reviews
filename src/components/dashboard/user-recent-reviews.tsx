@@ -35,6 +35,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import type { RecentReview } from "@/lib/dashboard";
 import { getUserRecentReviews } from "@/lib/dashboard";
+import { useToast } from "@/hooks/use-toast";
 
 interface RecentReviewsProps {
   initialReviews: RecentReview[];
@@ -45,6 +46,7 @@ export function UserRecentReviews({
   initialReviews,
   userId,
 }: RecentReviewsProps) {
+  const { toast } = useToast();
   const [reviews, setReviews] = useState(initialReviews);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [isPending, startTransition] = useTransition();
@@ -72,8 +74,15 @@ export function UserRecentReviews({
     return quote ? `${stars} ${quote} — ${name}` : `${stars} — ${name}`;
   };
 
-  const buildReviewPublicUrl = (_review: RecentReview): string | null => {
-    // No public URL field on RecentReview yet — user should create a Smart Link
+  const buildReviewPublicUrl = (review: RecentReview): string | null => {
+    // Prefer the original source URL (e.g. Google review link)
+    if (review.sourceUrl && review.sourceUrl.startsWith("http")) {
+      return review.sourceUrl;
+    }
+    // Fall back to the user's public RepWell profile page
+    if (review.userSlug) {
+      return `${window.location.origin}/pro/${review.userSlug}`;
+    }
     return null;
   };
 
@@ -123,9 +132,12 @@ export function UserRecentReviews({
         document.execCommand("copy");
         document.body.removeChild(textarea);
       }
-    } catch (err) {
-      console.error("[handleCopyReview] Failed to copy review text:", err);
-      alert("Failed to copy to clipboard. Please copy the text manually.");
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Please select and copy the text manually.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -266,10 +278,12 @@ export function UserRecentReviews({
                             <Share2 className="h-3.5 w-3.5" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuContent align="end" className="w-52">
                           <DropdownMenuItem onClick={() => handleShareToLinkedIn(review)}>
                             <LinkedinLogo className="mr-2 h-4 w-4" />
-                            Share to LinkedIn
+                            {review.sourceUrl || review.userSlug
+                              ? "Share to LinkedIn"
+                              : "Create Shareable Link"}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleShareToX(review)}>
                             <XLogo className="mr-2 h-4 w-4" />
@@ -277,7 +291,9 @@ export function UserRecentReviews({
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleShareToFacebook(review)}>
                             <FacebookLogo className="mr-2 h-4 w-4" />
-                            Share to Facebook
+                            {review.sourceUrl || review.userSlug
+                              ? "Share to Facebook"
+                              : "Create Shareable Link"}
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleCopyReview(review)}>
                             <Copy className="mr-2 h-4 w-4" />

@@ -38,6 +38,7 @@ export const PERMISSIONS = {
   MANAGE_BILLING: "manage:billing",
   INVITE_USERS: "invite:users",
   ELEVATE_ROLES: "elevate:roles",
+  MANAGE_SURVEY_TEMPLATES: "manage:survey_templates",
 
   // Admin analytics section (enterprise admin only)
   VIEW_ADMIN_ANALYTICS: "view:admin_analytics",
@@ -102,6 +103,7 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
     case PERMISSIONS.INVITE_USERS:
     case PERMISSIONS.ELEVATE_ROLES:
     case PERMISSIONS.VIEW_ADMIN_ANALYTICS:
+    case PERMISSIONS.MANAGE_SURVEY_TEMPLATES:
       // Only enterprise admins
       return isEnterprise && isAdmin;
 

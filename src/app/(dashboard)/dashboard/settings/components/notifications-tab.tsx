@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -8,14 +8,12 @@ import {
   EnvelopeSimple,
   SlackLogo,
   DeviceMobile,
-  BellSlash,
   ArrowRight,
   CheckCircle,
 } from '@phosphor-icons/react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { NotificationPreferencesCard } from '@/components/notifications';
 import { fadeInUp, staggerContainer } from '@/lib/motion/variants';
 
@@ -78,17 +76,6 @@ function QuickActionButton({ icon, title, description, href, onClick }: QuickAct
 }
 
 export function NotificationsTab() {
-  const [pauseAll, setPauseAll] = useState(false);
-
-  // In a real implementation, these would come from user preferences
-  const channels = {
-    inApp: true,
-    email: true,
-    slack: false,
-  };
-
-  const activeChannelCount = Object.values(channels).filter(Boolean).length;
-
   return (
     <motion.div
       initial="hidden"
@@ -123,44 +110,25 @@ export function NotificationsTab() {
                       <div>
                         <p className="text-sm font-medium text-white/80">Notification Channels</p>
                         <h3 className="text-2xl font-bold">
-                          {activeChannelCount} of 3 Active
+                          Your Preferences
                         </h3>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={`border ${
-                        channels.inApp
-                          ? 'bg-white/20 text-white border-white/30'
-                          : 'bg-white/10 text-white/60 border-white/20'
-                      }`}>
+                      <Badge className="border bg-white/20 text-white border-white/30">
                         <DeviceMobile weight="bold" className="h-3 w-3 mr-1" />
                         In-App
                       </Badge>
-                      <Badge className={`border ${
-                        channels.email
-                          ? 'bg-white/20 text-white border-white/30'
-                          : 'bg-white/10 text-white/60 border-white/20'
-                      }`}>
+                      <Badge className="border bg-white/20 text-white border-white/30">
                         <EnvelopeSimple weight="bold" className="h-3 w-3 mr-1" />
                         Email
                       </Badge>
-                      <Badge className={`border ${
-                        channels.slack
-                          ? 'bg-white/20 text-white border-white/30'
-                          : 'bg-white/10 text-white/60 border-white/20'
-                      }`}>
+                      <Badge className="border bg-white/20 text-white border-white/30">
                         <SlackLogo weight="bold" className="h-3 w-3 mr-1" />
                         Slack
                       </Badge>
                     </div>
                   </div>
-
-                  {pauseAll && (
-                    <Badge variant="outline" className="bg-white/10 text-white border-white/30">
-                      <BellSlash weight="bold" className="h-3 w-3 mr-1" />
-                      Paused
-                    </Badge>
-                  )}
                 </div>
 
                 <p className="mt-6 text-white/90 text-sm">
@@ -185,24 +153,6 @@ export function NotificationsTab() {
               <h4 className="font-semibold text-repwell-teal-500">Quick Settings</h4>
 
               <div className="space-y-3">
-                {/* Pause All Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-repwell-sage-100/30">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-repwell-sage-100/50">
-                      <BellSlash weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-repwell-teal-500">Pause All</p>
-                      <p className="text-xs text-repwell-teal-300">Mute notifications</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={pauseAll}
-                    onCheckedChange={setPauseAll}
-                    aria-label="Pause all notifications"
-                  />
-                </div>
-
                 <QuickActionButton
                   icon={<EnvelopeSimple weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
                   title="Email Preferences"
@@ -226,7 +176,7 @@ export function NotificationsTab() {
 
               {/* Notification Types */}
               <div className="pt-4 border-t border-border/50 space-y-3">
-                <p className="text-xs font-medium text-repwell-teal-500">You'll Be Notified About</p>
+                <p className="text-xs font-medium text-repwell-teal-500">You&apos;ll Be Notified About</p>
                 <ul className="space-y-2">
                   {[
                     'New reviews received',

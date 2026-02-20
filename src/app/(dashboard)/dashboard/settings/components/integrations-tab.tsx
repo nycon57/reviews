@@ -73,10 +73,6 @@ function QuickActionButton({ icon, title, description, href, onClick }: QuickAct
 }
 
 export function IntegrationsTab() {
-  // In a real implementation, these would come from a hook or server action
-  const connectedCount = 0; // Would be calculated from actual connection states
-  const totalIntegrations = 5;
-
   return (
     <motion.div
       initial="hidden"
@@ -111,7 +107,7 @@ export function IntegrationsTab() {
                       <div>
                         <p className="text-sm font-medium text-white/80">Integration Status</p>
                         <h3 className="text-2xl font-bold">
-                          {connectedCount} of {totalIntegrations} Connected
+                          Connected Services
                         </h3>
                       </div>
                     </div>

@@ -62,33 +62,66 @@ export default async function ProfileSetupPage() {
 
   const supabase = createAdminClient();
 
-  // Fetch organization directly
-  const { data: orgData } = await supabase
-    .from("organizations")
-    .select("*")
-    .eq("id", status.organizationId)
+  // Check if this is an individual org by looking for the user's org type
+  const { data: userRow } = await supabase
+    .from("users")
+    .select("organization_id, individual_organization_id, address")
+    .eq("id", user.id)
     .single();
 
-  // Cast to access all columns
-  const org = orgData as {
-    name: string;
-    logo_url: string | null;
-    primary_color: string | null;
-    domain: string | null;
-    settings: Record<string, unknown> | null;
-  } | null;
+  const isIndividual = !userRow?.organization_id && !!userRow?.individual_organization_id;
 
-  const initialData = {
-    organizationName: org?.name || "",
-    industry: (org?.settings?.industry as string) || "",
-    companySize: (org?.settings?.companySize as string) || "",
-    address: (org?.settings?.address as Record<string, string>) || {},
-    logoUrl: org?.logo_url || "",
-    primaryColor: org?.primary_color || "#52796f",
-    website: org?.domain || "",
-    phone: (org?.settings?.phone as string) || "",
-    companyEmail: (org?.settings?.companyEmail as string) || "",
-  };
+  let initialData;
+
+  if (isIndividual) {
+    // Individual: fetch from individual_organizations
+    const { data: indivOrgData } = await supabase
+      .from("individual_organizations")
+      .select("name, website_url, phone, email")
+      .eq("id", status.organizationId)
+      .single();
+
+    const userAddress = userRow?.address as Record<string, string> | null;
+
+    initialData = {
+      organizationName: indivOrgData?.name || "",
+      industry: "",
+      companySize: "",
+      address: userAddress || {},
+      logoUrl: "",
+      primaryColor: "#52796f",
+      website: indivOrgData?.website_url || "",
+      phone: indivOrgData?.phone || "",
+      companyEmail: indivOrgData?.email || "",
+    };
+  } else {
+    // Enterprise: fetch from organizations
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("id", status.organizationId)
+      .single();
+
+    const org = orgData as {
+      name: string;
+      logo_url: string | null;
+      primary_color: string | null;
+      domain: string | null;
+      settings: Record<string, unknown> | null;
+    } | null;
+
+    initialData = {
+      organizationName: org?.name || "",
+      industry: (org?.settings?.industry as string) || "",
+      companySize: (org?.settings?.companySize as string) || "",
+      address: (org?.settings?.address as Record<string, string>) || {},
+      logoUrl: org?.logo_url || "",
+      primaryColor: org?.primary_color || "#52796f",
+      website: org?.domain || "",
+      phone: (org?.settings?.phone as string) || "",
+      companyEmail: (org?.settings?.companyEmail as string) || "",
+    };
+  }
 
   return (
     <Suspense fallback={<ProfileSetupSkeleton />}>

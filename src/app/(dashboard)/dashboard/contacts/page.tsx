@@ -83,13 +83,18 @@ export default function ContactsPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-repwell-teal-500">
-            Contacts
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Manage your organization&apos;s employee directory
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <AddressBook className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-bold text-repwell-teal-500">
+              Contacts
+            </h1>
+            <p className="mt-1 text-muted-foreground">
+              Manage your organization&apos;s employee directory
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button
@@ -196,7 +201,7 @@ export default function ContactsPage() {
                             </Badge>
                           )}
                           {contact.userId && (
-                            <span title="Linked to user account">
+                            <span role="img" aria-label="Linked to user account" title="Linked to user account">
                               <LinkSimple className="h-3.5 w-3.5 text-repwell-sage-200" />
                             </span>
                           )}

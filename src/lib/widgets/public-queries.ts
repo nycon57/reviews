@@ -30,6 +30,7 @@ export interface PublicReview {
   avatar_url: string | null;
   loan_type: string | null;
   first_time_homebuyer: boolean | null;
+  loan_officer_name: string | null;
 }
 
 /** Public-safe entity profile data for lo_review and company_review widgets. */
@@ -90,7 +91,7 @@ export async function getPublicWidgetConfig(
   const { data, error } = await query.maybeSingle();
 
   if (error || !data) return null;
-  return data as PublicWidgetConfig;
+  return data as unknown as PublicWidgetConfig;
 }
 
 /**
@@ -372,7 +373,7 @@ export async function getNpsData(organizationId: string): Promise<NpsData> {
     else roundedDetractor += roundedPassive;
     roundedPassive = 0;
   }
-  const score = roundedPromoter - roundedDetractor;
+  const score = Math.round(rawPromoter - rawDetractor);
 
   return {
     score,

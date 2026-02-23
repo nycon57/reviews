@@ -247,6 +247,12 @@ const nextConfig = {
         destination: "/compare/trustpilot-alternative",
         permanent: true,
       },
+      // Consolidated manager dashboard into /dashboard/team
+      {
+        source: "/dashboard/manager",
+        destination: "/dashboard/team",
+        permanent: true,
+      },
     ];
   },
 };

@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { Star } from "@phosphor-icons/react/dist/ssr";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   getReviewStats,
@@ -180,7 +181,10 @@ export default async function ReviewsPage({
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Star className="h-5 w-5 text-primary" />
+        </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Reviews</h1>
           <p className="text-muted-foreground">

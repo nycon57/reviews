@@ -10,6 +10,9 @@ import type { Json } from "@/types/database.types";
 const WIDGETS_PATH = "/dashboard/widgets";
 const MAX_VERSIONS = 50;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const versionsTable = (client: ReturnType<typeof createAdminClient>) => (client as any).from("widget_config_versions");
+
 // ── Types ──────────────────────────────────────────────────────────────
 
 export interface WidgetVersion {
@@ -98,8 +101,7 @@ export async function createVersionSnapshot(
     }
 
     // Get previous version's config for diff summary
-    const { data: prevVersion } = await supabase
-      .from("widget_config_versions")
+    const { data: prevVersion } = await versionsTable(supabase)
       .select("config, version")
       .eq("widget_config_id", widgetConfigId)
       .order("version", { ascending: false })
@@ -117,8 +119,7 @@ export async function createVersionSnapshot(
 
     const newVersion = widget.version ?? 1;
 
-    const { data, error } = await supabase
-      .from("widget_config_versions")
+    const { data, error } = await versionsTable(supabase)
       .insert({
         widget_config_id: widgetConfigId,
         version: newVersion,
@@ -173,8 +174,7 @@ export async function listWidgetVersions(
       return { success: false, error: "Widget not found" };
     }
 
-    const { data: versions, error, count } = await supabase
-      .from("widget_config_versions")
+    const { data: versions, error, count } = await versionsTable(supabase)
       .select("*", { count: "exact" })
       .eq("widget_config_id", widgetConfigId)
       .order("version", { ascending: false })
@@ -185,12 +185,13 @@ export async function listWidgetVersions(
     }
 
     // Fetch user names for changed_by
-    const versionRows = versions ?? [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const versionRows: any[] = versions ?? [];
     const userIds = [
       ...new Set(
         versionRows
-          .map((v) => v.changed_by)
-          .filter((id): id is string => id !== null)
+          .map((v: { changed_by: string | null }) => v.changed_by)
+          .filter((id: string | null): id is string => id !== null)
       ),
     ];
 
@@ -244,8 +245,7 @@ export async function getWidgetVersion(
       return { success: false, error: "Widget not found" };
     }
 
-    const { data, error } = await supabase
-      .from("widget_config_versions")
+    const { data, error } = await versionsTable(supabase)
       .select("*")
       .eq("widget_config_id", widgetConfigId)
       .eq("version", version)
@@ -290,8 +290,7 @@ export async function rollbackToVersion(
     }
 
     // Fetch target version snapshot
-    const { data: targetVersionData, error: versionError } = await supabase
-      .from("widget_config_versions")
+    const { data: targetVersionData, error: versionError } = await versionsTable(supabase)
       .select("*")
       .eq("widget_config_id", widgetConfigId)
       .eq("version", targetVersion)
@@ -340,8 +339,7 @@ export async function rollbackToVersion(
     const diffs = computeDiff(currentConfig, restoredConfig);
     const changeSummary = `Rolled back to v${targetVersion} — ${generateChangeSummary(diffs)}`;
 
-    const { error: snapshotError } = await supabase
-      .from("widget_config_versions")
+    const { error: snapshotError } = await versionsTable(supabase)
       .insert({
         widget_config_id: widgetConfigId,
         version: newVersionNumber,

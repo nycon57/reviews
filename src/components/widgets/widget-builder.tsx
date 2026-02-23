@@ -172,7 +172,8 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
   const [showCreateTest, setShowCreateTest] = useState(false);
 
   // Determine A/B test state from widget data
-  const abTestConfig = widget?.ab_test_config as AbTestConfig | null;
+  // ab_test_config column exists in DB but not in generated types yet
+  const abTestConfig = (widget as unknown as Record<string, unknown>)?.ab_test_config as AbTestConfig | null;
   const hasActiveTest = abTestConfig?.enabled && abTestConfig.status === "running";
   const hasAnyTest = !!abTestConfig;
   const isVariant = !!widget?.parent_widget_id;

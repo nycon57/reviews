@@ -57,6 +57,7 @@ interface PageProps {
     rating?: string;
     sort?: string;
     page?: string;
+    radius?: string;
   }>;
 }
 

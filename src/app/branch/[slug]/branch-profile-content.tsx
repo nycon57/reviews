@@ -1,22 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import {
   Star,
   MapPin,
-  Phone,
   Clock,
   Users,
-  Quotes as Quote,
   BuildingOffice as Building2,
   CaretRight as ChevronRight,
 } from "@phosphor-icons/react";
+import { getInitials } from "@/lib/utils";
 import type {
   PublicBranch,
   PublicBranchProfessional,
@@ -28,8 +27,8 @@ import {
   type DirectoryBreadcrumbItem,
 } from "@/components/shared/directory-breadcrumbs";
 import { ShareProfileButton } from "@/app/pro/[slug]/components/share-profile-button";
-import { SourceIcon } from "@/app/pro/[slug]/components/review-card";
-import { ProfileHeroBanner, ContactCTACard, MessageModal } from "@/app/pro/[slug]/components";
+import { ReviewItem } from "@/components/shared/review-item";
+import { ProfileHeroBanner, ContactCTACard, MessageModal, ReportReviewModal } from "@/app/pro/[slug]/components";
 
 interface BranchProfileContentProps {
   branch: PublicBranch;
@@ -55,23 +54,6 @@ function StarRating({ rating }: { rating: number }) {
       ))}
     </div>
   );
-}
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 interface HoursOfOperation {
@@ -118,6 +100,11 @@ export function BranchProfileContent({
   breadcrumbs,
 }: BranchProfileContentProps) {
   const [messageOpen, setMessageOpen] = useState(false);
+  const [reportReviewId, setReportReviewId] = useState<string | null>(null);
+
+  const handleFlagReview = useCallback((reviewId: string) => {
+    setReportReviewId(reviewId);
+  }, []);
 
   const profileUrl = typeof window !== "undefined"
     ? window.location.href
@@ -145,12 +132,17 @@ export function BranchProfileContent({
   const hours = branch.hours_of_operation as HoursOfOperation | null;
   const formattedHours = formatHours(hours);
 
+  // Show More pagination
+  const [teamDisplayCount, setTeamDisplayCount] = useState(12);
+
   // Sort professionals: manager first
   const sortedProfessionals = [...professionals].sort((a, b) => {
     if (a.id === branch.manager_id) return -1;
     if (b.id === branch.manager_id) return 1;
     return 0;
   });
+
+  const displayedProfessionals = sortedProfessionals.slice(0, teamDisplayCount);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -204,19 +196,25 @@ export function BranchProfileContent({
                 <h1 className="text-2xl md:text-3xl font-display font-bold text-repwell-teal-500 tracking-tight">
                   {branch.name}
                 </h1>
-                {locationString && (
-                  <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
-                    <MapPin className="h-4 w-4 text-repwell-teal-300" />
-                    <span className="text-repwell-teal-400">{locationString}</span>
+                {(locationString || organization) && (
+                  <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start flex-wrap">
+                    {locationString && (
+                      <>
+                        <MapPin className="h-4 w-4 text-repwell-teal-300" />
+                        <span className="text-repwell-teal-400">{locationString}</span>
+                      </>
+                    )}
+                    {locationString && organization && (
+                      <span className="text-repwell-teal-300">·</span>
+                    )}
+                    {organization && (
+                      <>
+                        <Building2 className="h-4 w-4 text-repwell-teal-300" />
+                        <span className="text-repwell-teal-400">{organization.name}</span>
+                      </>
+                    )}
                   </div>
                 )}
-                {organization && (
-                  <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
-                    <Building2 className="h-4 w-4 text-repwell-teal-300" />
-                    <span className="text-repwell-teal-400">{organization.name}</span>
-                  </div>
-                )}
-
                 {/* Rating Summary */}
                 {branch.average_rating && branch.total_reviews ? (
                   <div className="mt-4 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
@@ -238,6 +236,11 @@ export function BranchProfileContent({
                   </div>
                 ) : (
                   <p className="mt-4 text-sm text-repwell-teal-300">No reviews yet</p>
+                )}
+                {branch.description && (
+                  <p className="mt-3 text-sm text-repwell-teal-400 leading-relaxed line-clamp-3">
+                    {branch.description}
+                  </p>
                 )}
               </div>
 
@@ -272,6 +275,11 @@ export function BranchProfileContent({
               contactLabel={`Contact ${branch.name}`}
               personalWebsiteUrl={branch.website_url}
               directionsUrl={directionsUrl}
+              linkedinUrl={branch.linkedin_url}
+              facebookUrl={branch.facebook_url}
+              instagramUrl={branch.instagram_url}
+              twitterUrl={branch.twitter_url}
+              zillowUrl={branch.zillow_profile_url}
               onMessage={() => setMessageOpen(true)}
               shareButton={
                 <ShareProfileButton
@@ -303,19 +311,7 @@ export function BranchProfileContent({
               </Card>
             )}
 
-            {/* Description */}
-            {branch.description && (
-              <Card className="border-t-4 border-t-repwell-sage-200">
-                <CardHeader>
-                  <CardTitle className="text-lg font-display text-repwell-teal-500">About</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-repwell-teal-400 leading-relaxed">
-                    {branch.description}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+
 
           </div>
 
@@ -335,56 +331,64 @@ export function BranchProfileContent({
                     No team members listed at this branch.
                   </p>
                 ) : (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {sortedProfessionals.map((member) => {
+                  <>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {displayedProfessionals.map((member) => {
                       const isManager = member.id === branch.manager_id;
                       return (
                       <Link
                         key={member.id}
                         href={`/pro/${member.slug || member.id}`}
-                        className="group block"
+                        className="group flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-repwell-sage-100/50"
                       >
-                        <div className={`flex items-center gap-4 rounded-lg border p-4 transition-colors hover:bg-repwell-sage-100/50 ${isManager ? 'border-repwell-teal-300/30 bg-repwell-sage-100/50' : ''}`}>
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
-                            <AvatarFallback className="bg-repwell-sage-100 text-repwell-teal-400">
-                              {getInitials(member.full_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-medium truncate text-repwell-teal-500 group-hover:text-repwell-teal-400 transition-colors">
-                                {member.full_name}
-                              </h4>
-                              {isManager && (
-                                <Badge variant="secondary" className="shrink-0 text-xs bg-repwell-sage-100 text-repwell-teal-400">
-                                  Branch Manager
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-repwell-teal-300 truncate">
-                              {member.title || "Professional"}
-                            </p>
-                            {member.average_rating && member.total_reviews ? (
-                              <div className="mt-1 flex items-center gap-2">
-                                <div className="flex items-center gap-1">
-                                  <Star weight="fill" className="h-3 w-3 text-amber-500" />
-                                  <span className="text-xs font-medium text-repwell-teal-500">
-                                    {Number(member.average_rating).toFixed(1)}
-                                  </span>
-                                </div>
-                                <span className="text-xs text-repwell-teal-300">
-                                  ({member.total_reviews} {member.total_reviews === 1 ? "review" : "reviews"})
-                                </span>
-                              </div>
-                            ) : null}
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={member.photo_url || undefined} alt={member.full_name} />
+                          <AvatarFallback className="bg-repwell-sage-100 text-repwell-teal-400 text-sm">
+                            {getInitials(member.full_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="text-sm font-medium truncate text-repwell-teal-500 group-hover:text-repwell-teal-400 transition-colors">
+                              {member.full_name}
+                            </h4>
+                            {isManager && (
+                              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-repwell-sage-300">
+                                <span className="h-1.5 w-1.5 rounded-full bg-repwell-sage-300" />
+                                Mgr
+                              </span>
+                            )}
                           </div>
-                          <ChevronRight className="h-5 w-5 text-repwell-teal-300 group-hover:text-repwell-teal-400 transition-colors" />
+                          <p className="text-xs text-repwell-teal-300 truncate">
+                            {member.title || "Professional"}
+                          </p>
+                          {member.average_rating && member.total_reviews ? (
+                            <div className="mt-0.5 flex items-center gap-1">
+                              <Star weight="fill" className="h-3 w-3 text-amber-500" />
+                              <span className="text-xs font-medium text-repwell-teal-500">
+                                {Number(member.average_rating).toFixed(1)}
+                              </span>
+                              <span className="text-xs text-repwell-teal-300">
+                                ({member.total_reviews})
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
+                        <ChevronRight className="h-4 w-4 text-repwell-teal-300 group-hover:text-repwell-teal-400 transition-colors" />
                       </Link>
                       );
                     })}
                   </div>
+                  {sortedProfessionals.length > teamDisplayCount && (
+                    <Button
+                      variant="outline"
+                      className="w-full mt-4"
+                      onClick={() => setTeamDisplayCount(prev => prev + 12)}
+                    >
+                      Show More Team Members ({sortedProfessionals.length - teamDisplayCount} remaining)
+                    </Button>
+                  )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -402,97 +406,36 @@ export function BranchProfileContent({
                 ) : (
                   <div className="space-y-6">
                     {reviews.map((review) => (
-                      <div
+                      <ReviewItem
                         key={review.id}
-                        className="border-b pb-6 last:border-0 last:pb-0"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <StarRating rating={review.rating} />
-                              <span className="text-sm font-medium text-repwell-teal-500">
-                                {review.rating}/5
-                              </span>
-                            </div>
-                            <p className="mt-1 text-sm text-repwell-teal-300">
-                              {review.customer_name || "Anonymous"}
-                              {review.customer_location && (
-                                <span> - {review.customer_location}</span>
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 text-xs text-repwell-teal-300">
-                            <SourceIcon source={review.source} />
-                            <span>{formatDate(review.review_date)}</span>
-                          </div>
-                        </div>
-
-                        {review.title && (
-                          <h4 className="mt-3 font-medium text-repwell-teal-500">{review.title}</h4>
-                        )}
-
-                        {review.text && (
-                          <div className="mt-2 flex items-start gap-2">
-                            <Quote className="h-4 w-4 shrink-0 text-repwell-teal-300/50" />
-                            <p className="text-sm text-repwell-teal-400 leading-relaxed">
-                              {review.text}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Link to LO who received this review */}
-                        <div className="mt-3 flex items-center gap-2">
-                          <Link
-                            href={`/pro/${review.loan_officer.slug || review.loan_officer.id}`}
-                            className="flex items-center gap-2 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
-                          >
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage
-                                src={review.loan_officer.photo_url || undefined}
-                                alt={review.loan_officer.full_name}
-                              />
-                              <AvatarFallback className="text-xs bg-repwell-sage-100 text-repwell-teal-400">
-                                {getInitials(review.loan_officer.full_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>Review for {review.loan_officer.full_name}</span>
-                          </Link>
-                        </div>
-
-                        {review.response_text && (
-                          <div className="mt-4 rounded-lg bg-repwell-sage-100/50 p-3">
-                            <p className="text-xs font-medium text-repwell-teal-300 mb-1">
-                              Response from {review.loan_officer.full_name}
-                            </p>
-                            <p className="text-sm text-repwell-teal-400">{review.response_text}</p>
-                          </div>
-                        )}
-                      </div>
+                        review={{
+                          id: review.id,
+                          customer_name: review.customer_name,
+                          customer_location: review.customer_location,
+                          rating: review.rating,
+                          text: review.text,
+                          title: review.title,
+                          review_date: review.review_date,
+                          source: review.source,
+                          response_text: review.response_text,
+                        }}
+                        respondentName={review.loan_officer.full_name}
+                        attribution={{
+                          loanOfficer: {
+                            name: review.loan_officer.full_name,
+                            href: `/pro/${review.loan_officer.slug || review.loan_officer.id}`,
+                            photoUrl: review.loan_officer.photo_url,
+                          },
+                        }}
+                        shareConfig={{ profileUrl, subjectName: branch.name }}
+                        onFlag={handleFlagReview}
+                      />
                     ))}
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* CTA Section */}
-            <Card className="bg-repwell-sage-100 border-repwell-sage-200">
-              <CardContent className="py-6">
-                <div className="text-center">
-                  <h3 className="text-lg font-display font-semibold text-repwell-teal-500">Looking for a Professional?</h3>
-                  <p className="mt-2 text-sm text-repwell-teal-400">
-                    Contact one of our experienced professionals to start your journey.
-                  </p>
-                  {branch.phone && (
-                    <Button asChild className="mt-4 bg-repwell-teal-400 hover:bg-repwell-teal-500 text-white">
-                      <a href={`tel:${branch.phone}`}>
-                        <Phone className="mr-2 h-4 w-4" />
-                        Call {branch.phone}
-                      </a>
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </div>
@@ -504,6 +447,13 @@ export function BranchProfileContent({
         recipientType="branch"
         recipientId={branch.id}
         recipientName={branch.name}
+      />
+
+      {/* Report Review Modal */}
+      <ReportReviewModal
+        open={reportReviewId !== null}
+        onOpenChange={(open) => { if (!open) setReportReviewId(null); }}
+        reviewId={reportReviewId ?? ""}
       />
     </div>
   );

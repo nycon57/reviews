@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { Gear } from '@phosphor-icons/react/dist/ssr';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsTabs } from './components';
 import { getUserProfile } from '@/lib/auth/profile-actions';
@@ -57,11 +58,16 @@ export default function SettingsPage() {
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account settings and preferences
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Gear className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account settings and preferences
+          </p>
+        </div>
       </div>
 
       {/* Settings content with tabs */}

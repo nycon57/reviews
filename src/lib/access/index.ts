@@ -76,6 +76,7 @@ export async function getAccessContext(): Promise<AccessContext | null> {
       role,
       is_owner,
       organization_id,
+      individual_organization_id,
       organizations (
         account_type,
         subscription_tier
@@ -85,21 +86,37 @@ export async function getAccessContext(): Promise<AccessContext | null> {
     .eq("id", authUser.id)
     .single();
 
-  if (!userData?.organization_id) return null;
+  // Enterprise path: organization_id is set
+  if (userData?.organization_id) {
+    const org = userData.organizations as {
+      account_type?: string;
+      subscription_tier?: string;
+    } | null;
 
-  const org = userData.organizations as {
-    account_type?: string;
-    subscription_tier?: string;
-  } | null;
+    return {
+      userId: authUser.id,
+      role: (userData.role || "user") as UserRole,
+      accountType: (org?.account_type || "enterprise") as AccountType,
+      subscriptionTier: (org?.subscription_tier || "basic") as SubscriptionTier,
+      organizationId: userData.organization_id,
+      isOwner: userData.is_owner || false,
+    };
+  }
 
-  return {
-    userId: authUser.id,
-    role: (userData.role || "user") as UserRole,
-    accountType: (org?.account_type || "individual") as AccountType,
-    subscriptionTier: (org?.subscription_tier || "basic") as SubscriptionTier,
-    organizationId: userData.organization_id,
-    isOwner: userData.is_owner || false,
-  };
+  // Individual path: individual_organization_id is set (no enterprise org)
+  if (userData?.individual_organization_id) {
+    return {
+      userId: authUser.id,
+      role: (userData.role || "admin") as UserRole,
+      accountType: "individual" as AccountType,
+      // TODO: read subscription_tier from individual_organizations once column exists
+      subscriptionTier: "basic" as SubscriptionTier,
+      organizationId: userData.individual_organization_id,
+      isOwner: true,
+    };
+  }
+
+  return null;
 }
 
 /**

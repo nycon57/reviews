@@ -9,7 +9,6 @@ import {
   Users,
   Target,
   Chats as MessageSquare,
-  CheckCircle as CheckCircle2,
 } from "@phosphor-icons/react/dist/ssr";
 import {
   getRecognitions,
@@ -264,44 +263,6 @@ export default async function RecognitionPage() {
           </TabsContent>
         )}
       </Tabs>
-
-      {/* Quick tips */}
-      <Card className="bg-muted/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CheckCircle2 className="h-5 w-5 text-primary" />
-            Building a Recognition Culture
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">1. Be Specific</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Mention exactly what the person did well
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">2. Be Timely</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Recognize achievements when they happen
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">3. Be Inclusive</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Recognize contributions from all team members
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">4. Be Genuine</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Authentic recognition has the most impact
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

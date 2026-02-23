@@ -114,8 +114,8 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
         companySize: formData.companySize || undefined,
         address: {
           street: formData.street || undefined,
-          city: formData.city || undefined,
-          state: formData.state || undefined,
+          city: formData.city,
+          state: formData.state,
           zip: formData.zip || undefined,
         },
         logoUrl: formData.logoUrl || undefined,
@@ -280,7 +280,7 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                 <MapPin className="h-5 w-5" />
                 Business Address
               </CardTitle>
-              <CardDescription>Optional - shown on public profiles</CardDescription>
+              <CardDescription>Required - used for your directory listing and map pin</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -295,22 +295,24 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
 
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">City *</Label>
                   <Input
                     id="city"
                     value={formData.city}
                     onChange={(e) => handleChange("city", e.target.value)}
                     placeholder="San Francisco"
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
+                  <Label htmlFor="state">State *</Label>
                   <Input
                     id="state"
                     value={formData.state}
                     onChange={(e) => handleChange("state", e.target.value)}
                     placeholder="CA"
+                    required
                   />
                 </div>
 

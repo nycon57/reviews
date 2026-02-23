@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +21,8 @@ import {
   MagnifyingGlass,
   SortAscending,
 } from "@phosphor-icons/react";
+import { getInitials } from "@/lib/utils";
+import { ReviewItem } from "@/components/shared/review-item";
 import type {
   PublicOrganization,
   PublicOrgBranch,
@@ -30,7 +33,7 @@ import {
   DirectoryBreadcrumbs,
   type DirectoryBreadcrumbItem,
 } from "@/components/shared/directory-breadcrumbs";
-import { ProfileHeroBanner, ContactCTACard, MessageModal } from "@/app/pro/[slug]/components";
+import { ProfileHeroBanner, ContactCTACard, MessageModal, ReportReviewModal } from "@/app/pro/[slug]/components";
 import { ShareProfileButton } from "@/app/pro/[slug]/components/share-profile-button";
 
 interface OrganizationProfileContentProps {
@@ -57,23 +60,6 @@ function StarRating({ rating }: { rating: number }) {
       ))}
     </div>
   );
-}
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
 }
 
 interface BranchAddress {
@@ -106,12 +92,21 @@ export function OrganizationProfileContent({
 
   // Message modal state
   const [messageOpen, setMessageOpen] = useState(false);
+  const [reportReviewId, setReportReviewId] = useState<string | null>(null);
+
+  const handleFlagReview = useCallback((reviewId: string) => {
+    setReportReviewId(reviewId);
+  }, []);
 
   // Search & sort state
   const [locationSearch, setLocationSearch] = useState("");
   const [locationSort, setLocationSort] = useState("name-asc");
   const [teamSearch, setTeamSearch] = useState("");
   const [teamSort, setTeamSort] = useState("name-asc");
+
+  // Show More pagination
+  const [locationDisplayCount, setLocationDisplayCount] = useState(12);
+  const [teamDisplayCount, setTeamDisplayCount] = useState(12);
 
   const filteredBranches = useMemo(() => {
     const q = locationSearch.toLowerCase().trim();
@@ -169,6 +164,23 @@ export function OrganizationProfileContent({
     });
   }, [featuredProfessionals, teamSearch, teamSort]);
 
+  // Reset display counts when search/sort changes
+  const locationFilterKey = `${locationSearch}|${locationSort}`;
+  const teamFilterKey = `${teamSearch}|${teamSort}`;
+  const [prevLocationKey, setPrevLocationKey] = useState(locationFilterKey);
+  const [prevTeamKey, setPrevTeamKey] = useState(teamFilterKey);
+  if (locationFilterKey !== prevLocationKey) {
+    setPrevLocationKey(locationFilterKey);
+    setLocationDisplayCount(12);
+  }
+  if (teamFilterKey !== prevTeamKey) {
+    setPrevTeamKey(teamFilterKey);
+    setTeamDisplayCount(12);
+  }
+
+  const displayedBranches = filteredBranches.slice(0, locationDisplayCount);
+  const displayedProfessionals = filteredProfessionals.slice(0, teamDisplayCount);
+
   // Derive contact info: prefer org-level fields, fallback to HQ branch
   const hq = organization.headquarters_branch;
   const contactPhone = organization.phone || hq?.phone || null;
@@ -177,10 +189,6 @@ export function OrganizationProfileContent({
   const hqDirectionsUrl = hqAddress
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([hqAddress.street, hqAddress.city, hqAddress.state, hqAddress.zip].filter(Boolean).join(" "))}`
     : null;
-  const hqLocationString = hqAddress
-    ? [hqAddress.city, hqAddress.state].filter(Boolean).join(", ")
-    : null;
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
       {/* Hero Banner */}
@@ -232,12 +240,6 @@ export function OrganizationProfileContent({
               <div className="max-w-2xl">
                 <h1 className="text-3xl md:text-4xl font-display font-bold text-repwell-teal-500 tracking-tight">
                   {organization.name}
-                  {hqLocationString && (
-                    <span className="ml-3 inline-flex items-center gap-1.5 align-middle text-base font-normal text-repwell-teal-300">
-                      <MapPin className="h-4 w-4" />
-                      {hqLocationString}
-                    </span>
-                  )}
                 </h1>
 
                 {organization.mission_statement && (
@@ -377,8 +379,9 @@ export function OrganizationProfileContent({
                             No locations match &ldquo;{locationSearch}&rdquo;
                           </p>
                         ) : (
+                          <>
                           <div className="grid gap-4 sm:grid-cols-2">
-                            {filteredBranches.map((branch) => (
+                            {displayedBranches.map((branch) => (
                               <Link
                                 key={branch.id}
                                 href={`/branch/${branch.global_slug || branch.id}`}
@@ -428,6 +431,16 @@ export function OrganizationProfileContent({
                               </Link>
                             ))}
                           </div>
+                          {filteredBranches.length > locationDisplayCount && (
+                            <Button
+                              variant="outline"
+                              className="w-full mt-4"
+                              onClick={() => setLocationDisplayCount(prev => prev + 12)}
+                            >
+                              Show More Locations ({filteredBranches.length - locationDisplayCount} remaining)
+                            </Button>
+                          )}
+                          </>
                         )}
                       </>
                     )}
@@ -471,8 +484,9 @@ export function OrganizationProfileContent({
                             No team members match &ldquo;{teamSearch}&rdquo;
                           </p>
                         ) : (
+                          <>
                           <div className="grid gap-3 sm:grid-cols-2">
-                            {filteredProfessionals.map((member) => (
+                            {displayedProfessionals.map((member) => (
                               <Link
                                 key={member.id}
                                 href={`/pro/${member.slug || member.id}`}
@@ -507,6 +521,16 @@ export function OrganizationProfileContent({
                               </Link>
                             ))}
                           </div>
+                          {filteredProfessionals.length > teamDisplayCount && (
+                            <Button
+                              variant="outline"
+                              className="w-full mt-4"
+                              onClick={() => setTeamDisplayCount(prev => prev + 12)}
+                            >
+                              Show More Team Members ({filteredProfessionals.length - teamDisplayCount} remaining)
+                            </Button>
+                          )}
+                          </>
                         )}
                       </>
                     )}
@@ -527,73 +551,33 @@ export function OrganizationProfileContent({
                 <CardContent>
                   <div className="space-y-6">
                     {testimonials.map((testimonial) => (
-                      <div
+                      <ReviewItem
                         key={testimonial.id}
-                        className="border-b pb-6 last:border-0 last:pb-0"
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <StarRating rating={testimonial.rating} />
-                              <span className="text-sm font-medium text-repwell-teal-500">
-                                {testimonial.rating}/5
-                              </span>
-                            </div>
-                            <p className="mt-1 text-sm text-repwell-teal-300">
-                              {testimonial.customer_name || "Anonymous"}
-                              {testimonial.customer_location && (
-                                <span> - {testimonial.customer_location}</span>
-                              )}
-                            </p>
-                          </div>
-                          <span className="text-xs text-repwell-teal-300">
-                            {formatDate(testimonial.review_date)}
-                          </span>
-                        </div>
-
-                        {testimonial.title && (
-                          <h4 className="mt-3 font-medium text-repwell-teal-500">{testimonial.title}</h4>
-                        )}
-
-                        {testimonial.text && (
-                          <div className="mt-2 flex items-start gap-2">
-                            <Quote className="h-4 w-4 shrink-0 text-repwell-teal-300/50" />
-                            <p className="text-sm text-repwell-teal-400 leading-relaxed">
-                              {testimonial.text}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Attribution */}
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-repwell-teal-300">
-                          <Link
-                            href={`/pro/${testimonial.loan_officer.slug || testimonial.loan_officer.id}`}
-                            className="flex items-center gap-2 text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
-                          >
-                            <Avatar className="h-5 w-5">
-                              <AvatarImage
-                                src={testimonial.loan_officer.photo_url || undefined}
-                                alt={testimonial.loan_officer.full_name}
-                              />
-                              <AvatarFallback className="text-[10px] bg-repwell-sage-100 text-repwell-teal-400">
-                                {getInitials(testimonial.loan_officer.full_name)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span>Served by {testimonial.loan_officer.full_name}</span>
-                          </Link>
-                          {testimonial.branch && (
-                            <>
-                              <span className="text-repwell-teal-300/50">|</span>
-                              <Link
-                                href={`/branch/${testimonial.branch.global_slug || testimonial.branch.id}`}
-                                className="text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
-                              >
-                                {testimonial.branch.name}
-                              </Link>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                        review={{
+                          id: testimonial.id,
+                          customer_name: testimonial.customer_name,
+                          customer_location: testimonial.customer_location,
+                          rating: testimonial.rating,
+                          text: testimonial.text,
+                          title: testimonial.title,
+                          review_date: testimonial.review_date,
+                          source: testimonial.source,
+                        }}
+                        attributionLabel="Served by"
+                        attribution={{
+                          loanOfficer: {
+                            name: testimonial.loan_officer.full_name,
+                            href: `/pro/${testimonial.loan_officer.slug || testimonial.loan_officer.id}`,
+                            photoUrl: testimonial.loan_officer.photo_url,
+                          },
+                          branch: testimonial.branch ? {
+                            name: testimonial.branch.name,
+                            href: `/branch/${testimonial.branch.global_slug || testimonial.branch.id}`,
+                          } : undefined,
+                        }}
+                        shareConfig={{ profileUrl, subjectName: organization.name }}
+                        onFlag={handleFlagReview}
+                      />
                     ))}
                   </div>
                 </CardContent>
@@ -610,6 +594,13 @@ export function OrganizationProfileContent({
         recipientType="organization"
         recipientId={organization.id}
         recipientName={organization.name}
+      />
+
+      {/* Report Review Modal */}
+      <ReportReviewModal
+        open={reportReviewId !== null}
+        onOpenChange={(open) => { if (!open) setReportReviewId(null); }}
+        reviewId={reportReviewId ?? ""}
       />
     </div>
   );

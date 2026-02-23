@@ -222,14 +222,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // Fetch user data once for both onboarding and access checks
-  let cachedUserData: { role: string | null; organization_id: string | null } | null = null;
+  let cachedUserData: { role: string | null; organization_id: string | null; individual_organization_id: string | null; address: unknown } | null = null;
   let cachedOrgData: { subscription_tier: string | null; account_type: string | null; onboarding_status: string | null } | null = null;
 
   if (user && supabase && isProtectedPath) {
     // Fetch user data using .limit(1) instead of .single() to avoid PGRST116 errors
     const { data: userRows, error: userQueryError } = await supabase
       .from("users")
-      .select("role, organization_id")
+      .select("role, organization_id, individual_organization_id, address")
       .eq("id", user.id)
       .limit(1);
 
@@ -238,7 +238,7 @@ export async function middleware(request: NextRequest) {
     } else if (userRows && userRows.length > 0) {
       cachedUserData = userRows[0];
 
-      // Fetch organization data if user has an organization
+      // Fetch organization data if user has an enterprise organization
       if (cachedUserData?.organization_id) {
         const { data: orgRows, error: orgQueryError } = await supabase
           .from("organizations")
@@ -251,6 +251,30 @@ export async function middleware(request: NextRequest) {
         } else if (orgRows && orgRows.length > 0) {
           cachedOrgData = orgRows[0];
         }
+      } else if (cachedUserData?.individual_organization_id) {
+        // Individual user — fetch onboarding_status from individual_organizations
+        const { data: indivOrgRows, error: indivOrgError } = await supabase
+          .from("individual_organizations")
+          .select("name, onboarding_status")
+          .eq("id", cachedUserData.individual_organization_id)
+          .limit(1);
+
+        if (indivOrgError) {
+          console.error(`[Middleware] Individual org query error:`, indivOrgError.message);
+        }
+
+        const indivOnboardingStatus = (indivOrgRows?.[0] as Record<string, unknown>)?.onboarding_status as string | null;
+
+        // Use address from the initial users query as fallback for profile completion check
+        const hasAddress = cachedUserData.address &&
+          typeof cachedUserData.address === "object" &&
+          (cachedUserData.address as Record<string, unknown>).city;
+
+        cachedOrgData = {
+          subscription_tier: "basic",
+          account_type: "individual",
+          onboarding_status: indivOnboardingStatus || (hasAddress ? "completed" : "payment_complete"),
+        };
       }
     }
   }

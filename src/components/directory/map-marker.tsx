@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Star,
   Phone,
-  MapPin,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import type { DirectoryProfessional } from "@/lib/directory/actions";
@@ -98,80 +97,78 @@ interface PopupContentProps {
 }
 
 function PopupContent({ professional }: PopupContentProps) {
+  const profileHref = `/pro/${professional.slug || professional.id}`;
+
   return (
-    <div className="p-2 min-w-[240px]">
-      <div className="flex items-start gap-3">
-        <Link href={`/pro/${professional.slug || professional.id}`}>
-          <Avatar className="h-12 w-12 border-2 border-repwell-sage-100">
+    <div className="p-3 w-[260px]">
+      {/* Header: avatar + name/title */}
+      <div className="flex items-center gap-3">
+        <Link href={profileHref} className="shrink-0">
+          <Avatar className="h-11 w-11 border-2 border-repwell-sage-100">
             <AvatarImage
               src={professional.photo_url || undefined}
               alt={professional.full_name}
             />
-            <AvatarFallback className="bg-repwell-teal-300/10 text-repwell-teal-400 font-medium">
+            <AvatarFallback className="bg-repwell-teal-300/10 text-repwell-teal-400 font-medium text-sm">
               {getInitials(professional.full_name)}
             </AvatarFallback>
           </Avatar>
         </Link>
 
         <div className="flex-1 min-w-0">
-          <Link href={`/pro/${professional.slug || professional.id}`}>
-            <h4 className="font-semibold text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
+          <Link href={profileHref}>
+            <h4 className="text-sm font-semibold text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate leading-tight">
               {professional.full_name}
             </h4>
           </Link>
           {professional.title && (
-            <p className="text-xs text-repwell-teal-400 truncate">
+            <p className="text-xs text-repwell-teal-300 truncate mt-0.5">
               {professional.title}
             </p>
-          )}
-          {professional.address?.city && (
-            <div className="flex items-center gap-1 text-xs text-repwell-teal-300 mt-1">
-              <MapPin className="h-3 w-3" />
-              <span>
-                {professional.address.city}
-                {professional.address.state ? `, ${professional.address.state}` : ""}
-              </span>
-            </div>
           )}
         </div>
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
+      {/* Rating row */}
+      <div className="mt-2.5 flex items-center gap-1.5">
         {professional.average_rating ? (
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-semibold text-repwell-teal-500">
-                {Number(professional.average_rating).toFixed(1)}
-              </span>
-            </div>
+          <>
+            <Star weight="fill" className="h-3.5 w-3.5 text-amber-500" />
+            <span className="text-sm font-semibold text-repwell-teal-500">
+              {Number(professional.average_rating).toFixed(1)}
+            </span>
             {professional.total_reviews !== null && professional.total_reviews > 0 && (
               <span className="text-xs text-repwell-teal-300">
-                ({professional.total_reviews} {professional.total_reviews === 1 ? "review" : "reviews"})
+                ({professional.total_reviews})
               </span>
             )}
-          </div>
+          </>
         ) : (
           <span className="text-xs text-repwell-teal-300">No reviews yet</span>
         )}
+      </div>
 
-        <div className="flex items-center gap-2">
-          {professional.phone && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 w-8 p-0"
-              asChild
-            >
-              <a href={`tel:${professional.phone}`} title={`Call ${professional.full_name}`}>
-                <Phone className="h-3.5 w-3.5" />
-              </a>
-            </Button>
-          )}
-          <Button size="sm" className="h-8" asChild>
-            <Link href={`/pro/${professional.slug || professional.id}`}>View Profile</Link>
+      {/* Action buttons — full width row */}
+      <div className="mt-2.5 flex items-center gap-2">
+        {professional.phone && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 shrink-0 p-0 border-repwell-sage-200"
+            asChild
+          >
+            <a href={`tel:${professional.phone}`} title={`Call ${professional.full_name}`} aria-label={`Call ${professional.full_name}`}>
+              <Phone className="h-3.5 w-3.5" />
+            </a>
           </Button>
-        </div>
+        )}
+        <Button
+          size="sm"
+          className="h-8 flex-1 bg-repwell-teal-300 hover:bg-repwell-teal-400 text-white text-xs font-medium"
+          asChild
+        >
+          <Link href={profileHref}>View Profile</Link>
+        </Button>
       </div>
     </div>
   );

@@ -95,10 +95,12 @@ export async function seedDefaultWidgets(
       change_summary: "Initial version",
     }));
 
-    await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
       .from("widget_config_versions")
       .insert(snapshots)
-      .then(({ error: snapErr }) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then(({ error: snapErr }: any) => {
         if (snapErr) console.error("Version snapshot batch error:", snapErr.message);
       });
   }

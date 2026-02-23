@@ -16,9 +16,11 @@ import {
   ClipboardText,
   Envelope,
   Buildings,
+  Code,
   Gear,
   Question,
   AddressBook,
+  Lightning,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -44,7 +46,9 @@ export const ICON_MAP: Record<string, Icon> = {
   ClipboardText,
   Envelope,
   Buildings,
+  Code,
   Gear,
   Question,
   AddressBook,
+  Lightning,
 };

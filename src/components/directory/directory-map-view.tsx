@@ -64,6 +64,8 @@ interface DirectoryMapViewProps {
   hoveredProfessionalId?: string | null;
   /** Height class for the map container */
   heightClass?: string;
+  /** Center point from radius/fallback search — map will pan here */
+  searchCenter?: { lat: number; lng: number; label: string };
 }
 
 function getInitials(name: string): string {
@@ -156,14 +158,18 @@ function InteractiveMap({
   isSearchingArea = false,
   hoveredProfessionalId,
   heightClass = "h-[400px] md:h-[500px]",
+  searchCenter,
 }: DirectoryMapViewProps) {
   const mapRef = useRef<LeafletMap | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [isLeafletLoaded, setIsLeafletLoaded] = useState(false);
 
-  // Filter officers with valid coordinates
+  // Filter professionals with valid, finite coordinates
   const professionalsWithCoords = useMemo(
-    () => professionals.filter((prof) => prof.latitude != null && prof.longitude != null),
+    () => professionals.filter((prof) =>
+      prof.latitude != null && prof.longitude != null &&
+      Number.isFinite(prof.latitude) && Number.isFinite(prof.longitude)
+    ),
     [professionals]
   );
 
@@ -174,9 +180,29 @@ function InteractiveMap({
     const lats = professionalsWithCoords.map((prof) => prof.latitude!);
     const lngs = professionalsWithCoords.map((prof) => prof.longitude!);
 
+    let minLat = Math.min(...lats);
+    let minLng = Math.min(...lngs);
+    let maxLat = Math.max(...lats);
+    let maxLng = Math.max(...lngs);
+
+    // Guard against NaN from bad data
+    if (!Number.isFinite(minLat) || !Number.isFinite(minLng) ||
+        !Number.isFinite(maxLat) || !Number.isFinite(maxLng)) {
+      return null;
+    }
+
+    // Pad zero-area bounds (single marker) so Leaflet can compute a valid zoom
+    if (minLat === maxLat && minLng === maxLng) {
+      const pad = 0.01; // ~1km
+      minLat -= pad;
+      minLng -= pad;
+      maxLat += pad;
+      maxLng += pad;
+    }
+
     return [
-      [Math.min(...lats), Math.min(...lngs)] as [number, number],
-      [Math.max(...lats), Math.max(...lngs)] as [number, number],
+      [minLat, minLng] as [number, number],
+      [maxLat, maxLng] as [number, number],
     ];
   }, [professionalsWithCoords]);
 
@@ -191,16 +217,39 @@ function InteractiveMap({
 
     const map = mapRef.current;
 
-    if (prefersReducedMotion) {
-      map.fitBounds(bounds, { padding: [50, 50] });
-    } else {
-      map.flyToBounds(bounds, {
-        padding: [50, 50],
-        duration: 0.5,
-        easeLinearity: 0.25,
-      });
+    try {
+      if (prefersReducedMotion) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      } else {
+        map.flyToBounds(bounds, {
+          padding: [50, 50],
+          duration: 0.5,
+          easeLinearity: 0.25,
+        });
+      }
+    } catch {
+      // Leaflet can throw on degenerate bounds — fall back to US default
+      map.setView(US_BOUNDS.center, US_BOUNDS.zoom);
     }
   }, [bounds, isMapReady]);
+
+  // Pan map to search center when radius/fallback search provides one
+  useEffect(() => {
+    if (!mapRef.current || !isMapReady || !searchCenter) return;
+
+    const map = mapRef.current;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    try {
+      if (prefersReducedMotion) {
+        map.setView([searchCenter.lat, searchCenter.lng], 10);
+      } else {
+        map.flyTo([searchCenter.lat, searchCenter.lng], 10, { duration: 0.5 });
+      }
+    } catch {
+      // ignore flyTo errors
+    }
+  }, [searchCenter, isMapReady]);
 
   // Lazy-loaded leaflet reference (only on client)
   const leafletRef = useRef<typeof import("leaflet") | null>(null);

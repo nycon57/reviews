@@ -10,10 +10,6 @@ import {
   Bell,
   CreditCard,
   ChatTeardropDots,
-  ShieldCheck,
-  Scales,
-  CurrencyDollar,
-  FileText,
   LinkSimple,
 } from "@phosphor-icons/react";
 import { cn } from '@/lib/utils';
@@ -22,20 +18,27 @@ import { IntegrationsTab } from './integrations-tab';
 import { ApiTab } from './api-tab';
 import { NotificationsTab } from './notifications-tab';
 import { BillingTab } from './billing-tab';
-import { SmsTab } from '@/components/settings/sms/sms-tab';
-import { RegistrationTab } from '@/components/settings/sms/registration-tab';
-import { ComplianceTab } from '@/components/settings/sms/compliance-tab';
-import { SmsBillingTab } from '@/components/settings/sms/billing-tab';
-import { SmsTemplatesTab } from '@/components/settings/sms/templates-tab';
+import { SmsSettingsPanel, type SmsSubTab } from '@/components/settings/sms/sms-settings-panel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SmartLinksTab } from './smart-links-tab';
 
-type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'smart-links' | 'sms' | 'sms-registration' | 'sms-compliance' | 'sms-billing' | 'sms-templates';
+type SettingsTab = 'profile' | 'integrations' | 'api' | 'notifications' | 'billing' | 'smart-links' | 'sms';
 
-const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'smart-links', 'sms', 'sms-registration', 'sms-compliance', 'sms-billing', 'sms-templates'];
+const VALID_TABS: SettingsTab[] = ['profile', 'integrations', 'api', 'notifications', 'billing', 'smart-links', 'sms'];
 
-function isSettingsTab(value: string | null): value is SettingsTab {
-  return value !== null && VALID_TABS.includes(value as SettingsTab);
+// Backwards-compat: old SMS sub-tab URL params → sms tab + sub-tab
+const SMS_SUB_TAB_MAP: Record<string, SmsSubTab> = {
+  'sms-registration': 'registration',
+  'sms-compliance': 'compliance',
+  'sms-billing': 'billing',
+  'sms-templates': 'templates',
+};
+
+function resolveTab(value: string | null): { tab: SettingsTab; smsSubTab?: SmsSubTab } {
+  if (!value) return { tab: 'profile' };
+  if (VALID_TABS.includes(value as SettingsTab)) return { tab: value as SettingsTab };
+  if (value in SMS_SUB_TAB_MAP) return { tab: 'sms', smsSubTab: SMS_SUB_TAB_MAP[value] };
+  return { tab: 'profile' };
 }
 
 const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
@@ -46,10 +49,6 @@ const tabs: { value: SettingsTab; label: string; icon: React.ElementType }[] = [
   { value: 'notifications', label: 'Notifications', icon: Bell },
   { value: 'smart-links', label: 'Smart Links', icon: LinkSimple },
   { value: 'sms', label: 'SMS', icon: ChatTeardropDots },
-  { value: 'sms-registration', label: '10DLC', icon: ShieldCheck },
-  { value: 'sms-compliance', label: 'Compliance', icon: Scales },
-  { value: 'sms-billing', label: 'SMS Billing', icon: CurrencyDollar },
-  { value: 'sms-templates', label: 'Templates', icon: FileText },
 ];
 
 function TabSkeleton() {
@@ -103,7 +102,7 @@ export function SettingsTabs({
   const searchParams = useSearchParams();
 
   const tabParam = searchParams.get('tab');
-  const currentTab = isSettingsTab(tabParam) ? tabParam : initialTab;
+  const { tab: currentTab, smsSubTab } = resolveTab(tabParam ?? (initialTab as string));
 
   const handleTabChange = useCallback(
     (value: string) => {
@@ -196,31 +195,7 @@ export function SettingsTabs({
 
         <TabsContent value="sms" className="m-0 animate-fade-in">
           <Suspense fallback={<TabSkeleton />}>
-            <SmsTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="sms-registration" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <RegistrationTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="sms-compliance" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <ComplianceTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="sms-billing" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <SmsBillingTab />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="sms-templates" className="m-0 animate-fade-in">
-          <Suspense fallback={<TabSkeleton />}>
-            <SmsTemplatesTab />
+            <SmsSettingsPanel initialSubTab={smsSubTab} />
           </Suspense>
         </TabsContent>
       </div>

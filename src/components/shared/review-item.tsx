@@ -143,6 +143,8 @@ export interface ReviewItemProps {
   review: ReviewItemData;
   respondentName?: string;
   attribution?: ReviewItemAttribution;
+  /** Label before the loan officer name in attribution (default: "Review for") */
+  attributionLabel?: string;
   shareConfig?: { profileUrl: string; subjectName: string };
   onFlag?: (reviewId: string) => void;
   animate?: boolean;
@@ -153,6 +155,7 @@ export function ReviewItem({
   review,
   respondentName,
   attribution,
+  attributionLabel = "Review for",
   shareConfig,
   onFlag,
   animate,
@@ -263,34 +266,126 @@ export function ReviewItem({
         </div>
       )}
 
-      {/* Attribution row */}
-      {attribution && (
+      {/* Attribution + Actions row */}
+      {(attribution || shareLinks || onFlag) && (
         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-repwell-teal-300">
-          <Link
-            href={attribution.loanOfficer.href}
-            className="flex items-center gap-2 hover:text-repwell-teal-500 transition-colors"
-          >
-            <Avatar className="h-6 w-6">
-              <AvatarImage
-                src={attribution.loanOfficer.photoUrl || undefined}
-                alt={attribution.loanOfficer.name}
-              />
-              <AvatarFallback className="text-[10px] bg-repwell-teal-500/10 text-repwell-teal-500">
-                {getInitials(attribution.loanOfficer.name)}
-              </AvatarFallback>
-            </Avatar>
-            <span>Review for {attribution.loanOfficer.name}</span>
-          </Link>
-          {attribution.branch && (
+          {attribution && (
             <>
-              <span className="text-repwell-sage-200">|</span>
               <Link
-                href={attribution.branch.href}
-                className="hover:text-repwell-teal-500 transition-colors"
+                href={attribution.loanOfficer.href}
+                className="flex items-center gap-2 hover:text-repwell-teal-500 transition-colors"
               >
-                {attribution.branch.name}
+                <Avatar className="h-6 w-6">
+                  <AvatarImage
+                    src={attribution.loanOfficer.photoUrl || undefined}
+                    alt={attribution.loanOfficer.name}
+                  />
+                  <AvatarFallback className="text-[10px] bg-repwell-teal-500/10 text-repwell-teal-500">
+                    {getInitials(attribution.loanOfficer.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{attributionLabel} {attribution.loanOfficer.name}</span>
               </Link>
+              {attribution.branch && (
+                <>
+                  <span className="text-repwell-sage-200">|</span>
+                  <Link
+                    href={attribution.branch.href}
+                    className="hover:text-repwell-teal-500 transition-colors"
+                  >
+                    {attribution.branch.name}
+                  </Link>
+                </>
+              )}
             </>
+          )}
+
+          {/* Share & Flag — right-aligned */}
+          {(shareLinks || onFlag) && (
+            <div className="ml-auto flex items-center gap-1">
+              <TooltipProvider>
+                {shareLinks && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-repwell-teal-400"
+                        aria-label="Share review"
+                      >
+                        <ShareNetwork className="h-3.5 w-3.5 mr-1" />
+                        Share
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={shareLinks.twitter}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2"
+                        >
+                          <Twitter className="h-4 w-4" />
+                          Twitter
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={shareLinks.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2"
+                        >
+                          <Facebook className="h-4 w-4" />
+                          Facebook
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={shareLinks.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2"
+                        >
+                          <Linkedin className="h-4 w-4" />
+                          LinkedIn
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={copyToClipboard} className="flex items-center gap-2">
+                        {copied ? (
+                          <>
+                            <Check className="h-4 w-4 text-green-500" />
+                            Copied!
+                          </>
+                        ) : (
+                          <>
+                            <Link2 className="h-4 w-4" />
+                            Copy link
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
+                {onFlag && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-red-500"
+                        onClick={() => onFlag(review.id)}
+                      >
+                        <Flag className="h-3.5 w-3.5" />
+                        Report
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Report inappropriate content</TooltipContent>
+                  </Tooltip>
+                )}
+              </TooltipProvider>
+            </div>
           )}
         </div>
       )}
@@ -302,98 +397,6 @@ export function ReviewItem({
             Response from {respondentName || "the team"}
           </p>
           <p className="text-sm text-repwell-teal-400">{review.response_text}</p>
-        </div>
-      )}
-
-      {/* Share & Flag Actions */}
-      {(shareLinks || onFlag) && (
-        <div className="mt-4 flex items-center gap-2">
-          <TooltipProvider>
-            {shareLinks && (
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-muted-foreground hover:text-repwell-teal-400"
-                      >
-                        <ShareNetwork className="h-4 w-4 mr-1" />
-                        Share
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent>Share this review</TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem asChild>
-                    <a
-                      href={shareLinks.twitter}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      <Twitter className="h-4 w-4" />
-                      Twitter
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a
-                      href={shareLinks.facebook}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      <Facebook className="h-4 w-4" />
-                      Facebook
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a
-                      href={shareLinks.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      <Linkedin className="h-4 w-4" />
-                      LinkedIn
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={copyToClipboard} className="flex items-center gap-2">
-                    {copied ? (
-                      <>
-                        <Check className="h-4 w-4 text-green-500" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Link2 className="h-4 w-4" />
-                        Copy link
-                      </>
-                    )}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-
-            {onFlag && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-muted-foreground hover:text-red-500"
-                    onClick={() => onFlag(review.id)}
-                  >
-                    <Flag className="h-4 w-4" />
-                    Report
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Report inappropriate content</TooltipContent>
-              </Tooltip>
-            )}
-          </TooltipProvider>
         </div>
       )}
     </Wrapper>

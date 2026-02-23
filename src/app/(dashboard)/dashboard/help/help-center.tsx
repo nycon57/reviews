@@ -197,7 +197,7 @@ export function HelpCenter() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{link.title}</h3>
+                    <h3 className="text-sm font-semibold">{link.title}</h3>
                     {link.badge && (
                       <Badge variant="secondary" className="text-xs">
                         {link.badge}
@@ -245,7 +245,7 @@ export function HelpCenter() {
             <Accordion type="single" collapsible className="w-full">
               {filteredFAQ.map((item) => (
                 <AccordionItem key={item.id} value={item.id}>
-                  <AccordionTrigger className="text-left">
+                  <AccordionTrigger className="text-sm text-left">
                     <div className="flex items-center gap-3">
                       <span>{item.question}</span>
                       <Badge variant="outline" className="text-xs shrink-0">
@@ -298,7 +298,7 @@ export function HelpCenter() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
                   <option.icon className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-semibold">{option.title}</h3>
+                <h3 className="text-sm font-semibold">{option.title}</h3>
                 <p className="text-sm text-muted-foreground mt-1 mb-4">
                   {option.description}
                 </p>

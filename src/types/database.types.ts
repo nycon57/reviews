@@ -256,6 +256,76 @@ export type Database = {
           },
         ]
       }
+      auto_reply_queue: {
+        Row: {
+          attempted_at: string | null
+          completed_at: string | null
+          created_at: string | null
+          eligible_at: string
+          error_message: string | null
+          id: string
+          organization_id: string
+          retry_count: number
+          review_id: string
+          status: string
+          tone: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          eligible_at: string
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          retry_count?: number
+          review_id: string
+          status?: string
+          tone?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          eligible_at?: string
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          retry_count?: number
+          review_id?: string
+          status?: string
+          tone?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_reply_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_reply_queue_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: true
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "auto_reply_queue_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           category: string
@@ -315,6 +385,60 @@ export type Database = {
           },
         ]
       }
+      blog_posts: {
+        Row: {
+          author: Json
+          category: string
+          content: string
+          created_at: string
+          date: string
+          description: string
+          featured: boolean
+          id: string
+          image: string | null
+          reading_time: number
+          slug: string
+          status: string
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: Json
+          category: string
+          content: string
+          created_at?: string
+          date: string
+          description: string
+          featured?: boolean
+          id?: string
+          image?: string | null
+          reading_time?: number
+          slug: string
+          status?: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: Json
+          category?: string
+          content?: string
+          created_at?: string
+          date?: string
+          description?: string
+          featured?: boolean
+          id?: string
+          image?: string | null
+          reading_time?: number
+          slug?: string
+          status?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       branches: {
         Row: {
           address: Json | null
@@ -323,14 +447,17 @@ export type Database = {
           created_at: string | null
           description: string | null
           email: string | null
+          facebook_url: string | null
           global_slug: string | null
           google_maps_url: string | null
           google_place_id: string | null
           hours_of_operation: Json | null
           id: string
+          instagram_url: string | null
           is_active: boolean | null
           is_public: boolean | null
           latitude: number | null
+          linkedin_url: string | null
           longitude: number | null
           manager_email: string | null
           manager_id: string | null
@@ -343,8 +470,10 @@ export type Database = {
           slug: string
           total_members: number | null
           total_reviews: number | null
+          twitter_url: string | null
           updated_at: string | null
           website_url: string | null
+          zillow_profile_url: string | null
         }
         Insert: {
           address?: Json | null
@@ -353,14 +482,17 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           global_slug?: string | null
           google_maps_url?: string | null
           google_place_id?: string | null
           hours_of_operation?: Json | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean | null
           is_public?: boolean | null
           latitude?: number | null
+          linkedin_url?: string | null
           longitude?: number | null
           manager_email?: string | null
           manager_id?: string | null
@@ -373,8 +505,10 @@ export type Database = {
           slug: string
           total_members?: number | null
           total_reviews?: number | null
+          twitter_url?: string | null
           updated_at?: string | null
           website_url?: string | null
+          zillow_profile_url?: string | null
         }
         Update: {
           address?: Json | null
@@ -383,14 +517,17 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           email?: string | null
+          facebook_url?: string | null
           global_slug?: string | null
           google_maps_url?: string | null
           google_place_id?: string | null
           hours_of_operation?: Json | null
           id?: string
+          instagram_url?: string | null
           is_active?: boolean | null
           is_public?: boolean | null
           latitude?: number | null
+          linkedin_url?: string | null
           longitude?: number | null
           manager_email?: string | null
           manager_id?: string | null
@@ -403,10 +540,19 @@ export type Database = {
           slug?: string
           total_members?: number | null
           total_reviews?: number | null
+          twitter_url?: string | null
           updated_at?: string | null
           website_url?: string | null
+          zillow_profile_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "branches_manager_id_fkey"
+            columns: ["manager_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "branches_organization_id_fkey"
             columns: ["organization_id"]
@@ -1607,6 +1753,110 @@ export type Database = {
           },
         ]
       }
+      individual_branches: {
+        Row: {
+          address: Json | null
+          created_at: string
+          email: string | null
+          id: string
+          individual_organization_id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          phone: string | null
+          region: string | null
+          slug: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          address?: Json | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          individual_organization_id: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          phone?: string | null
+          region?: string | null
+          slug: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          address?: Json | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          individual_organization_id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          phone?: string | null
+          region?: string | null
+          slug?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "individual_branches_individual_organization_id_fkey"
+            columns: ["individual_organization_id"]
+            isOneToOne: false
+            referencedRelation: "individual_organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      individual_organizations: {
+        Row: {
+          address: Json | null
+          created_at: string
+          email: string | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          name: string
+          onboarding_status: string | null
+          phone: string | null
+          slug: string
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          address?: Json | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name: string
+          onboarding_status?: string | null
+          phone?: string | null
+          slug: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          address?: Json | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name?: string
+          onboarding_status?: string | null
+          phone?: string | null
+          slug?: string
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           created_at: string | null
@@ -2131,6 +2381,7 @@ export type Database = {
       }
       notification_preferences: {
         Row: {
+          auto_reply_opt_out: boolean | null
           created_at: string | null
           digest_day_of_week: number | null
           digest_enabled: boolean | null
@@ -2173,6 +2424,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          auto_reply_opt_out?: boolean | null
           created_at?: string | null
           digest_day_of_week?: number | null
           digest_enabled?: boolean | null
@@ -2215,6 +2467,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          auto_reply_opt_out?: boolean | null
           created_at?: string | null
           digest_day_of_week?: number | null
           digest_enabled?: boolean | null
@@ -2382,6 +2635,7 @@ export type Database = {
           account_type: string | null
           billing_email: string | null
           created_at: string | null
+          description: string | null
           domain: string | null
           email: string | null
           facebook_url: string | null
@@ -2414,6 +2668,7 @@ export type Database = {
           account_type?: string | null
           billing_email?: string | null
           created_at?: string | null
+          description?: string | null
           domain?: string | null
           email?: string | null
           facebook_url?: string | null
@@ -2446,6 +2701,7 @@ export type Database = {
           account_type?: string | null
           billing_email?: string | null
           created_at?: string | null
+          description?: string | null
           domain?: string | null
           email?: string | null
           facebook_url?: string | null
@@ -2545,6 +2801,611 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profile_referrals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_assets: {
+        Row: {
+          asset_type: Database["public"]["Enums"]["proof_asset_type"]
+          asset_url: string | null
+          created_at: string
+          duration_seconds: number | null
+          height: number | null
+          id: string
+          metadata: Json
+          mime_type: string | null
+          organization_id: string
+          proof_item_id: string
+          storage_path: string | null
+          template_id: string | null
+          template_version_id: string | null
+          updated_at: string
+          width: number | null
+        }
+        Insert: {
+          asset_type: Database["public"]["Enums"]["proof_asset_type"]
+          asset_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          metadata?: Json
+          mime_type?: string | null
+          organization_id: string
+          proof_item_id: string
+          storage_path?: string | null
+          template_id?: string | null
+          template_version_id?: string | null
+          updated_at?: string
+          width?: number | null
+        }
+        Update: {
+          asset_type?: Database["public"]["Enums"]["proof_asset_type"]
+          asset_url?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          metadata?: Json
+          mime_type?: string | null
+          organization_id?: string
+          proof_item_id?: string
+          storage_path?: string | null
+          template_id?: string | null
+          template_version_id?: string | null
+          updated_at?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_assets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_assets_proof_item_id_fkey"
+            columns: ["proof_item_id"]
+            isOneToOne: false
+            referencedRelation: "proof_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_assets_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "proof_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_assets_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "proof_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_item_edits: {
+        Row: {
+          classification: Database["public"]["Enums"]["proof_edit_classification"]
+          classification_reason: string | null
+          created_at: string
+          diff_summary: Json
+          edited_by: string | null
+          edited_content: Json
+          id: string
+          lexical_delta_percent: number | null
+          organization_id: string
+          original_content: Json
+          proof_item_id: string
+        }
+        Insert: {
+          classification: Database["public"]["Enums"]["proof_edit_classification"]
+          classification_reason?: string | null
+          created_at?: string
+          diff_summary?: Json
+          edited_by?: string | null
+          edited_content: Json
+          id?: string
+          lexical_delta_percent?: number | null
+          organization_id: string
+          original_content: Json
+          proof_item_id: string
+        }
+        Update: {
+          classification?: Database["public"]["Enums"]["proof_edit_classification"]
+          classification_reason?: string | null
+          created_at?: string
+          diff_summary?: Json
+          edited_by?: string | null
+          edited_content?: Json
+          id?: string
+          lexical_delta_percent?: number | null
+          organization_id?: string
+          original_content?: Json
+          proof_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_item_edits_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_item_edits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_item_edits_proof_item_id_fkey"
+            columns: ["proof_item_id"]
+            isOneToOne: false
+            referencedRelation: "proof_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_items: {
+        Row: {
+          approval_required: boolean
+          approved_at: string | null
+          approved_by: string | null
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          custom_payload: Json | null
+          customer_name: string | null
+          id: string
+          organization_id: string
+          published_at: string | null
+          quote: string | null
+          rating: number | null
+          rejection_reason: string | null
+          source_id: string | null
+          source_platform: string | null
+          source_review_date: string | null
+          source_snapshot: Json
+          source_type: Database["public"]["Enums"]["proof_source_type"]
+          status: Database["public"]["Enums"]["proof_status"]
+          summary: string | null
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_required?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_payload?: Json | null
+          customer_name?: string | null
+          id?: string
+          organization_id: string
+          published_at?: string | null
+          quote?: string | null
+          rating?: number | null
+          rejection_reason?: string | null
+          source_id?: string | null
+          source_platform?: string | null
+          source_review_date?: string | null
+          source_snapshot?: Json
+          source_type: Database["public"]["Enums"]["proof_source_type"]
+          status?: Database["public"]["Enums"]["proof_status"]
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_required?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          custom_payload?: Json | null
+          customer_name?: string | null
+          id?: string
+          organization_id?: string
+          published_at?: string | null
+          quote?: string | null
+          rating?: number | null
+          rejection_reason?: string | null
+          source_id?: string | null
+          source_platform?: string | null
+          source_review_date?: string | null
+          source_snapshot?: Json
+          source_type?: Database["public"]["Enums"]["proof_source_type"]
+          status?: Database["public"]["Enums"]["proof_status"]
+          summary?: string | null
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_items_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_link_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_hash: string | null
+          metadata: Json
+          organization_id: string
+          proof_link_id: string
+          referrer: string | null
+          request_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json
+          organization_id: string
+          proof_link_id: string
+          referrer?: string | null
+          request_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json
+          organization_id?: string
+          proof_link_id?: string
+          referrer?: string | null
+          request_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_link_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_link_events_proof_link_id_fkey"
+            columns: ["proof_link_id"]
+            isOneToOne: false
+            referencedRelation: "proof_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_links: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          destination_url: string | null
+          id: string
+          og_asset_id: string | null
+          organization_id: string
+          proof_item_id: string
+          published: boolean
+          published_at: string | null
+          slug: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          destination_url?: string | null
+          id?: string
+          og_asset_id?: string | null
+          organization_id: string
+          proof_item_id: string
+          published?: boolean
+          published_at?: string | null
+          slug: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          destination_url?: string | null
+          id?: string
+          og_asset_id?: string | null
+          organization_id?: string
+          proof_item_id?: string
+          published?: boolean
+          published_at?: string | null
+          slug?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_links_og_asset_id_fkey"
+            columns: ["og_asset_id"]
+            isOneToOne: false
+            referencedRelation: "proof_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_links_proof_item_id_fkey"
+            columns: ["proof_item_id"]
+            isOneToOne: false
+            referencedRelation: "proof_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_render_jobs: {
+        Row: {
+          asset_type: Database["public"]["Enums"]["proof_asset_type"]
+          canceled_at: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          max_retries: number
+          organization_id: string
+          output_asset_id: string | null
+          payload: Json
+          priority: number
+          proof_item_id: string
+          queued_at: string
+          requested_by: string | null
+          retry_count: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["proof_job_status"]
+          template_id: string | null
+          template_version_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_type: Database["public"]["Enums"]["proof_asset_type"]
+          canceled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          organization_id: string
+          output_asset_id?: string | null
+          payload?: Json
+          priority?: number
+          proof_item_id: string
+          queued_at?: string
+          requested_by?: string | null
+          retry_count?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["proof_job_status"]
+          template_id?: string | null
+          template_version_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: Database["public"]["Enums"]["proof_asset_type"]
+          canceled_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          max_retries?: number
+          organization_id?: string
+          output_asset_id?: string | null
+          payload?: Json
+          priority?: number
+          proof_item_id?: string
+          queued_at?: string
+          requested_by?: string | null
+          retry_count?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["proof_job_status"]
+          template_id?: string | null
+          template_version_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_render_jobs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_render_jobs_output_asset_id_fkey"
+            columns: ["output_asset_id"]
+            isOneToOne: false
+            referencedRelation: "proof_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_render_jobs_proof_item_id_fkey"
+            columns: ["proof_item_id"]
+            isOneToOne: false
+            referencedRelation: "proof_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_render_jobs_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_render_jobs_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "proof_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_render_jobs_template_version_id_fkey"
+            columns: ["template_version_id"]
+            isOneToOne: false
+            referencedRelation: "proof_template_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_template_versions: {
+        Row: {
+          change_note: string | null
+          created_at: string
+          created_by: string | null
+          dsl: Json
+          id: string
+          organization_id: string | null
+          template_id: string
+          version: number
+        }
+        Insert: {
+          change_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          dsl: Json
+          id?: string
+          organization_id?: string | null
+          template_id: string
+          version: number
+        }
+        Update: {
+          change_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          dsl?: Json
+          id?: string
+          organization_id?: string | null
+          template_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_template_versions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_template_versions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_template_versions_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "proof_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proof_templates: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          dsl: Json
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          organization_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dsl?: Json
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name: string
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dsl?: Json
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name?: string
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_templates_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -3101,6 +3962,7 @@ export type Database = {
           template_used: string | null
           user_id: string
           was_ai_suggested: boolean | null
+          was_auto_reply: boolean | null
           was_edited_from_template: boolean | null
           word_count: number | null
         }
@@ -3116,6 +3978,7 @@ export type Database = {
           template_used?: string | null
           user_id: string
           was_ai_suggested?: boolean | null
+          was_auto_reply?: boolean | null
           was_edited_from_template?: boolean | null
           word_count?: number | null
         }
@@ -3131,6 +3994,7 @@ export type Database = {
           template_used?: string | null
           user_id?: string
           was_ai_suggested?: boolean | null
+          was_auto_reply?: boolean | null
           was_edited_from_template?: boolean | null
           word_count?: number | null
         }
@@ -5352,13 +6216,17 @@ export type Database = {
           department_id: string | null
           email: string
           email_verified_at: string | null
+          facebook_url: string | null
           featured_review_ids: string[] | null
           full_name: string | null
           google_business_id: string | null
           google_place_id: string | null
           hire_date: string | null
           id: string
+          individual_branch_id: string | null
+          individual_organization_id: string | null
           industry: string | null
+          instagram_url: string | null
           is_active: boolean | null
           is_owner: boolean | null
           last_login_at: string | null
@@ -5382,10 +6250,8 @@ export type Database = {
           timezone: string | null
           title: string | null
           total_reviews: number | null
-          updated_at: string | null
-          facebook_url: string | null
-          instagram_url: string | null
           twitter_url: string | null
+          updated_at: string | null
           video_testimonial_url: string | null
           video_thumbnail_url: string | null
           zillow_profile_url: string | null
@@ -5406,13 +6272,17 @@ export type Database = {
           department_id?: string | null
           email: string
           email_verified_at?: string | null
+          facebook_url?: string | null
           featured_review_ids?: string[] | null
           full_name?: string | null
           google_business_id?: string | null
           google_place_id?: string | null
           hire_date?: string | null
           id: string
+          individual_branch_id?: string | null
+          individual_organization_id?: string | null
           industry?: string | null
+          instagram_url?: string | null
           is_active?: boolean | null
           is_owner?: boolean | null
           last_login_at?: string | null
@@ -5436,10 +6306,8 @@ export type Database = {
           timezone?: string | null
           title?: string | null
           total_reviews?: number | null
-          updated_at?: string | null
-          facebook_url?: string | null
-          instagram_url?: string | null
           twitter_url?: string | null
+          updated_at?: string | null
           video_testimonial_url?: string | null
           video_thumbnail_url?: string | null
           zillow_profile_url?: string | null
@@ -5460,13 +6328,17 @@ export type Database = {
           department_id?: string | null
           email?: string
           email_verified_at?: string | null
+          facebook_url?: string | null
           featured_review_ids?: string[] | null
           full_name?: string | null
           google_business_id?: string | null
           google_place_id?: string | null
           hire_date?: string | null
           id?: string
+          individual_branch_id?: string | null
+          individual_organization_id?: string | null
           industry?: string | null
+          instagram_url?: string | null
           is_active?: boolean | null
           is_owner?: boolean | null
           last_login_at?: string | null
@@ -5490,10 +6362,8 @@ export type Database = {
           timezone?: string | null
           title?: string | null
           total_reviews?: number | null
-          updated_at?: string | null
-          facebook_url?: string | null
-          instagram_url?: string | null
           twitter_url?: string | null
+          updated_at?: string | null
           video_testimonial_url?: string | null
           video_thumbnail_url?: string | null
           zillow_profile_url?: string | null
@@ -5511,6 +6381,20 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_individual_branch_id_fkey"
+            columns: ["individual_branch_id"]
+            isOneToOne: false
+            referencedRelation: "individual_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "users_individual_organization_id_fkey"
+            columns: ["individual_organization_id"]
+            isOneToOne: false
+            referencedRelation: "individual_organizations"
             referencedColumns: ["id"]
           },
           {
@@ -6039,7 +6923,6 @@ export type Database = {
       }
       widget_configs: {
         Row: {
-          ab_test_config: Json | null
           ab_test_group: string | null
           allowed_domains: string[] | null
           config: Json
@@ -6060,7 +6943,6 @@ export type Database = {
           widget_type: Database["public"]["Enums"]["widget_type"]
         }
         Insert: {
-          ab_test_config?: Json | null
           ab_test_group?: string | null
           allowed_domains?: string[] | null
           config?: Json
@@ -6081,7 +6963,6 @@ export type Database = {
           widget_type: Database["public"]["Enums"]["widget_type"]
         }
         Update: {
-          ab_test_config?: Json | null
           ab_test_group?: string | null
           allowed_domains?: string[] | null
           config?: Json
@@ -6121,72 +7002,6 @@ export type Database = {
             columns: ["parent_widget_id"]
             isOneToOne: false
             referencedRelation: "widget_configs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      widget_config_versions: {
-        Row: {
-          id: string
-          widget_config_id: string
-          version: number
-          config: Json
-          name: string
-          status: string
-          allowed_domains: string[]
-          enable_structured_data: boolean
-          structured_data_type: string
-          entity_id: string | null
-          changed_by: string | null
-          change_note: string | null
-          change_summary: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          widget_config_id: string
-          version: number
-          config?: Json
-          name: string
-          status?: string
-          allowed_domains?: string[]
-          enable_structured_data?: boolean
-          structured_data_type?: string
-          entity_id?: string | null
-          changed_by?: string | null
-          change_note?: string | null
-          change_summary?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          widget_config_id?: string
-          version?: number
-          config?: Json
-          name?: string
-          status?: string
-          allowed_domains?: string[]
-          enable_structured_data?: boolean
-          structured_data_type?: string
-          entity_id?: string | null
-          changed_by?: string | null
-          change_note?: string | null
-          change_summary?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "widget_config_versions_widget_config_id_fkey"
-            columns: ["widget_config_id"]
-            isOneToOne: false
-            referencedRelation: "widget_configs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "widget_config_versions_changed_by_fkey"
-            columns: ["changed_by"]
-            isOneToOne: false
-            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -6342,6 +7157,22 @@ export type Database = {
       }
     }
     Enums: {
+      proof_asset_type: "smart_link_og" | "image" | "video"
+      proof_edit_classification: "minor" | "material" | "blocked"
+      proof_job_status:
+        | "queued"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "canceled"
+      proof_source_type: "review" | "video_testimonial" | "manual_json"
+      proof_status:
+        | "draft"
+        | "ready"
+        | "pending_approval"
+        | "approved"
+        | "rejected"
+        | "archived"
       render_status: "pending" | "rendering" | "complete" | "failed"
       sms_consent_method:
         | "web_form"
@@ -6542,6 +7373,24 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      proof_asset_type: ["smart_link_og", "image", "video"],
+      proof_edit_classification: ["minor", "material", "blocked"],
+      proof_job_status: [
+        "queued",
+        "processing",
+        "completed",
+        "failed",
+        "canceled",
+      ],
+      proof_source_type: ["review", "video_testimonial", "manual_json"],
+      proof_status: [
+        "draft",
+        "ready",
+        "pending_approval",
+        "approved",
+        "rejected",
+        "archived",
+      ],
       render_status: ["pending", "rendering", "complete", "failed"],
       sms_consent_method: [
         "web_form",

@@ -133,7 +133,7 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
 
         {data.length > 5 && (
           <Button variant="outline" size="sm" className="w-full" asChild>
-            <Link href="/dashboard/manager?filter=needs_attention">
+            <Link href="/dashboard/team?tab=overview&filter=needs_attention">
               View all {data.length} members needing attention
             </Link>
           </Button>

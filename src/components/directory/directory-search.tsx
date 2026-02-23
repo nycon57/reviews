@@ -23,6 +23,8 @@ import {
   Users,
   CaretLeft as ChevronLeft,
   CaretRight as ChevronRight,
+  Crosshair,
+  Info,
 } from "@phosphor-icons/react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
@@ -30,6 +32,7 @@ import { MessageModal } from "@/app/pro/[slug]/components/message-modal";
 import {
   searchProfessionals,
   type DirectoryProfessional,
+  type DirectorySearchResult,
   type SearchFilters,
   type MapBounds,
 } from "@/lib/directory/actions";
@@ -57,11 +60,15 @@ export function DirectorySearch({
   // Core state
   const [results, setResults] = useState<DirectoryProfessional[]>(initialResults);
   const [totalCount, setTotalCount] = useState(initialCount);
+  // Nearby fallback state
+  const [isNearbyFallback, setIsNearbyFallback] = useState(false);
+  const [searchCenter, setSearchCenter] = useState<DirectorySearchResult["searchCenter"]>();
   // Form state
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [city, setCity] = useState(searchParams.get("city") || "");
   const [state, setState] = useState(searchParams.get("state") || "");
   const [minRating, setMinRating] = useState(searchParams.get("rating") || "");
+  const [radius, setRadius] = useState(searchParams.get("radius") || "50");
   const [sortBy, setSortBy] = useState<"rating" | "reviews" | "name">(
     (searchParams.get("sort") as "rating" | "reviews" | "name") || "rating"
   );
@@ -84,18 +91,20 @@ export function DirectorySearch({
   const pageSize = 20;
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  // Client-side filter professionals by current map bounds for instant feedback
+  // Client-side filter professionals by current map bounds for instant feedback.
+  // Professionals WITHOUT coordinates are always kept — they just won't appear on the map.
   const filteredByBounds = useMemo(() => {
     if (!mapBounds) return results;
-    return results.filter(
-      (prof) =>
-        prof.latitude != null &&
-        prof.longitude != null &&
+    return results.filter((prof) => {
+      // Keep professionals with no coordinates (e.g. individual users without branch)
+      if (prof.latitude == null || prof.longitude == null) return true;
+      return (
         prof.latitude >= mapBounds.south &&
         prof.latitude <= mapBounds.north &&
         prof.longitude >= mapBounds.west &&
         prof.longitude <= mapBounds.east
-    );
+      );
+    });
   }, [results, mapBounds]);
 
   // Build current filters object
@@ -105,11 +114,12 @@ export function DirectorySearch({
       city: city || undefined,
       state: state || undefined,
       minRating: minRating ? parseFloat(minRating) : undefined,
+      radius: radius ? parseInt(radius, 10) : 50,
       sortBy,
       sortOrder: "desc",
       industry: industryFilter,
     };
-  }, [query, city, state, minRating, sortBy, industryFilter]);
+  }, [query, city, state, minRating, radius, sortBy, industryFilter]);
 
   // Update URL with current filters
   const updateURL = useCallback(
@@ -120,6 +130,7 @@ export function DirectorySearch({
       if (filters.city) params.set("city", filters.city);
       if (filters.state) params.set("state", filters.state);
       if (filters.minRating) params.set("rating", filters.minRating.toString());
+      if (filters.radius && filters.radius !== 50) params.set("radius", filters.radius.toString());
       if (filters.sortBy && filters.sortBy !== "rating") {
         params.set("sort", filters.sortBy);
       }
@@ -139,6 +150,8 @@ export function DirectorySearch({
         if (result.success && result.data) {
           setResults(result.data.professionals);
           setTotalCount(result.data.totalCount);
+          setIsNearbyFallback(result.data.isNearbyFallback ?? false);
+          setSearchCenter(result.data.searchCenter);
         }
       });
     },
@@ -160,14 +173,20 @@ export function DirectorySearch({
 
   // Handle filter changes
   const handleFilterChange = useCallback(
-    (key: keyof SearchFilters, value: string) => {
+    (key: keyof SearchFilters | "radius", value: string) => {
       const filters = getCurrentFilters();
 
+      if (key === "query") setQuery(value);
+      if (key === "city") setCity(value);
       if (key === "state") setState(value);
       if (key === "minRating") setMinRating(value);
+      if (key === "radius") setRadius(value);
       if (key === "sortBy") setSortBy(value as "rating" | "reviews" | "name");
 
-      const newFilters = { ...filters, [key]: value || undefined };
+      const newFilters = {
+        ...filters,
+        [key]: key === "radius" ? (value ? parseInt(value, 10) : 50) : (value || undefined),
+      };
       setPage(1);
       setHasUserMovedMap(false);
       performSearch(newFilters, 1);
@@ -250,9 +269,12 @@ export function DirectorySearch({
     setCity("");
     setState("");
     setMinRating("");
+    setRadius("50");
     setSortBy("rating");
     setPage(1);
     setHasUserMovedMap(false);
+    setIsNearbyFallback(false);
+    setSearchCenter(undefined);
 
     performSearch({}, 1);
     router.push(pathname, { scroll: false });
@@ -335,6 +357,24 @@ export function DirectorySearch({
                   </SelectContent>
                 </Select>
 
+                {city && (
+                  <Select
+                    value={radius}
+                    onValueChange={(v) => handleFilterChange("radius", v)}
+                  >
+                    <SelectTrigger className="w-24 text-left">
+                      <Crosshair className="mr-2 h-4 w-4" />
+                      <SelectValue placeholder="Radius" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 mi</SelectItem>
+                      <SelectItem value="25">25 mi</SelectItem>
+                      <SelectItem value="50">50 mi</SelectItem>
+                      <SelectItem value="100">100 mi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+
                 <Select
                   value={sortBy}
                   onValueChange={(v) => handleFilterChange("sortBy", v)}
@@ -359,10 +399,7 @@ export function DirectorySearch({
                       {query}
                       <X
                         className="h-3 w-3 cursor-pointer"
-                        onClick={() => {
-                          setQuery("");
-                          handleSearch();
-                        }}
+                        onClick={() => handleFilterChange("query", "")}
                       />
                     </Badge>
                   )}
@@ -371,10 +408,7 @@ export function DirectorySearch({
                       {city}
                       <X
                         className="h-3 w-3 cursor-pointer"
-                        onClick={() => {
-                          setCity("");
-                          handleSearch();
-                        }}
+                        onClick={() => handleFilterChange("city", "")}
                       />
                     </Badge>
                   )}
@@ -436,6 +470,25 @@ export function DirectorySearch({
             </span>
           )}
         </div>
+
+        {/* Nearby fallback banner */}
+        {isNearbyFallback && !isPending && (
+          <div className="flex items-start gap-2 rounded-lg border border-repwell-teal-300/30 bg-repwell-teal-300/5 px-3 py-2.5 mb-3">
+            <Info className="h-4 w-4 text-repwell-teal-300 shrink-0 mt-0.5" />
+            <p className="text-xs text-repwell-teal-400 leading-relaxed">
+              No exact match for <span className="font-semibold">{city}</span>.
+              {" "}Showing nearest results
+              {radius ? ` within ${radius} miles` : ""}.
+            </p>
+            <button
+              onClick={() => setIsNearbyFallback(false)}
+              className="shrink-0 ml-auto"
+              aria-label="Dismiss"
+            >
+              <X className="h-3.5 w-3.5 text-repwell-teal-300 hover:text-repwell-teal-400" />
+            </button>
+          </div>
+        )}
 
         {/* Scrollable Results List */}
         <div
@@ -560,6 +613,7 @@ export function DirectorySearch({
           selectedProfessionalId={selectedProfessionalId}
           hoveredProfessionalId={hoveredProfessionalId}
           heightClass="h-[400px] lg:h-[calc(100vh-120px)]"
+          searchCenter={searchCenter}
         />
       </div>
 

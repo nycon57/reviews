@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Search, LayoutGrid } from "lucide-react";
+import { Code } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -36,12 +37,17 @@ export function WidgetList({ widgets, total }: WidgetListProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-repwell-teal-500">Widgets</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {total} widget{total === 1 ? "" : "s"} created
-          </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <Code className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-repwell-teal-500">Widgets</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {total} widget{total === 1 ? "" : "s"} created
+            </p>
+          </div>
         </div>
         <Button
           onClick={() => router.push("/dashboard/widgets/new")}

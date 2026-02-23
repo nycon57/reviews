@@ -7,7 +7,7 @@ import { CampaignsDashboard } from "./campaigns-dashboard";
 import { requireEnterpriseManager } from "@/lib/access";
 
 export const metadata = {
-  title: "Email Campaigns | RepWell",
+  title: "Campaigns | RepWell",
   description: "Manage and create email campaigns for survey distribution",
 };
 
@@ -24,7 +24,7 @@ export default async function CampaignsPage() {
           <Mail className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Email Campaigns</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Campaigns</h1>
           <p className="text-muted-foreground">
             Create and manage email campaigns for survey distribution
           </p>

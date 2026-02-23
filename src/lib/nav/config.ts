@@ -57,7 +57,7 @@ export const NAV_CONFIG: NavConfig = {
     {
       title: "Share Studio",
       href: "/dashboard/share-studio",
-      icon: "ShareNetwork",
+      icon: "Lightning",
       permission: PERMISSIONS.VIEW_TESTIMONIALS,
     },
     {
@@ -118,23 +118,10 @@ export const NAV_CONFIG: NavConfig = {
       label: "Team",
       items: [
         {
-          title: "Team Overview",
-          href: "/dashboard/manager",
-          icon: "SquaresFour",
-          permission: PERMISSIONS.VIEW_MANAGER_DASHBOARD,
-        },
-        {
-          title: "Team Members",
+          title: "Team",
           href: "/dashboard/team",
           icon: "Users",
           permission: PERMISSIONS.VIEW_TEAM,
-        },
-        {
-          title: "EX Surveys",
-          href: "/dashboard/ex-surveys",
-          icon: "ClipboardText",
-          permission: PERMISSIONS.VIEW_EX_SURVEYS,
-          isNew: true,
         },
         {
           title: "Contacts",
@@ -158,6 +145,12 @@ export const NAV_CONFIG: NavConfig = {
           href: "/dashboard/organization",
           icon: "Buildings",
           permission: PERMISSIONS.VIEW_ORGANIZATION,
+        },
+        {
+          title: "EX Surveys",
+          href: "/dashboard/ex-surveys",
+          icon: "ClipboardText",
+          permission: PERMISSIONS.VIEW_EX_SURVEYS,
         },
         {
           title: "Widgets",

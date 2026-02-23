@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ChartBar } from "@phosphor-icons/react";
 import { UnifiedAnalyticsDashboard } from "@/components/analytics";
 import { AnalyticsTabsWrapper } from "@/components/analytics/analytics-tabs-wrapper";
 import { AdminAnalyticsDashboard } from "@/app/(dashboard)/dashboard/admin/analytics/admin-analytics-dashboard";
@@ -62,12 +63,17 @@ export function AnalyticsPageClient({
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground">
-            Track your performance metrics and insights
-          </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <ChartBar className="h-5 w-5 text-primary" aria-hidden="true" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
+            <p className="text-muted-foreground">
+              Track your performance metrics and insights
+            </p>
+          </div>
         </div>
         <ScopeSelector
           userRole={userRole}

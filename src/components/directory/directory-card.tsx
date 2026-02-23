@@ -77,7 +77,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
         <CardContent className="p-4 pt-4">
           <div className="flex items-start gap-3">
             {/* Avatar */}
-            <Link href={`/pro/${professional.slug || professional.id}`} className="shrink-0">
+            <Link href={`/pro/${professional.slug || professional.id}`} className="shrink-0 no-underline">
               <Avatar className="h-11 w-11 border-2 border-muted transition-transform group-hover:scale-105">
                 <AvatarImage
                   src={professional.photo_url || undefined}
@@ -92,15 +92,15 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <Link href={`/pro/${professional.slug || professional.id}`} className="min-w-0">
-                  <h3 className="font-semibold text-sm truncate group-hover:text-primary transition-colors">
+                <Link href={`/pro/${professional.slug || professional.id}`} className="min-w-0 no-underline">
+                  <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
                     {professional.full_name}
                   </h3>
                 </Link>
                 {professional.average_rating && professional.total_reviews ? (
                   <div className="flex items-center gap-1 shrink-0">
                     <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold text-xs">
+                    <span className="font-semibold text-xs text-foreground">
                       {Number(professional.average_rating).toFixed(1)}
                     </span>
                     <span className="text-[11px] text-muted-foreground">
@@ -115,13 +115,17 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
               </p>
 
               <div className="flex flex-wrap items-center gap-x-2 mt-0.5 text-xs text-muted-foreground">
-                {professional.is_enterprise && professional.organization && (
-                  <span className="flex items-center gap-1 truncate">
-                    <Building2 className="h-3 w-3 shrink-0" />
+                {professional.organization && (
+                  professional.is_enterprise ? (
+                    <span className="flex items-center gap-1 truncate">
+                      <Building2 className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{professional.organization.name}</span>
+                    </span>
+                  ) : (
                     <span className="truncate">{professional.organization.name}</span>
-                  </span>
+                  )
                 )}
-                {professional.is_enterprise && professional.organization && location && (
+                {professional.organization && location && (
                   <span className="text-muted-foreground/50">·</span>
                 )}
                 {location && (
@@ -129,6 +133,16 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
                     <MapPin className="h-3 w-3 shrink-0" />
                     <span className="truncate">{location}</span>
                   </span>
+                )}
+                {professional.distance_miles != null && (
+                  <>
+                    <span className="text-muted-foreground/50">·</span>
+                    <span className="text-repwell-teal-300 font-medium whitespace-nowrap">
+                      {professional.distance_miles < 1
+                        ? "< 1 mi"
+                        : `${professional.distance_miles.toFixed(1)} mi`}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
@@ -191,10 +205,10 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
       "group h-full transition-all hover:shadow-lg hover:border-primary/50",
       isHovered && "shadow-lg border-repwell-teal-300 bg-repwell-sage-100/30"
     )}>
-      <CardContent className="p-5">
+      <CardContent className="p-5 pt-5">
         <div className="flex items-start gap-4">
           {/* Avatar */}
-          <Link href={`/pro/${professional.slug || professional.id}`}>
+          <Link href={`/pro/${professional.slug || professional.id}`} className="no-underline">
             <Avatar className="h-16 w-16 border-2 border-muted transition-transform group-hover:scale-105">
               <AvatarImage
                 src={professional.photo_url || undefined}
@@ -208,24 +222,35 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <Link href={`/pro/${professional.slug || professional.id}`}>
-              <h3 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+            <Link href={`/pro/${professional.slug || professional.id}`} className="no-underline">
+              <h3 className="font-semibold text-lg text-repwell-teal-500 truncate group-hover:text-primary transition-colors">
                 {professional.full_name}
               </h3>
             </Link>
             <p className="text-sm text-muted-foreground truncate">
               {professional.title || "Professional"}
             </p>
-            {professional.is_enterprise && professional.organization && (
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                <Building2 className="h-3 w-3 shrink-0" />
-                <span className="truncate">{professional.organization.name}</span>
-              </div>
+            {professional.organization && (
+              professional.is_enterprise ? (
+                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                  <Building2 className="h-3 w-3 shrink-0" />
+                  <span className="truncate">{professional.organization.name}</span>
+                </div>
+              ) : (
+                <p className="mt-0.5 text-xs text-muted-foreground truncate">{professional.organization.name}</p>
+              )
             )}
             {location && (
               <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                 <MapPin className="h-3 w-3 shrink-0" />
                 <span className="truncate">{location}</span>
+                {professional.distance_miles != null && (
+                  <span className="text-repwell-teal-300 font-medium ml-1 whitespace-nowrap">
+                    ({professional.distance_miles < 1
+                      ? "< 1 mi"
+                      : `${professional.distance_miles.toFixed(1)} mi`})
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -236,7 +261,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
           {professional.average_rating && professional.total_reviews ? (
             <>
               <StarRating rating={Math.round(Number(professional.average_rating))} />
-              <span className="font-semibold text-sm">
+              <span className="font-semibold text-sm text-repwell-teal-500">
                 {Number(professional.average_rating).toFixed(1)}
               </span>
               <Badge variant="secondary" className="text-xs">

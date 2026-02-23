@@ -13,6 +13,10 @@ import {
 
 const WIDGETS_PATH = "/dashboard/widgets";
 
+// Helper to access ab_test_config which may not be in generated types yet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type WidgetRow = Record<string, any>;
+
 // ── Types ──────────────────────────────────────────────────────────────
 
 export interface AbTestConfig {
@@ -157,7 +161,7 @@ export async function createAbTest(
     }
 
     // Check no active A/B test exists
-    const existingConfig = parent.ab_test_config as AbTestConfig | null;
+    const existingConfig = (parent as WidgetRow).ab_test_config as AbTestConfig | null;
     if (existingConfig?.enabled && existingConfig.status === "running") {
       return {
         success: false,
@@ -268,7 +272,7 @@ export async function getAbTestResults(
       return { success: false, error: "Widget not found" };
     }
 
-    const abConfig = parent.ab_test_config as AbTestConfig | null;
+    const abConfig = (parent as WidgetRow).ab_test_config as AbTestConfig | null;
     if (!abConfig) {
       return { success: false, error: "No A/B test found for this widget" };
     }
@@ -346,7 +350,7 @@ export async function listAbTests(): Promise<ActionResult<AbTestSummary[]>> {
     const results: AbTestSummary[] = [];
 
     for (const parent of widgets ?? []) {
-      const abConfig = parent.ab_test_config as AbTestConfig | null;
+      const abConfig = (parent as WidgetRow).ab_test_config as AbTestConfig | null;
       if (!abConfig) continue;
 
       const { data: variant } = await supabase
@@ -416,7 +420,7 @@ export async function declareWinner(
       return { success: false, error: "Widget not found" };
     }
 
-    const abConfig = parent.ab_test_config as AbTestConfig | null;
+    const abConfig = (parent as WidgetRow).ab_test_config as AbTestConfig | null;
     if (!abConfig || abConfig.status !== "running") {
       return { success: false, error: "No active A/B test to conclude" };
     }
@@ -524,7 +528,7 @@ export async function cancelAbTest(
       return { success: false, error: "Widget not found" };
     }
 
-    const abConfig = parent.ab_test_config as AbTestConfig | null;
+    const abConfig = (parent as WidgetRow).ab_test_config as AbTestConfig | null;
     if (!abConfig || abConfig.status !== "running") {
       return { success: false, error: "No active A/B test to cancel" };
     }
@@ -589,9 +593,9 @@ export async function getPublicAbTestConfig(
     .eq("id", parentDbId)
     .single();
 
-  if (!parent?.ab_test_config) return null;
+  if (!(parent as WidgetRow | null)?.ab_test_config) return null;
 
-  const abConfig = parent.ab_test_config as unknown as AbTestConfig;
+  const abConfig = (parent as WidgetRow).ab_test_config as unknown as AbTestConfig;
   if (!abConfig.enabled || abConfig.status !== "running") return null;
 
   // Get variant widget slug

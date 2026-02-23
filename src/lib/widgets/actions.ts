@@ -48,7 +48,8 @@ async function createVersionSnapshotInternal(
       changeSummary = generateChangeSummary(diffs);
     }
 
-    const { error } = await supabase.from("widget_config_versions").insert({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("widget_config_versions").insert({
       widget_config_id: widgetConfigId,
       version: widgetData.version ?? 1,
       config: currentConfig as unknown as Json,

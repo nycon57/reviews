@@ -45,6 +45,7 @@ export default async function DashboardRootLayout({
     role?: string | null;
     is_owner?: boolean | null;
     organization_id?: string | null;
+    individual_organization_id?: string | null;
     slug?: string | null;
     organizations?: {
       account_type?: string | null;
@@ -69,16 +70,27 @@ export default async function DashboardRootLayout({
   // Build user context for permission system
   const orgData = profile?.organizations;
 
-  const userContext: UserContext | null = profile?.organization_id
-    ? {
-        userId: authUser.id,
-        role: (profile.role || "user") as UserContext["role"],
-        accountType: (orgData?.account_type || "individual") as AccountType,
-        isOwner: profile.is_owner || false,
-        subscriptionTier: (orgData?.subscription_tier || "basic") as SubscriptionTier,
-        organizationId: profile.organization_id,
-      }
-    : null;
+  // Build user context: enterprise org path, or individual org fallback
+  let userContext: UserContext | null = null;
+  if (profile?.organization_id) {
+    userContext = {
+      userId: authUser.id,
+      role: (profile.role || "user") as UserContext["role"],
+      accountType: (orgData?.account_type || "individual") as AccountType,
+      isOwner: profile.is_owner || false,
+      subscriptionTier: (orgData?.subscription_tier || "basic") as SubscriptionTier,
+      organizationId: profile.organization_id,
+    };
+  } else if (profile?.individual_organization_id) {
+    userContext = {
+      userId: authUser.id,
+      role: "admin" as UserContext["role"],
+      accountType: "individual" as AccountType,
+      isOwner: true,
+      subscriptionTier: "basic" as SubscriptionTier,
+      organizationId: profile.individual_organization_id,
+    };
+  }
 
   if (!userContext) {
     redirect("/onboarding");

@@ -24,7 +24,6 @@ export interface UserContext {
 // Permission identifiers
 export const PERMISSIONS = {
   // Management features (enterprise only, manager+)
-  VIEW_MANAGER_DASHBOARD: "view:manager_dashboard",
   VIEW_TEAM: "view:team",
   MANAGE_TEAM: "manage:team",
   VIEW_EX_SURVEYS: "view:ex_surveys",
@@ -84,7 +83,6 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
 
   switch (permission) {
     // === Enterprise-only management features (hidden from individual users) ===
-    case PERMISSIONS.VIEW_MANAGER_DASHBOARD:
     case PERMISSIONS.VIEW_TEAM:
     case PERMISSIONS.MANAGE_TEAM:
     case PERMISSIONS.VIEW_EX_SURVEYS:

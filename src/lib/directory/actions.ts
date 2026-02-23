@@ -53,6 +53,8 @@ export interface DirectoryProfessional {
   } | null;
   /** Whether this professional belongs to an enterprise organization */
   is_enterprise: boolean;
+  /** Distance in miles from the search center (only set for radius/fallback searches) */
+  distance_miles?: number;
 }
 
 /** @deprecated Use DirectoryProfessional instead */
@@ -82,6 +84,12 @@ export interface SearchFilters {
   organizationId?: string;
   /** Filter by geographic bounds (for map view) */
   bounds?: MapBounds;
+  /** Radius in miles for nearby search (10, 25, 50, 100) */
+  radius?: number;
+  /** Geocoded center latitude for radius search */
+  searchLat?: number;
+  /** Geocoded center longitude for radius search */
+  searchLng?: number;
 }
 
 export interface DirectorySearchResult {
@@ -92,6 +100,10 @@ export interface DirectorySearchResult {
     specialties: { value: string; count: number }[];
     languages: { value: string; count: number }[];
   };
+  /** When set, the search fell back to nearby results via geocoding */
+  isNearbyFallback?: boolean;
+  /** Center point of a radius/fallback search for map positioning */
+  searchCenter?: { lat: number; lng: number; label: string };
 }
 
 /** @deprecated Use DirectorySearchResult.professionals instead */
@@ -105,8 +117,134 @@ export interface LegacyDirectorySearchResult {
   };
 }
 
+// Shared select columns for the users query
+const PROFESSIONAL_SELECT = `
+  id,
+  slug,
+  full_name,
+  title,
+  bio,
+  photo_url,
+  email,
+  phone,
+  branch,
+  branch_id,
+  region,
+  nmls_id,
+  address,
+  linkedin_url,
+  average_rating,
+  total_reviews,
+  latitude,
+  longitude,
+  organization_id,
+  individual_organization_id,
+  role,
+  organizations (
+    id,
+    name,
+    slug,
+    logo_url,
+    account_type
+  ),
+  branches!users_branch_id_fkey (
+    id,
+    name,
+    latitude,
+    longitude,
+    address
+  ),
+  individual_organizations (
+    id,
+    name,
+    slug
+  )
+` as const;
+
+/** Transform a raw DB record into a DirectoryProfessional */
+function transformRecord(
+  record: Record<string, unknown>,
+  distanceMiles?: number
+): DirectoryProfessional {
+  const org = record.organizations as {
+    id: string;
+    name: string;
+    slug: string;
+    logo_url: string | null;
+    account_type: string | null;
+  } | null;
+  const indivOrg = record.individual_organizations as {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  const branchData = record.branches as {
+    id: string;
+    name: string;
+    latitude: number | null;
+    longitude: number | null;
+    address: {
+      street?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+    } | null;
+  } | null;
+
+  const effectiveLatitude = branchData?.latitude ?? (record.latitude as number | null);
+  const effectiveLongitude = branchData?.longitude ?? (record.longitude as number | null);
+
+  const effectiveOrg = org
+    ? { id: org.id, name: org.name, slug: org.slug, logo_url: org.logo_url, industry: null }
+    : indivOrg
+      ? { id: indivOrg.id, name: indivOrg.name, slug: indivOrg.slug, logo_url: null, industry: null }
+      : null;
+
+  return {
+    id: record.id as string,
+    slug: record.slug as string | null,
+    full_name: (record.full_name as string) || "Unknown",
+    title: record.title as string | null,
+    bio: record.bio as string | null,
+    photo_url: record.photo_url as string | null,
+    email: record.email as string | null,
+    phone: record.phone as string | null,
+    branch: record.branch as string | null,
+    branch_id: record.branch_id as string | null,
+    region: record.region as string | null,
+    nmls_id: record.nmls_id as string | null,
+    address: record.address as DirectoryProfessional["address"],
+    linkedin_url: record.linkedin_url as string | null,
+    average_rating: record.average_rating as number | null,
+    total_reviews: record.total_reviews as number | null,
+    latitude: effectiveLatitude,
+    longitude: effectiveLongitude,
+    organization: effectiveOrg,
+    branch_info: branchData,
+    is_enterprise: org?.account_type === "enterprise",
+    distance_miles: distanceMiles,
+  };
+}
+
+/** Haversine distance in miles between two lat/lng points */
+function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 3959 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 /**
- * Search professionals with filters
+ * Search professionals with filters.
+ *
+ * Uses a two-pass strategy:
+ * 1. Standard ILIKE search (fast, exact matching)
+ * 2. If pass 1 returns 0 results and a city was searched, fall back to:
+ *    a. Fuzzy city match via pg_trgm
+ *    b. Geocode city → radius search for nearest professionals
  */
 export async function searchProfessionals(
   filters: SearchFilters,
@@ -117,116 +255,52 @@ export async function searchProfessionals(
     const supabase = createAdminClient();
     const offset = (page - 1) * pageSize;
 
-    // Build the base query for fetching professionals
-    // Join with branches to get branch coordinates for map display
+    // ---------- PASS 1: Standard ILIKE search ----------
     let query = supabase
       .from("users")
-      .select(
-        `
-        id,
-        slug,
-        full_name,
-        title,
-        bio,
-        photo_url,
-        email,
-        phone,
-        branch,
-        branch_id,
-        region,
-        nmls_id,
-        address,
-        linkedin_url,
-        average_rating,
-        total_reviews,
-        latitude,
-        longitude,
-        organization_id,
-        role,
-        organizations (
-          id,
-          name,
-          slug,
-          logo_url,
-          account_type
-        ),
-        branches (
-          id,
-          name,
-          latitude,
-          longitude,
-          address
-        )
-      `,
-        { count: "exact" }
-      )
+      .select(PROFESSIONAL_SELECT, { count: "exact" })
       .eq("is_active", true);
 
-    // Apply organization filter
     if (filters.organizationId) {
       query = query.eq("organization_id", filters.organizationId);
     }
 
-    // Apply industry filter - disabled until industry column is added to organizations
-    // if (filters.industry) {
-    //   query = query.eq("organizations.industry", filters.industry);
-    // }
-
-    // Apply text search filter
-    if (filters.query && filters.query.trim()) {
+    if (filters.query?.trim()) {
       const searchTerm = `%${filters.query.trim().toLowerCase()}%`;
       query = query.or(`full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`);
     }
 
-    // Apply location filters
-    if (filters.state) {
-      query = query.filter("address->state", "eq", filters.state);
-    }
-
-    if (filters.city) {
-      query = query.filter("address->city", "ilike", `%${filters.city}%`);
-    }
-
+    // Note: city and state filters are applied post-fetch because city/state may
+    // live on the branch rather than the user. We check both below after transform.
     if (filters.zip) {
-      query = query.filter("address->zip", "eq", filters.zip);
+      query = query.filter("address->>zip", "eq", filters.zip);
     }
 
-    // Apply minimum rating filter
     if (filters.minRating && filters.minRating > 0) {
       query = query.gte("average_rating", filters.minRating);
     }
-
-    // Note: geographic bounds filtering is applied post-fetch (see below)
-    // because the UI uses effective coordinates (branch coords ?? user coords)
-    // and DB-level filtering on users.latitude/longitude would be inconsistent.
 
     // Apply sorting
     const sortBy = filters.sortBy || "rating";
     const sortOrder = filters.sortOrder || "desc";
 
     if (sortBy === "rating") {
-      query = query.order("average_rating", {
-        ascending: sortOrder === "asc",
-        nullsFirst: false,
-      });
+      query = query.order("average_rating", { ascending: sortOrder === "asc", nullsFirst: false });
     } else if (sortBy === "reviews") {
-      query = query.order("total_reviews", {
-        ascending: sortOrder === "asc",
-        nullsFirst: false,
-      });
+      query = query.order("total_reviews", { ascending: sortOrder === "asc", nullsFirst: false });
     } else if (sortBy === "name") {
       query = query.order("full_name", { ascending: sortOrder === "asc" });
     }
 
-    // Secondary sort by name for consistent ordering
     if (sortBy !== "name") {
       query = query.order("full_name", { ascending: true });
     }
 
-    // Apply pagination
+    // Exclude admin role at DB level (enterprise admins should not appear in directory)
+    query = query.neq("role", "admin");
+
     query = query.range(offset, offset + pageSize - 1);
 
-    // Execute query
     const { data, error, count } = await query;
 
     if (error) {
@@ -239,63 +313,8 @@ export async function searchProfessionals(
       return { success: false, error: "Failed to search professionals" };
     }
 
-    // Transform data to match our interface, then apply bounds filter post-fetch
-    // Also filter out enterprise admins — they should not appear in public directory
     let professionals: DirectoryProfessional[] = (data || [])
-      .filter((record) => {
-        const org = record.organizations as { account_type: string | null } | null;
-        const isEnterpriseAdmin = record.role === "admin" && org?.account_type === "enterprise";
-        return !isEnterpriseAdmin;
-      })
-      .map((record) => {
-      const org = record.organizations as {
-        id: string;
-        name: string;
-        slug: string;
-        logo_url: string | null;
-        account_type: string | null;
-      } | null;
-      const branchData = record.branches as {
-        id: string;
-        name: string;
-        latitude: number | null;
-        longitude: number | null;
-        address: {
-          street?: string;
-          city?: string;
-          state?: string;
-          postal_code?: string;
-        } | null;
-      } | null;
-
-      // Use branch coordinates as primary, fall back to user coordinates
-      const effectiveLatitude = branchData?.latitude ?? record.latitude;
-      const effectiveLongitude = branchData?.longitude ?? record.longitude;
-
-      return {
-        id: record.id,
-        slug: record.slug,
-        full_name: record.full_name || 'Unknown',
-        title: record.title,
-        bio: record.bio,
-        photo_url: record.photo_url,
-        email: record.email,
-        phone: record.phone,
-        branch: record.branch,
-        branch_id: record.branch_id,
-        region: record.region,
-        nmls_id: record.nmls_id,
-        address: record.address as DirectoryProfessional["address"],
-        linkedin_url: record.linkedin_url,
-        average_rating: record.average_rating,
-        total_reviews: record.total_reviews,
-        latitude: effectiveLatitude,
-        longitude: effectiveLongitude,
-        organization: org ? { id: org.id, name: org.name, slug: org.slug, logo_url: org.logo_url, industry: null } : null,
-        branch_info: branchData,
-        is_enterprise: org?.account_type === "enterprise",
-      };
-    });
+      .map((r) => transformRecord(r as unknown as Record<string, unknown>));
 
     // Apply geographic bounds filter post-fetch using effective coordinates
     if (filters.bounds) {
@@ -310,42 +329,230 @@ export async function searchProfessionals(
       });
     }
 
-    // Get facets for filtering - states
-    const { data: stateData } = await supabase
-      .from("users")
-      .select("address")
-      .eq("is_active", true);
+    // When bounds filter is applied post-fetch, DB count is inaccurate; use filtered length
+    const accurateCount = filters.bounds ? professionals.length : (count || 0);
 
-    const stateCounts = new Map<string, number>();
-    (stateData || []).forEach((record) => {
-      const addr = record.address as { state?: string } | null;
-      if (addr?.state) {
-        stateCounts.set(addr.state, (stateCounts.get(addr.state) || 0) + 1);
+    // ---------- PASS 2: Fuzzy / Radius fallback ----------
+    // Trigger when pass 1 returned 0 results AND a city was searched
+    let isNearbyFallback = false;
+    let searchCenter: { lat: number; lng: number; label: string } | undefined;
+
+    if (professionals.length === 0 && filters.city && !filters.bounds) {
+      // 2a. Try fuzzy city match via pg_trgm (gracefully skipped if extension not installed)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: fuzzyIds, error: fuzzyError } = await (supabase.rpc as any)("search_users_by_fuzzy_city", {
+          search_city: filters.city,
+          similarity_threshold: 0.3,
+        }) as { data: { user_id: string; similarity_score: number }[] | null; error: unknown };
+
+        if (!fuzzyError && fuzzyIds && fuzzyIds.length > 0) {
+          const matchedIds = fuzzyIds.map((r) => r.user_id);
+
+          let fuzzyQuery = supabase
+            .from("users")
+            .select(PROFESSIONAL_SELECT, { count: "exact" })
+            .eq("is_active", true)
+            .in("id", matchedIds);
+
+          if (filters.organizationId) fuzzyQuery = fuzzyQuery.eq("organization_id", filters.organizationId);
+          if (filters.query?.trim()) {
+            const searchTerm = `%${filters.query.trim().toLowerCase()}%`;
+            fuzzyQuery = fuzzyQuery.or(`full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`);
+          }
+          if (filters.state) fuzzyQuery = fuzzyQuery.filter("address->>state", "eq", filters.state);
+          if (filters.minRating && filters.minRating > 0) fuzzyQuery = fuzzyQuery.gte("average_rating", filters.minRating);
+          fuzzyQuery = fuzzyQuery.neq("role", "admin");
+
+          if (sortBy === "rating") {
+            fuzzyQuery = fuzzyQuery.order("average_rating", { ascending: sortOrder === "asc", nullsFirst: false });
+          } else if (sortBy === "reviews") {
+            fuzzyQuery = fuzzyQuery.order("total_reviews", { ascending: sortOrder === "asc", nullsFirst: false });
+          } else if (sortBy === "name") {
+            fuzzyQuery = fuzzyQuery.order("full_name", { ascending: sortOrder === "asc" });
+          }
+          if (sortBy !== "name") {
+            fuzzyQuery = fuzzyQuery.order("full_name", { ascending: true });
+          }
+          fuzzyQuery = fuzzyQuery.range(offset, offset + pageSize - 1);
+
+          const { data: fuzzyData, count: fuzzyCount } = await fuzzyQuery;
+
+          const fuzzyProfessionals = (fuzzyData || [])
+            .map((r) => transformRecord(r as unknown as Record<string, unknown>));
+
+          if (fuzzyProfessionals.length > 0) {
+            isNearbyFallback = true;
+            professionals = fuzzyProfessionals;
+
+            const facets = await buildFacets(supabase);
+            return {
+              success: true,
+              data: {
+                professionals,
+                totalCount: Math.max(0, fuzzyCount || fuzzyProfessionals.length),
+                facets,
+                isNearbyFallback,
+              },
+            };
+          }
+        }
+      } catch {
+        // pg_trgm extension or RPC not available — skip fuzzy, fall through to geocoding
       }
-    });
 
-    const states = Array.from(stateCounts.entries())
-      .map(([value, count]) => ({ value, count }))
-      .sort((a, b) => b.count - a.count);
+      // 2b. Geocode city → radius search (works with or without DB RPC)
+      const { geocodeAddress } = await import("./geocoding");
+      const coords = await geocodeAddress(undefined, filters.city, filters.state);
+
+      if (coords) {
+        const radius = filters.radius || 50;
+
+        // Try DB-level radius search first (fast, uses Haversine RPC)
+        let radiusResults: { userId: string; distance: number }[] | null = null;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: radiusData, error: rpcError } = await (supabase.rpc as any)("search_professionals_by_radius", {
+            search_lat: coords.latitude,
+            search_lng: coords.longitude,
+            radius_miles: radius,
+          }) as { data: { user_id: string; distance_miles: number }[] | null; error: unknown };
+
+          if (!rpcError && radiusData && radiusData.length > 0) {
+            radiusResults = radiusData.map((r) => ({ userId: r.user_id, distance: r.distance_miles }));
+          }
+        } catch {
+          // RPC not available — fall through to JS-level Haversine
+        }
+
+        // Fallback: JS-level Haversine on all professionals with coordinates
+        if (!radiusResults) {
+          let allQuery = supabase
+            .from("users")
+            .select(PROFESSIONAL_SELECT)
+            .eq("is_active", true)
+            .neq("role", "admin")
+            .not("latitude", "is", null);
+
+          if (filters.organizationId) allQuery = allQuery.eq("organization_id", filters.organizationId);
+          if (filters.query?.trim()) {
+            const searchTerm = `%${filters.query.trim().toLowerCase()}%`;
+            allQuery = allQuery.or(`full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`);
+          }
+          if (filters.minRating && filters.minRating > 0) allQuery = allQuery.gte("average_rating", filters.minRating);
+
+          const { data: allProfs } = await allQuery;
+
+          if (allProfs && allProfs.length > 0) {
+            radiusResults = [];
+            for (const r of allProfs) {
+              const rec = r as unknown as Record<string, unknown>;
+              const branchData = rec.branches as { latitude: number | null; longitude: number | null } | null;
+              const lat = branchData?.latitude ?? (rec.latitude as number | null);
+              const lng = branchData?.longitude ?? (rec.longitude as number | null);
+              if (lat == null || lng == null) continue;
+
+              const dist = haversineDistance(coords.latitude, coords.longitude, lat, lng);
+              if (dist <= radius) {
+                radiusResults.push({ userId: rec.id as string, distance: dist });
+              }
+            }
+            radiusResults.sort((a, b) => a.distance - b.distance);
+          }
+        }
+
+        if (radiusResults && radiusResults.length > 0) {
+          const distanceMap = new Map<string, number>();
+          const radiusIds: string[] = [];
+          for (const r of radiusResults) {
+            radiusIds.push(r.userId);
+            distanceMap.set(r.userId, r.distance);
+          }
+
+          let radiusQuery = supabase
+            .from("users")
+            .select(PROFESSIONAL_SELECT)
+            .eq("is_active", true)
+            .in("id", radiusIds);
+
+          if (filters.organizationId) radiusQuery = radiusQuery.eq("organization_id", filters.organizationId);
+          if (filters.query?.trim()) {
+            const searchTerm = `%${filters.query.trim().toLowerCase()}%`;
+            radiusQuery = radiusQuery.or(`full_name.ilike.${searchTerm},bio.ilike.${searchTerm},title.ilike.${searchTerm}`);
+          }
+          if (filters.minRating && filters.minRating > 0) radiusQuery = radiusQuery.gte("average_rating", filters.minRating);
+          radiusQuery = radiusQuery.neq("role", "admin");
+
+          const { data: radiusProfs } = await radiusQuery;
+
+          professionals = (radiusProfs || [])
+            .map((r) => {
+              const id = (r as unknown as Record<string, unknown>).id as string;
+              return transformRecord(r as unknown as Record<string, unknown>, distanceMap.get(id));
+            })
+            .sort((a, b) => (a.distance_miles ?? Infinity) - (b.distance_miles ?? Infinity))
+            .slice(offset, offset + pageSize);
+
+          isNearbyFallback = true;
+          searchCenter = { lat: coords.latitude, lng: coords.longitude, label: filters.city };
+
+          const facets = await buildFacets(supabase);
+          return {
+            success: true,
+            data: {
+              professionals,
+              totalCount: professionals.length,
+              facets,
+              isNearbyFallback,
+              searchCenter,
+            },
+          };
+        }
+      }
+    }
+
+    // ---------- Standard result path (pass 1 had results, or fallback had nothing) ----------
+
+    const facets = await buildFacets(supabase);
 
     return {
       success: true,
       data: {
         professionals,
-        totalCount: count || 0,
-        facets: {
-          states,
-          // Specialties and languages would come from user profile settings
-          // For now, we'll return the predefined list
-          specialties: SPECIALTIES.map((s) => ({ value: s, count: 0 })),
-          languages: LANGUAGES.map((l) => ({ value: l, count: 0 })),
-        },
+        totalCount: accurateCount,
+        facets,
       },
     };
   } catch (error) {
     console.error("Directory search error:", error instanceof Error ? error.message : error);
     return { success: false, error: "Failed to search professionals" };
   }
+}
+
+/** Build standard facets (states, specialties, languages) */
+async function buildFacets(supabase: ReturnType<typeof createAdminClient>) {
+  const { data: stateData } = await supabase
+    .from("users")
+    .select("address")
+    .eq("is_active", true);
+
+  const stateCounts = new Map<string, number>();
+  (stateData || []).forEach((record) => {
+    const addr = record.address as { state?: string } | null;
+    if (addr?.state) {
+      stateCounts.set(addr.state, (stateCounts.get(addr.state) || 0) + 1);
+    }
+  });
+
+  const states = Array.from(stateCounts.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    states,
+    specialties: SPECIALTIES.map((s) => ({ value: s, count: 0 })),
+    languages: LANGUAGES.map((l) => ({ value: l, count: 0 })),
+  };
 }
 
 /** @deprecated Use searchProfessionals instead */

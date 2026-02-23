@@ -12,6 +12,7 @@ import {
   type SelectPlanInput,
   type SetupProfileInput,
 } from "./schemas";
+import { geocodeAddressWithFallback } from "@/lib/directory/geocoding";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -43,39 +44,67 @@ export async function getOnboardingStatus(): Promise<OnboardingStatusResult> {
     return { success: false, error: "Not authenticated" };
   }
 
-  // Get user's organization ID
+  // Get user's organization ID (enterprise or individual)
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id")
+    .select("organization_id, individual_organization_id")
     .eq("id", user.id)
     .single();
 
-  if (userError || !userData?.organization_id) {
-    return { success: false, error: "Organization not found" };
+  if (userError) {
+    return { success: false, error: "User not found" };
   }
 
-  // Fetch organization with all columns to access potentially untyped columns
-  const { data: orgData, error: orgError } = await supabase
-    .from("organizations")
-    .select("*")
-    .eq("id", userData.organization_id)
-    .single();
+  // Enterprise path: use organizations table
+  if (userData?.organization_id) {
+    const { data: orgData, error: orgError } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("id", userData.organization_id)
+      .single();
 
-  if (orgError) {
-    return { success: false, error: "Organization not found" };
+    if (orgError) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const org = orgData as Record<string, unknown> | null;
+
+    return {
+      success: true,
+      status: ((org?.onboarding_status as string) || "pending") as OnboardingStatus,
+      selectedPlan: (org?.selected_plan as string) || null,
+      selectedBillingCycle: (org?.selected_billing_cycle as string) || null,
+      organizationId: userData.organization_id,
+      shouldSkip: false,
+    };
   }
 
-  // Cast to access potentially untyped columns
-  const org = orgData as Record<string, unknown> | null;
+  // Individual path: use individual_organizations table
+  if (userData?.individual_organization_id) {
+    const { data: indivOrgData, error: indivOrgError } = await supabase
+      .from("individual_organizations")
+      .select("*")
+      .eq("id", userData.individual_organization_id)
+      .single();
 
-  return {
-    success: true,
-    status: ((org?.onboarding_status as string) || "pending") as OnboardingStatus,
-    selectedPlan: (org?.selected_plan as string) || null,
-    selectedBillingCycle: (org?.selected_billing_cycle as string) || null,
-    organizationId: userData.organization_id,
-    shouldSkip: false, // Will be handled by middleware when invited_by is available
-  };
+    if (indivOrgError) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    const indivOrg = indivOrgData as Record<string, unknown> | null;
+
+    return {
+      success: true,
+      // Individual orgs skip plan+payment, go straight to profile
+      status: ((indivOrg?.onboarding_status as string) || "payment_complete") as OnboardingStatus,
+      selectedPlan: "basic",
+      selectedBillingCycle: null,
+      organizationId: userData.individual_organization_id,
+      shouldSkip: false,
+    };
+  }
+
+  return { success: false, error: "Organization not found" };
 }
 
 /**
@@ -410,47 +439,101 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
     return { success: false, error: "Not authenticated" };
   }
 
-  // Get user's organization
+  // Get user's organization (enterprise or individual)
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, role")
+    .select("organization_id, individual_organization_id, role")
     .eq("id", user.id)
     .single();
 
-  if (userError || !userData?.organization_id) {
+  if (userError) {
+    return { success: false, error: "User not found" };
+  }
+
+  const isIndividual = !userData.organization_id && !!userData.individual_organization_id;
+  const orgId = userData.organization_id || userData.individual_organization_id;
+
+  if (!orgId) {
     return { success: false, error: "Organization not found" };
   }
 
-  if (userData.role !== "admin") {
+  if (!isIndividual && userData.role !== "admin") {
     return { success: false, error: "Only admins can setup the profile" };
   }
 
   const adminClient = createAdminClient();
   const { organizationName, industry, companySize, address, logoUrl, primaryColor, website, phone, companyEmail } = validated.data;
 
-  // Update organization
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: updateError } = await (adminClient as any)
-    .from("organizations")
-    .update({
-      name: organizationName,
-      logo_url: logoUrl || null,
-      primary_color: primaryColor || "#52796f",
-      domain: website || null,
-      onboarding_status: "profile_complete",
-      settings: {
-        industry,
-        companySize,
-        address,
-        phone,
-        companyEmail,
-      },
-    })
-    .eq("id", userData.organization_id);
+  if (isIndividual) {
+    // Individual path: update individual_organizations + users table
+    const { error: updateError } = await adminClient
+      .from("individual_organizations")
+      .update({
+        name: organizationName,
+        website_url: website || null,
+        phone: phone || null,
+        email: companyEmail || null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onboarding_status: "profile_complete" as any,
+      })
+      .eq("id", orgId);
 
-  if (updateError) {
-    console.error("Error updating profile:", updateError);
-    return { success: false, error: "Failed to save profile" };
+    if (updateError) {
+      console.error("Error updating individual org profile:", updateError);
+      return { success: false, error: "Failed to save profile" };
+    }
+
+    // Geocode and write address + coordinates to the users table
+    const coords = await geocodeAddressWithFallback(
+      address.street,
+      address.city,
+      address.state,
+      address.zip,
+    );
+
+    const { error: userUpdateError } = await adminClient
+      .from("users")
+      .update({
+        address: {
+          street: address.street || null,
+          city: address.city,
+          state: address.state,
+          zip: address.zip || null,
+        },
+        latitude: coords?.latitude ?? null,
+        longitude: coords?.longitude ?? null,
+      })
+      .eq("id", user.id);
+
+    if (userUpdateError) {
+      console.error("Error updating user address:", userUpdateError);
+      return { success: false, error: "Failed to save address" };
+    }
+  } else {
+    // Enterprise path: update organizations table (unchanged)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateError } = await (adminClient as any)
+      .from("organizations")
+      .update({
+        name: organizationName,
+        logo_url: logoUrl || null,
+        primary_color: primaryColor || "#52796f",
+        domain: website || null,
+        onboarding_status: "profile_complete",
+        settings: {
+          industry,
+          companySize,
+          address,
+          phone,
+          companyEmail,
+        },
+      })
+      .eq("id", orgId);
+
+    if (updateError) {
+      console.error("Error updating profile:", updateError);
+      return { success: false, error: "Failed to save profile" };
+    }
   }
 
   // Record the step completion (using type assertion for untyped table)
@@ -458,7 +541,7 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
   await (adminClient as any)
     .from("onboarding_steps")
     .upsert({
-      organization_id: userData.organization_id,
+      organization_id: orgId,
       step_name: "profile",
       completed_at: new Date().toISOString(),
       data: validated.data,
@@ -481,42 +564,59 @@ export async function completeOnboarding(): Promise<ActionResult> {
 
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, role")
+    .select("organization_id, individual_organization_id, role")
     .eq("id", user.id)
     .single();
 
-  if (userError || !userData?.organization_id) {
+  if (userError) {
+    return { success: false, error: "User not found" };
+  }
+
+  const isIndividual = !userData.organization_id && !!userData.individual_organization_id;
+  const orgId = userData.organization_id || userData.individual_organization_id;
+
+  if (!orgId) {
     return { success: false, error: "Organization not found" };
   }
 
   const adminClient = createAdminClient();
 
-  // Update organization to completed
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (adminClient as any)
-    .from("organizations")
-    .update({
-      onboarding_status: "completed",
-      onboarding_completed_at: new Date().toISOString(),
-    })
-    .eq("id", userData.organization_id);
+  if (isIndividual) {
+    // Individual path: update individual_organizations
+    await adminClient
+      .from("individual_organizations")
+      .update({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onboarding_status: "completed" as any,
+      })
+      .eq("id", orgId);
+  } else {
+    // Enterprise path: update organizations
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminClient as any)
+      .from("organizations")
+      .update({
+        onboarding_status: "completed",
+        onboarding_completed_at: new Date().toISOString(),
+      })
+      .eq("id", orgId);
+  }
 
   // Record the step completion (using type assertion for untyped table)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (adminClient as any)
     .from("onboarding_steps")
     .upsert({
-      organization_id: userData.organization_id,
+      organization_id: orgId,
       step_name: "complete",
       completed_at: new Date().toISOString(),
     }, { onConflict: "organization_id,step_name" });
 
-  // Start org onboarding email sequence for admins
-  if (userData.role === "admin") {
+  // Start org onboarding email sequence for enterprise admins
+  if (!isIndividual && userData.role === "admin") {
     const { startOrgOnboardingSequence } = await import("@/lib/email/org-onboarding-service");
-    const result = await startOrgOnboardingSequence(userData.organization_id, user.id);
+    const result = await startOrgOnboardingSequence(orgId, user.id);
     if (!result.success) {
-      // Log but don't fail - onboarding is complete, email sequence is secondary
       console.warn("Failed to start org onboarding sequence:", result.error);
     }
   }

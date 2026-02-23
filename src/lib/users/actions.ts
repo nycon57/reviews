@@ -149,7 +149,7 @@ export async function getUserWithBranch(
     .select(
       `
       *,
-      branches (
+      branches!users_branch_id_fkey (
         id,
         name,
         slug

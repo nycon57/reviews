@@ -29,20 +29,6 @@ import {
   checkAdminAccessBetterAuth,
 } from "./server-actions";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
-import { seedDefaultWidgets } from "@/lib/widgets/seed-defaults";
-import { createAdminClient } from "@/lib/supabase/admin";
-
-/** Link a contacts record to a newly signed-up user (fire-and-forget). */
-async function linkContactOnSignup(organizationId: string, userId: string, email: string) {
-  const supabase = createAdminClient();
-  await supabase
-    // @ts-expect-error contacts table not in generated types yet
-    .from("contacts")
-    .update({ user_id: userId })
-    .eq("organization_id", organizationId)
-    .eq("email", email.toLowerCase())
-    .is("user_id", null);
-}
 
 function slugify(text: string): string {
   return text
@@ -87,26 +73,23 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     return { success: false, error: "Failed to create user" };
   }
 
-  // Create the organization with pending onboarding status
-  // Self-serve signups create individual accounts (B2C)
-  const { data: orgData, error: orgError } = await supabase
-    .from("organizations")
+  // Create individual organization for self-serve signup
+  // Uses individual_organizations table (not organizations — reserved for enterprise)
+  const { data: indivOrgData, error: indivOrgError } = await supabase
+    .from("individual_organizations")
     .insert({
       name: organizationName,
       slug: orgSlug,
-      onboarding_status: "pending",
-      account_type: "individual", // Self-serve = individual account
     })
     .select()
     .single();
 
-  if (orgError) {
-    // If org creation fails, the trigger should handle it, but log the error
-    console.error("Organization creation error:", orgError);
+  if (indivOrgError) {
+    console.error("Individual organization creation error:", indivOrgError);
   }
 
   // Create the user record in our users table
-  if (orgData) {
+  if (indivOrgData) {
     // Generate SEO-friendly slug for the user
     let userSlug: string;
     try {
@@ -120,7 +103,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
       .from("users")
       .insert({
         id: authData.user.id,
-        organization_id: orgData.id,
+        individual_organization_id: indivOrgData.id,
         email: email,
         full_name: fullName,
         slug: userSlug,
@@ -133,15 +116,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
       console.error("User record creation error:", userError);
     }
 
-    // Seed default widgets (fire-and-forget so signup isn't slowed)
-    seedDefaultWidgets(orgData.id, authData.user.id).catch((err) =>
-      console.error("Default widget seeding failed:", err)
-    );
-
-    // Link matching contact record if one exists (fire-and-forget)
-    linkContactOnSignup(orgData.id, authData.user.id, email).catch((err) =>
-      console.error("Contact linking failed:", err)
-    );
+    // Skip widget seeding for individual orgs — widgets require enterprise organization_id
   }
 
   return {

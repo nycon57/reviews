@@ -28,6 +28,11 @@ export interface PublicBranch {
   average_rating: number | null;
   total_reviews: number | null;
   total_members: number | null;
+  linkedin_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  twitter_url: string | null;
+  zillow_profile_url: string | null;
 }
 
 export interface PublicBranchProfessional {
@@ -223,6 +228,8 @@ export async function getPublicLOProfile(
         nps_score,
         is_active,
         organization_id,
+        individual_organization_id,
+        individual_branch_id,
         banner_url,
         cta_button_text,
         cta_button_url,
@@ -244,30 +251,55 @@ export async function getPublicLOProfile(
       return { success: false, error: "Professional not found" };
     }
 
-    if (!user.organization_id) {
+    // Must have either an enterprise org or an individual org
+    if (!user.organization_id && !user.individual_organization_id) {
       return { success: false, error: "Professional not associated with an organization" };
     }
 
     // Use avatar_url (from settings) or photo_url as fallback
     const photoUrl = user.avatar_url || user.photo_url;
 
-    // Fetch the organization with slug + account_type for visibility rules
-    const { data: orgData } = await supabase
-      .from("organizations")
-      .select("id, name, logo_url, domain, slug, account_type")
-      .eq("id", user.organization_id)
-      .single();
-
-    const organization = orgData as {
+    // Dual-path org fetch: enterprise org via organization_id, else individual org
+    type OrgInfo = {
       id: string;
       name: string;
       logo_url: string | null;
       domain: string | null;
       slug: string | null;
       account_type: string | null;
-    } | null;
+    };
+    let organization: OrgInfo | null = null;
+    let isIndividual = false;
 
-    const isIndividual = organization?.account_type === "individual";
+    if (user.organization_id) {
+      const { data: orgData, error: orgError } = await supabase
+        .from("organizations")
+        .select("id, name, logo_url, domain, slug, account_type")
+        .eq("id", user.organization_id)
+        .single();
+      if (orgError) {
+        console.error("Error fetching organization:", orgError.message);
+      }
+      organization = orgData as OrgInfo | null;
+      isIndividual = organization?.account_type === "individual";
+    } else if (user.individual_organization_id) {
+      const { data: indivOrgData } = await supabase
+        .from("individual_organizations")
+        .select("id, name, slug")
+        .eq("id", user.individual_organization_id)
+        .single();
+      if (indivOrgData) {
+        organization = {
+          id: indivOrgData.id,
+          name: indivOrgData.name,
+          logo_url: null,
+          domain: null,
+          slug: indivOrgData.slug,
+          account_type: "individual",
+        };
+        isIndividual = true;
+      }
+    }
 
     // Fetch published reviews (user_id references users table)
     const { data: reviews } = await supabase
@@ -350,6 +382,21 @@ export async function getPublicLOProfile(
         branchLongitude = branch.longitude;
         branchAddress = branch.address;
         googleMapsUrl = branch.google_maps_url;
+      }
+    } else if (user.individual_branch_id) {
+      // Fallback: individual branches (no hours_of_operation or google_maps_url columns)
+      const { data: indivBranch } = await supabase
+        .from("individual_branches")
+        .select("name, slug, latitude, longitude, address")
+        .eq("id", user.individual_branch_id)
+        .single();
+
+      if (indivBranch) {
+        branchName = indivBranch.name;
+        branchSlug = indivBranch.slug;
+        branchLatitude = indivBranch.latitude;
+        branchLongitude = indivBranch.longitude;
+        branchAddress = indivBranch.address as typeof branchAddress;
       }
     }
 
@@ -607,6 +654,7 @@ export async function getPublicBranchProfile(
         email,
         website_url,
         hours_of_operation,
+        manager_id,
         manager_name,
         google_maps_url,
         photo_url,
@@ -615,6 +663,11 @@ export async function getPublicBranchProfile(
         average_rating,
         total_reviews,
         total_members,
+        linkedin_url,
+        facebook_url,
+        instagram_url,
+        twitter_url,
+        zillow_profile_url,
         is_active,
         is_public,
         organization_id
@@ -742,7 +795,7 @@ export async function getPublicBranchProfile(
           email: branch.email,
           website_url: branch.website_url,
           hours_of_operation: branch.hours_of_operation,
-          manager_id: null,
+          manager_id: branch.manager_id,
           manager_name: branch.manager_name,
           google_maps_url: branch.google_maps_url,
           photo_url: branch.photo_url,
@@ -751,6 +804,11 @@ export async function getPublicBranchProfile(
           average_rating: branch.average_rating,
           total_reviews: branch.total_reviews,
           total_members: branch.total_members,
+          linkedin_url: branch.linkedin_url,
+          facebook_url: branch.facebook_url,
+          instagram_url: branch.instagram_url,
+          twitter_url: branch.twitter_url,
+          zillow_profile_url: branch.zillow_profile_url,
         },
         organization: organization || null,
         professionals: professionals || [],

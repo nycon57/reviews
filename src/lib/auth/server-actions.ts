@@ -1,6 +1,5 @@
 "use server";
 
-import crypto from "crypto";
 import { auth } from "./better-auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -19,7 +18,6 @@ import {
 } from "./schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
-import { seedDefaultWidgets } from "@/lib/widgets/seed-defaults";
 
 /**
  * Helper to slugify organization names
@@ -57,23 +55,21 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
   const orgSlug = slugify(organizationName);
 
   try {
-    // Use admin client to create organization first
+    // Use admin client to create individual organization first
+    // Self-serve signups use individual_organizations (not organizations — reserved for enterprise)
     const supabaseAdmin = createAdminClient();
 
-    // Create organization with pending onboarding status
-    const { data: orgData, error: orgError } = await supabaseAdmin
-      .from("organizations")
+    const { data: indivOrgData, error: indivOrgError } = await supabaseAdmin
+      .from("individual_organizations")
       .insert({
         name: organizationName,
         slug: orgSlug,
-        onboarding_status: "pending",
-        account_type: "individual",
       })
       .select()
       .single();
 
-    if (orgError) {
-      console.error("Organization creation error:", orgError);
+    if (indivOrgError) {
+      console.error("Individual organization creation error:", indivOrgError);
       return { success: false, error: "Failed to create organization" };
     }
 
@@ -87,8 +83,8 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
     });
 
     if (!signUpResult || "error" in signUpResult) {
-      // Clean up organization if user creation failed
-      await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
+      // Clean up individual organization if user creation failed
+      await supabaseAdmin.from("individual_organizations").delete().eq("id", indivOrgData.id);
       return {
         success: false,
         error: (signUpResult as { error?: string })?.error || "Failed to create user",
@@ -101,8 +97,6 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       userSlug = await generateUniqueUserSlug(fullName);
     } catch (slugError) {
       console.error("Slug generation failed, cleaning up:", slugError);
-      // Clean up the created user and related auth records to avoid orphaned rows
-      // Mirrors Better Auth's internal adapter: delete accounts, then user
       try {
         await supabaseAdmin.from("accounts").delete().eq("user_id", signUpResult.user.id);
         await supabaseAdmin.from("users").delete().eq("id", signUpResult.user.id);
@@ -110,9 +104,9 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
         console.error("Failed to clean up user/accounts after slug error:", cleanupErr);
       }
       try {
-        await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
+        await supabaseAdmin.from("individual_organizations").delete().eq("id", indivOrgData.id);
       } catch (cleanupErr) {
-        console.error("Failed to clean up organization after slug error:", cleanupErr);
+        console.error("Failed to clean up individual organization after slug error:", cleanupErr);
       }
       return {
         success: false,
@@ -120,11 +114,11 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       };
     }
 
-    // Update user with organization details
+    // Update user with individual organization details
     const { error: userUpdateError } = await supabaseAdmin
       .from("users")
       .update({
-        organization_id: orgData.id,
+        individual_organization_id: indivOrgData.id,
         slug: userSlug,
         role: "admin",
         is_active: true,
@@ -136,29 +130,7 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       console.error("User update error:", userUpdateError);
     }
 
-    // Create organization membership (members table created by Better Auth migration)
-    // Note: Run npm run db:types after applying migration to get proper types
-    try {
-      const { error: memberError } = await (supabaseAdmin as ReturnType<typeof createAdminClient>)
-        .from("members" as "users") // Type workaround until migration applied
-        .insert({
-          id: crypto.randomUUID(),
-          organization_id: orgData.id,
-          user_id: signUpResult.user.id,
-          role: "owner",
-        } as never);
-
-      if (memberError) {
-        console.error("Member creation error:", memberError);
-      }
-    } catch (e) {
-      console.error("Member table may not exist yet:", e);
-    }
-
-    // Seed default widgets (fire-and-forget so signup isn't slowed)
-    seedDefaultWidgets(orgData.id, signUpResult.user.id).catch((err) =>
-      console.error("Default widget seeding failed:", err)
-    );
+    // Skip widget seeding and membership for individual orgs — widgets require enterprise organization_id
 
     return {
       success: true,

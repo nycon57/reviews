@@ -143,12 +143,25 @@ export interface PublicReview {
   featured: boolean;
 }
 
+/**
+ * Organization display info shaped for rendering.
+ * `href` is null for individual accounts — components use its presence
+ * to decide whether to render a link or plain text.
+ */
+export interface OrgDisplay {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  domain: string | null;
+  industry: IndustryType | null;
+  /** null for individual accounts — drives link vs plain text */
+  href: string | null;
+}
+
 export interface PublicProfessionalProfileData {
   professional: PublicProfessional;
-  organization: (Pick<Organization, "id" | "name" | "logo_url" | "domain"> & {
-    slug: string;
-    industry: IndustryType | null;
-  }) | null;
+  organization: OrgDisplay | null;
   branch: { name: string; slug: string } | null;
   reviews: PublicReview[];
   featuredReviews: PublicReview[];
@@ -238,10 +251,10 @@ export async function getPublicLOProfile(
     // Use avatar_url (from settings) or photo_url as fallback
     const photoUrl = user.avatar_url || user.photo_url;
 
-    // Fetch the organization with slug for breadcrumbs
+    // Fetch the organization with slug + account_type for visibility rules
     const { data: orgData } = await supabase
       .from("organizations")
-      .select("id, name, logo_url, domain, slug")
+      .select("id, name, logo_url, domain, slug, account_type")
       .eq("id", user.organization_id)
       .single();
 
@@ -251,7 +264,10 @@ export async function getPublicLOProfile(
       logo_url: string | null;
       domain: string | null;
       slug: string | null;
+      account_type: string | null;
     } | null;
+
+    const isIndividual = organization?.account_type === "individual";
 
     // Fetch published reviews (user_id references users table)
     const { data: reviews } = await supabase
@@ -379,10 +395,11 @@ export async function getPublicLOProfile(
           ? {
               id: organization.id,
               name: organization.name,
-              logo_url: organization.logo_url,
+              logoUrl: organization.logo_url,
               domain: organization.domain,
               slug: organization.slug || "",
               industry: (user.industry as IndustryType) || null,
+              href: isIndividual ? null : `/org/${organization.slug}`,
             }
           : null,
         branch: branchName
@@ -545,7 +562,11 @@ export async function getAllOrganizationSlugs(): Promise<string[]> {
   try {
     const supabase = createAdminClient();
 
-    const { data, error } = await supabase.from("organizations").select("slug");
+    // Only include enterprise organizations in sitemap — individual orgs have no public page
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("slug")
+      .neq("account_type", "individual");
 
     if (error || !data) {
       return [];
@@ -618,7 +639,7 @@ export async function getPublicBranchProfile(
     // If UUID lookup resolved and branch has a global_slug, signal redirect
     const redirectSlug = (lookupField === "id" && branch.global_slug) ? branch.global_slug : undefined;
 
-    // Fetch professionals at this branch
+    // Fetch professionals at this branch (excluding enterprise admins)
     const { data: branchUsers } = await supabase
       .from("users")
       .select(
@@ -638,6 +659,7 @@ export async function getPublicBranchProfile(
       )
       .eq("branch_id", branch.id)
       .eq("is_active", true)
+      .neq("role", "admin")
       .order("average_rating", { ascending: false, nullsFirst: false })
       .limit(50);
 
@@ -922,13 +944,19 @@ export async function getPublicOrganizationProfile(
         facebook_url,
         instagram_url,
         twitter_url,
-        headquarters_branch_id
+        headquarters_branch_id,
+        account_type
       `
       )
       .eq("slug", slug)
       .single();
 
     if (orgError || !orgData) {
+      return { success: false, error: "Organization not found" };
+    }
+
+    // Individual orgs never get a public page
+    if ((orgData as { account_type: string | null }).account_type === "individual") {
       return { success: false, error: "Organization not found" };
     }
 
@@ -1009,7 +1037,7 @@ export async function getPublicOrganizationProfile(
       .eq("is_public", true)
       .order("name", { ascending: true });
 
-    // Fetch all active professionals for this organization (top rated)
+    // Fetch all active professionals for this organization (top rated), excluding admins
     const { data: orgUsers } = await supabase
       .from("users")
       .select(
@@ -1027,6 +1055,7 @@ export async function getPublicOrganizationProfile(
       )
       .eq("organization_id", organization.id)
       .eq("is_active", true)
+      .neq("role", "admin")
       .not("average_rating", "is", null)
       .order("average_rating", { ascending: false, nullsFirst: false })
       .limit(12);
@@ -1054,12 +1083,13 @@ export async function getPublicOrganizationProfile(
 
     const aggregateRating = totalReviews > 0 ? weightedRatingSum / totalReviews : null;
 
-    // Get total professionals count
+    // Get total professionals count (excluding admins)
     const { count: totalProfessionalsCount } = await supabase
       .from("users")
       .select("id", { count: "exact", head: true })
       .eq("organization_id", organization.id)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .neq("role", "admin");
 
     // Fetch featured testimonials (top-rated reviews with text)
     const userIds = allProfessionals.map((user) => user.id);

@@ -63,10 +63,10 @@ export default async function LOProfilePage({ params }: PageProps) {
 
   const baseUrl = getBaseUrl();
 
-  // Build breadcrumbs for navigation
+  // Build breadcrumbs for navigation — only link to org page for enterprise accounts (href present)
   const breadcrumbs = buildProfessionalBreadcrumbs(
     { id: professional.id, full_name: professional.full_name, slug: professional.slug },
-    organization
+    organization?.href
       ? {
           slug: organization.slug,
           name: organization.name,

@@ -115,13 +115,13 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
               </p>
 
               <div className="flex flex-wrap items-center gap-x-2 mt-0.5 text-xs text-muted-foreground">
-                {professional.organization && (
+                {professional.is_enterprise && professional.organization && (
                   <span className="flex items-center gap-1 truncate">
                     <Building2 className="h-3 w-3 shrink-0" />
                     <span className="truncate">{professional.organization.name}</span>
                   </span>
                 )}
-                {professional.organization && location && (
+                {professional.is_enterprise && professional.organization && location && (
                   <span className="text-muted-foreground/50">·</span>
                 )}
                 {location && (
@@ -216,7 +216,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
             <p className="text-sm text-muted-foreground truncate">
               {professional.title || "Professional"}
             </p>
-            {professional.organization && (
+            {professional.is_enterprise && professional.organization && (
               <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
                 <Building2 className="h-3 w-3 shrink-0" />
                 <span className="truncate">{professional.organization.name}</span>

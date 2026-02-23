@@ -6,9 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star } from "@phosphor-icons/react";
 import { AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
-import type { PublicProfessional, PublicReview, BusinessHours } from "@/lib/seo/actions";
-import type { Tables } from "@/types/database.types";
-import type { IndustryType } from "@/lib/industry/types";
+import type { PublicProfessional, PublicReview, BusinessHours, OrgDisplay } from "@/lib/seo/actions";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import {
   ProfileHeroBanner,
@@ -33,10 +31,7 @@ const SCROLL_THRESHOLD = 200;
 
 interface ProProfileContentProps {
   professional: PublicProfessional;
-  organization: (Pick<Tables<"organizations">, "id" | "name" | "logo_url" | "domain"> & {
-    slug: string;
-    industry: IndustryType | null;
-  }) | null;
+  organization: OrgDisplay | null;
   branch: { name: string; slug: string } | null;
   reviews: PublicReview[];
   featuredReviews: PublicReview[];
@@ -132,7 +127,7 @@ export function ProProfileContent({
         <div className="relative">
           <ProfileHeroBanner
             bannerUrl={professional.banner_url}
-            orgLogo={organization?.logo_url}
+            orgLogo={organization?.logoUrl}
             orgName={organization?.name}
           />
 
@@ -201,11 +196,11 @@ export function ProProfileContent({
                     </div>
 
                     {/* Organization Logo */}
-                    {organization?.logo_url && (
+                    {organization?.logoUrl && (
                       <div className="hidden sm:block shrink-0">
                         <div className="relative h-16 w-16 md:h-20 md:w-20 overflow-hidden">
                           <Image
-                            src={organization.logo_url}
+                            src={organization.logoUrl}
                             alt={organization.name || "Organization logo"}
                             fill
                             className="object-contain"
@@ -253,7 +248,7 @@ export function ProProfileContent({
               <ContactCTACard
                 phone={professional.phone}
                 address={address}
-                organization={organization ? { name: organization.name, slug: organization.slug } : null}
+                organization={organization ? { name: organization.name, href: organization.href } : null}
                 branch={branch}
                 professionalName={professional.full_name}
                 ctaText={professional.cta_button_text}

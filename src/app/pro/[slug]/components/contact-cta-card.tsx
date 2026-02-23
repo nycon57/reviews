@@ -30,7 +30,8 @@ interface ContactCTACardProps {
   } | null;
   organization?: {
     name: string;
-    slug: string;
+    /** null for individual accounts — renders plain text instead of link */
+    href: string | null;
   } | null;
   branch?: {
     name: string;
@@ -122,20 +123,32 @@ export function ContactCTACard({
           </motion.div>
         )}
 
-        {/* Organization / Branch Link */}
+        {/* Organization — link for enterprise, plain text for individual */}
         {organization && (
-          <Link
-            href={`/org/${organization.slug}`}
-            className="flex items-center gap-3 group"
-          >
-            <Buildings
-              weight="duotone"
-              className="h-5 w-5 shrink-0 text-repwell-teal-300"
-            />
-            <span className="text-sm font-medium text-repwell-teal-400 group-hover:text-repwell-teal-300 transition-colors underline-offset-2 group-hover:underline">
-              {organization.name}
-            </span>
-          </Link>
+          organization.href ? (
+            <Link
+              href={organization.href}
+              className="flex items-center gap-3 group"
+            >
+              <Buildings
+                weight="duotone"
+                className="h-5 w-5 shrink-0 text-repwell-teal-300"
+              />
+              <span className="text-sm font-medium text-repwell-teal-400 group-hover:text-repwell-teal-300 transition-colors underline-offset-2 group-hover:underline">
+                {organization.name}
+              </span>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Buildings
+                weight="duotone"
+                className="h-5 w-5 shrink-0 text-repwell-teal-300"
+              />
+              <span className="text-sm font-medium text-repwell-teal-400">
+                {organization.name}
+              </span>
+            </div>
+          )
         )}
 
         {/* Full Address — links to branch page if available */}

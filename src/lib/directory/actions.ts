@@ -51,6 +51,8 @@ export interface DirectoryProfessional {
       postal_code?: string;
     } | null;
   } | null;
+  /** Whether this professional belongs to an enterprise organization */
+  is_enterprise: boolean;
 }
 
 /** @deprecated Use DirectoryProfessional instead */
@@ -140,11 +142,13 @@ export async function searchProfessionals(
         latitude,
         longitude,
         organization_id,
+        role,
         organizations (
           id,
           name,
           slug,
-          logo_url
+          logo_url,
+          account_type
         ),
         branches (
           id,
@@ -236,12 +240,20 @@ export async function searchProfessionals(
     }
 
     // Transform data to match our interface, then apply bounds filter post-fetch
-    let professionals: DirectoryProfessional[] = (data || []).map((record) => {
+    // Also filter out enterprise admins — they should not appear in public directory
+    let professionals: DirectoryProfessional[] = (data || [])
+      .filter((record) => {
+        const org = record.organizations as { account_type: string | null } | null;
+        const isEnterpriseAdmin = record.role === "admin" && org?.account_type === "enterprise";
+        return !isEnterpriseAdmin;
+      })
+      .map((record) => {
       const org = record.organizations as {
         id: string;
         name: string;
         slug: string;
         logo_url: string | null;
+        account_type: string | null;
       } | null;
       const branchData = record.branches as {
         id: string;
@@ -279,8 +291,9 @@ export async function searchProfessionals(
         total_reviews: record.total_reviews,
         latitude: effectiveLatitude,
         longitude: effectiveLongitude,
-        organization: org ? { ...org, industry: null } : null,
+        organization: org ? { id: org.id, name: org.name, slug: org.slug, logo_url: org.logo_url, industry: null } : null,
         branch_info: branchData,
+        is_enterprise: org?.account_type === "enterprise",
       };
     });
 

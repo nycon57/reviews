@@ -135,10 +135,12 @@ export function ProProfileContent({
           {breadcrumbs && breadcrumbs.length > 0 && (
             <div className="absolute top-0 left-0 right-0 z-10">
               <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6 lg:px-8">
-                <DirectoryBreadcrumbs
-                  items={breadcrumbs}
-                  className="[&_a]:text-white/70 [&_a:hover]:text-white [&_span[aria-current]]:text-white [&_svg]:text-white/50"
-                />
+                <div className="inline-flex rounded-md bg-black/50 px-3 py-1.5">
+                  <DirectoryBreadcrumbs
+                    items={breadcrumbs}
+                    className="[&_a]:text-white/70 [&_a:hover]:text-white [&_span[aria-current]]:text-white [&_svg]:text-white/50"
+                  />
+                </div>
               </div>
             </div>
           )}

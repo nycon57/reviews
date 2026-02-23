@@ -30,6 +30,19 @@ import {
 } from "./server-actions";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
 import { seedDefaultWidgets } from "@/lib/widgets/seed-defaults";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+/** Link a contacts record to a newly signed-up user (fire-and-forget). */
+async function linkContactOnSignup(organizationId: string, userId: string, email: string) {
+  const supabase = createAdminClient();
+  await supabase
+    // @ts-expect-error contacts table not in generated types yet
+    .from("contacts")
+    .update({ user_id: userId })
+    .eq("organization_id", organizationId)
+    .eq("email", email.toLowerCase())
+    .is("user_id", null);
+}
 
 function slugify(text: string): string {
   return text
@@ -123,6 +136,11 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     // Seed default widgets (fire-and-forget so signup isn't slowed)
     seedDefaultWidgets(orgData.id, authData.user.id).catch((err) =>
       console.error("Default widget seeding failed:", err)
+    );
+
+    // Link matching contact record if one exists (fire-and-forget)
+    linkContactOnSignup(orgData.id, authData.user.id, email).catch((err) =>
+      console.error("Contact linking failed:", err)
     );
   }
 

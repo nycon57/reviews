@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { contactProfessional } from "@/lib/pro/contact-actions";
+import { contactRecipient, type ContactRecipientType } from "@/lib/pro/contact-actions";
 
 const messageSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
@@ -38,8 +38,13 @@ type MessageFormData = z.infer<typeof messageSchema>;
 interface MessageModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  professionalId: string;
-  professionalName: string;
+  /** @deprecated Use recipientId instead */
+  professionalId?: string;
+  /** @deprecated Use recipientName instead */
+  professionalName?: string;
+  recipientType?: ContactRecipientType;
+  recipientId?: string;
+  recipientName?: string;
 }
 
 export function MessageModal({
@@ -47,10 +52,16 @@ export function MessageModal({
   onOpenChange,
   professionalId,
   professionalName,
+  recipientType = "professional",
+  recipientId,
+  recipientName,
 }: MessageModalProps) {
+  const resolvedId = recipientId || professionalId || "";
+  const resolvedName = recipientName || professionalName || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const missingRecipient = !resolvedId;
 
   const form = useForm<MessageFormData>({
     resolver: zodResolver(messageSchema),
@@ -63,12 +74,17 @@ export function MessageModal({
   });
 
   const onSubmit = async (data: MessageFormData) => {
+    if (!resolvedId) {
+      setError("Unable to send message — recipient information is missing.");
+      return;
+    }
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const result = await contactProfessional({
-        professionalId,
+      const result = await contactRecipient({
+        recipientType,
+        recipientId: resolvedId,
         name: data.name,
         email: data.email,
         phone: data.phone || undefined,
@@ -107,7 +123,7 @@ export function MessageModal({
             Send a Message
           </DialogTitle>
           <DialogDescription>
-            Reach out to {professionalName} directly.
+            Reach out to {resolvedName} directly.
           </DialogDescription>
         </DialogHeader>
 
@@ -118,7 +134,7 @@ export function MessageModal({
               Message Sent!
             </h3>
             <p className="text-repwell-teal-400 mb-4">
-              {professionalName} will get back to you soon.
+              {resolvedName} will get back to you soon.
             </p>
             <Button
               onClick={handleClose}
@@ -206,7 +222,7 @@ export function MessageModal({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || missingRecipient}
                   className="bg-repwell-teal-300 hover:bg-repwell-teal-400"
                 >
                   {isSubmitting ? (

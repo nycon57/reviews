@@ -15,10 +15,10 @@ TRUNCATE users CASCADE;
 TRUNCATE organizations CASCADE;
 
 -- Insert demo organization
-INSERT INTO organizations (id, name, slug, domain, primary_color, subscription_tier, subscription_status, settings)
+INSERT INTO organizations (id, name, slug, domain, primary_color, subscription_tier, subscription_status, settings, description)
 VALUES
-  ('11111111-1111-1111-1111-111111111111', 'Acme Mortgage', 'acme-mortgage', 'acmemortgage.com', '#3B82F6', 'pro', 'active', '{"allow_auto_publish": true, "review_threshold": 4}'),
-  ('22222222-2222-2222-2222-222222222222', 'Demo Lending', 'demo-lending', 'demolending.com', '#10B981', 'free', 'active', '{}');
+  ('11111111-1111-1111-1111-111111111111', 'Acme Mortgage', 'acme-mortgage', 'acmemortgage.com', '#3B82F6', 'pro', 'active', '{"allow_auto_publish": true, "review_threshold": 4}', 'Acme Mortgage is a leading mortgage company dedicated to helping families achieve homeownership. With over 20 years of experience and a commitment to personalized service, we offer competitive rates and expert guidance through every step of the lending process.'),
+  ('22222222-2222-2222-2222-222222222222', 'Demo Lending', 'demo-lending', 'demolending.com', '#10B981', 'free', 'active', '{}', 'Demo Lending provides innovative mortgage solutions with a focus on transparency and customer satisfaction. Our team of experienced professionals is here to help you find the perfect loan for your needs.');
 
 -- Insert loan officers (these don't require auth.users since user_id is nullable)
 INSERT INTO loan_officers (id, organization_id, full_name, email, phone, title, nmls_id, bio, branch, region, average_rating, total_reviews, reputation_score)

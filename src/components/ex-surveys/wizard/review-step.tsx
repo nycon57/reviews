@@ -33,12 +33,12 @@ function ReviewItem({ icon, label, value }: ReviewItemProps) {
   );
 }
 
-export function ReviewStep({ formData, templates, departments }: StepProps) {
+export function ReviewStep({ formData, templates }: StepProps) {
   const selectedTemplate = templates.find((t) => t.id === formData.templateId);
   const selectedDepartment =
-    formData.targetDepartmentId === "__all__"
+    formData.targetDepartment === "__all__"
       ? null
-      : departments.find((d) => d.id === formData.targetDepartmentId);
+      : formData.targetDepartment;
 
   return (
     <div className="space-y-8">
@@ -85,7 +85,7 @@ export function ReviewStep({ formData, templates, departments }: StepProps) {
             label="Target Audience"
             value={
               selectedDepartment
-                ? selectedDepartment.name
+                ? selectedDepartment
                 : "All Departments"
             }
           />

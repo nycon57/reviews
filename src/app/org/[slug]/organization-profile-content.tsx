@@ -15,17 +15,8 @@ import {
   Users,
   Quotes as Quote,
   BuildingOffice as Building2,
-  ArrowSquareOut as ExternalLink,
   CaretRight as ChevronRight,
-  Globe,
-  Target,
   Medal as Award,
-  Phone,
-  Envelope,
-  LinkedinLogo,
-  FacebookLogo,
-  InstagramLogo,
-  TwitterLogo,
   MagnifyingGlass,
   SortAscending,
 } from "@phosphor-icons/react";
@@ -39,7 +30,7 @@ import {
   DirectoryBreadcrumbs,
   type DirectoryBreadcrumbItem,
 } from "@/components/shared/directory-breadcrumbs";
-import { ProfileHeroBanner } from "@/app/pro/[slug]/components";
+import { ProfileHeroBanner, ContactCTACard, MessageModal } from "@/app/pro/[slug]/components";
 import { ShareProfileButton } from "@/app/pro/[slug]/components/share-profile-button";
 
 interface OrganizationProfileContentProps {
@@ -102,16 +93,6 @@ function formatBranchLocation(address: BranchAddress | null, region: string | nu
   return region || "";
 }
 
-function formatFullAddress(address: BranchAddress | null): string | null {
-  if (!address) return null;
-  const parts = [address.street, address.city, address.state, address.zip].filter(Boolean);
-  if (parts.length === 0) return null;
-  // Format as "street, city, state zip"
-  const street = address.street;
-  const cityStateZip = [address.city, [address.state, address.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
-  return [street, cityStateZip].filter(Boolean).join(", ");
-}
-
 export function OrganizationProfileContent({
   organization,
   branches,
@@ -122,6 +103,9 @@ export function OrganizationProfileContent({
   const profileUrl = typeof window !== "undefined"
     ? window.location.href
     : `/org/${organization.slug || organization.id}`;
+
+  // Message modal state
+  const [messageOpen, setMessageOpen] = useState(false);
 
   // Search & sort state
   const [locationSearch, setLocationSearch] = useState("");
@@ -188,19 +172,14 @@ export function OrganizationProfileContent({
   // Derive contact info: prefer org-level fields, fallback to HQ branch
   const hq = organization.headquarters_branch;
   const contactPhone = organization.phone || hq?.phone || null;
-  const contactEmail = organization.email || hq?.email || null;
-  const contactAddress = hq?.address
-    ? formatFullAddress(hq.address as BranchAddress | null)
-    : formatFullAddress(organization.headquarters_address as BranchAddress | null);
-
-  const socialLinks = [
-    { url: organization.linkedin_url, icon: LinkedinLogo, label: "LinkedIn" },
-    { url: organization.facebook_url, icon: FacebookLogo, label: "Facebook" },
-    { url: organization.instagram_url, icon: InstagramLogo, label: "Instagram" },
-    { url: organization.twitter_url, icon: TwitterLogo, label: "X (Twitter)" },
-  ].filter((s) => s.url);
-
-  const hasContactInfo = contactPhone || contactEmail || contactAddress || organization.website_url || socialLinks.length > 0;
+  const rawAddr = (hq?.address || organization.headquarters_address) as BranchAddress | null;
+  const hqAddress = rawAddr ? { street: rawAddr.street, city: rawAddr.city, state: rawAddr.state, zip: rawAddr.zip } : null;
+  const hqDirectionsUrl = hqAddress
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([hqAddress.street, hqAddress.city, hqAddress.state, hqAddress.zip].filter(Boolean).join(" "))}`
+    : null;
+  const hqLocationString = hqAddress
+    ? [hqAddress.city, hqAddress.state].filter(Boolean).join(", ")
+    : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
@@ -215,10 +194,12 @@ export function OrganizationProfileContent({
         {breadcrumbs && breadcrumbs.length > 0 && (
           <div className="absolute top-0 left-0 right-0 z-10">
             <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6 lg:px-8">
-              <DirectoryBreadcrumbs
-                items={breadcrumbs}
-                className="[&_a]:text-white/70 [&_a:hover]:text-white [&_span[aria-current]]:text-white [&_svg]:text-white/50"
-              />
+              <div className="inline-flex rounded-md bg-black/50 px-3 py-1.5">
+                <DirectoryBreadcrumbs
+                  items={breadcrumbs}
+                  className="[&_a]:text-white/70 [&_a:hover]:text-white [&_span[aria-current]]:text-white [&_svg]:text-white/50"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -251,6 +232,12 @@ export function OrganizationProfileContent({
               <div className="max-w-2xl">
                 <h1 className="text-3xl md:text-4xl font-display font-bold text-repwell-teal-500 tracking-tight">
                   {organization.name}
+                  {hqLocationString && (
+                    <span className="ml-3 inline-flex items-center gap-1.5 align-middle text-base font-normal text-repwell-teal-300">
+                      <MapPin className="h-4 w-4" />
+                      {hqLocationString}
+                    </span>
+                  )}
                 </h1>
 
                 {organization.mission_statement && (
@@ -285,6 +272,13 @@ export function OrganizationProfileContent({
                     {organization.total_members} Professionals
                   </Badge>
                 </div>
+
+                {/* Description / Bio */}
+                {organization.description && (
+                  <p className="mt-4 text-sm text-repwell-teal-400 leading-relaxed max-w-xl">
+                    {organization.description}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -296,107 +290,30 @@ export function OrganizationProfileContent({
         <div className="grid gap-10 lg:grid-cols-3">
           {/* Left Sidebar — Contact Info */}
           <div className="lg:sticky lg:top-20 lg:self-start space-y-6 lg:col-span-1 order-2 lg:order-1">
-            {hasContactInfo && (
-              <Card className="border-t-4 border-t-repwell-sage-200">
-                <CardHeader>
-                  <CardTitle className="text-lg font-display text-repwell-teal-500 flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-repwell-teal-300" />
-                    Contact
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* HQ Address */}
-                  {contactAddress && (
-                    <div className="flex items-start gap-3 text-sm text-repwell-teal-400">
-                      <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-repwell-teal-300" />
-                      <span>{contactAddress}</span>
-                    </div>
-                  )}
-
-                  {/* Phone */}
-                  {contactPhone && (
-                    <a
-                      href={`tel:${contactPhone}`}
-                      className="flex items-center gap-3 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
-                    >
-                      <Phone className="h-4 w-4 shrink-0 text-repwell-teal-300" />
-                      <span>{contactPhone}</span>
-                    </a>
-                  )}
-
-                  {/* Email */}
-                  {contactEmail && (
-                    <a
-                      href={`mailto:${contactEmail}`}
-                      className="flex items-center gap-3 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
-                    >
-                      <Envelope className="h-4 w-4 shrink-0 text-repwell-teal-300" />
-                      <span>{contactEmail}</span>
-                    </a>
-                  )}
-
-                  {/* Website */}
-                  {organization.website_url && (
-                    <a
-                      href={organization.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
-                    >
-                      <Globe className="h-4 w-4 shrink-0 text-repwell-teal-300" />
-                      <span className="truncate">{organization.website_url.replace(/^https?:\/\//, "")}</span>
-                      <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
-                  )}
-
-                  {/* Social Links */}
-                  {socialLinks.length > 0 && (
-                    <div className="flex items-center gap-3 pt-2 border-t border-repwell-sage-200">
-                      {socialLinks.map((social) => (
-                        <a
-                          key={social.label}
-                          href={social.url!}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-repwell-teal-300 hover:text-repwell-teal-500 transition-colors"
-                          title={social.label}
-                        >
-                          <social.icon className="h-5 w-5" />
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Share Profile */}
-            <ShareProfileButton
-              profileUrl={profileUrl}
-              loanOfficerName={organization.name}
-              title={`${organization.name} - Organization Profile`}
+            <ContactCTACard
+              phone={contactPhone}
+              address={hqAddress}
+              professionalName={organization.name}
+              contactLabel={`Contact ${organization.name}`}
+              personalWebsiteUrl={organization.website_url}
+              directionsUrl={hqDirectionsUrl}
+              linkedinUrl={organization.linkedin_url}
+              facebookUrl={organization.facebook_url}
+              instagramUrl={organization.instagram_url}
+              twitterUrl={organization.twitter_url}
+              onMessage={() => setMessageOpen(true)}
+              shareButton={
+                <ShareProfileButton
+                  profileUrl={profileUrl}
+                  loanOfficerName={organization.name}
+                  title={`${organization.name} - Organization Profile`}
+                />
+              }
             />
           </div>
 
           {/* Right Content Area */}
           <div className="space-y-10 lg:col-span-2 order-1 lg:order-2">
-            {/* About Section */}
-            {organization.description && (
-              <Card className="border-t-4 border-t-repwell-sage-200">
-                <CardHeader>
-                  <CardTitle className="text-xl font-display text-repwell-teal-500 flex items-center gap-2">
-                    <Target className="h-5 w-5 text-repwell-teal-300" />
-                    About {organization.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-repwell-teal-400 leading-relaxed">
-                    {organization.description}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Tabbed Locations / Team */}
             <Card className="border-t-4 border-t-repwell-sage-200">
               <CardContent className="pt-6">
@@ -685,6 +602,15 @@ export function OrganizationProfileContent({
           </div>
         </div>
       </div>
+
+      {/* Message Modal */}
+      <MessageModal
+        open={messageOpen}
+        onOpenChange={setMessageOpen}
+        recipientType="organization"
+        recipientId={organization.id}
+        recipientName={organization.name}
+      />
     </div>
   );
 }

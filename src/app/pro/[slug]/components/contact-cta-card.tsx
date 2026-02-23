@@ -13,6 +13,7 @@ import {
   InstagramLogo,
   TwitterLogo,
   GlobeSimple,
+  Envelope,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 
@@ -22,6 +23,7 @@ import { Button } from "@/components/ui/button";
 
 interface ContactCTACardProps {
   phone?: string | null;
+  email?: string | null;
   address?: {
     street?: string;
     city?: string;
@@ -38,6 +40,8 @@ interface ContactCTACardProps {
     slug: string;
   } | null;
   professionalName?: string;
+  /** Override the "Contact {name}" heading — use when the full name should appear (e.g. org pages) */
+  contactLabel?: string;
   ctaText?: string | null;
   ctaUrl?: string | null;
   directionsUrl?: string | null;
@@ -76,10 +80,12 @@ function formatAddress(address: NonNullable<ContactCTACardProps["address"]>) {
 
 export function ContactCTACard({
   phone,
+  email,
   address,
   organization,
   branch,
   professionalName,
+  contactLabel,
   ctaText = "Get Started",
   ctaUrl,
   directionsUrl,
@@ -100,7 +106,7 @@ export function ContactCTACard({
     <Card className={cn("border-t-4 border-t-repwell-sage-200", className)}>
       <CardHeader>
         <CardTitle className="text-lg font-display text-repwell-teal-500">
-          Contact {professionalName?.split(" ")[0] || "Information"}
+          {contactLabel || `Contact ${professionalName?.split(" ")[0] || "Information"}`}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -197,6 +203,18 @@ export function ContactCTACard({
               className="text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline transition-colors"
             >
               {phone}
+            </a>
+          </div>
+        )}
+
+        {email && (
+          <div className="flex items-center gap-3">
+            <Envelope className="h-5 w-5 shrink-0 text-repwell-teal-300" />
+            <a
+              href={`mailto:${email}`}
+              className="text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline transition-colors break-all"
+            >
+              {email}
             </a>
           </div>
         )}

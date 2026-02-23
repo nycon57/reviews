@@ -9,7 +9,6 @@ import {
   EXSurveyTemplate,
   EXSurvey,
   EXSurveyResponse,
-  Department,
   DEFAULT_EX_TEMPLATES,
   EXSurveyType,
 } from "@/types/ex-survey.types";
@@ -47,87 +46,9 @@ async function checkManagerAccess() {
   return result;
 }
 
-// ==================== DEPARTMENT ACTIONS ====================
-
-export async function getDepartments(): Promise<{ success: boolean; data?: Department[]; error?: string }> {
-  const result = await getUserOrganization();
-  if ("error" in result) return { success: false, error: result.error };
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("departments")
-    .select("*")
-    .eq("organization_id", result.organizationId)
-    .order("name");
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  return {
-    success: true,
-    data: data?.map((d) => ({
-      id: d.id,
-      organizationId: d.organization_id,
-      name: d.name,
-      slug: d.slug,
-      description: d.description,
-      parentId: d.parent_id,
-      managerUserId: d.manager_user_id,
-      settings: d.settings,
-      isActive: d.is_active,
-      createdAt: d.created_at,
-      updatedAt: d.updated_at,
-    })),
-  };
-}
-
-export async function createDepartment(input: {
-  name: string;
-  slug: string;
-  description?: string;
-  parentId?: string;
-  managerUserId?: string;
-}): Promise<{ success: boolean; data?: Department; error?: string }> {
-  const result = await checkManagerAccess();
-  if ("error" in result) return { success: false, error: result.error };
-
-  const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("departments")
-    .insert({
-      organization_id: result.organizationId,
-      name: input.name,
-      slug: input.slug,
-      description: input.description,
-      parent_id: input.parentId,
-      manager_user_id: input.managerUserId,
-    })
-    .select()
-    .single();
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/dashboard/ex-surveys");
-  return {
-    success: true,
-    data: {
-      id: data.id,
-      organizationId: data.organization_id,
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      parentId: data.parent_id,
-      managerUserId: data.manager_user_id,
-      settings: data.settings,
-      isActive: data.is_active,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-    },
-  };
-}
+// ==================== DEPARTMENT ACTIONS (DEPRECATED) ====================
+// Department CRUD removed — use getContactDepartments() from @/lib/contacts/actions instead.
+// Departments are now free-text fields on the contacts table.
 
 // ==================== TEMPLATE ACTIONS ====================
 
@@ -607,7 +528,7 @@ export async function createEXSurvey(input: {
   description?: string;
   surveyType: EXSurveyType;
   isAnonymous?: boolean;
-  targetDepartmentId?: string;
+  targetDepartment?: string;
   endDate?: string;
 }): Promise<{ success: boolean; data?: EXSurvey; error?: string }> {
   const result = await checkManagerAccess();
@@ -624,7 +545,7 @@ export async function createEXSurvey(input: {
       survey_type: input.surveyType,
       is_anonymous: input.isAnonymous ?? true,
       status: "draft",
-      target_departments: input.targetDepartmentId ? [input.targetDepartmentId] : [],
+      target_departments: input.targetDepartment ? [input.targetDepartment] : [],
       end_date: input.endDate,
       created_by: result.userId,
     })
@@ -683,33 +604,65 @@ export async function launchEXSurvey(surveyId: string): Promise<{ success: boole
     return { success: false, error: "Survey must be in draft status to launch" };
   }
 
-  // Get users to invite
-  let query = supabase
-    .from("users")
-    .select("id, department_id")
+  // Get contacts to invite (includes both linked users and non-user employees)
+  let contactQuery = supabase
+    .from("contacts")
+    .select("id, email, user_id, department")
     .eq("organization_id", result.organizationId)
     .eq("is_active", true);
 
   if (survey.target_departments && survey.target_departments.length > 0) {
-    query = query.in("department_id", survey.target_departments);
+    contactQuery = contactQuery.in("department", survey.target_departments);
   }
 
-  const { data: users, error: usersError } = await query;
+  const { data: contacts, error: contactsError } = await contactQuery;
 
-  if (usersError) {
-    return { success: false, error: "Failed to get users" };
+  // Also get users who may not be in contacts table yet
+  const { data: users, error: usersError } = await supabase
+    .from("users")
+    .select("id, email")
+    .eq("organization_id", result.organizationId)
+    .eq("is_active", true);
+
+  if (contactsError || usersError) {
+    return { success: false, error: "Failed to get recipients" };
   }
 
-  if (!users || users.length === 0) {
-    return { success: false, error: "No users to invite" };
+  // Build deduplicated invitation list
+  const invitations: { survey_id: string; user_id?: string; contact_id?: string; contact_email?: string }[] = [];
+  const seenUserIds = new Set<string>();
+  const seenEmails = new Set<string>();
+
+  // Process contacts first
+  for (const contact of contacts ?? []) {
+    const email = contact.email ? String(contact.email).toLowerCase() : null;
+    if (contact.user_id) {
+      if (!seenUserIds.has(contact.user_id)) {
+        invitations.push({ survey_id: surveyId, user_id: contact.user_id, contact_id: contact.id });
+        seenUserIds.add(contact.user_id);
+        if (email) seenEmails.add(email);
+      }
+    } else if (email) {
+      if (!seenEmails.has(email)) {
+        invitations.push({ survey_id: surveyId, contact_id: contact.id, contact_email: email });
+        seenEmails.add(email);
+      }
+    }
   }
 
-  // Create invitations
-  const invitations = users.map((u) => ({
-    survey_id: surveyId,
-    user_id: u.id,
-    department_id: u.department_id,
-  }));
+  // Add users not already covered by contacts (only when no department filter)
+  if (!survey.target_departments || survey.target_departments.length === 0) {
+    for (const user of users ?? []) {
+      if (!seenUserIds.has(user.id)) {
+        invitations.push({ survey_id: surveyId, user_id: user.id });
+        seenUserIds.add(user.id);
+      }
+    }
+  }
+
+  if (invitations.length === 0) {
+    return { success: false, error: "No recipients to invite" };
+  }
 
   const { error: inviteError } = await supabase.from("ex_survey_invitations").insert(invitations);
 
@@ -724,7 +677,7 @@ export async function launchEXSurvey(surveyId: string): Promise<{ success: boole
     .update({
       status: "active",
       start_date: new Date().toISOString(),
-      total_invites: users.length,
+      total_invites: invitations.length,
     })
     .eq("id", surveyId);
 

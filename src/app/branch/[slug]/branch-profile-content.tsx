@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +11,10 @@ import {
   Star,
   MapPin,
   Phone,
-  Envelope as Mail,
-  Globe,
   Clock,
   Users,
   Quotes as Quote,
   BuildingOffice as Building2,
-  ArrowSquareOut as ExternalLink,
   CaretRight as ChevronRight,
 } from "@phosphor-icons/react";
 import type {
@@ -31,7 +29,7 @@ import {
 } from "@/components/shared/directory-breadcrumbs";
 import { ShareProfileButton } from "@/app/pro/[slug]/components/share-profile-button";
 import { SourceIcon } from "@/app/pro/[slug]/components/review-card";
-import { ProfileHeroBanner } from "@/app/pro/[slug]/components";
+import { ProfileHeroBanner, ContactCTACard, MessageModal } from "@/app/pro/[slug]/components";
 
 interface BranchProfileContentProps {
   branch: PublicBranch;
@@ -119,6 +117,8 @@ export function BranchProfileContent({
   reviews,
   breadcrumbs,
 }: BranchProfileContentProps) {
+  const [messageOpen, setMessageOpen] = useState(false);
+
   const profileUrl = typeof window !== "undefined"
     ? window.location.href
     : `/branch/${branch.global_slug || branch.id}`;
@@ -136,6 +136,11 @@ export function BranchProfileContent({
   const locationString = address
     ? [address.city, address.state].filter(Boolean).join(", ")
     : branch.region || "";
+
+  const directionsUrl = branch.google_maps_url
+    || (address && (address.street || address.city)
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([address.street, [address.city, address.state].filter(Boolean).join(", "), address.zip].filter(Boolean).join(" "))}`
+      : null);
 
   const hours = branch.hours_of_operation as HoursOfOperation | null;
   const formattedHours = formatHours(hours);
@@ -161,10 +166,12 @@ export function BranchProfileContent({
         {breadcrumbs && breadcrumbs.length > 0 && (
           <div className="absolute top-0 left-0 right-0 z-10">
             <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6 lg:px-8">
-              <DirectoryBreadcrumbs
-                items={breadcrumbs}
-                className="[&_a]:text-white/70 [&_a:hover]:text-white [&_span[aria-current]]:text-white [&_svg]:text-white/50"
-              />
+              <div className="inline-flex rounded-md bg-black/50 px-3 py-1.5">
+                <DirectoryBreadcrumbs
+                  items={breadcrumbs}
+                  className="[&_a]:text-white/70 [&_a:hover]:text-white [&_span[aria-current]]:text-white [&_svg]:text-white/50"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -203,7 +210,6 @@ export function BranchProfileContent({
                     <span className="text-repwell-teal-400">{locationString}</span>
                   </div>
                 )}
-
                 {organization && (
                   <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
                     <Building2 className="h-4 w-4 text-repwell-teal-300" />
@@ -259,75 +265,21 @@ export function BranchProfileContent({
           {/* Sidebar - Contact Info & Hours */}
           <div className="lg:sticky lg:top-20 lg:self-start space-y-6 lg:col-span-1">
             {/* Contact Card */}
-            <Card className="border-t-4 border-t-repwell-sage-200">
-              <CardHeader>
-                <CardTitle className="text-lg font-display text-repwell-teal-500">Contact Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {addressString && (
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 shrink-0 text-repwell-teal-300" />
-                    <span className="text-sm text-repwell-teal-400">{addressString}</span>
-                  </div>
-                )}
-                {branch.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-5 w-5 shrink-0 text-repwell-teal-300" />
-                    <a
-                      href={`tel:${branch.phone}`}
-                      className="text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline"
-                    >
-                      {branch.phone}
-                    </a>
-                  </div>
-                )}
-                {branch.email && (
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 shrink-0 text-repwell-teal-300" />
-                    <a
-                      href={`mailto:${branch.email}`}
-                      className="text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline break-all"
-                    >
-                      {branch.email}
-                    </a>
-                  </div>
-                )}
-                {branch.website_url && (
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-5 w-5 shrink-0 text-repwell-teal-300" />
-                    <a
-                      href={branch.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline flex items-center gap-1"
-                    >
-                      Visit Website
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-                {branch.google_maps_url && (
-                  <div className="pt-2">
-                    <a
-                      href={branch.google_maps_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      View on Google Maps
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Share Profile */}
-            <ShareProfileButton
-              profileUrl={profileUrl}
-              loanOfficerName={branch.name}
-              title={`${branch.name} - Branch Profile`}
+            <ContactCTACard
+              phone={branch.phone}
+              address={address}
+              organization={organization ? { name: organization.name, href: `/org/${organization.slug}` } : null}
+              contactLabel={`Contact ${branch.name}`}
+              personalWebsiteUrl={branch.website_url}
+              directionsUrl={directionsUrl}
+              onMessage={() => setMessageOpen(true)}
+              shareButton={
+                <ShareProfileButton
+                  profileUrl={profileUrl}
+                  loanOfficerName={branch.name}
+                  title={`${branch.name} - Branch Profile`}
+                />
+              }
             />
 
             {/* Hours Card */}
@@ -545,6 +497,14 @@ export function BranchProfileContent({
         </div>
       </div>
 
+      {/* Message Modal */}
+      <MessageModal
+        open={messageOpen}
+        onOpenChange={setMessageOpen}
+        recipientType="branch"
+        recipientId={branch.id}
+        recipientName={branch.name}
+      />
     </div>
   );
 }

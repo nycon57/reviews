@@ -118,9 +118,9 @@ export function DetailsAudienceStep({ formData, setFormData, departments }: Step
             Department
           </Label>
           <Select
-            value={formData.targetDepartmentId}
+            value={formData.targetDepartment}
             onValueChange={(value) =>
-              setFormData((prev) => ({ ...prev, targetDepartmentId: value }))
+              setFormData((prev) => ({ ...prev, targetDepartment: value }))
             }
           >
             <SelectTrigger className="focus:ring-repwell-teal-300">
@@ -134,14 +134,14 @@ export function DetailsAudienceStep({ formData, setFormData, departments }: Step
                 </span>
               </SelectItem>
               {departments.map((dept) => (
-                <SelectItem key={dept.id} value={dept.id}>
-                  {dept.name}
+                <SelectItem key={dept} value={dept}>
+                  {dept}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            {formData.targetDepartmentId === "__all__"
+            {formData.targetDepartment === "__all__"
               ? "Survey will be sent to all employees in the organization."
               : "Survey will only be sent to employees in the selected department."}
           </p>

@@ -1,4 +1,4 @@
-import { EXSurveyTemplate, Department } from "@/types/ex-survey.types";
+import { EXSurveyTemplate } from "@/types/ex-survey.types";
 
 // Wizard step enum
 export type WizardStep = 1 | 2 | 3 | 4;
@@ -26,7 +26,7 @@ export interface WizardFormData {
   name: string;
   description: string;
   isAnonymous: boolean;
-  targetDepartmentId: string; // "__all__" or UUID
+  targetDepartment: string; // "__all__" or department name (text)
 
   // Step 3: Schedule
   launchImmediately: boolean;
@@ -40,7 +40,7 @@ export const INITIAL_FORM_DATA: WizardFormData = {
   name: "",
   description: "",
   isAnonymous: true,
-  targetDepartmentId: "__all__",
+  targetDepartment: "__all__",
   launchImmediately: true,
   startDate: undefined,
   endDate: undefined,
@@ -51,7 +51,7 @@ export interface StepProps {
   formData: WizardFormData;
   setFormData: React.Dispatch<React.SetStateAction<WizardFormData>>;
   templates: EXSurveyTemplate[];
-  departments: Department[];
+  departments: string[];
 }
 
 // Validation per step

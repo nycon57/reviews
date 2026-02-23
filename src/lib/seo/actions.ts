@@ -926,7 +926,8 @@ export async function getPublicOrganizationProfile(
     const supabase = createAdminClient();
 
     // Fetch the organization by slug
-    const { data: orgData, error: orgError } = await supabase
+    // NOTE: `description` column exists in DB but not in generated types — cast through unknown
+    const { data: orgDataRaw, error: orgError } = await supabase
       .from("organizations")
       .select(
         `
@@ -936,6 +937,7 @@ export async function getPublicOrganizationProfile(
         domain,
         logo_url,
         primary_color,
+        description,
         settings,
         phone,
         email,
@@ -950,6 +952,8 @@ export async function getPublicOrganizationProfile(
       )
       .eq("slug", slug)
       .single();
+
+    const orgData = orgDataRaw as unknown as Record<string, unknown> | null;
 
     if (orgError || !orgData) {
       return { success: false, error: "Organization not found" };
@@ -968,6 +972,7 @@ export async function getPublicOrganizationProfile(
       domain: string | null;
       logo_url: string | null;
       primary_color: string | null;
+      description: string | null;
       settings: unknown;
       phone: string | null;
       email: string | null;
@@ -1167,7 +1172,7 @@ export async function getPublicOrganizationProfile(
           domain: organization.domain,
           logo_url: organization.logo_url,
           primary_color: organization.primary_color,
-          description: settings?.description || null,
+          description: organization.description || settings?.description || null,
           mission_statement: settings?.mission_statement || null,
           website_url: organization.website_url || settings?.website_url || null,
           phone: organization.phone,

@@ -10,8 +10,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, SpinnerGap as Loader2 } from "@phosphor-icons/react";
 import { format } from "date-fns";
-import { createEXSurvey, getEXSurveyTemplates, getDepartments, launchEXSurvey } from "@/lib/ex-surveys/actions";
-import { EXSurveyTemplate, Department } from "@/types/ex-survey.types";
+import { createEXSurvey, getEXSurveyTemplates, launchEXSurvey } from "@/lib/ex-surveys/actions";
+import { getContactDepartments } from "@/lib/contacts/actions";
+import { EXSurveyTemplate } from "@/types/ex-survey.types";
 import {
   WizardStepIndicator,
   WizardNavigation,
@@ -35,7 +36,7 @@ export default function CreateEXSurveyPage() {
 
   // Data loading state
   const [templates, setTemplates] = useState<EXSurveyTemplate[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ export default function CreateEXSurveyPage() {
       try {
         const [templatesResult, depsResult] = await Promise.all([
           getEXSurveyTemplates(),
-          getDepartments(),
+          getContactDepartments(),
         ]);
 
         if (templatesResult.data) {
@@ -75,7 +76,7 @@ export default function CreateEXSurveyPage() {
         }
 
         if (depsResult.data) {
-          setDepartments(depsResult.data);
+          setDepartments(depsResult.data as string[]);
         }
       } catch {
         setError("Failed to load data");
@@ -117,8 +118,8 @@ export default function CreateEXSurveyPage() {
         description: formData.description || undefined,
         surveyType: selectedTemplate?.surveyType || "engagement",
         isAnonymous: formData.isAnonymous,
-        targetDepartmentId:
-          formData.targetDepartmentId === "__all__" ? undefined : formData.targetDepartmentId,
+        targetDepartment:
+          formData.targetDepartment === "__all__" ? undefined : formData.targetDepartment,
         endDate: formData.endDate?.toISOString(),
       });
 

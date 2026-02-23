@@ -137,6 +137,12 @@ export const NAV_CONFIG: NavConfig = {
           isNew: true,
         },
         {
+          title: "Contacts",
+          href: "/dashboard/contacts",
+          icon: "AddressBook",
+          permission: PERMISSIONS.VIEW_EX_SURVEYS,
+        },
+        {
           title: "Campaigns",
           href: "/dashboard/campaigns",
           icon: "Envelope",

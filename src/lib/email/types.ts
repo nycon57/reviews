@@ -153,7 +153,9 @@ export type EmailTemplate =
   | "referral_friend_converted"
   | "referral_reward_earned"
   | "referral_reminder"
-  | "referral_leaderboard";
+  | "referral_leaderboard"
+  // Profile referral introduction email (public profile page)
+  | "profile_referral_introduction";
 
 // Base email data
 export interface BaseEmailData {
@@ -2483,3 +2485,29 @@ export type ReferralEmailData =
   | ReferralRewardEarnedEmailData
   | ReferralReminderEmailData
   | ReferralLeaderboardEmailData;
+
+// =============================================================================
+// PROFILE REFERRAL INTRODUCTION EMAIL (Public profile page)
+// =============================================================================
+
+export interface ProfileReferralIntroductionReview {
+  customerName: string;
+  rating: number;
+  text: string;
+}
+
+export interface ProfileReferralIntroductionEmailData extends BaseEmailData {
+  referredName: string;
+  referrerName?: string;
+  subject: string;
+  message: string;
+  professionalName: string;
+  professionalTitle?: string;
+  professionalPhotoUrl?: string;
+  organizationName?: string;
+  averageRating?: number;
+  totalReviews?: number;
+  phone?: string;
+  profileUrl: string;
+  recentReviews?: ProfileReferralIntroductionReview[];
+}

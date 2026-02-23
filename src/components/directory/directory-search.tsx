@@ -26,6 +26,7 @@ import {
 } from "@phosphor-icons/react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
+import { MessageModal } from "@/app/pro/[slug]/components/message-modal";
 import {
   searchProfessionals,
   type DirectoryProfessional,
@@ -65,6 +66,9 @@ export function DirectorySearch({
     (searchParams.get("sort") as "rating" | "reviews" | "name") || "rating"
   );
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1", 10));
+
+  // Message modal state
+  const [messageProfessional, setMessageProfessional] = useState<{ id: string; name: string } | null>(null);
 
   // Map interaction state
   const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
@@ -473,6 +477,7 @@ export function DirectorySearch({
                     professional={professional}
                     variant="list"
                     isHovered={hoveredProfessionalId === professional.id}
+                    onMessage={() => setMessageProfessional({ id: professional.id, name: professional.full_name })}
                   />
                 </div>
               ))}
@@ -557,6 +562,16 @@ export function DirectorySearch({
           heightClass="h-[400px] lg:h-[calc(100vh-120px)]"
         />
       </div>
+
+      {/* Message Modal */}
+      <MessageModal
+        open={messageProfessional !== null}
+        onOpenChange={(open) => {
+          if (!open) setMessageProfessional(null);
+        }}
+        professionalId={messageProfessional?.id ?? ""}
+        professionalName={messageProfessional?.name ?? ""}
+      />
     </div>
   );
 }

@@ -1,9 +1,11 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { MapPin, ArrowSquareOut } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
+const LeafletMap = dynamic(() => import("./leaflet-map"), { ssr: false });
 
 interface Address {
   street?: string;
@@ -15,6 +17,8 @@ interface Address {
 interface OfficeLocationMapProps {
   address?: Address | null;
   googleMapsUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   className?: string;
 }
 
@@ -35,6 +39,8 @@ function getGoogleMapsSearchUrl(address: Address): string {
 export function OfficeLocationMap({
   address,
   googleMapsUrl,
+  latitude,
+  longitude,
   className,
 }: OfficeLocationMapProps) {
   if (!address || (!address.city && !address.street)) {
@@ -43,6 +49,7 @@ export function OfficeLocationMap({
 
   const formattedAddress = formatAddress(address);
   const mapsUrl = googleMapsUrl || getGoogleMapsSearchUrl(address);
+  const hasCoords = latitude != null && longitude != null;
 
   return (
     <Card className={cn("border-t-4 border-t-repwell-sage-200 overflow-hidden", className)}>
@@ -53,42 +60,34 @@ export function OfficeLocationMap({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        {/* Map placeholder with address */}
-        <a
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block relative w-full h-36 bg-repwell-sage-100 hover:bg-repwell-sage-100/80 transition-colors group"
-        >
-          {/* Visual map placeholder */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="h-8 w-8 text-repwell-teal-300 mx-auto mb-2" />
-              <p className="text-sm text-repwell-teal-400 px-4 line-clamp-2">
-                {formattedAddress}
-              </p>
-              <p className="text-xs text-repwell-teal-300 mt-1 group-hover:underline flex items-center justify-center gap-1">
-                View on Google Maps
-                <ArrowSquareOut className="h-3 w-3" />
-              </p>
-            </div>
-          </div>
-        </a>
-
-        {/* Address and directions button */}
-        <div className="p-4 pt-3">
-          <p className="text-sm text-repwell-teal-400 mb-3">{formattedAddress}</p>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
+        {/* Interactive map or static placeholder */}
+        {hasCoords ? (
+          <LeafletMap latitude={latitude} longitude={longitude} />
+        ) : (
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block relative w-full h-48 bg-repwell-sage-100 hover:bg-repwell-sage-100/80 transition-colors group"
           >
-            <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-              <MapPin className="h-4 w-4 mr-2" />
-              Get Directions
-            </a>
-          </Button>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <MapPin className="h-8 w-8 text-repwell-teal-300 mx-auto mb-2" />
+                <p className="text-sm text-repwell-teal-400 px-4 line-clamp-2">
+                  {formattedAddress}
+                </p>
+                <p className="text-xs text-repwell-teal-300 mt-1 group-hover:underline flex items-center justify-center gap-1">
+                  View on Google Maps
+                  <ArrowSquareOut className="h-3 w-3" />
+                </p>
+              </div>
+            </div>
+          </a>
+        )}
+
+        {/* Address */}
+        <div className="p-4 pt-3">
+          <p className="text-sm text-repwell-teal-400">{formattedAddress}</p>
         </div>
       </CardContent>
     </Card>

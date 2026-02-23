@@ -19,6 +19,7 @@ import {
 } from "./schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
+import { seedDefaultWidgets } from "@/lib/widgets/seed-defaults";
 
 /**
  * Helper to slugify organization names
@@ -100,11 +101,13 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       userSlug = await generateUniqueUserSlug(fullName);
     } catch (slugError) {
       console.error("Slug generation failed, cleaning up:", slugError);
-      // Clean up the created user and organization to avoid orphaned records
+      // Clean up the created user and related auth records to avoid orphaned rows
+      // Mirrors Better Auth's internal adapter: delete accounts, then user
       try {
+        await supabaseAdmin.from("accounts").delete().eq("user_id", signUpResult.user.id);
         await supabaseAdmin.from("users").delete().eq("id", signUpResult.user.id);
       } catch (cleanupErr) {
-        console.error("Failed to clean up user after slug error:", cleanupErr);
+        console.error("Failed to clean up user/accounts after slug error:", cleanupErr);
       }
       try {
         await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
@@ -151,6 +154,11 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
     } catch (e) {
       console.error("Member table may not exist yet:", e);
     }
+
+    // Seed default widgets (fire-and-forget so signup isn't slowed)
+    seedDefaultWidgets(orgData.id, signUpResult.user.id).catch((err) =>
+      console.error("Default widget seeding failed:", err)
+    );
 
     return {
       success: true,

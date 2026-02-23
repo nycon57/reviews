@@ -29,6 +29,7 @@ import {
   checkAdminAccessBetterAuth,
 } from "./server-actions";
 import { generateUniqueUserSlug } from "@/lib/users/slug-utils";
+import { seedDefaultWidgets } from "@/lib/widgets/seed-defaults";
 
 function slugify(text: string): string {
   return text
@@ -118,6 +119,11 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     if (userError) {
       console.error("User record creation error:", userError);
     }
+
+    // Seed default widgets (fire-and-forget so signup isn't slowed)
+    seedDefaultWidgets(orgData.id, authData.user.id).catch((err) =>
+      console.error("Default widget seeding failed:", err)
+    );
   }
 
   return {

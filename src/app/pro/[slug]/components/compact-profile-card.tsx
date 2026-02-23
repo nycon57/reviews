@@ -2,22 +2,14 @@
 
 import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Star,
-  BuildingOffice as Building2,
-  Medal as Award,
-} from "@phosphor-icons/react";
+import { Star } from "@phosphor-icons/react";
 
 interface CompactProfileCardProps {
   fullName: string;
   photoUrl: string | null;
   title: string | null;
-  organizationName: string | null;
   averageRating: string | number | null;
   totalReviews: number | null;
-  npsScore: number | null;
-  nmlsId: string | null;
 }
 
 function getInitials(name: string): string {
@@ -49,11 +41,8 @@ export function CompactProfileCard({
   fullName,
   photoUrl,
   title,
-  organizationName,
   averageRating,
   totalReviews,
-  npsScore,
-  nmlsId,
 }: CompactProfileCardProps) {
   const rating = averageRating ? Number(averageRating) : 0;
 
@@ -87,15 +76,6 @@ export function CompactProfileCard({
             <span className="truncate">
               {title || "Professional"}
             </span>
-            {organizationName && (
-              <>
-                <span className="text-repwell-teal-300">@</span>
-                <span className="truncate flex items-center gap-1">
-                  <Building2 className="h-3 w-3 shrink-0" />
-                  {organizationName}
-                </span>
-              </>
-            )}
           </div>
 
           {/* Stats Row */}
@@ -104,35 +84,11 @@ export function CompactProfileCard({
               <div className="flex items-center gap-1.5">
                 <CompactStarRating rating={Math.round(rating)} />
                 <span className="text-sm font-medium text-repwell-teal-500">
-                  {rating.toFixed(1)}
+                  {rating.toFixed(1)} ({totalReviews})
                 </span>
               </div>
             ) : null}
 
-            {totalReviews ? (
-              <Badge
-                variant="secondary"
-                className="bg-repwell-sage-100 text-repwell-teal-400 text-xs px-1.5 py-0"
-              >
-                {totalReviews} {totalReviews === 1 ? "Review" : "Reviews"}
-              </Badge>
-            ) : null}
-
-            {npsScore !== null && (
-              <Badge
-                variant="outline"
-                className="border-repwell-sage-200 text-repwell-teal-400 text-xs px-1.5 py-0"
-              >
-                NPS: {npsScore}
-              </Badge>
-            )}
-
-            {nmlsId && (
-              <div className="flex items-center gap-1 text-xs text-repwell-teal-300">
-                <Award className="h-3 w-3" />
-                NMLS# {nmlsId}
-              </div>
-            )}
           </div>
         </div>
       </div>

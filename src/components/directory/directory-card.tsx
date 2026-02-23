@@ -10,7 +10,7 @@ import {
   Star,
   MapPin,
   Phone,
-  Envelope as Mail,
+  ChatCircle,
   BuildingOffice as Building2,
   ArrowSquareOut as ExternalLink,
 } from "@phosphor-icons/react";
@@ -21,6 +21,8 @@ interface DirectoryCardProps {
   variant?: "grid" | "list";
   /** Whether this card is being hovered (for map sync) */
   isHovered?: boolean;
+  /** Callback when user clicks Message */
+  onMessage?: () => void;
 }
 
 function getInitials(name: string): string {
@@ -49,13 +51,21 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export function DirectoryCard({ professional, variant = "grid", isHovered = false }: DirectoryCardProps) {
+function getDirectionsUrl(address: DirectoryProfessional["address"]): string | null {
+  if (!address || (!address.street && !address.city)) return null;
+  const query = [address.street, [address.city, address.state].filter(Boolean).join(", "), address.zip].filter(Boolean).join(" ");
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+export function DirectoryCard({ professional, variant = "grid", isHovered = false, onMessage }: DirectoryCardProps) {
   // Prefer user's address, fall back to branch address, then branch name + region
   const location = professional.address?.city || professional.address?.state
     ? [professional.address.city, professional.address.state].filter(Boolean).join(", ")
     : professional.branch_info?.address?.city || professional.branch_info?.address?.state
       ? [professional.branch_info.address.city, professional.branch_info.address.state].filter(Boolean).join(", ")
       : [professional.branch, professional.region].filter(Boolean).join(", ");
+
+  const directionsUrl = getDirectionsUrl(professional.address) || getDirectionsUrl(professional.branch_info?.address ?? null);
 
   // List variant - compact sidebar layout
   if (variant === "list") {
@@ -135,21 +145,33 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
                   "h-7 px-2.5 text-xs"
                 )}
               >
-                <Phone className="h-3.5 w-3.5 mr-1" />
+                <Phone className="h-3.5 w-3.5" />
                 Call
               </a>
             )}
-            {professional.email && (
+            {onMessage && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                onClick={onMessage}
+              >
+                <ChatCircle className="h-3.5 w-3.5" />
+                Message
+              </Button>
+            )}
+            {directionsUrl && (
               <a
-                href={`mailto:${professional.email}`}
-                title="Email"
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={cn(
                   buttonVariants({ variant: "outline", size: "sm" }),
                   "h-7 px-2.5 text-xs"
                 )}
               >
-                <Mail className="h-3.5 w-3.5 mr-1" />
-                Email
+                <MapPin className="h-3.5 w-3.5" />
+                Directions
               </a>
             )}
             <Button variant="default" size="sm" asChild className="h-7 text-xs ml-auto">
@@ -251,26 +273,39 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
                 "h-8"
               )}
             >
-              <Phone className="mr-1.5 h-3.5 w-3.5" />
+              <Phone className="h-3.5 w-3.5" />
               Call
             </a>
           )}
-          {professional.email && (
+          {onMessage && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8"
+              onClick={onMessage}
+            >
+              <ChatCircle className="h-3.5 w-3.5" />
+              Message
+            </Button>
+          )}
+          {directionsUrl && (
             <a
-              href={`mailto:${professional.email}`}
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className={cn(
                 buttonVariants({ variant: "outline", size: "sm" }),
                 "h-8"
               )}
             >
-              <Mail className="mr-1.5 h-3.5 w-3.5" />
-              Email
+              <MapPin className="h-3.5 w-3.5" />
+              Directions
             </a>
           )}
           <Button variant="default" size="sm" asChild className="h-8 ml-auto">
             <Link href={`/pro/${professional.slug || professional.id}`}>
               View Profile
-              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </Button>
         </div>

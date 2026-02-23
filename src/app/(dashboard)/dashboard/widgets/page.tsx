@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WidgetList } from "@/components/widgets/widget-list";
 import { listWidgets } from "@/lib/widgets/actions";
+import { ensureDefaultWidgets } from "@/lib/widgets/seed-defaults";
+import { unifiedGetUser } from "@/lib/auth/actions";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = {
   title: "Widgets | RepWell",
@@ -9,6 +12,25 @@ export const metadata = {
 };
 
 async function WidgetListLoader() {
+  // Lazy backfill: ensure all 9 default widget types exist for the org
+  try {
+    const user = await unifiedGetUser();
+    if (user?.id) {
+      const supabase = createAdminClient();
+      const { data: userData } = await supabase
+        .from("users")
+        .select("organization_id")
+        .eq("id", user.id)
+        .single();
+
+      if (userData?.organization_id) {
+        await ensureDefaultWidgets(userData.organization_id, user.id);
+      }
+    }
+  } catch (err) {
+    console.error("Widget backfill check failed:", err);
+  }
+
   const result = await listWidgets({ page: 1, pageSize: 100 });
 
   if (!result.success) {

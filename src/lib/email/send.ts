@@ -47,6 +47,8 @@ import type {
   TrialEnding3FinalReminderEmailData,
   TrialEnding4GracePeriodEmailData,
   TrialEnding5WinbackEmailData,
+  // Profile referral introduction
+  ProfileReferralIntroductionEmailData,
 } from "./types";
 import {
   getSurveyInvitationEmail,
@@ -88,6 +90,7 @@ import {
   getTrialEnding4GracePeriodEmail,
   getTrialEnding5WinbackEmail,
 } from "./trial-ending-templates";
+import { renderProfileReferralIntroductionEmail } from "./templates/index";
 
 // Check if email is unsubscribed
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
@@ -2661,4 +2664,63 @@ export async function sendTrialEnding5WinbackEmail(
 
     return { success: false, error: errorMessage };
   }
+}
+
+// =============================================================================
+// PROFILE REFERRAL INTRODUCTION EMAIL
+// =============================================================================
+
+/**
+ * Send profile referral introduction email.
+ * Called when someone refers a friend via a professional's public profile page.
+ */
+export async function sendProfileReferralIntroductionEmail(
+  data: ProfileReferralIntroductionEmailData,
+  referralId: string
+): Promise<EmailSendResult> {
+  // Check unsubscribe status
+  const unsubscribed = await isEmailUnsubscribed(data.toEmail);
+  if (unsubscribed) {
+    return { success: false, error: "Email is unsubscribed" };
+  }
+
+  const fromAddress = getFromAddress(data.organizationName);
+  const { subject, html } =
+    await renderProfileReferralIntroductionEmail(data);
+  const idempotencyKey = `profile-referral-intro-${referralId}`;
+
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.referredName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "profile_referral_introduction" },
+      { name: "referral_id", value: referralId },
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
+
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.referredName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName: "profile_referral_introduction",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
+
+  return result;
 }

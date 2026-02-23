@@ -97,9 +97,15 @@ export interface PublicProfessionalListItem {
   address: User["address"];
   linkedin_url: string | null;
   zillow_profile_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  twitter_url: string | null;
+  personal_website_url: string | null;
   average_rating: number | null;
   total_reviews: number | null;
   nps_score: number | null;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 /** @deprecated Use PublicProfessionalListItem instead */
@@ -109,6 +115,7 @@ export type PublicLoanOfficerListItem = PublicProfessionalListItem;
 export interface PublicProfessional extends PublicProfessionalListItem {
   slug: string | null;
   branch_id: string | null;
+  google_maps_url: string | null;
   // Profile customization fields
   banner_url: string | null;
   cta_button_text: string | null;
@@ -142,6 +149,7 @@ export interface PublicProfessionalProfileData {
     slug: string;
     industry: IndustryType | null;
   }) | null;
+  branch: { name: string; slug: string } | null;
   reviews: PublicReview[];
   featuredReviews: PublicReview[];
   businessHours: BusinessHours | null;
@@ -193,6 +201,10 @@ export async function getPublicLOProfile(
         address,
         linkedin_url,
         zillow_profile_url,
+        facebook_url,
+        instagram_url,
+        twitter_url,
+        personal_website_url,
         average_rating,
         total_reviews,
         nps_score,
@@ -206,7 +218,9 @@ export async function getPublicLOProfile(
         accepts_public_reviews,
         referral_enabled,
         featured_review_ids,
-        industry
+        industry,
+        latitude,
+        longitude
       `
       )
       .eq(lookupField, slugOrId)
@@ -295,17 +309,31 @@ export async function getPublicLOProfile(
       }
     }
 
-    // Fetch business hours from branch if available
+    // Fetch business hours and location from branch if available
     let businessHours: BusinessHours | null = null;
+    let branchLatitude: number | null = null;
+    let branchLongitude: number | null = null;
+    let branchAddress: Branch["address"] | null = null;
+    let googleMapsUrl: string | null = null;
+    let branchName: string | null = null;
+    let branchSlug: string | null = null;
     if (user.branch_id) {
       const { data: branch } = await supabase
         .from("branches")
-        .select("hours_of_operation")
+        .select("name, global_slug, hours_of_operation, latitude, longitude, address, google_maps_url")
         .eq("id", user.branch_id)
         .single();
 
-      if (branch?.hours_of_operation) {
-        businessHours = branch.hours_of_operation as BusinessHours;
+      if (branch) {
+        branchName = branch.name;
+        branchSlug = branch.global_slug;
+        if (branch.hours_of_operation) {
+          businessHours = branch.hours_of_operation as BusinessHours;
+        }
+        branchLatitude = branch.latitude;
+        branchLongitude = branch.longitude;
+        branchAddress = branch.address;
+        googleMapsUrl = branch.google_maps_url;
       }
     }
 
@@ -325,12 +353,19 @@ export async function getPublicLOProfile(
           branch_id: user.branch_id,
           region: user.region,
           nmls_id: user.nmls_id,
-          address: user.address,
+          address: user.address ?? branchAddress,
           linkedin_url: user.linkedin_url,
           zillow_profile_url: user.zillow_profile_url,
+          facebook_url: user.facebook_url ?? null,
+          instagram_url: user.instagram_url ?? null,
+          twitter_url: user.twitter_url ?? null,
+          personal_website_url: user.personal_website_url ?? null,
           average_rating: user.average_rating,
           total_reviews: user.total_reviews,
           nps_score: user.nps_score,
+          latitude: user.latitude ?? branchLatitude,
+          longitude: user.longitude ?? branchLongitude,
+          google_maps_url: googleMapsUrl,
           banner_url: user.banner_url,
           cta_button_text: user.cta_button_text,
           cta_button_url: user.cta_button_url,
@@ -349,6 +384,9 @@ export async function getPublicLOProfile(
               slug: organization.slug || "",
               industry: (user.industry as IndustryType) || null,
             }
+          : null,
+        branch: branchName
+          ? { name: branchName, slug: branchSlug || user.branch_id! }
           : null,
         reviews: (reviews || []).map((r) => ({ ...r, featured: r.featured ?? false })),
         featuredReviews,
@@ -410,9 +448,15 @@ export async function getPublicLOList(
         address,
         linkedin_url,
         zillow_profile_url,
+        facebook_url,
+        instagram_url,
+        twitter_url,
+        personal_website_url,
         average_rating,
         total_reviews,
-        nps_score
+        nps_score,
+        latitude,
+        longitude
       `
       )
       .eq("is_active", true)
@@ -757,6 +801,16 @@ export interface OrganizationAddress {
   country?: string;
 }
 
+export interface PublicOrgHQBranch {
+  id: string;
+  name: string;
+  slug: string;
+  global_slug: string | null;
+  address: Branch["address"];
+  phone: string | null;
+  email: string | null;
+}
+
 export interface PublicOrganization {
   id: string;
   name: string;
@@ -767,7 +821,14 @@ export interface PublicOrganization {
   description: string | null;
   mission_statement: string | null;
   website_url: string | null;
+  phone: string | null;
+  email: string | null;
+  linkedin_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  twitter_url: string | null;
   headquarters_address: OrganizationAddress | null;
+  headquarters_branch: PublicOrgHQBranch | null;
   aggregate_rating: number | null;
   total_reviews: number;
   total_branches: number;
@@ -853,7 +914,15 @@ export async function getPublicOrganizationProfile(
         domain,
         logo_url,
         primary_color,
-        settings
+        settings,
+        phone,
+        email,
+        website_url,
+        linkedin_url,
+        facebook_url,
+        instagram_url,
+        twitter_url,
+        headquarters_branch_id
       `
       )
       .eq("slug", slug)
@@ -872,6 +941,14 @@ export async function getPublicOrganizationProfile(
       logo_url: string | null;
       primary_color: string | null;
       settings: unknown;
+      phone: string | null;
+      email: string | null;
+      website_url: string | null;
+      linkedin_url: string | null;
+      facebook_url: string | null;
+      instagram_url: string | null;
+      twitter_url: string | null;
+      headquarters_branch_id: string | null;
     };
 
     // Parse organization settings for additional fields
@@ -886,6 +963,28 @@ export async function getPublicOrganizationProfile(
         zip?: string;
       };
     } | null;
+
+    // Fetch HQ branch if set
+    let hqBranch: PublicOrgHQBranch | null = null;
+    if (organization.headquarters_branch_id) {
+      const { data: hqData } = await supabase
+        .from("branches")
+        .select("id, name, slug, global_slug, address, phone, email")
+        .eq("id", organization.headquarters_branch_id)
+        .single();
+
+      if (hqData) {
+        hqBranch = {
+          id: hqData.id,
+          name: hqData.name,
+          slug: hqData.slug,
+          global_slug: hqData.global_slug,
+          address: hqData.address,
+          phone: hqData.phone,
+          email: hqData.email,
+        };
+      }
+    }
 
     // Fetch all public branches for this organization
     const { data: branches } = await supabase
@@ -1040,8 +1139,15 @@ export async function getPublicOrganizationProfile(
           primary_color: organization.primary_color,
           description: settings?.description || null,
           mission_statement: settings?.mission_statement || null,
-          website_url: settings?.website_url || null,
+          website_url: organization.website_url || settings?.website_url || null,
+          phone: organization.phone,
+          email: organization.email,
+          linkedin_url: organization.linkedin_url,
+          facebook_url: organization.facebook_url,
+          instagram_url: organization.instagram_url,
+          twitter_url: organization.twitter_url,
           headquarters_address: settings?.headquarters_address || null,
+          headquarters_branch: hqBranch,
           aggregate_rating: aggregateRating,
           total_reviews: totalReviews,
           total_branches: allBranches.length,

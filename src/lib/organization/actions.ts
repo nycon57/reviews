@@ -50,6 +50,14 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
     trial_ends_at: row.trial_ends_at ?? null,
     features: settings?.features as Organization["features"],
     limits: settings?.limits as Organization["limits"],
+    website_url: (row as Record<string, unknown>).website_url as string ?? null,
+    phone: (row as Record<string, unknown>).phone as string ?? null,
+    email: (row as Record<string, unknown>).email as string ?? null,
+    linkedin_url: (row as Record<string, unknown>).linkedin_url as string ?? null,
+    facebook_url: (row as Record<string, unknown>).facebook_url as string ?? null,
+    instagram_url: (row as Record<string, unknown>).instagram_url as string ?? null,
+    twitter_url: (row as Record<string, unknown>).twitter_url as string ?? null,
+    headquarters_branch_id: (row as Record<string, unknown>).headquarters_branch_id as string ?? null,
     settings: settings ?? undefined,
     metadata: (settings?.metadata as Record<string, unknown>) ?? undefined,
     created_at: row.created_at ?? new Date().toISOString(),
@@ -126,11 +134,26 @@ export async function updateOrganizationSettings(
     return { success: false, error: "Only admins can update organization settings" };
   }
 
+  // Clean empty strings to null for optional URL/email/uuid fields
+  const cleanedData = { ...validated.data };
+  const nullableFields = [
+    "website_url", "email", "linkedin_url", "facebook_url",
+    "instagram_url", "twitter_url", "headquarters_branch_id",
+  ] as const;
+  for (const key of nullableFields) {
+    if (key in cleanedData && (cleanedData as Record<string, unknown>)[key] === "") {
+      (cleanedData as Record<string, unknown>)[key] = null;
+    }
+  }
+  if ("phone" in cleanedData && cleanedData.phone === "") {
+    cleanedData.phone = null;
+  }
+
   // Update organization
   const { error } = await supabase
     .from("organizations")
     .update({
-      ...validated.data,
+      ...cleanedData,
       updated_at: new Date().toISOString(),
     })
     .eq("id", userData.organization_id);
@@ -139,7 +162,17 @@ export async function updateOrganizationSettings(
     return { success: false, error: error.message };
   }
 
+  // Revalidate admin and public profile pages
   revalidatePath("/dashboard/organization");
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("slug")
+    .eq("id", userData.organization_id)
+    .single();
+  if (orgData?.slug) {
+    revalidatePath(`/org/${orgData.slug}`);
+  }
+
   return { success: true, error: null };
 }
 

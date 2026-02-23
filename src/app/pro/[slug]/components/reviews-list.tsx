@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { PencilSimple } from "@phosphor-icons/react";
+import { PencilSimple, Users } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,7 @@ interface ReviewsListProps {
   googlePlaceId?: string | null;
   acceptsPublicReviews?: boolean;
   onWriteReview?: () => void;
+  onReferFriend?: () => void;
   onFlagReview?: (reviewId: string) => void;
   className?: string;
 }
@@ -34,13 +35,15 @@ export function ReviewsList({
   googlePlaceId,
   acceptsPublicReviews = true,
   onWriteReview,
+  onReferFriend,
   onFlagReview,
   className,
 }: ReviewsListProps) {
   const [filters, setFilters] = useState<ReviewFilters>({
     search: "",
     rating: null,
-    source: null,
+    sources: [],
+    dateRange: undefined,
     sort: "newest",
   });
   const [displayCount, setDisplayCount] = useState(REVIEWS_PER_PAGE);
@@ -74,11 +77,22 @@ export function ReviewsList({
       result = result.filter((r) => r.rating >= filters.rating!);
     }
 
-    // Apply source filter
-    if (filters.source) {
-      result = result.filter(
-        (r) => r.source.toLowerCase() === filters.source!.toLowerCase()
-      );
+    // Apply source filter (multi-select)
+    if (filters.sources.length > 0) {
+      const selected = new Set(filters.sources.map((s) => s.toLowerCase()));
+      result = result.filter((r) => selected.has(r.source.toLowerCase()));
+    }
+
+    // Apply date range filter
+    if (filters.dateRange?.from) {
+      const from = new Date(filters.dateRange.from).setHours(0, 0, 0, 0);
+      const to = filters.dateRange.to
+        ? new Date(filters.dateRange.to).setHours(23, 59, 59, 999)
+        : new Date(filters.dateRange.from).setHours(23, 59, 59, 999);
+      result = result.filter((r) => {
+        const d = new Date(r.review_date).getTime();
+        return d >= from && d <= to;
+      });
     }
 
     // Apply sorting - featured reviews always come first
@@ -127,15 +141,27 @@ export function ReviewsList({
         <CardTitle className="text-xl font-display text-repwell-teal-500">
           Customer Reviews
         </CardTitle>
-        {acceptsPublicReviews && onWriteReview && (
-          <Button
-            onClick={onWriteReview}
-            className="bg-repwell-teal-300 hover:bg-repwell-teal-400"
-          >
-            <PencilSimple className="h-4 w-4 mr-2" />
-            Write a Review
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {onReferFriend && (
+            <Button
+              onClick={onReferFriend}
+              variant="outline"
+              className="border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
+            >
+              <Users className="h-4 w-4" />
+              Refer {loanOfficerName.split(" ")[0]}
+            </Button>
+          )}
+          {acceptsPublicReviews && onWriteReview && (
+            <Button
+              onClick={onWriteReview}
+              className="bg-repwell-teal-300 hover:bg-repwell-teal-400"
+            >
+              <PencilSimple className="h-4 w-4" />
+              Write a Review
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {reviews.length === 0 ? (
@@ -149,7 +175,7 @@ export function ReviewsList({
                 variant="outline"
                 className="border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
               >
-                <PencilSimple className="h-4 w-4 mr-2" />
+                <PencilSimple className="h-4 w-4" />
                 Write the First Review
               </Button>
             )}
@@ -160,9 +186,7 @@ export function ReviewsList({
               filters={filters}
               onFiltersChange={handleFiltersChange}
               sources={sources}
-              totalCount={reviews.length}
-              filteredCount={filteredReviews.length}
-              className="mb-6"
+              className="mb-8"
             />
 
             {filteredReviews.length === 0 ? (

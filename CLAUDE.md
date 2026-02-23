@@ -83,17 +83,35 @@ npx shadcn@latest add <component>
 Follow the full 6-phase lifecycle in `.claude/dev-pipeline.md`:
 **Ideation** → **Design** → **Development** → **Testing** → **Code Review** → **Commit & Ship**
 
+### Mandatory Code Review (No Exceptions)
+
+**Tier 1 — Always (every task):**
+- Run `/react-doctor` at the end of EVERY task. Fix errors before presenting work. Non-negotiable.
+- `npm run lint` + `npm run build` must pass (existing quality gates).
+
+**Tier 2 — Auto-escalate (no need to be asked):**
+- Auth/payment/DB schema/API route changes → also run `coderabbit review --prompt-only`
+- Error handling changes → also run `silent-failure-hunter` subagent — scans modified files for suppressed/swallowed errors (empty catch blocks, `.catch(() => {})`, missing error logging); input: list of changed files; output: list of findings with file, line, severity, and suggested fix
+- New types/interfaces → also run `type-design-analyzer` subagent — inspects new/modified types for naming consistency, compatibility issues, unsafe `any`/`never` casts, missing readonly/optional modifiers; input: list of changed type definitions; output: list of suggestions with file, line, issue category, and recommended change
+
+**Tier 3 — Pre-PR polish:**
+- Run `code-simplifier` subagent on modified files before committing.
+
 ### Skill Auto-Invocation (No Exceptions)
 
 | Phase | Skills (invoke automatically) |
 |---|---|
-| ANY UI work | `frontend-design` → `next-best-practices` → `vercel-react-best-practices` |
+| ANY UI work | `frontend-design` → `next-best-practices` → `vercel-react-best-practices` → `vercel-composition-patterns` |
 | ANY DB work | `supabase-postgres-best-practices` + Supabase MCP |
 | ANY new feature | `feature-dev:feature-dev` at start |
 | ANY auth work | `better-auth-best-practices` |
 | Before library use | Context7 `query-docs` |
-| After coding | `coderabbit:code-review` or `code-review:code-review` |
 | After UI changes | `agent-browser` for visual verification |
+| End of EVERY task | `/react-doctor` — no exceptions |
+| Auth/payment/DB/API changes | `coderabbit review --prompt-only` — auto-triggered |
+| Error handling changes | `silent-failure-hunter` subagent on changed files |
+| New types/interfaces | `type-design-analyzer` subagent on changed type defs |
+| Before commit | `code-simplifier` subagent on changed files |
 | Ready to ship | `commit-commands:commit-push-pr` |
 
 ## Reference

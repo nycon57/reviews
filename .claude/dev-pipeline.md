@@ -23,7 +23,7 @@ Full 6-phase lifecycle for every feature. Chain skills in order.
 | Design UI | `frontend-design` | Generate UI designs following design system |
 | Check Next.js patterns | `next-best-practices` | RSC boundaries, data patterns, async APIs |
 | Check React patterns | `vercel-react-best-practices` | Composition, performance, rendering |
-| Check composition | `vercel-composition-patterns` | When refactoring components |
+| Check composition | `vercel-composition-patterns` | Component structure, prop patterns, scaling |
 
 ---
 
@@ -57,11 +57,11 @@ Full 6-phase lifecycle for every feature. Chain skills in order.
 
 | Step | Skill/Tool | Action |
 |---|---|---|
-| Self-review | `code-review:code-review` | Review own changes before committing |
-| CodeRabbit review | `coderabbit:code-review` | AI review for bugs, security, quality |
-| Code simplification | `code-simplifier` (Task agent) | Simplify/refine recently modified code |
-| Design review | `web-design-guidelines` | Check accessibility, UX compliance |
-| Feature review | `feature-dev:code-reviewer` | Check for bugs, logic errors, security |
+| React Doctor scan | `/react-doctor` | Every task — fix errors before done |
+| Deep AI review | `coderabbit review --prompt-only` | Auto for auth, payments, DB schema, API routes |
+| Error handling audit | `silent-failure-hunter` subagent | When catch blocks or error handling modified |
+| Code simplification | `code-simplifier` subagent | Pre-commit polish on modified files |
+| Design review | `frontend-design` + `web-design-guidelines` | UI compliance + accessibility (UI tasks) |
 
 ---
 

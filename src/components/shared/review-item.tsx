@@ -386,7 +386,7 @@ export function ReviewItem({
                     className="h-8 px-2 text-muted-foreground hover:text-red-500"
                     onClick={() => onFlag(review.id)}
                   >
-                    <Flag className="h-4 w-4 mr-1" />
+                    <Flag className="h-4 w-4" />
                     Report
                   </Button>
                 </TooltipTrigger>

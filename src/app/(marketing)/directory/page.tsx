@@ -214,7 +214,7 @@ export default async function DirectoryPage(props: PageProps) {
       ))}
       <div className="bg-background">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-repwell-sage-100/20 to-transparent pt-16 pb-12 md:pt-24 md:pb-16">
+        <section className="relative overflow-hidden bg-gradient-to-b from-repwell-sage-100/20 to-transparent pt-16 pb-6 md:pt-24 md:pb-8">
           {/* Background decorations */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute top-20 left-10 w-4 h-4 bg-repwell-teal-300 rounded-full opacity-40" />
@@ -246,7 +246,7 @@ export default async function DirectoryPage(props: PageProps) {
         </section>
 
         {/* Directory Content */}
-        <section className="py-8 md:py-12">
+        <section className="pt-8 pb-16 md:pt-12 md:pb-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Suspense fallback={<DirectorySkeleton />}>
               <DirectoryContent searchParams={props.searchParams} />

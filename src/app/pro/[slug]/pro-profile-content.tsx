@@ -2,18 +2,9 @@
 
 import { useState, useCallback } from "react";
 import Image from "next/image";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Star,
-  LinkedinLogo as Linkedin,
-  ArrowSquareOut as ExternalLink,
-  BuildingOffice as Building2,
-  Medal as Award,
-  Users,
-} from "@phosphor-icons/react";
+import { Star } from "@phosphor-icons/react";
 import { AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import type { PublicProfessional, PublicReview, BusinessHours } from "@/lib/seo/actions";
 import type { Tables } from "@/types/database.types";
@@ -25,9 +16,10 @@ import {
   ReviewsList,
   ContactCTACard,
   BusinessHoursCard,
-  OfficeLocationMap,
   ReferFriendModal,
   WriteReviewModal,
+  MessageModal,
+  ReportReviewModal,
   VideoTestimonialSlot,
   ShareProfileButton,
   CompactProfileCard,
@@ -45,6 +37,7 @@ interface ProProfileContentProps {
     slug: string;
     industry: IndustryType | null;
   }) | null;
+  branch: { name: string; slug: string } | null;
   reviews: PublicReview[];
   featuredReviews: PublicReview[];
   businessHours: BusinessHours | null;
@@ -81,6 +74,7 @@ function getInitials(name: string): string {
 export function ProProfileContent({
   professional,
   organization,
+  branch,
   reviews,
   featuredReviews,
   businessHours,
@@ -88,6 +82,8 @@ export function ProProfileContent({
 }: ProProfileContentProps) {
   const [isReferModalOpen, setIsReferModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [reportReviewId, setReportReviewId] = useState<string | null>(null);
   const [isCompact, setIsCompact] = useState(false);
 
   const isDesktop = useIsDesktop();
@@ -110,9 +106,11 @@ export function ProProfileContent({
     zip?: string;
   } | null;
 
-  const locationString = address
-    ? [address.city, address.state].filter(Boolean).join(", ")
-    : [professional.branch, professional.region].filter(Boolean).join(", ");
+  // Compute directions URL from google_maps_url or address
+  const directionsUrl = professional.google_maps_url
+    || (address && (address.street || address.city)
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([address.street, [address.city, address.state].filter(Boolean).join(", "), address.zip].filter(Boolean).join(" "))}`
+      : null);
 
   // Profile URL for sharing (prefer slug for SEO-friendly URL)
   const profileUrl = typeof window !== "undefined"
@@ -124,8 +122,7 @@ export function ProProfileContent({
   }, []);
 
   const handleFlagReview = useCallback((reviewId: string) => {
-    // For now, we just log - could open a flag modal
-    console.log("Flag review:", reviewId);
+    setReportReviewId(reviewId);
   }, []);
 
   return (
@@ -172,16 +169,12 @@ export function ProProfileContent({
                       <h1 className="text-2xl md:text-3xl font-display font-bold text-repwell-teal-500 tracking-tight">
                         {professional.full_name}
                       </h1>
-                      <p className="text-lg text-repwell-teal-400">
+                      <p className="text-sm text-repwell-teal-400">
                         {professional.title || "Professional"}
+                        {professional.nmls_id && (
+                          <span> · NMLS# {professional.nmls_id}</span>
+                        )}
                       </p>
-
-                      {organization && (
-                        <div className="mt-2 flex items-center justify-center gap-2 sm:justify-start">
-                          <Building2 className="h-4 w-4 text-repwell-teal-300" />
-                          <span className="text-repwell-teal-400">{organization.name}</span>
-                        </div>
-                      )}
 
                       {/* Rating Summary */}
                       {professional.average_rating && professional.total_reviews ? (
@@ -195,24 +188,15 @@ export function ProProfileContent({
                           <Badge variant="secondary" className="bg-repwell-sage-100 text-repwell-teal-400">
                             {professional.total_reviews} {professional.total_reviews === 1 ? "Review" : "Reviews"}
                           </Badge>
-                          {professional.nps_score !== null && (
-                            <Badge variant="outline" className="border-repwell-sage-200 text-repwell-teal-400">
-                              NPS: {professional.nps_score}
-                            </Badge>
-                          )}
                         </div>
                       ) : (
                         <p className="mt-4 text-sm text-repwell-teal-300">No reviews yet</p>
                       )}
 
-                      {/* NMLS Badge */}
-                      {professional.nmls_id && (
-                        <div className="mt-3 flex items-center justify-center gap-2 sm:justify-start">
-                          <Award className="h-4 w-4 text-repwell-teal-300" />
-                          <span className="text-sm text-repwell-teal-400">
-                            NMLS# {professional.nmls_id}
-                          </span>
-                        </div>
+                      {professional.bio && (
+                        <p className="mt-3 text-sm text-repwell-teal-400 leading-relaxed">
+                          {professional.bio}
+                        </p>
                       )}
                     </div>
 
@@ -259,11 +243,8 @@ export function ProProfileContent({
                     fullName={professional.full_name}
                     photoUrl={professional.photo_url}
                     title={professional.title}
-                    organizationName={organization?.name || null}
                     averageRating={professional.average_rating}
                     totalReviews={professional.total_reviews}
-                    npsScore={professional.nps_score}
-                    nmlsId={professional.nmls_id}
                   />
                 )}
               </AnimatePresence>
@@ -271,88 +252,31 @@ export function ProProfileContent({
               {/* Contact CTA Card */}
               <ContactCTACard
                 phone={professional.phone}
-                email={professional.email}
-                location={locationString}
+                address={address}
+                organization={organization ? { name: organization.name, slug: organization.slug } : null}
+                branch={branch}
+                professionalName={professional.full_name}
                 ctaText={professional.cta_button_text}
                 ctaUrl={professional.cta_button_url}
+                directionsUrl={directionsUrl}
+                linkedinUrl={professional.linkedin_url}
+                facebookUrl={professional.facebook_url}
+                instagramUrl={professional.instagram_url}
+                twitterUrl={professional.twitter_url}
+                personalWebsiteUrl={professional.personal_website_url}
+                zillowUrl={professional.zillow_profile_url}
+                onMessage={() => setIsMessageModalOpen(true)}
+                shareButton={
+                  <ShareProfileButton
+                    profileUrl={profileUrl}
+                    loanOfficerName={professional.full_name}
+                  />
+                }
               />
 
               {/* Business Hours */}
               <BusinessHoursCard hours={businessHours} />
 
-              {/* Office Location Map */}
-              <OfficeLocationMap address={address} />
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                {professional.referral_enabled && (
-                  <Button
-                    onClick={() => setIsReferModalOpen(true)}
-                    variant="outline"
-                    className="w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
-                  >
-                    <Users className="h-4 w-4 mr-2" />
-                    Refer a Friend
-                  </Button>
-                )}
-
-                <ShareProfileButton
-                  profileUrl={profileUrl}
-                  loanOfficerName={professional.full_name}
-                />
-              </div>
-
-              {/* External Links */}
-              {(professional.linkedin_url || professional.zillow_profile_url) && (
-                <Card className="border-t-4 border-t-repwell-sage-200">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-display text-repwell-teal-500">
-                      Links
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {professional.linkedin_url && (
-                      <a
-                        href={professional.linkedin_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline"
-                      >
-                        <Linkedin className="h-5 w-5" />
-                        LinkedIn Profile
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    )}
-                    {professional.zillow_profile_url && (
-                      <a
-                        href={professional.zillow_profile_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 text-sm text-repwell-teal-400 hover:text-repwell-teal-300 hover:underline"
-                      >
-                        <ExternalLink className="h-5 w-5" />
-                        Zillow Profile
-                      </a>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Bio */}
-              {professional.bio && (
-                <Card className="border-t-4 border-t-repwell-sage-200">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg font-display text-repwell-teal-500">
-                      About
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-repwell-teal-400 leading-relaxed">
-                      {professional.bio}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
             </div>
 
             {/* Reviews Section */}
@@ -365,6 +289,7 @@ export function ProProfileContent({
                 linkedinUrl={professional.linkedin_url}
                 acceptsPublicReviews={professional.accepts_public_reviews}
                 onWriteReview={handleWriteReview}
+                onReferFriend={() => setIsReferModalOpen(true)}
                 onFlagReview={handleFlagReview}
               />
             </div>
@@ -384,6 +309,19 @@ export function ProProfileContent({
           onOpenChange={setIsReviewModalOpen}
           loanOfficerId={professional.id}
           loanOfficerName={professional.full_name}
+        />
+
+        <MessageModal
+          open={isMessageModalOpen}
+          onOpenChange={setIsMessageModalOpen}
+          professionalId={professional.id}
+          professionalName={professional.full_name}
+        />
+
+        <ReportReviewModal
+          open={reportReviewId !== null}
+          onOpenChange={(open) => { if (!open) setReportReviewId(null); }}
+          reviewId={reportReviewId ?? ""}
         />
       </div>
     </>

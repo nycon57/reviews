@@ -25,6 +25,9 @@ import { AnnouncementUpdateEmail } from "./announcement-update";
 import { AnnouncementMaintenanceEmail } from "./announcement-maintenance";
 import { AnnouncementSecurityEmail } from "./announcement-security";
 
+// Profile Referral Introduction Template
+import { ProfileReferralIntroductionEmail } from "./profile-referral-introduction";
+
 // Referral Program Templates (S094)
 import { ReferralInviteEmail } from "./referral-invite";
 import { ReferralFriendSignedUpEmail } from "./referral-friend-signed-up";
@@ -62,6 +65,8 @@ export {
   AnnouncementUpdateEmail,
   AnnouncementMaintenanceEmail,
   AnnouncementSecurityEmail,
+  // Profile referral introduction
+  ProfileReferralIntroductionEmail,
   // Referral program templates (S094)
   ReferralInviteEmail,
   ReferralFriendSignedUpEmail,
@@ -86,6 +91,8 @@ import type {
   AnnouncementUpdateEmailData,
   AnnouncementMaintenanceEmailData,
   AnnouncementSecurityEmailData,
+  // Profile referral introduction
+  ProfileReferralIntroductionEmailData,
 } from "../types";
 
 // =============================================================================
@@ -252,5 +259,22 @@ export async function renderAnnouncementSecurityEmail(
   const actionText = data.actionRequired ? " - Action Required" : "";
   const subject = `${severityPrefix} Security Update: ${data.title}${actionText}`;
   const html = await render(<AnnouncementSecurityEmail data={data} />);
+  return { subject, html };
+}
+
+// =============================================================================
+// PROFILE REFERRAL INTRODUCTION EMAIL RENDERING FUNCTION
+// =============================================================================
+
+/**
+ * Render Profile Referral Introduction email to HTML
+ */
+export async function renderProfileReferralIntroductionEmail(
+  data: ProfileReferralIntroductionEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = data.subject;
+  const html = await render(
+    <ProfileReferralIntroductionEmail data={data} />
+  );
   return { subject, html };
 }

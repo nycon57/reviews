@@ -77,10 +77,11 @@ export function ShareProfileButton({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
+                size="sm"
                 className="w-full border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
               >
-                <ShareNetwork className="h-4 w-4 mr-2" />
-                Share Profile
+                <ShareNetwork className="h-4 w-4 mr-1" />
+                Share
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>

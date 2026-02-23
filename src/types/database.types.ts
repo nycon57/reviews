@@ -2383,11 +2383,17 @@ export type Database = {
           billing_email: string | null
           created_at: string | null
           domain: string | null
+          email: string | null
+          facebook_url: string | null
+          headquarters_branch_id: string | null
           id: string
+          instagram_url: string | null
+          linkedin_url: string | null
           logo_url: string | null
           name: string
           onboarding_completed_at: string | null
           onboarding_status: string | null
+          phone: string | null
           primary_color: string | null
           selected_billing_cycle: string | null
           selected_plan: string | null
@@ -2400,18 +2406,26 @@ export type Database = {
           subscription_status: string | null
           subscription_tier: string | null
           trial_ends_at: string | null
+          twitter_url: string | null
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
           account_type?: string | null
           billing_email?: string | null
           created_at?: string | null
           domain?: string | null
+          email?: string | null
+          facebook_url?: string | null
+          headquarters_branch_id?: string | null
           id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
           logo_url?: string | null
           name: string
           onboarding_completed_at?: string | null
           onboarding_status?: string | null
+          phone?: string | null
           primary_color?: string | null
           selected_billing_cycle?: string | null
           selected_plan?: string | null
@@ -2424,18 +2438,26 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           trial_ends_at?: string | null
+          twitter_url?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
           account_type?: string | null
           billing_email?: string | null
           created_at?: string | null
           domain?: string | null
+          email?: string | null
+          facebook_url?: string | null
+          headquarters_branch_id?: string | null
           id?: string
+          instagram_url?: string | null
+          linkedin_url?: string | null
           logo_url?: string | null
           name?: string
           onboarding_completed_at?: string | null
           onboarding_status?: string | null
+          phone?: string | null
           primary_color?: string | null
           selected_billing_cycle?: string | null
           selected_plan?: string | null
@@ -2448,9 +2470,19 @@ export type Database = {
           subscription_status?: string | null
           subscription_tier?: string | null
           trial_ends_at?: string | null
+          twitter_url?: string | null
           updated_at?: string | null
+          website_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_headquarters_branch_id_fkey"
+            columns: ["headquarters_branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_referrals: {
         Row: {
@@ -5351,6 +5383,9 @@ export type Database = {
           title: string | null
           total_reviews: number | null
           updated_at: string | null
+          facebook_url: string | null
+          instagram_url: string | null
+          twitter_url: string | null
           video_testimonial_url: string | null
           video_thumbnail_url: string | null
           zillow_profile_url: string | null
@@ -5402,6 +5437,9 @@ export type Database = {
           title?: string | null
           total_reviews?: number | null
           updated_at?: string | null
+          facebook_url?: string | null
+          instagram_url?: string | null
+          twitter_url?: string | null
           video_testimonial_url?: string | null
           video_thumbnail_url?: string | null
           zillow_profile_url?: string | null
@@ -5453,6 +5491,9 @@ export type Database = {
           title?: string | null
           total_reviews?: number | null
           updated_at?: string | null
+          facebook_url?: string | null
+          instagram_url?: string | null
+          twitter_url?: string | null
           video_testimonial_url?: string | null
           video_thumbnail_url?: string | null
           zillow_profile_url?: string | null

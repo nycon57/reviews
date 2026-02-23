@@ -3,6 +3,9 @@
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { headers } from "next/headers";
+import { sendProfileReferralIntroductionEmail } from "@/lib/email/send";
+import { emailConfig } from "@/lib/email/client";
+import type { ProfileReferralIntroductionEmailData } from "@/lib/email/types";
 
 // Schema definitions
 const submitPublicReviewSchema = z.object({
@@ -22,15 +25,24 @@ const submitReferralSchema = z.object({
   referrerEmail: z.string().email().optional().or(z.literal("")),
   referrerPhone: z.string().max(20).optional(),
   referredName: z.string().min(1).max(100),
-  referredEmail: z.string().email().optional().or(z.literal("")),
+  referredEmail: z.string().email("Please enter a valid email"),
   referredPhone: z.string().max(20).optional(),
-  message: z.string().max(1000).optional(),
+  subject: z.string().min(1, "Subject is required").max(200),
+  message: z.string().min(1, "Message is required").max(2000),
 });
 
 const flagReviewSchema = z.object({
   reviewId: z.string().uuid(),
-  reason: z.enum(["inappropriate", "spam", "fake", "other"]),
-  details: z.string().max(500).optional(),
+  reason: z.enum([
+    "inaccurate_information",
+    "impersonation",
+    "inappropriate_content",
+    "spam_fake_review",
+    "other",
+  ]),
+  details: z.string().max(1000).optional(),
+  reporterName: z.string().max(100).optional(),
+  reporterEmail: z.string().email().optional().or(z.literal("")),
 });
 
 export type ActionResult<T = void> = {
@@ -117,7 +129,7 @@ export async function submitPublicReview(
 }
 
 /**
- * Submit a referral from the profile page
+ * Submit a referral from the profile page and send an introduction email
  */
 export async function submitReferral(
   input: z.infer<typeof submitReferralSchema>
@@ -132,10 +144,12 @@ export async function submitReferral(
     const forwardedFor = headersList.get("x-forwarded-for");
     const ipAddress = forwardedFor?.split(",")[0]?.trim() || undefined;
 
-    // Verify user exists and has referrals enabled
+    // Fetch professional with expanded fields for email template
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("id, organization_id, referral_enabled")
+      .select(
+        "id, organization_id, full_name, title, photo_url, email, phone, slug"
+      )
       .eq("id", validated.loanOfficerId)
       .eq("is_active", true)
       .single();
@@ -148,9 +162,23 @@ export async function submitReferral(
       return { success: false, error: "Professional not associated with an organization" };
     }
 
-    if (!user.referral_enabled) {
-      return { success: false, error: "Referrals are not enabled for this professional" };
-    }
+
+    // Fetch organization name
+    const { data: org } = await supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", user.organization_id)
+      .single();
+
+    // Fetch 2 recent approved reviews with text for the email snippet
+    const { data: recentReviews } = await supabase
+      .from("reviews")
+      .select("customer_name, rating, text")
+      .eq("user_id", validated.loanOfficerId)
+      .eq("status", "approved")
+      .not("text", "is", null)
+      .order("review_date", { ascending: false })
+      .limit(2);
 
     // Insert the referral
     const { data: referral, error: insertError } = await supabase
@@ -162,9 +190,9 @@ export async function submitReferral(
         referrer_email: validated.referrerEmail || null,
         referrer_phone: validated.referrerPhone || null,
         referred_name: validated.referredName,
-        referred_email: validated.referredEmail || null,
+        referred_email: validated.referredEmail,
         referred_phone: validated.referredPhone || null,
-        message: validated.message || null,
+        message: validated.message,
         ip_address: ipAddress,
         user_agent: userAgent,
       })
@@ -175,6 +203,43 @@ export async function submitReferral(
       console.error("Error submitting referral:", insertError);
       return { success: false, error: "Failed to submit referral" };
     }
+
+    // Send introduction email (fire-and-forget — don't block the response)
+    const profileUrl = `${emailConfig.baseUrl}/pro/${user.slug || user.id}`;
+
+    const emailData: ProfileReferralIntroductionEmailData = {
+      toEmail: validated.referredEmail,
+      toName: validated.referredName,
+      organizationId: user.organization_id,
+      loanOfficerId: validated.loanOfficerId,
+      referredName: validated.referredName,
+      referrerName: validated.referrerName,
+      subject: validated.subject,
+      message: validated.message,
+      professionalName: user.full_name ?? "Professional",
+      professionalTitle: user.title ?? undefined,
+      professionalPhotoUrl: user.photo_url ?? undefined,
+      organizationName: org?.name ?? undefined,
+      phone: user.phone ?? undefined,
+      profileUrl,
+      recentReviews: recentReviews
+        ?.filter(
+          (r): r is typeof r & { text: string; customer_name: string } =>
+            !!r.text && !!r.customer_name
+        )
+        .map((r) => ({
+          customerName: r.customer_name,
+          rating: r.rating,
+          text: r.text,
+        })),
+    };
+
+    // Send email — don't fail the referral if email fails
+    sendProfileReferralIntroductionEmail(emailData, referral.id).catch(
+      (err) => {
+        console.error("Failed to send referral introduction email:", err);
+      }
+    );
 
     return { success: true, data: { id: referral.id } };
   } catch (error) {
@@ -188,7 +253,6 @@ export async function submitReferral(
 
 /**
  * Flag a review for moderation
- * TODO: Implement review_flags table for proper flag storage
  */
 export async function flagReview(
   input: z.infer<typeof flagReviewSchema>
@@ -197,7 +261,13 @@ export async function flagReview(
     const validated = flagReviewSchema.parse(input);
     const supabase = createAdminClient();
 
-    // Verify review exists
+    // Get request metadata
+    const headersList = await headers();
+    const userAgent = headersList.get("user-agent") || undefined;
+    const forwardedFor = headersList.get("x-forwarded-for");
+    const ipAddress = forwardedFor?.split(",")[0]?.trim() || undefined;
+
+    // Verify review exists and get org
     const { data: review, error: reviewError } = await supabase
       .from("reviews")
       .select("id, organization_id")
@@ -208,15 +278,27 @@ export async function flagReview(
       return { success: false, error: "Review not found" };
     }
 
-    // TODO: Create review_flags table and store flag data there
-    // For now, just log the flag attempt
-    console.log("Review flag attempt:", {
-      reviewId: validated.reviewId,
-      reason: validated.reason,
-      details: validated.details,
-    });
+    // Insert flag into review_flags table
+    // TODO: Remove type assertion after running db:push && db:types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insertError } = await (supabase as any)
+      .from("review_flags")
+      .insert({
+        review_id: validated.reviewId,
+        organization_id: review.organization_id,
+        reason: validated.reason,
+        details: validated.details || null,
+        reporter_name: validated.reporterName || null,
+        reporter_email: validated.reporterEmail || null,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      });
 
-    // Return success to acknowledge the flag was received
+    if (insertError) {
+      console.error("Error inserting review flag:", insertError);
+      return { success: false, error: "Failed to submit report" };
+    }
+
     return { success: true };
   } catch (error) {
     if (error instanceof z.ZodError) {

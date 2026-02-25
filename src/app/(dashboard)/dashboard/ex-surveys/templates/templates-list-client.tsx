@@ -149,13 +149,18 @@ export function TemplatesListClient({ templates }: TemplatesListClientProps) {
                       Default
                     </Badge>
                   )}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <DotsThreeVertical weight="bold" className="h-4 w-4" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label={`Actions for ${template.name}`}
+                        >
+                          <DotsThreeVertical weight="bold" className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => setPreviewTemplate(template)}>
                         <Eye weight="regular" className="mr-2 h-4 w-4" />

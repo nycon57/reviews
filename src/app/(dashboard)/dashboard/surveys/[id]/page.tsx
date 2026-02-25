@@ -4,6 +4,11 @@ import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { getSurveyTemplate } from "@/lib/surveys/actions";
 import { SurveyTemplateDetail } from "./survey-template-detail";
 
+export const metadata = {
+  title: "Survey Template Details | RepWell",
+  description: "Review and manage an existing survey template.",
+};
+
 interface SurveyDetailPageProps {
   params: Promise<{ id: string }>;
 }

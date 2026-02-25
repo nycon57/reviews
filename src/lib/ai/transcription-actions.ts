@@ -1,16 +1,14 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
-  transcribeVideoWithRetry,
-  formatTranscriptionError,
-  type TranscriptionError,
-  type TranscriptionResult,
-} from "./video-transcription";
-import { isWhisperEnabled } from "./openai-client";
+  transcribeWithWordTimestamps,
+  isWordTimestampTranscriptionEnabled,
+  WordTimestampTranscriptionError,
+} from "@/lib/share-studio/transcription-service";
 
 // Validation schema for response ID
 const responseIdSchema = z.string().uuid("Invalid response ID format");
@@ -81,11 +79,12 @@ export async function transcribeVideoTestimonial(
     // Authenticate user and get organization
     const { organizationId } = await getAuthenticatedUser();
 
-    // Check if Whisper is enabled
-    if (!isWhisperEnabled()) {
+    // Check if a word-level transcription provider is enabled
+    if (!isWordTimestampTranscriptionEnabled()) {
       return {
         success: false,
-        error: "Video transcription is not enabled. Check OPENAI_API_KEY configuration.",
+        error:
+          "Video transcription is not enabled. Configure DEEPGRAM_API_KEY or GEMINI_API_KEY.",
       };
     }
 
@@ -134,16 +133,22 @@ export async function transcribeVideoTestimonial(
     }
 
     // Perform transcription
-    let result: TranscriptionResult;
+    const untypedSupabase = createUntypedAdminClient();
+    let result:
+      | Awaited<ReturnType<typeof transcribeWithWordTimestamps>>
+      | null = null;
     try {
-      result = await transcribeVideoWithRetry(
-        response.video_url,
-        response.duration_seconds
-      );
+      result = await transcribeWithWordTimestamps(response.video_url, {
+        durationSeconds: response.duration_seconds,
+      });
     } catch (error) {
       // Handle transcription failure
-      const transcriptionError = error as TranscriptionError;
-      const errorMessage = formatTranscriptionError(transcriptionError);
+      const errorMessage =
+        error instanceof WordTimestampTranscriptionError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Transcription failed";
 
       await supabase
         .from("video_testimonial_responses")
@@ -158,14 +163,27 @@ export async function transcribeVideoTestimonial(
       return { success: false, error: errorMessage };
     }
 
+    if (!result) {
+      return { success: false, error: "Transcription returned no result" };
+    }
+
     // Store successful transcription
-    const { error: updateError } = await supabase
+    const { error: updateError } = await untypedSupabase
       .from("video_testimonial_responses")
       .update({
-        transcription: result.text,
+        transcription: result.full_text,
         transcription_status: "completed",
         transcription_completed_at: new Date().toISOString(),
         transcription_error: null,
+        word_timestamps: {
+          full_text: result.full_text,
+          segments: result.segments,
+          words: result.words,
+          provider: result.provider,
+          model: result.model,
+          created_at: new Date().toISOString(),
+          flagged_word_count: result.words.filter((word) => word.flagged_for_review).length,
+        },
         updated_at: new Date().toISOString(),
       })
       .eq("id", responseId);
@@ -179,8 +197,8 @@ export async function transcribeVideoTestimonial(
     logTranscriptionCost(
       response.organization_id,
       responseId,
-      result.cost,
-      result.duration || 0
+      0,
+      result.duration_ms ? result.duration_ms / 1000 : 0
     ).catch((err) => {
       console.error("Failed to log transcription cost:", err);
     });
@@ -190,9 +208,9 @@ export async function transcribeVideoTestimonial(
     return {
       success: true,
       data: {
-        transcription: result.text,
-        language: result.language,
-        cost: result.cost,
+        transcription: result.full_text,
+        language: null,
+        cost: 0,
       },
     };
   } catch (error) {

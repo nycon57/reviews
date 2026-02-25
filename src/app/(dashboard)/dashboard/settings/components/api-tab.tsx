@@ -100,7 +100,7 @@ function QuickActionButton({ icon, title, description, href, onClick, primary }:
   }
 
   return (
-    <button onClick={onClick} className={className}>
+    <button type="button" onClick={onClick} className={className}>
       {content}
     </button>
   );

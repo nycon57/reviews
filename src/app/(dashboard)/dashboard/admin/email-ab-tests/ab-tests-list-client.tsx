@@ -413,7 +413,13 @@ export function ABTestsListClient() {
                 <SelectItem value="send_time">Send Time</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="icon" onClick={() => fetchTests()}>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Refresh A/B tests"
+              disabled={isLoading || isPending}
+              onClick={fetchTests}
+            >
               <RefreshCcw className={cn("h-4 w-4", isLoading && "animate-spin")} />
             </Button>
           </div>

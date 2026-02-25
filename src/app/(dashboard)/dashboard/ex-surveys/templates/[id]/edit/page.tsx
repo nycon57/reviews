@@ -70,7 +70,12 @@ export default async function EditTemplatePage({ params }: EditTemplatePageProps
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          aria-label="Back to survey templates"
+        >
           <Link href="/dashboard/ex-surveys/templates">
             <ArrowLeft className="h-4 w-4" />
           </Link>

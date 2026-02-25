@@ -204,7 +204,7 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
           <Ionicons name="alert-circle-outline" size={48} color={colors.destructive} />
           <Text variant="muted" style={styles.loadingText}>Video not found</Text>
           <Button variant="outline" onPress={() => navigation.goBack()}>
-            Go Back
+            <Text variant="body">Go Back</Text>
           </Button>
         </View>
       </SafeAreaView>
@@ -448,7 +448,9 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
                 onPress={handleApprove}
                 isLoading={actionLoading}
               >
-                <Ionicons name="checkmark" size={18} color="#fff" /> Approve
+                <Text variant="body">
+                  <Ionicons name="checkmark" size={18} color="#fff" /> Approve
+                </Text>
               </Button>
               <Button
                 variant="destructive"
@@ -456,7 +458,9 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
                 onPress={handleReject}
                 isLoading={actionLoading}
               >
-                <Ionicons name="close" size={18} color="#fff" /> Reject
+                <Text variant="body">
+                  <Ionicons name="close" size={18} color="#fff" /> Reject
+                </Text>
               </Button>
               <Button
                 variant="outline"
@@ -464,7 +468,9 @@ export function VideoDetailScreen({ route, navigation }: { route: any; navigatio
                 onPress={handleRequestChanges}
                 isLoading={actionLoading}
               >
-                <Ionicons name="create-outline" size={18} /> Changes
+                <Text variant="body">
+                  <Ionicons name="create-outline" size={18} /> Changes
+                </Text>
               </Button>
             </View>
           </View>

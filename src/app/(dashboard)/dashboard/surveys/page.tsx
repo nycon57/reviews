@@ -6,6 +6,11 @@ import { getAccessContext, isEnterprise, isAdmin } from "@/lib/access";
 import { SurveyTemplatesList } from "./survey-templates-list";
 import { CardSkeleton } from "@/components/shared/skeletons";
 
+export const metadata = {
+  title: "Survey Templates | RepWell",
+  description: "Create and manage reusable survey templates.",
+};
+
 export default async function SurveysPage() {
   const ctx = await getAccessContext();
   if (!ctx) redirect("/login");

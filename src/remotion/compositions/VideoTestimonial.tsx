@@ -19,7 +19,7 @@ import {
 } from "remotion";
 import type { VideoTestimonialProps } from "../types";
 import { REPWELL_COLORS } from "../types";
-import { secondsToFrames, getCompositionSegments } from "../utils/timing";
+import { secondsToFrames } from "../utils/timing";
 import { withOpacity } from "../utils/colors";
 import { BrandedIntro } from "../components/BrandedIntro";
 import { BrandedOutro } from "../components/BrandedOutro";
@@ -29,7 +29,8 @@ import { QuoteReveal } from "../components/QuoteReveal";
 export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
   videoUrl,
   captions,
-  transcription,
+  wordTimestamps,
+  transcription: _transcription,
   aiQuote,
   customer,
   loanOfficer,
@@ -42,7 +43,7 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
   videoDurationMs,
 }) => {
   const frame = useCurrentFrame();
-  const { fps, width, height, durationInFrames } = useVideoConfig();
+  const { fps } = useVideoConfig();
 
   // Calculate segment timings
   const introDurationSec = showIntro ? 3 : 0;
@@ -128,9 +129,11 @@ export const VideoTestimonial: React.FC<VideoTestimonialProps> = ({
           />
 
           {/* Animated Captions Overlay */}
-          {showCaptions && captions.length > 0 && (
+          {showCaptions &&
+            ((wordTimestamps?.length ?? 0) > 0 || captions.length > 0) && (
             <AnimatedCaptions
               captions={captions}
+              wordTimestamps={wordTimestamps}
               startFrame={0}
               highlightColor={organization.primaryColor || REPWELL_COLORS.teal[300]}
               textColor={REPWELL_COLORS.white}

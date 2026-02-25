@@ -119,6 +119,10 @@ async function RecentReviewsList() {
   return <UserRecentReviews initialReviews={result.success ? (result.data || []) : []} />;
 }
 
+function FullProfileCompletionCard() {
+  return <ProfileCompletionCard showMilestones showTips />;
+}
+
 
 export default async function DashboardPage() {
   const userResult = await getCurrentUser();
@@ -185,7 +189,7 @@ export default async function DashboardPage() {
         <div className="space-y-6">
           <UserQuickActions />
           <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
-            <ProfileCompletionCard showMilestones={true} showTips={true} />
+            <FullProfileCompletionCard />
           </Suspense>
         </div>
       </div>

@@ -14,7 +14,7 @@ import {
   retryTranscription,
   getTranscriptionStatus,
 } from "@/lib/ai/transcription-actions";
-import { isWhisperEnabled } from "@/lib/ai/openai-client";
+import { isWordTimestampTranscriptionEnabled } from "@/lib/share-studio/transcription-service";
 
 // Validation schema for POST request
 const transcribeRequestSchema = z.object({
@@ -24,11 +24,11 @@ const transcribeRequestSchema = z.object({
 
 // POST /api/v1/testimonials/transcribe - Trigger transcription for a video testimonial
 async function handlePost(request: NextRequest, context: ApiAuthContext) {
-  // Check if Whisper is enabled
-  if (!isWhisperEnabled()) {
+  // Check if transcription providers are enabled
+  if (!isWordTimestampTranscriptionEnabled()) {
     return apiError(
-      "SERVICE_UNAVAILABLE" as Parameters<typeof apiError>[0],
-      "Video transcription service is not available. Check OPENAI_API_KEY configuration.",
+      "SERVICE_UNAVAILABLE",
+      "Video transcription service is not available. Configure DEEPGRAM_API_KEY or GEMINI_API_KEY.",
       context.requestId,
       503
     );

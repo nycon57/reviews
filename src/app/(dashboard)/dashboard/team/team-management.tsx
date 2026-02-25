@@ -52,7 +52,6 @@ import { usePermissions } from "@/lib/permissions/context";
 import { Phone } from "@phosphor-icons/react";
 import { formatForDisplay } from "@/lib/sms/phone-utils";
 import { getLoPhoneAssignments } from "@/lib/sms/enterprise/per-lo-numbers";
-import { cn } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },

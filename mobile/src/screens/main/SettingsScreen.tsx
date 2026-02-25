@@ -129,7 +129,7 @@ export function SettingsScreen() {
           isLoading={isLoading}
           style={styles.signOutButton}
         >
-          Sign Out
+          <Text variant="body">Sign Out</Text>
         </Button>
 
         <Text variant="small" color="muted" style={styles.footer}>

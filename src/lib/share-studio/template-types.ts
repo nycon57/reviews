@@ -216,3 +216,37 @@ export const IMAGE_EXPORT_SIZES: CanvasSize[] = [
 
 export const VIDEO_EXPORT_FORMATS = ["16:9", "1:1", "9:16"] as const;
 export type VideoExportFormat = (typeof VIDEO_EXPORT_FORMATS)[number];
+
+export interface WordTimestampRaw {
+  word: string;
+  start_ms: number;
+  end_ms: number;
+  confidence: number;
+  flagged_for_review?: boolean;
+}
+
+export interface TranscriptionSegment {
+  text: string;
+  start_ms: number;
+  end_ms: number;
+  confidence: number;
+}
+
+export interface TranscriptionResult {
+  full_text: string;
+  segments: TranscriptionSegment[];
+  words: WordTimestampRaw[];
+  provider: "deepgram" | "gemini";
+  model: string;
+  duration_ms: number | null;
+}
+
+export interface WordTimestampData {
+  full_text: string;
+  segments: TranscriptionSegment[];
+  words: WordTimestampRaw[];
+  provider: "deepgram" | "gemini";
+  model: string;
+  created_at: string;
+  flagged_word_count: number;
+}

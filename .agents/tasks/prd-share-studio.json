@@ -1,0 +1,831 @@
+{
+  "project": {
+    "name": "Share Studio — Complete Feature Suite",
+    "description": "Full Share Studio build-out: smart link polish, one-click static graphic generation, video template pipeline with word-level captions, and animated graphic loops. Proof-item-first architecture with DSL templates, Remotion rendering, async job queue, and REST API. Target: individual professionals (industry agnostic, non-technical). Distribution: download + clipboard + share links (no OAuth social publishing).",
+    "version": "2.0.0",
+    "repository": "nycon57/reviews",
+    "tech_stack": {
+      "frontend": "Next.js 15 (App Router)",
+      "ui_components": "ShadCN/UI + Tailwind CSS",
+      "backend": "Supabase (PostgreSQL + Edge Functions)",
+      "rendering": "Remotion (stills + video)",
+      "transcription": "Deepgram / Gemini",
+      "storage": "Supabase Storage (share-studio bucket)",
+      "cron": "Vercel Cron Routes"
+    },
+    "routes": {
+      "dashboard": "/dashboard/share-studio",
+      "public_link": "/s/[slug]",
+      "api": "/api/v1/share-studio/*",
+      "cron": "/api/cron/share-render-jobs"
+    }
+  },
+  "epics": [
+    {
+      "id": "SS1",
+      "name": "Smart Links Polish",
+      "description": "Harden smart links: CTA customization, per-link analytics, mobile polish, bulk operations, and auto-OG image queuing. All stories parallelizable."
+    },
+    {
+      "id": "SS2",
+      "name": "Static Graphics (Core)",
+      "description": "One-click review-to-graphic pipeline. DSL template Remotion composition, 4 MVP templates, client-side gallery picker with instant previews, server action to queue multi-format renders, modal flow, polling + download UI, cron worker, and graphics gallery overhaul."
+    },
+    {
+      "id": "SS3",
+      "name": "Video Templates",
+      "description": "Deepgram/Gemini word-level STT pipeline, enhanced AnimatedCaptions with real timing, video generation server action, config modal (format, intro/outro, CTA), download + share link UI."
+    },
+    {
+      "id": "SS4",
+      "name": "Animated Graphics",
+      "description": "Extend DslTemplate for spring animations (MotionConfig), 4 animated template variants, 'Share as Animation' entry point, CSS animation previews in gallery picker. 3-5s MP4 loops via Remotion."
+    }
+  ],
+  "stories": [
+    {
+      "id": "S100",
+      "epic": "SS1",
+      "title": "CTA URL + text settings panel in dashboard",
+      "description": "Add a settings panel to the smart link detail/edit view allowing users to customize the CTA button URL and display text per link. Persist to proof_links table. Default CTA text: 'Get Started'. Validate URL format.",
+      "acceptance_criteria": [
+        "Settings panel renders in smart link edit view with URL input and text input",
+        "CTA URL validates as a proper HTTPS URL (or HTTP for local dev)",
+        "CTA text has a max length of 40 characters with character counter",
+        "Changes persist to proof_links.cta_url and proof_links.cta_text columns",
+        "Public smart link page (/s/[slug]) renders the custom CTA button",
+        "Default CTA text 'Get Started' is used when field is empty",
+        "Negative: empty URL hides CTA button entirely on public page",
+        "Negative: malformed URL shows inline validation error, does not save"
+      ],
+      "priority": "P1",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [],
+      "files_existing": [
+        "src/components/share-studio/smart-links-table.tsx",
+        "src/components/share-studio/smart-links-tab-content.tsx",
+        "src/lib/share-studio/actions.ts",
+        "src/lib/share-studio/service.ts",
+        "src/app/s/[slug]/page.tsx",
+        "src/app/s/[slug]/smart-link-content.tsx"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S101",
+      "epic": "SS1",
+      "title": "Per-link analytics (views, clicks, referrers, 30-day chart)",
+      "description": "Build an analytics panel for each smart link showing view count, click count, top referrers, and a 30-day sparkline chart. Query proof_link_events table, aggregate by day. Use Recharts for the chart.",
+      "acceptance_criteria": [
+        "Analytics panel renders below smart link detail with views, clicks, CTR percentage",
+        "Top 5 referrers displayed as a ranked list with counts",
+        "30-day sparkline chart shows daily views and clicks as two lines",
+        "Data loads via server action with date range filter (default: last 30 days)",
+        "Empty state shown when link has zero events",
+        "Negative: bot-flagged events (is_bot=true) are excluded from counts",
+        "Negative: links with no events show 'No analytics yet' placeholder"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [],
+      "files_existing": [
+        "src/components/share-studio/smart-links-table.tsx",
+        "src/lib/share-studio/service.ts",
+        "src/app/s/[slug]/page.tsx"
+      ],
+      "files_new": [
+        "src/components/share-studio/smart-link-analytics.tsx"
+      ]
+    },
+    {
+      "id": "S102",
+      "epic": "SS1",
+      "title": "Landing page mobile polish + reduced-motion + skeleton",
+      "description": "Polish the public smart link landing page (/s/[slug]) for mobile: fix tap targets (min 44x44), add skeleton loading states, respect prefers-reduced-motion for any animations, ensure WCAG AA contrast on all text.",
+      "acceptance_criteria": [
+        "All interactive elements have minimum 44x44px tap targets on mobile",
+        "Skeleton loading state shows while proof_link data loads (Suspense boundary)",
+        "prefers-reduced-motion media query disables any entrance animations",
+        "Text passes WCAG AA contrast ratio (4.5:1 for normal, 3:1 for large)",
+        "Layout does not overflow horizontally on 320px viewport",
+        "Share buttons are properly spaced and accessible on mobile",
+        "Negative: slow network shows skeleton, not blank page",
+        "Negative: broken/missing OG image does not crash the page"
+      ],
+      "priority": "P1",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [],
+      "files_existing": [
+        "src/app/s/[slug]/page.tsx",
+        "src/app/s/[slug]/smart-link-content.tsx",
+        "src/app/s/[slug]/copy-link-button.tsx"
+      ],
+      "files_new": [
+        "src/app/s/[slug]/loading.tsx"
+      ]
+    },
+    {
+      "id": "S103",
+      "epic": "SS1",
+      "title": "Bulk select/archive/unpublish from smart links table",
+      "description": "Add multi-select capability to the smart links table. Users can select multiple links and perform bulk archive or unpublish operations. Use checkbox column + floating action bar pattern.",
+      "acceptance_criteria": [
+        "Checkbox column added to smart links table with select-all header checkbox",
+        "Floating action bar appears at bottom when 1+ links selected, showing count",
+        "Bulk archive sets status=archived on all selected proof_links",
+        "Bulk unpublish sets is_published=false on all selected proof_links",
+        "Confirmation dialog before destructive actions showing count of affected links",
+        "Table refreshes after bulk operation completes",
+        "Negative: archived links do not appear in default table view (add filter toggle)",
+        "Negative: bulk operation on 0 selected items is disabled"
+      ],
+      "priority": "P2",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [],
+      "files_existing": [
+        "src/components/share-studio/smart-links-table.tsx",
+        "src/components/share-studio/smart-links-tab-content.tsx",
+        "src/lib/share-studio/service.ts",
+        "src/lib/share-studio/actions.ts"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S104",
+      "epic": "SS1",
+      "title": "Auto-queue OG image render on smart link creation",
+      "description": "When a smart link is created via createSmartLink(), automatically queue a proof_render_job with asset_type=smart_link_og. Use the default OG template. Link the resulting proof_asset to proof_links.og_asset_id on completion.",
+      "acceptance_criteria": [
+        "createSmartLink() automatically inserts a proof_render_job row with asset_type=smart_link_og",
+        "Render worker picks up the job and renders OG image via Remotion",
+        "Completed render creates proof_asset and updates proof_links.og_asset_id",
+        "Public smart link page uses the rendered OG image in meta tags",
+        "Idempotent: re-creating a link for same proof_item reuses existing OG asset",
+        "Negative: failed OG render does not block smart link from being published",
+        "Negative: missing template falls back to default brand-colored OG image"
+      ],
+      "priority": "P1",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [],
+      "files_existing": [
+        "src/lib/share-studio/service.ts",
+        "src/lib/share-studio/render-worker.ts",
+        "src/lib/share-studio/remotion-renderer.ts",
+        "src/app/s/[slug]/opengraph-image.tsx"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S200",
+      "epic": "SS2",
+      "title": "DslTemplate Remotion composition (DSL to layers to PNG)",
+      "description": "Create a new Remotion composition (DslTemplate) that reads ShareStudioTemplateDsl JSON and renders each layer (text, shape, image, icon, rating, stats) to a pixel-perfect PNG still. Register compositions for all canvas presets: Square (1080x1080), Story (1080x1920), OG (1200x630).",
+      "acceptance_criteria": [
+        "DslTemplate.tsx Remotion composition renders all 6 layer types (text, shape, image, icon, rating, stats)",
+        "Composition registered in Root.tsx for all 3 canvas presets: DslTemplate-Square, DslTemplate-Story, DslTemplate-OG",
+        "Text layers support binding resolution via template-resolver.ts",
+        "Brand tokens (colors, font, logo) applied from resolved organization settings",
+        "Rating layers render star icons at correct scale and color",
+        "Stats layers render numeric values with label text",
+        "Image layers load remote URLs with fallback placeholder",
+        "Output matches canvas dimensions exactly (no scaling artifacts)",
+        "Negative: missing binding path renders empty string, not crash",
+        "Negative: invalid layer type is skipped with console warning"
+      ],
+      "priority": "P0",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes",
+        "Remotion studio renders all 3 presets without errors"
+      ],
+      "dependencies": [],
+      "files_existing": [
+        "src/remotion/Root.tsx",
+        "src/lib/share-studio/template-types.ts",
+        "src/lib/share-studio/template-resolver.ts",
+        "src/lib/share-studio/remotion-renderer.ts"
+      ],
+      "files_new": [
+        "src/remotion/compositions/DslTemplate.tsx"
+      ]
+    },
+    {
+      "id": "S201",
+      "epic": "SS2",
+      "title": "4 MVP template DSL definitions (migration + seed)",
+      "description": "Create 4 system-level DSL template definitions and seed them into the proof_templates table via migration: Review Quote Card, Star Rating Card, Stats Summary, Professional Spotlight. Each template defined as ShareStudioTemplateDsl JSON with layers, bindings, and brand token references.",
+      "acceptance_criteria": [
+        "Migration inserts 4 rows into proof_templates with is_system=true",
+        "Review Quote Card: customer name, quote text (binding: review_text), star rating, platform icon",
+        "Star Rating Card: large rating number, star visualization, review count, reviewer name",
+        "Stats Summary: 3-stat grid (avg rating, total reviews, response rate), org logo, tagline",
+        "Professional Spotlight: headshot placeholder, name, title, featured quote, star rating",
+        "Each template has entries for all 3 canvas presets (square, story, og) as template variants",
+        "Brand token bindings (primaryColor, secondaryColor, fontFamily, logoUrl) used in all templates",
+        "Negative: templates render correctly with missing optional bindings (e.g., no headshot)",
+        "Negative: migration is idempotent (re-running does not create duplicates)"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes",
+        "Migration runs without errors"
+      ],
+      "dependencies": [
+        "S200"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/template-types.ts",
+        "src/lib/share-studio/service.ts"
+      ],
+      "files_new": [
+        "supabase/migrations/YYYYMMDD_share_studio_mvp_templates.sql"
+      ]
+    },
+    {
+      "id": "S202",
+      "epic": "SS2",
+      "title": "Template gallery picker (client-side DSL-to-DOM preview)",
+      "description": "Build a template gallery picker component that renders DSL templates as DOM elements client-side for instant previews. No server round-trip required for preview. Shows all available templates as thumbnail cards. User taps one to select it for generation.",
+      "acceptance_criteria": [
+        "Gallery renders thumbnail cards for all system templates from proof_templates",
+        "dsl-preview-renderer.tsx converts DSL layers to DOM elements with correct positioning",
+        "Preview shows the user's actual review data pre-filled via binding resolution",
+        "Brand tokens from user's org applied to preview (colors, font)",
+        "Selected template highlighted with visual indicator (ring/border)",
+        "Gallery is responsive: 2 columns on mobile, 3 on tablet, 4 on desktop",
+        "Loading state while templates fetch from server",
+        "Negative: template with broken bindings shows placeholder text, not empty card",
+        "Negative: gallery with 0 templates shows 'No templates available' message"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S201"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/template-types.ts",
+        "src/lib/share-studio/template-resolver.ts",
+        "src/lib/share-studio/service.ts"
+      ],
+      "files_new": [
+        "src/components/share-studio/dsl-preview-renderer.tsx",
+        "src/components/share-studio/template-gallery-picker.tsx"
+      ]
+    },
+    {
+      "id": "S203",
+      "epic": "SS2",
+      "title": "generateGraphicsFromReview server action (queues 3 formats)",
+      "description": "Create a server action that takes a review_id and template_id and queues 3 proof_render_jobs (square, story, OG) in a single transaction. Idempotent: if proof_item already exists for that review, reuse it. Creates proof_item if needed.",
+      "acceptance_criteria": [
+        "Server action accepts { review_id, template_id } and returns { proof_item_id, job_ids: string[] }",
+        "Creates proof_item from review if one does not already exist (idempotent)",
+        "Queues exactly 3 proof_render_jobs: asset_type=image for square + story, asset_type=smart_link_og for OG",
+        "Each job references the selected template_id and appropriate canvas preset",
+        "All DB operations wrapped in a transaction (all-or-nothing)",
+        "Returns existing jobs if re-invoked for same review + template combination",
+        "Negative: non-existent review_id returns 404 error",
+        "Negative: non-existent template_id returns 400 error",
+        "Negative: review belonging to different org returns 403 error"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S200"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/service.ts",
+        "src/lib/share-studio/actions.ts"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S204",
+      "epic": "SS2",
+      "title": "'Share as Graphic' button + modal on review detail",
+      "description": "Add a 'Share as Graphic' button to the review detail page that opens a modal. Modal contains the template gallery picker pre-filled with the review's data. Selecting a template triggers generateGraphicsFromReview and transitions to the render progress view.",
+      "acceptance_criteria": [
+        "Share as Graphic button visible on review detail page (icon: Image + 'Share as Graphic')",
+        "Button opens a modal dialog with template gallery picker",
+        "Gallery shows templates with the current review's data pre-filled in previews",
+        "Clicking a template triggers generateGraphicsFromReview server action",
+        "Modal transitions to render progress view showing job status",
+        "Button disabled if review has no text content",
+        "Loading spinner on button while server action executes",
+        "Negative: modal closes cleanly if user clicks outside or presses Escape",
+        "Negative: error from server action shown as toast notification, modal stays open"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S202",
+        "S203"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/actions.ts"
+      ],
+      "files_new": [
+        "src/components/share-studio/generate-graphic-modal.tsx"
+      ]
+    },
+    {
+      "id": "S205",
+      "epic": "SS2",
+      "title": "Render job polling + download/clipboard/share-link UI",
+      "description": "Build a render progress component that polls proof_render_jobs status. On completion, show download button, copy-to-clipboard button, and create-share-link button. Progress bar with Zeigarnik effect ('2 of 3 formats generated').",
+      "acceptance_criteria": [
+        "Render progress card shows status of all 3 jobs (square, story, OG) with format labels",
+        "Progress bar shows '1 of 3', '2 of 3', '3 of 3 formats generated' as jobs complete",
+        "Polling interval: 2 seconds while any job is processing, stops when all complete",
+        "Download button generates a direct download link to the rendered asset in storage",
+        "Copy-to-clipboard copies the image blob to clipboard (navigator.clipboard.write)",
+        "Create share link button triggers createSmartLink for the proof_item",
+        "Failed job shows error state with retry button",
+        "Negative: all 3 jobs fail shows 'Generation failed' with retry-all button",
+        "Negative: user closes modal during polling — no memory leak (cleanup on unmount)"
+      ],
+      "priority": "P0",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S203"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/service.ts",
+        "src/lib/share-studio/actions.ts"
+      ],
+      "files_new": [
+        "src/components/share-studio/render-progress-card.tsx"
+      ]
+    },
+    {
+      "id": "S206",
+      "epic": "SS2",
+      "title": "Render worker cron trigger (Vercel cron route)",
+      "description": "Ensure the /api/cron/share-render-jobs cron route is properly configured for Vercel cron. Add vercel.json cron config if missing. Worker processes batch of queued jobs with retry logic and error reporting.",
+      "acceptance_criteria": [
+        "Vercel cron config entry for /api/cron/share-render-jobs (every 1 minute)",
+        "Cron route calls processShareRenderJobs() from render-worker.ts",
+        "Configurable batch size via query param (default: 5, max: 25)",
+        "Returns JSON summary: { processed, completed, failed, requeued, errors }",
+        "Authorization: vercel cron secret header or API key required",
+        "Failed jobs with retries_remaining > 0 are requeued with backoff",
+        "Negative: concurrent cron invocations do not pick up same job (row-level lock)",
+        "Negative: job exceeding 5-minute timeout is marked failed with timeout error"
+      ],
+      "priority": "P1",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [],
+      "files_existing": [
+        "src/lib/share-studio/render-worker.ts",
+        "src/app/api/cron/share-render-jobs/route.ts"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S207",
+      "epic": "SS2",
+      "title": "Graphics tab overhaul (completed asset gallery)",
+      "description": "Overhaul the Graphics tab in the Share Studio dashboard to show a gallery of completed rendered assets. Grid layout with thumbnail previews, filter by template/format/date, and quick actions (download, copy, share link, delete).",
+      "acceptance_criteria": [
+        "Graphics tab shows a responsive grid gallery of completed proof_assets (asset_type=image)",
+        "Each card shows thumbnail preview, template name, format badge (1:1/9:16/OG), and creation date",
+        "Filter bar: template dropdown, format toggle (all/square/story/OG), date range picker",
+        "Quick actions on each card: download, copy to clipboard, create share link, delete",
+        "Delete requires confirmation dialog and removes proof_asset + storage file",
+        "Empty state: 'No graphics yet — share a review to get started' with CTA button",
+        "Pagination: load 20 at a time with infinite scroll or Load More button",
+        "Negative: missing storage file shows broken-image placeholder, not crash",
+        "Negative: filter combination with 0 results shows 'No matching graphics' message"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S205",
+        "S206"
+      ],
+      "files_existing": [
+        "src/app/(dashboard)/dashboard/share-studio/page.tsx",
+        "src/lib/share-studio/service.ts"
+      ],
+      "files_new": [
+        "src/components/share-studio/graphics-gallery.tsx"
+      ]
+    },
+    {
+      "id": "S300",
+      "epic": "SS3",
+      "title": "Deepgram/Gemini word-level STT service",
+      "description": "Build a transcription service that takes an audio/video URL and returns word-level timestamps using Deepgram (primary) with Gemini as fallback. TikTok-style word-level timing for animated captions.",
+      "acceptance_criteria": [
+        "Service function: transcribeWithWordTimestamps(audioUrl) returns TranscriptionResult",
+        "TranscriptionResult includes: full_text, segments[], words[] with { word, start_ms, end_ms, confidence }",
+        "Primary: Deepgram Nova-2 API with word_timestamps=true",
+        "Fallback: Gemini API with structured JSON output for word-level timing",
+        "Automatic fallback if Deepgram fails (network error, rate limit, API key missing)",
+        "Confidence threshold: words below 0.5 confidence flagged for review",
+        "Supports audio formats: mp3, wav, m4a, webm, mp4",
+        "Negative: empty/silent audio returns empty transcript, not error",
+        "Negative: audio > 60 minutes returns 413 error with clear message",
+        "Negative: invalid audio URL returns 400 with format validation message"
+      ],
+      "priority": "P1",
+      "estimate": "L",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes",
+        "Unit tests for fallback logic pass"
+      ],
+      "dependencies": [],
+      "files_existing": [],
+      "files_new": [
+        "src/lib/share-studio/transcription-service.ts"
+      ]
+    },
+    {
+      "id": "S301",
+      "epic": "SS3",
+      "title": "Word-level timestamp data model (migration + types)",
+      "description": "Add database columns/table to store word-level transcription timestamps alongside video testimonials. Create TypeScript types for the word-level data model.",
+      "acceptance_criteria": [
+        "Migration adds word_timestamps JSONB column to video_responses table (or creates word_timestamps table)",
+        "JSONB schema: { words: [{ word: string, start_ms: number, end_ms: number, confidence: number }], model: string, created_at: string }",
+        "TypeScript types: WordTimestamp, TranscriptionResult, WordTimestampData",
+        "Index on video_response_id for fast lookup",
+        "Migration is reversible (down migration drops column/table)",
+        "Negative: null word_timestamps means video has not been processed yet (not an error)"
+      ],
+      "priority": "P1",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes",
+        "Migration runs without errors"
+      ],
+      "dependencies": [
+        "S300"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/template-types.ts"
+      ],
+      "files_new": [
+        "supabase/migrations/YYYYMMDD_word_level_timestamps.sql"
+      ]
+    },
+    {
+      "id": "S302",
+      "epic": "SS3",
+      "title": "Enhanced AnimatedCaptions with real word-level timing",
+      "description": "Upgrade the existing AnimatedCaptions Remotion component to use real word-level timestamps from the STT service instead of estimated timing. TikTok-style karaoke highlighting with word-by-word progression.",
+      "acceptance_criteria": [
+        "AnimatedCaptions accepts wordTimestamps prop (WordTimestamp[] from S301)",
+        "Each word highlights at its exact start_ms timestamp (karaoke-style)",
+        "Active word styled with scale(1.1) + brand primaryColor highlight",
+        "Words before active word styled as completed (dimmed)",
+        "Words after active word styled as upcoming (normal opacity)",
+        "Smooth transitions between words using Remotion's interpolate()",
+        "Line breaks inserted intelligently (max 3-4 words per line for readability)",
+        "Falls back to estimated timing when wordTimestamps prop is null/undefined",
+        "Negative: words with 0ms duration are treated as instantaneous (no animation)",
+        "Negative: overlapping word timestamps handled gracefully (use start_ms only)"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes",
+        "Remotion studio preview shows correct word-level timing"
+      ],
+      "dependencies": [
+        "S301"
+      ],
+      "files_existing": [
+        "src/remotion/components/AnimatedCaptions.tsx",
+        "src/remotion/utils/timing.ts"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S303",
+      "epic": "SS3",
+      "title": "generateVideoFromTestimonial server action",
+      "description": "Create a server action that takes a video_response_id, transcribes it (if not already), and queues a proof_render_job for video generation. Supports format selection (16:9, 1:1, 9:16). Creates proof_item if needed.",
+      "acceptance_criteria": [
+        "Server action accepts { video_response_id, format, template_config }",
+        "Auto-transcribes video if word_timestamps is null (calls transcription service)",
+        "Creates proof_item from video_response if not exists (idempotent)",
+        "Queues proof_render_job with asset_type=video and selected format",
+        "template_config supports: include_intro (bool), include_outro (bool), cta_text (string)",
+        "Returns { proof_item_id, job_id, transcription_status }",
+        "Negative: video_response without video_url returns 400 error",
+        "Negative: transcription failure queues job anyway with estimated timing fallback",
+        "Negative: video_response belonging to different org returns 403"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S300",
+        "S301"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/service.ts",
+        "src/lib/share-studio/actions.ts",
+        "src/lib/share-studio/remotion-renderer.ts",
+        "src/remotion/compositions/VideoTestimonial.tsx"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S304",
+      "epic": "SS3",
+      "title": "Video template config modal (format, intro/outro, CTA)",
+      "description": "Build a modal for configuring video template options before generation. User selects aspect ratio, toggles intro/outro, sets CTA text, and previews settings before triggering render.",
+      "acceptance_criteria": [
+        "Modal opens from 'Share as Video' button on video testimonial detail page",
+        "Format picker: 16:9 (Landscape), 1:1 (Square), 9:16 (Portrait/Stories) with visual indicators",
+        "Toggle switches for: Include branded intro, Include branded outro",
+        "CTA text input with 40-char max and character counter",
+        "Preview section shows a mockup of the video layout with selected options",
+        "Generate button triggers generateVideoFromTestimonial and transitions to progress view",
+        "Default selections: 9:16, intro on, outro on, CTA from org settings",
+        "Negative: generate button disabled while another render is in progress for same video",
+        "Negative: modal remembers last-used settings per session (not persisted)"
+      ],
+      "priority": "P1",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S303"
+      ],
+      "files_existing": [
+        "src/remotion/compositions/VideoTestimonial.tsx",
+        "src/remotion/components/BrandedIntro.tsx",
+        "src/remotion/components/BrandedOutro.tsx"
+      ],
+      "files_new": [
+        "src/components/share-studio/video-config-modal.tsx"
+      ]
+    },
+    {
+      "id": "S305",
+      "epic": "SS3",
+      "title": "Video download + share link UI",
+      "description": "Reuse and extend the render progress card (S205) for video assets. Add video-specific features: inline video preview player, download as MP4, and create share link.",
+      "acceptance_criteria": [
+        "Render progress card works for asset_type=video jobs (single job, not 3)",
+        "On completion: inline video preview player with play/pause controls",
+        "Download button triggers MP4 file download with descriptive filename",
+        "Create share link button creates a smart link pointing to the video proof_item",
+        "Share link OG meta includes video:type and video:url for social platforms",
+        "Video player is responsive and works on mobile",
+        "Negative: large video (>100MB) shows download progress indicator",
+        "Negative: video render failure shows error with retry button"
+      ],
+      "priority": "P2",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S205"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/service.ts",
+        "src/lib/share-studio/actions.ts"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S400",
+      "epic": "SS4",
+      "title": "Extend DslTemplate for MotionConfig (spring animations)",
+      "description": "Extend the DslTemplate Remotion composition to support motion presets. Add MotionConfig to template-types.ts DSL schema. Each layer can specify entrance animation (fade, fade-up, slide-left, zoom-in) with spring physics and stagger delays.",
+      "acceptance_criteria": [
+        "MotionConfig type added to ShareStudioTemplateDsl: { preset, delay_ms, duration_ms, spring }",
+        "DslTemplate renders layers with Remotion spring() animations when motion config present",
+        "Supported presets: fade, fade-up, fade-down, slide-left, slide-right, zoom-in, zoom-out",
+        "Spring physics configurable: damping, stiffness, mass (sensible defaults provided)",
+        "Stagger delays: each layer can have independent delay_ms for sequenced entrance",
+        "Animated output renders as 3-5 second MP4 loops (90-150 frames at 30fps)",
+        "Layers without motion config render statically (backwards compatible)",
+        "Negative: invalid motion preset falls back to 'fade' with console warning",
+        "Negative: total animation duration exceeding 5s is clamped to 5s"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes",
+        "Remotion studio renders animated compositions smoothly"
+      ],
+      "dependencies": [
+        "S200"
+      ],
+      "files_existing": [
+        "src/remotion/compositions/DslTemplate.tsx",
+        "src/lib/share-studio/template-types.ts"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S401",
+      "epic": "SS4",
+      "title": "4 animated template variants (motion-enabled DSL)",
+      "description": "Create animated variants of the 4 MVP templates from S201. Each variant adds MotionConfig to layers for entrance animations. Seed into proof_templates with is_animated=true flag.",
+      "acceptance_criteria": [
+        "Migration inserts 4 animated template rows into proof_templates with is_animated=true",
+        "Animated Review Quote: quote text fade-up → stars zoom-in → name slide-right (staggered)",
+        "Animated Star Rating: rating number zoom-in → stars sequential fade → reviewer slide-up",
+        "Animated Stats Summary: each stat counter zoom-in with stagger → logo fade → tagline slide-up",
+        "Animated Professional Spotlight: headshot zoom-in → name/title slide-right → quote fade-up → rating fade",
+        "All animations complete within 3-5 seconds (loop-friendly)",
+        "Each animated template has square (1080x1080) and story (1080x1920) variants",
+        "Negative: rendering animated template as still (PNG) ignores motion config, outputs first frame",
+        "Negative: migration is idempotent"
+      ],
+      "priority": "P2",
+      "estimate": "M",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes",
+        "Migration runs without errors"
+      ],
+      "dependencies": [
+        "S400"
+      ],
+      "files_existing": [
+        "src/lib/share-studio/template-types.ts",
+        "src/lib/share-studio/service.ts"
+      ],
+      "files_new": [
+        "supabase/migrations/YYYYMMDD_animated_template_variants.sql"
+      ]
+    },
+    {
+      "id": "S402",
+      "epic": "SS4",
+      "title": "'Share as Animation' entry point + modal tab",
+      "description": "Add a 'Share as Animation' tab or toggle within the generate graphic modal (S204). When animation mode is selected, gallery shows only animated templates. Generation queues video render jobs (MP4) instead of image jobs.",
+      "acceptance_criteria": [
+        "Tab or toggle in generate graphic modal: 'Static' | 'Animated'",
+        "Animated tab filters gallery to show only templates with is_animated=true",
+        "Selecting animated template queues proof_render_job with asset_type=video (MP4 loop)",
+        "Render progress card shows single job (not 3 formats) for animated output",
+        "Output is 3-5 second looping MP4 at 30fps",
+        "Download button provides MP4 file, copy-to-clipboard copies as video/mp4 blob",
+        "Negative: switching tabs preserves review data but resets template selection",
+        "Negative: org with no animated templates shows 'Coming soon' placeholder in animated tab"
+      ],
+      "priority": "P2",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S204",
+        "S401"
+      ],
+      "files_existing": [
+        "src/components/share-studio/generate-graphic-modal.tsx",
+        "src/components/share-studio/template-gallery-picker.tsx"
+      ],
+      "files_new": []
+    },
+    {
+      "id": "S403",
+      "epic": "SS4",
+      "title": "CSS animation preview in template gallery picker",
+      "description": "Add CSS-based animation previews to the template gallery picker for animated templates. When hovering/focusing an animated template card, play a CSS approximation of the entrance animations. No Remotion needed for preview.",
+      "acceptance_criteria": [
+        "Animated template cards in gallery show a play icon overlay",
+        "On hover (desktop) or tap (mobile), CSS animations play simulating the entrance sequence",
+        "CSS animations approximate the MotionConfig: fade → opacity, slide → translateX/Y, zoom → scale",
+        "Stagger delays from DSL mapped to CSS animation-delay values",
+        "Animation plays once on trigger, resets on mouse leave / second tap",
+        "Static templates show no play icon and have no hover animation",
+        "Performance: CSS animations only, no JavaScript animation libraries needed",
+        "Negative: prefers-reduced-motion disables animation preview, shows static card",
+        "Negative: template with missing motion config treated as static (no play icon)"
+      ],
+      "priority": "P2",
+      "estimate": "S",
+      "status": "pending",
+      "gates": [
+        "npm run build passes",
+        "npm run lint passes"
+      ],
+      "dependencies": [
+        "S202",
+        "S400"
+      ],
+      "files_existing": [
+        "src/components/share-studio/template-gallery-picker.tsx",
+        "src/components/share-studio/dsl-preview-renderer.tsx"
+      ],
+      "files_new": []
+    }
+  ],
+  "marketing_psychology": {
+    "zeigarnik_effect": {
+      "principle": "People remember incomplete tasks better than complete ones",
+      "application": "'3 of 3 formats generated' progress bar in render progress card (S205)"
+    },
+    "endowment_effect": {
+      "principle": "People value things more when they feel ownership",
+      "application": "Gallery previews show YOUR review data pre-filled in templates (S202)"
+    },
+    "ikea_effect": {
+      "principle": "People value things they helped create",
+      "application": "Choosing a template is a micro-investment that increases perceived value (S204)"
+    },
+    "mimetic_desire": {
+      "principle": "People want what others demonstrate wanting",
+      "application": "'Your reviews deserve this spotlight' footer CTA in share studio dashboard"
+    },
+    "activation_energy": {
+      "principle": "Lower the starting friction to near-zero",
+      "application": "One-click flow: review → tap template → auto-generate 3 formats (S203, S204)"
+    },
+    "goal_gradient": {
+      "principle": "People accelerate toward a goal as they get closer",
+      "application": "Progress indicators accelerate visually as renders complete (S205)"
+    }
+  }
+}

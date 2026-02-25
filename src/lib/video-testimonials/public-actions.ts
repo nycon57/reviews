@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 import { cache } from "react";
 import type { Json } from "@/types/database.types";
@@ -16,8 +16,8 @@ import {
   type SubmitVideoInput,
   type VideoSubmissionResult,
 } from "./types";
-import { transcribeVideoWithRetry } from "@/lib/ai/video-transcription";
 import { generateReviewFromTranscript } from "@/lib/ai/transcript-to-review";
+import { transcribeWithWordTimestamps } from "@/lib/share-studio/transcription-service";
 
 // ============================================================================
 // Validation Schemas
@@ -764,6 +764,7 @@ export async function processVideoTestimonialAIJob(
   job: AIProcessingJob
 ): Promise<AIProcessingResult> {
   const supabase = createAdminClient();
+  const untypedSupabase = createUntypedAdminClient();
   const { responseId, videoUrl, durationSeconds, customerName, professionalName } = job;
 
   try {
@@ -781,21 +782,32 @@ export async function processVideoTestimonialAIJob(
 
     // Run AI transcription
     try {
-      const transcriptionResult = await transcribeVideoWithRetry(
-        videoUrl,
+      const transcriptionResult = await transcribeWithWordTimestamps(videoUrl, {
         durationSeconds,
-        { prompt: `Customer testimonial for ${professionalName}` }
-      );
+        prompt: `Customer testimonial for ${professionalName}`,
+      });
 
-      transcription = transcriptionResult.text;
+      transcription = transcriptionResult.full_text;
+      const wordTimestampPayload = {
+        full_text: transcriptionResult.full_text,
+        segments: transcriptionResult.segments.map((segment) => ({ ...segment })),
+        words: transcriptionResult.words.map((word) => ({ ...word })),
+        provider: transcriptionResult.provider,
+        model: transcriptionResult.model,
+        created_at: new Date().toISOString(),
+        flagged_word_count: transcriptionResult.words.filter(
+          (word) => word.flagged_for_review
+        ).length,
+      } as Json;
 
       // Update transcription status
-      await supabase
+      await untypedSupabase
         .from("video_testimonial_responses")
         .update({
           transcription: transcription,
           transcription_status: "completed",
           ai_generation_status: "processing",
+          word_timestamps: wordTimestampPayload,
           updated_at: new Date().toISOString(),
         })
         .eq("id", responseId);
@@ -845,6 +857,8 @@ export async function processVideoTestimonialAIJob(
         .from("video_testimonial_responses")
         .update({
           transcription_status: "failed",
+          transcription_error:
+            transcribeError instanceof Error ? transcribeError.message : "Transcription failed",
           ai_generation_status: "failed",
           updated_at: new Date().toISOString(),
         })

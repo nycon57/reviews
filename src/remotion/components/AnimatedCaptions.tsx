@@ -2,16 +2,24 @@
  * AnimatedCaptions Component
  *
  * TikTok-style word-by-word highlighting captions for video testimonials.
- * Words highlight as they're spoken based on timing data.
+ * Supports exact word-level timestamps with fallback to segment-estimated timing.
  */
 
+import { useMemo } from "react";
 import { useCurrentFrame, useVideoConfig, interpolate, spring } from "remotion";
-import type { CaptionSegment } from "../types";
+import type { CaptionSegment, WordTimestamp } from "../types";
 import { REPWELL_COLORS } from "../types";
+import {
+  buildDisplayLines,
+  buildTimelineWords,
+  findActiveWordIndex,
+} from "../utils/caption-timing";
 
 interface AnimatedCaptionsProps {
   /** Caption segments with timing information */
   captions: CaptionSegment[];
+  /** Optional word-level timestamps for exact karaoke timing */
+  wordTimestamps?: WordTimestamp[] | null;
   /** Starting frame offset for when captions should begin */
   startFrame: number;
   /** Primary color for highlighted words */
@@ -30,15 +38,9 @@ interface AnimatedCaptionsProps {
   style?: "default" | "boxed" | "minimal";
 }
 
-interface Word {
-  text: string;
-  startFrame: number;
-  endFrame: number;
-  segmentIndex: number;
-}
-
 export const AnimatedCaptions: React.FC<AnimatedCaptionsProps> = ({
   captions,
+  wordTimestamps,
   startFrame,
   highlightColor = REPWELL_COLORS.teal[300],
   textColor = REPWELL_COLORS.white,
@@ -51,32 +53,33 @@ export const AnimatedCaptions: React.FC<AnimatedCaptionsProps> = ({
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Parse captions into individual words with timing
-  const words = parseWordsFromCaptions(captions, fps, startFrame);
-
-  // Find current segment based on frame
-  const currentSegmentIndex = findCurrentSegment(captions, frame, fps, startFrame);
-  const currentSegment = currentSegmentIndex >= 0 ? captions[currentSegmentIndex] : null;
-
-  // Get words for current segment
-  const currentWords = words.filter((w) => w.segmentIndex === currentSegmentIndex);
-
-  // Find currently highlighted word
-  const currentWordIndex = currentWords.findIndex(
-    (w) => frame >= w.startFrame && frame <= w.endFrame
+  const words = useMemo(
+    () =>
+      buildTimelineWords({
+        captions,
+        wordTimestamps,
+        fps,
+        startFrame,
+      }),
+    [captions, wordTimestamps, fps, startFrame]
   );
 
-  if (!currentSegment || currentWords.length === 0) {
+  const WORDS_PER_LINE = 4;
+
+  if (!words.length) {
     return null;
   }
 
-  // Calculate container entry animation
-  const containerOpacity = interpolate(
-    frame - startFrame,
-    [0, fps * 0.3],
-    [0, 1],
-    { extrapolateRight: "clamp" }
-  );
+  const activeWordIndex = findActiveWordIndex(words, frame);
+  const displayLines = buildDisplayLines(words, activeWordIndex, WORDS_PER_LINE, 2);
+
+  if (!displayLines.length) {
+    return null;
+  }
+
+  const containerOpacity = interpolate(frame - startFrame, [0, fps * 0.3], [0, 1], {
+    extrapolateRight: "clamp",
+  });
 
   const containerStyles: React.CSSProperties = {
     position: "absolute",
@@ -86,40 +89,64 @@ export const AnimatedCaptions: React.FC<AnimatedCaptionsProps> = ({
     maxWidth: `${maxWidth}%`,
     opacity: containerOpacity,
     display: "flex",
-    justifyContent: "center",
+    flexDirection: "column",
+    gap: "10px",
     alignItems: "center",
-    flexWrap: "wrap",
-    gap: style === "boxed" ? "8px" : "12px",
+    justifyContent: "center",
     padding: style === "minimal" ? "0" : "16px 24px",
     borderRadius: style === "minimal" ? "0" : "12px",
     backgroundColor: style === "minimal" ? "transparent" : backgroundColor,
     backdropFilter: style === "minimal" ? "none" : "blur(8px)",
   };
 
+  const firstDisplayedWord = displayLines[0]?.[0];
+  const displayStartIndex = firstDisplayedWord
+    ? words.findIndex(
+        (word) =>
+          word.startFrame === firstDisplayedWord.startFrame && word.text === firstDisplayedWord.text
+      )
+    : 0;
+  const safeDisplayStartIndex = Math.max(0, displayStartIndex);
+
   return (
     <div style={containerStyles}>
-      {currentWords.map((word, index) => (
-        <AnimatedWord
-          key={`${word.segmentIndex}-${index}`}
-          word={word}
-          index={index}
-          currentFrame={frame}
-          isActive={index === currentWordIndex}
-          isPast={index < currentWordIndex}
-          highlightColor={highlightColor}
-          textColor={textColor}
-          fontSize={fontSize}
-          style={style}
-          fps={fps}
-        />
+      {displayLines.map((line, lineIndex) => (
+        <div
+          key={`line-${lineIndex}`}
+          style={{
+            display: "flex",
+            flexWrap: "nowrap",
+            gap: style === "boxed" ? "8px" : "12px",
+            justifyContent: "center",
+          }}
+        >
+          {line.map((word, wordOffset) => {
+            const wordIndex = safeDisplayStartIndex + lineIndex * WORDS_PER_LINE + wordOffset;
+            return (
+              <AnimatedWord
+                key={`${wordIndex}-${word.startFrame}`}
+                text={word.text}
+                wordStartFrame={word.startFrame}
+                currentFrame={frame}
+                isActive={wordIndex === activeWordIndex}
+                isPast={wordIndex < activeWordIndex}
+                highlightColor={highlightColor}
+                textColor={textColor}
+                fontSize={fontSize}
+                style={style}
+                fps={fps}
+              />
+            );
+          })}
+        </div>
       ))}
     </div>
   );
 };
 
 interface AnimatedWordProps {
-  word: Word;
-  index: number;
+  text: string;
+  wordStartFrame: number;
   currentFrame: number;
   isActive: boolean;
   isPast: boolean;
@@ -131,8 +158,8 @@ interface AnimatedWordProps {
 }
 
 const AnimatedWord: React.FC<AnimatedWordProps> = ({
-  word,
-  index: _index,
+  text,
+  wordStartFrame,
   currentFrame,
   isActive,
   isPast,
@@ -142,26 +169,21 @@ const AnimatedWord: React.FC<AnimatedWordProps> = ({
   style,
   fps,
 }) => {
-  // Spring animation for active word
-  const scale = spring({
-    frame: currentFrame - word.startFrame,
+  const entrySpring = spring({
+    frame: currentFrame - wordStartFrame,
     fps,
     config: {
       stiffness: 400,
       damping: 25,
       mass: 0.8,
     },
-    durationInFrames: fps * 0.3,
+    durationInFrames: Math.max(6, Math.floor(fps * 0.2)),
   });
 
-  // Opacity based on state
-  const opacity = isPast || isActive ? 1 : 0.6;
+  const wordScale = isActive ? interpolate(entrySpring, [0, 1], [1, 1.1]) : 1;
 
-  // Color based on state
-  const color = isActive ? highlightColor : isPast ? textColor : `${textColor}99`;
-
-  // Scale only for active word
-  const wordScale = isActive ? interpolate(scale, [0, 1], [1, 1.1]) : 1;
+  const opacity = isPast ? 0.65 : isActive ? 1 : 0.9;
+  const color = isActive ? highlightColor : textColor;
 
   const wordStyles: React.CSSProperties = {
     fontFamily: "'Source Sans 3', system-ui, sans-serif",
@@ -184,58 +206,7 @@ const AnimatedWord: React.FC<AnimatedWordProps> = ({
       : {}),
   };
 
-  return <span style={wordStyles}>{word.text}</span>;
+  return <span style={wordStyles}>{text}</span>;
 };
-
-/**
- * Parse caption segments into individual words with timing
- */
-function parseWordsFromCaptions(
-  captions: CaptionSegment[],
-  fps: number,
-  startFrame: number
-): Word[] {
-  const words: Word[] = [];
-
-  captions.forEach((segment, segmentIndex) => {
-    const segmentWords = segment.text.trim().split(/\s+/);
-    const segmentDurationMs = segment.endMs - segment.startMs;
-    const wordDurationMs = segmentDurationMs / segmentWords.length;
-
-    segmentWords.forEach((text, wordIndex) => {
-      const wordStartMs = segment.startMs + wordIndex * wordDurationMs;
-      const wordEndMs = wordStartMs + wordDurationMs;
-
-      words.push({
-        text,
-        startFrame: startFrame + Math.floor((wordStartMs / 1000) * fps),
-        endFrame: startFrame + Math.floor((wordEndMs / 1000) * fps),
-        segmentIndex,
-      });
-    });
-  });
-
-  return words;
-}
-
-/**
- * Find the current segment based on frame
- */
-function findCurrentSegment(
-  captions: CaptionSegment[],
-  frame: number,
-  fps: number,
-  startFrame: number
-): number {
-  const currentTimeMs = ((frame - startFrame) / fps) * 1000;
-
-  for (let i = 0; i < captions.length; i++) {
-    if (currentTimeMs >= captions[i].startMs && currentTimeMs <= captions[i].endMs) {
-      return i;
-    }
-  }
-
-  return -1;
-}
 
 export default AnimatedCaptions;

@@ -48,6 +48,7 @@ interface QuickActionButtonProps {
 function QuickActionButton({ icon, title, description, onClick }: QuickActionButtonProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group"
     >

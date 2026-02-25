@@ -94,7 +94,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
                 isLoading={isLoading}
                 style={styles.button}
               >
-                Send Reset Link
+                <Text variant="body">Send Reset Link</Text>
               </Button>
             </CardContent>
           </Card>

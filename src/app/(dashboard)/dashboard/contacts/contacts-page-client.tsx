@@ -63,7 +63,7 @@ export function ContactsPageClient() {
     }
     fetchData();
     return () => { cancelled = true; };
-  }, [page, search, refetchCount]);
+  }, [page, search, refetchCount, toast]);
 
   // Debounced search
   const [searchInput, setSearchInput] = useState("");

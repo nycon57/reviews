@@ -140,7 +140,7 @@ export function SignUpScreen({ navigation }: Props) {
                 isLoading={isLoading}
                 style={styles.button}
               >
-                Create Account
+                <Text variant="body">Create Account</Text>
               </Button>
             </CardContent>
           </Card>

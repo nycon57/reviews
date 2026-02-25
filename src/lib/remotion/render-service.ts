@@ -32,6 +32,7 @@ import type {
   VideoThumbnailProps,
   CaptionSegment,
   VideoFormat,
+  WordTimestamp,
 } from "@/remotion/types";
 
 // Cache bundled Remotion app
@@ -235,12 +236,18 @@ async function getVideoTestimonialProps(
   const professional = req.users;
   const customerName = [req.customer_first_name, req.customer_last_name].filter(Boolean).join(" ") || "Valued Customer";
 
-  // Parse transcription into caption segments
-  const captions = parseTranscriptionToCaptions(response.transcription);
+  const wordTimestampData = parseWordTimestampData(
+    (response as unknown as Record<string, unknown>).word_timestamps
+  );
+  const captions =
+    wordTimestampData?.segments.length && wordTimestampData.segments.length > 0
+      ? wordTimestampData.segments
+      : parseTranscriptionToCaptions(response.transcription);
 
   return {
     videoUrl: response.video_url,
     captions,
+    wordTimestamps: wordTimestampData?.words ?? null,
     format: request.format,
     template: request.template || "modern",
     organization: {
@@ -653,6 +660,78 @@ async function getVideoThumbnailProps(
     },
     customerPhotoUrl: response.thumbnail_url,
   };
+}
+
+/**
+ * Parse stored word-level timestamp payload from video_testimonial_responses.word_timestamps
+ */
+function parseWordTimestampData(
+  value: unknown
+): { words: WordTimestamp[]; segments: CaptionSegment[] } | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const payload = value as {
+    words?: Array<{
+      word?: string;
+      start_ms?: number;
+      end_ms?: number;
+      confidence?: number;
+    }>;
+    segments?: Array<{
+      text?: string;
+      start_ms?: number;
+      end_ms?: number;
+      confidence?: number;
+    }>;
+  };
+
+  const words: WordTimestamp[] = (payload.words ?? [])
+    .map((word): WordTimestamp | null => {
+      const text = (word.word ?? "").trim();
+      if (!text) return null;
+
+      const startMs = Number(word.start_ms ?? 0);
+      const endMs = Number(word.end_ms ?? startMs);
+      const confidence =
+        typeof word.confidence === "number" ? word.confidence : undefined;
+
+      return {
+        word: text,
+        startMs: Math.max(0, Math.round(startMs)),
+        endMs: Math.max(Math.round(startMs), Math.round(endMs)),
+        confidence,
+      };
+    })
+    .filter((word): word is WordTimestamp => word !== null)
+    .sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
+
+  const segments: CaptionSegment[] = (payload.segments ?? [])
+    .map((segment): CaptionSegment | null => {
+      const text = (segment.text ?? "").trim();
+      if (!text) return null;
+
+      const startMs = Number(segment.start_ms ?? 0);
+      const endMs = Number(segment.end_ms ?? startMs);
+      const confidence =
+        typeof segment.confidence === "number" ? segment.confidence : undefined;
+
+      return {
+        text,
+        startMs: Math.max(0, Math.round(startMs)),
+        endMs: Math.max(Math.round(startMs), Math.round(endMs)),
+        confidence,
+      };
+    })
+    .filter((segment): segment is CaptionSegment => segment !== null)
+    .sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
+
+  if (!words.length && !segments.length) {
+    return null;
+  }
+
+  return { words, segments };
 }
 
 /**

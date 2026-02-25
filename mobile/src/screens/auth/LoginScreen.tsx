@@ -110,7 +110,7 @@ export function LoginScreen({ navigation }: Props) {
                 isLoading={isLoading}
                 style={styles.button}
               >
-                Sign In
+                <Text variant="body">Sign In</Text>
               </Button>
             </CardContent>
           </Card>

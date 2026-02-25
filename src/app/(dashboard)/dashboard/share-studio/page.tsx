@@ -45,6 +45,33 @@ function formatShortDate(value: unknown): string {
   });
 }
 
+function getErrorMessage(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (value instanceof Error) return value.message;
+
+  if (typeof value === "object") {
+    const candidate = value as {
+      message?: unknown;
+      details?: unknown;
+      hint?: unknown;
+      code?: unknown;
+      error?: unknown;
+    };
+    return [
+      candidate.message,
+      candidate.details,
+      candidate.hint,
+      candidate.code,
+      candidate.error,
+    ]
+      .filter((entry): entry is string => typeof entry === "string")
+      .join(" ");
+  }
+
+  return String(value);
+}
+
 function statusBadge(status: string) {
   const normalized = status.toLowerCase();
 
@@ -90,10 +117,28 @@ async function getDashboardData() {
       imageJobs: [] as Record<string, unknown>[],
       videoJobs: [] as Record<string, unknown>[],
       pendingApprovals: 0,
+      captionStats: {
+        totalVideos: 0,
+        captionReady: 0,
+        captionPending: 0,
+        captionFailed: 0,
+      },
+      wordTimestampColumnReady: false,
+      captionMetricsAvailable: false,
     };
   }
 
-  const [itemsResult, templatesResult, linksResult, jobsResult, pendingResult] =
+  const [
+    itemsResult,
+    templatesResult,
+    linksResult,
+    jobsResult,
+    pendingResult,
+    captionReadyResult,
+    captionTotalResult,
+    captionPendingResult,
+    captionFailedResult,
+  ] =
     await Promise.all([
       listProofItems({ organizationId, page: 1, page_size: 30 }),
       listProofTemplates(organizationId),
@@ -114,6 +159,25 @@ async function getDashboardData() {
         .select("id", { count: "exact", head: true })
         .eq("organization_id", organizationId)
         .eq("status", "pending_approval"),
+      supabase
+        .from("video_testimonial_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .not("word_timestamps", "is", "null"),
+      supabase
+        .from("video_testimonial_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId),
+      supabase
+        .from("video_testimonial_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .eq("transcription_status", "pending"),
+      supabase
+        .from("video_testimonial_responses")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", organizationId)
+        .eq("transcription_status", "failed"),
     ]);
 
   if (linksResult.error) {
@@ -131,6 +195,49 @@ async function getDashboardData() {
     throw new Error("Failed to load approval counts");
   }
 
+  const captionReadyErrorMessage = getErrorMessage(captionReadyResult.error).toLowerCase();
+  const wordTimestampColumnReady = !captionReadyResult.error;
+  const isMissingWordTimestampsColumn =
+    !wordTimestampColumnReady &&
+    captionReadyErrorMessage.includes("word_timestamps");
+  const logCaptionMetricDebug = process.env.SHARE_STUDIO_DEBUG === "true";
+
+  if (captionReadyResult.error && !isMissingWordTimestampsColumn) {
+    if (logCaptionMetricDebug) {
+      console.debug(
+        "[ShareStudio] Caption-ready query failed (non-fatal):",
+        captionReadyResult.error
+      );
+    }
+  }
+
+  if (captionTotalResult.error) {
+    if (logCaptionMetricDebug) {
+      console.debug("[ShareStudio] Caption total query failed (non-fatal):", captionTotalResult.error);
+    }
+  }
+
+  if (captionPendingResult.error) {
+    if (logCaptionMetricDebug) {
+      console.debug(
+        "[ShareStudio] Caption pending query failed (non-fatal):",
+        captionPendingResult.error
+      );
+    }
+  }
+
+  if (captionFailedResult.error) {
+    if (logCaptionMetricDebug) {
+      console.debug("[ShareStudio] Caption failed query failed (non-fatal):", captionFailedResult.error);
+    }
+  }
+
+  const captionMetricsAvailable =
+    (!captionReadyResult.error || isMissingWordTimestampsColumn) &&
+    !captionTotalResult.error &&
+    !captionPendingResult.error &&
+    !captionFailedResult.error;
+
   const jobs = (jobsResult.data || []) as Record<string, unknown>[];
 
   return {
@@ -144,6 +251,14 @@ async function getDashboardData() {
     imageJobs: jobs.filter((job) => job.asset_type === "image"),
     videoJobs: jobs.filter((job) => job.asset_type === "video"),
     pendingApprovals: pendingResult.count || 0,
+    captionStats: {
+      totalVideos: captionTotalResult.error ? 0 : captionTotalResult.count || 0,
+      captionReady: isMissingWordTimestampsColumn ? 0 : captionReadyResult.count || 0,
+      captionPending: captionPendingResult.error ? 0 : captionPendingResult.count || 0,
+      captionFailed: captionFailedResult.error ? 0 : captionFailedResult.count || 0,
+    },
+    wordTimestampColumnReady: wordTimestampColumnReady && !isMissingWordTimestampsColumn,
+    captionMetricsAvailable,
   };
 }
 
@@ -185,6 +300,19 @@ export default async function ShareStudioPage() {
   const publishedLinks = data.links.filter((link) => Boolean(link.published)).length;
   const completedGraphics = data.imageJobs.filter((job) => String(job.status) === "completed").length;
   const completedAnimations = data.videoJobs.filter((job) => String(job.status) === "completed").length;
+  const captionCoveragePercent =
+    data.captionStats.totalVideos > 0
+      ? Math.round((data.captionStats.captionReady / data.captionStats.totalVideos) * 100)
+      : 0;
+  const captionProviderSummary = !data.captionMetricsAvailable
+    ? "Metrics unavailable"
+    : !data.wordTimestampColumnReady
+      ? "Migration required"
+      : process.env.DEEPGRAM_API_KEY
+        ? "Deepgram primary + Gemini fallback"
+        : process.env.GEMINI_API_KEY
+          ? "Gemini fallback only"
+          : "Not configured";
 
   return (
     <div className="flex-1 space-y-6">
@@ -202,6 +330,10 @@ export default async function ShareStudioPage() {
             <p className="max-w-2xl text-sm text-muted-foreground">
               Build Smart Links, branded graphics, and motion-ready animations from the same proof item source.
             </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Badge variant="secondary">Word-level captions</Badge>
+              <Badge variant="outline">{captionProviderSummary}</Badge>
+            </div>
           </div>
 
           {canReviewApprovals ? (
@@ -220,7 +352,7 @@ export default async function ShareStudioPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Smart Links</CardDescription>
@@ -253,6 +385,19 @@ export default async function ShareStudioPage() {
           <CardContent>
             <p className="text-xs text-muted-foreground">
               {data.videoJobs.length} Remotion video renders in queue or completed.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>Word-level Captions</CardDescription>
+            <CardTitle className="text-2xl">{data.captionStats.captionReady}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">
+              {captionCoveragePercent}% coverage across {data.captionStats.totalVideos} video testimonial
+              {data.captionStats.totalVideos === 1 ? "" : "s"}.
             </p>
           </CardContent>
         </Card>
@@ -382,20 +527,39 @@ export default async function ShareStudioPage() {
 
             <Card className="xl:col-span-2">
               <CardHeader>
-                <CardTitle>Coming Next</CardTitle>
+                <CardTitle>Caption Pipeline</CardTitle>
                 <CardDescription>
-                  Planned fourth tab: captured client video reviews wrapped in branded Remotion templates.
+                  Word-level timestamp status for video testimonials used in animated caption rendering.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <CardContent className="space-y-3 text-sm">
+                <div className="grid gap-2">
+                  <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                    <span className="text-muted-foreground">Ready with word timestamps</span>
+                    <span className="font-medium">{data.captionStats.captionReady}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                    <span className="text-muted-foreground">Pending transcription</span>
+                    <span className="font-medium">{data.captionStats.captionPending}</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border px-3 py-2">
+                    <span className="text-muted-foreground">Failed transcription</span>
+                    <span className="font-medium">{data.captionStats.captionFailed}</span>
+                  </div>
+                </div>
                 <p>
-                  This release keeps the creation surface focused on Smart Links, Graphics, and Animations so users
-                  can learn one predictable workflow.
+                  Provider mode: <span className="font-medium">{captionProviderSummary}</span>
                 </p>
-                <p>
-                  The next phase can layer in direct video uploads without changing template logic or brand token
-                  resolution.
-                </p>
+                {!data.captionMetricsAvailable ? (
+                  <p className="text-xs text-amber-700">
+                    Caption stats are temporarily unavailable. The rest of Share Studio remains usable.
+                  </p>
+                ) : null}
+                {data.captionMetricsAvailable && !data.wordTimestampColumnReady ? (
+                  <p className="text-xs text-amber-700">
+                    Apply migration: <code>20260225000002_word_level_timestamps.sql</code>
+                  </p>
+                ) : null}
                 {canReviewApprovals ? (
                   <Button asChild variant="ghost" className="mt-2 w-full justify-between">
                     <Link href="/dashboard/approvals">

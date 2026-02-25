@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition, useCallback } from "react";
+import Image from "next/image";
 import { EnhancedLeaderboard, ProfileCompletionLeaderboard } from "@/components/gamification";
 import {
   Crown,
@@ -20,6 +21,10 @@ import type { EnhancedLeaderboardEntry } from "@/lib/gamification/types";
 
 interface LeaderboardDashboardProps {
   initialFilters: FilterOptions;
+}
+
+function CompactProfileCompletionLeaderboard() {
+  return <ProfileCompletionLeaderboard limit={10} showPodium={false} />;
 }
 
 export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardProps) {
@@ -99,9 +104,13 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                   <div className="relative mb-3">
                     <div className={`flex ${config.avatarSize} items-center justify-center rounded-full ${config.bgColor} ring-4 ${config.ringColor}`}>
                       {performer.photoUrl ? (
-                        <img
+                        <Image
+                          loader={({ src }) => src}
+                          unoptimized
                           src={performer.photoUrl}
                           alt={performer.fullName}
+                          width={config.isFirst ? 64 : 56}
+                          height={config.isFirst ? 64 : 56}
                           className={`${config.avatarSize} rounded-full object-cover`}
                         />
                       ) : (
@@ -149,6 +158,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
             </div>
             <p className="flex-1 text-sm font-medium text-destructive">{error}</p>
             <button
+              type="button"
               onClick={loadTopPerformers}
               className="text-sm font-medium text-destructive underline hover:no-underline"
             >
@@ -190,7 +200,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
       <EnhancedLeaderboard filterOptions={initialFilters} initialPeriod="monthly" />
 
       {/* Profile completion leaderboard */}
-      <ProfileCompletionLeaderboard limit={10} showPodium={false} />
+      <CompactProfileCompletionLeaderboard />
 
       {/* Info card */}
       <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 p-5">

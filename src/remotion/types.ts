@@ -19,6 +19,13 @@ export interface CaptionSegment {
   confidence?: number;
 }
 
+export interface WordTimestamp {
+  word: string;
+  startMs: number;
+  endMs: number;
+  confidence?: number;
+}
+
 export interface OrganizationBranding {
   name: string;
   logoUrl: string | null;
@@ -40,6 +47,8 @@ export interface VideoTestimonialProps {
   videoUrl: string;
   /** Parsed caption segments with timing */
   captions: CaptionSegment[];
+  /** Word-level timestamps for karaoke caption highlighting */
+  wordTimestamps?: WordTimestamp[] | null;
   /** Full transcription text */
   transcription: string;
   /** AI-generated quote/summary */

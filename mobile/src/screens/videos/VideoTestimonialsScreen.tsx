@@ -262,7 +262,7 @@ export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
             style={styles.emptyButton}
             onPress={handleCreateRequest}
           >
-            Send Request
+            <Text variant="body">Send Request</Text>
           </Button>
         )}
       </CardContent>

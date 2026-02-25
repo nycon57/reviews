@@ -552,12 +552,17 @@ export function EmailAnalyticsDashboard() {
               <CardDescription>Sorted by open rate performance</CardDescription>
             </div>
             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </TooltipTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label="Email benchmark details"
+                    >
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-xs">
                     Industry benchmarks: Delivery {INDUSTRY_BENCHMARKS.deliveryRate}%,

@@ -26,20 +26,56 @@ export const metadata = {
   description: "Employee recognition and continuous feedback",
 };
 
-async function RecognitionFeedSection() {
-  const result = await getRecognitions({ limit: 10 });
-  return <RecognitionFeed initialRecognitions={result.data || []} showGiveButton={false} />;
+function ReadOnlyRecognitionFeed({
+  initialRecognitions,
+}: {
+  initialRecognitions: Awaited<ReturnType<typeof getRecognitions>>["data"] | undefined;
+}) {
+  return <RecognitionFeed initialRecognitions={initialRecognitions || []} showGiveButton={false} />;
 }
 
-async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string }) {
-  const result = await getManagerFeedback({ limit: 10 });
+function ReadOnlyManagerFeedbackList({
+  initialFeedback,
+  currentUserId,
+}: {
+  initialFeedback: Awaited<ReturnType<typeof getManagerFeedback>>["data"] | undefined;
+  currentUserId: string;
+}) {
   return (
     <ManagerFeedbackList
-      initialFeedback={result.data || []}
+      initialFeedback={initialFeedback || []}
       showGiveButton={false}
       currentUserId={currentUserId}
     />
   );
+}
+
+async function RecognitionFeedSection() {
+  try {
+    const result = await getRecognitions({ limit: 10 });
+    return <ReadOnlyRecognitionFeed initialRecognitions={result.data} />;
+  } catch (err) {
+    console.error("Failed to load recognitions:", err);
+    return (
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
+        <p className="text-sm text-muted-foreground">Failed to load recognition feed. Please try refreshing the page.</p>
+      </div>
+    );
+  }
+}
+
+async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string }) {
+  try {
+    const result = await getManagerFeedback({ limit: 10 });
+    return <ReadOnlyManagerFeedbackList initialFeedback={result.data} currentUserId={currentUserId} />;
+  } catch (err) {
+    console.error("Failed to load manager feedback:", err);
+    return (
+      <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-6 text-center">
+        <p className="text-sm text-muted-foreground">Failed to load manager feedback. Please try refreshing the page.</p>
+      </div>
+    );
+  }
 }
 
 export default async function RecognitionPage() {

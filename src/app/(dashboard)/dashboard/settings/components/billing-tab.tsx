@@ -292,6 +292,7 @@ export function BillingTab() {
               {hasPaidSubscription ? (
                 <div className="space-y-3">
                   <button
+                    type="button"
                     onClick={handleManageSubscription}
                     disabled={portalLoading}
                     className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group"
@@ -306,6 +307,7 @@ export function BillingTab() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={handleManageSubscription}
                     disabled={portalLoading}
                     className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group"
@@ -320,6 +322,7 @@ export function BillingTab() {
                   </button>
 
                   <button
+                    type="button"
                     onClick={handleManageSubscription}
                     disabled={portalLoading}
                     className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group"

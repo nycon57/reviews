@@ -14,7 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAccessContext, isManagerOrAbove, isEnterprise } from "@/lib/access";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
   isShareStudioSchemaReady,
@@ -69,29 +69,18 @@ function statusBadge(status: string) {
 
 
 async function getDashboardData() {
-  const user = await unifiedGetUser();
-  if (!user) {
+  const ctx = await getAccessContext();
+  if (!ctx) {
     redirect("/login");
   }
 
   const supabase = createUntypedAdminClient();
-
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("id, organization_id, role")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile?.organization_id) {
-    throw new Error("Unable to resolve organization for Share Studio");
-  }
-
-  const organizationId = profile.organization_id as string;
+  const organizationId = ctx.organizationId;
   const schemaReady = await isShareStudioSchemaReady(organizationId);
 
   if (!schemaReady) {
     return {
-      profile,
+      ctx,
       organizationId,
       schemaReady: false,
       items: [] as Record<string, unknown>[],
@@ -145,7 +134,7 @@ async function getDashboardData() {
   const jobs = (jobsResult.data || []) as Record<string, unknown>[];
 
   return {
-    profile,
+    ctx,
     organizationId,
     schemaReady: true,
     items: itemsResult.items,
@@ -192,7 +181,7 @@ export default async function ShareStudioPage() {
     );
   }
 
-  const canReviewApprovals = ["admin", "manager"].includes(String(data.profile.role));
+  const canReviewApprovals = isEnterprise(data.ctx) && isManagerOrAbove(data.ctx);
   const publishedLinks = data.links.filter((link) => Boolean(link.published)).length;
   const completedGraphics = data.imageJobs.filter((job) => String(job.status) === "completed").length;
   const completedAnimations = data.videoJobs.filter((job) => String(job.status) === "completed").length;

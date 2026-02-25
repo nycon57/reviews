@@ -38,21 +38,49 @@ import type { VideoTestimonialRequest } from "@/lib/video-testimonials/actions";
 function StatusBadge({ status }: { status: string }) {
   const config: Record<
     string,
-    { label: string; variant: "default" | "secondary" | "outline" | "destructive"; icon: typeof Clock }
+    { label: string; className: string; icon: typeof Clock }
   > = {
-    pending: { label: "Pending", variant: "secondary", icon: Clock },
-    sent: { label: "Sent", variant: "default", icon: Send },
-    opened: { label: "Opened", variant: "outline", icon: Eye },
-    recording: { label: "Recording", variant: "outline", icon: AlertCircle },
-    submitted: { label: "Completed", variant: "default", icon: CheckCircle },
-    expired: { label: "Expired", variant: "destructive", icon: XCircle },
-    cancelled: { label: "Cancelled", variant: "destructive", icon: XCircle },
+    pending: {
+      label: "Pending",
+      className: "text-amber-600 border-amber-300 bg-amber-50",
+      icon: Clock,
+    },
+    sent: {
+      label: "Sent",
+      className: "text-repwell-teal-300 border-repwell-teal-300/30 bg-repwell-teal-300/5",
+      icon: Send,
+    },
+    opened: {
+      label: "Opened",
+      className: "text-repwell-teal-400 border-repwell-teal-400/30 bg-repwell-teal-400/5",
+      icon: Eye,
+    },
+    recording: {
+      label: "Recording",
+      className: "text-purple-600 border-purple-300 bg-purple-50",
+      icon: AlertCircle,
+    },
+    submitted: {
+      label: "Completed",
+      className: "text-repwell-sage-200 border-repwell-sage-200/30 bg-repwell-sage-200/5",
+      icon: CheckCircle,
+    },
+    expired: {
+      label: "Expired",
+      className: "text-destructive border-destructive/30 bg-destructive/5",
+      icon: XCircle,
+    },
+    cancelled: {
+      label: "Cancelled",
+      className: "text-muted-foreground border-border bg-muted/50",
+      icon: XCircle,
+    },
   };
 
-  const { label, variant, icon: Icon } = config[status] || config.pending;
+  const { label, className, icon: Icon } = config[status] || config.pending;
 
   return (
-    <Badge variant={variant} className="gap-1">
+    <Badge variant="outline" className={`gap-1 ${className}`}>
       <Icon className="h-3 w-3" />
       {label}
     </Badge>
@@ -91,16 +119,16 @@ export function RequestTable({
 }: RequestTableProps) {
   if (requests.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-          <Send className="h-6 w-6 text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center py-16">
+        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <Send className="h-7 w-7 text-repwell-teal-300" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold">No video testimonial requests</h3>
-        <p className="mt-1 text-sm text-muted-foreground text-center max-w-sm">
+        <h3 className="mt-4 text-lg font-semibold text-repwell-teal-500">No video testimonial requests</h3>
+        <p className="mt-1.5 text-sm text-muted-foreground text-center max-w-sm">
           Create your first video testimonial request to start collecting customer videos.
         </p>
         {canManage && (
-          <Button onClick={onCreateNew} className="mt-4">
+          <Button onClick={onCreateNew} className="mt-5">
             <Plus className="mr-2 h-4 w-4" />
             Create Request
           </Button>
@@ -110,15 +138,15 @@ export function RequestTable({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-lg border border-border/50 overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Customer</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Sent</TableHead>
-            <TableHead>Opened</TableHead>
-            <TableHead>Reminders</TableHead>
+          <TableRow className="bg-muted/30 hover:bg-muted/30">
+            <TableHead className="text-xs font-medium uppercase tracking-wider">Customer</TableHead>
+            <TableHead className="text-xs font-medium uppercase tracking-wider">Status</TableHead>
+            <TableHead className="text-xs font-medium uppercase tracking-wider">Sent</TableHead>
+            <TableHead className="text-xs font-medium uppercase tracking-wider">Opened</TableHead>
+            <TableHead className="text-xs font-medium uppercase tracking-wider">Reminders</TableHead>
             <TableHead className="w-[70px]"></TableHead>
           </TableRow>
         </TableHeader>

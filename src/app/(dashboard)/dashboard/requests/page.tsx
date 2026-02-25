@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import {
   PaperPlaneRight as Send,
 } from "@phosphor-icons/react/dist/ssr";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { UnifiedRequestsHub } from "@/components/requests/unified-requests-hub";
 import {
@@ -11,44 +10,12 @@ import {
   getVideoTestimonialRequestStats,
   getUsersForVideoRequests,
 } from "@/lib/video-testimonials/actions";
-import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAccessContext } from "@/lib/access";
 
 export const metadata = {
   title: "Requests | RepWell",
   description: "Manage all customer outreach: video testimonial requests and survey distribution",
 };
-
-type UserRole = "admin" | "manager" | "user";
-
-const VALID_ROLES: readonly UserRole[] = ["admin", "manager", "user"] as const;
-
-function isValidRole(role: unknown): role is UserRole {
-  return typeof role === "string" && VALID_ROLES.includes(role as UserRole);
-}
-
-async function checkAccess() {
-  const user = await unifiedGetUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const supabase = createAdminClient();
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    redirect("/dashboard");
-  }
-
-  // Validate role is one of the allowed values, default to user if invalid
-  const role: UserRole = isValidRole(userData.role) ? userData.role : "user";
-
-  return { role };
-}
 
 export default async function RequestsPage({
   searchParams,
@@ -56,7 +23,9 @@ export default async function RequestsPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const params = await searchParams;
-  const { role } = await checkAccess();
+  const ctx = await getAccessContext();
+  if (!ctx) redirect("/login");
+  const role = ctx.role;
 
   // Fetch video testimonial requests data
   const [requestsResult, statsResult, usersResult] = await Promise.all([

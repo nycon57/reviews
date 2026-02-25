@@ -22,8 +22,6 @@ import {
   updateOrganizationSlug,
   type Organization,
   type OrganizationStats,
-  TIER_FEATURES,
-  TIER_LIMITS,
 } from "@/lib/organization";
 import { EditSlugDialog } from "@/components/shared/edit-slug-dialog";
 import { cn } from "@/lib/utils";
@@ -36,37 +34,29 @@ interface StatCardProps {
   trend?: { value: number; positive: boolean };
 }
 
-function StatCard({ title, value, description, icon }: StatCardProps) {
+function StatCard({ title, value, icon }: StatCardProps) {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-          {icon}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+        {icon}
+      </div>
+      <div>
+        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value}</p>
+        <p className="text-xs text-muted-foreground">{title}</p>
+      </div>
+    </div>
   );
 }
 
 function StatCardSkeleton() {
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-8 w-8 rounded-lg" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-8 w-16 mb-1" />
-        <Skeleton className="h-3 w-32" />
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+      <Skeleton className="h-10 w-10 rounded-lg" />
+      <div className="space-y-1">
+        <Skeleton className="h-7 w-16" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+    </div>
   );
 }
 
@@ -124,9 +114,6 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
   }
 
   const tier = organization.subscription_tier || "free";
-  const features = TIER_FEATURES[tier];
-  const limits = TIER_LIMITS[tier];
-
   const tierColors: Record<string, string> = {
     free: "bg-gray-100 text-gray-800",
     starter: "bg-blue-100 text-blue-800",
@@ -137,8 +124,8 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
   return (
     <div className="space-y-6">
       {/* Organization info card */}
-      <Card>
-        <CardHeader>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               {organization.logo_url ? (
@@ -170,7 +157,7 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <p className="text-sm text-muted-foreground">Status</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</p>
               <div className="flex items-center gap-2 mt-1">
                 <div className={cn(
                   "h-2 w-2 rounded-full",
@@ -182,18 +169,18 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
               </div>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Timezone</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timezone</p>
               <p className="font-medium mt-1">{organization.timezone || "America/New_York"}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Member Since</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Member Since</p>
               <p className="font-medium mt-1">
                 {new Date(organization.created_at).toLocaleDateString()}
               </p>
             </div>
             {organization.trial_ends_at && new Date(organization.trial_ends_at) > new Date() && (
               <div>
-                <p className="text-sm text-muted-foreground">Trial Ends</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Trial Ends</p>
                 <p className="font-medium mt-1">
                   {new Date(organization.trial_ends_at).toLocaleDateString()}
                 </p>
@@ -205,7 +192,7 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
           {currentSlug && (
             <div className="mt-6 pt-6 border-t">
               <div className="flex items-center gap-2 mb-3">
-                <LinkIcon className="h-4 w-4 text-primary" />
+                <LinkIcon className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
                 <h4 className="text-sm font-medium">Public Organization Page</h4>
               </div>
               <div className="rounded-lg border bg-muted/50 p-4">
@@ -265,147 +252,41 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
         <StatCard
           title="Team Members"
           value={stats?.total_users || 0}
-          description={limits.max_users === -1 ? "Unlimited" : `of ${limits.max_users} allowed`}
-          icon={<Users className="h-4 w-4 text-primary" />}
+          description="Active team members"
+          icon={<Users className="h-5 w-5 text-repwell-teal-300" weight="duotone" />}
         />
         <StatCard
           title="Professionals"
           value={stats?.total_members || 0}
-          description={limits.max_professionals === -1 ? "Unlimited" : `of ${limits.max_professionals} allowed`}
-          icon={<UserCheck className="h-4 w-4 text-primary" />}
+          description="Registered professionals"
+          icon={<UserCheck className="h-5 w-5 text-repwell-teal-300" weight="duotone" />}
         />
         <StatCard
           title="Total Reviews"
           value={stats?.total_reviews || 0}
           description="All time reviews collected"
-          icon={<Star className="h-4 w-4 text-primary" />}
+          icon={<Star className="h-5 w-5 text-repwell-teal-300" weight="duotone" />}
         />
         <StatCard
           title="Total Surveys"
           value={stats?.total_surveys || 0}
           description="Surveys sent all time"
-          icon={<FileText className="h-4 w-4 text-primary" />}
+          icon={<FileText className="h-5 w-5 text-repwell-teal-300" weight="duotone" />}
         />
         <StatCard
           title="Active Surveys"
           value={stats?.active_surveys || 0}
           description="Surveys awaiting response"
-          icon={<Clock className="h-4 w-4 text-primary" />}
+          icon={<Clock className="h-5 w-5 text-repwell-teal-300" weight="duotone" />}
         />
         <StatCard
           title="Pending Reviews"
           value={stats?.pending_reviews || 0}
           description="Reviews awaiting approval"
-          icon={<CheckCircle2 className="h-4 w-4 text-primary" />}
+          icon={<CheckCircle2 className="h-5 w-5 text-repwell-teal-300" weight="duotone" />}
         />
       </div>
 
-      {/* Features */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Available Features</CardTitle>
-          <CardDescription>
-            Features included in your {tier} plan
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(features).map(([feature, enabled]) => (
-              <div
-                key={feature}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg border p-3",
-                  enabled ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50 opacity-60"
-                )}
-              >
-                <div className={cn(
-                  "h-2 w-2 rounded-full",
-                  enabled ? "bg-green-500" : "bg-gray-400"
-                )} />
-                <span className={cn(
-                  "text-sm capitalize",
-                  enabled ? "text-green-800" : "text-gray-600"
-                )}>
-                  {feature.replace(/_/g, " ")}
-                </span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Usage Limits */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Usage Limits</CardTitle>
-          <CardDescription>
-            Current usage against your plan limits
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <UsageBar
-              label="Team Members"
-              current={stats?.total_users || 0}
-              max={limits.max_users}
-            />
-            <UsageBar
-              label="Professionals"
-              current={stats?.total_members || 0}
-              max={limits.max_professionals}
-            />
-            <UsageBar
-              label="Surveys/Month"
-              current={0}
-              max={limits.max_surveys_per_month}
-              description="Resets monthly"
-            />
-            <UsageBar
-              label="API Calls/Day"
-              current={0}
-              max={limits.max_api_calls_per_day}
-              description="Resets daily"
-            />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-interface UsageBarProps {
-  label: string;
-  current: number;
-  max: number;
-  description?: string;
-}
-
-function UsageBar({ label, current, max, description }: UsageBarProps) {
-  const isUnlimited = max === -1;
-  const percentage = isUnlimited ? 0 : Math.min((current / max) * 100, 100);
-  const isNearLimit = !isUnlimited && percentage >= 80;
-  const isAtLimit = !isUnlimited && percentage >= 100;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">{label}</span>
-        <span className="text-sm text-muted-foreground">
-          {current.toLocaleString()} / {isUnlimited ? "∞" : max.toLocaleString()}
-        </span>
-      </div>
-      <div className="h-2 rounded-full bg-muted overflow-hidden">
-        <div
-          className={cn(
-            "h-full rounded-full transition-all",
-            isAtLimit ? "bg-red-500" : isNearLimit ? "bg-yellow-500" : "bg-primary"
-          )}
-          style={{ width: isUnlimited ? "0%" : `${percentage}%` }}
-        />
-      </div>
-      {description && (
-        <p className="text-xs text-muted-foreground">{description}</p>
-      )}
     </div>
   );
 }

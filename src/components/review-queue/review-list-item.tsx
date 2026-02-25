@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SourceIcon } from "@/components/shared/review-item";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,21 +59,6 @@ function getStatusBadge(status: Review["status"]) {
   }
 }
 
-function getSourceBadge(source: string) {
-  const colors: Record<string, string> = {
-    internal: "bg-blue-100 text-blue-700",
-    google: "bg-red-100 text-red-700",
-    zillow: "bg-purple-100 text-purple-700",
-    facebook: "bg-indigo-100 text-indigo-700",
-    yelp: "bg-orange-100 text-orange-700",
-  };
-  return (
-    <Badge className={colors[source] || "bg-gray-100 text-gray-700"}>
-      {source === "internal" ? "Survey" : source.charAt(0).toUpperCase() + source.slice(1)}
-    </Badge>
-  );
-}
-
 export function ReviewListItem({ review }: { review: Review | AggregatedReview }) {
   const { state, actions } = useReviewQueue();
   const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -123,7 +109,7 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
               ))}
             </div>
             {getStatusBadge(review.status)}
-            {getSourceBadge(review.source)}
+            <SourceIcon source={review.source} />
           </div>
         </div>
         {review.text ? (

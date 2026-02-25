@@ -46,6 +46,8 @@ export interface PublicBranchProfessional {
   nmls_id: string | null;
   average_rating: number | null;
   total_reviews: number | null;
+  is_enterprise: boolean;
+  is_pro: boolean;
 }
 
 /** @deprecated Use PublicBranchProfessional instead */
@@ -74,6 +76,8 @@ export interface PublicBranchProfileData {
   organization: (Pick<Organization, "id" | "name" | "logo_url" | "domain"> & { slug: string }) | null;
   professionals: PublicBranchProfessional[];
   reviews: PublicBranchReview[];
+  is_enterprise: boolean;
+  is_pro: boolean;
 }
 
 export interface BusinessHours {
@@ -111,6 +115,8 @@ export interface PublicProfessionalListItem {
   nps_score: number | null;
   latitude: number | null;
   longitude: number | null;
+  is_enterprise: boolean;
+  is_pro: boolean;
 }
 
 /** @deprecated Use PublicProfessionalListItem instead */
@@ -171,6 +177,8 @@ export interface PublicProfessionalProfileData {
   reviews: PublicReview[];
   featuredReviews: PublicReview[];
   businessHours: BusinessHours | null;
+  is_enterprise: boolean;
+  is_pro: boolean;
 }
 
 /** @deprecated Use PublicProfessionalProfileData instead */
@@ -267,6 +275,7 @@ export async function getPublicLOProfile(
       domain: string | null;
       slug: string | null;
       account_type: string | null;
+      subscription_tier: string | null;
     };
     let organization: OrgInfo | null = null;
     let isIndividual = false;
@@ -274,7 +283,7 @@ export async function getPublicLOProfile(
     if (user.organization_id) {
       const { data: orgData, error: orgError } = await supabase
         .from("organizations")
-        .select("id, name, logo_url, domain, slug, account_type")
+        .select("id, name, logo_url, domain, slug, account_type, subscription_tier")
         .eq("id", user.organization_id)
         .single();
       if (orgError) {
@@ -296,6 +305,7 @@ export async function getPublicLOProfile(
           domain: null,
           slug: indivOrgData.slug,
           account_type: "individual",
+          subscription_tier: null,
         };
         isIndividual = true;
       }
@@ -437,6 +447,8 @@ export async function getPublicLOProfile(
           accepts_public_reviews: user.accepts_public_reviews ?? true,
           referral_enabled: user.referral_enabled ?? false,
           featured_review_ids: featuredIds,
+          is_enterprise: organization?.account_type === "enterprise",
+          is_pro: organization?.account_type === "enterprise" || ["professional", "pro"].includes(organization?.subscription_tier ?? ""),
         },
         organization: organization
           ? {
@@ -455,6 +467,8 @@ export async function getPublicLOProfile(
         reviews: (reviews || []).map((r) => ({ ...r, featured: r.featured ?? false })),
         featuredReviews,
         businessHours,
+        is_enterprise: organization?.account_type === "enterprise",
+        is_pro: organization?.account_type === "enterprise" || ["professional", "pro"].includes(organization?.subscription_tier ?? ""),
       },
     };
   } catch {
@@ -520,7 +534,11 @@ export async function getPublicLOList(
         total_reviews,
         nps_score,
         latitude,
-        longitude
+        longitude,
+        organizations (
+          account_type,
+          subscription_tier
+        )
       `
       )
       .eq("is_active", true)
@@ -537,11 +555,18 @@ export async function getPublicLOList(
     }
 
     // Map users to the expected format, using photo_url or avatar_url
-    const professionals = (users || []).map((user) => ({
-      ...user,
-      full_name: user.full_name || "Unknown",
-      photo_url: user.avatar_url || user.photo_url,
-    }));
+    const professionals = (users || []).map((user) => {
+      const org = user.organizations as { account_type?: string | null; subscription_tier?: string | null } | null;
+      const isEnterprise = org?.account_type === "enterprise";
+      const isPro = isEnterprise || ["professional", "pro"].includes(org?.subscription_tier ?? "");
+      return {
+        ...user,
+        full_name: user.full_name || "Unknown",
+        photo_url: user.avatar_url || user.photo_url,
+        is_enterprise: isEnterprise,
+        is_pro: isPro,
+      };
+    });
 
     return {
       success: true,
@@ -685,7 +710,7 @@ export async function getPublicBranchProfile(
     // Fetch the organization
     const { data: organization } = await supabase
       .from("organizations")
-      .select("id, name, logo_url, domain, slug")
+      .select("id, name, logo_url, domain, slug, account_type, subscription_tier")
       .eq("id", branch.organization_id)
       .single();
 
@@ -716,11 +741,17 @@ export async function getPublicBranchProfile(
       .order("average_rating", { ascending: false, nullsFirst: false })
       .limit(50);
 
+    // Derive tier flags from parent organization
+    const branchIsEnterprise = organization?.account_type === "enterprise";
+    const branchIsPro = branchIsEnterprise || ["professional", "pro"].includes((organization as { subscription_tier?: string | null })?.subscription_tier ?? "");
+
     // Map to expected format with photo fallback
     const professionals = (branchUsers || []).map((user) => ({
       ...user,
       full_name: user.full_name || "Unknown",
       photo_url: user.avatar_url || user.photo_url,
+      is_enterprise: branchIsEnterprise,
+      is_pro: branchIsPro,
     }));
 
     // Get user IDs for fetching reviews
@@ -813,6 +844,8 @@ export async function getPublicBranchProfile(
         organization: organization || null,
         professionals: professionals || [],
         reviews,
+        is_enterprise: branchIsEnterprise,
+        is_pro: branchIsPro,
       },
     };
   } catch {
@@ -939,6 +972,8 @@ export interface PublicOrgProfessional {
   branch_name: string | null;
   average_rating: number | null;
   total_reviews: number | null;
+  is_enterprise: boolean;
+  is_pro: boolean;
 }
 
 /** @deprecated Use PublicOrgProfessional instead */
@@ -1005,7 +1040,8 @@ export async function getPublicOrganizationProfile(
         instagram_url,
         twitter_url,
         headquarters_branch_id,
-        account_type
+        account_type,
+        subscription_tier
       `
       )
       .eq("slug", slug)
@@ -1260,16 +1296,22 @@ export async function getPublicOrganizationProfile(
           total_reviews: b.total_reviews,
           total_members: b.total_members,
         })),
-        featuredProfessionals: allProfessionals.map((professional) => ({
-          id: professional.id,
-          slug: professional.slug,
-          full_name: professional.full_name || "Unknown",
-          title: professional.title,
-          photo_url: professional.photo_url,
-          branch_name: professional.branch,
-          average_rating: professional.average_rating,
-          total_reviews: professional.total_reviews,
-        })),
+        featuredProfessionals: allProfessionals.map((professional) => {
+          const orgIsEnterprise = (orgData as { account_type?: string }).account_type === "enterprise";
+          const orgIsPro = orgIsEnterprise || ["professional", "pro"].includes(String((orgData as { subscription_tier?: string | null }).subscription_tier ?? ""));
+          return {
+            id: professional.id,
+            slug: professional.slug,
+            full_name: professional.full_name || "Unknown",
+            title: professional.title,
+            photo_url: professional.photo_url,
+            branch_name: professional.branch,
+            average_rating: professional.average_rating,
+            total_reviews: professional.total_reviews,
+            is_enterprise: orgIsEnterprise,
+            is_pro: orgIsPro,
+          };
+        }),
         testimonials,
       },
     };

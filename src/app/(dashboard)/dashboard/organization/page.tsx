@@ -4,13 +4,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   BuildingOffice as Building2,
+  ChartBar,
+  GearSix,
+  Palette,
+  Users,
+  Buildings,
+  FileText,
+  CreditCard,
 } from "@phosphor-icons/react/dist/ssr";
 import { OrganizationSettings } from "@/components/organization/organization-settings";
 import { OrganizationBranding } from "@/components/organization/organization-branding";
 import { OrganizationTeam } from "@/components/organization/organization-team";
 import { OrganizationBilling } from "@/components/organization/organization-billing";
 import { OrganizationOverview } from "@/components/organization/organization-overview";
-import { OrganizationSEO } from "@/components/organization/organization-seo";
+import { OrganizationBranches } from "@/components/organization/organization-branches";
 import { ResponseTemplatesTab } from "@/components/organization/response-templates-tab";
 import { requireEnterpriseAdmin } from "@/lib/access";
 
@@ -21,8 +28,8 @@ export const metadata = {
 
 function TabSkeleton() {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-72" />
       </CardHeader>
@@ -38,6 +45,8 @@ function TabSkeleton() {
   );
 }
 
+const triggerClassName = "relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-repwell-teal-400 data-[state=active]:text-repwell-teal-300 border-b-2 border-transparent data-[state=active]:border-repwell-teal-300 rounded-none bg-transparent shadow-none transition-colors duration-200 flex items-center gap-2 whitespace-nowrap";
+
 export default async function OrganizationPage() {
   // Check access - requires enterprise account + admin role
   await requireEnterpriseAdmin();
@@ -46,11 +55,11 @@ export default async function OrganizationPage() {
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Building2 className="h-5 w-5 text-primary" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <Building2 className="h-5 w-5 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Organization</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display text-repwell-teal-500">Organization</h1>
           <p className="text-muted-foreground">
             Manage your organization settings, branding, and team
           </p>
@@ -59,14 +68,35 @@ export default async function OrganizationPage() {
 
       {/* Organization tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="bg-muted/50 p-1">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
+        <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto gap-0 overflow-x-auto">
+          <TabsTrigger value="overview" className={triggerClassName}>
+            <ChartBar className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="settings" className={triggerClassName}>
+            <GearSix className="h-4 w-4" />
+            Settings
+          </TabsTrigger>
+          <TabsTrigger value="branding" className={triggerClassName}>
+            <Palette className="h-4 w-4" />
+            Branding
+          </TabsTrigger>
+          <TabsTrigger value="team" className={triggerClassName}>
+            <Users className="h-4 w-4" />
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="branches" className={triggerClassName}>
+            <Buildings className="h-4 w-4" />
+            Branches
+          </TabsTrigger>
+          <TabsTrigger value="templates" className={triggerClassName}>
+            <FileText className="h-4 w-4" />
+            Templates
+          </TabsTrigger>
+          <TabsTrigger value="billing" className={triggerClassName}>
+            <CreditCard className="h-4 w-4" />
+            Billing
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -93,15 +123,15 @@ export default async function OrganizationPage() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="templates" className="space-y-6">
+        <TabsContent value="branches" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
-            <ResponseTemplatesTab />
+            <OrganizationBranches />
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="seo" className="space-y-6">
+        <TabsContent value="templates" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
-            <OrganizationSEO />
+            <ResponseTemplatesTab />
           </Suspense>
         </TabsContent>
 

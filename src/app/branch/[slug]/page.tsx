@@ -50,7 +50,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
     redirect(`/branch/${result.redirectSlug}`);
   }
 
-  const { branch, organization, professionals, reviews } = result.data;
+  const { branch, organization, professionals, reviews, is_enterprise } = result.data;
   const baseUrl = getBaseUrl();
 
   // Build breadcrumbs
@@ -99,6 +99,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
         professionals={professionals}
         reviews={reviews}
         breadcrumbs={breadcrumbs}
+        isEnterprise={is_enterprise}
       />
     </>
   );

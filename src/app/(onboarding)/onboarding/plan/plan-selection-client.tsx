@@ -4,20 +4,21 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  Check,
+  CheckCircle,
   Sparkle as Sparkles,
+  User,
+  Buildings,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
@@ -34,6 +35,7 @@ interface PlanOption {
   features: string[];
   highlighted?: boolean;
   badge?: string;
+  icon: React.ElementType;
 }
 
 const plans: PlanOption[] = [
@@ -43,6 +45,7 @@ const plans: PlanOption[] = [
     monthlyPrice: 49,
     yearlyPrice: 39,
     description: "Perfect for individuals",
+    icon: User,
     features: [
       "1 user account",
       "Unlimited surveys",
@@ -59,6 +62,7 @@ const plans: PlanOption[] = [
     monthlyPrice: 149,
     yearlyPrice: 119,
     description: "For individuals who need AI insights",
+    icon: Sparkles,
     features: [
       "Everything in Basic",
       "AI-powered insights",
@@ -77,6 +81,7 @@ const plans: PlanOption[] = [
     monthlyPrice: -1,
     yearlyPrice: -1,
     description: "For teams and organizations",
+    icon: Buildings,
     features: [
       "Everything in Pro",
       "Unlimited team members",
@@ -96,7 +101,6 @@ export function PlanSelectionClient() {
   const [loadingPlan, setLoadingPlan] = React.useState<string | null>(null);
 
   const handleSelectPlan = async (planId: PlanOption["id"]) => {
-    // Enterprise goes to contact
     if (planId === "enterprise") {
       router.push("/contact?plan=enterprise");
       return;
@@ -105,7 +109,6 @@ export function PlanSelectionClient() {
     setLoadingPlan(planId);
 
     try {
-      // Step 1: Save plan selection
       const input: SelectPlanInput = {
         plan: planId,
         billingCycle: isYearly ? "year" : "month",
@@ -122,11 +125,9 @@ export function PlanSelectionClient() {
         return;
       }
 
-      // Step 2: Create Stripe checkout session and redirect directly
       const checkoutResult = await createOnboardingCheckout();
 
       if (checkoutResult.success && checkoutResult.url) {
-        // Redirect directly to Stripe checkout
         window.location.href = checkoutResult.url;
       } else {
         toast({
@@ -155,7 +156,7 @@ export function PlanSelectionClient() {
     >
       {/* Header */}
       <motion.div variants={fadeInUp} className="text-center space-y-4">
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-repwell-teal-500">
           Choose your plan
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -164,22 +165,24 @@ export function PlanSelectionClient() {
         </p>
       </motion.div>
 
-      {/* Billing toggle */}
-      <motion.div variants={fadeInUp} className="flex items-center justify-center gap-4">
-        <Label htmlFor="billing-toggle" className={cn("text-sm", !isYearly && "font-medium")}>
-          Monthly
-        </Label>
-        <Switch
-          id="billing-toggle"
-          checked={isYearly}
-          onCheckedChange={setIsYearly}
-        />
-        <Label htmlFor="billing-toggle" className={cn("text-sm flex items-center gap-2", isYearly && "font-medium")}>
-          Yearly
-          <Badge variant="secondary" className="text-xs">
-            Save 20%
-          </Badge>
-        </Label>
+      {/* Billing toggle in pill container */}
+      <motion.div variants={fadeInUp} className="flex items-center justify-center">
+        <div className="flex items-center gap-4 rounded-full bg-repwell-sage-100/30 px-6 py-2.5">
+          <Label htmlFor="billing-toggle" className={cn("text-sm", !isYearly && "font-medium text-repwell-teal-500")}>
+            Monthly
+          </Label>
+          <Switch
+            id="billing-toggle"
+            checked={isYearly}
+            onCheckedChange={setIsYearly}
+          />
+          <Label htmlFor="billing-toggle" className={cn("text-sm flex items-center gap-2", isYearly && "font-medium text-repwell-teal-500")}>
+            Yearly
+            <span className="inline-flex items-center rounded-full bg-repwell-teal-300 px-2.5 py-0.5 text-xs font-medium text-white">
+              Save 20%
+            </span>
+          </Label>
+        </div>
       </motion.div>
 
       {/* Plan cards */}
@@ -190,31 +193,46 @@ export function PlanSelectionClient() {
         {plans.map((plan) => {
           const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
           const isLoading = loadingPlan === plan.id;
+          const IconComponent = plan.icon;
 
           return (
             <Card
               key={plan.id}
               className={cn(
-                "relative flex flex-col transition-all duration-200",
+                "relative flex flex-col overflow-hidden transition-all duration-200",
                 plan.highlighted
-                  ? "border-primary shadow-lg ring-2 ring-primary/20 lg:scale-105"
-                  : "hover:border-primary/50 hover:shadow-md"
+                  ? "border-repwell-teal-300 shadow-lg ring-1 ring-repwell-teal-300/20 lg:scale-105"
+                  : "hover:border-repwell-teal-300/50 hover:shadow-md"
               )}
             >
+              {/* Accent bar at top */}
+              <div className={cn(
+                "h-1.5",
+                plan.highlighted
+                  ? "bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200"
+                  : "bg-gradient-to-r from-repwell-sage-100 to-transparent"
+              )} />
+
               {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <Badge className="px-3 py-1 shadow-md">
-                    <Sparkles className="h-3 w-3 mr-1" />
+                <div className="absolute top-4 right-4 z-10">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-repwell-teal-300 px-3 py-1 text-xs font-medium text-white shadow-md">
+                    <Sparkles className="h-3 w-3" weight="fill" />
                     {plan.badge}
-                  </Badge>
+                  </span>
                 </div>
               )}
 
-              <CardHeader className="text-center pb-2">
+              {/* Gradient header */}
+              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 text-center pb-4">
+                <div className="flex justify-center mb-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                    <IconComponent className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                  </div>
+                </div>
                 <CardTitle className="text-xl">{plan.name}</CardTitle>
                 <CardDescription className="text-sm">{plan.description}</CardDescription>
                 <div className="mt-4 flex items-baseline justify-center gap-1">
-                  <span className="text-3xl font-bold">
+                  <span className="font-display text-3xl font-bold text-repwell-teal-500">
                     {price === -1 ? "Custom" : price === 0 ? "Free" : `$${price}`}
                   </span>
                   {price > 0 && (
@@ -228,13 +246,11 @@ export function PlanSelectionClient() {
                 )}
               </CardHeader>
 
-              <CardContent className="flex-1 pt-4">
+              <CardContent className="flex-1 pt-5">
                 <ul className="space-y-3">
                   {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                        <Check className="h-3 w-3 text-primary" strokeWidth={3} />
-                      </div>
+                    <li key={index} className="flex items-start gap-2.5 text-sm">
+                      <CheckCircle className="h-4 w-4 shrink-0 mt-0.5 text-repwell-sage-200" weight="fill" />
                       <span className="text-muted-foreground">{feature}</span>
                     </li>
                   ))}
@@ -243,7 +259,10 @@ export function PlanSelectionClient() {
 
               <CardFooter className="pt-4">
                 <Button
-                  className="w-full"
+                  className={cn(
+                    "w-full h-11",
+                    plan.highlighted && "bg-repwell-teal-300 hover:bg-repwell-teal-400"
+                  )}
                   variant={plan.highlighted ? "default" : "outline"}
                   onClick={() => handleSelectPlan(plan.id)}
                   disabled={isLoading || loadingPlan !== null}

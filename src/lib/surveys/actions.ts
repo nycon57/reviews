@@ -23,13 +23,29 @@ export interface ActionResult<T = void> {
   error?: string;
 }
 
-async function requireSurveyTemplatePermission(): Promise<ActionResult | null> {
+async function requireSurveyAccess(): Promise<ActionResult | null> {
   const ctx = await getAccessContext();
   if (!ctx) return { success: false, error: "Not authenticated" };
+
+  // Individual users can manage their own survey templates
+  if (ctx.accountType === "individual") return null;
+
+  // Enterprise users need MANAGE_SURVEY_TEMPLATES (admin only)
   if (!hasPermission(ctx, PERMISSIONS.MANAGE_SURVEY_TEMPLATES)) {
     return { success: false, error: "Insufficient permissions" };
   }
   return null; // No error — access granted
+}
+
+/** Resolve the caller's organization ID (works for both individual + enterprise) */
+async function resolveOrgId(supabase: ReturnType<typeof createAdminClient>, userId: string): Promise<string | null> {
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, individual_organization_id")
+    .eq("id", userId)
+    .single();
+
+  return userData?.organization_id || userData?.individual_organization_id || null;
 }
 
 // Get all survey templates for the current organization
@@ -42,21 +58,15 @@ export async function getSurveyTemplates(): Promise<ActionResult<SurveyTemplate[
       return { success: false, error: "Not authenticated" };
     }
 
-    // Get user's organization_id
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
+    const orgId = await resolveOrgId(supabase, user.id);
+    if (!orgId) {
       return { success: false, error: "Organization not found" };
     }
 
     const { data, error } = await supabase
       .from("survey_templates")
       .select("*")
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", orgId)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -92,14 +102,8 @@ export async function getSurveyTemplate(id: string): Promise<ActionResult<Survey
       return { success: false, error: "Not authenticated" };
     }
 
-    // Resolve caller's org to prevent cross-tenant reads
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
+    const orgId = await resolveOrgId(supabase, user.id);
+    if (!orgId) {
       return { success: false, error: "Organization not found" };
     }
 
@@ -107,7 +111,7 @@ export async function getSurveyTemplate(id: string): Promise<ActionResult<Survey
       .from("survey_templates")
       .select("*")
       .eq("id", id)
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", orgId)
       .single();
 
     if (error) {
@@ -141,7 +145,7 @@ export async function createSurveyTemplate(
   input: CreateSurveyTemplateInput
 ): Promise<ActionResult<SurveyTemplate>> {
   try {
-    const permError = await requireSurveyTemplatePermission();
+    const permError = await requireSurveyAccess();
     if (permError) return permError as ActionResult<SurveyTemplate>;
 
     const validated = createSurveyTemplateSchema.safeParse(input);
@@ -156,14 +160,8 @@ export async function createSurveyTemplate(
       return { success: false, error: "Not authenticated" };
     }
 
-    // Get user's organization_id
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
+    const orgId = await resolveOrgId(supabase, user.id);
+    if (!orgId) {
       return { success: false, error: "Organization not found" };
     }
 
@@ -175,7 +173,7 @@ export async function createSurveyTemplate(
       thank_you_config: validated.data.thankYouConfig ? JSON.parse(JSON.stringify(validated.data.thankYouConfig)) : null,
       is_active: validated.data.isActive ?? true,
       is_default: validated.data.isDefault ?? false,
-      organization_id: userData.organization_id,
+      organization_id: orgId,
       created_by: user.id,
     };
 
@@ -214,7 +212,7 @@ export async function updateSurveyTemplate(
   input: UpdateSurveyTemplateInput
 ): Promise<ActionResult<SurveyTemplate>> {
   try {
-    const permError = await requireSurveyTemplatePermission();
+    const permError = await requireSurveyAccess();
     if (permError) return permError as ActionResult<SurveyTemplate>;
 
     const validated = updateSurveyTemplateSchema.safeParse(input);
@@ -275,7 +273,7 @@ export async function updateSurveyTemplate(
 // Delete a survey template
 export async function deleteSurveyTemplate(id: string): Promise<ActionResult> {
   try {
-    const permError = await requireSurveyTemplatePermission();
+    const permError = await requireSurveyAccess();
     if (permError) return permError;
 
     const supabase = createAdminClient();
@@ -319,7 +317,7 @@ export async function deleteSurveyTemplate(id: string): Promise<ActionResult> {
 // Duplicate a survey template
 export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<SurveyTemplate>> {
   try {
-    const permError = await requireSurveyTemplatePermission();
+    const permError = await requireSurveyAccess();
     if (permError) return permError as ActionResult<SurveyTemplate>;
 
     const supabase = createAdminClient();
@@ -329,14 +327,8 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
       return { success: false, error: "Not authenticated" };
     }
 
-    // Resolve caller's org to prevent cross-tenant duplication
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
+    const orgId = await resolveOrgId(supabase, user.id);
+    if (!orgId) {
       return { success: false, error: "Organization not found" };
     }
 
@@ -345,7 +337,7 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
       .from("survey_templates")
       .select("*")
       .eq("id", id)
-      .eq("organization_id", userData.organization_id)
+      .eq("organization_id", orgId)
       .single();
 
     if (fetchError || !original) {
@@ -363,7 +355,7 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
         thank_you_config: original.thank_you_config,
         is_active: false, // Start as inactive
         is_default: false,
-        organization_id: userData.organization_id,
+        organization_id: orgId,
         created_by: user.id,
       })
       .select()
@@ -396,7 +388,7 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
 // Toggle template active status
 export async function toggleTemplateStatus(id: string, isActive: boolean): Promise<ActionResult> {
   try {
-    const permError = await requireSurveyTemplatePermission();
+    const permError = await requireSurveyAccess();
     if (permError) return permError;
 
     const supabase = createAdminClient();
@@ -406,14 +398,8 @@ export async function toggleTemplateStatus(id: string, isActive: boolean): Promi
       return { success: false, error: "Not authenticated" };
     }
 
-    // Resolve caller's org to prevent cross-tenant writes
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("organization_id")
-      .eq("id", user.id)
-      .single();
-
-    if (userError || !userData?.organization_id) {
+    const orgId = await resolveOrgId(supabase, user.id);
+    if (!orgId) {
       return { success: false, error: "Organization not found" };
     }
 
@@ -421,7 +407,7 @@ export async function toggleTemplateStatus(id: string, isActive: boolean): Promi
       .from("survey_templates")
       .update({ is_active: isActive, updated_at: new Date().toISOString() })
       .eq("id", id)
-      .eq("organization_id", userData.organization_id);
+      .eq("organization_id", orgId);
 
     if (error) {
       return { success: false, error: error.message };
@@ -440,7 +426,7 @@ export async function createFromDefaultTemplate(
   templateKey: keyof typeof DEFAULT_TEMPLATES
 ): Promise<ActionResult<SurveyTemplate>> {
   try {
-    const permError = await requireSurveyTemplatePermission();
+    const permError = await requireSurveyAccess();
     if (permError) return permError as ActionResult<SurveyTemplate>;
 
     const defaultTemplate = DEFAULT_TEMPLATES[templateKey];

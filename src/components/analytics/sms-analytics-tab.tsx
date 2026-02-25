@@ -8,21 +8,26 @@ import {
   memo,
 } from "react";
 import {
-  PaperPlaneRightIcon as Send,
-  CheckCircleIcon as CheckCircle,
-  CursorClickIcon as MousePointerClick,
-  StarIcon as Star,
-  CurrencyDollarIcon as DollarSign,
-  ChartBarIcon as BarChart3,
-  CalendarIcon as Calendar,
-  ArrowsClockwiseIcon as RefreshCw,
-  UsersIcon as Users,
-  DownloadIcon as Download,
-  ArrowRightIcon as ArrowRight,
-  CaretUpDownIcon as ArrowUpDown,
-  WarningIcon as AlertTriangle,
-  EnvelopeIcon as Mail,
-  ChatCircleDotsIcon as MessageCircle,
+  PaperPlaneRight,
+  CheckCircle,
+  CursorClick,
+  Star,
+  CurrencyDollar,
+  ChartBar,
+  CalendarDots,
+  ArrowsClockwise,
+  Users,
+  Download,
+  ArrowRight,
+  CaretUpDown,
+  Warning,
+  Envelope,
+  ChatCircleDots,
+  Funnel,
+  Table as TableIcon,
+  Trophy,
+  Clock,
+  ArrowsLeftRight,
 } from "@phosphor-icons/react";
 import {
   BarChart,
@@ -222,29 +227,23 @@ const KpiCard = memo(function KpiCard({
   value,
   subtitle,
   icon: Icon,
-  iconColor,
 }: {
   title: string;
   value: string | number;
   subtitle: string;
   icon: typeof Star;
-  iconColor?: string;
 }) {
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold tracking-tight">{value}</p>
-            <p className="text-xs text-muted-foreground">{subtitle}</p>
-          </div>
-          <div className={cn("rounded-full p-2.5", iconColor ?? "bg-repwell-teal-300")} aria-hidden="true">
-            <Icon className="h-5 w-5 text-white" aria-hidden="true" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10" aria-hidden="true">
+        <Icon className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+      </div>
+      <div>
+        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value}</p>
+        <p className="text-xs text-muted-foreground">{title}</p>
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
+      </div>
+    </div>
   );
 });
 
@@ -258,43 +257,37 @@ function SmsKpiCards({ data }: { data: SmsAnalyticsData }) {
           title="Total Sent"
           value={formatNumber(summary.totalSent)}
           subtitle="Messages sent"
-          icon={Send}
-          iconColor="bg-repwell-teal-300"
+          icon={PaperPlaneRight}
         />
         <KpiCard
           title="Delivery Rate"
           value={formatPercent(summary.deliveryRate)}
           subtitle={`${formatNumber(summary.totalDelivered)} delivered`}
           icon={CheckCircle}
-          iconColor="bg-repwell-sage-200"
         />
         <KpiCard
           title="Click Rate"
           value={formatPercent(summary.clickRate)}
           subtitle={`${formatNumber(summary.totalClicks)} clicks`}
-          icon={MousePointerClick}
-          iconColor="bg-[#6b9080]"
+          icon={CursorClick}
         />
         <KpiCard
           title="Conversion Rate"
           value={formatPercent(summary.conversionRate)}
           subtitle="Reviews per click"
           icon={Star}
-          iconColor="bg-amber-500"
         />
         <KpiCard
           title="Total Cost"
           value={formatCurrency(summary.totalCostCents)}
           subtitle="SMS spend"
-          icon={DollarSign}
-          iconColor="bg-repwell-teal-400"
+          icon={CurrencyDollar}
         />
         <KpiCard
           title="Cost Per Review"
           value={formatCurrency(summary.costPerReview)}
           subtitle={`${formatNumber(summary.totalReviewsGenerated)} reviews`}
           icon={Star}
-          iconColor="bg-repwell-teal-300"
         />
       </div>
     </section>
@@ -315,10 +308,17 @@ function DeliveryFunnel({ data }: { data: SmsAnalyticsData }) {
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Delivery Funnel</CardTitle>
-        <CardDescription>Message journey from send to review</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Funnel className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Delivery Funnel</CardTitle>
+            <CardDescription>Message journey from send to review</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {funnel.sent === 0 ? (
@@ -369,10 +369,17 @@ function DailyVolumeChart({ data }: { data: SmsDailyVolume[] }) {
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Daily Volume</CardTitle>
-        <CardDescription>Messages sent, delivered, and failed per day</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <ChartBar className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Daily Volume</CardTitle>
+            <CardDescription>Messages sent, delivered, and failed per day</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
@@ -437,16 +444,23 @@ function TemplatePerformanceTable({ data }: { data: SmsTemplatePerformanceRow[] 
         onClick={() => toggleSort(field)}
       >
         {label}
-        <ArrowUpDown className="h-3 w-3" />
+        <CaretUpDown className="h-3 w-3" />
       </button>
     </TableHead>
   ), [toggleSort]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Template Performance</CardTitle>
-        <CardDescription>How each template performs across key metrics</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <TableIcon className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Template Performance</CardTitle>
+            <CardDescription>How each template performs across key metrics</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
@@ -496,10 +510,17 @@ function TemplatePerformanceTable({ data }: { data: SmsTemplatePerformanceRow[] 
 
 function LoLeaderboard({ data }: { data: SmsLoLeaderboardRow[] }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">LO Leaderboard</CardTitle>
-        <CardDescription>Team member SMS performance ranked by conversion rate</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Trophy className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">LO Leaderboard</CardTitle>
+            <CardDescription>Team member SMS performance ranked by conversion rate</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {data.length === 0 ? (
@@ -570,10 +591,17 @@ function OptOutTrendChart({ data }: { data: SmsOptOutTrend[] }) {
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Opt-out Trend</CardTitle>
-        <CardDescription>Daily opt-out count and rate over time</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Warning className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Opt-out Trend</CardTitle>
+            <CardDescription>Daily opt-out count and rate over time</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {data.length === 0 || data.every((d) => d.optOutCount === 0) ? (
@@ -621,10 +649,17 @@ function CostBreakdownChart({ data }: { data: SmsCostBreakdown[] }) {
   const totalCost = useMemo(() => data.reduce((s, d) => s + d.costCents, 0), [data]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Cost Breakdown</CardTitle>
-        <CardDescription>Spend by message category</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <CurrencyDollar className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Cost Breakdown</CardTitle>
+            <CardDescription>Spend by message category</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {data.length === 0 || totalCost === 0 ? (
@@ -706,10 +741,17 @@ function TimeHeatmap({ data }: { data: SmsTimeHeatmapCell[] }) {
   const hasSends = data.some((c) => c.sends > 0);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Send Time Performance</CardTitle>
-        <CardDescription>Click rates by day of week and hour (UTC)</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Clock className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Send Time Performance</CardTitle>
+            <CardDescription>Click rates by day of week and hour (UTC)</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {!hasSends ? (
@@ -791,10 +833,17 @@ function ChannelComparisonSection({ data }: { data: SmsChannelComparison[] | nul
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Channel Comparison</CardTitle>
-        <CardDescription>Email vs SMS performance side by side</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <ArrowsLeftRight className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-base">Channel Comparison</CardTitle>
+            <CardDescription>Email vs SMS performance side by side</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -804,13 +853,13 @@ function ChannelComparisonSection({ data }: { data: SmsChannelComparison[] | nul
                 <TableHead>Metric</TableHead>
                 <TableHead>
                   <div className="flex items-center gap-1.5">
-                    <Mail className="h-4 w-4" aria-hidden="true" />
+                    <Envelope className="h-4 w-4" aria-hidden="true" />
                     Email
                   </div>
                 </TableHead>
                 <TableHead>
                   <div className="flex items-center gap-1.5">
-                    <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                    <ChatCircleDots className="h-4 w-4" aria-hidden="true" />
                     SMS
                   </div>
                 </TableHead>
@@ -839,7 +888,7 @@ function ChannelComparisonSection({ data }: { data: SmsChannelComparison[] | nul
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
-      <BarChart3 className="h-10 w-10 text-muted-foreground mb-3" aria-hidden="true" />
+      <ChartBar className="h-10 w-10 text-muted-foreground mb-3" aria-hidden="true" />
       <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
@@ -908,11 +957,21 @@ export function SmsAnalyticsTab({ teamMembers, userRole }: Props) {
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Funnel className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle>Filters</CardTitle>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
           <div className="flex flex-wrap items-center gap-4" role="group" aria-label="SMS analytics filters">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <CalendarDots className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
                 <SelectTrigger className="w-[150px]" aria-label="Select date range">
                   <SelectValue placeholder="Date range" />
@@ -951,7 +1010,7 @@ export function SmsAnalyticsTab({ teamMembers, userRole }: Props) {
                 Export CSV
               </Button>
               <Button variant="outline" size="icon" onClick={fetchData} disabled={isLoading} aria-label="Refresh SMS analytics">
-                <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} aria-hidden="true" />
+                <ArrowsClockwise className={cn("h-4 w-4", isLoading && "animate-spin")} aria-hidden="true" />
               </Button>
             </div>
           </div>
@@ -1001,7 +1060,7 @@ export function SmsAnalyticsTab({ teamMembers, userRole }: Props) {
         <Card>
           <CardContent className="py-12">
             <div className="text-center">
-              <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
+              <Warning className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
               <h3 className="mt-4 text-lg font-semibold">Unable to load analytics</h3>
               <p className="mt-1 text-sm text-muted-foreground">Try refreshing the page</p>
               <Button variant="outline" className="mt-4" onClick={fetchData}>

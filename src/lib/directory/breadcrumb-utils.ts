@@ -65,7 +65,7 @@ export function buildProfessionalBreadcrumbs(
   // Add professional (current page) - prefer slug for SEO-friendly URL
   items.push({
     label: professional.full_name,
-    href: `/pro/${professional.slug || professional.id}`,
+    href: professional.slug ? `/pro/${professional.slug}` : `/pro/${professional.id}`,
     type: "professional",
   });
 

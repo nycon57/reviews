@@ -1,18 +1,14 @@
 import { Suspense } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Medal as Award,
   Gift,
   TrendUp as TrendingUp,
-  Users,
-  Target,
   Chats as MessageSquare,
 } from "@phosphor-icons/react/dist/ssr";
 import {
   getRecognitions,
-  getRecognitionAnalytics,
   getManagerFeedback,
   initializeDefaultBadges,
 } from "@/lib/recognition/actions";
@@ -29,90 +25,6 @@ export const metadata = {
   title: "Recognition & Feedback | RepWell",
   description: "Employee recognition and continuous feedback",
 };
-
-function StatCardSkeleton() {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-4 w-4" />
-      </CardHeader>
-      <CardContent>
-        <Skeleton className="h-8 w-16" />
-        <Skeleton className="mt-1 h-3 w-32" />
-      </CardContent>
-    </Card>
-  );
-}
-
-async function RecognitionStatsCards() {
-  const result = await getRecognitionAnalytics("month");
-  const analytics = result.data;
-
-  if (!analytics) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <StatCardSkeleton key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            Recognitions This Month
-          </CardTitle>
-          <Gift className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{analytics.totalRecognitions}</div>
-          <p className="text-xs text-muted-foreground">
-            {analytics.totalPoints} points awarded
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Active Givers</CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{analytics.uniqueGivers}</div>
-          <p className="text-xs text-muted-foreground">
-            employees giving recognition
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Recipients</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{analytics.uniqueRecipients}</div>
-          <p className="text-xs text-muted-foreground">employees recognized</p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Participation</CardTitle>
-          <Target className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{analytics.participationRate}%</div>
-          <p className="text-xs text-muted-foreground">of employees engaged</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 async function RecognitionFeedSection() {
   const result = await getRecognitions({ limit: 10 });
@@ -164,19 +76,6 @@ export default async function RecognitionPage() {
         </div>
       </div>
 
-      {/* Stats cards */}
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <StatCardSkeleton key={i} />
-            ))}
-          </div>
-        }
-      >
-        <RecognitionStatsCards />
-      </Suspense>
-
       {/* Main content with tabs */}
       <Tabs defaultValue="feed" className="space-y-4">
         <TabsList>
@@ -197,27 +96,17 @@ export default async function RecognitionPage() {
         </TabsList>
 
         <TabsContent value="feed" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Recognition</CardTitle>
-              <CardDescription>
-                See what your colleagues are celebrating
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Suspense
-                fallback={
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <Skeleton key={i} className="h-32 w-full" />
-                    ))}
-                  </div>
-                }
-              >
-                <RecognitionFeedSection />
-              </Suspense>
-            </CardContent>
-          </Card>
+          <Suspense
+            fallback={
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-32 w-full" />
+                ))}
+              </div>
+            }
+          >
+            <RecognitionFeedSection />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-4">
@@ -239,27 +128,17 @@ export default async function RecognitionPage() {
 
         {isManager && (
           <TabsContent value="feedback" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Continuous Feedback</CardTitle>
-                <CardDescription>
-                  Feedback you&apos;ve given and received as a manager
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Suspense
-                  fallback={
-                    <div className="space-y-4">
-                      {[...Array(3)].map((_, i) => (
-                        <Skeleton key={i} className="h-32 w-full" />
-                      ))}
-                    </div>
-                  }
-                >
-                  <ManagerFeedbackSection currentUserId={userId} />
-                </Suspense>
-              </CardContent>
-            </Card>
+            <Suspense
+              fallback={
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Skeleton key={i} className="h-32 w-full" />
+                  ))}
+                </div>
+              }
+            >
+              <ManagerFeedbackSection currentUserId={userId} />
+            </Suspense>
           </TabsContent>
         )}
       </Tabs>

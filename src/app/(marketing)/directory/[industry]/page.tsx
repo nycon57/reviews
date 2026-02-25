@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import {
   searchProfessionals,
-  getAvailableStates,
   getAvailableIndustries,
   type SearchFilters,
   type DirectoryProfessional,
@@ -35,11 +34,13 @@ interface PageProps {
   }>;
   searchParams: Promise<{
     q?: string;
-    city?: string;
-    state?: string;
+    lat?: string;
+    lng?: string;
+    place?: string;
     rating?: string;
     sort?: string;
     page?: string;
+    radius?: string;
   }>;
 }
 
@@ -101,24 +102,26 @@ async function IndustryDirectoryContent({
 }) {
   const params = await searchParams;
 
+  const searchLat = params.lat ? parseFloat(params.lat) : undefined;
+  const searchLng = params.lng ? parseFloat(params.lng) : undefined;
+  const hasCoords = searchLat != null && searchLng != null && !isNaN(searchLat) && !isNaN(searchLng);
+
   // Build filters from search params with industry pre-filter
   const filters: SearchFilters = {
     query: params.q || undefined,
-    city: params.city || undefined,
-    state: params.state || undefined,
+    city: params.place || undefined,
+    searchLat: hasCoords ? searchLat : undefined,
+    searchLng: hasCoords ? searchLng : undefined,
+    radius: params.radius ? parseInt(params.radius, 10) : 50,
     minRating: params.rating ? parseFloat(params.rating) : undefined,
     sortBy: (params.sort as "rating" | "reviews" | "name") || "rating",
     sortOrder: "desc",
-    industry, // Pre-filter by industry
+    industry,
   };
 
   const page = params.page ? parseInt(params.page, 10) : 1;
 
-  // Fetch initial data
-  const [searchResult, availableStates] = await Promise.all([
-    searchProfessionals(filters, page, 20),
-    getAvailableStates(),
-  ]);
+  const searchResult = await searchProfessionals(filters, page, 20);
 
   const initialResults = searchResult.success ? searchResult.data?.professionals || [] : [];
   const initialCount = searchResult.success ? searchResult.data?.totalCount || 0 : 0;
@@ -127,8 +130,9 @@ async function IndustryDirectoryContent({
     <DirectorySearch
       initialResults={initialResults}
       initialCount={initialCount}
-      availableStates={availableStates}
       industryFilter={industry}
+      initialCoords={hasCoords ? { lat: searchLat!, lng: searchLng! } : null}
+      initialPlace={params.place || ""}
     />
   );
 }
@@ -154,10 +158,10 @@ function generateIndustryDirectorySchema(
       position: index + 1,
       item: {
         "@type": "Person",
-        "@id": `${baseUrl}/pro/${professional.id}`,
+        "@id": `${baseUrl}/pro/${professional.slug}`,
         name: professional.full_name,
         jobTitle: professional.title || config.labels.professional,
-        url: `${baseUrl}/pro/${professional.id}`,
+        url: `${baseUrl}/pro/${professional.slug}`,
         ...(professional.photo_url && { image: professional.photo_url }),
         ...(professional.email && { email: professional.email }),
         ...(professional.phone && { telephone: professional.phone }),
@@ -268,10 +272,16 @@ export default async function IndustryDirectoryPage(props: PageProps) {
 
   // Fetch data for structured data and industry filter
   const params = await props.searchParams;
+  const sdLat = params.lat ? parseFloat(params.lat) : undefined;
+  const sdLng = params.lng ? parseFloat(params.lng) : undefined;
+  const sdHasCoords = sdLat != null && sdLng != null && !isNaN(sdLat) && !isNaN(sdLng);
+
   const filters: SearchFilters = {
     query: params.q || undefined,
-    city: params.city || undefined,
-    state: params.state || undefined,
+    city: params.place || undefined,
+    searchLat: sdHasCoords ? sdLat : undefined,
+    searchLng: sdHasCoords ? sdLng : undefined,
+    radius: params.radius ? parseInt(params.radius, 10) : 50,
     minRating: params.rating ? parseFloat(params.rating) : undefined,
     sortBy: (params.sort as "rating" | "reviews" | "name") || "rating",
     sortOrder: "desc",

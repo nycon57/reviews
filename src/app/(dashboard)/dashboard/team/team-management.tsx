@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,29 +23,24 @@ import {
   UserPlus,
   DotsThree as MoreHorizontal,
   Envelope as Mail,
-  Shield,
-  UserMinus as UserX,
   UserCheck,
   X,
   Clock,
-  Star,
   ArrowSquareOut as ExternalLink,
   MagnifyingGlass as Search,
-  Users,
   User,
   Medal as Award,
   ChartBar as BarChart,
   DownloadSimple as Download,
-  Pencil,
-  UserGear as UserCog,
+  Users,
+  EnvelopeSimple,
+  UserCircleMinus,
 } from "@phosphor-icons/react";
 import {
   getOrganizationMembers,
   getPendingInvitations,
   createInvitation,
   revokeInvitation,
-  updateMemberRole,
-  deactivateMember,
   reactivateMember,
   createInvitationSchema,
   type OrganizationMember,
@@ -53,11 +48,11 @@ import {
   type CreateInvitation,
 } from "@/lib/organization";
 import { GiveRecognitionDialog } from "@/components/recognition/give-recognition-dialog";
-import { EditTeamMemberDialog } from "@/components/organization/edit-team-member-dialog";
 import { usePermissions } from "@/lib/permissions/context";
 import { Phone } from "@phosphor-icons/react";
 import { formatForDisplay } from "@/lib/sms/phone-utils";
 import { getLoPhoneAssignments } from "@/lib/sms/enterprise/per-lo-numbers";
+import { cn } from "@/lib/utils";
 
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },
@@ -83,10 +78,9 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
 
   // Dialog state for role-based actions
   const [recognitionMember, setRecognitionMember] = useState<OrganizationMember | null>(null);
-  const [editMember, setEditMember] = useState<OrganizationMember | null>(null);
   // Confirmation state for destructive actions
-  const [memberToDeactivate, setMemberToDeactivate] = useState<string | null>(null);
   const [inviteToRevoke, setInviteToRevoke] = useState<string | null>(null);
+  const [isRevoking, setIsRevoking] = useState(false);
 
   const isAdmin = userRole === "admin";
   const showInviteButton = canInviteTeam();
@@ -202,46 +196,6 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     });
   }
 
-  async function handleUpdateRole(memberId: string, newRole: "admin" | "manager" | "user") {
-    startTransition(async () => {
-      const result = await updateMemberRole(memberId, newRole);
-
-      if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Role updated",
-          description: "Member role has been updated.",
-        });
-        refreshData();
-      }
-    });
-  }
-
-  async function handleDeactivate(memberId: string) {
-    startTransition(async () => {
-      const result = await deactivateMember(memberId);
-
-      if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Member deactivated",
-          description: "Member has been deactivated.",
-        });
-        refreshData();
-      }
-    });
-  }
-
   async function handleReactivate(memberId: string) {
     startTransition(async () => {
       const result = await reactivateMember(memberId);
@@ -263,7 +217,6 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
   }
 
   function downloadMemberReport(member: OrganizationMember) {
-    // Generate CSV with member performance data
     const rows: string[][] = [];
     const date = new Date().toISOString().split("T")[0];
 
@@ -292,7 +245,6 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    // Delay revoking to ensure the browser has finished downloading
     setTimeout(() => URL.revokeObjectURL(url), 100);
 
     toast({
@@ -304,12 +256,30 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-72" />
+        {/* Stats skeleton */}
+        <div className="grid grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+              <Skeleton className="h-10 w-10 rounded-lg" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-6 w-12" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Table skeleton */}
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex items-center gap-4">
@@ -330,7 +300,6 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
   const activeMembers = members.filter((m) => m.is_active);
   const inactiveMembers = members.filter((m) => !m.is_active);
 
-  // Filter members by search query
   const filteredActiveMembers = activeMembers.filter((member) => {
     const searchLower = searchQuery.toLowerCase();
     return (
@@ -341,31 +310,62 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
 
   return (
     <div className="space-y-6">
-      {/* Team members */}
-      <Card>
-        <CardContent className="pt-6">
-          {/* Search and Invite */}
-          <div className="mb-4 flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search team members..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+      {/* Stats Overview Strip */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Total Members", value: members.length, icon: Users },
+          { label: "Active", value: activeMembers.length, icon: UserCheck },
+          { label: "Pending Invites", value: invitations.length, icon: EnvelopeSimple },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                <Icon className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Active Team Members */}
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Users className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Team Members</CardTitle>
+                <CardDescription>
+                  {activeMembers.length} active member{activeMembers.length !== 1 ? "s" : ""}
+                </CardDescription>
+              </div>
             </div>
             {showInviteButton && (
               <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button size="sm">
                     <UserPlus className="mr-2 h-4 w-4" />
                     Invite Member
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Invite Team Member</DialogTitle>
+                    <DialogTitle className="flex items-center gap-2">
+                      <UserPlus className="h-5 w-5 text-repwell-teal-300" />
+                      Invite Team Member
+                    </DialogTitle>
                     <DialogDescription>
                       Send an invitation to add a new member to your organization.
                     </DialogDescription>
@@ -438,191 +438,179 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
               </Dialog>
             )}
           </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          {/* Search bar */}
+          <div className="px-6 py-4 border-b border-border/50">
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search team members..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>SMS Number</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
-                <TableHead className="w-[70px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredActiveMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={member.avatar_url || undefined} />
-                        <AvatarFallback>
-                          {(member.full_name || member.email)
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{member.full_name || "No name"}</p>
-                          {member.role === "user" && (
-                            <Link
-                              href={`/dashboard/analytics/member/${member.id}`}
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                            </Link>
-                          )}
+          {filteredActiveMembers.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-6">Member</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>SMS Number</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead className="w-[70px] pr-6"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredActiveMembers.map((member) => (
+                  <TableRow key={member.id} className="group">
+                    <TableCell className="pl-6">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={member.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs bg-repwell-sage-100/50 text-repwell-teal-400">
+                            {(member.full_name || member.email)
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm">{member.full_name || "No name"}</p>
+                            {member.role === "user" && (
+                              <Link
+                                href={`/dashboard/analytics/member/${member.id}`}
+                                className="text-muted-foreground hover:text-repwell-teal-400 transition-colors"
+                              >
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </Link>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{member.email}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={ROLE_LABELS[member.role]?.variant || "outline"}>
-                      {ROLE_LABELS[member.role]?.label || member.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {loPhoneMap.has(member.id) ? (
-                      <span className="flex items-center gap-1 text-sm font-mono">
-                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                        {formatForDisplay(loPhoneMap.get(member.id)!)}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
-                      Active
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(member.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {/* Manager-level actions (available to managers and admins) */}
-                        <DropdownMenuItem onClick={() => router.push(`/pro/${member.id}`)}>
-                          <User className="mr-2 h-4 w-4" />
-                          View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setRecognitionMember(member)}>
-                          <Award className="mr-2 h-4 w-4" />
-                          Give Recognition
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push(`/dashboard/analytics/member/${member.id}`)}>
-                          <BarChart className="mr-2 h-4 w-4" />
-                          See Analytics
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => downloadMemberReport(member)}>
-                          <Download className="mr-2 h-4 w-4" />
-                          Download Report
-                        </DropdownMenuItem>
-
-                        {/* Admin-only actions */}
-                        {isAdmin && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setEditMember(member)}>
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit Team Member
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={ROLE_LABELS[member.role]?.variant || "outline"}>
+                        {ROLE_LABELS[member.role]?.label || member.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {loPhoneMap.has(member.id) ? (
+                        <span className="flex items-center gap-1.5 text-sm font-mono">
+                          <Phone className="h-3.5 w-3.5 text-repwell-teal-300" />
+                          {formatForDisplay(loPhoneMap.get(member.id)!)}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className="border-repwell-sage-200 bg-repwell-sage-100/30 text-repwell-teal-400"
+                      >
+                        Active
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(member.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="pr-6">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {member.slug && (
+                            <DropdownMenuItem onClick={() => router.push(`/pro/${member.slug}`)}>
+                              <User className="mr-2 h-4 w-4" />
+                              View Profile
                             </DropdownMenuItem>
-                            <DropdownMenuSub>
-                              <DropdownMenuSubTrigger>
-                                <UserCog className="mr-2 h-4 w-4" />
-                                Change Role
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuSubContent>
-                                <DropdownMenuItem
-                                  onClick={() => handleUpdateRole(member.id, "admin")}
-                                  disabled={member.role === "admin"}
-                                >
-                                  <Shield className="mr-2 h-4 w-4" />
-                                  Make Admin
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleUpdateRole(member.id, "manager")}
-                                  disabled={member.role === "manager"}
-                                >
-                                  <Shield className="mr-2 h-4 w-4" />
-                                  Make Manager
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleUpdateRole(member.id, "user")}
-                                  disabled={member.role === "user"}
-                                >
-                                  <Shield className="mr-2 h-4 w-4" />
-                                  Make User
-                                </DropdownMenuItem>
-                              </DropdownMenuSubContent>
-                            </DropdownMenuSub>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onSelect={(e) => { e.preventDefault(); setMemberToDeactivate(member.id); }}
-                            >
-                              <UserX className="mr-2 h-4 w-4" />
-                              Deactivate
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {filteredActiveMembers.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    {searchQuery ? "No members found matching your search" : "No active team members"}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                          )}
+                          <DropdownMenuItem onClick={() => setRecognitionMember(member)}>
+                            <Award className="mr-2 h-4 w-4" />
+                            Give Recognition
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/dashboard/analytics/member/${member.id}`)}>
+                            <BarChart className="mr-2 h-4 w-4" />
+                            See Analytics
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => downloadMemberReport(member)}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Download Report
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-repwell-sage-100/30 mb-3">
+                <Users className="h-6 w-6 text-repwell-teal-300/50" />
+              </div>
+              <p className="text-sm font-medium text-muted-foreground">
+                {searchQuery ? "No members found matching your search" : "No active team members"}
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                {searchQuery ? "Try a different search term" : "Invite your first team member to get started"}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Pending invitations */}
+      {/* Pending Invitations */}
       {invitations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Invitations</CardTitle>
-            <CardDescription>
-              Invitations that haven&apos;t been accepted yet
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <EnvelopeSimple className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Pending Invitations</CardTitle>
+                <CardDescription>
+                  {invitations.length} invitation{invitations.length !== 1 ? "s" : ""} awaiting acceptance
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-6">Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Expires</TableHead>
-                  <TableHead className="w-[70px]"></TableHead>
+                  <TableHead className="w-[70px] pr-6"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {invitations.map((invite) => (
-                  <TableRow key={invite.id}>
-                    <TableCell>
+                  <TableRow key={invite.id} className="group">
+                    <TableCell className="pl-6">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-repwell-sage-100/50">
+                          <Mail className="h-4 w-4 text-repwell-teal-300" />
                         </div>
-                        <span>{invite.email}</span>
+                        <span className="text-sm">{invite.email}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -630,17 +618,17 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                         {ROLE_LABELS[invite.role]?.label || invite.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
+                    <TableCell className="text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5" />
                         {new Date(invite.expires_at).toLocaleDateString()}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="pr-6">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive"
+                        className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-all"
                         onClick={() => setInviteToRevoke(invite.id)}
                         disabled={isPending}
                       >
@@ -655,32 +643,39 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         </Card>
       )}
 
-      {/* Inactive members */}
+      {/* Inactive Members */}
       {inactiveMembers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Inactive Members</CardTitle>
-            <CardDescription>
-              Members who have been deactivated
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <UserCircleMinus className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Inactive Members</CardTitle>
+                <CardDescription>
+                  {inactiveMembers.length} deactivated member{inactiveMembers.length !== 1 ? "s" : ""}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Member</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-6">Member</TableHead>
                   <TableHead>Role</TableHead>
-                  <TableHead className="w-[120px]"></TableHead>
+                  <TableHead className="w-[120px] pr-6"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {inactiveMembers.map((member) => (
-                  <TableRow key={member.id} className="opacity-60">
-                    <TableCell>
+                  <TableRow key={member.id} className="group opacity-60 hover:opacity-100 transition-opacity">
+                    <TableCell className="pl-6">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
                           <AvatarImage src={member.avatar_url || undefined} />
-                          <AvatarFallback>
+                          <AvatarFallback className="text-xs bg-repwell-sage-100/50 text-repwell-teal-400">
                             {(member.full_name || member.email)
                               .split(" ")
                               .map((n) => n[0])
@@ -690,8 +685,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{member.full_name || "No name"}</p>
-                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                          <p className="font-medium text-sm">{member.full_name || "No name"}</p>
+                          <p className="text-xs text-muted-foreground">{member.email}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -700,12 +695,13 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                         {ROLE_LABELS[member.role]?.label || member.role}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="pr-6">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleReactivate(member.id)}
                         disabled={isPending}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <UserCheck className="mr-2 h-4 w-4" />
                         Reactivate
@@ -743,56 +739,12 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         }}
       />
 
-      {/* Edit Team Member Dialog (Admin only) */}
-      {editMember && isAdmin && (
-        <EditTeamMemberDialog
-          member={editMember}
-          open={!!editMember}
-          onOpenChange={(open) => !open && setEditMember(null)}
-          onSuccess={() => {
-            setEditMember(null);
-            refreshData();
-            toast({
-              title: "Member updated",
-              description: "Team member has been updated successfully.",
-            });
-          }}
-        />
-      )}
-
-      {/* Deactivate Member Confirmation */}
-      <AlertDialog
-        open={!!memberToDeactivate}
-        onOpenChange={(open) => !open && setMemberToDeactivate(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate team member?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will revoke their access to the dashboard. You can reactivate them later from this page.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (memberToDeactivate) {
-                  handleDeactivate(memberToDeactivate);
-                  setMemberToDeactivate(null);
-                }
-              }}
-            >
-              Deactivate
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       {/* Revoke Invitation Confirmation */}
       <AlertDialog
         open={!!inviteToRevoke}
-        onOpenChange={(open) => !open && setInviteToRevoke(null)}
+        onOpenChange={(open) => {
+          if (!open && !isRevoking) setInviteToRevoke(null);
+        }}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -802,17 +754,30 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isRevoking}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (inviteToRevoke) {
-                  handleRevokeInvitation(inviteToRevoke);
+              disabled={isRevoking}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!inviteToRevoke || isRevoking) return;
+                setIsRevoking(true);
+                try {
+                  await handleRevokeInvitation(inviteToRevoke);
+                } finally {
+                  setIsRevoking(false);
                   setInviteToRevoke(null);
                 }
               }}
             >
-              Revoke
+              {isRevoking ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Revoking...
+                </>
+              ) : (
+                "Revoke"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -65,8 +65,8 @@ export function AnalyticsPageClient({
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <ChartBar className="h-5 w-5 text-primary" aria-hidden="true" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+            <ChartBar className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>

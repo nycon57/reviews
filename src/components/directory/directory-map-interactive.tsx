@@ -273,7 +273,7 @@ export default function InteractiveMap({
                     <Popup className="repwell-popup" closeButton={true} maxWidth={280}>
                       <div className="p-1">
                         <div className="flex items-start gap-3">
-                          <Link href={`/pro/${prof.slug || prof.id}`}>
+                          <Link href={`/pro/${prof.slug}`}>
                             <Avatar className="h-11 w-11 border-2 border-repwell-sage-100">
                               <AvatarImage
                                 src={prof.photo_url || undefined}
@@ -286,7 +286,7 @@ export default function InteractiveMap({
                           </Link>
 
                           <div className="flex-1 min-w-0">
-                            <Link href={`/pro/${prof.slug || prof.id}`}>
+                            <Link href={`/pro/${prof.slug}`}>
                               <h4 className="font-semibold text-sm text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
                                 {prof.full_name}
                               </h4>
@@ -334,7 +334,7 @@ export default function InteractiveMap({
                               </Button>
                             )}
                             <Button size="sm" className="h-7 text-xs px-2.5" asChild>
-                              <Link href={`/pro/${prof.slug || prof.id}`}>View</Link>
+                              <Link href={`/pro/${prof.slug}`}>View</Link>
                             </Button>
                           </div>
                         </div>

@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Star } from "@phosphor-icons/react";
 import { AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import type { PublicProfessional, PublicReview, BusinessHours, OrgDisplay } from "@/lib/seo/actions";
+import { TierBadge } from "@/components/shared/tier-badge";
 import { useIsDesktop } from "@/hooks/use-is-desktop";
 import {
   ProfileHeroBanner,
@@ -37,6 +38,8 @@ interface ProProfileContentProps {
   featuredReviews: PublicReview[];
   businessHours: BusinessHours | null;
   breadcrumbs?: DirectoryBreadcrumbItem[];
+  isEnterprise?: boolean;
+  isPro?: boolean;
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -74,6 +77,8 @@ export function ProProfileContent({
   featuredReviews,
   businessHours,
   breadcrumbs,
+  isEnterprise = false,
+  isPro = false,
 }: ProProfileContentProps) {
   const [isReferModalOpen, setIsReferModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -110,7 +115,7 @@ export function ProProfileContent({
   // Profile URL for sharing (prefer slug for SEO-friendly URL)
   const profileUrl = typeof window !== "undefined"
     ? window.location.href
-    : `/pro/${professional.slug || professional.id}`;
+    : `/pro/${professional.slug}`;
 
   const handleWriteReview = useCallback(() => {
     setIsReviewModalOpen(true);
@@ -163,9 +168,12 @@ export function ProProfileContent({
 
                     {/* Profile Info */}
                     <div className="flex-1 text-center sm:text-left min-w-0">
-                      <h1 className="text-2xl md:text-3xl font-display font-bold text-repwell-teal-500 tracking-tight">
-                        {professional.full_name}
-                      </h1>
+                      <div className="flex items-center justify-center gap-2 sm:justify-start">
+                        <h1 className="text-2xl md:text-3xl font-display font-bold text-repwell-teal-500 tracking-tight">
+                          {professional.full_name}
+                        </h1>
+                        <TierBadge isEnterprise={isEnterprise} isPro={isPro} size="md" />
+                      </div>
                       <p className="text-sm text-repwell-teal-400">
                         {professional.title || "Professional"}
                         {professional.nmls_id && (

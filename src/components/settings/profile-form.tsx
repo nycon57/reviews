@@ -28,9 +28,14 @@ import {
   FileText,
   BuildingOffice as Building2,
   IdentificationBadge,
+  FacebookLogo,
+  InstagramLogo,
+  XLogo,
 } from "@phosphor-icons/react";
 import { updateProfile, uploadAvatar, updateUserSlug } from '@/lib/auth/profile-actions';
+import { updateMemberProfile, uploadMemberAvatar } from '@/lib/organization/actions';
 import { AvatarUpload } from '@/components/shared/avatar-upload';
+import { CoverPhotoUpload } from '@/components/settings/cover-photo-upload';
 import { EditSlugDialog } from '@/components/shared/edit-slug-dialog';
 import { updateProfileSchema } from '@/lib/auth/profile-schemas';
 import { Link as LinkIcon, PencilSimple } from "@phosphor-icons/react";
@@ -59,10 +64,16 @@ interface ProfileFormProps {
   initialPersonalWebsiteUrl?: string | null;
   initialLinkedinUrl?: string | null;
   initialZillowProfileUrl?: string | null;
+  initialFacebookUrl?: string | null;
+  initialInstagramUrl?: string | null;
+  initialTwitterUrl?: string | null;
   initialTimezone?: string | null;
   initialSlug?: string | null;
+  initialBannerUrl?: string | null;
   userId?: string;
   isAdmin?: boolean;
+  /** When set, edits this user's profile instead of the logged-in user */
+  targetUserId?: string;
 }
 
 export function ProfileForm({
@@ -76,10 +87,15 @@ export function ProfileForm({
   initialPersonalWebsiteUrl,
   initialLinkedinUrl,
   initialZillowProfileUrl,
+  initialFacebookUrl,
+  initialInstagramUrl,
+  initialTwitterUrl,
   initialTimezone,
   initialSlug,
+  initialBannerUrl,
   userId,
   isAdmin = false,
+  targetUserId,
 }: ProfileFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl ?? null);
@@ -105,6 +121,9 @@ export function ProfileForm({
       personalWebsiteUrl: initialPersonalWebsiteUrl || '',
       linkedinUrl: initialLinkedinUrl || '',
       zillowProfileUrl: initialZillowProfileUrl || '',
+      facebookUrl: initialFacebookUrl || '',
+      instagramUrl: initialInstagramUrl || '',
+      twitterUrl: initialTwitterUrl || '',
       timezone: initialTimezone || '',
     },
   });
@@ -115,16 +134,36 @@ export function ProfileForm({
   const onSubmit = async (data: ProfileFormData) => {
     setIsSubmitting(true);
 
-    const result = await updateProfile({
-      ...data,
-      avatarUrl: avatarUrl || undefined,
-    });
+    let result: { success: boolean; error?: string | null };
+
+    if (targetUserId) {
+      // Admin editing another user's profile
+      result = await updateMemberProfile(targetUserId, {
+        fullName: data.fullName,
+        title: data.title,
+        nmlsId: data.nmlsId,
+        bio: data.bio,
+        phone: data.phone,
+        personalWebsiteUrl: data.personalWebsiteUrl,
+        linkedinUrl: data.linkedinUrl,
+        zillowProfileUrl: data.zillowProfileUrl,
+        facebookUrl: data.facebookUrl,
+        instagramUrl: data.instagramUrl,
+        twitterUrl: data.twitterUrl,
+        timezone: data.timezone,
+      });
+    } else {
+      result = await updateProfile({
+        ...data,
+        avatarUrl: avatarUrl || undefined,
+      });
+    }
 
     if (result.success) {
       setAvatarChanged(false);
       toast({
         title: 'Profile updated',
-        description: 'Your profile has been saved successfully.',
+        description: 'Profile has been saved successfully.',
       });
     } else {
       toast({
@@ -141,7 +180,9 @@ export function ProfileForm({
     const formData = new FormData();
     formData.append('file', file);
 
-    const result = await uploadAvatar(formData);
+    const result = targetUserId
+      ? await uploadMemberAvatar(targetUserId, formData)
+      : await uploadAvatar(formData);
 
     if (result.success && result.url) {
       setAvatarUrl(result.url);
@@ -179,9 +220,9 @@ export function ProfileForm({
       </CardHeader>
       <CardContent className="p-0">
         <form onSubmit={handleSubmit(onSubmit)}>
-          {/* Section 1: Photo & Basic Info */}
+          {/* Section 1: Photo & Cover */}
           <div className="p-6 border-b border-border/50">
-            <div className="flex items-start gap-6">
+            <div className="flex items-stretch gap-6">
               <AvatarUpload
                 currentAvatarUrl={avatarUrl}
                 onUpload={handleAvatarUpload}
@@ -191,36 +232,8 @@ export function ProfileForm({
                 }}
                 fallbackInitials={initialName?.trim().split(/\s+/).filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
               />
-              <div className="flex-1 grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="text-sm font-medium">
-                    Full Name
-                  </Label>
-                  <Input
-                    id="fullName"
-                    placeholder="Enter your full name"
-                    {...register('fullName')}
-                  />
-                  {errors.fullName && (
-                    <p className="text-xs text-destructive">{errors.fullName.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={initialEmail || ''}
-                    disabled
-                    className="bg-muted/50"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Contact support to change your email
-                  </p>
-                </div>
+              <div className="flex-1 min-w-0">
+                <CoverPhotoUpload currentBannerUrl={initialBannerUrl} targetUserId={targetUserId} embedded />
               </div>
             </div>
           </div>
@@ -273,6 +286,36 @@ export function ProfileForm({
               </h3>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-sm font-medium">
+                  Full Name
+                </Label>
+                <Input
+                  id="fullName"
+                  placeholder="Enter your full name"
+                  {...register('fullName')}
+                />
+                {errors.fullName && (
+                  <p className="text-xs text-destructive">{errors.fullName.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={initialEmail || ''}
+                  disabled
+                  className="bg-muted/50"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Contact support to change your email
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="title" className="text-sm font-medium">
                   Job Title
@@ -400,6 +443,54 @@ export function ProfileForm({
                 />
                 {errors.zillowProfileUrl && (
                   <p className="text-xs text-destructive">{errors.zillowProfileUrl.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="facebookUrl" className="text-sm font-medium flex items-center gap-2">
+                  <FacebookLogo className="h-3.5 w-3.5 text-muted-foreground" />
+                  Facebook
+                </Label>
+                <Input
+                  id="facebookUrl"
+                  type="url"
+                  placeholder="https://facebook.com/yourprofile"
+                  {...register('facebookUrl')}
+                />
+                {errors.facebookUrl && (
+                  <p className="text-xs text-destructive">{errors.facebookUrl.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="instagramUrl" className="text-sm font-medium flex items-center gap-2">
+                  <InstagramLogo className="h-3.5 w-3.5 text-muted-foreground" />
+                  Instagram
+                </Label>
+                <Input
+                  id="instagramUrl"
+                  type="url"
+                  placeholder="https://instagram.com/yourprofile"
+                  {...register('instagramUrl')}
+                />
+                {errors.instagramUrl && (
+                  <p className="text-xs text-destructive">{errors.instagramUrl.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="twitterUrl" className="text-sm font-medium flex items-center gap-2">
+                  <XLogo className="h-3.5 w-3.5 text-muted-foreground" />
+                  X (Twitter)
+                </Label>
+                <Input
+                  id="twitterUrl"
+                  type="url"
+                  placeholder="https://x.com/yourprofile"
+                  {...register('twitterUrl')}
+                />
+                {errors.twitterUrl && (
+                  <p className="text-xs text-destructive">{errors.twitterUrl.message}</p>
                 )}
               </div>
             </div>

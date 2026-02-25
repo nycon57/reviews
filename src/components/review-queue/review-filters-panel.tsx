@@ -28,7 +28,7 @@ export function ReviewFiltersPanel() {
   const { state, actions } = useReviewQueue();
 
   return (
-    <Card>
+    <Card className="border border-border/50 shadow-soft rounded-xl">
       <CardContent className="pt-6">
         <div className="space-y-4">
           {/* Search Bar */}

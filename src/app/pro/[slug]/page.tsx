@@ -54,7 +54,7 @@ export default async function LOProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const { professional, organization, branch, reviews, featuredReviews, businessHours } = result.data;
+  const { professional, organization, branch, reviews, featuredReviews, businessHours, is_enterprise, is_pro } = result.data;
 
   // If accessed via UUID and user has a slug, redirect to the SEO-friendly URL
   if (isUUID(slug) && professional.slug) {
@@ -101,6 +101,8 @@ export default async function LOProfilePage({ params }: PageProps) {
         featuredReviews={featuredReviews}
         businessHours={businessHours}
         breadcrumbs={breadcrumbs}
+        isEnterprise={is_enterprise}
+        isPro={is_pro}
       />
     </>
   );

@@ -45,13 +45,17 @@ function TrendBadge({ trend }: { trend: "above" | "at" | "below" }) {
 export function BenchmarksCard({ data }: BenchmarksCardProps) {
   if (data.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">Industry Benchmarks</CardTitle>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Industry Benchmarks</CardTitle>
+              <CardDescription>How you compare to mortgage industry standards</CardDescription>
+            </div>
           </div>
-          <CardDescription>How you compare to industry standards</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
@@ -67,13 +71,17 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg font-semibold">Industry Benchmarks</CardTitle>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Industry Benchmarks</CardTitle>
+            <CardDescription>How you compare to mortgage industry standards</CardDescription>
+          </div>
         </div>
-        <CardDescription>How you compare to mortgage industry standards</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {data.map((benchmark, index) => (
@@ -81,10 +89,10 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
             {/* Metric header */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <h4 className="font-medium">{benchmark.metric}</h4>
+                <h4 className="text-sm font-medium">{benchmark.metric}</h4>
                 <TrendBadge trend={benchmark.trend} />
               </div>
-              <span className="text-2xl font-bold tabular-nums">
+              <span className="text-xl font-semibold tabular-nums text-repwell-teal-500">
                 {typeof benchmark.yourValue === 'number' && benchmark.yourValue % 1 !== 0
                   ? benchmark.yourValue.toFixed(1)
                   : benchmark.yourValue}

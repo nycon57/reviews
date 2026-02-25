@@ -75,49 +75,51 @@ function MetricCard({
   trendValue?: string;
 }) {
   return (
-    <div className="space-y-1 rounded-lg border bg-card p-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" />
+    <div className="rounded-xl border border-border/50 bg-card p-4">
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+        <Icon className="h-3.5 w-3.5 text-repwell-teal-300" />
         {label}
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-xl font-semibold tabular-nums">{value}</span>
+      <div className="mt-1.5 flex items-baseline gap-2">
+        <span className="text-xl font-semibold tracking-tight text-repwell-teal-500 tabular-nums">{value}</span>
         {trend && <TrendIndicator direction={trend} value={trendValue} />}
       </div>
       {subtext && (
-        <p className="text-xs text-muted-foreground">{subtext}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{subtext}</p>
       )}
     </div>
   );
 }
 
 export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
-  const fallbackBadge = { label: "Unknown", class: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400" };
+  const fallbackBadge = { label: "Unknown", class: "bg-gray-100 text-gray-800" };
   const sentimentBadge: Record<string, { label: string; class: string }> = {
-    improving: { label: "Improving", class: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
-    stable: { label: "Stable", class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
-    declining: { label: "Declining", class: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+    improving: { label: "Improving", class: "bg-green-100 text-green-800" },
+    stable: { label: "Stable", class: "bg-blue-100 text-blue-800" },
+    declining: { label: "Declining", class: "bg-red-100 text-red-800" },
   };
 
   const sentiment = sentimentBadge[data.sentimentTrajectory] ?? fallbackBadge;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ChartLineUp className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">
-              Performance Scorecard
-            </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <ChartLineUp className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Performance Scorecard</CardTitle>
+              <CardDescription>
+                {data.loanOfficerName}&apos;s key performance metrics (90-day window)
+              </CardDescription>
+            </div>
           </div>
           <Badge variant="secondary" className={cn("text-xs", sentiment.class)}>
             Sentiment: {sentiment.label}
           </Badge>
         </div>
-        <CardDescription>
-          {data.loanOfficerName}&apos;s key performance metrics (90-day window)
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Key metrics grid */}
@@ -187,7 +189,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
           <div className="grid gap-3 sm:grid-cols-2">
             {data.topPositiveThemes.length > 0 && (
               <div className="space-y-1.5">
-                <h4 className="flex items-center gap-1 text-xs font-medium text-green-700 dark:text-green-400">
+                <h4 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-green-700">
                   <Smiley className="h-3.5 w-3.5" />
                   Top Strengths
                 </h4>
@@ -196,7 +198,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
                     <Badge
                       key={theme}
                       variant="secondary"
-                      className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                      className="bg-green-100 text-green-800"
                     >
                       {theme}
                     </Badge>
@@ -206,7 +208,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
             )}
             {data.riskThemes.length > 0 && (
               <div className="space-y-1.5">
-                <h4 className="flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-400">
+                <h4 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-red-700">
                   <TrendDown className="h-3.5 w-3.5" />
                   Areas to Watch
                 </h4>
@@ -215,7 +217,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
                     <Badge
                       key={theme}
                       variant="secondary"
-                      className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                      className="bg-red-100 text-red-800"
                     >
                       {theme}
                     </Badge>
@@ -244,8 +246,8 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
 
         {/* Coaching brief */}
         {data.coachingBrief && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-primary">
+          <div className="rounded-xl border border-repwell-teal-300/20 bg-repwell-teal-300/5 p-4">
+            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-repwell-teal-300">
               <Sparkle className="h-3.5 w-3.5" />
               AI Coaching Brief
             </div>

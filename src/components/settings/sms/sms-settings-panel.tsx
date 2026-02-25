@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState } from 'react';
 import {
   ChatTeardropDots,
   ShieldCheck,
@@ -14,7 +14,6 @@ import { RegistrationTab } from './registration-tab';
 import { ComplianceTab } from './compliance-tab';
 import { SmsBillingTab } from './billing-tab';
 import { SmsTemplatesTab } from './templates-tab';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export type SmsSubTab = 'setup' | 'registration' | 'compliance' | 'billing' | 'templates';
 
@@ -26,16 +25,6 @@ const subTabs: { value: SmsSubTab; label: string; icon: React.ElementType }[] = 
   { value: 'templates', label: 'Templates', icon: FileText },
 ];
 
-function SubTabSkeleton() {
-  return (
-    <div className="space-y-4 animate-fade-in">
-      <Skeleton className="h-8 w-48" />
-      <Skeleton className="h-32 w-full" />
-      <Skeleton className="h-48 w-full" />
-    </div>
-  );
-}
-
 interface SmsSettingsPanelProps {
   initialSubTab?: SmsSubTab;
 }
@@ -44,6 +33,15 @@ export function SmsSettingsPanel({ initialSubTab = 'setup' }: SmsSettingsPanelPr
   const [activeSubTab, setActiveSubTab] = useState<SmsSubTab>(initialSubTab);
 
   return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+          SMS & Messaging
+        </h2>
+        <p className="text-repwell-teal-300 mt-1">
+          Configure SMS delivery, 10DLC registration, compliance, and message templates.
+        </p>
+      </div>
     <div className="flex gap-6">
       <nav className="w-48 shrink-0 border-r border-border pr-4">
         <ul className="space-y-1">
@@ -71,14 +69,13 @@ export function SmsSettingsPanel({ initialSubTab = 'setup' }: SmsSettingsPanelPr
       </nav>
 
       <div className="flex-1 min-w-0">
-        <Suspense fallback={<SubTabSkeleton />}>
-          {activeSubTab === 'setup' && <SmsTab />}
-          {activeSubTab === 'registration' && <RegistrationTab />}
-          {activeSubTab === 'compliance' && <ComplianceTab />}
-          {activeSubTab === 'billing' && <SmsBillingTab />}
-          {activeSubTab === 'templates' && <SmsTemplatesTab />}
-        </Suspense>
+        {activeSubTab === 'setup' && <SmsTab />}
+        {activeSubTab === 'registration' && <RegistrationTab />}
+        {activeSubTab === 'compliance' && <ComplianceTab />}
+        {activeSubTab === 'billing' && <SmsBillingTab />}
+        {activeSubTab === 'templates' && <SmsTemplatesTab />}
       </div>
+    </div>
     </div>
   );
 }

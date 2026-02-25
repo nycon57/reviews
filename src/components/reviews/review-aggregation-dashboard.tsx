@@ -4,6 +4,7 @@ import { useState, useTransition, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SourceIcon } from "@/components/shared/review-item";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -293,18 +294,7 @@ export function ReviewAggregationDashboard({
   };
 
   const getSourceBadge = (source: string) => {
-    const colors: Record<string, string> = {
-      internal: "bg-blue-100 text-blue-700",
-      google: "bg-red-100 text-red-700",
-      zillow: "bg-purple-100 text-purple-700",
-      facebook: "bg-indigo-100 text-indigo-700",
-      yelp: "bg-orange-100 text-orange-700",
-    };
-    return (
-      <Badge className={colors[source] || "bg-gray-100 text-gray-700"}>
-        {source === "internal" ? "Survey" : source.charAt(0).toUpperCase() + source.slice(1)}
-      </Badge>
-    );
+    return <SourceIcon source={source} />;
   };
 
   const totalPages = Math.ceil(total / limit);

@@ -57,7 +57,7 @@ interface EditSlugDialogProps {
   onOpenChange: (open: boolean) => void;
   currentSlug: string;
   entityName: string;
-  entityType: "user" | "organization";
+  entityType: "user" | "organization" | "branch";
   baseUrl: string;
   pathPrefix: string;
   onSave: (newSlug: string) => Promise<{ success: boolean; error?: string | null }>;
@@ -149,7 +149,7 @@ export function EditSlugDialog({
             Edit Public URL
           </DialogTitle>
           <DialogDescription>
-            Customize the public URL for {entityName}'s {entityType === "user" ? "profile" : "page"}.
+            Customize the public URL for {entityName}&apos;s {entityType === "user" ? "profile" : entityType === "branch" ? "branch page" : "page"}.
           </DialogDescription>
         </DialogHeader>
 

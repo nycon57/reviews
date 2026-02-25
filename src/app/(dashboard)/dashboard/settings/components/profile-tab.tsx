@@ -13,7 +13,6 @@ import {
   ProfileForm,
   ChangePasswordForm,
   ProfileBanner,
-  CoverPhotoUpload,
   AccountDangerZone,
 } from '@/components/settings';
 import { fadeInUp, staggerContainer } from '@/lib/motion/variants';
@@ -29,6 +28,9 @@ interface ProfileTabProps {
   userPersonalWebsiteUrl?: string | null;
   userLinkedinUrl?: string | null;
   userZillowProfileUrl?: string | null;
+  userFacebookUrl?: string | null;
+  userInstagramUrl?: string | null;
+  userTwitterUrl?: string | null;
   userTimezone?: string | null;
   userSlug?: string | null;
   userBannerUrl?: string | null;
@@ -72,6 +74,9 @@ export function ProfileTab({
   userPersonalWebsiteUrl,
   userLinkedinUrl,
   userZillowProfileUrl,
+  userFacebookUrl,
+  userInstagramUrl,
+  userTwitterUrl,
   userTimezone,
   userSlug,
   userBannerUrl,
@@ -111,11 +116,6 @@ export function ProfileTab({
             <ProfileBanner />
           </motion.div>
 
-          {/* Cover Photo Upload */}
-          <motion.div variants={fadeInUp} id="cover-photo">
-            <CoverPhotoUpload currentBannerUrl={userBannerUrl} />
-          </motion.div>
-
           {/* Profile Form */}
           <motion.div variants={fadeInUp} id="profile-form">
             <ProfileForm
@@ -129,8 +129,12 @@ export function ProfileTab({
               initialPersonalWebsiteUrl={userPersonalWebsiteUrl}
               initialLinkedinUrl={userLinkedinUrl}
               initialZillowProfileUrl={userZillowProfileUrl}
+              initialFacebookUrl={userFacebookUrl}
+              initialInstagramUrl={userInstagramUrl}
+              initialTwitterUrl={userTwitterUrl}
               initialTimezone={userTimezone}
               initialSlug={userSlug}
+              initialBannerUrl={userBannerUrl}
               userId={userId}
               isAdmin={isAdmin}
             />

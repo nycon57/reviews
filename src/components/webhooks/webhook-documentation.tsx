@@ -22,7 +22,7 @@ import {
   Copy,
   CheckCircle as CheckCircle2,
   CaretDown as ChevronDown,
-  ArrowSquareOut as ExternalLink,
+  Envelope,
   Shield,
   Clock,
   Lightning as Zap,
@@ -35,11 +35,19 @@ export function WebhookDocumentation() {
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const { toast } = useToast();
 
-  function copyToClipboard(text: string, item: string): void {
-    navigator.clipboard.writeText(text);
-    setCopiedItem(item);
-    setTimeout(() => setCopiedItem(null), 2000);
-    toast({ title: "Copied", description: `${item} copied to clipboard` });
+  async function copyToClipboard(text: string, item: string): Promise<void> {
+    if (!navigator.clipboard) {
+      toast({ title: "Error", description: "Clipboard not available", variant: "destructive" });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(item);
+      setTimeout(() => setCopiedItem(null), 2000);
+      toast({ title: "Copied", description: `${item} copied to clipboard` });
+    } catch {
+      toast({ title: "Error", description: "Failed to copy to clipboard", variant: "destructive" });
+    }
   }
 
   const webhookEndpoint =
@@ -51,38 +59,45 @@ export function WebhookDocumentation() {
     <div className="space-y-6">
       {/* Overview */}
       <Card>
+        <div className="h-1 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200 rounded-t-xl" />
         <CardHeader>
-          <CardTitle>Webhook Integration Guide</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-sans text-xl font-semibold text-repwell-teal-500">Webhook Integration Guide</CardTitle>
+          <CardDescription className="text-repwell-teal-300">
             Learn how to integrate your LOS, CRM, or other systems with RepWell
             webhooks to automatically trigger survey sends
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="flex items-start gap-3 p-4 rounded-lg border">
-              <Shield className="h-5 w-5 text-green-600 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 rounded-xl border border-border hover:shadow-sm transition-shadow duration-300">
+              <div className="w-10 h-10 bg-repwell-sage-100/50 rounded-lg flex items-center justify-center shrink-0">
+                <Shield weight="duotone" className="h-5 w-5 text-repwell-sage-200" />
+              </div>
               <div>
-                <h4 className="font-medium text-sm">Secure</h4>
-                <p className="text-xs text-muted-foreground">
+                <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Secure</h4>
+                <p className="text-xs text-repwell-teal-300">
                   HMAC-SHA256 signature verification for all requests
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg border">
-              <Clock className="h-5 w-5 text-blue-600 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 rounded-xl border border-border hover:shadow-sm transition-shadow duration-300">
+              <div className="w-10 h-10 bg-repwell-sage-100/50 rounded-lg flex items-center justify-center shrink-0">
+                <Clock weight="duotone" className="h-5 w-5 text-repwell-teal-300" />
+              </div>
               <div>
-                <h4 className="font-medium text-sm">Reliable</h4>
-                <p className="text-xs text-muted-foreground">
+                <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Reliable</h4>
+                <p className="text-xs text-repwell-teal-300">
                   Automatic retries with exponential backoff
                 </p>
               </div>
             </div>
-            <div className="flex items-start gap-3 p-4 rounded-lg border">
-              <Zap className="h-5 w-5 text-amber-600 mt-0.5" />
+            <div className="flex items-start gap-3 p-4 rounded-xl border border-border hover:shadow-sm transition-shadow duration-300">
+              <div className="w-10 h-10 bg-repwell-sage-100/50 rounded-lg flex items-center justify-center shrink-0">
+                <Zap weight="duotone" className="h-5 w-5 text-[#d4a574]" />
+              </div>
               <div>
-                <h4 className="font-medium text-sm">Fast</h4>
-                <p className="text-xs text-muted-foreground">
+                <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Fast</h4>
+                <p className="text-xs text-repwell-teal-300">
                   Process webhooks in under 500ms
                 </p>
               </div>
@@ -94,21 +109,21 @@ export function WebhookDocumentation() {
       {/* Quick Start */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Quick Start</CardTitle>
+          <CardTitle className="font-sans text-lg font-semibold text-repwell-teal-500">Quick Start</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <h4 className="font-medium text-sm">1. Get your API Key</h4>
-            <p className="text-sm text-muted-foreground">
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">1. Get your API Key</h4>
+            <p className="text-sm text-repwell-teal-300 leading-relaxed">
               Create a webhook configuration in the Settings tab to generate your
               unique API key.
             </p>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium text-sm">2. Webhook Endpoint</h4>
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">2. Webhook Endpoint</h4>
             <div className="flex items-center gap-2">
-              <code className="flex-1 rounded bg-muted p-2 text-sm break-all">
+              <code className="flex-1 rounded-lg bg-repwell-teal-500 text-repwell-sage-100 p-3 text-sm font-mono break-all">
                 {webhookEndpoint}
               </code>
               <Button
@@ -117,7 +132,7 @@ export function WebhookDocumentation() {
                 onClick={() => copyToClipboard(webhookEndpoint, "Endpoint")}
               >
                 {copiedItem === "Endpoint" ? (
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <CheckCircle2 className="h-4 w-4 text-repwell-sage-200" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
@@ -126,13 +141,13 @@ export function WebhookDocumentation() {
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium text-sm">3. Required Headers</h4>
-            <div className="rounded bg-muted p-3 space-y-1">
-              <code className="block text-sm">
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">3. Required Headers</h4>
+            <div className="rounded-lg bg-repwell-teal-500 p-4 space-y-1.5 font-mono">
+              <code className="block text-sm text-repwell-sage-100">
                 Content-Type: application/json
               </code>
-              <code className="block text-sm">x-api-key: your_api_key_here</code>
-              <code className="block text-sm text-muted-foreground">
+              <code className="block text-sm text-repwell-sage-100">x-api-key: your_api_key_here</code>
+              <code className="block text-sm text-repwell-sage-100/60">
                 x-webhook-signature: sha256=... (optional but recommended)
               </code>
             </div>
@@ -143,8 +158,8 @@ export function WebhookDocumentation() {
       {/* Event Types */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Event Types</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-sans text-lg font-semibold text-repwell-teal-500">Event Types</CardTitle>
+          <CardDescription className="text-repwell-teal-300">
             Different event types for different use cases
           </CardDescription>
         </CardHeader>
@@ -160,7 +175,7 @@ export function WebhookDocumentation() {
             <TabsContent value="loan.closed" className="space-y-4 mt-4">
               <div className="flex items-center gap-2">
                 <Badge>Recommended</Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-repwell-teal-300">
                   Use when a loan closes in your LOS
                 </span>
               </div>
@@ -186,16 +201,15 @@ export function WebhookDocumentation() {
                   null,
                   2
                 )}
-                onCopy={() => copyToClipboard("loan.closed payload", "Payload")}
-                isCopied={copiedItem === "Payload"}
+                label="Payload"
               />
-              <div className="text-sm space-y-2">
+              <div className="text-sm text-repwell-teal-400 space-y-2">
                 <p>
-                  <strong>Default delay:</strong> 24 hours (configurable in webhook
+                  <strong className="text-repwell-teal-500">Default delay:</strong> 24 hours (configurable in webhook
                   settings)
                 </p>
                 <p>
-                  <strong>Required fields:</strong> transaction_id,
+                  <strong className="text-repwell-teal-500">Required fields:</strong> transaction_id,
                   user_email, customer_name, customer_email
                 </p>
               </div>
@@ -203,7 +217,7 @@ export function WebhookDocumentation() {
 
             <TabsContent value="contact.created" className="space-y-4 mt-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-repwell-teal-300">
                   Use when a new contact is added to your CRM
                 </span>
               </div>
@@ -226,17 +240,14 @@ export function WebhookDocumentation() {
                   null,
                   2
                 )}
-                onCopy={() =>
-                  copyToClipboard("contact.created payload", "Payload2")
-                }
-                isCopied={copiedItem === "Payload2"}
+                label="Payload"
               />
-              <div className="text-sm space-y-2">
+              <div className="text-sm text-repwell-teal-400 space-y-2">
                 <p>
-                  <strong>Default delay:</strong> No delay (immediate)
+                  <strong className="text-repwell-teal-500">Default delay:</strong> No delay (immediate)
                 </p>
                 <p>
-                  <strong>Required fields:</strong> user_email,
+                  <strong className="text-repwell-teal-500">Required fields:</strong> user_email,
                   customer_name, customer_email
                 </p>
               </div>
@@ -244,7 +255,7 @@ export function WebhookDocumentation() {
 
             <TabsContent value="survey.trigger" className="space-y-4 mt-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-repwell-teal-300">
                   Manual trigger with full control over all parameters
                 </span>
               </div>
@@ -269,17 +280,14 @@ export function WebhookDocumentation() {
                   null,
                   2
                 )}
-                onCopy={() =>
-                  copyToClipboard("survey.trigger payload", "Payload3")
-                }
-                isCopied={copiedItem === "Payload3"}
+                label="Payload"
               />
-              <div className="text-sm space-y-2">
+              <div className="text-sm text-repwell-teal-400 space-y-2">
                 <p>
-                  <strong>Delay:</strong> 0-168 hours (configurable per request)
+                  <strong className="text-repwell-teal-500">Delay:</strong> 0-168 hours (configurable per request)
                 </p>
                 <p>
-                  <strong>Required fields:</strong> customer_name, customer_email,
+                  <strong className="text-repwell-teal-500">Required fields:</strong> customer_name, customer_email,
                   and either user_email or user_id
                 </p>
               </div>
@@ -287,11 +295,11 @@ export function WebhookDocumentation() {
 
             <TabsContent value="encompass.milestone" className="space-y-4 mt-4">
               <div className="flex items-center gap-2">
-                <Badge variant="outline" className="border-blue-300 text-blue-700">
+                <Badge variant="outline" className="border-repwell-teal-300/30 text-repwell-teal-400">
                   <Building2 className="mr-1 h-3 w-3" />
                   Encompass
                 </Badge>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-repwell-teal-300">
                   Trigger surveys based on Encompass loan milestones
                 </span>
               </div>
@@ -318,21 +326,18 @@ export function WebhookDocumentation() {
                   null,
                   2
                 )}
-                onCopy={() =>
-                  copyToClipboard("encompass.milestone payload", "Payload4")
-                }
-                isCopied={copiedItem === "Payload4"}
+                label="Payload"
               />
-              <div className="text-sm space-y-2">
+              <div className="text-sm text-repwell-teal-400 space-y-2">
                 <p>
-                  <strong>Delay:</strong> Configured per milestone in the Encompass tab
+                  <strong className="text-repwell-teal-500">Delay:</strong> Configured per milestone in the Encompass tab
                 </p>
                 <p>
-                  <strong>Required fields:</strong> milestone, loan_id,
+                  <strong className="text-repwell-teal-500">Required fields:</strong> milestone, loan_id,
                   user_email, borrower_name, borrower_email
                 </p>
                 <p>
-                  <strong>Optional fields:</strong> borrower_phone, loan_amount,
+                  <strong className="text-repwell-teal-500">Optional fields:</strong> borrower_phone, loan_amount,
                   property_address, loan_number, milestone_date, metadata
                 </p>
               </div>
@@ -345,18 +350,20 @@ export function WebhookDocumentation() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-blue-600" />
-            <CardTitle className="text-lg">Encompass Integration Guide</CardTitle>
+            <div className="w-8 h-8 bg-repwell-sage-100/50 rounded-lg flex items-center justify-center">
+              <Building2 weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
+            </div>
+            <CardTitle className="font-sans text-lg font-semibold text-repwell-teal-500">Encompass Integration Guide</CardTitle>
           </div>
-          <CardDescription>
+          <CardDescription className="text-repwell-teal-300">
             Step-by-step instructions to connect Encompass with RepWell
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Prerequisites */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">Prerequisites</h4>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Prerequisites</h4>
+            <ul className="text-sm text-repwell-teal-400 space-y-1 list-disc list-inside leading-relaxed">
               <li>Encompass admin access to configure webhook notifications</li>
               <li>RepWell webhook API key (create in the Configurations tab)</li>
               <li>Milestone mappings configured (in the Encompass tab)</li>
@@ -365,9 +372,9 @@ export function WebhookDocumentation() {
 
           {/* Step 1 */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">Step 1: Get Your RepWell API Key</h4>
-            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-              <li>Go to the <strong>Configurations</strong> tab above</li>
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Step 1: Get Your RepWell API Key</h4>
+            <ol className="text-sm text-repwell-teal-400 space-y-2 list-decimal list-inside leading-relaxed">
+              <li>Go to the <strong className="text-repwell-teal-500">Configurations</strong> tab above</li>
               <li>Create a new webhook configuration (or use an existing one)</li>
               <li>Copy your API key - you&apos;ll need this for Encompass</li>
             </ol>
@@ -375,9 +382,9 @@ export function WebhookDocumentation() {
 
           {/* Step 2 */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">Step 2: Configure Milestone Mappings</h4>
-            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-              <li>Go to the <strong>Encompass</strong> tab above</li>
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Step 2: Configure Milestone Mappings</h4>
+            <ol className="text-sm text-repwell-teal-400 space-y-2 list-decimal list-inside leading-relaxed">
+              <li>Go to the <strong className="text-repwell-teal-500">Encompass</strong> tab above</li>
               <li>Enable the milestones you want to trigger surveys (e.g., &quot;Funded&quot;)</li>
               <li>Configure the delay (how long after the milestone to send the survey)</li>
               <li>Optionally assign specific survey templates to each milestone</li>
@@ -386,75 +393,75 @@ export function WebhookDocumentation() {
 
           {/* Step 3 */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">Step 3: Configure Encompass Webhook</h4>
-            <p className="text-sm text-muted-foreground">
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Step 3: Configure Encompass Webhook</h4>
+            <p className="text-sm text-repwell-teal-400 leading-relaxed">
               You&apos;ll need to configure an outbound webhook in Encompass to send milestone
               events to RepWell. This can be done via:
             </p>
-            <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside ml-4">
-              <li><strong>Encompass Business Rules</strong> - Trigger webhooks on milestone changes</li>
-              <li><strong>Custom Integration Middleware</strong> - Transform Encompass events to RepWell format</li>
-              <li><strong>Zapier/Make</strong> - Connect Encompass to RepWell via automation platform</li>
+            <ul className="text-sm text-repwell-teal-400 space-y-1 list-disc list-inside ml-4 leading-relaxed">
+              <li><strong className="text-repwell-teal-500">Encompass Business Rules</strong> - Trigger webhooks on milestone changes</li>
+              <li><strong className="text-repwell-teal-500">Custom Integration Middleware</strong> - Transform Encompass events to RepWell format</li>
+              <li><strong className="text-repwell-teal-500">Zapier/Make</strong> - Connect Encompass to RepWell via automation platform</li>
             </ul>
           </div>
 
           {/* Webhook Configuration */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">Webhook Configuration Details</h4>
-            <div className="rounded bg-muted p-3 space-y-2">
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Webhook Configuration Details</h4>
+            <div className="rounded-lg bg-repwell-teal-500 p-4 space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Endpoint URL:</span>
-                <code className="text-xs">{webhookEndpoint}</code>
+                <span className="text-repwell-sage-100/70">Endpoint URL:</span>
+                <code className="text-xs text-repwell-sage-100 font-mono">{webhookEndpoint}</code>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Method:</span>
-                <code className="text-xs">POST</code>
+                <span className="text-repwell-sage-100/70">Method:</span>
+                <code className="text-xs text-repwell-sage-100 font-mono">POST</code>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Content-Type:</span>
-                <code className="text-xs">application/json</code>
+                <span className="text-repwell-sage-100/70">Content-Type:</span>
+                <code className="text-xs text-repwell-sage-100 font-mono">application/json</code>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Auth Header:</span>
-                <code className="text-xs">x-api-key: YOUR_API_KEY</code>
+                <span className="text-repwell-sage-100/70">Auth Header:</span>
+                <code className="text-xs text-repwell-sage-100 font-mono">x-api-key: YOUR_API_KEY</code>
               </div>
             </div>
           </div>
 
           {/* Field Mapping */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">Required Field Mapping</h4>
-            <p className="text-sm text-muted-foreground">
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Required Field Mapping</h4>
+            <p className="text-sm text-repwell-teal-400 leading-relaxed">
               Map these Encompass fields to the RepWell webhook payload:
             </p>
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-xl overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-muted">
+                <thead className="bg-repwell-sage-100/30">
                   <tr>
-                    <th className="text-left p-2 font-medium">RepWell Field</th>
-                    <th className="text-left p-2 font-medium">Encompass Field (Example)</th>
+                    <th className="text-left p-3 font-sans font-semibold text-repwell-teal-500">RepWell Field</th>
+                    <th className="text-left p-3 font-sans font-semibold text-repwell-teal-500">Encompass Field (Example)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
-                  <tr>
-                    <td className="p-2"><code>milestone</code></td>
-                    <td className="p-2 text-muted-foreground">Milestone Name (e.g., &quot;Funded&quot;)</td>
+                <tbody className="divide-y divide-border">
+                  <tr className="hover:bg-repwell-sage-100/10 transition-colors">
+                    <td className="p-3"><code className="text-repwell-teal-300 font-mono text-xs bg-repwell-sage-100/30 px-1.5 py-0.5 rounded">milestone</code></td>
+                    <td className="p-3 text-repwell-teal-400">Milestone Name (e.g., &quot;Funded&quot;)</td>
                   </tr>
-                  <tr>
-                    <td className="p-2"><code>loan_id</code></td>
-                    <td className="p-2 text-muted-foreground">Loan GUID / Loan Number</td>
+                  <tr className="hover:bg-repwell-sage-100/10 transition-colors">
+                    <td className="p-3"><code className="text-repwell-teal-300 font-mono text-xs bg-repwell-sage-100/30 px-1.5 py-0.5 rounded">loan_id</code></td>
+                    <td className="p-3 text-repwell-teal-400">Loan GUID / Loan Number</td>
                   </tr>
-                  <tr>
-                    <td className="p-2"><code>user_email</code></td>
-                    <td className="p-2 text-muted-foreground">Loan Officer Email Address</td>
+                  <tr className="hover:bg-repwell-sage-100/10 transition-colors">
+                    <td className="p-3"><code className="text-repwell-teal-300 font-mono text-xs bg-repwell-sage-100/30 px-1.5 py-0.5 rounded">user_email</code></td>
+                    <td className="p-3 text-repwell-teal-400">Loan Officer Email Address</td>
                   </tr>
-                  <tr>
-                    <td className="p-2"><code>borrower_name</code></td>
-                    <td className="p-2 text-muted-foreground">Borrower First + Last Name</td>
+                  <tr className="hover:bg-repwell-sage-100/10 transition-colors">
+                    <td className="p-3"><code className="text-repwell-teal-300 font-mono text-xs bg-repwell-sage-100/30 px-1.5 py-0.5 rounded">borrower_name</code></td>
+                    <td className="p-3 text-repwell-teal-400">Borrower First + Last Name</td>
                   </tr>
-                  <tr>
-                    <td className="p-2"><code>borrower_email</code></td>
-                    <td className="p-2 text-muted-foreground">Borrower Email Address</td>
+                  <tr className="hover:bg-repwell-sage-100/10 transition-colors">
+                    <td className="p-3"><code className="text-repwell-teal-300 font-mono text-xs bg-repwell-sage-100/30 px-1.5 py-0.5 rounded">borrower_email</code></td>
+                    <td className="p-3 text-repwell-teal-400">Borrower Email Address</td>
                   </tr>
                 </tbody>
               </table>
@@ -463,20 +470,22 @@ export function WebhookDocumentation() {
 
           {/* Testing */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">Step 4: Test Your Integration</h4>
-            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-              <li>Go to the <strong>Test Webhooks</strong> tab</li>
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">Step 4: Test Your Integration</h4>
+            <ol className="text-sm text-repwell-teal-400 space-y-2 list-decimal list-inside leading-relaxed">
+              <li>Go to the <strong className="text-repwell-teal-500">Test Webhooks</strong> tab</li>
               <li>Select your webhook configuration</li>
               <li>Choose &quot;encompass.milestone&quot; as the event type (coming soon)</li>
               <li>Run a live test to verify the connection</li>
-              <li>Check the <strong>Logs</strong> tab to see webhook activity</li>
+              <li>Check the <strong className="text-repwell-teal-500">Logs</strong> tab to see webhook activity</li>
             </ol>
           </div>
 
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
-            <div className="text-sm text-blue-800">
-              <strong>Need help?</strong> Contact your Encompass administrator or IT team
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-repwell-sage-100/30 border border-repwell-teal-300/20">
+            <div className="w-8 h-8 bg-repwell-teal-300/10 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+              <Info weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
+            </div>
+            <div className="text-sm text-repwell-teal-400 leading-relaxed">
+              <strong className="text-repwell-teal-500">Need help?</strong> Contact your Encompass administrator or IT team
               to set up the webhook configuration. They may need to create a custom
               business rule or use middleware to format the payload correctly.
             </div>
@@ -487,23 +496,25 @@ export function WebhookDocumentation() {
       {/* Signature Verification */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Signature Verification</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-sans text-lg font-semibold text-repwell-teal-500">Signature Verification</CardTitle>
+          <CardDescription className="text-repwell-teal-300">
             Recommended: Sign your requests for additional security
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-            <p className="text-sm text-amber-800">
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-[#d4a574]/10 border border-[#d4a574]/20">
+            <div className="w-8 h-8 bg-[#d4a574]/10 rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle weight="duotone" className="h-4 w-4 text-[#d4a574]" />
+            </div>
+            <p className="text-sm text-repwell-teal-400 leading-relaxed">
               While signature verification is optional, we strongly recommend it
               for production integrations to prevent unauthorized requests.
             </p>
           </div>
 
           <div className="space-y-2">
-            <h4 className="font-medium text-sm">How to generate a signature</h4>
-            <p className="text-sm text-muted-foreground">
+            <h4 className="font-sans font-semibold text-sm text-repwell-teal-500">How to generate a signature</h4>
+            <p className="text-sm text-repwell-teal-400 leading-relaxed">
               Create an HMAC-SHA256 hash of the request body using your API key as
               the secret, then prefix it with &quot;sha256=&quot;.
             </p>
@@ -511,7 +522,7 @@ export function WebhookDocumentation() {
 
           <Collapsible>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
+              <Button variant="outline" className="w-full justify-between text-repwell-teal-400">
                 <span>Node.js / TypeScript Example</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -542,15 +553,14 @@ fetch(webhookUrl, {
   },
   body: payload,
 });`}
-                onCopy={() => copyToClipboard("node signature", "NodeSig")}
-                isCopied={copiedItem === "NodeSig"}
+                label="Code example"
               />
             </CollapsibleContent>
           </Collapsible>
 
           <Collapsible>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
+              <Button variant="outline" className="w-full justify-between text-repwell-teal-400">
                 <span>Python Example</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -584,15 +594,14 @@ response = requests.post(
     },
     data=payload,
 )`}
-                onCopy={() => copyToClipboard("python signature", "PythonSig")}
-                isCopied={copiedItem === "PythonSig"}
+                label="Code example"
               />
             </CollapsibleContent>
           </Collapsible>
 
           <Collapsible>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" className="w-full justify-between">
+              <Button variant="outline" className="w-full justify-between text-repwell-teal-400">
                 <span>cURL Example</span>
                 <ChevronDown className="h-4 w-4" />
               </Button>
@@ -611,8 +620,7 @@ curl -X POST "${webhookEndpoint}" \\
   -H "x-api-key: $API_KEY" \\
   -H "x-webhook-signature: sha256=$SIGNATURE" \\
   -d "$PAYLOAD"`}
-                onCopy={() => copyToClipboard("curl signature", "CurlSig")}
-                isCopied={copiedItem === "CurlSig"}
+                label="Code example"
               />
             </CollapsibleContent>
           </Collapsible>
@@ -622,47 +630,47 @@ curl -X POST "${webhookEndpoint}" \\
       {/* Response Codes */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Response Codes</CardTitle>
+          <CardTitle className="font-sans text-lg font-semibold text-repwell-teal-500">Response Codes</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            <div className="flex items-center gap-3 p-2 rounded">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
               <Badge variant="default" className="w-16 justify-center">
                 200
               </Badge>
-              <span className="text-sm">
+              <span className="text-sm text-repwell-teal-400">
                 Success - Survey created and queued for delivery
               </span>
             </div>
-            <div className="flex items-center gap-3 p-2 rounded">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
               <Badge variant="secondary" className="w-16 justify-center">
                 400
               </Badge>
-              <span className="text-sm">
+              <span className="text-sm text-repwell-teal-400">
                 Bad Request - Invalid JSON or missing required fields
               </span>
             </div>
-            <div className="flex items-center gap-3 p-2 rounded">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
               <Badge variant="secondary" className="w-16 justify-center">
                 401
               </Badge>
-              <span className="text-sm">
+              <span className="text-sm text-repwell-teal-400">
                 Unauthorized - Invalid API key or signature
               </span>
             </div>
-            <div className="flex items-center gap-3 p-2 rounded">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
               <Badge variant="secondary" className="w-16 justify-center">
                 403
               </Badge>
-              <span className="text-sm">
+              <span className="text-sm text-repwell-teal-400">
                 Forbidden - Webhook disabled or IP not allowed
               </span>
             </div>
-            <div className="flex items-center gap-3 p-2 rounded">
+            <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
               <Badge variant="destructive" className="w-16 justify-center">
                 500
               </Badge>
-              <span className="text-sm">
+              <span className="text-sm text-repwell-teal-400">
                 Server Error - Processing failed (will retry automatically)
               </span>
             </div>
@@ -673,35 +681,35 @@ curl -X POST "${webhookEndpoint}" \\
       {/* Retry Policy */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Retry Policy</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-sans text-lg font-semibold text-repwell-teal-500">Retry Policy</CardTitle>
+          <CardDescription className="text-repwell-teal-300">
             Failed webhooks are automatically retried with exponential backoff
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-2">
-            <div className="flex items-center justify-between text-sm">
-              <span>Attempt 1</span>
+            <div className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
+              <span className="text-repwell-teal-400">Attempt 1</span>
               <Badge variant="outline">5 minutes</Badge>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Attempt 2</span>
+            <div className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
+              <span className="text-repwell-teal-400">Attempt 2</span>
               <Badge variant="outline">10 minutes</Badge>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Attempt 3</span>
+            <div className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
+              <span className="text-repwell-teal-400">Attempt 3</span>
               <Badge variant="outline">20 minutes</Badge>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Attempt 4</span>
+            <div className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
+              <span className="text-repwell-teal-400">Attempt 4</span>
               <Badge variant="outline">40 minutes</Badge>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Attempt 5</span>
+            <div className="flex items-center justify-between text-sm p-2 rounded-lg hover:bg-repwell-sage-100/10 transition-colors">
+              <span className="text-repwell-teal-400">Attempt 5</span>
               <Badge variant="outline">1 hour 20 minutes</Badge>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-repwell-teal-300 leading-relaxed">
             After 5 failed attempts, the webhook is marked as permanently failed.
             Permanent errors (invalid payload, auth failures) will not be retried.
           </p>
@@ -711,28 +719,24 @@ curl -X POST "${webhookEndpoint}" \\
       {/* Support */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Need Help?</CardTitle>
+          <CardTitle className="font-sans text-lg font-semibold text-repwell-teal-500">Need Help?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-repwell-teal-400 leading-relaxed">
             If you need assistance with your webhook integration, check the
             following resources:
           </p>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" asChild>
-              <a
-                href="https://github.com/anthropics/claude-code/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="mr-2 h-4 w-4" />
-                GitHub Issues
+              <a href="mailto:support@repwell.com">
+                <Envelope className="mr-2 h-4 w-4" />
+                Contact Support
               </a>
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled aria-disabled="true">
               Test Webhooks Tab
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled aria-disabled="true">
               View Logs Tab
             </Button>
           </div>
@@ -745,29 +749,46 @@ curl -X POST "${webhookEndpoint}" \\
 interface CodeBlockProps {
   title: string;
   code: string;
-  onCopy: () => void;
-  isCopied: boolean;
+  label: string;
 }
 
-function CodeBlock({ title, code, onCopy, isCopied }: CodeBlockProps) {
+function CodeBlock({ title, code, label }: CodeBlockProps) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  async function handleCopy() {
+    if (!navigator.clipboard) {
+      toast({ title: "Error", description: "Clipboard not available", variant: "destructive" });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({ title: "Copied", description: `${label} copied to clipboard` });
+    } catch {
+      toast({ title: "Error", description: "Failed to copy to clipboard", variant: "destructive" });
+    }
+  }
+
   return (
     <div className="space-y-2">
-      {title && <h5 className="text-sm font-medium">{title}</h5>}
+      {title && <h5 className="font-sans text-sm font-semibold text-repwell-teal-500">{title}</h5>}
       <div className="relative">
         <Button
           variant="ghost"
           size="sm"
-          className="absolute right-2 top-2 h-6 px-2 z-10"
-          onClick={onCopy}
+          className="absolute right-2 top-2 h-7 px-2 z-10 text-repwell-sage-100/60 hover:text-repwell-sage-100 hover:bg-repwell-teal-400/50"
+          onClick={handleCopy}
         >
-          {isCopied ? (
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
+          {copied ? (
+            <CheckCircle2 className="h-4 w-4 text-repwell-sage-200" />
           ) : (
             <Copy className="h-4 w-4" />
           )}
         </Button>
-        <ScrollArea className="rounded-md border bg-muted">
-          <pre className="p-4 text-xs font-mono overflow-x-auto">{code}</pre>
+        <ScrollArea className="rounded-lg border border-repwell-teal-400/20 bg-repwell-teal-500">
+          <pre className="p-4 text-xs font-mono text-repwell-sage-100 overflow-x-auto">{code}</pre>
         </ScrollArea>
       </div>
     </div>

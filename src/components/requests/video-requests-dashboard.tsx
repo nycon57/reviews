@@ -6,6 +6,12 @@ import {
   DownloadSimple as Download,
   CaretLeft as ChevronLeft,
   CaretRight as ChevronRight,
+  PaperPlaneRight,
+  Clock,
+  CheckCircle,
+  ChartLineUp,
+  ListDashes,
+  XCircle,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,42 +66,35 @@ function StatsCards({ stats }: { stats: RequestStats }) {
   const completionRate =
     stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
+  const statItems = [
+    { label: "Total Requests", value: stats.total, icon: PaperPlaneRight },
+    { label: "In Progress", value: stats.pending + stats.sent, icon: Clock },
+    { label: "Completed", value: stats.completed, icon: CheckCircle },
+    { label: "Expired", value: stats.expired, icon: XCircle },
+    { label: "Completion Rate", value: `${completionRate}%`, icon: ChartLineUp },
+  ];
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Total Requests</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.total}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>In Progress</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-primary">
-            {stats.pending + stats.sent}
+    <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+      {statItems.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <div
+            key={stat.label}
+            className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4"
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+              <Icon className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                {stat.value}
+              </p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Completed</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-repwell-sage-200">{stats.completed}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardDescription>Completion Rate</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{completionRate}%</div>
-        </CardContent>
-      </Card>
+        );
+      })}
     </div>
   );
 }
@@ -256,14 +255,19 @@ export function VideoTestimonialRequestsDashboard({
     <div className="space-y-6">
       <StatsCards stats={stats} />
 
-      <Card>
-        <CardHeader className="pb-4">
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <CardTitle>Requests</CardTitle>
-              <CardDescription>
-                {total} total request{total !== 1 ? "s" : ""}
-              </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <ListDashes className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Requests</CardTitle>
+                <CardDescription>
+                  {total} total request{total !== 1 ? "s" : ""}
+                </CardDescription>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {canManage && (
@@ -279,7 +283,7 @@ export function VideoTestimonialRequestsDashboard({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6 space-y-4">
           <RequestFilters
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -316,11 +320,11 @@ export function VideoTestimonialRequestsDashboard({
           />
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4">
-              <div className="text-sm text-muted-foreground">
+            <div className="flex items-center justify-between border-t border-border/50 pt-4">
+              <p className="text-xs text-muted-foreground">
                 Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, total)} of{" "}
                 {total} results
-              </div>
+              </p>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -328,11 +332,11 @@ export function VideoTestimonialRequestsDashboard({
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1 || isLoading}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="mr-1 h-3.5 w-3.5" />
                   Previous
                 </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {page} of {totalPages}
+                <span className="text-xs font-medium text-muted-foreground tabular-nums">
+                  {page} / {totalPages}
                 </span>
                 <Button
                   variant="outline"
@@ -341,7 +345,7 @@ export function VideoTestimonialRequestsDashboard({
                   disabled={page === totalPages || isLoading}
                 >
                   Next
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </div>
             </div>

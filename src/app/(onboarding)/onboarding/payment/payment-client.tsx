@@ -8,15 +8,17 @@ import {
   Shield,
   CaretLeft as ChevronLeft,
   WarningCircle as AlertCircle,
+  CheckCircle,
+  Clock,
+  LockSimple,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/hooks/use-toast";
@@ -72,11 +74,11 @@ export function PaymentClient({ selectedPlan, billingCycle }: PaymentClientProps
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
-      className="max-w-lg mx-auto space-y-8"
+      className="max-w-2xl mx-auto space-y-8"
     >
       {/* Header */}
       <motion.div variants={fadeInUp} className="text-center space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-repwell-teal-500">
           Start your free trial
         </h1>
         <p className="text-muted-foreground">
@@ -97,51 +99,71 @@ export function PaymentClient({ selectedPlan, billingCycle }: PaymentClientProps
         </motion.div>
       )}
 
-      {/* Plan summary */}
-      <motion.div variants={fadeInUp}>
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+      {/* Two-column layout: plan summary + trust signals */}
+      <motion.div variants={fadeInUp} className="grid gap-6 lg:grid-cols-5">
+        {/* Plan summary card — 3 cols */}
+        <Card className="lg:col-span-3 overflow-hidden">
+          {/* Accent bar */}
+          <div className="h-1.5 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200" />
+
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <CreditCard className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
               <div>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="text-lg flex items-center gap-2">
                   {tier?.name} Plan
                   {billingCycle === "year" && (
-                    <Badge variant="secondary" className="text-xs">
+                    <span className="inline-flex items-center rounded-full bg-repwell-teal-300 px-2.5 py-0.5 text-xs font-medium text-white">
                       Annual
-                    </Badge>
+                    </span>
                   )}
                 </CardTitle>
                 <CardDescription>14-day free trial included</CardDescription>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold">
-                  ${monthlyEquivalent}
-                  <span className="text-sm font-normal text-muted-foreground">/mo</span>
-                </p>
-                {billingCycle === "year" && (
-                  <p className="text-xs text-muted-foreground">
-                    ${price}/year billed annually
-                  </p>
-                )}
-              </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+
+          <CardContent className="space-y-6 pt-6">
+            {/* Price */}
+            <div className="text-center">
+              <p className="font-display text-4xl font-bold text-repwell-teal-500">
+                ${monthlyEquivalent}
+                <span className="text-base font-normal text-muted-foreground">/mo</span>
+              </p>
+              {billingCycle === "year" && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  ${price}/year billed annually
+                </p>
+              )}
+            </div>
+
             {/* Trial timeline */}
-            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Today</span>
-                <span className="font-medium">Start free trial</span>
+            <div className="rounded-lg border border-border/50 overflow-hidden">
+              <div className="flex items-center gap-3 px-4 py-3 bg-repwell-sage-100/20">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-repwell-teal-300 text-white">
+                  <CheckCircle className="h-4 w-4" weight="fill" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Today</p>
+                  <p className="text-sm font-medium">Start free trial</p>
+                </div>
               </div>
-              <div className="h-px bg-border" />
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">In 14 days</span>
-                <span className="font-medium">First charge: ${billingCycle === "year" ? price : monthlyEquivalent}</span>
+              <div className="h-px bg-border/50" />
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-dashed border-muted-foreground/30">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">In 14 days</p>
+                  <p className="text-sm font-medium">First charge: ${billingCycle === "year" ? price : monthlyEquivalent}</p>
+                </div>
               </div>
             </div>
 
             <Button
-              className="w-full"
+              className="w-full h-11 bg-repwell-teal-300 hover:bg-repwell-teal-400"
               size="lg"
               onClick={handleStartCheckout}
               disabled={isLoading}
@@ -152,29 +174,43 @@ export function PaymentClient({ selectedPlan, billingCycle }: PaymentClientProps
 
             {/* Security note */}
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Shield className="h-3 w-3" />
+              <Shield className="h-3.5 w-3.5 text-repwell-teal-300" weight="duotone" />
               <span>Secure payment powered by Stripe</span>
             </div>
           </CardContent>
         </Card>
-      </motion.div>
 
-      {/* Trust signals */}
-      <motion.div variants={fadeInUp} className="space-y-4">
-        <div className="grid grid-cols-3 gap-4 text-center text-sm">
-          <div>
-            <p className="font-medium">Cancel anytime</p>
-            <p className="text-xs text-muted-foreground">No questions asked</p>
-          </div>
-          <div>
-            <p className="font-medium">No charge today</p>
-            <p className="text-xs text-muted-foreground">Trial is free</p>
-          </div>
-          <div>
-            <p className="font-medium">Secure checkout</p>
-            <p className="text-xs text-muted-foreground">256-bit encryption</p>
-          </div>
-        </div>
+        {/* Trust signals card — 2 cols */}
+        <Card className="lg:col-span-2 overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-repwell-sage-100 to-transparent" />
+
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <LockSimple className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <CardTitle className="text-lg">Why RepWell?</CardTitle>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-0 divide-y divide-border/50">
+            {[
+              { label: "Cancel anytime", detail: "No questions asked" },
+              { label: "No charge today", detail: "Trial is completely free" },
+              { label: "Secure checkout", detail: "256-bit encryption" },
+              { label: "Data privacy", detail: "SOC 2 compliant" },
+              { label: "Expert support", detail: "Real humans, fast replies" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-3 px-6 py-3.5">
+                <CheckCircle className="h-4 w-4 shrink-0 text-repwell-sage-200" weight="fill" />
+                <div>
+                  <p className="text-sm font-medium">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.detail}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       </motion.div>
 
       {/* Back button */}

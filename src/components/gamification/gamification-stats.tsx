@@ -21,11 +21,13 @@ import { getGamificationStats } from "@/lib/gamification/actions";
 interface GamificationStatsCardProps {
   loanOfficerId?: string;
   className?: string;
+  showTeamRank?: boolean;
 }
 
 export function GamificationStatsCard({
   loanOfficerId,
   className,
+  showTeamRank = true,
 }: GamificationStatsCardProps) {
   const [stats, setStats] = useState<GamificationStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,10 +46,18 @@ export function GamificationStatsCard({
 
   if (isLoading) {
     return (
-      <Card className={className}>
+      <Card className={cn("shadow-soft", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Trophy className="h-4 w-4 text-repwell-teal-300" />
+            </div>
+            Your Progress
+          </CardTitle>
+        </CardHeader>
         <CardContent className="pt-6">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
+          <div className={cn("grid grid-cols-2 gap-4", showTeamRank ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
+            {[...Array(showTeamRank ? 4 : 3)].map((_, i) => (
               <div key={i} className="space-y-2 text-center">
                 <div className="h-10 w-10 rounded-full bg-muted mx-auto animate-pulse" />
                 <div className="h-4 w-16 bg-muted rounded mx-auto animate-pulse" />
@@ -61,16 +71,18 @@ export function GamificationStatsCard({
 
   if (!stats) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
+      <Card className={cn("shadow-soft", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Trophy className="h-4 w-4 text-repwell-teal-300" />
+            </div>
             Your Progress
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/10">
+            <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/10">
               <Trophy className="h-7 w-7 text-repwell-teal-300" />
             </div>
             <p className="text-sm font-medium text-repwell-teal-500">Start earning achievements</p>
@@ -103,56 +115,60 @@ export function GamificationStatsCard({
   };
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-yellow-500" />
+    <Card className={cn("shadow-soft", className)}>
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Trophy className="h-4 w-4 text-repwell-teal-300" />
+          </div>
           Your Progress
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <CardContent className="pt-6">
+        <div className={cn("grid grid-cols-2 gap-4", showTeamRank ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
           {/* Reputation Score */}
           <div className="text-center">
             <div className="flex items-center justify-center gap-1 mb-2">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
                 {stats.reputationScore}
               </div>
             </div>
-            <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+            <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
               Reputation
               {getTrendIcon(stats.reputationTrend)}
             </div>
           </div>
 
-          {/* Rank */}
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <div
-                className={cn(
-                  "h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md",
-                  getRankBadgeColor(stats.currentRank)
-                )}
-              >
-                {stats.currentRank === 1 ? (
-                  <Crown className="h-6 w-6" />
-                ) : (
-                  `#${stats.currentRank || "-"}`
+          {/* Rank — hidden for individual accounts */}
+          {showTeamRank && (
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <div
+                  className={cn(
+                    "h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md",
+                    getRankBadgeColor(stats.currentRank)
+                  )}
+                >
+                  {stats.currentRank === 1 ? (
+                    <Crown className="h-6 w-6" />
+                  ) : (
+                    `#${stats.currentRank || "-"}`
+                  )}
+                </div>
+              </div>
+              <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
+                Team Rank
+                {stats.rankChange !== 0 && (
+                  <Badge
+                    variant={stats.rankChange > 0 ? "default" : "destructive"}
+                    className="text-[10px] h-4 px-1"
+                  >
+                    {stats.rankChange > 0 ? `+${stats.rankChange}` : stats.rankChange}
+                  </Badge>
                 )}
               </div>
             </div>
-            <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
-              Team Rank
-              {stats.rankChange !== 0 && (
-                <Badge
-                  variant={stats.rankChange > 0 ? "default" : "destructive"}
-                  className="text-[10px] h-4 px-1"
-                >
-                  {stats.rankChange > 0 ? `+${stats.rankChange}` : stats.rankChange}
-                </Badge>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* Badges */}
           <div className="text-center">
@@ -161,10 +177,10 @@ export function GamificationStatsCard({
                 <Award className="h-6 w-6 text-purple-500" />
               </div>
             </div>
-            <div className="text-sm font-semibold">
+            <div className="text-sm font-semibold text-repwell-teal-500">
               {stats.earnedBadges} / {stats.totalBadges}
             </div>
-            <div className="text-xs text-muted-foreground">Badges Earned</div>
+            <div className="text-xs text-repwell-teal-400">Badges Earned</div>
           </div>
 
           {/* Next Badge Progress */}
@@ -179,9 +195,9 @@ export function GamificationStatsCard({
                     showTooltip={false}
                   />
                 </div>
-                <div className="text-xs text-muted-foreground mb-1">
+                <div className="text-xs text-repwell-teal-400 mb-1">
                   {stats.nextBadgeProgress.percentComplete}% to{" "}
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-repwell-teal-500">
                     {stats.nextBadgeProgress.badge.name}
                   </span>
                 </div>
@@ -197,7 +213,7 @@ export function GamificationStatsCard({
                     <Target className="h-6 w-6 text-green-500" />
                   </div>
                 </div>
-                <div className="text-xs text-muted-foreground">All badges earned!</div>
+                <div className="text-xs text-repwell-teal-400">All badges earned!</div>
               </>
             )}
           </div>
@@ -243,10 +259,10 @@ export function GamificationWidget({
   return (
     <div className={cn("flex items-center gap-4 text-sm", className)}>
       <div className="flex items-center gap-1.5">
-        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+        <div className="h-6 w-6 rounded-full bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 flex items-center justify-center text-white text-xs font-bold">
           {stats.reputationScore}
         </div>
-        <span className="text-muted-foreground">score</span>
+        <span className="text-repwell-teal-400">score</span>
       </div>
       <div className="flex items-center gap-1.5">
         <Trophy className="h-4 w-4 text-yellow-500" />

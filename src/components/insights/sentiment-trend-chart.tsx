@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ChartLine } from "@phosphor-icons/react";
 import {
   XAxis,
   YAxis,
@@ -26,16 +27,23 @@ export function SentimentTrendChart({ data, isLoading }: SentimentTrendChartProp
 
   if (!hasData) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">Sentiment Trend</CardTitle>
-          <CardDescription>Track how customer sentiment changes over time</CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <ChartLine className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Sentiment Trend</CardTitle>
+              <CardDescription>Track how customer sentiment changes over time</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex h-[280px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm">No sentiment data available yet</p>
-              <p className="text-xs">Reviews need sentiment analysis to display trends</p>
+              <p className="text-sm font-medium text-repwell-teal-500">No sentiment data available yet</p>
+              <p className="mt-1 text-xs">Reviews need sentiment analysis to display trends</p>
             </div>
           </div>
         </CardContent>
@@ -44,10 +52,17 @@ export function SentimentTrendChart({ data, isLoading }: SentimentTrendChartProp
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">Sentiment Trend</CardTitle>
-        <CardDescription>Track how customer sentiment changes over time</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <ChartLine className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Sentiment Trend</CardTitle>
+            <CardDescription>Track how customer sentiment changes over time</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[280px] w-full" role="img" aria-label="Sentiment trend over time">

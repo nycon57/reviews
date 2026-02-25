@@ -11,6 +11,7 @@ import {
   MapPin,
   ArrowRight,
 } from "@phosphor-icons/react/dist/ssr";
+import { TierBadgeSSR } from "@/components/shared/tier-badge-ssr";
 
 export async function generateMetadata(): Promise<Metadata> {
   const baseUrl = getBaseUrl();
@@ -76,7 +77,7 @@ export default async function LOListingPage() {
                 : [professional.branch, professional.region].filter(Boolean).join(", ");
 
               return (
-                <Link key={professional.id} href={`/pro/${professional.slug || professional.id}`}>
+                <Link key={professional.id} href={`/pro/${professional.slug}`}>
                   <Card className="group h-full transition-all hover:shadow-lg hover:border-primary/50">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
@@ -87,9 +88,12 @@ export default async function LOListingPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <h2 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
-                            {professional.full_name}
-                          </h2>
+                          <div className="flex items-center gap-1">
+                            <h2 className="font-semibold text-lg truncate group-hover:text-primary transition-colors">
+                              {professional.full_name}
+                            </h2>
+                            <TierBadgeSSR isEnterprise={professional.is_enterprise} isPro={professional.is_pro} size="sm" />
+                          </div>
                           <p className="text-sm text-muted-foreground truncate">
                             {professional.title || "Professional"}
                           </p>

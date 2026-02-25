@@ -97,7 +97,7 @@ interface PopupContentProps {
 }
 
 function PopupContent({ professional }: PopupContentProps) {
-  const profileHref = `/pro/${professional.slug || professional.id}`;
+  const profileHref = `/pro/${professional.slug}`;
 
   return (
     <div className="p-3 w-[260px]">

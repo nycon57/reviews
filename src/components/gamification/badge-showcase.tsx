@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
-  MedalIcon as Award,
-  LockIcon as Lock,
-  CaretRightIcon as ChevronRight,
+  Medal as Award,
+  Lock,
+  CaretRight as ChevronRight,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { BadgeIcon } from "./badge-icon";
@@ -52,14 +52,16 @@ export function BadgeShowcase({
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Award size={20} className="text-purple-500" />
+      <Card className={cn("shadow-soft", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Award className="h-4 w-4 text-repwell-teal-300" />
+            </div>
             Achievements
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <div className="flex flex-wrap gap-2">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-10 w-10 rounded-full bg-muted animate-pulse" />
@@ -79,11 +81,13 @@ export function BadgeShowcase({
   const hasMore = earned.length > maxDisplay;
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
+    <Card className={cn("shadow-soft", className)}>
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Award size={20} className="text-purple-500" />
+          <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Award className="h-4 w-4 text-repwell-teal-300" />
+            </div>
             Achievements
           </CardTitle>
           <Badge variant="secondary" className="font-normal">
@@ -91,7 +95,7 @@ export function BadgeShowcase({
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-4">
         {/* Earned Badges */}
         {earned.length > 0 ? (
           <div>
@@ -117,8 +121,8 @@ export function BadgeShowcase({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-50 to-purple-100">
-              <Lock size={24} className="text-purple-400" />
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-repwell-sage-100/50 to-repwell-teal-300/10">
+              <Lock size={24} className="text-repwell-teal-300" />
             </div>
             <p className="text-sm font-medium text-repwell-teal-500">No badges earned yet</p>
             <p className="mt-1 max-w-[220px] text-xs text-repwell-teal-400">
@@ -129,8 +133,8 @@ export function BadgeShowcase({
 
         {/* In Progress */}
         {showProgress && inProgress.length > 0 && (
-          <div className="pt-3 border-t space-y-3">
-            <h4 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="pt-3 border-t border-border/50 space-y-3">
+            <h4 className="text-xs font-medium uppercase tracking-wider text-repwell-teal-300">
               In Progress
             </h4>
             {inProgress.map((bp) => (
@@ -143,10 +147,10 @@ export function BadgeShowcase({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium truncate">
+                    <span className="text-xs font-medium truncate text-repwell-teal-500">
                       {bp.badge.name}
                     </span>
-                    <span className="text-xs text-muted-foreground ml-2">
+                    <span className="text-xs text-repwell-teal-400 ml-2">
                       {bp.percentComplete}%
                     </span>
                   </div>

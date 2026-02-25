@@ -317,6 +317,7 @@ const config = {
   			'elevation-4': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
   			// Brand shadows using repwell-teal-300 (#52796f)
   			'card': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
+			'soft': '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)',
   			'card-hover': '0 8px 16px -4px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.04)',
   			'button-hover': '0 4px 12px -2px rgb(82 121 111 / 0.25)',
   			'glow': '0 0 20px -5px rgb(82 121 111 / 0.4)'

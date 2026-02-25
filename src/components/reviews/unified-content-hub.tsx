@@ -7,6 +7,7 @@ import {
   Chats as MessageSquare,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   Tabs,
   TabsContent,
@@ -82,21 +83,35 @@ export function UnifiedContentHub({
         onValueChange={(value) => setActiveTab(value as ContentTab)}
         className="space-y-4"
       >
-        <TabsList variant="underline">
-          <TabsTrigger value="reviews" variant="underline" className="gap-2">
-            <MessageSquare className="h-4 w-4" />
-            Text Reviews
-            <Badge variant="secondary" className="ml-1.5 text-xs">
-              {reviewStats.total}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="videos" variant="underline" className="gap-2">
-            <Film className="h-4 w-4" />
-            Video Testimonials
-            <Badge variant="secondary" className="ml-1.5 text-xs">
-              {videoStats.total}
-            </Badge>
-          </TabsTrigger>
+        <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto gap-0">
+          {[
+            { value: "reviews" as const, label: "Text Reviews", icon: MessageSquare, count: reviewStats.total },
+            { value: "videos" as const, label: "Video Testimonials", icon: Film, count: videoStats.total },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className={cn(
+                  "relative px-4 py-3 text-sm font-medium",
+                  "text-muted-foreground hover:text-repwell-teal-400",
+                  "data-[state=active]:text-repwell-teal-300",
+                  "border-b-2 border-transparent",
+                  "data-[state=active]:border-repwell-teal-300",
+                  "rounded-none bg-transparent shadow-none",
+                  "transition-colors duration-200",
+                  "flex items-center gap-2 whitespace-nowrap"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {tab.count}
+                </Badge>
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
         <TabsContent value="reviews" className="mt-6">

@@ -205,7 +205,7 @@ export async function submitReferral(
     }
 
     // Send introduction email (fire-and-forget — don't block the response)
-    const profileUrl = `${emailConfig.baseUrl}/pro/${user.slug || user.id}`;
+    const profileUrl = `${emailConfig.baseUrl}/pro/${user.slug}`;
 
     const emailData: ProfileReferralIntroductionEmailData = {
       toEmail: validated.referredEmail,

@@ -11,19 +11,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   CreditCard,
   Calendar,
-  CheckCircle,
   Lightning as Zap,
   Warning as AlertTriangle,
   Crown,
-  ArrowSquareOut as ExternalLink,
   SpinnerGap as Loader2,
-  Users,
-  UserCircle,
   EnvelopeSimple,
   Sparkle,
   ArrowRight,
   ShieldCheck,
-  Infinity,
 } from '@phosphor-icons/react';
 import {
   getBillingOverview,
@@ -61,51 +56,6 @@ const TIER_CONFIG: Record<string, { name: string; gradient: string; icon: React.
   professional: { name: 'Professional', gradient: 'from-repwell-teal-300 to-repwell-teal-400', icon: <Crown weight="duotone" className="h-6 w-6" /> },
   enterprise: { name: 'Enterprise', gradient: 'from-repwell-teal-400 to-repwell-teal-500', icon: <ShieldCheck weight="duotone" className="h-6 w-6" /> },
 };
-
-interface UsageBarProps {
-  label: string;
-  current: number;
-  max: number;
-  icon: React.ReactNode;
-}
-
-function UsageBar({ label, current, max, icon }: UsageBarProps) {
-  const isUnlimited = max === -1;
-  const percentage = isUnlimited ? 0 : Math.min((current / max) * 100, 100);
-  const isNearLimit = percentage > 80;
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-medium text-repwell-teal-400">
-          {icon}
-          {label}
-        </div>
-        <span className="text-sm text-repwell-teal-300 font-medium tabular-nums">
-          {isUnlimited ? (
-            <span className="flex items-center gap-1">
-              {current} <Infinity weight="bold" className="h-4 w-4" />
-            </span>
-          ) : (
-            `${current} / ${max}`
-          )}
-        </span>
-      </div>
-      {!isUnlimited && (
-        <div className="h-2 bg-repwell-sage-100/50 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${percentage}%` }}
-            transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-            className={`h-full rounded-full transition-colors ${
-              isNearLimit ? 'bg-amber-400' : 'bg-gradient-to-r from-repwell-sage-200 to-repwell-teal-300'
-            }`}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function BillingTab() {
   const router = useRouter();
@@ -408,92 +358,6 @@ export function BillingTab() {
         </motion.div>
       </div>
 
-      {/* Usage & Features Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Usage Card */}
-        {billingData?.usage && (
-          <motion.div variants={fadeInUp}>
-            <Card className="border-border/50">
-              <CardContent className="p-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-repwell-teal-500">Usage This Period</h4>
-                  {subscriptionEndsAt && (
-                    <span className="text-xs text-repwell-teal-300">
-                      Resets {subscriptionEndsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-5">
-                  <UsageBar
-                    label="Team Members"
-                    current={billingData.usage.currentUsers}
-                    max={billingData.tier?.limits?.maxUsers ?? 3}
-                    icon={<Users weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
-                  />
-
-                  <UsageBar
-                    label="Users"
-                    current={billingData.usage.currentMembers}
-                    max={billingData.tier?.limits?.maxProfessionals ?? 5}
-                    icon={<UserCircle weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
-                  />
-
-                  <UsageBar
-                    label="Surveys This Month"
-                    current={billingData.usage.surveysThisMonth}
-                    max={billingData.tier?.limits?.maxSurveysPerMonth ?? 100}
-                    icon={<EnvelopeSimple weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
-
-        {/* Features Card */}
-        <motion.div variants={fadeInUp}>
-          <Card className="border-border/50 h-full">
-            <CardContent className="p-6 space-y-4">
-              <h4 className="font-semibold text-repwell-teal-500">
-                {tierConfig.name} Plan Features
-              </h4>
-
-              <ul className="space-y-3">
-                {(billingData?.tier?.features || [
-                  'Basic review management',
-                  'Email support',
-                  'Up to 3 team members',
-                ]).map((feature, index) => (
-                  <motion.li
-                    key={index}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className="flex items-start gap-3 text-sm text-repwell-teal-400"
-                  >
-                    <CheckCircle weight="duotone" className="h-5 w-5 text-repwell-sage-200 flex-shrink-0 mt-0.5" />
-                    {feature}
-                  </motion.li>
-                ))}
-              </ul>
-
-              {currentTier !== 'enterprise' && (
-                <div className="pt-4 border-t border-border/50">
-                  <button
-                    onClick={() => router.push('/pricing')}
-                    className="text-sm text-repwell-teal-300 hover:text-repwell-teal-400 font-medium flex items-center gap-1 group"
-                  >
-                    Compare all plans
-                    <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-
       {/* Non-Admin Info Card */}
       {!isAdmin && hasPaidSubscription && (
         <motion.div variants={fadeInUp}>
@@ -516,14 +380,6 @@ export function BillingTab() {
         </motion.div>
       )}
 
-      {/* Secure Payment Badge */}
-      {hasPaidSubscription && (
-        <motion.div variants={fadeInUp} className="flex items-center justify-center gap-2 text-xs text-repwell-teal-300">
-          <ShieldCheck weight="duotone" className="h-4 w-4" />
-          <span>Secure payments powered by Stripe</span>
-          <ExternalLink className="h-3 w-3" />
-        </motion.div>
-      )}
     </motion.div>
   );
 }

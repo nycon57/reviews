@@ -99,7 +99,9 @@ export function RecognitionAnalyticsDashboard({
                 <CardTitle className="text-sm font-medium">
                   Total Recognitions
                 </CardTitle>
-                <Gift className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-950">
+                  <Gift className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -116,7 +118,9 @@ export function RecognitionAnalyticsDashboard({
                 <CardTitle className="text-sm font-medium">
                   Active Givers
                 </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-950">
+                  <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -133,7 +137,9 @@ export function RecognitionAnalyticsDashboard({
                 <CardTitle className="text-sm font-medium">
                   Recipients
                 </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-950">
+                  <Users className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
@@ -150,7 +156,9 @@ export function RecognitionAnalyticsDashboard({
                 <CardTitle className="text-sm font-medium">
                   Participation Rate
                 </CardTitle>
-                <Target className="h-4 w-4 text-muted-foreground" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950">
+                  <Target className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">

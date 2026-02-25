@@ -19,6 +19,7 @@ import {
   Target,
   Star,
   Users,
+  Lightning,
 } from "@phosphor-icons/react";
 import { cn, getInitials } from "@/lib/utils";
 import { getProfileCompletionLeaderboard } from "@/lib/gamification/profile-completion-actions";
@@ -58,14 +59,16 @@ export function ProfileCompletionLeaderboard({
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-repwell-teal-300" />
-            Profile Completion Leaderboard
-          </CardTitle>
+      <Card className={cn("border border-border/50 shadow-soft rounded-xl", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Target className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <CardTitle className="text-lg text-repwell-teal-500">Profile Completion</CardTitle>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center gap-4">
@@ -84,17 +87,24 @@ export function ProfileCompletionLeaderboard({
 
   if (entries.length === 0) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-repwell-teal-300" />
-            Profile Completion Leaderboard
-          </CardTitle>
+      <Card className={cn("border border-border/50 shadow-soft rounded-xl overflow-hidden", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Target className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <CardTitle className="text-lg text-repwell-teal-500">Profile Completion</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No team members found</p>
+          <div className="relative flex flex-col items-center justify-center py-12 text-center overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
+            <div className="relative">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50">
+                <Users className="h-7 w-7 text-repwell-teal-400" />
+              </div>
+              <p className="font-medium text-repwell-teal-500">No team members found</p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -105,14 +115,16 @@ export function ProfileCompletionLeaderboard({
   const restOfList = entries.slice(3);
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-repwell-teal-300" />
-          Profile Completion Leaderboard
-        </CardTitle>
+    <Card className={cn("border border-border/50 shadow-soft rounded-xl overflow-hidden", className)}>
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Target className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <CardTitle className="text-lg text-repwell-teal-500">Profile Completion</CardTitle>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="p-5 space-y-5">
         {/* Podium for top 3 */}
         {showPodium && topThree.length >= 1 && (
           <div className="grid gap-4 sm:grid-cols-3">
@@ -144,10 +156,10 @@ export function ProfileCompletionLeaderboard({
 
         {/* Rest of leaderboard table */}
         {restOfList.length > 0 && (
-          <div className="rounded-md border">
+          <div className="rounded-xl border border-border/50 overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-repwell-sage-100/10">
                   <TableHead className="w-16">Rank</TableHead>
                   <TableHead>Team Member</TableHead>
                   <TableHead className="w-24 text-right">Points</TableHead>
@@ -157,20 +169,20 @@ export function ProfileCompletionLeaderboard({
               </TableHeader>
               <TableBody>
                 {restOfList.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="font-medium">#{entry.rank}</TableCell>
+                  <TableRow key={entry.id} className="hover:bg-repwell-sage-100/10">
+                    <TableCell className="font-medium text-repwell-teal-400">#{entry.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           {entry.photoUrl && (
                             <AvatarImage src={entry.photoUrl} alt={entry.fullName} />
                           )}
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-xs bg-repwell-teal-300/10 text-repwell-teal-400">
                             {getInitials(entry.fullName)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-sm">{entry.fullName}</p>
+                          <p className="font-medium text-sm text-repwell-teal-500">{entry.fullName}</p>
                           {entry.branch && (
                             <p className="text-xs text-muted-foreground">
                               {entry.branch}
@@ -180,7 +192,7 @@ export function ProfileCompletionLeaderboard({
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="font-medium">{entry.earnedPoints}</span>
+                      <span className="font-medium text-repwell-teal-500">{entry.earnedPoints}</span>
                       <span className="text-muted-foreground text-xs">
                         /{entry.totalPoints}
                       </span>
@@ -188,7 +200,7 @@ export function ProfileCompletionLeaderboard({
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Star className="h-3 w-3 text-yellow-500" />
-                        <span className="font-medium">{entry.searchRankScore}</span>
+                        <span className="font-medium text-repwell-teal-500">{entry.searchRankScore}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -204,7 +216,7 @@ export function ProfileCompletionLeaderboard({
                                 : "[&>div]:bg-orange-500"
                           )}
                         />
-                        <span className="text-xs font-medium w-8">
+                        <span className="text-xs font-medium w-8 text-repwell-teal-400">
                           {entry.percentage}%
                         </span>
                       </div>
@@ -217,22 +229,21 @@ export function ProfileCompletionLeaderboard({
         )}
 
         {/* Info card */}
-        <div className="rounded-lg border border-dashed bg-muted/30 p-4">
-          <h4 className="font-medium text-sm mb-2">How Profile Scores Work</h4>
-          <ul className="text-xs text-muted-foreground space-y-1">
-            <li>
-              <strong>Points</strong> are earned by completing profile fields
-            </li>
-            <li>
-              <strong>Search Rank</strong> (0-850) combines profile completion with reviews and engagement
-            </li>
-            <li>
-              Higher scores improve visibility in search results and client matching
-            </li>
-            <li>
-              Connect external platforms like Google Business and Zillow for bonus points
-            </li>
-          </ul>
+        <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-repwell-teal-300/10 shrink-0">
+              <Lightning className="h-4 w-4 text-repwell-teal-300" />
+            </div>
+            <div>
+              <h4 className="font-medium text-sm text-repwell-teal-500 mb-1.5">How Profile Scores Work</h4>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li><strong className="text-repwell-teal-400">Points</strong> are earned by completing profile fields</li>
+                <li><strong className="text-repwell-teal-400">Search Rank</strong> (0-850) combines profile completion with reviews and engagement</li>
+                <li>Higher scores improve visibility in search results and client matching</li>
+                <li>Connect external platforms like Google Business and Zillow for bonus points</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -251,7 +262,7 @@ function PodiumCard({
     entry.rank === 1 ? (
       <Crown className="h-6 w-6 text-yellow-500" />
     ) : entry.rank === 2 ? (
-      <Medal className="h-5 w-5 text-gray-400" />
+      <Medal className="h-5 w-5 text-repwell-sage-200" />
     ) : (
       <Trophy className="h-5 w-5 text-amber-600" />
     );
@@ -263,90 +274,89 @@ function PodiumCard({
         ? "2nd Place"
         : "3rd Place";
 
-  const cardBorder = isWinner
-    ? "border-yellow-200 bg-gradient-to-b from-yellow-50/50 to-transparent"
-    : "";
-
   return (
-    <Card className={cn("transition-all hover:shadow-md", cardBorder)}>
-      <CardContent className="p-4">
-        <div className="flex flex-col items-center text-center">
-          <div className="relative mb-3">
-            <Avatar
-              className={cn(
-                isWinner ? "h-16 w-16" : "h-14 w-14",
-                "ring-4",
-                entry.rank === 1
-                  ? "ring-yellow-400"
-                  : entry.rank === 2
-                    ? "ring-gray-300"
-                    : "ring-amber-400"
-              )}
-            >
-              {entry.photoUrl && (
-                <AvatarImage src={entry.photoUrl} alt={entry.fullName} />
-              )}
-              <AvatarFallback
-                className={cn(
-                  isWinner ? "text-xl" : "text-lg",
-                  entry.rank === 1
-                    ? "bg-yellow-100 text-yellow-700"
-                    : entry.rank === 2
-                      ? "bg-gray-100 text-gray-700"
-                      : "bg-amber-100 text-amber-700"
-                )}
-              >
-                {getInitials(entry.fullName)}
-              </AvatarFallback>
-            </Avatar>
-            {isWinner && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                {rankIcon}
-              </div>
-            )}
-            {!isWinner && (
-              <div className="absolute -bottom-1 -right-1">{rankIcon}</div>
-            )}
-          </div>
-
-          <p className="font-semibold truncate max-w-full">{entry.fullName}</p>
-          <p
+    <div className={cn(
+      "rounded-xl border border-border/50 p-5 transition-all hover:shadow-soft",
+      isWinner
+        ? "border-yellow-200/50 bg-gradient-to-b from-yellow-50/30 to-transparent"
+        : "bg-card"
+    )}>
+      <div className="flex flex-col items-center text-center">
+        <div className="relative mb-3">
+          <Avatar
             className={cn(
-              "text-xs font-medium",
+              isWinner ? "h-16 w-16" : "h-14 w-14",
+              "ring-4",
               entry.rank === 1
-                ? "text-yellow-600"
-                : "text-muted-foreground"
+                ? "ring-yellow-400"
+                : entry.rank === 2
+                  ? "ring-repwell-sage-200/60"
+                  : "ring-amber-400/60"
             )}
           >
-            {rankLabel}
-          </p>
-
-          <div className="mt-3 w-full space-y-2">
-            <Progress
-              value={entry.percentage}
+            {entry.photoUrl && (
+              <AvatarImage src={entry.photoUrl} alt={entry.fullName} />
+            )}
+            <AvatarFallback
               className={cn(
-                "h-2",
-                entry.percentage >= 80
-                  ? "[&>div]:bg-green-500"
-                  : entry.percentage >= 50
-                    ? "[&>div]:bg-yellow-500"
-                    : "[&>div]:bg-orange-500"
+                isWinner ? "text-xl" : "text-lg",
+                entry.rank === 1
+                  ? "bg-yellow-50 text-yellow-700"
+                  : entry.rank === 2
+                    ? "bg-repwell-sage-100/30 text-repwell-sage-200"
+                    : "bg-amber-50 text-amber-700"
               )}
-            />
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium">{entry.earnedPoints} pts</span>
-              <span className="font-bold">{entry.percentage}%</span>
+            >
+              {getInitials(entry.fullName)}
+            </AvatarFallback>
+          </Avatar>
+          {isWinner && (
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+              {rankIcon}
             </div>
-          </div>
+          )}
+          {!isWinner && (
+            <div className="absolute -bottom-1 -right-1">{rankIcon}</div>
+          )}
+        </div>
 
-          <div className="mt-2 flex items-center gap-1 text-sm">
-            <Star className="h-3.5 w-3.5 text-yellow-500" />
-            <span className="font-medium">{entry.searchRankScore}</span>
-            <span className="text-xs text-muted-foreground">rank</span>
+        <p className="font-semibold text-repwell-teal-500 truncate max-w-full">{entry.fullName}</p>
+        <p
+          className={cn(
+            "text-xs font-medium",
+            entry.rank === 1
+              ? "text-yellow-600"
+              : "text-muted-foreground"
+          )}
+        >
+          {rankLabel}
+        </p>
+
+        <div className="mt-3 w-full space-y-2">
+          <Progress
+            value={entry.percentage}
+            className={cn(
+              "h-2",
+              entry.percentage >= 80
+                ? "[&>div]:bg-green-500"
+                : entry.percentage >= 50
+                  ? "[&>div]:bg-yellow-500"
+                  : "[&>div]:bg-orange-500"
+            )}
+          />
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-medium text-muted-foreground">{entry.earnedPoints} pts</span>
+            <span className="font-bold text-repwell-teal-400">{entry.percentage}%</span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="mt-2 flex items-center gap-1 text-sm">
+          <Star className="h-3.5 w-3.5 text-yellow-500" />
+          <span className="font-medium text-repwell-teal-500">{entry.searchRankScore}</span>
+          <span className="text-xs text-muted-foreground">rank</span>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -382,9 +392,12 @@ export function CompactProfileLeaderboard({
 
   if (isLoading) {
     return (
-      <Card className={className}>
+      <Card className={cn("border border-border/50 shadow-soft rounded-xl", className)}>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Profile Leaders</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Target className="h-4 w-4 text-repwell-teal-300" />
+            Profile Leaders
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -401,9 +414,9 @@ export function CompactProfileLeaderboard({
   }
 
   return (
-    <Card className={className}>
+    <Card className={cn("border border-border/50 shadow-soft rounded-xl", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2">
+        <CardTitle className="text-base flex items-center gap-2 text-repwell-teal-500">
           <Target className="h-4 w-4 text-repwell-teal-300" />
           Profile Leaders
         </CardTitle>
@@ -417,7 +430,7 @@ export function CompactProfileLeaderboard({
                   {entry.photoUrl && (
                     <AvatarImage src={entry.photoUrl} alt={entry.fullName} />
                   )}
-                  <AvatarFallback className="text-xs">
+                  <AvatarFallback className="text-xs bg-repwell-teal-300/10 text-repwell-teal-400">
                     {getInitials(entry.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -426,7 +439,7 @@ export function CompactProfileLeaderboard({
                     {entry.rank === 1 ? (
                       <Crown className="h-3 w-3 text-yellow-500" />
                     ) : entry.rank === 2 ? (
-                      <Medal className="h-3 w-3 text-gray-400" />
+                      <Medal className="h-3 w-3 text-repwell-sage-200" />
                     ) : (
                       <Trophy className="h-3 w-3 text-amber-600" />
                     )}
@@ -434,7 +447,7 @@ export function CompactProfileLeaderboard({
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{entry.fullName}</p>
+                <p className="text-sm font-medium text-repwell-teal-500 truncate">{entry.fullName}</p>
                 <div className="flex items-center gap-2">
                   <Progress value={entry.percentage} className="h-1 flex-1" />
                   <span className="text-xs text-muted-foreground w-8">

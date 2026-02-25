@@ -34,7 +34,7 @@ async function SettingsContent() {
 
   return (
     <SettingsTabs
-      initialTab="profile"
+      initialTab="account"
       userEmail={profile?.email}
       userName={profile?.full_name ?? undefined}
       userAvatarUrl={profile?.avatar_url}
@@ -45,6 +45,9 @@ async function SettingsContent() {
       userPersonalWebsiteUrl={profile?.personal_website_url}
       userLinkedinUrl={profile?.linkedin_url}
       userZillowProfileUrl={profile?.zillow_profile_url}
+      userFacebookUrl={profile?.facebook_url}
+      userInstagramUrl={profile?.instagram_url}
+      userTwitterUrl={profile?.twitter_url}
       userTimezone={profile?.timezone}
       userSlug={profile?.slug}
       userBannerUrl={profile?.banner_url}

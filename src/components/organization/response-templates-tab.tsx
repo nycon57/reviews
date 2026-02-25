@@ -216,7 +216,7 @@ export function ResponseTemplatesTab() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="border border-border shadow-soft">
         <CardContent className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </CardContent>
@@ -226,14 +226,19 @@ export function ResponseTemplatesTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Response Templates</CardTitle>
-              <CardDescription>
-                Create and manage reusable templates for responding to customer reviews
-              </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <FileText className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Response Templates</CardTitle>
+                <CardDescription>
+                  Create and manage reusable templates for responding to customer reviews
+                </CardDescription>
+              </div>
             </div>
             <Button onClick={() => setShowForm(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -276,7 +281,7 @@ export function ResponseTemplatesTab() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {templates.map((template) => (
-                <Card key={template.id} className="relative">
+                <Card key={template.id} className="relative border border-border/50 shadow-soft">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">

@@ -23,9 +23,9 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { setupProfile, uploadLogo } from "@/lib/onboarding/actions";
@@ -83,7 +83,6 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
     companyEmail: initialData.companyEmail,
   });
 
-  // Handle logo upload
   const handleLogoUpload = async (file: File) => {
     const formDataObj = new FormData();
     formDataObj.append("file", file);
@@ -94,7 +93,6 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
     return result;
   };
 
-  // Handle color extracted from logo
   const handleColorExtracted = (color: string) => {
     setFormData((prev) => ({ ...prev, primaryColor: color }));
   };
@@ -152,11 +150,11 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
-      className="max-w-2xl mx-auto space-y-8"
+      className="max-w-4xl mx-auto space-y-8"
     >
       {/* Header */}
       <motion.div variants={fadeInUp} className="text-center space-y-4">
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-repwell-teal-500">
           Set up your organization
         </h1>
         <p className="text-muted-foreground">
@@ -165,36 +163,47 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
       </motion.div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
-        <motion.div variants={fadeInUp}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Basic Information
-              </CardTitle>
-              <CardDescription>Your organization details</CardDescription>
+        {/* Row 1: Basic Info (3 cols) + Branding (2 cols) side by side */}
+        <motion.div variants={fadeInUp} className="grid gap-6 lg:grid-cols-5">
+          {/* Basic Info — 3 cols */}
+          <Card className="lg:col-span-3 overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200" />
+            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <Building2 className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Basic Information</CardTitle>
+                  <CardDescription>Your organization details</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="organizationName">Organization Name *</Label>
+            <CardContent className="space-y-4 pt-6">
+              <div className="space-y-1.5">
+                <Label htmlFor="organizationName" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Organization Name *
+                </Label>
                 <Input
                   id="organizationName"
                   value={formData.organizationName}
                   onChange={(e) => handleChange("organizationName", e.target.value)}
                   placeholder="Acme Mortgage"
                   required
+                  className="h-11"
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="industry">Industry</Label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="industry" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Industry
+                  </Label>
                   <Select
                     value={formData.industry}
                     onValueChange={(value) => handleChange("industry", value)}
                   >
-                    <SelectTrigger id="industry">
+                    <SelectTrigger id="industry" className="h-11">
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
                     <SelectContent>
@@ -207,13 +216,15 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="companySize">Company Size</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="companySize" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Company Size
+                  </Label>
                   <Select
                     value={formData.companySize}
                     onValueChange={(value) => handleChange("companySize", value)}
                   >
-                    <SelectTrigger id="companySize">
+                    <SelectTrigger id="companySize" className="h-11">
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -227,32 +238,40 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="website" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Website
+                  </Label>
                   <Input
                     id="website"
                     type="url"
                     value={formData.website}
                     onChange={(e) => handleChange("website", e.target.value)}
                     placeholder="https://example.com"
+                    className="h-11"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Phone
+                  </Label>
                   <Input
                     id="phone"
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleChange("phone", e.target.value)}
                     placeholder="(555) 123-4567"
+                    className="h-11"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="companyEmail">Company Email</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="companyEmail" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Company Email
+                </Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -261,7 +280,7 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                     value={formData.companyEmail}
                     onChange={(e) => handleChange("companyEmail", e.target.value)}
                     placeholder="contact@yourcompany.com"
-                    className="pl-10"
+                    className="pl-10 h-11"
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -270,80 +289,27 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
 
-        {/* Address */}
-        <motion.div variants={fadeInUp}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Business Address
-              </CardTitle>
-              <CardDescription>Required - used for your directory listing and map pin</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="street">Street Address</Label>
-                <Input
-                  id="street"
-                  value={formData.street}
-                  onChange={(e) => handleChange("street", e.target.value)}
-                  placeholder="123 Main St"
-                />
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => handleChange("city", e.target.value)}
-                    placeholder="San Francisco"
-                    required
-                  />
+          {/* Branding — 2 cols */}
+          <Card className="lg:col-span-2 overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-repwell-sage-100 to-transparent" />
+            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <Palette className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="state">State *</Label>
-                  <Input
-                    id="state"
-                    value={formData.state}
-                    onChange={(e) => handleChange("state", e.target.value)}
-                    placeholder="CA"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="zip">ZIP Code</Label>
-                  <Input
-                    id="zip"
-                    value={formData.zip}
-                    onChange={(e) => handleChange("zip", e.target.value)}
-                    placeholder="94102"
-                  />
+                <div>
+                  <CardTitle className="text-lg">Branding</CardTitle>
+                  <CardDescription>Customize your surveys and pages</CardDescription>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Branding */}
-        <motion.div variants={fadeInUp}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Palette className="h-5 w-5" />
-                Branding
-              </CardTitle>
-              <CardDescription>Customize your surveys and public pages</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pt-6">
               {/* Logo Upload */}
-              <div className="space-y-2">
-                <Label>Company Logo</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  Company Logo
+                </Label>
                 <LogoUpload
                   currentLogoUrl={formData.logoUrl || null}
                   onUpload={handleLogoUpload}
@@ -352,12 +318,12 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                 />
               </div>
 
-              {/* Primary Color - now shows auto-detected or manual */}
-              <div className="space-y-2">
-                <Label htmlFor="primaryColor">
+              {/* Primary Color */}
+              <div className="space-y-1.5">
+                <Label htmlFor="primaryColor" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   Brand Color
                   {formData.logoUrl && (
-                    <span className="ml-2 text-xs font-normal text-repwell-sage-200">
+                    <span className="ml-2 normal-case text-repwell-sage-200">
                       Auto-detected from logo
                     </span>
                   )}
@@ -368,13 +334,13 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                     type="color"
                     value={formData.primaryColor}
                     onChange={(e) => handleChange("primaryColor", e.target.value)}
-                    className="w-12 h-10 p-1 cursor-pointer"
+                    className="w-12 h-11 p-1 cursor-pointer"
                   />
                   <Input
                     value={formData.primaryColor}
                     onChange={(e) => handleChange("primaryColor", e.target.value)}
                     placeholder="#52796f"
-                    className="flex-1 font-mono text-sm"
+                    className="flex-1 font-mono text-sm h-11"
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -382,6 +348,81 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
                     ? "Adjust if the auto-detected color doesn't match your brand"
                     : "Upload a logo to auto-detect your brand color, or choose manually"}
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Row 2: Address (full width) */}
+        <motion.div variants={fadeInUp}>
+          <Card className="overflow-hidden">
+            <div className="h-1.5 bg-gradient-to-r from-repwell-sage-100 to-transparent" />
+            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <MapPin className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Business Address</CardTitle>
+                  <CardDescription>City and state are required for your directory listing and map pin</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="sm:col-span-2 lg:col-span-4 space-y-1.5">
+                  <Label htmlFor="street" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Street Address
+                  </Label>
+                  <Input
+                    id="street"
+                    value={formData.street}
+                    onChange={(e) => handleChange("street", e.target.value)}
+                    placeholder="123 Main St"
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="city" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    City *
+                  </Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) => handleChange("city", e.target.value)}
+                    placeholder="San Francisco"
+                    required
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="state" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    State *
+                  </Label>
+                  <Input
+                    id="state"
+                    value={formData.state}
+                    onChange={(e) => handleChange("state", e.target.value)}
+                    placeholder="CA"
+                    required
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="zip" className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    ZIP Code
+                  </Label>
+                  <Input
+                    id="zip"
+                    value={formData.zip}
+                    onChange={(e) => handleChange("zip", e.target.value)}
+                    placeholder="94102"
+                    className="h-11"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -399,7 +440,12 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
             Back
           </Button>
 
-          <Button type="submit" size="lg" disabled={isLoading}>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={isLoading}
+            className="h-11 bg-repwell-teal-300 hover:bg-repwell-teal-400"
+          >
             {isLoading ? "Saving..." : "Continue"}
           </Button>
         </motion.div>

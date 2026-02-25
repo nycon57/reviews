@@ -5,6 +5,7 @@ import {
   TrendUp as TrendingUp,
   TrendDown as TrendingDown,
   Minus,
+  Tag,
 } from "@phosphor-icons/react";
 import type { ThemeFrequency } from "@/lib/ai";
 import { THEME_DESCRIPTIONS } from "@/lib/ai";
@@ -44,16 +45,23 @@ export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
 
   if (data.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">Common Themes</CardTitle>
-          <CardDescription>Topics mentioned most frequently in reviews</CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Tag aria-hidden="true" className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Common Themes</CardTitle>
+              <CardDescription>Topics mentioned most frequently in reviews</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm">No theme data available yet</p>
-              <p className="text-xs">Themes are extracted from review analysis</p>
+              <p className="text-sm font-medium text-repwell-teal-500">No theme data available yet</p>
+              <p className="mt-1 text-xs">Themes are extracted from review analysis</p>
             </div>
           </div>
         </CardContent>
@@ -65,17 +73,24 @@ export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
   const maxCount = Math.max(...data.map((d) => d.count));
   const getSize = (count: number) => {
     const ratio = count / maxCount;
-    if (ratio >= 0.8) return "text-xl font-bold";
-    if (ratio >= 0.6) return "text-lg font-semibold";
-    if (ratio >= 0.4) return "text-base font-medium";
+    if (ratio >= 0.8) return "text-sm font-bold";
+    if (ratio >= 0.6) return "text-sm font-semibold";
+    if (ratio >= 0.4) return "text-sm font-medium";
     return "text-sm";
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">Common Themes</CardTitle>
-        <CardDescription>Topics mentioned most frequently in reviews</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Tag className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Common Themes</CardTitle>
+            <CardDescription>Topics mentioned most frequently in reviews</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2">
@@ -110,7 +125,7 @@ export function ThemeCloud({ data, isLoading }: ThemeCloudProps) {
 
         {/* Theme breakdown list */}
         <div className="mt-6 space-y-3">
-          <h4 className="text-sm font-medium text-muted-foreground">Theme Breakdown</h4>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theme Breakdown</h4>
           {data.slice(0, 5).map((theme) => {
             return (
               <div key={theme.theme} className="space-y-1">

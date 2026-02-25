@@ -66,6 +66,8 @@ interface DirectoryMapViewProps {
   heightClass?: string;
   /** Center point from radius/fallback search — map will pan here */
   searchCenter?: { lat: number; lng: number; label: string };
+  /** Radius in miles — controls map zoom level when searchCenter is set */
+  searchRadius?: number;
 }
 
 function getInitials(name: string): string {
@@ -159,6 +161,7 @@ function InteractiveMap({
   hoveredProfessionalId,
   heightClass = "h-[400px] md:h-[500px]",
   searchCenter,
+  searchRadius,
 }: DirectoryMapViewProps) {
   const mapRef = useRef<LeafletMap | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
@@ -233,23 +236,34 @@ function InteractiveMap({
     }
   }, [bounds, isMapReady]);
 
-  // Pan map to search center when radius/fallback search provides one
+  // Pan map to search center when radius/fallback search provides one.
+  // Zoom level adapts to the search radius so the visible area roughly matches.
   useEffect(() => {
     if (!mapRef.current || !isMapReady || !searchCenter) return;
 
     const map = mapRef.current;
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Approximate zoom for radius in miles
+    const radiusMiles = searchRadius || 50;
+    let zoom: number;
+    if (radiusMiles <= 10) zoom = 12;
+    else if (radiusMiles <= 25) zoom = 10;
+    else if (radiusMiles <= 50) zoom = 9;
+    else if (radiusMiles <= 100) zoom = 8;
+    else if (radiusMiles <= 250) zoom = 7;
+    else zoom = 6; // 500mi
+
     try {
       if (prefersReducedMotion) {
-        map.setView([searchCenter.lat, searchCenter.lng], 10);
+        map.setView([searchCenter.lat, searchCenter.lng], zoom);
       } else {
-        map.flyTo([searchCenter.lat, searchCenter.lng], 10, { duration: 0.5 });
+        map.flyTo([searchCenter.lat, searchCenter.lng], zoom, { duration: 0.5 });
       }
     } catch {
       // ignore flyTo errors
     }
-  }, [searchCenter, isMapReady]);
+  }, [searchCenter, searchRadius, isMapReady]);
 
   // Lazy-loaded leaflet reference (only on client)
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
@@ -333,18 +347,28 @@ function InteractiveMap({
     });
   }, []);
 
-  if (professionalsWithCoords.length === 0) {
+  // Only show the "no location data" fallback when there's no search center
+  // AND no professionals with coords. If the user searched a location, always
+  // show the map so they can adjust the radius.
+  if (professionalsWithCoords.length === 0 && !searchCenter) {
     return <NoLocationData professionals={professionals} />;
   }
+
+  // Determine initial map center: prefer searchCenter, then marker bounds, then US default
+  const initialCenter = searchCenter
+    ? [searchCenter.lat, searchCenter.lng] as [number, number]
+    : bounds
+      ? [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2] as [number, number]
+      : US_BOUNDS.center;
 
   return (
     <Card className="overflow-hidden">
       <div className={`relative ${heightClass}`}>
         <MapContainer
           ref={mapRef}
-          center={bounds ? [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2] : US_BOUNDS.center}
-          zoom={bounds ? undefined : US_BOUNDS.zoom}
-          bounds={bounds || undefined}
+          center={initialCenter}
+          zoom={bounds && !searchCenter ? undefined : US_BOUNDS.zoom}
+          bounds={bounds && !searchCenter ? bounds : undefined}
           boundsOptions={{ padding: [50, 50] }}
           style={{ height: "100%", width: "100%" }}
           scrollWheelZoom={true}
@@ -384,7 +408,7 @@ function InteractiveMap({
                     <Popup className="repwell-popup" closeButton={true} maxWidth={280}>
                       <div className="p-1">
                         <div className="flex items-start gap-3">
-                          <Link href={`/pro/${prof.slug || prof.id}`}>
+                          <Link href={`/pro/${prof.slug}`}>
                             <Avatar className="h-11 w-11 border-2 border-repwell-sage-100">
                               <AvatarImage
                                 src={prof.photo_url || undefined}
@@ -397,7 +421,7 @@ function InteractiveMap({
                           </Link>
 
                           <div className="flex-1 min-w-0">
-                            <Link href={`/pro/${prof.slug || prof.id}`}>
+                            <Link href={`/pro/${prof.slug}`}>
                               <h4 className="font-semibold text-sm text-repwell-teal-500 hover:text-repwell-teal-400 transition-colors truncate">
                                 {prof.full_name}
                               </h4>
@@ -445,7 +469,7 @@ function InteractiveMap({
                               </Button>
                             )}
                             <Button size="sm" className="h-7 text-xs px-2.5" asChild>
-                              <Link href={`/pro/${prof.slug || prof.id}`}>View</Link>
+                              <Link href={`/pro/${prof.slug}`}>View</Link>
                             </Button>
                           </div>
                         </div>

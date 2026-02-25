@@ -173,7 +173,7 @@ export function AvatarUpload({
 
   return (
     <>
-      <div className={cn("space-y-2", className)}>
+      <div className={cn("flex flex-col gap-2", className)}>
         {/* Label */}
         <label className="text-sm font-medium text-foreground">{label}</label>
 
@@ -202,25 +202,32 @@ export function AvatarUpload({
           <div
             {...getRootProps()}
             className={cn(
-              "border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer transition-colors",
-              "hover:border-repwell-teal-300 hover:bg-repwell-sage-100/50",
-              isDragActive && "border-repwell-teal-300 bg-repwell-sage-100",
+              "relative w-full flex-1 rounded-lg border-2 border-dashed transition-all cursor-pointer p-6",
+              "flex flex-col items-center justify-center gap-3",
+              isDragActive
+                ? "border-repwell-teal-300 bg-repwell-sage-100"
+                : "border-border hover:border-repwell-teal-300 hover:bg-repwell-sage-100/30",
               (disabled || isUploading) && "opacity-50 cursor-not-allowed"
             )}
           >
             <input {...getInputProps()} />
-            <div className="flex flex-col items-center gap-2">
+            <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/20 via-transparent to-repwell-teal-400/5 rounded-lg pointer-events-none" />
+
+            <div className="relative flex flex-col items-center gap-2">
               {isUploading ? (
-                <Loader2 className="h-8 w-8 text-repwell-teal-400 animate-spin" />
+                <Loader2 className="h-10 w-10 text-repwell-teal-400 animate-spin" />
               ) : (
-                <Upload className="h-8 w-8 text-repwell-teal-400" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <Upload className="h-6 w-6 text-repwell-teal-400" />
+                </div>
               )}
               {isDragActive ? (
                 <p className="text-sm text-repwell-teal-300 font-medium">Drop image here...</p>
               ) : (
                 <>
                   <p className="text-sm text-repwell-teal-400">
-                    <span className="font-medium text-repwell-teal-500">Click to upload</span> or drag and drop
+                    <span className="font-medium text-repwell-teal-500">Click to upload</span>{" "}
+                    or drag and drop
                   </p>
                   <p className="text-xs text-muted-foreground">PNG, JPG or WebP (max 5MB)</p>
                 </>

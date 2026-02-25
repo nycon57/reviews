@@ -7,7 +7,8 @@ import {
   TrendUp as TrendingUp,
   ShareNetwork as Share2,
   PaperPlaneRight as Send,
-  ArrowSquareOut as ExternalLink,
+  CaretRight,
+  Lightning as Zap,
 } from "@phosphor-icons/react";
 
 interface QuickAction {
@@ -46,27 +47,32 @@ export function UserQuickActions() {
   ];
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
+    <Card className="shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Zap className="h-4 w-4 text-repwell-teal-300" />
+          </div>
+          Quick Actions
+        </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-2">
+      <CardContent className="grid gap-2 pt-4">
         {actions.map((action) => (
           <Link
             key={action.title}
             href={action.href}
-            className="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex items-center gap-3 rounded-lg border border-border/50 p-3 text-left transition-all hover:bg-repwell-sage-100/20 hover:border-repwell-teal-300/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-repwell-teal-300/10 text-repwell-teal-300">
               {action.icon}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="font-medium">{action.title}</div>
-              <div className="text-sm text-muted-foreground truncate">
+              <div className="font-medium text-repwell-teal-500">{action.title}</div>
+              <div className="text-sm text-repwell-teal-400 truncate">
                 {action.description}
               </div>
             </div>
-            <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <CaretRight className="h-4 w-4 shrink-0 text-repwell-teal-300/50" />
           </Link>
         ))}
       </CardContent>

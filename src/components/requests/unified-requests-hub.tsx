@@ -7,6 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { VideoTestimonialRequestsDashboard, type RequestStats } from "./video-requests-dashboard";
 import { DistributionDashboard } from "@/components/distribution";
 import type { VideoTestimonialRequest } from "@/lib/video-testimonials/actions";
@@ -52,41 +53,63 @@ export function UnifiedRequestsHub({
     router.replace(`/dashboard/requests?${params.toString()}`);
   };
 
+  const tabs = [
+    { value: "video", label: "Video Testimonials", icon: Video, badge: initialVideoTotal },
+    { value: "surveys", label: "Survey Distribution", icon: Mail },
+  ] as const;
+
   return (
     <div className="space-y-6">
-      {/* Tabbed Content */}
       <Tabs
         defaultValue={defaultTab}
         onValueChange={handleTabChange}
-        className="space-y-4"
+        className="w-full"
       >
-        <TabsList variant="underline">
-          <TabsTrigger value="video" variant="underline" className="gap-2">
-            <Video className="h-4 w-4" />
-            Video Testimonials
-            <Badge variant="secondary" className="ml-1.5 text-xs">
-              {initialVideoTotal}
-            </Badge>
-          </TabsTrigger>
-          <TabsTrigger value="surveys" variant="underline" className="gap-2">
-            <Mail className="h-4 w-4" />
-            Survey Distribution
-          </TabsTrigger>
+        <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto gap-0">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className={cn(
+                  "relative px-4 py-3 text-sm font-medium",
+                  "text-muted-foreground hover:text-repwell-teal-400",
+                  "data-[state=active]:text-repwell-teal-300",
+                  "border-b-2 border-transparent",
+                  "data-[state=active]:border-repwell-teal-300",
+                  "rounded-none bg-transparent shadow-none",
+                  "transition-colors duration-200",
+                  "flex items-center gap-2 whitespace-nowrap"
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {tab.label}
+                {"badge" in tab && tab.badge != null && tab.badge > 0 && (
+                  <Badge variant="secondary" className="ml-1.5 text-xs">
+                    {tab.badge}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            );
+          })}
         </TabsList>
 
-        <TabsContent value="video" className="mt-6">
-          <VideoTestimonialRequestsDashboard
-            initialRequests={initialVideoRequests}
-            initialTotal={initialVideoTotal}
-            initialStats={initialVideoStats}
-            teamMembers={teamMembers}
-            userRole={userRole}
-          />
-        </TabsContent>
+        <div className="mt-6">
+          <TabsContent value="video" className="m-0">
+            <VideoTestimonialRequestsDashboard
+              initialRequests={initialVideoRequests}
+              initialTotal={initialVideoTotal}
+              initialStats={initialVideoStats}
+              teamMembers={teamMembers}
+              userRole={userRole}
+            />
+          </TabsContent>
 
-        <TabsContent value="surveys" className="mt-6">
-          <DistributionDashboard />
-        </TabsContent>
+          <TabsContent value="surveys" className="m-0">
+            <DistributionDashboard />
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );

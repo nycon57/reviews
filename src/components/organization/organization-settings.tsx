@@ -21,6 +21,9 @@ import {
   Phone,
   Envelope,
   MapPin,
+  GearSix,
+  ShareNetwork,
+  Buildings,
 } from "@phosphor-icons/react";
 import {
   getCurrentOrganization,
@@ -144,8 +147,8 @@ export function OrganizationSettings() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-72" />
         </CardHeader>
@@ -165,12 +168,19 @@ export function OrganizationSettings() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* General Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>General Settings</CardTitle>
-            <CardDescription>
-              Basic information about your organization
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <GearSix className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">General Settings</CardTitle>
+                <CardDescription>
+                  Basic information about your organization
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <FormField
@@ -178,29 +188,12 @@ export function OrganizationSettings() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization Name</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Organization Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Acme Corp" {...field} />
                   </FormControl>
                   <FormDescription>
                     This name will appear across the platform
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="domain"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Domain</FormLabel>
-                  <FormControl>
-                    <Input placeholder="acme.com" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormDescription>
-                    Your company domain (optional)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -213,7 +206,7 @@ export function OrganizationSettings() {
                 name="company_email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Email</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contact Email</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="contact@acme.com" {...field} value={field.value || ""} />
                     </FormControl>
@@ -227,7 +220,7 @@ export function OrganizationSettings() {
                 name="company_phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contact Phone</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Contact Phone</FormLabel>
                     <FormControl>
                       <Input placeholder="+1 (555) 000-0000" {...field} value={field.value || ""} />
                     </FormControl>
@@ -243,7 +236,7 @@ export function OrganizationSettings() {
                 name="timezone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Timezone</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timezone</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -268,7 +261,7 @@ export function OrganizationSettings() {
                 name="date_format"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date Format</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Date Format</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -292,12 +285,19 @@ export function OrganizationSettings() {
         </Card>
 
         {/* Address */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Company Address</CardTitle>
-            <CardDescription>
-              Your organization's physical address
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <MapPin className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Company Address</CardTitle>
+                <CardDescription>
+                  Your organization&apos;s physical address
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -305,7 +305,7 @@ export function OrganizationSettings() {
               name="company_address.street"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Street Address</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Street Address</FormLabel>
                   <FormControl>
                     <Input placeholder="123 Main St" {...field} value={field.value || ""} />
                   </FormControl>
@@ -319,7 +319,7 @@ export function OrganizationSettings() {
               name="company_address.street2"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Street Address 2</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Street Address 2</FormLabel>
                   <FormControl>
                     <Input placeholder="Suite 100" {...field} value={field.value || ""} />
                   </FormControl>
@@ -334,7 +334,7 @@ export function OrganizationSettings() {
                 name="company_address.city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>City</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">City</FormLabel>
                     <FormControl>
                       <Input placeholder="New York" {...field} value={field.value || ""} />
                     </FormControl>
@@ -348,7 +348,7 @@ export function OrganizationSettings() {
                 name="company_address.state"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>State</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">State</FormLabel>
                     <FormControl>
                       <Input placeholder="NY" {...field} value={field.value || ""} />
                     </FormControl>
@@ -362,7 +362,7 @@ export function OrganizationSettings() {
                 name="company_address.postal_code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ZIP Code</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ZIP Code</FormLabel>
                     <FormControl>
                       <Input placeholder="10001" {...field} value={field.value || ""} />
                     </FormControl>
@@ -375,12 +375,19 @@ export function OrganizationSettings() {
         </Card>
 
         {/* Public Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Public Profile</CardTitle>
-            <CardDescription>
-              These appear on your public organization profile page
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Globe className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Public Profile</CardTitle>
+                <CardDescription>
+                  These appear on your public organization profile page
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <FormField
@@ -388,7 +395,7 @@ export function OrganizationSettings() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Public Contact Email</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Public Contact Email</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Envelope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -405,7 +412,7 @@ export function OrganizationSettings() {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Public Contact Phone</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Public Contact Phone</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -422,7 +429,7 @@ export function OrganizationSettings() {
               name="website_url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Website</FormLabel>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Website</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -437,12 +444,19 @@ export function OrganizationSettings() {
         </Card>
 
         {/* Social Links */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Social Links</CardTitle>
-            <CardDescription>
-              Link your social media profiles
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <ShareNetwork className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Social Links</CardTitle>
+                <CardDescription>
+                  Link your social media profiles
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -451,7 +465,7 @@ export function OrganizationSettings() {
                 name="linkedin_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>LinkedIn</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">LinkedIn</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <LinkedinLogo className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -468,7 +482,7 @@ export function OrganizationSettings() {
                 name="facebook_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Facebook</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Facebook</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <FacebookLogo className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -485,7 +499,7 @@ export function OrganizationSettings() {
                 name="instagram_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Instagram</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Instagram</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <InstagramLogo className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -502,7 +516,7 @@ export function OrganizationSettings() {
                 name="twitter_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>X / Twitter</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">X / Twitter</FormLabel>
                     <FormControl>
                       <div className="relative">
                         <XLogo className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -518,12 +532,19 @@ export function OrganizationSettings() {
         </Card>
 
         {/* Headquarters Branch */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Headquarters Branch</CardTitle>
-            <CardDescription>
-              The headquarters address and contact info will appear on your public profile
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Buildings className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Headquarters Branch</CardTitle>
+                <CardDescription>
+                  The headquarters address and contact info will appear on your public profile
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <FormField
@@ -531,8 +552,8 @@ export function OrganizationSettings() {
               name="headquarters_branch_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Headquarters</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Headquarters</FormLabel>
+                  <Select onValueChange={(v) => field.onChange(v === "none" ? "" : v)} value={field.value || "none"}>
                     <FormControl>
                       <SelectTrigger>
                         <div className="flex items-center gap-2">
@@ -542,7 +563,7 @@ export function OrganizationSettings() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {branches.map((branch) => (
                         <SelectItem key={branch.id} value={branch.id}>
                           {branch.name}

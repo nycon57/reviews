@@ -17,22 +17,26 @@ interface AISummaryCardProps {
 export function AISummaryCard({ summary }: AISummaryCardProps) {
   if (!summary) {
     return (
-      <Card className="border-dashed">
-        <CardHeader className="pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <CardTitle className="text-lg font-semibold">AI Summary</CardTitle>
+      <Card className="border border-dashed border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Sparkles className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">AI Summary</CardTitle>
+              <CardDescription>AI-generated monthly performance summary</CardDescription>
             </div>
           </div>
-          <CardDescription>AI-generated monthly performance summary</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <Sparkles className="mx-auto mb-2 h-8 w-8 opacity-50" />
-              <p className="text-sm">No summary available yet</p>
-              <p className="text-xs">Collect more reviews to generate insights</p>
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Sparkles className="h-7 w-7 text-repwell-teal-300" />
+              </div>
+              <p className="text-sm font-medium text-repwell-teal-500">No summary available yet</p>
+              <p className="mt-1 text-xs">Collect more reviews to generate insights</p>
             </div>
           </div>
         </CardContent>
@@ -49,18 +53,20 @@ export function AISummaryCard({ summary }: AISummaryCardProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">AI Summary</CardTitle>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Sparkles className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">AI Summary</CardTitle>
+            <CardDescription className="flex items-center gap-1.5">
+              <Calendar className="h-3 w-3" />
+              {formatDate(summary.periodStart)} - {formatDate(summary.periodEnd)}
+            </CardDescription>
           </div>
         </div>
-        <CardDescription className="flex items-center gap-1.5">
-          <Calendar className="h-3 w-3" />
-          {formatDate(summary.periodStart)} - {formatDate(summary.periodEnd)}
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Main summary */}
@@ -71,8 +77,8 @@ export function AISummaryCard({ summary }: AISummaryCardProps) {
         {/* Highlights */}
         {summary.highlights.length > 0 && (
           <div className="space-y-2">
-            <h4 className="flex items-center gap-1.5 text-sm font-medium text-green-700">
-              <CheckCircle className="h-4 w-4" />
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-green-700">
+              <CheckCircle className="h-3.5 w-3.5" />
               Highlights
             </h4>
             <ul className="space-y-1.5">
@@ -92,8 +98,8 @@ export function AISummaryCard({ summary }: AISummaryCardProps) {
         {/* Areas for improvement */}
         {summary.areasOfImprovement.length > 0 && (
           <div className="space-y-2">
-            <h4 className="flex items-center gap-1.5 text-sm font-medium text-amber-700">
-              <AlertCircle className="h-4 w-4" />
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
+              <AlertCircle className="h-3.5 w-3.5" />
               Areas for Improvement
             </h4>
             <ul className="space-y-1.5">

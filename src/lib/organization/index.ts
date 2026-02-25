@@ -12,6 +12,8 @@ export type {
   CreateInvitation,
   Invitation,
   OrganizationMember,
+  OrganizationMemberFull,
+  UpdateMemberProfileData,
   OrganizationStats,
   AuditLog,
 } from "./types";
@@ -52,4 +54,8 @@ export {
   getAuditLogs,
   isOrganizationAdmin,
   updateOrganizationSlug,
+  getOrganizationMemberFull,
+  updateMemberProfile,
+  uploadMemberAvatar,
+  uploadMemberBanner,
 } from "./actions";

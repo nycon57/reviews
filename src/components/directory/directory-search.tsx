@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import {
   MagnifyingGlass as Search,
-  MapPin,
   Star,
   SlidersHorizontal,
   X,
@@ -24,7 +23,6 @@ import {
   CaretLeft as ChevronLeft,
   CaretRight as ChevronRight,
   Crosshair,
-  Info,
 } from "@phosphor-icons/react";
 import { DirectoryCard } from "./directory-card";
 import { DirectoryMapView } from "./directory-map-view";
@@ -32,25 +30,29 @@ import { MessageModal } from "@/app/pro/[slug]/components/message-modal";
 import {
   searchProfessionals,
   type DirectoryProfessional,
-  type DirectorySearchResult,
   type SearchFilters,
   type MapBounds,
 } from "@/lib/directory/actions";
+import { PlacesAutocompleteInput, type PlaceSelection } from "./places-autocomplete-input";
 import type { IndustryType } from "@/lib/industry/types";
 
 interface DirectorySearchProps {
   initialResults: DirectoryProfessional[];
   initialCount: number;
-  availableStates: { value: string; label: string }[];
   /** Pre-filter by industry (for industry-specific directory pages) */
   industryFilter?: IndustryType;
+  /** Initial search coordinates from URL params */
+  initialCoords?: { lat: number; lng: number } | null;
+  /** Initial place label from URL params */
+  initialPlace?: string;
 }
 
 export function DirectorySearch({
   initialResults,
   initialCount,
-  availableStates,
   industryFilter,
+  initialCoords,
+  initialPlace,
 }: DirectorySearchProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -60,18 +62,20 @@ export function DirectorySearch({
   // Core state
   const [results, setResults] = useState<DirectoryProfessional[]>(initialResults);
   const [totalCount, setTotalCount] = useState(initialCount);
-  // Nearby fallback state
-  const [isNearbyFallback, setIsNearbyFallback] = useState(false);
-  const [searchCenter, setSearchCenter] = useState<DirectorySearchResult["searchCenter"]>();
+  const [searchCenter, setSearchCenter] = useState<{ lat: number; lng: number; label: string } | undefined>(
+    initialCoords ? { lat: initialCoords.lat, lng: initialCoords.lng, label: initialPlace || "" } : undefined
+  );
   // Form state
   const [query, setQuery] = useState(searchParams.get("q") || "");
-  const [city, setCity] = useState(searchParams.get("city") || "");
-  const [state, setState] = useState(searchParams.get("state") || "");
+  const [placeLabel, setPlaceLabel] = useState(initialPlace || "");
+  const [searchCoords, setSearchCoords] = useState<{ lat: number; lng: number } | null>(initialCoords || null);
   const [minRating, setMinRating] = useState(searchParams.get("rating") || "");
   const [radius, setRadius] = useState(searchParams.get("radius") || "50");
-  const [sortBy, setSortBy] = useState<"rating" | "reviews" | "name">(
-    (searchParams.get("sort") as "rating" | "reviews" | "name") || "rating"
-  );
+  const [sortBy, setSortBy] = useState<"rating" | "reviews" | "name" | "distance">(() => {
+    const raw = searchParams.get("sort") as "rating" | "reviews" | "name" | "distance" | null;
+    if (raw === "distance" && !initialCoords) return "rating";
+    return raw || "rating";
+  });
   const [page, setPage] = useState(parseInt(searchParams.get("page") || "1", 10));
 
   // Message modal state
@@ -92,9 +96,11 @@ export function DirectorySearch({
   const totalPages = Math.ceil(totalCount / pageSize);
 
   // Client-side filter professionals by current map bounds for instant feedback.
-  // Professionals WITHOUT coordinates are always kept — they just won't appear on the map.
+  // Skip bounds filtering when a radius search is active — the server already
+  // filtered by distance, and map fly-to animation causes transient bounds
+  // mismatches that hide results.
   const filteredByBounds = useMemo(() => {
-    if (!mapBounds) return results;
+    if (searchCoords || !mapBounds) return results;
     return results.filter((prof) => {
       // Keep professionals with no coordinates (e.g. individual users without branch)
       if (prof.latitude == null || prof.longitude == null) return true;
@@ -105,21 +111,22 @@ export function DirectorySearch({
         prof.longitude <= mapBounds.east
       );
     });
-  }, [results, mapBounds]);
+  }, [results, mapBounds, searchCoords]);
 
   // Build current filters object
   const getCurrentFilters = useCallback((): SearchFilters => {
     return {
       query: query || undefined,
-      city: city || undefined,
-      state: state || undefined,
+      city: placeLabel || undefined,
+      searchLat: searchCoords?.lat,
+      searchLng: searchCoords?.lng,
       minRating: minRating ? parseFloat(minRating) : undefined,
       radius: radius ? parseInt(radius, 10) : 50,
       sortBy,
       sortOrder: "desc",
       industry: industryFilter,
     };
-  }, [query, city, state, minRating, radius, sortBy, industryFilter]);
+  }, [query, placeLabel, searchCoords, minRating, radius, sortBy, industryFilter]);
 
   // Update URL with current filters
   const updateURL = useCallback(
@@ -127,10 +134,13 @@ export function DirectorySearch({
       const params = new URLSearchParams();
 
       if (filters.query) params.set("q", filters.query);
-      if (filters.city) params.set("city", filters.city);
-      if (filters.state) params.set("state", filters.state);
+      if (filters.searchLat != null && filters.searchLng != null) {
+        params.set("lat", filters.searchLat.toFixed(4));
+        params.set("lng", filters.searchLng.toFixed(4));
+        if (filters.city) params.set("place", filters.city);
+        if (filters.radius && filters.radius !== 50) params.set("radius", filters.radius.toString());
+      }
       if (filters.minRating) params.set("rating", filters.minRating.toString());
-      if (filters.radius && filters.radius !== 50) params.set("radius", filters.radius.toString());
       if (filters.sortBy && filters.sortBy !== "rating") {
         params.set("sort", filters.sortBy);
       }
@@ -150,7 +160,6 @@ export function DirectorySearch({
         if (result.success && result.data) {
           setResults(result.data.professionals);
           setTotalCount(result.data.totalCount);
-          setIsNearbyFallback(result.data.isNearbyFallback ?? false);
           setSearchCenter(result.data.searchCenter);
         }
       });
@@ -171,17 +180,57 @@ export function DirectorySearch({
     [getCurrentFilters, performSearch, updateURL]
   );
 
+  // Handle place selection from Google Places Autocomplete
+  const handlePlaceSelect = useCallback(
+    (place: PlaceSelection) => {
+      setPlaceLabel(place.label);
+      setSearchCoords({ lat: place.lat, lng: place.lng });
+      setSortBy("distance");
+      setPage(1);
+      setHasUserMovedMap(false);
+
+      const filters: SearchFilters = {
+        ...getCurrentFilters(),
+        city: place.label,
+        searchLat: place.lat,
+        searchLng: place.lng,
+        sortBy: "distance",
+      };
+      performSearch(filters, 1);
+      updateURL(filters, 1);
+    },
+    [getCurrentFilters, performSearch, updateURL]
+  );
+
+  // Handle clearing place selection
+  const handlePlaceClear = useCallback(() => {
+    setPlaceLabel("");
+    setSearchCoords(null);
+    setSearchCenter(undefined);
+    setSortBy("rating");
+    setPage(1);
+    setHasUserMovedMap(false);
+
+    const filters: SearchFilters = {
+      ...getCurrentFilters(),
+      city: undefined,
+      searchLat: undefined,
+      searchLng: undefined,
+      sortBy: "rating",
+    };
+    performSearch(filters, 1);
+    updateURL(filters, 1);
+  }, [getCurrentFilters, performSearch, updateURL]);
+
   // Handle filter changes
   const handleFilterChange = useCallback(
     (key: keyof SearchFilters | "radius", value: string) => {
       const filters = getCurrentFilters();
 
       if (key === "query") setQuery(value);
-      if (key === "city") setCity(value);
-      if (key === "state") setState(value);
       if (key === "minRating") setMinRating(value);
       if (key === "radius") setRadius(value);
-      if (key === "sortBy") setSortBy(value as "rating" | "reviews" | "name");
+      if (key === "sortBy") setSortBy(value as "rating" | "reviews" | "name" | "distance");
 
       const newFilters = {
         ...filters,
@@ -266,14 +315,13 @@ export function DirectorySearch({
   // Clear all filters
   const clearFilters = useCallback(() => {
     setQuery("");
-    setCity("");
-    setState("");
+    setPlaceLabel("");
+    setSearchCoords(null);
     setMinRating("");
     setRadius("50");
     setSortBy("rating");
     setPage(1);
     setHasUserMovedMap(false);
-    setIsNearbyFallback(false);
     setSearchCenter(undefined);
 
     performSearch({}, 1);
@@ -281,7 +329,7 @@ export function DirectorySearch({
   }, [pathname, router, performSearch]);
 
   // Check if any filters are active
-  const hasActiveFilters = query || city || state || minRating;
+  const hasActiveFilters = query || searchCoords || minRating;
 
   // Professionals to display in the list (client-side filtered by bounds)
   const displayedProfessionals = filteredByBounds;
@@ -312,31 +360,13 @@ export function DirectorySearch({
 
               {/* Location Row */}
               <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="City"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Select
-                  value={state || "all"}
-                  onValueChange={(v) => handleFilterChange("state", v === "all" ? "" : v)}
-                >
-                  <SelectTrigger className="w-28">
-                    <SelectValue placeholder="State" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    {availableStates.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.value}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <PlacesAutocompleteInput
+                  value={placeLabel}
+                  onPlaceSelect={handlePlaceSelect}
+                  onPlaceClear={handlePlaceClear}
+                  onChange={setPlaceLabel}
+                  placeholder="Search city..."
+                />
               </div>
 
               {/* Filter Row */}
@@ -345,8 +375,8 @@ export function DirectorySearch({
                   value={minRating || "any"}
                   onValueChange={(v) => handleFilterChange("minRating", v === "any" ? "" : v)}
                 >
-                  <SelectTrigger className="flex-1 text-left">
-                    <Star className="mr-2 h-4 w-4 text-yellow-400" />
+                  <SelectTrigger className="flex-1 min-w-0 text-left">
+                    <Star className="mr-2 h-4 w-4 text-yellow-400 shrink-0" />
                     <SelectValue placeholder="Rating" />
                   </SelectTrigger>
                   <SelectContent>
@@ -357,13 +387,13 @@ export function DirectorySearch({
                   </SelectContent>
                 </Select>
 
-                {city && (
+                {searchCoords && (
                   <Select
                     value={radius}
                     onValueChange={(v) => handleFilterChange("radius", v)}
                   >
-                    <SelectTrigger className="w-24 text-left">
-                      <Crosshair className="mr-2 h-4 w-4" />
+                    <SelectTrigger className="flex-1 min-w-0 text-left">
+                      <Crosshair className="mr-2 h-4 w-4 shrink-0" />
                       <SelectValue placeholder="Radius" />
                     </SelectTrigger>
                     <SelectContent>
@@ -371,6 +401,8 @@ export function DirectorySearch({
                       <SelectItem value="25">25 mi</SelectItem>
                       <SelectItem value="50">50 mi</SelectItem>
                       <SelectItem value="100">100 mi</SelectItem>
+                      <SelectItem value="250">250 mi</SelectItem>
+                      <SelectItem value="500">500 mi</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -379,11 +411,14 @@ export function DirectorySearch({
                   value={sortBy}
                   onValueChange={(v) => handleFilterChange("sortBy", v)}
                 >
-                  <SelectTrigger className="flex-1 text-left">
-                    <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  <SelectTrigger className="flex-1 min-w-0 text-left">
+                    <SlidersHorizontal className="mr-2 h-4 w-4 shrink-0" />
                     <SelectValue placeholder="Sort" />
                   </SelectTrigger>
                   <SelectContent>
+                    {searchCoords && (
+                      <SelectItem value="distance">Closest</SelectItem>
+                    )}
                     <SelectItem value="rating">Top Rated</SelectItem>
                     <SelectItem value="reviews">Most Reviews</SelectItem>
                     <SelectItem value="name">Name A-Z</SelectItem>
@@ -403,21 +438,12 @@ export function DirectorySearch({
                       />
                     </Badge>
                   )}
-                  {city && (
+                  {searchCoords && placeLabel && (
                     <Badge variant="secondary" className="gap-1 text-xs">
-                      {city}
+                      {placeLabel}
                       <X
                         className="h-3 w-3 cursor-pointer"
-                        onClick={() => handleFilterChange("city", "")}
-                      />
-                    </Badge>
-                  )}
-                  {state && (
-                    <Badge variant="secondary" className="gap-1 text-xs">
-                      {state}
-                      <X
-                        className="h-3 w-3 cursor-pointer"
-                        onClick={() => handleFilterChange("state", "")}
+                        onClick={handlePlaceClear}
                       />
                     </Badge>
                   )}
@@ -470,25 +496,6 @@ export function DirectorySearch({
             </span>
           )}
         </div>
-
-        {/* Nearby fallback banner */}
-        {isNearbyFallback && !isPending && (
-          <div className="flex items-start gap-2 rounded-lg border border-repwell-teal-300/30 bg-repwell-teal-300/5 px-3 py-2.5 mb-3">
-            <Info className="h-4 w-4 text-repwell-teal-300 shrink-0 mt-0.5" />
-            <p className="text-xs text-repwell-teal-400 leading-relaxed">
-              No exact match for <span className="font-semibold">{city}</span>.
-              {" "}Showing nearest results
-              {radius ? ` within ${radius} miles` : ""}.
-            </p>
-            <button
-              onClick={() => setIsNearbyFallback(false)}
-              className="shrink-0 ml-auto"
-              aria-label="Dismiss"
-            >
-              <X className="h-3.5 w-3.5 text-repwell-teal-300 hover:text-repwell-teal-400" />
-            </button>
-          </div>
-        )}
 
         {/* Scrollable Results List */}
         <div
@@ -614,6 +621,7 @@ export function DirectorySearch({
           hoveredProfessionalId={hoveredProfessionalId}
           heightClass="h-[400px] lg:h-[calc(100vh-120px)]"
           searchCenter={searchCenter}
+          searchRadius={searchCoords ? parseInt(radius, 10) || 50 : undefined}
         />
       </div>
 

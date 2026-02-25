@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -169,29 +169,29 @@ export function DistributionDashboard() {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+          <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
             <Clock className="mr-1 h-3 w-3" />
             Pending
           </Badge>
         );
       case "processing":
         return (
-          <Badge variant="outline" className="text-blue-600 border-blue-600">
+          <Badge variant="outline" className="text-repwell-teal-300 border-repwell-teal-300/30 bg-repwell-teal-300/5">
             <RefreshCw className="mr-1 h-3 w-3 animate-spin" />
             Processing
           </Badge>
         );
       case "sent":
         return (
-          <Badge variant="outline" className="text-green-600 border-green-600">
+          <Badge variant="outline" className="text-repwell-sage-200 border-repwell-sage-200/30 bg-repwell-sage-200/5">
             <CheckCircle2 className="mr-1 h-3 w-3" />
             Sent
           </Badge>
         );
       case "failed":
         return (
-          <Badge variant="outline" className="text-red-600 border-red-600">
-            <AlertCircle className="mr-1 h-3 w-3" />
+          <Badge variant="destructive" className="gap-1">
+            <AlertCircle className="h-3 w-3" />
             Failed
           </Badge>
         );
@@ -225,98 +225,70 @@ export function DistributionDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header with Send Survey button */}
-      <div className="flex justify-end">
-        <SendSurveyDialog onSuccess={loadData} />
-      </div>
-
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pending}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting delivery
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processing</CardTitle>
-            <RefreshCw className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.processing}</div>
-            <p className="text-xs text-muted-foreground">
-              Being sent now
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sent</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.sent}</div>
-            <p className="text-xs text-muted-foreground">
-              Successfully delivered
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Failed</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.failed}</div>
-            <p className="text-xs text-muted-foreground">
-              Delivery failed
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: "Pending", sublabel: "Awaiting delivery", value: stats.pending, icon: Clock },
+          { label: "Processing", sublabel: "Being sent now", value: stats.processing, icon: RefreshCw },
+          { label: "Sent", sublabel: "Successfully delivered", value: stats.sent, icon: CheckCircle2 },
+          { label: "Failed", sublabel: "Delivery failed", value: stats.failed, icon: AlertCircle },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                <Icon className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                  {stat.value}
+                </p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="text-xs text-muted-foreground">{stat.sublabel}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Tabs for Queue and Recent Surveys */}
-      <Card>
+      <Card className="border border-border shadow-soft">
         <Tabs defaultValue="queue" className="w-full">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <TabsList>
-                <TabsTrigger value="queue" className="flex items-center gap-2">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center justify-between gap-4">
+              <TabsList className="bg-transparent p-0 h-auto gap-1 flex-wrap">
+                <TabsTrigger value="queue" className="flex items-center gap-2 text-xs sm:text-sm">
                   <Mail className="h-4 w-4" />
-                  Distribution Queue
+                  <span className="hidden sm:inline">Distribution</span> Queue
                 </TabsTrigger>
-                <TabsTrigger value="surveys" className="flex items-center gap-2">
+                <TabsTrigger value="surveys" className="flex items-center gap-2 text-xs sm:text-sm">
                   <Send className="h-4 w-4" />
-                  Recent Surveys
+                  <span className="hidden sm:inline">Recent</span> Surveys
                 </TabsTrigger>
-                <TabsTrigger value="webhooks" className="flex items-center gap-2">
+                <TabsTrigger value="webhooks" className="flex items-center gap-2 text-xs sm:text-sm">
                   <Webhook className="h-4 w-4" />
-                  Webhook Logs
+                  <span className="hidden sm:inline">Webhook</span> Logs
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center gap-2">
+                <TabsTrigger value="settings" className="flex items-center gap-2 text-xs sm:text-sm">
                   <Settings className="h-4 w-4" />
                   Settings
                 </TabsTrigger>
               </TabsList>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadData}
-                disabled={isPending}
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
+              <div className="flex items-center gap-2 shrink-0">
+                <SendSurveyDialog onSuccess={loadData} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadData}
+                  disabled={isPending}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+              </div>
             </div>
           </CardHeader>
 
@@ -332,7 +304,7 @@ export function DistributionDashboard() {
                   {queueItems.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
+                      className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -383,7 +355,7 @@ export function DistributionDashboard() {
                   {surveys.map((survey) => (
                     <div
                       key={survey.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
+                      className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors"
                     >
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">

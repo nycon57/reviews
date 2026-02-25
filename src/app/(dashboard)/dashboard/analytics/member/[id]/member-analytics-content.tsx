@@ -20,6 +20,7 @@ import {
   Medal as Award,
   ChartBar as BarChart,
   ArrowSquareOut as ExternalLink,
+  Users,
 } from "@phosphor-icons/react";
 import {
   getMemberAnalytics,
@@ -123,12 +124,14 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
             </div>
           </div>
         </div>
-        <Link href={`/pro/${memberId}`}>
-          <Button variant="outline">
-            <ExternalLink className="mr-2 h-4 w-4" />
-            View Public Profile
-          </Button>
-        </Link>
+        {member.slug && (
+          <Link href={`/pro/${member.slug}`}>
+            <Button variant="outline">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              View Public Profile
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Key Metrics */}
@@ -136,7 +139,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
         <MetricCard
           title="Average Rating"
           value={metrics.averageRating.toFixed(1)}
-          icon={<Star className="h-5 w-5 text-yellow-500" />}
+          icon={<Star className="h-5 w-5 text-repwell-teal-300" />}
           subtitle={
             <ComparisonBadge
               value={comparison.ratingDiff}
@@ -147,7 +150,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
         <MetricCard
           title="Total Reviews"
           value={metrics.totalReviews.toString()}
-          icon={<BarChart className="h-5 w-5 text-blue-500" />}
+          icon={<BarChart className="h-5 w-5 text-repwell-teal-300" />}
           subtitle={
             <ComparisonBadge
               value={comparison.reviewsDiff}
@@ -158,7 +161,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
         <MetricCard
           title="NPS Score"
           value={metrics.npsScore !== null ? metrics.npsScore.toString() : "N/A"}
-          icon={<TrendUp className="h-5 w-5 text-green-500" />}
+          icon={<TrendUp className="h-5 w-5 text-repwell-teal-300" />}
           subtitle={
             comparison.npsDiff !== null ? (
               <ComparisonBadge
@@ -173,7 +176,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
         <MetricCard
           title="Response Rate"
           value={`${metrics.responseRate}%`}
-          icon={<Mail className="h-5 w-5 text-purple-500" />}
+          icon={<Mail className="h-5 w-5 text-repwell-teal-300" />}
           subtitle={
             <span className="text-xs text-muted-foreground">
               {metrics.surveysCompleted} of {metrics.surveysSent} surveys
@@ -184,13 +187,17 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
 
       {/* Recognition and Surveys */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-amber-500" />
-              Recognition
-            </CardTitle>
-            <CardDescription>Recognition activity for this team member</CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Award className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle>Recognition</CardTitle>
+                <CardDescription>Recognition activity for this team member</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
@@ -206,13 +213,17 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5 text-purple-500" />
-              Survey Activity
-            </CardTitle>
-            <CardDescription>Survey distribution and completion stats</CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Mail className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle>Survey Activity</CardTitle>
+                <CardDescription>Survey distribution and completion stats</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -238,10 +249,17 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
 
       {/* Review Trends */}
       {trends.reviewsTrend.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Reviews Over Time (Last 30 Days)</CardTitle>
-            <CardDescription>Daily review count trend</CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <BarChart className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle>Reviews Over Time (Last 30 Days)</CardTitle>
+                <CardDescription>Daily review count trend</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
@@ -273,10 +291,17 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
       )}
 
       {/* Team Comparison */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Comparison</CardTitle>
-          <CardDescription>How this member compares to the team average</CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Users className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle>Team Comparison</CardTitle>
+              <CardDescription>How this member compares to the team average</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-3">
@@ -320,20 +345,16 @@ function MetricCard({
   subtitle?: React.ReactNode;
 }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold">{value}</p>
-            {subtitle}
-          </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-            {icon}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+        {icon}
+      </div>
+      <div>
+        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value}</p>
+        <p className="text-xs text-muted-foreground">{title}</p>
+        {subtitle}
+      </div>
+    </div>
   );
 }
 

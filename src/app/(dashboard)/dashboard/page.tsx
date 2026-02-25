@@ -7,25 +7,21 @@ import {
   UserRecentReviews,
   UserQuickActions,
 } from "@/components/dashboard";
-import { ManagerDashboardClient } from "@/components/dashboard/manager";
 import {
   GamificationStatsCard,
   BadgeShowcase,
   ReputationBreakdownCard,
   ImprovementTipsCard,
   ProfileCompletionCard,
-  CompactProfileLeaderboard,
 } from "@/components/gamification";
 import {
   getUserMetrics,
   getUserRecentReviews,
   getRatingTrend,
   getNPSTrend,
-  getUserComparison,
-  getFilterOptions,
 } from "@/lib/dashboard";
 import { getCurrentUser } from "@/lib/users/actions";
-import { getAccessContext, isManagerOrAbove } from "@/lib/access";
+import { TrendUp } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata = {
   title: "Dashboard | RepWell",
@@ -57,23 +53,6 @@ async function DashboardStats() {
   }
 
   return <UserStatsCards metrics={result.data!} />;
-}
-
-// Server component that fetches data and renders the manager team overview
-async function ManagerDashboardSection() {
-  const [comparisonResult, filterResult] = await Promise.all([
-    getUserComparison(),
-    getFilterOptions(),
-  ]);
-
-  if (!comparisonResult.success || !filterResult.success) return null;
-
-  return (
-    <ManagerDashboardClient
-      initialComparison={comparisonResult.data ?? []}
-      filterOptions={filterResult.data!}
-    />
-  );
 }
 
 // Server component for rating trend chart
@@ -142,12 +121,8 @@ async function RecentReviewsList() {
 
 
 export default async function DashboardPage() {
-  const [userResult, ctx] = await Promise.all([
-    getCurrentUser(),
-    getAccessContext(),
-  ]);
+  const userResult = await getCurrentUser();
   const userName = userResult.success ? userResult.data?.fullName : null;
-  const isManager = ctx != null && isManagerOrAbove(ctx);
 
   return (
     <div className="flex-1 space-y-8">
@@ -159,15 +134,6 @@ export default async function DashboardPage() {
         <DashboardStats />
       </Suspense>
 
-      {/* Manager team overview — shown for admin/manager roles */}
-      {isManager && (
-        <section>
-          <Suspense fallback={<div className="h-32 animate-pulse rounded-lg bg-muted" />}>
-            <ManagerDashboardSection />
-          </Suspense>
-        </section>
-      )}
-
       {/* Gamification progress */}
       <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
         <GamificationStatsCard />
@@ -175,9 +141,14 @@ export default async function DashboardPage() {
 
       {/* Charts grid */}
       <section>
-        <h2 className="text-heading-sm font-semibold text-repwell-teal-500 mb-4">
-          Performance Trends
-        </h2>
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <TrendUp className="h-4 w-4 text-repwell-teal-300" />
+          </div>
+          <h2 className="text-heading-sm font-semibold text-repwell-teal-500">
+            Performance Trends
+          </h2>
+        </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <Suspense fallback={<ChartSkeleton />}>
             <RatingTrendChart />
@@ -215,9 +186,6 @@ export default async function DashboardPage() {
           <UserQuickActions />
           <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
             <ProfileCompletionCard showMilestones={true} showTips={true} />
-          </Suspense>
-          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
-            <CompactProfileLeaderboard limit={5} />
           </Suspense>
         </div>
       </div>

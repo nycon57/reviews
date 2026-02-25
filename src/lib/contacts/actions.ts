@@ -28,12 +28,21 @@ async function getUserOrganization() {
   const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
-    .select("organization_id, role")
+    .select("organization_id, role, organizations(account_type)")
     .eq("id", user.id)
     .single();
 
   if (!userData?.organization_id) {
     return { error: "No organization found" };
+  }
+
+  // Contacts is enterprise-only
+  const org = userData.organizations as { account_type?: string } | null;
+  if (!org) {
+    return { error: "Organization not found" };
+  }
+  if (org.account_type !== "enterprise") {
+    return { error: "Contacts requires an enterprise account" };
   }
 
   return { userId: user.id, organizationId: userData.organization_id, role: userData.role };

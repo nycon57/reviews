@@ -58,7 +58,7 @@ export function generateLOProfileMetadata(
   const description =
     professional.bio ||
     `Read reviews and ratings for ${professional.full_name}, ${professional.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${professional.total_reviews || 0} reviews with ${professional.average_rating ? `${Number(professional.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
-  const profileUrl = `${baseUrl}/pro/${professional.slug || professional.id}`;
+  const profileUrl = `${baseUrl}/pro/${professional.slug}`;
 
   const metadata: Metadata = {
     title,

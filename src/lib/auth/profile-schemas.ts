@@ -21,6 +21,9 @@ export const updateProfileSchema = z.object({
   personalWebsiteUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
   linkedinUrl: z.string().url("Please enter a valid LinkedIn URL").optional().or(z.literal("")),
   zillowProfileUrl: z.string().url("Please enter a valid Zillow URL").optional().or(z.literal("")),
+  facebookUrl: z.string().url("Please enter a valid Facebook URL").optional().or(z.literal("")),
+  instagramUrl: z.string().url("Please enter a valid Instagram URL").optional().or(z.literal("")),
+  twitterUrl: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
 
   // Preferences
   timezone: z.string().optional().or(z.literal("")),

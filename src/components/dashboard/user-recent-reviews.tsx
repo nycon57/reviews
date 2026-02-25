@@ -68,19 +68,17 @@ export function UserRecentReviews({
   const router = useRouter();
 
   const buildShareText = (review: RecentReview) => {
-    const stars = "★".repeat(review.rating) + "☆".repeat(5 - review.rating);
+    const stars = "\u2605".repeat(review.rating) + "\u2606".repeat(5 - review.rating);
     const name = review.customerName || "A customer";
     const quote = review.text ? `"${review.text}"` : "";
-    return quote ? `${stars} ${quote} — ${name}` : `${stars} — ${name}`;
+    return quote ? `${stars} ${quote} \u2014 ${name}` : `${stars} \u2014 ${name}`;
   };
 
   const buildReviewPublicUrl = (review: RecentReview): string | null => {
-    // Prefer the original source URL (e.g. Google review link)
     if (review.sourceUrl && review.sourceUrl.startsWith("http")) {
       return review.sourceUrl;
     }
-    // Fall back to the user's public RepWell profile page
-    if (review.userSlug) {
+    if (review.userSlug && review.userSlug.trim()) {
       return `${window.location.origin}/pro/${review.userSlug}`;
     }
     return null;
@@ -129,8 +127,19 @@ export function UserRecentReviews({
         textarea.style.opacity = "0";
         document.body.appendChild(textarea);
         textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
+        let success = false;
+        try {
+          success = document.execCommand("copy");
+        } finally {
+          document.body.removeChild(textarea);
+        }
+        if (!success) {
+          toast({
+            title: "Copy failed",
+            description: "Please select and copy the text manually.",
+            variant: "destructive",
+          });
+        }
       }
     } catch {
       toast({
@@ -146,9 +155,14 @@ export function UserRecentReviews({
   };
 
   return (
-    <Card className="col-span-1">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-semibold">Recent Reviews</CardTitle>
+    <Card className="col-span-1 shadow-soft">
+      <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Star className="h-4 w-4 text-repwell-teal-300" />
+          </div>
+          Recent Reviews
+        </CardTitle>
         <div className="flex items-center gap-2">
           <Select value={statusFilter} onValueChange={handleFilterChange}>
             <SelectTrigger className="h-8 w-[100px]">
@@ -167,12 +181,12 @@ export function UserRecentReviews({
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         {isPending ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="animate-pulse">
-                <div className="flex gap-3 rounded-lg border p-3">
+                <div className="flex gap-3 rounded-lg border border-border/50 p-3">
                   <div className="h-10 w-10 rounded-full bg-muted" />
                   <div className="flex-1 space-y-2">
                     <div className="h-4 w-1/3 rounded bg-muted" />
@@ -208,13 +222,13 @@ export function UserRecentReviews({
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {reviews.map((review) => (
               <div
                 key={review.id}
-                className="group flex gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                className="group flex gap-3 rounded-lg border border-border/50 p-3 transition-all hover:bg-repwell-sage-100/20 hover:border-repwell-teal-300/30"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-repwell-teal-300/10 text-repwell-teal-300 font-medium text-sm">
                   {review.customerName
                     ?.split(" ")
                     .map((n) => n[0])
@@ -223,7 +237,7 @@ export function UserRecentReviews({
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">
+                      <span className="font-medium text-repwell-teal-500">
                         {review.customerName || "Anonymous"}
                       </span>
                       <Badge
@@ -253,12 +267,12 @@ export function UserRecentReviews({
                     </div>
                   </div>
                   {review.text && (
-                    <p className="line-clamp-2 text-sm text-muted-foreground">
+                    <p className="line-clamp-2 text-sm text-repwell-teal-400">
                       {review.text}
                     </p>
                   )}
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-repwell-teal-300">
                       {formatDistanceToNow(new Date(review.reviewDate), {
                         addSuffix: true,
                       })}

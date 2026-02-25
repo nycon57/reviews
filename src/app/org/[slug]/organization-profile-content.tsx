@@ -20,9 +20,11 @@ import {
   Medal as Award,
   MagnifyingGlass,
   SortAscending,
+  SealCheck,
 } from "@phosphor-icons/react";
 import { getInitials } from "@/lib/utils";
 import { ReviewItem } from "@/components/shared/review-item";
+import { TierBadge } from "@/components/shared/tier-badge";
 import type {
   PublicOrganization,
   PublicOrgBranch,
@@ -33,7 +35,7 @@ import {
   DirectoryBreadcrumbs,
   type DirectoryBreadcrumbItem,
 } from "@/components/shared/directory-breadcrumbs";
-import { ProfileHeroBanner, ContactCTACard, MessageModal, ReportReviewModal } from "@/app/pro/[slug]/components";
+import { ProfileHeroBanner, ContactCTACard, MessageModal, ReportReviewModal, ReviewFiltersBar, type ReviewFilters } from "@/app/pro/[slug]/components";
 import { ShareProfileButton } from "@/app/pro/[slug]/components/share-profile-button";
 
 interface OrganizationProfileContentProps {
@@ -103,6 +105,72 @@ export function OrganizationProfileContent({
   const [locationSort, setLocationSort] = useState("name-asc");
   const [teamSearch, setTeamSearch] = useState("");
   const [teamSort, setTeamSort] = useState("name-asc");
+
+  // Review filters
+  const [reviewFilters, setReviewFilters] = useState<ReviewFilters>({
+    search: "",
+    rating: null,
+    sources: [],
+    dateRange: undefined,
+    sort: "newest",
+  });
+  const [reviewDisplayCount, setReviewDisplayCount] = useState(10);
+
+  const reviewSources = useMemo(() => {
+    const sourceSet = new Set(testimonials.map((t) => (t.source || "").toLowerCase()).filter(Boolean));
+    return Array.from(sourceSet).filter((s) => s !== "internal" && s !== "survey");
+  }, [testimonials]);
+
+  const filteredTestimonials = useMemo(() => {
+    let result = [...testimonials];
+    if (reviewFilters.search) {
+      const q = reviewFilters.search.toLowerCase();
+      result = result.filter(
+        (t) =>
+          t.text?.toLowerCase().includes(q) ||
+          t.title?.toLowerCase().includes(q) ||
+          t.customer_name?.toLowerCase().includes(q)
+      );
+    }
+    if (reviewFilters.rating !== null) {
+      result = result.filter((t) => t.rating >= reviewFilters.rating!);
+    }
+    if (reviewFilters.sources.length > 0) {
+      const selected = new Set(reviewFilters.sources.map((s) => s.toLowerCase()));
+      result = result.filter((t) => selected.has((t.source || "").toLowerCase()));
+    }
+    if (reviewFilters.dateRange?.from) {
+      const from = new Date(reviewFilters.dateRange.from).setHours(0, 0, 0, 0);
+      const to = reviewFilters.dateRange.to
+        ? new Date(reviewFilters.dateRange.to).setHours(23, 59, 59, 999)
+        : new Date(reviewFilters.dateRange.from).setHours(23, 59, 59, 999);
+      result = result.filter((t) => {
+        const d = t.review_date ? Date.parse(t.review_date) : NaN;
+        if (Number.isNaN(d)) return true;
+        return d >= from && d <= to;
+      });
+    }
+    result.sort((a, b) => {
+      switch (reviewFilters.sort) {
+        case "oldest":
+          return new Date(a.review_date).getTime() - new Date(b.review_date).getTime();
+        case "highest":
+          return b.rating - a.rating;
+        case "lowest":
+          return a.rating - b.rating;
+        default:
+          return new Date(b.review_date).getTime() - new Date(a.review_date).getTime();
+      }
+    });
+    return result;
+  }, [testimonials, reviewFilters]);
+
+  const displayedTestimonials = filteredTestimonials.slice(0, reviewDisplayCount);
+
+  const handleReviewFiltersChange = useCallback((f: ReviewFilters) => {
+    setReviewFilters(f);
+    setReviewDisplayCount(10);
+  }, [setReviewDisplayCount]);
 
   // Show More pagination
   const [locationDisplayCount, setLocationDisplayCount] = useState(12);
@@ -238,9 +306,12 @@ export function OrganizationProfileContent({
 
               {/* Organization Info */}
               <div className="max-w-2xl">
-                <h1 className="text-3xl md:text-4xl font-display font-bold text-repwell-teal-500 tracking-tight">
-                  {organization.name}
-                </h1>
+                <div className="flex items-center justify-center gap-2">
+                  <h1 className="text-3xl md:text-4xl font-display font-bold text-repwell-teal-500 tracking-tight">
+                    {organization.name}
+                  </h1>
+                  <SealCheck weight="fill" className="h-6 w-6 text-repwell-teal-300 shrink-0" />
+                </div>
 
                 {organization.mission_statement && (
                   <p className="mt-3 text-lg text-repwell-teal-400 italic">
@@ -489,7 +560,7 @@ export function OrganizationProfileContent({
                             {displayedProfessionals.map((member) => (
                               <Link
                                 key={member.id}
-                                href={`/pro/${member.slug || member.id}`}
+                                href={member.slug ? `/pro/${member.slug}` : "#"}
                                 className="group flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-repwell-sage-100/50"
                               >
                                 <Avatar className="h-10 w-10">
@@ -499,9 +570,12 @@ export function OrganizationProfileContent({
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1 min-w-0">
-                                  <h4 className="text-sm font-medium truncate text-repwell-teal-500 group-hover:text-repwell-teal-400 transition-colors">
-                                    {member.full_name}
-                                  </h4>
+                                  <div className="flex items-center gap-1">
+                                    <h4 className="text-sm font-medium truncate text-repwell-teal-500 group-hover:text-repwell-teal-400 transition-colors">
+                                      {member.full_name}
+                                    </h4>
+                                    <TierBadge isEnterprise={member.is_enterprise} isPro={member.is_pro} size="sm" />
+                                  </div>
                                   <p className="text-xs text-repwell-teal-300 truncate">
                                     {member.title || "Professional"}
                                   </p>
@@ -549,37 +623,62 @@ export function OrganizationProfileContent({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {testimonials.map((testimonial) => (
-                      <ReviewItem
-                        key={testimonial.id}
-                        review={{
-                          id: testimonial.id,
-                          customer_name: testimonial.customer_name,
-                          customer_location: testimonial.customer_location,
-                          rating: testimonial.rating,
-                          text: testimonial.text,
-                          title: testimonial.title,
-                          review_date: testimonial.review_date,
-                          source: testimonial.source,
-                        }}
-                        attributionLabel="Served by"
-                        attribution={{
-                          loanOfficer: {
-                            name: testimonial.loan_officer.full_name,
-                            href: `/pro/${testimonial.loan_officer.slug || testimonial.loan_officer.id}`,
-                            photoUrl: testimonial.loan_officer.photo_url,
-                          },
-                          branch: testimonial.branch ? {
-                            name: testimonial.branch.name,
-                            href: `/branch/${testimonial.branch.global_slug || testimonial.branch.id}`,
-                          } : undefined,
-                        }}
-                        shareConfig={{ profileUrl, subjectName: organization.name }}
-                        onFlag={handleFlagReview}
-                      />
-                    ))}
-                  </div>
+                  <ReviewFiltersBar
+                    filters={reviewFilters}
+                    onFiltersChange={handleReviewFiltersChange}
+                    sources={reviewSources}
+                    className="mb-8"
+                  />
+
+                  {filteredTestimonials.length === 0 ? (
+                    <p className="py-8 text-center text-repwell-teal-300">
+                      No testimonials match your filters.
+                    </p>
+                  ) : (
+                    <div className="space-y-6">
+                      {displayedTestimonials.map((testimonial) => (
+                        <ReviewItem
+                          key={testimonial.id}
+                          review={{
+                            id: testimonial.id,
+                            customer_name: testimonial.customer_name,
+                            customer_location: testimonial.customer_location,
+                            rating: testimonial.rating,
+                            text: testimonial.text,
+                            title: testimonial.title,
+                            review_date: testimonial.review_date,
+                            source: testimonial.source,
+                          }}
+                          attributionLabel="Served by"
+                          attribution={{
+                            loanOfficer: {
+                              name: testimonial.loan_officer.full_name,
+                              href: testimonial.loan_officer.slug ? `/pro/${testimonial.loan_officer.slug}` : "#",
+                              photoUrl: testimonial.loan_officer.photo_url,
+                            },
+                            branch: testimonial.branch ? {
+                              name: testimonial.branch.name,
+                              href: testimonial.branch.global_slug ? `/branch/${testimonial.branch.global_slug}` : "#",
+                            } : undefined,
+                          }}
+                          shareConfig={{ profileUrl, subjectName: organization.name }}
+                          onFlag={handleFlagReview}
+                        />
+                      ))}
+
+                      {filteredTestimonials.length > reviewDisplayCount && (
+                        <div className="flex justify-center pt-4">
+                          <Button
+                            variant="outline"
+                            onClick={() => setReviewDisplayCount((prev) => prev + 10)}
+                            className="border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100"
+                          >
+                            Load More Testimonials
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

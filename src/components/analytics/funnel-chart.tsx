@@ -2,13 +2,15 @@
 
 import { memo, useMemo } from "react";
 import {
-  PaperPlaneRightIcon as Send,
-  EyeIcon as Eye,
-  CheckCircleIcon as CheckCircle,
-  ThumbsUpIcon as ThumbsUp,
-  XCircleIcon as XCircle,
-  WarningIcon as AlertTriangle,
-  ArrowRightIcon as ArrowRight,
+  PaperPlaneRight,
+  Eye,
+  CheckCircle,
+  ThumbsUp,
+  XCircle,
+  Warning,
+  ArrowRight,
+  Clock,
+  ChartBar,
 } from "@phosphor-icons/react";
 import {
   Card,
@@ -30,38 +32,29 @@ export const FunnelStageCard = memo(function FunnelStageCard({
   label,
   value,
   icon: Icon,
-  color,
   conversionRate,
   description,
 }: {
   label: string;
   value: number;
-  icon: typeof Send;
-  color: string;
+  icon: typeof PaperPlaneRight;
   conversionRate?: number;
   description?: string;
 }) {
   return (
-    <Card className="relative overflow-hidden">
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground">{label}</p>
-            <p className="text-3xl font-bold tracking-tight">{value.toLocaleString()}</p>
-            {description && <p className="text-xs text-muted-foreground">{description}</p>}
-          </div>
-          <div className={cn("rounded-full p-2.5", color)} aria-hidden="true">
-            <Icon className="h-5 w-5 text-white" aria-hidden="true" />
-          </div>
-        </div>
+    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4" role="listitem">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10" aria-hidden="true">
+        <Icon className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+      </div>
+      <div>
+        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value.toLocaleString()}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+        {description && <p className="text-xs text-muted-foreground">{description}</p>}
         {conversionRate !== undefined && (
-          <div className="mt-3 flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Conversion:</span>
-            <Badge variant="outline" className="font-mono">{conversionRate}%</Badge>
-          </div>
+          <Badge variant="outline" className="mt-1 font-mono text-xs">{conversionRate}%</Badge>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 });
 
@@ -85,12 +78,19 @@ export const FunnelVisualization = memo(function FunnelVisualization({
   const maxValue = Math.max(...stages.map((s) => s.value), 1);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Video Funnel Overview</CardTitle>
-        <CardDescription>Video testimonial journey from request to publication</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <ChartBar className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Video Funnel Overview</CardTitle>
+            <CardDescription>Video testimonial journey from request to publication</CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent role="img" aria-label="Review funnel chart">
+      <CardContent className="p-6" role="figure" aria-label="Review funnel chart">
         <div className="space-y-4" role="list" aria-label="Video testimonial funnel stages">
           {stages.map((stage, index) => {
             const percentage = maxValue > 0 ? (stage.value / maxValue) * 100 : 0;
@@ -126,7 +126,7 @@ export const FunnelVisualization = memo(function FunnelVisualization({
             <span className="font-medium">{metrics.expiredCount}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
+            <Warning className="h-4 w-4 text-amber-600" aria-hidden="true" />
             <span className="text-muted-foreground">Cancelled:</span>
             <span className="font-medium">{metrics.cancelledCount}</span>
           </div>
@@ -157,7 +157,7 @@ export const ConversionRateCards = memo(function ConversionRateCards({
       {rates.map((rate) => {
         const isAboveTarget = rate.value >= rate.target;
         return (
-          <Card key={rate.label} role="listitem">
+          <Card key={rate.label} role="listitem" className="shadow-soft">
             <CardContent className="pt-6">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">{rate.label}</p>
@@ -209,15 +209,19 @@ export const TimeMetricsCards = memo(function TimeMetricsCards({
   ], [metrics.averageTimeToOpen, metrics.averageTimeToComplete, metrics.averageApprovalTime]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Clock className="h-5 w-5" aria-hidden="true" />
-          Processing Times
-        </CardTitle>
-        <CardDescription>Average time between funnel stages</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Clock className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Processing Times</CardTitle>
+            <CardDescription>Average time between funnel stages</CardDescription>
+          </div>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <div className="grid gap-4 sm:grid-cols-3" role="list" aria-label="Processing time metrics">
           {timeMetrics.map((metric) => (
             <div key={metric.label} className="flex items-start gap-3 rounded-lg border p-4" role="listitem">
@@ -234,6 +238,3 @@ export const TimeMetricsCards = memo(function TimeMetricsCards({
     </Card>
   );
 });
-
-// Need Clock icon import for TimeMetricsCards
-import { ClockIcon as Clock } from "@phosphor-icons/react";

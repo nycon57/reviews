@@ -733,6 +733,373 @@ async function updateBranchMemberCount(branchId: string): Promise<void> {
 }
 
 /**
+ * Upload a photo for a branch
+ */
+export async function uploadBranchPhoto(
+  branchId: string,
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const auth = await requireAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
+    if (!['admin', 'manager'].includes(auth.role)) {
+      return { success: false, error: 'Only admins and managers can update branch photos' };
+    }
+
+    const supabase = createAdminClient();
+
+    const { data: branchData } = await supabase
+      .from('branches')
+      .select('organization_id, photo_url')
+      .eq('id', branchId)
+      .single();
+
+    if (!branchData || branchData.organization_id !== auth.organizationId) {
+      return { success: false, error: 'Branch not found in organization' };
+    }
+
+    const file = formData.get('file') as File;
+    if (!file) {
+      return { success: false, error: 'No file provided' };
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return { success: false, error: 'Invalid file type. Please upload a JPG, PNG, or WebP image.' };
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      return { success: false, error: 'File too large. Maximum size is 5MB.' };
+    }
+
+    const oldPhotoUrl = branchData.photo_url;
+    const mimeToExt: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+    const fileExt = mimeToExt[file.type] || 'jpg';
+    const fileName = `branches/${branchId}/photo-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+    if (uploadError) {
+      console.error('Error uploading branch photo to storage:', uploadError);
+      return { success: false, error: 'Failed to upload image. Please try again.' };
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    const { error: dbError } = await supabase
+      .from('branches')
+      .update({
+        photo_url: publicUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', branchId)
+      .eq('organization_id', auth.organizationId);
+
+    if (dbError) {
+      await supabase.storage.from('avatars').remove([fileName]);
+      return { success: false, error: 'Failed to update branch. Please try again.' };
+    }
+
+    // Cleanup old photo
+    if (oldPhotoUrl && oldPhotoUrl.includes('/avatars/')) {
+      const oldPath = oldPhotoUrl.split('/avatars/').pop();
+      if (oldPath && oldPath !== fileName) {
+        await supabase.storage.from('avatars').remove([oldPath]);
+      }
+    }
+
+    revalidatePath('/dashboard/organization');
+    revalidatePath(`/dashboard/organization/branches/${branchId}`);
+    return { success: true, url: publicUrl };
+  } catch (error) {
+    console.error('Error uploading branch photo:', error);
+    return { success: false, error: 'Failed to upload branch photo' };
+  }
+}
+
+/**
+ * Upload a cover image for a branch
+ */
+export async function uploadBranchCoverImage(
+  branchId: string,
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const auth = await requireAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
+    if (!['admin', 'manager'].includes(auth.role)) {
+      return { success: false, error: 'Only admins and managers can update branch cover images' };
+    }
+
+    const supabase = createAdminClient();
+
+    const { data: branchData } = await supabase
+      .from('branches')
+      .select('organization_id, cover_image_url')
+      .eq('id', branchId)
+      .single();
+
+    if (!branchData || branchData.organization_id !== auth.organizationId) {
+      return { success: false, error: 'Branch not found in organization' };
+    }
+
+    const file = formData.get('file') as File;
+    if (!file) {
+      return { success: false, error: 'No file provided' };
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      return { success: false, error: 'Invalid file type. Please upload a JPG, PNG, or WebP image.' };
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return { success: false, error: 'File too large. Maximum size is 10MB.' };
+    }
+
+    const oldCoverUrl = branchData.cover_image_url;
+    const mimeToExt: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+    const fileExt = mimeToExt[file.type] || 'jpg';
+    const fileName = `branches/${branchId}/cover-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+    if (uploadError) {
+      console.error('Error uploading branch cover image to storage:', uploadError);
+      return { success: false, error: 'Failed to upload image. Please try again.' };
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName);
+
+    const { error: dbError } = await supabase
+      .from('branches')
+      .update({
+        cover_image_url: publicUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', branchId)
+      .eq('organization_id', auth.organizationId);
+
+    if (dbError) {
+      await supabase.storage.from('avatars').remove([fileName]);
+      return { success: false, error: 'Failed to update branch. Please try again.' };
+    }
+
+    // Cleanup old cover
+    if (oldCoverUrl && oldCoverUrl.includes('/avatars/')) {
+      const oldPath = oldCoverUrl.split('/avatars/').pop();
+      if (oldPath && oldPath !== fileName) {
+        await supabase.storage.from('avatars').remove([oldPath]);
+      }
+    }
+
+    revalidatePath('/dashboard/organization');
+    revalidatePath(`/dashboard/organization/branches/${branchId}`);
+    return { success: true, url: publicUrl };
+  } catch (error) {
+    console.error('Error uploading branch cover image:', error);
+    return { success: false, error: 'Failed to upload branch cover image' };
+  }
+}
+
+/**
+ * Update branch slug (public URL)
+ */
+export async function updateBranchSlug(
+  branchId: string,
+  newGlobalSlug: string
+): Promise<ActionResult> {
+  try {
+    const auth = await requireAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
+    if (auth.role !== 'admin') {
+      return { success: false, error: 'Only admins can update branch URLs' };
+    }
+
+    // Validate slug format
+    const slugRegex = /^[a-z0-9-]+$/;
+    if (!slugRegex.test(newGlobalSlug)) {
+      return { success: false, error: 'URL can only contain lowercase letters, numbers, and hyphens' };
+    }
+
+    if (newGlobalSlug.length < 2 || newGlobalSlug.length > 100) {
+      return { success: false, error: 'URL must be between 2 and 100 characters' };
+    }
+
+    const supabase = createAdminClient();
+
+    // Get current branch
+    const { data: branch } = await supabase
+      .from('branches')
+      .select('global_slug, organization_id')
+      .eq('id', branchId)
+      .eq('organization_id', auth.organizationId)
+      .single();
+
+    if (!branch) {
+      return { success: false, error: 'Branch not found' };
+    }
+
+    const oldSlug = branch.global_slug;
+
+    // Check uniqueness
+    const uniqueSlug = await ensureUniqueBranchSlug(newGlobalSlug, branchId);
+    if (uniqueSlug !== newGlobalSlug) {
+      return { success: false, error: 'This URL is already taken. Please choose a different one.' };
+    }
+
+    const { error } = await supabase
+      .from('branches')
+      .update({
+        global_slug: newGlobalSlug,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', branchId)
+      .eq('organization_id', auth.organizationId);
+
+    if (error) {
+      console.error('Error updating branch slug:', error);
+      return { success: false, error: 'Failed to update branch URL' };
+    }
+
+    revalidatePath('/dashboard/organization');
+    revalidatePath(`/dashboard/organization/branches/${branchId}`);
+    if (oldSlug) revalidatePath(`/branch/${oldSlug}`);
+    revalidatePath(`/branch/${newGlobalSlug}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating branch slug:', error);
+    return { success: false, error: 'Failed to update branch URL' };
+  }
+}
+
+/**
+ * Update branch hours of operation
+ */
+export async function updateBranchHours(
+  branchId: string,
+  hours: Record<string, { open: string; close: string; is24hr: boolean } | null>
+): Promise<ActionResult> {
+  try {
+    const auth = await requireAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
+    if (!['admin', 'manager'].includes(auth.role)) {
+      return { success: false, error: 'Insufficient permissions' };
+    }
+
+    // Validate hours format
+    const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+    const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+    for (const [day, schedule] of Object.entries(hours)) {
+      if (!validDays.includes(day)) {
+        return { success: false, error: `Invalid day: ${day}` };
+      }
+      if (schedule && !schedule.is24hr) {
+        if (!timeRegex.test(schedule.open)) {
+          return { success: false, error: `Invalid open time for ${day}` };
+        }
+        if (!timeRegex.test(schedule.close)) {
+          return { success: false, error: `Invalid close time for ${day}` };
+        }
+      }
+    }
+
+    const supabase = createAdminClient();
+
+    const { error } = await supabase
+      .from('branches')
+      .update({
+        hours_of_operation: hours as unknown as Json,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', branchId)
+      .eq('organization_id', auth.organizationId);
+
+    if (error) {
+      console.error('Error updating branch hours:', error);
+      return { success: false, error: 'Failed to update hours of operation' };
+    }
+
+    revalidatePath('/dashboard/organization');
+    revalidatePath(`/dashboard/organization/branches/${branchId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error updating branch hours:', error);
+    return { success: false, error: 'Failed to update hours of operation' };
+  }
+}
+
+/**
+ * Get organization members not assigned to any branch (for branch assignment)
+ */
+export async function getUnassignedMembers(): Promise<
+  ActionResult<{ id: string; fullName: string; email: string; title: string | null; photoUrl: string | null }[]>
+> {
+  try {
+    const auth = await requireAccess();
+    if (!auth.success) {
+      return { success: false, error: auth.error };
+    }
+
+    if (!['admin', 'manager'].includes(auth.role)) {
+      return { success: false, error: 'Insufficient permissions' };
+    }
+
+    const supabase = createAdminClient();
+
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, full_name, email, title, photo_url')
+      .eq('organization_id', auth.organizationId)
+      .eq('is_active', true)
+      .is('branch_id', null)
+      .order('full_name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching unassigned members:', error);
+      return { success: false, error: 'Failed to fetch members' };
+    }
+
+    return {
+      success: true,
+      data: (data || []).map((m) => ({
+        id: m.id,
+        fullName: m.full_name || 'Unknown',
+        email: m.email,
+        title: m.title,
+        photoUrl: m.photo_url,
+      })),
+    };
+  } catch (error) {
+    console.error('Error fetching unassigned members:', error);
+    return { success: false, error: 'Failed to fetch members' };
+  }
+}
+
+/**
  * Get unique regions for filter dropdown
  */
 export async function getBranchRegions(): Promise<ActionResult<string[]>> {

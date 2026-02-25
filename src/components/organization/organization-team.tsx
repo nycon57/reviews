@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import {
   SpinnerGap as Loader2,
@@ -25,6 +26,9 @@ import {
   UserCheck,
   X,
   Clock,
+  Pencil,
+  SignIn,
+  UsersThree,
 } from "@phosphor-icons/react";
 import {
   getOrganizationMembers,
@@ -54,6 +58,7 @@ export function OrganizationTeam() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
+  const router = useRouter();
   const { canInviteTeam } = usePermissions();
   const showInviteButton = canInviteTeam();
 
@@ -211,8 +216,8 @@ export function OrganizationTeam() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-72" />
           </CardHeader>
@@ -240,94 +245,104 @@ export function OrganizationTeam() {
   return (
     <div className="space-y-6">
       {/* Team members */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Team Members</CardTitle>
-            <CardDescription>
-              Manage your organization's team members and their roles
-            </CardDescription>
-          </div>
-          {showInviteButton && (
-            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Invite Member
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Invite Team Member</DialogTitle>
-                  <DialogDescription>
-                    Send an invitation to add a new member to your organization.
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmitInvite)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="john@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <UsersThree className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Team Members</CardTitle>
+                <CardDescription>
+                  Manage your organization&apos;s team members and their roles
+                </CardDescription>
+              </div>
+            </div>
+            {showInviteButton && (
+              <Dialog open={inviteDialogOpen} onOpenChange={(open) => {
+                setInviteDialogOpen(open);
+                if (!open) form.reset();
+              }}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Invite Member
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Invite Team Member</DialogTitle>
+                    <DialogDescription>
+                      Send an invitation to add a new member to your organization.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmitInvite)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select role" />
-                            </SelectTrigger>
+                            <Input type="email" placeholder="john@example.com" {...field} />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin - Full access</SelectItem>
-                            <SelectItem value="manager">Manager - Team management</SelectItem>
-                            <SelectItem value="user">User - Basic access</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormDescription>
-                          Choose the role that best fits their responsibilities
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit" disabled={isPending}>
-                      {isPending ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="mr-2 h-4 w-4" />
-                          Send Invitation
-                        </>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-            </Dialog>
-          )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Role</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select role" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="admin">Admin - Full access</SelectItem>
+                              <SelectItem value="manager">Manager - Team management</SelectItem>
+                              <SelectItem value="user">User - Basic access</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Choose the role that best fits their responsibilities
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={isPending}>
+                        {isPending ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send Invitation
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+              </Dialog>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -396,6 +411,17 @@ export function OrganizationTeam() {
                           Make User
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => router.push(`/dashboard/organization/users/${member.id}`)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        {showInviteButton && (
+                          <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Login as user will be available soon." })}>
+                            <SignIn className="mr-2 h-4 w-4" />
+                            Login
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDeactivate(member.id)}
@@ -422,12 +448,19 @@ export function OrganizationTeam() {
 
       {/* Pending invitations */}
       {invitations.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Invitations</CardTitle>
-            <CardDescription>
-              Invitations that haven't been accepted yet
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Clock className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Pending Invitations</CardTitle>
+                <CardDescription>
+                  Invitations that haven&apos;t been accepted yet
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -482,12 +515,19 @@ export function OrganizationTeam() {
 
       {/* Inactive members */}
       {inactiveMembers.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Inactive Members</CardTitle>
-            <CardDescription>
-              Members who have been deactivated
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <UserX className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Inactive Members</CardTitle>
+                <CardDescription>
+                  Members who have been deactivated
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>

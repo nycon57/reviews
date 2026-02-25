@@ -38,12 +38,13 @@ const roleProtectedRoutes: RouteConfig[] = [
   { path: "/dashboard/campaigns", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/approvals", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/ex-surveys", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
+  { path: "/dashboard/contacts", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/recognition", requiresEnterprise: true },
   { path: "/dashboard/analytics/leaderboard", requiresEnterprise: true },
 
   // Enterprise admin only routes
   { path: "/dashboard/organization", requiresEnterpriseAdmin: true },
-  { path: "/dashboard/surveys", requiresEnterpriseAdmin: true },
+  // Note: /dashboard/surveys access control is handled at the page level (open to individuals + enterprise admins)
 
   // Pro tier features (available to pro individuals and all enterprise users)
   { path: "/dashboard/insights", minTier: "pro" },

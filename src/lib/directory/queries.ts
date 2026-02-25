@@ -3,7 +3,6 @@ import { cacheLife } from "next/cache";
 import { cacheTag } from "next/cache";
 import {
   searchProfessionals,
-  getAvailableStates,
   getAvailableIndustries,
   type SearchFilters,
 } from "./actions";
@@ -14,17 +13,6 @@ import {
  * call this — only one DB query executes per request.
  */
 export const deduplicatedSearch = cache(searchProfessionals);
-
-/**
- * Cross-request cached wrapper for available states.
- * States rarely change — cache for hours.
- */
-export async function getCachedAvailableStates() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("directory-states");
-  return getAvailableStates();
-}
 
 /**
  * Cross-request cached wrapper for available industries.

@@ -43,12 +43,6 @@ export const NAV_CONFIG: NavConfig = {
       permission: PERMISSIONS.VIEW_REVIEWS,
     },
     {
-      title: "Surveys",
-      href: "/dashboard/surveys",
-      icon: "FileText",
-      permission: PERMISSIONS.MANAGE_SURVEY_TEMPLATES,
-    },
-    {
       title: "Requests",
       href: "/dashboard/requests",
       icon: "PaperPlaneRight",
@@ -138,7 +132,7 @@ export const NAV_CONFIG: NavConfig = {
       ],
     },
     {
-      label: "Organization",
+      label: "Admin",
       items: [
         {
           title: "Organization",
@@ -147,16 +141,22 @@ export const NAV_CONFIG: NavConfig = {
           permission: PERMISSIONS.VIEW_ORGANIZATION,
         },
         {
-          title: "EX Surveys",
-          href: "/dashboard/ex-surveys",
-          icon: "ClipboardText",
-          permission: PERMISSIONS.VIEW_EX_SURVEYS,
+          title: "Surveys",
+          href: "/dashboard/surveys",
+          icon: "FileText",
+          permission: PERMISSIONS.VIEW_SURVEYS,
         },
         {
           title: "Widgets",
           href: "/dashboard/widgets",
           icon: "Code",
           permission: PERMISSIONS.VIEW_DASHBOARD,
+        },
+        {
+          title: "EX Surveys",
+          href: "/dashboard/ex-surveys",
+          icon: "ClipboardText",
+          permission: PERMISSIONS.VIEW_EX_SURVEYS,
         },
       ],
     },

@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Trophy,
   Medal,
@@ -26,6 +25,7 @@ import {
   Crown,
   WarningCircle,
 } from "@phosphor-icons/react";
+import { cn } from "@/lib/utils";
 import type {
   EnhancedLeaderboardEntry,
   LeaderboardPeriod,
@@ -82,7 +82,7 @@ export function EnhancedLeaderboard({
       case 1:
         return <Crown className="h-5 w-5 text-yellow-500" />;
       case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />;
+        return <Medal className="h-5 w-5 text-repwell-sage-200" />;
       case 3:
         return <Trophy className="h-5 w-5 text-amber-600" />;
       default:
@@ -97,11 +97,11 @@ export function EnhancedLeaderboard({
   const getRankBackground = (rank: number) => {
     switch (rank) {
       case 1:
-        return "bg-gradient-to-r from-yellow-50 to-yellow-100/50 border-l-4 border-l-yellow-400";
+        return "bg-gradient-to-r from-yellow-50/60 to-transparent border-l-4 border-l-yellow-400";
       case 2:
-        return "bg-gradient-to-r from-gray-50 to-gray-100/50 border-l-4 border-l-gray-400";
+        return "bg-gradient-to-r from-repwell-sage-100/20 to-transparent border-l-4 border-l-repwell-sage-200";
       case 3:
-        return "bg-gradient-to-r from-amber-50 to-amber-100/50 border-l-4 border-l-amber-600";
+        return "bg-gradient-to-r from-amber-50/40 to-transparent border-l-4 border-l-amber-500";
       default:
         return "border-l-4 border-l-transparent";
     }
@@ -159,6 +159,13 @@ export function EnhancedLeaderboard({
     setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
+  const periodTabs: { value: LeaderboardPeriod; label: string }[] = [
+    { value: "monthly", label: "Monthly" },
+    { value: "quarterly", label: "Quarterly" },
+    { value: "yearly", label: "Yearly" },
+    { value: "all_time", label: "All Time" },
+  ];
+
   const renderLeaderboardContent = () => {
     if (isLoading) {
       return (
@@ -182,17 +189,19 @@ export function EnhancedLeaderboard({
 
     if (error) {
       return (
-        <div className="flex h-[300px] items-center justify-center text-muted-foreground">
+        <div className="flex h-[300px] items-center justify-center">
           <div className="text-center">
-            <WarningCircle className="h-12 w-12 mx-auto mb-3 text-destructive opacity-60" />
-            <p className="text-sm text-destructive">{error}</p>
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-destructive/10 to-destructive/5">
+              <WarningCircle className="h-7 w-7 text-destructive" />
+            </div>
+            <p className="text-sm font-medium text-destructive">{error}</p>
             <button
               onClick={() => {
                 setError(null);
                 setIsLoading(true);
                 setRetryCount((c) => c + 1);
               }}
-              className="mt-2 text-xs font-medium text-primary underline hover:no-underline"
+              className="mt-2 text-xs font-medium text-repwell-teal-300 underline hover:no-underline"
             >
               Try again
             </button>
@@ -203,11 +212,14 @@ export function EnhancedLeaderboard({
 
     if (data.length === 0) {
       return (
-        <div className="flex h-[300px] items-center justify-center text-muted-foreground">
-          <div className="text-center">
-            <Trophy className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p className="text-sm">No leaderboard data available</p>
-            <p className="text-xs mt-1">
+        <div className="relative flex flex-col items-center justify-center py-16 text-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
+          <div className="relative">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50">
+              <Trophy className="h-7 w-7 text-repwell-teal-400" />
+            </div>
+            <p className="font-medium text-repwell-teal-500">No leaderboard data available</p>
+            <p className="mt-1 text-sm text-repwell-teal-300">
               Team members will appear here once they have reviews
             </p>
           </div>
@@ -221,7 +233,7 @@ export function EnhancedLeaderboard({
           <Link
             key={entry.id}
             href={`/dashboard/team/${entry.id}`}
-            className={`flex items-center gap-3 rounded-lg p-3 transition-all hover:bg-accent/50 ${getRankBackground(entry.rank)}`}
+            className={`flex items-center gap-3 rounded-lg p-3 transition-all hover:bg-repwell-sage-100/20 ${getRankBackground(entry.rank)}`}
           >
             {/* Rank */}
             <div className="flex w-10 flex-col items-center justify-center">
@@ -237,14 +249,14 @@ export function EnhancedLeaderboard({
                 src={entry.photoUrl || undefined}
                 alt={entry.fullName}
               />
-              <AvatarFallback className="text-xs font-medium">
+              <AvatarFallback className="text-xs font-medium bg-repwell-teal-300/10 text-repwell-teal-400">
                 {getInitials(entry.fullName)}
               </AvatarFallback>
             </Avatar>
 
             {/* Name and stats */}
             <div className="flex-1 min-w-0">
-              <div className="font-medium truncate">{entry.fullName}</div>
+              <div className="font-medium text-repwell-teal-500 truncate">{entry.fullName}</div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>{entry.totalReviews} reviews</span>
                 <span className="flex items-center gap-0.5">
@@ -253,7 +265,7 @@ export function EnhancedLeaderboard({
                 </span>
                 {entry.badges.length > 0 && (
                   <span className="flex items-center gap-0.5">
-                    <Trophy className="h-3 w-3 text-purple-500" />
+                    <Trophy className="h-3 w-3 text-repwell-sage-200" />
                     {entry.badges.length}
                   </span>
                 )}
@@ -262,7 +274,7 @@ export function EnhancedLeaderboard({
 
             {/* Score */}
             <div className="text-right">
-              <div className="font-bold text-lg">{entry.reputationScore}</div>
+              <div className="font-bold text-lg text-repwell-teal-500">{entry.reputationScore}</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 points
               </div>
@@ -276,13 +288,15 @@ export function EnhancedLeaderboard({
   const hasFilters = filterOptions.branches.length > 0 || filterOptions.regions.length > 0;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-2">
+    <Card className="overflow-hidden border border-border/50 shadow-soft rounded-xl">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Team Leaderboard
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Trophy className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <CardTitle className="text-lg text-repwell-teal-500">Team Leaderboard</CardTitle>
+          </div>
 
           <div className="flex items-center gap-2">
             {hasFilters && (
@@ -336,56 +350,40 @@ export function EnhancedLeaderboard({
         </div>
       </CardHeader>
 
-      <Tabs
-        value={period}
-        onValueChange={(v) => setPeriod(v as LeaderboardPeriod)}
-        className="w-full"
-      >
-        <div className="px-6 border-b">
-          <TabsList className="h-10 w-full justify-start rounded-none border-none bg-transparent p-0">
-            <TabsTrigger
-              value="monthly"
-              className="h-10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+      {/* Period tabs */}
+      <div className="px-6 border-b border-border/50">
+        <div className="flex gap-0">
+          {periodTabs.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setPeriod(tab.value)}
+              className={cn(
+                "relative px-4 py-3 text-sm font-medium transition-colors duration-200",
+                "border-b-2",
+                period === tab.value
+                  ? "text-repwell-teal-300 border-repwell-teal-300"
+                  : "text-muted-foreground hover:text-repwell-teal-400 border-transparent"
+              )}
             >
-              Monthly
-            </TabsTrigger>
-            <TabsTrigger
-              value="quarterly"
-              className="h-10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
-              Quarterly
-            </TabsTrigger>
-            <TabsTrigger
-              value="yearly"
-              className="h-10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
-              Yearly
-            </TabsTrigger>
-            <TabsTrigger
-              value="all_time"
-              className="h-10 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
-              All Time
-            </TabsTrigger>
-          </TabsList>
+              {tab.label}
+            </button>
+          ))}
         </div>
+      </div>
 
-        <CardContent className="p-0">
-          <TabsContent value={period} className="m-0">
-            <div className="px-2 py-3">{renderLeaderboardContent()}</div>
-          </TabsContent>
-        </CardContent>
-      </Tabs>
+      <CardContent className="p-0">
+        <div className="px-2 py-3">{renderLeaderboardContent()}</div>
+      </CardContent>
 
       {/* Period indicator */}
-      <div className="px-6 py-3 border-t bg-muted/30 text-xs text-muted-foreground text-center">
+      <div className="px-6 py-3 border-t border-border/50 bg-repwell-sage-100/10 text-xs text-muted-foreground text-center">
         Rank changes compared to previous {period === "all_time" ? "snapshot" : period.replace("_", " ")}. Rankings reflect overall reputation.
         {(branch !== "all" || region !== "all") && (
           <span>
             {" "}
             &middot; Filtered by{" "}
-            {branch !== "all" && <Badge variant="outline" className="mx-1">{branch}</Badge>}
-            {region !== "all" && <Badge variant="outline" className="mx-1">{region}</Badge>}
+            {branch !== "all" && <Badge variant="outline" className="mx-1 border-repwell-teal-300/30 text-repwell-teal-400">{branch}</Badge>}
+            {region !== "all" && <Badge variant="outline" className="mx-1 border-repwell-teal-300/30 text-repwell-teal-400">{region}</Badge>}
           </span>
         )}
       </div>

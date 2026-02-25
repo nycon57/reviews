@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Quotes } from "@phosphor-icons/react";
 import type { KeyPhraseData } from "@/lib/ai";
 import { cn } from "@/lib/utils";
 
@@ -18,16 +19,23 @@ const sentimentColors = {
 export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
   if (data.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold">Key Phrases</CardTitle>
-          <CardDescription>Most commonly mentioned phrases in reviews</CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Quotes aria-hidden="true" className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Key Phrases</CardTitle>
+              <CardDescription>Most commonly mentioned phrases in reviews</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm">No key phrases extracted yet</p>
-              <p className="text-xs">Phrases are identified from review analysis</p>
+              <p className="text-sm font-medium text-repwell-teal-500">No key phrases extracted yet</p>
+              <p className="mt-1 text-xs">Phrases are identified from review analysis</p>
             </div>
           </div>
         </CardContent>
@@ -40,10 +48,17 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
   const negativeData = data.filter((p) => p.sentiment === "negative").slice(0, 5);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold">Key Phrases</CardTitle>
-        <CardDescription>Most commonly mentioned phrases in reviews</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Quotes className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Key Phrases</CardTitle>
+            <CardDescription>Most commonly mentioned phrases in reviews</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Word cloud style display */}
@@ -68,7 +83,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
           {/* Positive phrases */}
           {positiveData.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-green-700">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-green-700">
                 Positive Mentions
               </h4>
               <ul className="space-y-1">
@@ -92,7 +107,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
           {/* Negative phrases */}
           {negativeData.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-sm font-medium text-red-700">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-red-700">
                 Areas of Concern
               </h4>
               <ul className="space-y-1">
@@ -117,7 +132,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
         {/* Recent activity indicator */}
         {data.some((p) => p.recentOccurrences > 0) && (
           <div className="border-t pt-3">
-            <h4 className="mb-2 text-sm font-medium text-muted-foreground">
+            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Trending This Month
             </h4>
             <div className="flex flex-wrap gap-1.5">

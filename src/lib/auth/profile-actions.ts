@@ -30,6 +30,9 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
     personalWebsiteUrl,
     linkedinUrl,
     zillowProfileUrl,
+    facebookUrl,
+    instagramUrl,
+    twitterUrl,
     timezone,
   } = result.data;
 
@@ -56,6 +59,9 @@ export async function updateProfile(formData: UpdateProfileInput): Promise<Profi
       personal_website_url: personalWebsiteUrl || null,
       linkedin_url: linkedinUrl || null,
       zillow_profile_url: zillowProfileUrl || null,
+      facebook_url: facebookUrl || null,
+      instagram_url: instagramUrl || null,
+      twitter_url: twitterUrl || null,
       timezone: timezone || null,
       updated_at: new Date().toISOString(),
     })

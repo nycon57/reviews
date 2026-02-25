@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Star,
   ArrowSquareOut as ExternalLink,
@@ -19,7 +18,6 @@ import {
   Chats as MessageSquare,
   Calendar,
   MapPin,
-  BuildingOffice as Building2,
   TrendUp as TrendingUp,
   Tag as Tags,
   Clock,
@@ -66,55 +64,27 @@ export function ReviewDetailModal({
   const formatDateTime = (dateString: string | null) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleString("en-US", {
-      year: "numeric",
       month: "short",
       day: "numeric",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
   };
 
-  const getStatusBadge = (status: AggregatedReview["status"]) => {
-    const variants = {
-      pending: "border-yellow-500 text-yellow-600 bg-yellow-50",
-      approved: "border-green-500 text-green-600 bg-green-50",
-      rejected: "border-red-500 text-red-600 bg-red-50",
-      archived: "border-gray-400 text-gray-500 bg-gray-50",
-    };
-    return (
-      <Badge variant="outline" className={variants[status]}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
+  const statusConfig: Record<string, { label: string; className: string }> = {
+    pending: { label: "Pending", className: "border-amber-300 text-amber-700 bg-amber-50" },
+    approved: { label: "Approved", className: "border-green-300 text-green-700 bg-green-50" },
+    rejected: { label: "Rejected", className: "border-red-300 text-red-700 bg-red-50" },
+    archived: { label: "Archived", className: "border-gray-300 text-gray-500 bg-gray-50" },
   };
 
-  const getSourceBadge = (source: string) => {
-    const colors: Record<string, string> = {
-      internal: "bg-blue-100 text-blue-700",
-      google: "bg-red-100 text-red-700",
-      zillow: "bg-purple-100 text-purple-700",
-      facebook: "bg-indigo-100 text-indigo-700",
-      yelp: "bg-orange-100 text-orange-700",
-    };
-    return (
-      <Badge className={colors[source] || "bg-gray-100 text-gray-700"}>
-        {source === "internal" ? "Survey" : source.charAt(0).toUpperCase() + source.slice(1)}
-      </Badge>
-    );
-  };
-
-  const getSentimentBadge = (label: string | null) => {
-    if (!label) return null;
-    const colors: Record<string, string> = {
-      positive: "bg-green-100 text-green-700",
-      neutral: "bg-gray-100 text-gray-700",
-      negative: "bg-red-100 text-red-700",
-    };
-    return (
-      <Badge className={colors[label.toLowerCase()] || "bg-gray-100 text-gray-700"}>
-        {label}
-      </Badge>
-    );
+  const sourceLabels: Record<string, string> = {
+    internal: "Survey",
+    google: "Google",
+    zillow: "Zillow",
+    facebook: "Facebook",
+    yelp: "Yelp",
   };
 
   const handleArchive = () => {
@@ -145,178 +115,194 @@ export function ReviewDetailModal({
         .slice(0, 2)
     : "?";
 
+  const status = statusConfig[review.status] || statusConfig.pending;
+  const hasAiData = review.sentimentLabel || (review.themes && review.themes.length > 0);
+  const hasSourceInfo = review.sourceUrl || review.syncedAt;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-3">
-            <span>Review Details</span>
-            {getStatusBadge(review.status)}
-            {getSourceBadge(review.source)}
-          </DialogTitle>
-          <DialogDescription>
-            View full review context and manage this review
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Customer & Rating Section */}
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 text-lg font-semibold">
-              {customerInitials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg">
-                    {review.customerName || "Anonymous"}
-                  </h3>
-                  {review.customerLocation && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {review.customerLocation}
-                    </div>
-                  )}
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0">
+        {/* ── Header ── */}
+        <div className="bg-gradient-to-r from-repwell-sage-100/40 to-transparent px-6 pt-6 pb-5 border-b border-border/50">
+          <DialogHeader className="space-y-0">
+            <div className="flex items-start justify-between gap-4 pr-8">
+              {/* Customer identity */}
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-repwell-teal-300/10 text-repwell-teal-400 text-sm font-semibold shrink-0">
+                  {customerInitials}
                 </div>
-                <div className="flex items-center gap-1">
+                <div>
+                  <DialogTitle className="text-base font-semibold text-repwell-teal-500">
+                    {review.customerName || "Anonymous"}
+                  </DialogTitle>
+                  <DialogDescription className="flex items-center gap-3 mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(review.reviewDate)}
+                    </span>
+                    {review.customerLocation && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {review.customerLocation}
+                      </span>
+                    )}
+                  </DialogDescription>
+                </div>
+              </div>
+
+              {/* Rating + badges */}
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <div className="flex items-center gap-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
-                      className={`h-5 w-5 ${
+                      weight={i < review.rating ? "fill" : "regular"}
+                      className={`h-4.5 w-4.5 ${
                         i < review.rating
                           ? "fill-yellow-400 text-yellow-400"
-                          : "fill-muted text-muted"
+                          : "text-repwell-sage-200"
                       }`}
                     />
                   ))}
                 </div>
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                {formatDate(review.reviewDate)}
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="outline" className={status.className}>
+                    {status.label}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {sourceLabels[review.source] || review.source}
+                  </Badge>
+                </div>
               </div>
             </div>
-          </div>
+          </DialogHeader>
+        </div>
 
-          <Separator />
-
-          {/* Review Content */}
-          <div className="space-y-3">
+        {/* ── Body ── */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Review text — primary content, no box treatment */}
+          <div>
             {review.title && (
-              <h4 className="font-medium text-lg">{review.title}</h4>
+              <h4 className="font-medium text-repwell-teal-500 mb-1.5">{review.title}</h4>
             )}
             {review.text ? (
-              <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
                 {review.text}
               </p>
             ) : (
-              <p className="text-muted-foreground/60 italic">
+              <p className="text-sm text-muted-foreground italic">
                 No written review provided
               </p>
             )}
           </div>
 
-          {/* Sentiment & Themes */}
-          {(review.sentimentLabel || (review.themes && review.themes.length > 0)) && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  AI Analysis
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {review.sentimentLabel && getSentimentBadge(review.sentimentLabel)}
-                  {review.themes?.map((theme, i) => (
-                    <Badge key={i} variant="outline" className="flex items-center gap-1">
-                      <Tags className="h-3 w-3" />
-                      {theme}
-                    </Badge>
-                  ))}
+          {/* AI Analysis + Source — compact inline row */}
+          {(hasAiData || hasSourceInfo) && (
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3.5 space-y-3">
+              {/* Sentiment + themes */}
+              {hasAiData && (
+                <div className="flex items-start gap-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-repwell-teal-300 mt-0.5 shrink-0" />
+                  <div className="flex flex-wrap gap-1.5">
+                    {review.sentimentLabel && (
+                      <Badge
+                        variant="outline"
+                        className={
+                          review.sentimentLabel.toLowerCase() === "positive"
+                            ? "border-green-200 text-green-700 bg-green-50/50"
+                            : review.sentimentLabel.toLowerCase() === "negative"
+                              ? "border-red-200 text-red-700 bg-red-50/50"
+                              : "border-border text-muted-foreground"
+                        }
+                      >
+                        {review.sentimentLabel}
+                      </Badge>
+                    )}
+                    {review.themes?.map((theme, i) => (
+                      <Badge key={i} variant="outline" className="border-border/50 text-muted-foreground">
+                        <Tags className="h-3 w-3 mr-1" />
+                        {theme}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                {review.keyPhrases && review.keyPhrases.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-medium">Key phrases: </span>
-                    {review.keyPhrases.join(", ")}
-                  </p>
-                )}
-              </div>
-            </>
+              )}
+              {review.keyPhrases && review.keyPhrases.length > 0 && (
+                <p className="text-xs text-muted-foreground pl-5.5">
+                  <span className="font-medium">Key phrases:</span> {review.keyPhrases.join(", ")}
+                </p>
+              )}
+              {/* Source link */}
+              {hasSourceInfo && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {hasAiData && <div className="w-3.5 shrink-0" />}
+                  {review.sourceUrl && (() => {
+                    try {
+                      const url = new URL(review.sourceUrl);
+                      if (!['http:', 'https:'].includes(url.protocol)) return null;
+                      return (
+                        <a
+                          href={url.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-repwell-teal-400 hover:text-repwell-teal-500 transition-colors inline-flex items-center gap-1"
+                        >
+                          View on {sourceLabels[review.source] || review.source}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      );
+                    } catch {
+                      return null;
+                    }
+                  })()}
+                  {review.syncedAt && (
+                    <>
+                      <span className="text-border">·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Synced {formatDateTime(review.syncedAt)}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Response Section */}
+          {/* Response — existing response shown inline */}
           {review.responseText && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Response
-                </h4>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm whitespace-pre-wrap">{review.responseText}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Responded on {formatDateTime(review.responseAt)}
-                  </p>
-                </div>
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3.5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <MessageSquare className="h-3.5 w-3.5 text-repwell-teal-300" />
+                <span className="text-xs font-medium text-repwell-teal-400 uppercase tracking-wider">Your Response</span>
               </div>
-            </>
+              <p className="text-sm text-foreground/80 whitespace-pre-wrap">{review.responseText}</p>
+              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatDateTime(review.responseAt)}
+              </p>
+            </div>
           )}
 
-          {/* Response Form */}
+          {/* Response composer — expandable */}
           {!review.responseText && showResponseForm && (
-            <>
-              <Separator />
-              <div className="space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  Compose Response
-                </h4>
-                <ResponseComposer
-                  review={review}
-                  onSuccess={() => {
-                    setShowResponseForm(false);
-                    onUpdate?.();
-                  }}
-                  onCancel={() => setShowResponseForm(false)}
-                  hasAiAccess={hasAiAccess}
-                />
-              </div>
-            </>
+            <div className="rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/10 p-4">
+              <ResponseComposer
+                review={review}
+                onSuccess={() => {
+                  setShowResponseForm(false);
+                  onUpdate?.();
+                }}
+                onCancel={() => setShowResponseForm(false)}
+                hasAiAccess={hasAiAccess}
+              />
+            </div>
           )}
+        </div>
 
-          {/* Source Info */}
-          {(review.sourceUrl || review.sourceReviewId) && (
-            <>
-              <Separator />
-              <div className="space-y-2">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Source Information
-                </h4>
-                {review.sourceUrl && (
-                  <a
-                    href={review.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline flex items-center gap-1"
-                  >
-                    View on {review.source.charAt(0).toUpperCase() + review.source.slice(1)}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-                {review.syncedAt && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    Last synced: {formatDateTime(review.syncedAt)}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
-
+        {/* ── Footer — actions + metadata ── */}
+        <div className="border-t border-border/50 bg-muted/20 px-6 py-4 space-y-3">
           {/* Actions */}
-          <Separator />
           <div className="flex flex-wrap gap-2">
             <Button
               variant={review.featured ? "default" : "outline"}
@@ -324,7 +310,7 @@ export function ReviewDetailModal({
               onClick={handleToggleFeatured}
               disabled={isPending}
             >
-              <Flag className="h-4 w-4 mr-1" />
+              <Flag className="h-4 w-4 mr-1.5" />
               {review.featured ? "Featured" : "Feature"}
             </Button>
             {!review.responseText && (
@@ -333,8 +319,8 @@ export function ReviewDetailModal({
                 size="sm"
                 onClick={() => setShowResponseForm(!showResponseForm)}
               >
-                <MessageSquare className="h-4 w-4 mr-1" />
-                Respond
+                <MessageSquare className="h-4 w-4 mr-1.5" />
+                {showResponseForm ? "Cancel" : "Respond"}
               </Button>
             )}
             {review.status !== "archived" && (
@@ -344,7 +330,7 @@ export function ReviewDetailModal({
                 onClick={handleArchive}
                 disabled={isPending}
               >
-                <Archive className="h-4 w-4 mr-1" />
+                <Archive className="h-4 w-4 mr-1.5" />
                 Archive
               </Button>
             )}
@@ -354,22 +340,17 @@ export function ReviewDetailModal({
                 size="sm"
                 onClick={() => setShowSocialComposer(true)}
               >
-                <Share2 className="h-4 w-4 mr-1" />
-                Share to Social
+                <Share2 className="h-4 w-4 mr-1.5" />
+                Share
               </Button>
             )}
           </div>
 
-          {/* Metadata */}
-          <div className="text-xs text-muted-foreground border-t pt-4 grid grid-cols-2 gap-2">
-            <div>Created: {formatDateTime(review.createdAt)}</div>
-            <div>Updated: {formatDateTime(review.updatedAt)}</div>
-            {review.approvedAt && (
-              <div>Approved: {formatDateTime(review.approvedAt)}</div>
-            )}
-            {review.publishedAt && (
-              <div>Published: {formatDateTime(review.publishedAt)}</div>
-            )}
+          {/* Metadata — single compact line */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span>Created {formatDateTime(review.createdAt)}</span>
+            {review.approvedAt && <span>Approved {formatDateTime(review.approvedAt)}</span>}
+            {review.publishedAt && <span>Published {formatDateTime(review.publishedAt)}</span>}
           </div>
         </div>
       </DialogContent>

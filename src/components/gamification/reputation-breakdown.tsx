@@ -36,6 +36,19 @@ const componentLabels = {
   averageRating: { label: "Average Rating", description: "Average star rating (1-5)" },
 };
 
+function RepBreakdownHeader() {
+  return (
+    <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+      <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <BarChart3 className="h-4 w-4 text-repwell-teal-300" />
+        </div>
+        Reputation Breakdown
+      </CardTitle>
+    </CardHeader>
+  );
+}
+
 export function ReputationBreakdownCard({
   loanOfficerId,
   className,
@@ -57,14 +70,9 @@ export function ReputationBreakdownCard({
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-500" />
-            Reputation Breakdown
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className={cn("shadow-soft", className)}>
+        <RepBreakdownHeader />
+        <CardContent className="pt-4">
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="space-y-2">
@@ -80,17 +88,12 @@ export function ReputationBreakdownCard({
 
   if (!breakdown) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5 text-blue-500" />
-            Reputation Breakdown
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className={cn("shadow-soft", className)}>
+        <RepBreakdownHeader />
+        <CardContent className="pt-4">
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50">
-              <BarChart3 className="h-8 w-8 text-blue-500" />
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100/50 to-repwell-teal-300/10">
+              <BarChart3 className="h-8 w-8 text-repwell-teal-300" />
             </div>
             <p className="text-sm font-medium text-repwell-teal-500">Build your reputation score</p>
             <p className="mt-1 max-w-[280px] text-xs text-repwell-teal-400">
@@ -157,24 +160,26 @@ export function ReputationBreakdownCard({
   ];
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
+    <Card className={cn("shadow-soft", className)}>
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-500" />
+            <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <BarChart3 className="h-4 w-4 text-repwell-teal-300" />
+              </div>
               Reputation Breakdown
             </CardTitle>
-            <CardDescription className="mt-1">
+            <CardDescription className="mt-1.5 ml-[42px]">
               How your score of {breakdown.totalScore} is calculated
             </CardDescription>
           </div>
-          <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-xl shadow-lg">
+          <div className="flex items-center justify-center h-14 w-14 rounded-full bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 text-white font-bold text-xl shadow-lg">
             {breakdown.totalScore}
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-4">
         {components.map((component) => (
           <div key={component.key} className="space-y-1.5">
             <div className="flex items-center justify-between text-sm">
@@ -182,8 +187,8 @@ export function ReputationBreakdownCard({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-1.5 cursor-help">
-                      <span className="font-medium">{component.label}</span>
-                      <Info className="h-3 w-3 text-muted-foreground" />
+                      <span className="font-medium text-repwell-teal-500">{component.label}</span>
+                      <Info className="h-3 w-3 text-repwell-teal-300" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -193,7 +198,7 @@ export function ReputationBreakdownCard({
                 </Tooltip>
               </TooltipProvider>
               <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{component.displayValue}</span>
+                <span className="text-repwell-teal-400">{component.displayValue}</span>
                 <Badge variant="secondary" className="text-xs font-normal">
                   +{component.contribution} pts
                 </Badge>
@@ -206,8 +211,8 @@ export function ReputationBreakdownCard({
           </div>
         ))}
 
-        <div className="pt-3 border-t">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+        <div className="pt-3 border-t border-border/50">
+          <div className="flex items-center justify-between text-xs text-repwell-teal-400">
             <span>Total from all components</span>
             <span className="font-medium">
               {components.reduce((sum, c) => sum + c.contribution, 0)} / 100 points
@@ -260,14 +265,16 @@ export function ImprovementTipsCard({
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-green-500" />
+      <Card className={cn("shadow-soft", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Target className="h-4 w-4 text-repwell-teal-300" />
+            </div>
             Improvement Tips
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="h-20 bg-muted rounded animate-pulse" />
@@ -280,20 +287,22 @@ export function ImprovementTipsCard({
 
   if (tips.length === 0) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-green-500" />
+      <Card className={cn("shadow-soft", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Target className="h-4 w-4 text-repwell-teal-300" />
+            </div>
             Improvement Tips
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-            <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center mb-3">
+        <CardContent className="pt-4">
+          <div className="flex flex-col items-center justify-center py-6 text-center">
+            <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-3">
               <TrendingUp className="h-6 w-6 text-green-500" />
             </div>
-            <p className="text-sm font-medium text-foreground">Great job!</p>
-            <p className="text-xs text-center max-w-[200px]">
+            <p className="text-sm font-medium text-repwell-teal-500">Great job!</p>
+            <p className="text-xs text-repwell-teal-400 max-w-[200px]">
               You&apos;re performing well across all metrics. Keep up the excellent work!
             </p>
           </div>
@@ -303,17 +312,19 @@ export function ImprovementTipsCard({
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <Target className="h-5 w-5 text-green-500" />
+    <Card className={cn("shadow-soft", className)}>
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Target className="h-4 w-4 text-repwell-teal-300" />
+          </div>
           Improvement Tips
         </CardTitle>
-        <CardDescription>
+        <CardDescription className="ml-[42px]">
           Focus on these areas to boost your reputation score
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 pt-4">
         {tips.map((tip, index) => {
           const Icon = areaIcons[tip.area];
           return (

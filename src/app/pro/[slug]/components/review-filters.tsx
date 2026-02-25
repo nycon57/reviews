@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SourceIcon } from "@/components/shared/review-item";
 
 export interface ReviewFilters {
   search: string;
@@ -237,6 +238,7 @@ export function ReviewFiltersBar({
                       onClick={() => handleSourceToggle(source)}
                     >
                       <Checkbox checked={checked} className="pointer-events-none" />
+                      <SourceIcon source={source} />
                       <span className="flex-1 text-left">{formatSourceLabel(source)}</span>
                       {checked && <Check className="h-3.5 w-3.5 text-repwell-teal-400" />}
                     </button>
@@ -291,6 +293,7 @@ export function ReviewFiltersBar({
           )}
           {filters.sources.map((source) => (
             <Badge key={source} variant="secondary" className="gap-1 text-xs h-6">
+              <SourceIcon source={source} />
               {formatSourceLabel(source)}
               <button
                 onClick={() => handleSourceToggle(source)}

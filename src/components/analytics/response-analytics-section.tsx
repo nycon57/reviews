@@ -2,12 +2,12 @@
 
 import { memo } from "react";
 import {
-  ClockIcon as Clock,
-  TrendUpIcon as TrendingUp,
-  CheckCircleIcon as CheckCircle,
-  ChatsIcon as MessageSquare,
-  ChartBarIcon as BarChart3,
-  SparkleIcon as Sparkles,
+  Clock,
+  TrendUp,
+  CheckCircle,
+  Chats,
+  ChartBar,
+  Sparkle,
 } from "@phosphor-icons/react";
 import {
   Card,
@@ -59,68 +59,72 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
     <div className="space-y-6">
       {/* Response Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Responses</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalResponses}</div>
+        <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10" aria-hidden="true">
+            <Chats className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{analytics.totalResponses}</p>
+            <p className="text-xs text-muted-foreground">Total Responses</p>
             <p className="text-xs text-muted-foreground">Responses sent to customers</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.responseRate}%</div>
-            <Progress value={analytics.responseRate} className="mt-2" />
-            <p className="text-xs text-muted-foreground mt-1">Of reviews have responses</p>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10" aria-hidden="true">
+            <TrendUp className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div className="flex-1">
+            <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{analytics.responseRate}%</p>
+            <p className="text-xs text-muted-foreground">Response Rate</p>
+            <p className="text-xs text-muted-foreground">Of reviews have responses</p>
+            <Progress value={analytics.responseRate} className="mt-2" aria-label="Response rate" aria-valuetext={`${analytics.responseRate}%`} />
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Response Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${getResponseTimeColor(analytics.averageResponseTimeHours)}`}>
+        <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10" aria-hidden="true">
+            <Clock className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <p className={`text-2xl font-semibold tracking-tight ${getResponseTimeColor(analytics.averageResponseTimeHours)}`}>
               {getResponseTimeLabel(analytics.averageResponseTimeHours)}
-            </div>
+            </p>
+            <p className="text-xs text-muted-foreground">Avg Response Time</p>
             <p className="text-xs text-muted-foreground">Time from review to response</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approvals</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+        <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10" aria-hidden="true">
+            <CheckCircle className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
               {analytics.pendingApprovals}
               {analytics.pendingApprovals > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs">Needs attention</Badge>
               )}
-            </div>
+            </p>
+            <p className="text-xs text-muted-foreground">Pending Approvals</p>
             <p className="text-xs text-muted-foreground">Responses awaiting review</p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Platform and AI Usage */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Responses by Platform
-            </CardTitle>
-            <CardDescription>Distribution of responses across review sources</CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <ChartBar className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Responses by Platform</CardTitle>
+                <CardDescription>Distribution of responses across review sources</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {Object.keys(analytics.platformBreakdown).length > 0 ? (
@@ -159,20 +163,24 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Response Composition
-            </CardTitle>
-            <CardDescription>How responses are being created</CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Sparkle className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Response Composition</CardTitle>
+                <CardDescription>How responses are being created</CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-purple-500" />
+                    <Sparkle className="h-4 w-4 text-purple-500" />
                     AI-Suggested Responses
                   </span>
                   <span className="font-medium">{analytics.aiSuggestionRate}%</span>

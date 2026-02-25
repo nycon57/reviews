@@ -143,12 +143,66 @@ export const organizationMemberSchema = z.object({
   email: z.string().email(),
   full_name: z.string().nullable(),
   avatar_url: z.string().url().nullable(),
+  slug: z.string().nullable(),
   role: z.enum(["admin", "manager", "user"]),
   is_active: z.boolean(),
   last_login_at: z.string().nullable(),
   created_at: z.string(),
 });
 export type OrganizationMember = z.infer<typeof organizationMemberSchema>;
+
+// Full member profile (for admin edit page)
+export interface OrganizationMemberFull {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  bio: string | null;
+  title: string | null;
+  nmls_id: string | null;
+  phone: string | null;
+  personal_website_url: string | null;
+  linkedin_url: string | null;
+  zillow_profile_url: string | null;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  twitter_url: string | null;
+  timezone: string | null;
+  branch_id: string | null;
+  region: string | null;
+  role: "admin" | "manager" | "user";
+  is_active: boolean;
+  is_owner: boolean;
+  slug: string | null;
+  cta_button_text: string | null;
+  cta_button_url: string | null;
+  hire_date: string | null;
+  address: string | null;
+  industry: string | null;
+  created_at: string;
+}
+
+// Update member profile data (admin edit)
+export interface UpdateMemberProfileData {
+  fullName?: string;
+  title?: string;
+  nmlsId?: string;
+  bio?: string;
+  phone?: string;
+  personalWebsiteUrl?: string;
+  linkedinUrl?: string;
+  zillowProfileUrl?: string;
+  facebookUrl?: string;
+  instagramUrl?: string;
+  twitterUrl?: string;
+  timezone?: string;
+  ctaButtonText?: string;
+  ctaButtonUrl?: string;
+  hireDate?: string;
+  industry?: string;
+  region?: string;
+}
 
 // Organization stats
 export interface OrganizationStats {

@@ -11,10 +11,10 @@ import {
   MapPin,
   Phone,
   ChatCircle,
-  BuildingOffice as Building2,
   ArrowSquareOut as ExternalLink,
 } from "@phosphor-icons/react";
 import type { DirectoryProfessional } from "@/lib/directory/actions";
+import { TierBadge } from "@/components/shared/tier-badge";
 
 interface DirectoryCardProps {
   professional: DirectoryProfessional;
@@ -77,7 +77,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
         <CardContent className="p-4 pt-4">
           <div className="flex items-start gap-3">
             {/* Avatar */}
-            <Link href={`/pro/${professional.slug || professional.id}`} className="shrink-0 no-underline">
+            <Link href={`/pro/${professional.slug}`} className="shrink-0 no-underline">
               <Avatar className="h-11 w-11 border-2 border-muted transition-transform group-hover:scale-105">
                 <AvatarImage
                   src={professional.photo_url || undefined}
@@ -92,11 +92,14 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
             {/* Info */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <Link href={`/pro/${professional.slug || professional.id}`} className="min-w-0 no-underline">
-                  <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
-                    {professional.full_name}
-                  </h3>
-                </Link>
+                <div className="flex items-center gap-1 min-w-0">
+                  <Link href={`/pro/${professional.slug}`} className="min-w-0 no-underline">
+                    <h3 className="font-semibold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                      {professional.full_name}
+                    </h3>
+                  </Link>
+                  <TierBadge isEnterprise={professional.is_enterprise} isPro={professional.is_pro} size="sm" />
+                </div>
                 {professional.average_rating && professional.total_reviews ? (
                   <div className="flex items-center gap-1 shrink-0">
                     <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
@@ -116,14 +119,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
 
               <div className="flex flex-wrap items-center gap-x-2 mt-0.5 text-xs text-muted-foreground">
                 {professional.organization && (
-                  professional.is_enterprise ? (
-                    <span className="flex items-center gap-1 truncate">
-                      <Building2 className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{professional.organization.name}</span>
-                    </span>
-                  ) : (
-                    <span className="truncate">{professional.organization.name}</span>
-                  )
+                  <span className="truncate">{professional.organization.name}</span>
                 )}
                 {professional.organization && location && (
                   <span className="text-muted-foreground/50">·</span>
@@ -189,7 +185,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
               </a>
             )}
             <Button variant="default" size="sm" asChild className="h-7 text-xs ml-auto">
-              <Link href={`/pro/${professional.slug || professional.id}`}>
+              <Link href={`/pro/${professional.slug}`}>
                 View Profile
               </Link>
             </Button>
@@ -208,7 +204,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
       <CardContent className="p-5 pt-5">
         <div className="flex items-start gap-4">
           {/* Avatar */}
-          <Link href={`/pro/${professional.slug || professional.id}`} className="no-underline">
+          <Link href={`/pro/${professional.slug}`} className="no-underline">
             <Avatar className="h-16 w-16 border-2 border-muted transition-transform group-hover:scale-105">
               <AvatarImage
                 src={professional.photo_url || undefined}
@@ -222,23 +218,19 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <Link href={`/pro/${professional.slug || professional.id}`} className="no-underline">
-              <h3 className="font-semibold text-lg text-repwell-teal-500 truncate group-hover:text-primary transition-colors">
-                {professional.full_name}
-              </h3>
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link href={`/pro/${professional.slug}`} className="no-underline min-w-0">
+                <h3 className="font-semibold text-lg text-repwell-teal-500 truncate group-hover:text-primary transition-colors">
+                  {professional.full_name}
+                </h3>
+              </Link>
+              <TierBadge isEnterprise={professional.is_enterprise} isPro={professional.is_pro} size="sm" />
+            </div>
             <p className="text-sm text-muted-foreground truncate">
               {professional.title || "Professional"}
             </p>
             {professional.organization && (
-              professional.is_enterprise ? (
-                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                  <Building2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{professional.organization.name}</span>
-                </div>
-              ) : (
-                <p className="mt-0.5 text-xs text-muted-foreground truncate">{professional.organization.name}</p>
-              )
+              <p className="mt-0.5 text-xs text-muted-foreground truncate">{professional.organization.name}</p>
             )}
             {location && (
               <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
@@ -328,7 +320,7 @@ export function DirectoryCard({ professional, variant = "grid", isHovered = fals
             </a>
           )}
           <Button variant="default" size="sm" asChild className="h-8 ml-auto">
-            <Link href={`/pro/${professional.slug || professional.id}`}>
+            <Link href={`/pro/${professional.slug}`}>
               View Profile
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>

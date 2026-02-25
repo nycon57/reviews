@@ -166,12 +166,12 @@ export function AdminAnalyticsDashboard() {
 
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
-                  <MessageSquare className="h-5 w-5 text-blue-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                  <MessageSquare className="h-5 w-5 text-repwell-teal-300" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Total Reviews</p>
@@ -183,12 +183,12 @@ export function AdminAnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100">
-                  <Star className="h-5 w-5 text-yellow-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                  <Star className="h-5 w-5 text-repwell-teal-300" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Avg Rating</p>
@@ -202,12 +202,12 @@ export function AdminAnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100">
-                  <BarChart3 className="h-5 w-5 text-green-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                  <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Team NPS</p>
@@ -219,12 +219,12 @@ export function AdminAnalyticsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100">
-                  <Users className="h-5 w-5 text-purple-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                  <Users className="h-5 w-5 text-repwell-teal-300" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Active Members</p>
@@ -245,12 +245,14 @@ export function AdminAnalyticsDashboard() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Review Distribution by Source */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-primary" />
-                Review Distribution by Source
-              </CardTitle>
+          <Card className="shadow-soft">
+            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
+                </div>
+                <CardTitle className="text-lg font-semibold">Review Distribution by Source</CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="h-[250px] w-full">
@@ -291,12 +293,14 @@ export function AdminAnalyticsDashboard() {
         </div>
 
         {/* Top Performers */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
-              Top Performers
-            </CardTitle>
+        <Card className="shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Trophy className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <CardTitle className="text-lg font-semibold">Top Performers</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             {topPerformers.length === 0 ? (
@@ -336,12 +340,14 @@ export function AdminAnalyticsDashboard() {
       {/* Secondary content grid */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Team Performance Distribution */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Users className="h-5 w-5 text-purple-500" />
-              Team Performance Distribution
-            </CardTitle>
+        <Card className="shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Users className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <CardTitle className="text-lg font-semibold">Team Performance Distribution</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             {pieData.length === 0 ? (
@@ -398,12 +404,14 @@ export function AdminAnalyticsDashboard() {
         </Card>
 
         {/* Needs Attention */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              Needs Attention
-            </CardTitle>
+        <Card className="shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <AlertTriangle className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <CardTitle className="text-lg font-semibold">Needs Attention</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             {lowPerformers.length === 0 ? (

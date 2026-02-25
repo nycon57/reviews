@@ -16,4 +16,9 @@ export {
   deleteBranch,
   assignUserToBranch,
   getBranchRegions,
+  uploadBranchPhoto,
+  uploadBranchCoverImage,
+  updateBranchSlug,
+  updateBranchHours,
+  getUnassignedMembers,
 } from './actions';

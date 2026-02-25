@@ -13,6 +13,7 @@ import type { ActionResult } from "@/lib/reviews/types";
 export interface MemberAnalytics {
   member: {
     id: string;
+    slug: string | null;
     fullName: string;
     email: string;
     avatarUrl: string | null;
@@ -91,6 +92,7 @@ export async function getMemberAnalytics(
     .from("users")
     .select(`
       id,
+      slug,
       full_name,
       email,
       avatar_url,
@@ -202,6 +204,7 @@ export async function getMemberAnalytics(
   const analytics: MemberAnalytics = {
     member: {
       id: memberData.id,
+      slug: memberData.slug,
       fullName: memberData.full_name || memberData.email,
       email: memberData.email,
       avatarUrl: memberData.avatar_url,

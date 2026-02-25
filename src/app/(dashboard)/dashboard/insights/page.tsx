@@ -168,12 +168,12 @@ export default async function AIInsightsPage() {
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+          <Sparkles className="h-5 w-5 text-primary" />
+        </div>
         <div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold tracking-tight">AI Insights</h1>
-          </div>
+          <h1 className="text-2xl font-bold tracking-tight">AI Insights</h1>
           <p className="text-muted-foreground">
             AI-powered analysis of your customer feedback and performance trends
           </p>

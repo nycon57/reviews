@@ -18,6 +18,7 @@ import { ChartSkeleton } from "@/components/shared/skeletons";
 interface ChannelEffectivenessCardProps {
   data: ChannelMetrics[];
   isLoading?: boolean;
+  periodLabel?: string;
 }
 
 // Friendly channel names
@@ -127,20 +128,22 @@ function ChannelBar({ channel, maxCount }: { channel: ChannelMetrics; maxCount: 
   );
 }
 
-export function ChannelEffectivenessCard({ data, isLoading }: ChannelEffectivenessCardProps) {
+export function ChannelEffectivenessCard({ data, isLoading, periodLabel = "6 months" }: ChannelEffectivenessCardProps) {
   if (isLoading) return <ChartSkeleton />;
 
   if (data.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <Browsers className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">
-              Channel Effectiveness
-            </CardTitle>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Browsers className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Channel Effectiveness</CardTitle>
+              <CardDescription>No channel data available yet</CardDescription>
+            </div>
           </div>
-          <CardDescription>No channel data available yet</CardDescription>
         </CardHeader>
       </Card>
     );
@@ -149,22 +152,24 @@ export function ChannelEffectivenessCard({ data, isLoading }: ChannelEffectivene
   const maxCount = Math.max(...data.map((c) => c.reviewCount));
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Browsers className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">
-              Channel Effectiveness
-            </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Browsers className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Channel Effectiveness</CardTitle>
+              <CardDescription>
+                Review performance by source channel ({periodLabel})
+              </CardDescription>
+            </div>
           </div>
           <Badge variant="secondary" className="text-xs">
             {data.length} channel{data.length !== 1 ? "s" : ""}
           </Badge>
         </div>
-        <CardDescription>
-          Review performance by source channel (6 months)
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {data.map((channel) => (

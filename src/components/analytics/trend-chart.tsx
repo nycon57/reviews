@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { ChartBarIcon as BarChart3 } from "@phosphor-icons/react";
+import { ChartBar } from "@phosphor-icons/react";
 import {
   Card,
   CardContent,
@@ -41,13 +41,17 @@ export const TrendChart = memo(function TrendChart({
 
   if (chartData.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" aria-hidden="true" />
-            Video Trends
-          </CardTitle>
-          <CardDescription>Video testimonial activity over time</CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <ChartBar className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Video Trends</CardTitle>
+              <CardDescription>Video testimonial activity over time</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex h-[300px] items-center justify-center text-muted-foreground">
@@ -62,13 +66,17 @@ export const TrendChart = memo(function TrendChart({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" aria-hidden="true" />
-          Video Trends
-        </CardTitle>
-        <CardDescription>Video testimonial activity over time</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <ChartBar className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Video Trends</CardTitle>
+            <CardDescription>Video testimonial activity over time</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="sr-only">

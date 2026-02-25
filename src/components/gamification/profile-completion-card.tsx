@@ -104,8 +104,16 @@ export function ProfileCompletionCard({
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardContent className="pt-6">
+      <Card className={cn("shadow-soft", className)}>
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Target className="h-4 w-4 text-repwell-teal-300" />
+            </div>
+            Profile Score
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <div className="h-16 w-16 rounded-full bg-muted animate-pulse" />
@@ -153,12 +161,14 @@ export function ProfileCompletionCard({
   const nextMilestone = data.milestones.find((m) => !m.achieved);
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-2">
+    <Card className={cn("shadow-soft", className)}>
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-repwell-teal-300" />
-            <span className="text-lg">Profile Score</span>
+          <div className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Target className="h-4 w-4 text-repwell-teal-300" />
+            </div>
+            Profile Score
           </div>
           {data.rank && (
             <Badge variant="outline" className="font-normal">
@@ -167,7 +177,7 @@ export function ProfileCompletionCard({
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-4">
         {/* Main Score Display */}
         <div className="flex items-start gap-4">
           {/* Circular Score */}
@@ -200,10 +210,10 @@ export function ProfileCompletionCard({
           {/* Score Details */}
           <div className="flex-1 space-y-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-foreground">
+              <span className="text-2xl font-bold text-repwell-teal-500">
                 {data.earnedPoints}
               </span>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-repwell-teal-400">
                 / {data.totalPoints} points
               </span>
             </div>
@@ -216,8 +226,8 @@ export function ProfileCompletionCard({
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1.5">
                 <Star className="h-4 w-4 text-yellow-500" />
-                <span className="font-medium">{data.searchRankScore}</span>
-                <span className="text-muted-foreground">/ 850</span>
+                <span className="font-medium text-repwell-teal-500">{data.searchRankScore}</span>
+                <span className="text-repwell-teal-400">/ 850</span>
               </div>
               <span className={cn("font-medium", searchRank.color)}>
                 {searchRank.label}
@@ -230,8 +240,8 @@ export function ProfileCompletionCard({
         {showMilestones && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Milestones</span>
-              <span className="text-muted-foreground">
+              <span className="font-medium text-repwell-teal-500">Milestones</span>
+              <span className="text-repwell-teal-400">
                 {earnedMilestones.length} / {data.milestones.length} achieved
               </span>
             </div>
@@ -274,8 +284,8 @@ export function ProfileCompletionCard({
               })}
             </div>
             {nextMilestone && (
-              <p className="text-xs text-muted-foreground">
-                Next: <span className="font-medium">{nextMilestone.name}</span> at{" "}
+              <p className="text-xs text-repwell-teal-400">
+                Next: <span className="font-medium text-repwell-teal-500">{nextMilestone.name}</span> at{" "}
                 {nextMilestone.threshold}% completion
               </p>
             )}
@@ -285,7 +295,7 @@ export function ProfileCompletionCard({
         {/* Section Breakdown */}
         {showSections && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Profile Sections</h4>
+            <h4 className="text-sm font-medium text-repwell-teal-500">Profile Sections</h4>
             <div className="space-y-1.5">
               {data.sections.map((section) => (
                 <SectionRow
@@ -304,13 +314,13 @@ export function ProfileCompletionCard({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-yellow-500" />
-              <h4 className="text-sm font-medium">Quick Wins</h4>
+              <h4 className="text-sm font-medium text-repwell-teal-500">Quick Wins</h4>
             </div>
             <div className="space-y-1.5">
               {data.nextActions.slice(0, 3).map((tip) => (
                 <div
                   key={tip.field.id}
-                  className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2"
+                  className="flex items-center justify-between rounded-md bg-repwell-sage-100/20 px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
                     <TrendingUp
@@ -323,7 +333,7 @@ export function ProfileCompletionCard({
                             : "text-muted-foreground"
                       )}
                     />
-                    <span className="text-sm">{tip.field.label}</span>
+                    <span className="text-sm text-repwell-teal-500">{tip.field.label}</span>
                   </div>
                   <Badge variant="secondary" className="text-xs">
                     +{tip.impact} pts
@@ -359,7 +369,7 @@ function SectionRow({
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <CollapsibleTrigger className="w-full">
-        <div className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-muted/50 transition-colors">
+        <div className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-repwell-sage-100/20 transition-colors">
           <div
             className={cn(
               "h-8 w-8 rounded-full flex items-center justify-center",
@@ -372,15 +382,15 @@ function SectionRow({
           </div>
           <div className="flex-1 text-left">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">{section.section.name}</span>
+              <span className="text-sm font-medium text-repwell-teal-500">{section.section.name}</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-repwell-teal-400">
                   {section.earnedPoints}/{section.maxPoints} pts
                 </span>
                 {isExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="h-4 w-4 text-repwell-teal-300" />
                 ) : (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-repwell-teal-300" />
                 )}
               </div>
             </div>
@@ -404,8 +414,8 @@ function SectionRow({
                 <span
                   className={cn(
                     fieldStatus.completed
-                      ? "text-muted-foreground line-through"
-                      : "text-foreground"
+                      ? "text-repwell-teal-400 line-through"
+                      : "text-repwell-teal-500"
                   )}
                 >
                   {fieldStatus.field.label}
@@ -414,7 +424,7 @@ function SectionRow({
               <span
                 className={cn(
                   "text-xs",
-                  fieldStatus.completed ? "text-green-600" : "text-muted-foreground"
+                  fieldStatus.completed ? "text-green-600" : "text-repwell-teal-400"
                 )}
               >
                 {fieldStatus.completed ? "+" : ""}
@@ -475,12 +485,12 @@ export function ProfileCompletionWidget({
         >
           {data.percentage}
         </div>
-        <span className="text-muted-foreground">profile</span>
+        <span className="text-repwell-teal-400">profile</span>
       </div>
       <div className="flex items-center gap-1.5">
         <Star className="h-4 w-4 text-yellow-500" />
-        <span className="font-medium">{data.searchRankScore}</span>
-        <span className="text-xs text-muted-foreground">rank</span>
+        <span className="font-medium text-repwell-teal-500">{data.searchRankScore}</span>
+        <span className="text-xs text-repwell-teal-400">rank</span>
       </div>
     </div>
   );

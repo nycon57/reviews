@@ -124,15 +124,24 @@ async function getAuthedUserContext(
 
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, role")
+    .select("organization_id, individual_organization_id, role")
     .eq("id", user.id)
     .single();
 
-  if (userError || !userData?.organization_id) {
+  if (userError) {
     return { success: false, error: "Organization not found" };
   }
 
-  if (userData.role !== "admin" && userData.role !== "manager") {
+  // Resolve organization ID: enterprise uses organization_id, individual uses individual_organization_id
+  const orgId = userData?.organization_id || userData?.individual_organization_id;
+  if (!orgId) {
+    return { success: false, error: "Organization not found" };
+  }
+
+  const isIndividual = !userData.organization_id && !!userData.individual_organization_id;
+
+  // Enterprise users need admin/manager role; individual users (always admin of their own org) pass through
+  if (!isIndividual && userData.role !== "admin" && userData.role !== "manager") {
     return {
       success: false,
       error: "Insufficient permissions. Admin or manager role required.",
@@ -143,8 +152,8 @@ async function getAuthedUserContext(
     success: true,
     data: {
       userId: user.id,
-      organizationId: userData.organization_id,
-      role: userData.role,
+      organizationId: orgId,
+      role: isIndividual ? "admin" : (userData.role || "user"),
     },
   };
 }

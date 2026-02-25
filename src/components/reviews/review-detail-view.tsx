@@ -20,6 +20,7 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SourceIcon } from "@/components/shared/review-item";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -116,21 +117,6 @@ function StatusBadge({ status }: { status: ReviewDetail["status"] }) {
   );
 }
 
-function SourceBadge({ source }: { source: string }) {
-  const colors: Record<string, string> = {
-    internal: "bg-blue-100 text-blue-700",
-    google: "bg-red-100 text-red-700",
-    zillow: "bg-purple-100 text-purple-700",
-    facebook: "bg-indigo-100 text-indigo-700",
-    yelp: "bg-orange-100 text-orange-700",
-  };
-  return (
-    <Badge className={colors[source] || "bg-gray-100 text-gray-700"}>
-      {source === "internal" ? "Survey" : source.charAt(0).toUpperCase() + source.slice(1)}
-    </Badge>
-  );
-}
-
 function SentimentBadge({ label }: { label: string | null }) {
   if (!label) return null;
   const colors: Record<string, string> = {
@@ -212,7 +198,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
           <div className="h-6 w-px bg-border" />
           <div className="flex items-center gap-2">
             <StatusBadge status={review.status} />
-            <SourceBadge source={review.source} />
+            <SourceIcon source={review.source} />
           </div>
         </div>
         <div className="flex items-center gap-1">

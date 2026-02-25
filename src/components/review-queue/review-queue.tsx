@@ -15,6 +15,13 @@ import {
   Archive,
   Flag,
   Sparkle as Sparkles,
+  ClockCounterClockwise,
+  CheckCircle,
+  XCircle,
+  ChartBar,
+  GoogleLogo,
+  EnvelopeSimple,
+  ChatCircleDots,
 } from "@phosphor-icons/react";
 import { useReviewQueue } from "./review-queue-context";
 import { ReviewFiltersPanel } from "./review-filters-panel";
@@ -28,76 +35,72 @@ export function ReviewQueueContent() {
     <div className="space-y-6">
       {/* Mode Indicator */}
       {state.isPendingMode && (
-        <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3">
-          <Sparkles className="h-5 w-5 text-amber-600" />
-          <span className="text-sm font-medium text-amber-800">Moderation Mode</span>
-          <span className="text-sm text-amber-600">&mdash; Review and approve or reject pending reviews</span>
+        <div className="flex items-center gap-3 rounded-xl border border-amber-200/50 bg-amber-50/50 px-4 py-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+            <Sparkles className="h-4 w-4 text-amber-600" />
+          </div>
+          <div>
+            <span className="text-sm font-medium text-amber-800">Moderation Mode</span>
+            <span className="text-sm text-amber-600"> &mdash; Review and approve or reject pending reviews</span>
+          </div>
         </div>
       )}
 
       {/* Stats Cards */}
       {state.isPendingMode ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Card className="border-l-4 border-l-yellow-500">
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{state.stats.pending}</div>
-              <p className="text-sm text-muted-foreground">Pending</p>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-green-500">
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{state.stats.approved}</div>
-              <p className="text-sm text-muted-foreground">Approved</p>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-red-500">
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{state.stats.rejected}</div>
-              <p className="text-sm text-muted-foreground">Rejected</p>
-            </CardContent>
-          </Card>
-          <Card className="border-l-4 border-l-blue-500">
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{state.stats.total}</div>
-              <p className="text-sm text-muted-foreground">Total</p>
-            </CardContent>
-          </Card>
+          {[
+            { label: "Pending", value: state.stats.pending, icon: ClockCounterClockwise, color: "text-amber-500" },
+            { label: "Approved", value: state.stats.approved, icon: CheckCircle, color: "text-green-500" },
+            { label: "Rejected", value: state.stats.rejected, icon: XCircle, color: "text-red-500" },
+            { label: "Total", value: state.stats.total, icon: ChartBar, color: "text-repwell-teal-300" },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.label}
+                className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                  <Icon className={`h-5 w-5 ${stat.color}`} />
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                    {stat.value}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{state.aggregatedStats?.total || state.stats.total}</div>
-              <p className="text-sm text-muted-foreground">Total Reviews</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold flex items-center gap-1">
-                <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                {state.aggregatedStats?.averageRating || "\u2014"}
+          {[
+            { label: "Total Reviews", value: state.aggregatedStats?.total ?? state.stats.total, icon: ChartBar },
+            { label: "Avg Rating", value: state.aggregatedStats?.averageRating ?? "\u2014", icon: Star, isStar: true },
+            { label: "From Surveys", value: state.aggregatedStats?.bySource.internal ?? 0, icon: EnvelopeSimple },
+            { label: "From Google", value: state.aggregatedStats?.bySource.google ?? 0, icon: GoogleLogo },
+            { label: "With Response", value: state.aggregatedStats?.withResponse ?? 0, icon: ChatCircleDots },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.label}
+                className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+                  <Icon className={`h-5 w-5 ${"isStar" in stat ? "fill-yellow-400 text-yellow-400" : "text-repwell-teal-300"}`} />
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                    {stat.value}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground">Avg Rating</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-blue-600">{state.aggregatedStats?.bySource.internal || 0}</div>
-              <p className="text-sm text-muted-foreground">From Surveys</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-red-600">{state.aggregatedStats?.bySource.google || 0}</div>
-              <p className="text-sm text-muted-foreground">From Google</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="text-2xl font-bold text-green-600">{state.aggregatedStats?.withResponse || 0}</div>
-              <p className="text-sm text-muted-foreground">With Response</p>
-            </CardContent>
-          </Card>
+            );
+          })}
         </div>
       )}
 
@@ -106,8 +109,8 @@ export function ReviewQueueContent() {
 
       {/* Bulk Actions */}
       {state.selectedIds.size > 0 && (
-        <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
-          <span className="text-sm font-medium">
+        <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30">
+          <span className="text-sm font-medium text-repwell-teal-500">
             {state.selectedIds.size} review{state.selectedIds.size !== 1 ? "s" : ""} selected
           </span>
           {state.isPendingMode ? (
@@ -139,10 +142,15 @@ export function ReviewQueueContent() {
       )}
 
       {/* Reviews List */}
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className="border border-border shadow-soft overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Reviews ({state.total})</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Star className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <CardTitle className="text-lg">Reviews ({state.total})</CardTitle>
+            </div>
             {state.reviews.length > 0 && (
               <div className="flex items-center gap-2">
                 <Checkbox
@@ -183,7 +191,7 @@ export function ReviewQueueContent() {
 
       {/* Pagination */}
       {state.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
           <p className="text-sm text-muted-foreground">
             Showing {(state.filters.page - 1) * state.limit + 1} to{" "}
             {Math.min(state.filters.page * state.limit, state.total)} of {state.total} reviews

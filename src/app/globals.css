@@ -343,3 +343,54 @@
     animation: none;
   }
 }
+
+/* ========================================
+   Google Places Autocomplete Dropdown
+   Match RepWell design system
+   ======================================== */
+.pac-container {
+  border: 1px solid hsl(97 14% 85%);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  font-family: inherit;
+  margin-top: 4px;
+  z-index: 1100;
+}
+
+.pac-item {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: hsl(201 20% 23%);
+  border-top: 1px solid hsl(97 14% 92%);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.pac-item:first-child {
+  border-top: none;
+}
+
+.pac-item:hover,
+.pac-item-selected {
+  background-color: hsl(97 14% 96%);
+}
+
+.pac-item-query {
+  font-size: 14px;
+  color: hsl(201 20% 23%);
+  font-weight: 500;
+}
+
+.pac-matched {
+  font-weight: 600;
+  color: hsl(165 19% 40%);
+}
+
+.pac-icon {
+  display: none;
+}
+
+/* "Powered by Google" logo — must remain visible per TOS */
+.pac-logo::after {
+  margin: 4px 12px 8px;
+}

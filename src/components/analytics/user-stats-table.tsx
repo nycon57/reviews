@@ -1,7 +1,7 @@
 "use client";
 
 import { memo } from "react";
-import { UsersIcon as Users } from "@phosphor-icons/react";
+import { Users } from "@phosphor-icons/react";
 import {
   Card,
   CardContent,
@@ -27,13 +27,17 @@ export const TeamPerformanceTable = memo(function TeamPerformanceTable({
 }) {
   if (stats.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5" aria-hidden="true" />
-            Team Performance
-          </CardTitle>
-          <CardDescription>Video testimonial stats by team member</CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Users className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Team Performance</CardTitle>
+              <CardDescription>Video testimonial stats by team member</CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
@@ -48,13 +52,17 @@ export const TeamPerformanceTable = memo(function TeamPerformanceTable({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Users className="h-5 w-5" aria-hidden="true" />
-          Team Performance
-        </CardTitle>
-        <CardDescription>Video testimonial stats by team member</CardDescription>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Users className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Team Performance</CardTitle>
+            <CardDescription>Video testimonial stats by team member</CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Table aria-label="Team performance statistics by team member">

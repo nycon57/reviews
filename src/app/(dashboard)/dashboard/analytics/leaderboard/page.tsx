@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { CardSkeleton } from "@/components/shared";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Trophy,
 } from "@phosphor-icons/react/dist/ssr";
@@ -26,12 +26,12 @@ export default async function LeaderboardPage() {
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-100">
-          <Trophy className="h-5 w-5 text-yellow-600" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <Trophy className="h-5 w-5 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Performance Leaderboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-repwell-teal-500">Performance Leaderboard</h1>
+          <p className="text-repwell-teal-300">
             View team rankings and performance metrics
           </p>
         </div>
@@ -41,13 +41,17 @@ export default async function LeaderboardPage() {
       <Suspense
         fallback={
           <div className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <CardSkeleton />
-              <CardSkeleton />
-              <CardSkeleton />
-              <CardSkeleton />
+            <div className="grid gap-4 sm:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-40 rounded-xl" />
+              ))}
             </div>
-            <CardSkeleton className="h-[500px]" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-24 rounded-xl" />
+              ))}
+            </div>
+            <Skeleton className="h-[500px] rounded-xl" />
           </div>
         }
       >

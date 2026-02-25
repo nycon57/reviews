@@ -11,6 +11,8 @@ import {
   createInvitationSchema,
   type Organization,
   type OrganizationMember,
+  type OrganizationMemberFull,
+  type UpdateMemberProfileData,
   type Invitation,
   type OrganizationStats,
   type AuditLog,
@@ -300,7 +302,7 @@ export async function getOrganizationMembers(): Promise<{
   // Get members
   const { data: members, error } = await supabase
     .from("users")
-    .select("id, email, full_name, avatar_url, role, is_active, last_login_at, created_at")
+    .select("id, email, full_name, avatar_url, slug, role, is_active, last_login_at, created_at")
     .eq("organization_id", userData.organization_id)
     .order("created_at", { ascending: false });
 
@@ -874,6 +876,332 @@ export async function updateOrganizationSlug(
   revalidatePath(`/org/${normalizedSlug}`);
 
   return { success: true, error: null };
+}
+
+// Get full member profile for admin edit page
+export async function getOrganizationMemberFull(
+  memberId: string
+): Promise<{ member: OrganizationMemberFull | null; error: string | null }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { member: null, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Get current user's org and role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id || userData.role !== "admin") {
+    return { member: null, error: "Only admins can view member details" };
+  }
+
+  // Get the member with all profile fields
+  const { data: memberData, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", memberId)
+    .single();
+
+  if (error || !memberData) {
+    return { member: null, error: "Member not found" };
+  }
+
+  // Cast to access all fields
+  const m = memberData as Record<string, unknown>;
+
+  // Verify same org
+  if (m.organization_id !== userData.organization_id) {
+    return { member: null, error: "Member not found in organization" };
+  }
+
+  return {
+    member: {
+      id: m.id as string,
+      email: (m.email as string) ?? "",
+      full_name: (m.full_name as string) ?? null,
+      avatar_url: (m.avatar_url as string) ?? null,
+      banner_url: (m.banner_url as string) ?? null,
+      bio: (m.bio as string) ?? null,
+      title: (m.title as string) ?? null,
+      nmls_id: (m.nmls_id as string) ?? null,
+      phone: (m.phone as string) ?? null,
+      personal_website_url: (m.personal_website_url as string) ?? null,
+      linkedin_url: (m.linkedin_url as string) ?? null,
+      zillow_profile_url: (m.zillow_profile_url as string) ?? null,
+      facebook_url: (m.facebook_url as string) ?? null,
+      instagram_url: (m.instagram_url as string) ?? null,
+      twitter_url: (m.twitter_url as string) ?? null,
+      timezone: (m.timezone as string) ?? null,
+      branch_id: (m.branch_id as string) ?? null,
+      region: (m.region as string) ?? null,
+      role: (m.role as "admin" | "manager" | "user") ?? "user",
+      is_active: (m.is_active as boolean) ?? true,
+      is_owner: (m.is_owner as boolean) ?? false,
+      slug: (m.slug as string) ?? null,
+      cta_button_text: (m.cta_button_text as string) ?? null,
+      cta_button_url: (m.cta_button_url as string) ?? null,
+      hire_date: (m.hire_date as string) ?? null,
+      address: (m.address as string) ?? null,
+      industry: (m.industry as string) ?? null,
+      created_at: (m.created_at as string) ?? new Date().toISOString(),
+    },
+    error: null,
+  };
+}
+
+// Update full member profile (admin only)
+export async function updateMemberProfile(
+  memberId: string,
+  data: UpdateMemberProfileData
+): Promise<{ success: boolean; error: string | null }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Get current user's org and role
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id || userData.role !== "admin") {
+    return { success: false, error: "Only admins can update member profiles" };
+  }
+
+  // Verify member belongs to same organization
+  const { data: memberDataRaw } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", memberId)
+    .single();
+
+  const memberData = memberDataRaw as { organization_id?: string; is_owner?: boolean } | null;
+
+  if (memberData?.organization_id !== userData.organization_id) {
+    return { success: false, error: "Member not found in organization" };
+  }
+
+  // Build update object, converting camelCase to snake_case
+  const updateData: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (data.fullName !== undefined) updateData.full_name = data.fullName || null;
+  if (data.title !== undefined) updateData.title = data.title || null;
+  if (data.nmlsId !== undefined) updateData.nmls_id = data.nmlsId || null;
+  if (data.bio !== undefined) updateData.bio = data.bio || null;
+  if (data.phone !== undefined) updateData.phone = data.phone || null;
+  if (data.personalWebsiteUrl !== undefined) updateData.personal_website_url = data.personalWebsiteUrl || null;
+  if (data.linkedinUrl !== undefined) updateData.linkedin_url = data.linkedinUrl || null;
+  if (data.zillowProfileUrl !== undefined) updateData.zillow_profile_url = data.zillowProfileUrl || null;
+  if (data.facebookUrl !== undefined) updateData.facebook_url = data.facebookUrl || null;
+  if (data.instagramUrl !== undefined) updateData.instagram_url = data.instagramUrl || null;
+  if (data.twitterUrl !== undefined) updateData.twitter_url = data.twitterUrl || null;
+  if (data.timezone !== undefined) updateData.timezone = data.timezone || null;
+  if (data.ctaButtonText !== undefined) updateData.cta_button_text = data.ctaButtonText || null;
+  if (data.ctaButtonUrl !== undefined) updateData.cta_button_url = data.ctaButtonUrl || null;
+  if (data.hireDate !== undefined) updateData.hire_date = data.hireDate || null;
+  if (data.industry !== undefined) updateData.industry = data.industry || null;
+  if (data.region !== undefined) updateData.region = data.region || null;
+
+  const { error } = await supabase
+    .from("users")
+    .update(updateData)
+    .eq("id", memberId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/team");
+  revalidatePath(`/dashboard/organization/users/${memberId}`);
+  return { success: true, error: null };
+}
+
+// Upload avatar for a team member (admin only)
+export async function uploadMemberAvatar(
+  memberId: string,
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Verify admin + same org
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id || userData.role !== "admin") {
+    return { success: false, error: "Only admins can update member avatars" };
+  }
+
+  const { data: memberData } = await supabase
+    .from("users")
+    .select("organization_id, avatar_url")
+    .eq("id", memberId)
+    .single();
+
+  if (memberData?.organization_id !== userData.organization_id) {
+    return { success: false, error: "Member not found in organization" };
+  }
+
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(file.type)) {
+    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: "File too large. Maximum size is 5MB." };
+  }
+
+  const oldAvatarUrl = memberData?.avatar_url;
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const fileName = `${memberId}/avatar-${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) {
+    return { success: false, error: "Failed to upload image. Please try again." };
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from("avatars")
+    .getPublicUrl(fileName);
+
+  const { error: dbError } = await supabase
+    .from("users")
+    .update({
+      avatar_url: publicUrl,
+      photo_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", memberId);
+
+  if (dbError) {
+    await supabase.storage.from("avatars").remove([fileName]);
+    return { success: false, error: "Failed to update profile. Please try again." };
+  }
+
+  // Cleanup old avatar
+  if (oldAvatarUrl && oldAvatarUrl.includes("/avatars/")) {
+    const oldPath = oldAvatarUrl.split("/avatars/").pop();
+    if (oldPath && oldPath !== fileName) {
+      await supabase.storage.from("avatars").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/team");
+  revalidatePath(`/dashboard/organization/users/${memberId}`);
+  return { success: true, url: publicUrl };
+}
+
+// Upload banner for a team member (admin only)
+export async function uploadMemberBanner(
+  memberId: string,
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  // Verify admin + same org
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id || userData.role !== "admin") {
+    return { success: false, error: "Only admins can update member banners" };
+  }
+
+  const { data: memberData } = await supabase
+    .from("users")
+    .select("organization_id, banner_url")
+    .eq("id", memberId)
+    .single();
+
+  if (memberData?.organization_id !== userData.organization_id) {
+    return { success: false, error: "Member not found in organization" };
+  }
+
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedTypes.includes(file.type)) {
+    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    return { success: false, error: "File too large. Maximum size is 10MB." };
+  }
+
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const fileName = `${memberId}/cover-${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) {
+    return { success: false, error: "Failed to upload image. Please try again." };
+  }
+
+  const { data: { publicUrl } } = supabase.storage
+    .from("avatars")
+    .getPublicUrl(fileName);
+
+  const { error: dbError } = await supabase
+    .from("users")
+    .update({
+      banner_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", memberId);
+
+  if (dbError) {
+    await supabase.storage.from("avatars").remove([fileName]);
+    return { success: false, error: "Failed to update profile. Please try again." };
+  }
+
+  // Cleanup old banner
+  if (memberData?.banner_url && memberData.banner_url.includes("/avatars/")) {
+    const oldPath = memberData.banner_url.split("/avatars/").pop();
+    if (oldPath && oldPath !== fileName) {
+      await supabase.storage.from("avatars").remove([oldPath]);
+    }
+  }
+
+  revalidatePath(`/dashboard/organization/users/${memberId}`);
+  return { success: true, url: publicUrl };
 }
 
 /**

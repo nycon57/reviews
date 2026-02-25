@@ -42,20 +42,26 @@ const priorityConfig = {
 export function RecommendationsCard({ data }: RecommendationsCardProps) {
   if (data.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">Improvement Recommendations</CardTitle>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Lightbulb className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Improvement Recommendations</CardTitle>
+              <CardDescription>AI-powered suggestions based on customer feedback</CardDescription>
+            </div>
           </div>
-          <CardDescription>AI-powered suggestions based on customer feedback</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <Lightbulb className="mx-auto mb-2 h-8 w-8 opacity-50" />
-              <p className="text-sm">No recommendations available</p>
-              <p className="text-xs">Collect more feedback to generate suggestions</p>
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Lightbulb className="h-7 w-7 text-repwell-teal-300" />
+              </div>
+              <p className="text-sm font-medium text-repwell-teal-500">No recommendations available</p>
+              <p className="mt-1 text-xs">Collect more feedback to generate suggestions</p>
             </div>
           </div>
         </CardContent>
@@ -70,13 +76,17 @@ export function RecommendationsCard({ data }: RecommendationsCardProps) {
   });
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg font-semibold">Improvement Recommendations</CardTitle>
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Lightbulb className="h-5 w-5 text-repwell-teal-300" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Improvement Recommendations</CardTitle>
+            <CardDescription>AI-powered suggestions based on customer feedback</CardDescription>
+          </div>
         </div>
-        <CardDescription>AI-powered suggestions based on customer feedback</CardDescription>
       </CardHeader>
       <CardContent>
         <Accordion type="single" collapsible className="w-full">
@@ -100,7 +110,7 @@ export function RecommendationsCard({ data }: RecommendationsCardProps) {
                       rec.priority === "medium" && "text-amber-600",
                       rec.priority === "low" && "text-green-600"
                     )} />
-                    <span className="font-medium">{rec.title}</span>
+                    <span className="text-sm font-medium">{rec.title}</span>
                     <Badge variant="secondary" className={cn("ml-auto mr-2 text-xs", config.badge)}>
                       {config.label}
                     </Badge>
@@ -113,7 +123,7 @@ export function RecommendationsCard({ data }: RecommendationsCardProps) {
 
                   {/* Action items */}
                   <div className="space-y-2">
-                    <h5 className="text-sm font-medium">Action Items</h5>
+                    <h5 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Action Items</h5>
                     <ul className="space-y-1.5">
                       {rec.actionItems.map((item, i) => (
                         <li

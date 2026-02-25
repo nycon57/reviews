@@ -30,24 +30,24 @@ interface TeamActivityMonitorProps {
 const statusConfig = {
   active: {
     label: "Active",
-    class: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+    class: "bg-green-100 text-green-800",
     icon: CheckCircle,
   },
   slowing: {
     label: "Slowing",
-    class: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
+    class: "bg-amber-100 text-amber-800",
     icon: Clock,
   },
   inactive: {
     label: "Inactive",
-    class: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+    class: "bg-red-100 text-red-800",
     icon: WarningCircle,
   },
 };
 
 const defaultStatus = {
   label: "Unknown",
-  class: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+  class: "bg-gray-100 text-gray-800",
   icon: Clock,
 };
 
@@ -59,8 +59,8 @@ function LORow({ member }: { member: LOActivityStatus }) {
   return (
     <div
       className={cn(
-        "rounded-lg border p-3 transition-colors",
-        hasCriticalAlerts && "border-red-200 dark:border-red-900/50"
+        "rounded-xl border border-border/50 bg-card p-3 transition-colors",
+        hasCriticalAlerts && "border-red-200"
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -133,8 +133,8 @@ function LORow({ member }: { member: LOActivityStatus }) {
               className={cn(
                 "flex items-center gap-1.5 rounded px-2 py-1 text-xs",
                 alert.severity === "critical"
-                  ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
-                  : "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+                  ? "bg-red-50 text-red-700"
+                  : "bg-amber-50 text-amber-700"
               )}
             >
               {alert.severity === "critical" ? (
@@ -158,41 +158,43 @@ export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
 
   if (data.teamMembers.length === 0) {
     return (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <UsersThree className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">
-              Team Activity Monitor
-            </CardTitle>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <UsersThree className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Team Activity Monitor</CardTitle>
+              <CardDescription>No team members found</CardDescription>
+            </div>
           </div>
-          <CardDescription>No team members found</CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border border-border shadow-soft">
+      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <UsersThree className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg font-semibold">
-              Team Activity Monitor
-            </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <UsersThree className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <CardTitle className="text-lg">Team Activity Monitor</CardTitle>
           </div>
           <div className="flex gap-1.5">
             <Badge
               variant="secondary"
-              className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+              className="bg-green-100 text-green-800"
             >
               {data.orgMetrics.activeCount} active
             </Badge>
             {data.orgMetrics.slowingCount > 0 && (
               <Badge
                 variant="secondary"
-                className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                className="bg-amber-100 text-amber-800"
               >
                 {data.orgMetrics.slowingCount} slowing
               </Badge>
@@ -200,7 +202,7 @@ export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
             {data.orgMetrics.inactiveCount > 0 && (
               <Badge
                 variant="secondary"
-                className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                className="bg-red-100 text-red-800"
               >
                 {data.orgMetrics.inactiveCount} inactive
               </Badge>

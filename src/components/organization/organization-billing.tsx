@@ -185,8 +185,8 @@ export function OrganizationBilling() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-72" />
           </CardHeader>
@@ -235,15 +235,22 @@ export function OrganizationBilling() {
       )}
 
       {/* Current Plan */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Current Plan</CardTitle>
-          <CardDescription>
-            Manage your subscription and billing information
-          </CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <CreditCard className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Current Plan</CardTitle>
+              <CardDescription>
+                Manage your subscription and billing information
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+          <div className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-card">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h3 className="text-xl font-semibold">{pricing.name}</h3>
@@ -301,7 +308,7 @@ export function OrganizationBilling() {
           {/* Billing Cycle */}
           {pricing.monthly > 0 && (
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="p-4 border rounded-lg">
+              <div className="p-4 rounded-xl border border-border/50 bg-card">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Calendar className="h-4 w-4" />
                   Next Billing Date
@@ -310,7 +317,7 @@ export function OrganizationBilling() {
                   {subscriptionEndsAt ? subscriptionEndsAt.toLocaleDateString() : "N/A"}
                 </p>
               </div>
-              <div className="p-4 border rounded-lg">
+              <div className="p-4 rounded-xl border border-border/50 bg-card">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <TrendingUp className="h-4 w-4" />
                   Current Period Usage
@@ -325,12 +332,19 @@ export function OrganizationBilling() {
       </Card>
 
       {/* Usage Limits */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Usage & Limits</CardTitle>
-          <CardDescription>
-            Monitor your resource usage against plan limits
-          </CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <TrendingUp className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Usage & Limits</CardTitle>
+              <CardDescription>
+                Monitor your resource usage against plan limits
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
@@ -387,12 +401,19 @@ export function OrganizationBilling() {
 
       {/* Upgrade Plans */}
       {currentTier !== "enterprise" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upgrade Your Plan</CardTitle>
-            <CardDescription>
-              Get more features and higher limits with an upgraded plan
-            </CardDescription>
+        <Card className="border border-border shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Zap className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Upgrade Your Plan</CardTitle>
+                <CardDescription>
+                  Get more features and higher limits with an upgraded plan
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
@@ -405,10 +426,10 @@ export function OrganizationBilling() {
                   return (
                     <div
                       key={tier}
-                      className="p-4 border rounded-lg hover:border-primary transition-colors"
+                      className="p-4 rounded-xl border border-border/50 hover:border-repwell-teal-300 transition-colors"
                     >
                       <h4 className="font-semibold">{info.name}</h4>
-                      <p className="text-2xl font-bold mt-1">
+                      <p className="text-2xl font-bold mt-1 text-repwell-teal-500 tracking-tight">
                         ${info.monthly}
                         <span className="text-sm font-normal text-muted-foreground">/mo</span>
                       </p>
@@ -445,25 +466,32 @@ export function OrganizationBilling() {
       )}
 
       {/* Payment Methods */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Payment Methods</CardTitle>
-            <CardDescription>
-              Manage your payment methods
-            </CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <CreditCard className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">Payment Methods</CardTitle>
+                <CardDescription>
+                  Manage your payment methods
+                </CardDescription>
+              </div>
+            </div>
+            {currentTier !== "free" && stripeAvailable && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleManagePlan}
+                disabled={actionLoading}
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                Add Payment Method
+              </Button>
+            )}
           </div>
-          {currentTier !== "free" && stripeAvailable && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleManagePlan}
-              disabled={actionLoading}
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              Add Payment Method
-            </Button>
-          )}
         </CardHeader>
         <CardContent>
           {billingData?.paymentMethods && billingData.paymentMethods.length > 0 ? (
@@ -511,13 +539,18 @@ export function OrganizationBilling() {
       </Card>
 
       {/* Invoice History */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Invoice History</CardTitle>
-            <CardDescription>
-              View and download your past invoices
-            </CardDescription>
+      <Card className="border border-border shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <Calendar className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Invoice History</CardTitle>
+              <CardDescription>
+                View and download your past invoices
+              </CardDescription>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -613,7 +646,7 @@ export function OrganizationBilling() {
 
       {/* Danger Zone - Cancel Subscription */}
       {currentTier !== "free" && !billingData?.subscription?.cancelAtPeriodEnd && (
-        <Card className="border-destructive/50">
+        <Card className="border-destructive/50 shadow-soft">
           <CardHeader>
             <CardTitle className="text-destructive">Danger Zone</CardTitle>
             <CardDescription>

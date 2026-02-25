@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { unifiedGetUser } from "@/lib/auth/actions";
+import { getAccessContext } from "@/lib/access";
 import {
   getVideoTestimonialFunnelMetrics,
   getVideoTestimonialTrends,
@@ -16,27 +16,13 @@ export const metadata = {
 };
 
 export default async function AnalyticsPage() {
-  const user = await unifiedGetUser();
+  const ctx = await getAccessContext();
+  if (!ctx) redirect("/login");
 
-  if (!user) {
-    redirect("/login");
-  }
+  const userRole = ctx.role;
+  const organizationId = ctx.organizationId;
 
   const supabase = createAdminClient();
-
-  // Get user role and organization info
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role, organization_id")
-    .eq("id", user.id)
-    .single();
-
-  const userRole = (userData?.role || "user") as "admin" | "manager" | "user";
-  const organizationId = userData?.organization_id;
-
-  if (!organizationId) {
-    redirect("/login");
-  }
 
   // Fetch review summary data
   const { data: reviewsData, count: totalReviews } = await supabase

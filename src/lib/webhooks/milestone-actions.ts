@@ -167,7 +167,7 @@ export async function updateMilestoneMapping(
       return { success: false, error: error.message };
     }
 
-    revalidatePath("/dashboard/webhooks");
+    revalidatePath("/dashboard/settings");
 
     const mapping: MilestoneMapping = {
       id: data.id,
@@ -258,7 +258,7 @@ export async function createMilestoneMapping(
       return { success: false, error: error.message };
     }
 
-    revalidatePath("/dashboard/webhooks");
+    revalidatePath("/dashboard/settings");
 
     const mapping: MilestoneMapping = {
       id: data.id,
@@ -327,7 +327,7 @@ export async function deleteMilestoneMapping(id: string): Promise<ActionResult<v
       return { success: false, error: error.message };
     }
 
-    revalidatePath("/dashboard/webhooks");
+    revalidatePath("/dashboard/settings");
 
     return { success: true };
   } catch (error) {

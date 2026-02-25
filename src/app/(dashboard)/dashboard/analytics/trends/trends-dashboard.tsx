@@ -101,9 +101,9 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
     <div className="space-y-6">
       {/* Loading indicator */}
       {isPending && (
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Loading trends...</span>
+        <div className="flex items-center justify-center gap-2 rounded-xl border border-border/50 bg-card/80 px-4 py-2.5 text-muted-foreground shadow-soft backdrop-blur-sm">
+          <Loader2 className="h-4 w-4 animate-spin text-repwell-teal-300" />
+          <span className="text-sm font-medium">Updating trends...</span>
         </div>
       )}
 
@@ -135,12 +135,12 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
 
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
+        <Card className="rounded-xl border-border/50 shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-yellow-100">
-                  <Star className="h-5 w-5 text-yellow-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <Star className="h-5 w-5 text-repwell-teal-300" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">
@@ -156,12 +156,12 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-xl border-border/50 shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-repwell-sage-200/10">
+                  <BarChart3 className="h-5 w-5 text-repwell-sage-200" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">
@@ -175,12 +175,12 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-xl border-border/50 shadow-soft">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-100">
-                  <MessageSquare className="h-5 w-5 text-purple-600" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-repwell-teal-400/10">
+                  <MessageSquare className="h-5 w-5 text-repwell-teal-400" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Reviews</p>
@@ -198,12 +198,16 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
       {/* Charts row 1 */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Rating Trend */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-500" />
-              {isTeamScope ? "Team Rating Trend" : "Rating Trend"}
-            </CardTitle>
+        <Card className="rounded-xl border-border/50 shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <Star className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <CardTitle className="text-lg font-semibold">
+                {isTeamScope ? "Team Rating Trend" : "Rating Trend"}
+              </CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             {!hasRatingData ? (
@@ -237,12 +241,16 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
         </Card>
 
         {/* NPS Trend */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-blue-500" />
-              {isTeamScope ? "Team NPS Trend" : "NPS Score Trend"}
-            </CardTitle>
+        <Card className="rounded-xl border-border/50 shadow-soft">
+          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
+              </div>
+              <CardTitle className="text-lg font-semibold">
+                {isTeamScope ? "Team NPS Trend" : "NPS Score Trend"}
+              </CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             {!hasNpsData ? (
@@ -271,12 +279,14 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
       </div>
 
       {/* Review Volume */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            <MessageSquare className="h-5 w-5 text-purple-500" />
-            Review Volume
-          </CardTitle>
+      <Card className="rounded-xl border-border/50 shadow-soft">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <MessageSquare className="h-5 w-5 text-repwell-teal-300" />
+            </div>
+            <CardTitle className="text-lg font-semibold">Review Volume</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           {!hasVolumeData ? (

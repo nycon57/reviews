@@ -1,11 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   widgetConfigJsonSchema,
-  createWidgetInputSchema,
   updateWidgetInputSchema,
   listWidgetsInputSchema,
-  deleteWidgetInputSchema,
-  duplicateWidgetInputSchema,
   getWidgetInputSchema,
 } from "../schemas";
 
@@ -177,74 +174,6 @@ describe("widgetConfigJsonSchema", () => {
   });
 });
 
-describe("createWidgetInputSchema", () => {
-  const validInput = {
-    name: "My Widget",
-    widget_type: "lo_review" as const,
-    entity_type: "user" as const,
-  };
-
-  it("accepts valid minimal input", () => {
-    const result = createWidgetInputSchema.safeParse(validInput);
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.status).toBe("draft");
-      expect(result.data.enable_structured_data).toBe(true);
-    }
-  });
-
-  it("accepts full input with config", () => {
-    const result = createWidgetInputSchema.safeParse({
-      ...validInput,
-      entity_id: "123e4567-e89b-12d3-a456-426614174000",
-      config: { theme: { preset: "dark" } },
-      allowed_domains: ["example.com"],
-      status: "active",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects empty name", () => {
-    const result = createWidgetInputSchema.safeParse({
-      ...validInput,
-      name: "",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid widget_type", () => {
-    const result = createWidgetInputSchema.safeParse({
-      ...validInput,
-      widget_type: "invalid",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid entity_type", () => {
-    const result = createWidgetInputSchema.safeParse({
-      ...validInput,
-      entity_type: "team",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects invalid entity_id (not a UUID)", () => {
-    const result = createWidgetInputSchema.safeParse({
-      ...validInput,
-      entity_id: "not-a-uuid",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects name longer than 100 chars", () => {
-    const result = createWidgetInputSchema.safeParse({
-      ...validInput,
-      name: "a".repeat(101),
-    });
-    expect(result.success).toBe(false);
-  });
-});
-
 describe("updateWidgetInputSchema", () => {
   it("accepts a valid update with only id", () => {
     const result = updateWidgetInputSchema.safeParse({
@@ -257,7 +186,6 @@ describe("updateWidgetInputSchema", () => {
     const result = updateWidgetInputSchema.safeParse({
       id: "123e4567-e89b-12d3-a456-426614174000",
       config: { theme: { preset: "dark" } },
-      name: "Updated Widget",
     });
     expect(result.success).toBe(true);
   });
@@ -299,34 +227,6 @@ describe("listWidgetsInputSchema", () => {
 
   it("rejects pageSize > 100", () => {
     const result = listWidgetsInputSchema.safeParse({ pageSize: 101 });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("deleteWidgetInputSchema", () => {
-  it("accepts a valid UUID", () => {
-    const result = deleteWidgetInputSchema.safeParse({
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects invalid UUID", () => {
-    const result = deleteWidgetInputSchema.safeParse({ id: "bad" });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("duplicateWidgetInputSchema", () => {
-  it("accepts a valid UUID", () => {
-    const result = duplicateWidgetInputSchema.safeParse({
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects invalid UUID", () => {
-    const result = duplicateWidgetInputSchema.safeParse({ id: "bad" });
     expect(result.success).toBe(false);
   });
 });

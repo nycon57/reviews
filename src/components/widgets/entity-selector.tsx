@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { searchEntities, type EntitySearchResult } from "@/lib/widgets/actions";
 import type { WidgetEntityType } from "@/lib/widgets/types";
+import { ENTITY_TYPE_LABELS } from "@/lib/widgets/constants";
 
 interface EntitySelectorProps {
   entityType: WidgetEntityType;
@@ -18,12 +19,6 @@ const ENTITY_ICONS: Record<WidgetEntityType, typeof User> = {
   user: User,
   branch: Building2,
   organization: Briefcase,
-};
-
-const ENTITY_LABELS: Record<WidgetEntityType, string> = {
-  user: "Loan Officer",
-  branch: "Branch",
-  organization: "Organization",
 };
 
 function getInitials(name: string): string {
@@ -121,7 +116,7 @@ export function EntitySelector({
           <Input
             value={query}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder={`Search ${ENTITY_LABELS[entityType].toLowerCase()}s...`}
+            placeholder={`Search ${ENTITY_TYPE_LABELS[entityType].toLowerCase()}s...`}
             className="h-6 border-0 p-0 text-xs focus-visible:ring-0 shadow-none"
             autoFocus
           />
@@ -129,7 +124,7 @@ export function EntitySelector({
           <span
             className={`truncate ${selectedName ? "text-repwell-teal-400" : "text-muted-foreground"}`}
           >
-            {selectedName ?? `Select a ${ENTITY_LABELS[entityType].toLowerCase()}...`}
+            {selectedName ?? `Select a ${ENTITY_TYPE_LABELS[entityType].toLowerCase()}...`}
           </span>
         )}
       </div>
@@ -146,7 +141,7 @@ export function EntitySelector({
             </div>
           ) : results.length === 0 ? (
             <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-              No {ENTITY_LABELS[entityType].toLowerCase()}s found.
+              No {ENTITY_TYPE_LABELS[entityType].toLowerCase()}s found.
             </div>
           ) : (
             results.map((entity) => (

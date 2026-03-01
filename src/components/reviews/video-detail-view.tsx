@@ -15,6 +15,9 @@ import {
   Chats as MessageSquare,
   SpinnerGap as Loader2,
   Calendar,
+  Copy,
+  LinkSimple,
+  Palette,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,9 +39,13 @@ import {
   getVideoSignedUrl,
   updateVideoApprovalStatus,
 } from "@/lib/video-testimonials/actions";
+import { ensureVideoSmartLink } from "@/lib/share-studio/actions";
 import { VideoPlayerSection } from "./video-player-section";
 import { VideoApprovalPanel } from "./video-approval-panel";
 import { VideoFeedbackSection } from "./video-feedback-section";
+import { ReviewShareAssets } from "./review-share-assets";
+import { AssetCreatorModal } from "@/components/share-studio/asset-creator-modal";
+import { AnimatedSection } from "@/components/motion";
 
 // ============================================================================
 // Types
@@ -303,6 +310,12 @@ export function VideoDetailView({ video, userRole }: Props) {
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState<ApprovalAction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shareBusy, setShareBusy] = useState<Set<string>>(new Set());
+  const [assetsRefreshToken, setAssetsRefreshToken] = useState(0);
+  const [assetCreatorOpen, setAssetCreatorOpen] = useState(false);
+
+  const addBusy = (key: string) => setShareBusy(prev => new Set(prev).add(key));
+  const removeBusy = (key: string) => setShareBusy(prev => { const next = new Set(prev); next.delete(key); return next; });
 
   const canManage = userRole === "admin" || userRole === "manager";
 
@@ -390,6 +403,54 @@ export function VideoDetailView({ video, userRole }: Props) {
     },
     [currentAction, video.id, router]
   );
+
+  const resolveSmartLinkUrl = useCallback(async (): Promise<string | null> => {
+    const result = await ensureVideoSmartLink(video.id);
+    if (!result.success || !result.url) {
+      toast({
+        title: "Unable to create Smart Link",
+        description: result.error || "Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    }
+    return `${window.location.origin}${result.url}`;
+  }, [video.id]);
+
+  const handleCopySmartLink = () => {
+    addBusy("link");
+    void (async () => {
+      try {
+        const url = await resolveSmartLinkUrl();
+        if (!url) return;
+        await navigator.clipboard.writeText(url);
+        toast({ title: "Smart Link copied" });
+        setAssetsRefreshToken((value) => value + 1);
+      } catch {
+        toast({
+          title: "Copy failed",
+          description: "Could not copy Smart Link.",
+          variant: "destructive",
+        });
+      } finally {
+        removeBusy("link");
+      }
+    })();
+  };
+
+  const handleOpenSmartLink = () => {
+    addBusy("link");
+    void (async () => {
+      try {
+        const url = await resolveSmartLinkUrl();
+        if (!url) return;
+        window.open(url, "_blank", "noopener,noreferrer");
+        setAssetsRefreshToken((value) => value + 1);
+      } finally {
+        removeBusy("link");
+      }
+    })();
+  };
 
   return (
     <div className="flex-1 space-y-6">
@@ -560,11 +621,60 @@ export function VideoDetailView({ video, userRole }: Props) {
         </div>
 
         {/* Sidebar */}
-        <VideoApprovalPanel
-          video={video}
-          canManage={canManage}
-          onAction={handleActionClick}
-        />
+        <div className="space-y-6">
+          <AnimatedSection>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Share Studio</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={handleCopySmartLink}
+                disabled={shareBusy.has("link")}
+                aria-label="Copy smart link to clipboard"
+              >
+                <Copy className="h-4 w-4" />
+                Copy Smart Link
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={handleOpenSmartLink}
+                disabled={shareBusy.has("link")}
+                aria-label="Open smart link in new tab"
+              >
+                <LinkSimple className="h-4 w-4" />
+                Open Smart Link
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => setAssetCreatorOpen(true)}
+                aria-label="Create a shareable asset"
+              >
+                <Palette className="h-4 w-4" />
+                Create Asset
+              </Button>
+            </CardContent>
+          </Card>
+          </AnimatedSection>
+
+          <ReviewShareAssets
+            sourceType="video_testimonial"
+            sourceId={video.id}
+            refreshToken={assetsRefreshToken}
+          />
+
+          <AnimatedSection delay={0.1}>
+          <VideoApprovalPanel
+            video={video}
+            canManage={canManage}
+            onAction={handleActionClick}
+          />
+          </AnimatedSection>
+        </div>
       </div>
 
       {/* Action Dialog */}
@@ -574,6 +684,22 @@ export function VideoDetailView({ video, userRole }: Props) {
         actionType={currentAction}
         onConfirm={handleActionConfirm}
         isLoading={isSubmitting}
+      />
+
+      {/* Asset Creator Modal */}
+      <AssetCreatorModal
+        open={assetCreatorOpen}
+        onOpenChange={setAssetCreatorOpen}
+        sourceType="video_testimonial"
+        sourceId={video.id}
+        reviewData={{
+          text: video.aiGeneratedText || video.transcription,
+          customerName: video.customerName,
+          rating: video.sentimentScore
+            ? Math.max(1, Math.min(5, Math.round((video.sentimentScore / 100) * 5)))
+            : 5,
+        }}
+        onQueued={() => setAssetsRefreshToken((v) => v + 1)}
       />
     </div>
   );

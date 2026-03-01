@@ -352,21 +352,6 @@ export const loadingDot: Variants = {
   },
 };
 
-// Skeleton shimmer animation
-export const shimmerAnimation: Variants = {
-  initial: {
-    backgroundPosition: "-200% 0",
-  },
-  animate: {
-    backgroundPosition: "200% 0",
-    transition: {
-      duration: 1.5,
-      repeat: Infinity,
-      ease: "linear",
-    },
-  },
-};
-
 // Viewport settings for scroll-triggered animations
 // amount: "some" triggers when any part is visible, works reliably with client navigation
 export const viewportOnce = { once: true, amount: "some" } as const;
@@ -418,9 +403,9 @@ export function createStaggerContainer(delay: number = 0.1): Variants {
 // ===========================================
 
 // Card hover with lift effect (for feature cards, pricing cards)
+// Shadow moved to CSS (hover:shadow-md) to keep this S-tier (compositor-only)
 export const cardHover = {
   y: -4,
-  boxShadow: '0 8px 16px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.04)',
   transition: { duration: 0.2, ease: [0.43, 0.13, 0.23, 0.96] as const },
 };
 
@@ -478,88 +463,9 @@ export const staggerChildrenDelayed: Variants = {
   },
 };
 
-// Brand button hover (with glow effect)
-export const brandButtonHover = {
-  y: -2,
-  boxShadow: '0 4px 12px -2px rgba(0, 107, 255, 0.25)',
-  transition: { duration: 0.15, ease: [0.43, 0.13, 0.23, 0.96] as const },
-};
-
 // Feature card icon hover
 export const featureIconHover = {
   scale: 1.1,
   transition: { duration: 0.2, ease: [0.43, 0.13, 0.23, 0.96] as const },
 };
 
-// Smooth number counter animation config
-export const counterTransition = {
-  duration: 1.5,
-  ease: [0.43, 0.13, 0.23, 0.96] as const,
-};
-
-// Navigation link underline animation
-export const navLinkUnderline: Variants = {
-  initial: {
-    scaleX: 0,
-    originX: 0,
-  },
-  hover: {
-    scaleX: 1,
-    transition: { duration: 0.2, ease: 'easeOut' },
-  },
-};
-
-// Accordion content animation
-export const accordionContent: Variants = {
-  collapsed: {
-    height: 0,
-    opacity: 0,
-  },
-  expanded: {
-    height: 'auto',
-    opacity: 1,
-    transition: {
-      height: { duration: 0.3, ease: 'easeOut' },
-      opacity: { duration: 0.2, delay: 0.1 },
-    },
-  },
-};
-
-// Badge/pill enter animation
-export const badgeEnter: Variants = {
-  hidden: {
-    opacity: 0,
-    scale: 0.8,
-  },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.2,
-      ease: [0.43, 0.13, 0.23, 0.96],
-    },
-  },
-};
-
-// Toast notification animation
-export const toastAnimation: Variants = {
-  initial: {
-    opacity: 0,
-    y: 50,
-    scale: 0.95,
-  },
-  animate: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: {
-      duration: 0.3,
-      ease: [0.43, 0.13, 0.23, 0.96],
-    },
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    transition: { duration: 0.15 },
-  },
-};

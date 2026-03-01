@@ -20,6 +20,9 @@ import { getCurrentOrganization } from "@/lib/organization/actions";
 import { TIER_FEATURES } from "@/lib/organization/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { getUnifiedRequests, getUnifiedRequestStats } from "@/lib/requests/unified-requests";
+import { hasPermission, PERMISSIONS } from "@/lib/permissions";
+import { getAccessContext } from "@/lib/access";
 
 // Dynamic import for heavy UnifiedContentHub component
 const UnifiedContentHub = dynamic(
@@ -50,7 +53,7 @@ const UnifiedContentHub = dynamic(
 
 export const metadata = {
   title: "Reviews | RepWell",
-  description: "View and manage all customer reviews and video testimonials",
+  description: "View and manage all customer reviews, video testimonials, and requests",
 };
 
 const DEFAULT_VIDEO_STATS: VideoLibraryStats = {
@@ -103,8 +106,13 @@ export default async function ReviewsPage({
   const params = await searchParams;
   const initialReviewId = params?.id;
 
-  // Get user role for permissions
-  const userRole = await getUserRole();
+  // Get user role and access context for permissions
+  const [userRole, accessCtx] = await Promise.all([
+    getUserRole(),
+    getAccessContext(),
+  ]);
+
+  const canSendRequests = hasPermission(accessCtx, PERMISSIONS.SEND_SURVEY);
 
   // Fetch all data in parallel
   const [
@@ -115,6 +123,8 @@ export default async function ReviewsPage({
     videosResult,
     videoUsersResult,
     orgResult,
+    requestsResult,
+    requestStatsResult,
   ] = await Promise.all([
     getAggregatedReviews({ page: 1, limit: 20 }),
     getReviewStats(),
@@ -123,6 +133,8 @@ export default async function ReviewsPage({
     getVideoTestimonialResponses({ page: 1, pageSize: 24 }),
     getUsersForVideoRequests(),
     getCurrentOrganization(),
+    canSendRequests ? getUnifiedRequests({ page: 1, pageSize: 25 }) : null,
+    canSendRequests ? getUnifiedRequestStats() : null,
   ]);
 
   // Process text reviews data
@@ -178,16 +190,21 @@ export default async function ReviewsPage({
   const subscriptionTier = orgResult.organization?.subscription_tier ?? "free";
   const hasAiAccess = TIER_FEATURES[subscriptionTier]?.ai_insights ?? false;
 
+  // Process requests data
+  const initialRequests = requestsResult?.requests ?? [];
+  const initialRequestsTotal = requestsResult?.total ?? 0;
+  const initialRequestStats = requestStatsResult ?? undefined;
+
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-          <Star className="h-5 w-5 text-repwell-teal-300" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <Star className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-repwell-teal-500">Reviews</h1>
-          <p className="text-repwell-teal-300">
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Reviews</h1>
+          <p className="text-sm leading-snug text-repwell-teal-300">
             Manage customer reviews and video testimonials
           </p>
         </div>
@@ -224,6 +241,10 @@ export default async function ReviewsPage({
           userRole={userRole}
           hasAiAccess={hasAiAccess}
           initialReviewId={initialReviewId}
+          initialRequests={initialRequests}
+          initialRequestsTotal={initialRequestsTotal}
+          initialRequestStats={initialRequestStats}
+          canSendRequests={canSendRequests}
         />
       </Suspense>
     </div>

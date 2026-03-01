@@ -342,10 +342,8 @@ export async function getEnhancedLeaderboard(
     return { success: false, error: "Unauthorized" };
   }
 
-  // Check if user is manager or admin for full access
-  if (context.role !== "manager" && context.role !== "admin") {
-    return { success: false, error: "Manager access required" };
-  }
+  // All authenticated users within an org can view the leaderboard
+  // (page-level guard already restricts to enterprise accounts)
 
   const supabase = createAdminClient();
   const limit = filters.limit || 10;

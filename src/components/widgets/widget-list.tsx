@@ -1,11 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Plus, Search, LayoutGrid } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { Code } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -15,21 +12,16 @@ import {
 } from "@/components/ui/select";
 import { WidgetCard } from "./widget-card";
 import type { WidgetConfig } from "@/lib/widgets/types";
+import { WIDGET_TYPE_LABELS } from "@/lib/widgets/constants";
 
 interface WidgetListProps {
   widgets: WidgetConfig[];
-  total: number;
 }
 
-export function WidgetList({ widgets, total }: WidgetListProps) {
-  const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+export function WidgetList({ widgets }: WidgetListProps) {
   const [typeFilter, setTypeFilter] = useState<string>("all");
 
   const filteredWidgets = widgets.filter((w) => {
-    if (search && !w.name.toLowerCase().includes(search.toLowerCase())) return false;
-    if (statusFilter !== "all" && w.status !== statusFilter) return false;
     if (typeFilter !== "all" && w.widget_type !== typeFilter) return false;
     return true;
   });
@@ -43,58 +35,27 @@ export function WidgetList({ widgets, total }: WidgetListProps) {
             <Code className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-repwell-teal-500">Widgets</h1>
+            <h1 className="text-2xl font-bold text-repwell-teal-500">Widget Templates</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {total} widget{total === 1 ? "" : "s"} created
+              Customize and embed review widgets on your website
             </p>
           </div>
         </div>
-        <Button
-          onClick={() => router.push("/dashboard/widgets/new")}
-          className="gap-2 bg-repwell-teal-300 hover:bg-repwell-teal-400"
-        >
-          <Plus size={16} />
-          Create Widget
-        </Button>
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search widgets..."
-            className="pl-9"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-36">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-          </SelectContent>
-        </Select>
         <Select value={typeFilter} onValueChange={setTypeFilter}>
           <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="lo_review">LO Reviews</SelectItem>
-            <SelectItem value="branch_review">Branch Reviews</SelectItem>
-            <SelectItem value="company_review">Company Reviews</SelectItem>
-            <SelectItem value="review_carousel">Carousel</SelectItem>
-            <SelectItem value="star_rating_badge">Star Badge</SelectItem>
-            <SelectItem value="video_testimonial">Video</SelectItem>
-            <SelectItem value="review_wall">Review Wall</SelectItem>
-            <SelectItem value="nps_score_badge">NPS Badge</SelectItem>
-            <SelectItem value="social_proof_banner">Social Proof</SelectItem>
+            <SelectItem value="lo_review">{WIDGET_TYPE_LABELS.lo_review}</SelectItem>
+            <SelectItem value="branch_review">{WIDGET_TYPE_LABELS.branch_review}</SelectItem>
+            <SelectItem value="company_review">{WIDGET_TYPE_LABELS.company_review}</SelectItem>
+            <SelectItem value="review_carousel">{WIDGET_TYPE_LABELS.review_carousel}</SelectItem>
+            <SelectItem value="star_rating_badge">{WIDGET_TYPE_LABELS.star_rating_badge}</SelectItem>
+            <SelectItem value="video_testimonial">{WIDGET_TYPE_LABELS.video_testimonial}</SelectItem>
+            <SelectItem value="review_wall">{WIDGET_TYPE_LABELS.review_wall}</SelectItem>
+            <SelectItem value="nps_score_badge">{WIDGET_TYPE_LABELS.nps_score_badge}</SelectItem>
+            <SelectItem value="social_proof_banner">{WIDGET_TYPE_LABELS.social_proof_banner}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -106,24 +67,11 @@ export function WidgetList({ widgets, total }: WidgetListProps) {
             <LayoutGrid size={24} className="text-repwell-teal-300" />
           </div>
           <h3 className="text-base font-semibold text-repwell-teal-500 mb-1">
-            {search || statusFilter !== "all" || typeFilter !== "all"
-              ? "No widgets match your filters"
-              : "No widgets yet"}
+            No widgets match your filter
           </h3>
-          <p className="text-sm text-muted-foreground max-w-sm mb-4">
-            {search || statusFilter !== "all" || typeFilter !== "all"
-              ? "Try adjusting your search or filter criteria."
-              : "Create your first embeddable review widget to showcase customer reviews on your website."}
+          <p className="text-sm text-muted-foreground max-w-sm">
+            Try selecting a different widget type.
           </p>
-          {!search && statusFilter === "all" && typeFilter === "all" && (
-            <Button
-              onClick={() => router.push("/dashboard/widgets/new")}
-              className="gap-2 bg-repwell-teal-300 hover:bg-repwell-teal-400"
-            >
-              <Plus size={16} />
-              Create Widget
-            </Button>
-          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

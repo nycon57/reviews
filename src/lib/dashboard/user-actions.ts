@@ -331,8 +331,9 @@ export async function getRatingTrend(
     entry.count += 1;
   }
 
-  // Convert to array and fill in missing months
+  // Convert to array, carrying forward the last known average for quiet months
   const trendData: TrendDataPoint[] = [];
+  let lastKnownValue = 0;
 
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date();
@@ -342,9 +343,12 @@ export async function getRatingTrend(
     const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 
     const entry = monthlyData.get(monthKey);
+    if (entry) {
+      lastKnownValue = Number((entry.sum / entry.count).toFixed(1));
+    }
     trendData.push({
       date: monthLabel,
-      value: entry ? Number((entry.sum / entry.count).toFixed(1)) : 0,
+      value: lastKnownValue,
     });
   }
 
@@ -425,8 +429,9 @@ export async function getNPSTrend(
     }
   }
 
-  // Convert to array with NPS calculation
+  // Convert to array, carrying forward the last known NPS for quiet months
   const trendData: TrendDataPoint[] = [];
+  let lastKnownNps = 0;
 
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date();
@@ -436,18 +441,16 @@ export async function getNPSTrend(
     const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 
     const entry = monthlyData.get(monthKey);
-    let nps = 0;
-
     if (entry) {
       const total = entry.promoters + entry.passives + entry.detractors;
       if (total > 0) {
-        nps = Math.round(((entry.promoters - entry.detractors) / total) * 100);
+        lastKnownNps = Math.round(((entry.promoters - entry.detractors) / total) * 100);
       }
     }
 
     trendData.push({
       date: monthLabel,
-      value: nps,
+      value: lastKnownNps,
     });
   }
 

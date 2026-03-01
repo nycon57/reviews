@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { DashboardEntrance } from "@/components/dashboard/dashboard-entrance";
 import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, EmptyState, EmptyStateCard } from "@/components/shared";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import {
@@ -45,7 +46,7 @@ async function DashboardStats() {
         title="Your stats will appear here"
         description="Once you start collecting reviews and survey responses, you'll see your performance metrics displayed here."
         actions={[
-          { label: "Send Your First Survey", href: "/dashboard/requests", iconName: "send" },
+          { label: "Send Your First Survey", href: "/dashboard/reviews?tab=requests", iconName: "send" },
           { label: "Import Reviews", href: "/dashboard/reviews", variant: "outline" },
         ]}
       />
@@ -129,7 +130,7 @@ export default async function DashboardPage() {
   const userName = userResult.success ? userResult.data?.fullName : null;
 
   return (
-    <div className="flex-1 space-y-8">
+    <DashboardEntrance className="flex-1 space-y-8">
       {/* Page header */}
       <DashboardHeader userName={userName} />
 
@@ -138,10 +139,8 @@ export default async function DashboardPage() {
         <DashboardStats />
       </Suspense>
 
-      {/* Gamification progress */}
-      <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
-        <GamificationStatsCard />
-      </Suspense>
+      {/* Quick Actions */}
+      <UserQuickActions />
 
       {/* Charts grid */}
       <section>
@@ -185,14 +184,16 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Sidebar - quick actions and profile completion */}
+        {/* Sidebar - progress and profile completion */}
         <div className="space-y-6">
-          <UserQuickActions />
+          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+            <GamificationStatsCard layout="vertical" />
+          </Suspense>
           <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
             <FullProfileCompletionCard />
           </Suspense>
         </div>
       </div>
-    </div>
+    </DashboardEntrance>
   );
 }

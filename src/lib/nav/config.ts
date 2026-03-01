@@ -16,6 +16,8 @@ export interface NavItemConfig {
 export interface NavSectionConfig {
   label: string;
   items: NavItemConfig[];
+  /** Hide the entire section for enterprise users with role "user" */
+  hideForEnterpriseUser?: boolean;
 }
 
 export interface NavConfig {
@@ -41,12 +43,6 @@ export const NAV_CONFIG: NavConfig = {
       href: "/dashboard/reviews",
       icon: "Star",
       permission: PERMISSIONS.VIEW_REVIEWS,
-    },
-    {
-      title: "Requests",
-      href: "/dashboard/requests",
-      icon: "PaperPlaneRight",
-      permission: PERMISSIONS.SEND_SURVEY,
     },
     {
       title: "Share Studio",
@@ -133,6 +129,7 @@ export const NAV_CONFIG: NavConfig = {
     },
     {
       label: "Admin",
+      hideForEnterpriseUser: true,
       items: [
         {
           title: "Organization",

@@ -62,6 +62,7 @@ interface VideoLibraryState {
   canManage: boolean;
   canDelete: boolean;
   teamMembers: TeamMember[];
+  videoStats: VideoLibraryStats;
 }
 
 interface VideoLibraryActions {
@@ -126,7 +127,7 @@ export function VideoLibraryProvider({
   children,
   initialVideos,
   initialTotal,
-  videoStats: _videoStats,
+  videoStats,
   teamMembers,
   userRole,
 }: VideoLibraryProviderProps) {
@@ -448,6 +449,7 @@ export function VideoLibraryProvider({
         canManage,
         canDelete,
         teamMembers,
+        videoStats,
       },
       actions: {
         setViewMode,
@@ -479,7 +481,7 @@ export function VideoLibraryProvider({
       responses, total, isLoading, isUpdating, viewMode, approvalFilter,
       memberFilter, searchQuery, page, pageSize, totalPages, selectedIds,
       allSelected, openDialog, videoToReject, videoToDelete, canManage,
-      canDelete, teamMembers, setApprovalFilterWithReset, setMemberFilterWithReset,
+      canDelete, teamMembers, videoStats, setApprovalFilterWithReset, setMemberFilterWithReset,
       setSearchQueryDirect, fetchResponses, handleSelect, handleSelectAll,
       handleClearSelection, handleVideoClick, handleApprove, handleRejectClick,
       handleRejectConfirm, handlePublish, handleDeleteClick, handleDeleteConfirm,

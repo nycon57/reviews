@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicVideoTestimonial, getPublicVideoMetadata } from "@/lib/video-testimonials/public-actions";
 import { EmbedVideoPlayer } from "./embed-video-player";
+import { getPublishedSmartLinkBySource } from "@/lib/share-studio/service";
 
 interface PageProps {
   params: Promise<{
@@ -36,7 +37,14 @@ export default async function EmbedVideoPage({ params }: PageProps) {
 
   const video = result.data;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
-  const pageUrl = `${baseUrl}/testimonials/video/${id}`;
+  const smartLink = await getPublishedSmartLinkBySource({
+    organizationId: video.organization.id,
+    sourceType: "video_testimonial",
+    sourceId: id,
+  });
+  const pageUrl = smartLink
+    ? `${baseUrl}/s/${smartLink.slug}`
+    : `${baseUrl}/testimonials/video/${id}`;
 
   return (
     <EmbedVideoPlayer

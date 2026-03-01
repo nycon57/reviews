@@ -52,8 +52,8 @@ export interface LeaderboardEntry {
   change: number; // rank change from previous period
 }
 
-// Get user context for manager actions - requires manager or admin role
-async function getManagerContext() {
+// Get user context — requires authenticated user with an organization
+async function getEnterpriseContext() {
   const user = await unifiedGetUser();
 
   if (!user) {
@@ -67,20 +67,27 @@ async function getManagerContext() {
     .eq("id", user.id)
     .single();
 
-  if (!userData) {
-    return null;
-  }
-
-  // Check if user has manager or admin role
-  if (userData.role !== "manager" && userData.role !== "admin") {
+  if (!userData || !userData.organization_id) {
     return null;
   }
 
   return {
     userId: userData.id,
-    organizationId: userData.organization_id!,
+    organizationId: userData.organization_id,
     role: userData.role,
   };
+}
+
+// Get user context for manager actions - requires manager or admin role
+async function getManagerContext() {
+  const ctx = await getEnterpriseContext();
+  if (!ctx) return null;
+
+  if (ctx.role !== "manager" && ctx.role !== "admin") {
+    return null;
+  }
+
+  return ctx;
 }
 
 // Get team-level metrics for the manager dashboard
@@ -305,19 +312,33 @@ export async function getUserComparison(
   return { success: true, data: comparison };
 }
 
-// Get filter options (unique branches and regions)
+// Get filter options (unique branches and regions) — manager only
 export async function getFilterOptions(): Promise<ActionResult<FilterOptions>> {
   const context = await getManagerContext();
   if (!context) {
     return { success: false, error: "Unauthorized - Manager access required" };
   }
 
+  return fetchFilterOptions(context.organizationId);
+}
+
+// Get filter options — any enterprise user (used by leaderboard)
+export async function getEnterpriseFilterOptions(): Promise<ActionResult<FilterOptions>> {
+  const context = await getEnterpriseContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  return fetchFilterOptions(context.organizationId);
+}
+
+async function fetchFilterOptions(organizationId: string): Promise<ActionResult<FilterOptions>> {
   const supabase = createAdminClient();
 
   const { data: userList, error } = await supabase
     .from("users")
     .select("branch, region")
-    .eq("organization_id", context.organizationId);
+    .eq("organization_id", organizationId);
 
   if (error) {
     return { success: false, error: "Failed to fetch filter options" };

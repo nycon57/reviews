@@ -13,7 +13,6 @@ export type {
   Invitation,
   OrganizationMember,
   OrganizationMemberFull,
-  UpdateMemberProfileData,
   OrganizationStats,
   AuditLog,
 } from "./types";
@@ -58,4 +57,5 @@ export {
   updateMemberProfile,
   uploadMemberAvatar,
   uploadMemberBanner,
+  createOrganizationUser,
 } from "./actions";

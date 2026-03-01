@@ -80,7 +80,7 @@ export async function sendSmsReviewRequest(
   });
 
   if (result.success) {
-    revalidatePath("/dashboard/requests");
+    revalidatePath("/dashboard/reviews");
   }
 
   return result.success

@@ -30,7 +30,8 @@ import {
 } from "@/lib/video-testimonials/actions";
 import { RequestFilters } from "./request-filters";
 import { RequestTable } from "./request-table";
-import { CreateRequestDialog, CancelRequestDialog } from "./request-dialogs";
+import { CancelRequestDialog } from "./request-dialogs";
+import { SendReviewRequestDialog } from "./send-review-request-dialog";
 
 // ============================================================================
 // Types
@@ -353,10 +354,9 @@ export function VideoTestimonialRequestsDashboard({
         </CardContent>
       </Card>
 
-      <CreateRequestDialog
+      <SendReviewRequestDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
-        teamMembers={teamMembers}
         onSuccess={fetchRequests}
       />
 

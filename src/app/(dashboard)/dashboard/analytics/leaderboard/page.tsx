@@ -4,8 +4,8 @@ import {
   Trophy,
 } from "@phosphor-icons/react/dist/ssr";
 import { LeaderboardDashboard } from "./leaderboard-dashboard";
-import { getFilterOptions } from "@/lib/dashboard";
-import { requireEnterpriseManager } from "@/lib/access";
+import { getEnterpriseFilterOptions } from "@/lib/dashboard";
+import { requireEnterprise } from "@/lib/access";
 
 export const metadata = {
   title: "Leaderboard | RepWell",
@@ -13,25 +13,25 @@ export const metadata = {
 };
 
 async function getInitialFilters() {
-  const result = await getFilterOptions();
+  const result = await getEnterpriseFilterOptions();
   return result.success ? result.data || { branches: [], regions: [] } : { branches: [], regions: [] };
 }
 
 export default async function LeaderboardPage() {
-  // Check access - requires enterprise manager (server actions also require manager/admin)
-  await requireEnterpriseManager();
+  // Check access - requires enterprise account (all enterprise users can view leaderboard)
+  await requireEnterprise();
   const filters = await getInitialFilters();
 
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-          <Trophy className="h-5 w-5 text-repwell-teal-300" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <Trophy className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-repwell-teal-500">Performance Leaderboard</h1>
-          <p className="text-repwell-teal-300">
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Performance Leaderboard</h1>
+          <p className="text-sm leading-snug text-repwell-teal-300">
             View team rankings and performance metrics
           </p>
         </div>

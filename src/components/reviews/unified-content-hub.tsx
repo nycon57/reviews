@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   FilmStrip as Film,
   Chats as MessageSquare,
+  PaperPlaneRight,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -19,8 +20,13 @@ import type {
   VideoLibraryStats,
 } from "@/lib/video-testimonials/actions";
 import type { AggregatedReview, ReviewAggregationStats } from "@/lib/reviews/types";
+import type {
+  UnifiedRequest,
+  UnifiedRequestStats,
+} from "@/lib/requests/unified-requests";
 import { ReviewQueue } from "@/components/reviews/review-queue";
 import { VideoLibraryProvider, VideoTabContent } from "@/components/video-library";
+import { UnifiedRequestsTab } from "@/components/requests/unified-requests-tab";
 
 // ============================================================================
 // Types
@@ -51,9 +57,14 @@ interface UnifiedContentHubProps {
   userRole: "admin" | "manager" | "user";
   hasAiAccess: boolean;
   initialReviewId?: string;
+  // Requests tab (optional — hidden when not provided)
+  initialRequests?: UnifiedRequest[];
+  initialRequestsTotal?: number;
+  initialRequestStats?: UnifiedRequestStats;
+  canSendRequests?: boolean;
 }
 
-type ContentTab = "reviews" | "videos";
+type ContentTab = "reviews" | "videos" | "requests";
 
 // ============================================================================
 // Main Unified Content Hub Component
@@ -71,10 +82,30 @@ export function UnifiedContentHub({
   userRole,
   hasAiAccess,
   initialReviewId,
+  initialRequests,
+  initialRequestsTotal,
+  initialRequestStats,
+  canSendRequests,
 }: UnifiedContentHubProps) {
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get("tab") === "videos" ? "videos" : "reviews";
+  const tabParam = searchParams.get("tab");
+  const defaultTab: ContentTab =
+    tabParam === "videos"
+      ? "videos"
+      : tabParam === "requests" && canSendRequests
+        ? "requests"
+        : "reviews";
   const [activeTab, setActiveTab] = useState<ContentTab>(defaultTab);
+
+  const showRequestsTab = canSendRequests && initialRequestStats;
+
+  const tabs: Array<{ value: ContentTab; label: string; icon: typeof MessageSquare; count: number }> = [
+    { value: "reviews", label: "Text Reviews", icon: MessageSquare, count: reviewStats.total },
+    { value: "videos", label: "Video Reviews", icon: Film, count: videoStats.total },
+    ...(showRequestsTab
+      ? [{ value: "requests" as const, label: "Requests", icon: PaperPlaneRight, count: initialRequestStats.total }]
+      : []),
+  ];
 
   return (
     <div className="space-y-6">
@@ -84,10 +115,7 @@ export function UnifiedContentHub({
         className="space-y-4"
       >
         <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto gap-0">
-          {[
-            { value: "reviews" as const, label: "Text Reviews", icon: MessageSquare, count: reviewStats.total },
-            { value: "videos" as const, label: "Video Testimonials", icon: Film, count: videoStats.total },
-          ].map((tab) => {
+          {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <TabsTrigger
@@ -137,6 +165,18 @@ export function UnifiedContentHub({
             <VideoTabContent />
           </VideoLibraryProvider>
         </TabsContent>
+
+        {showRequestsTab && (
+          <TabsContent value="requests" className="mt-6">
+            <UnifiedRequestsTab
+              initialRequests={initialRequests ?? []}
+              initialTotal={initialRequestsTotal ?? 0}
+              initialStats={initialRequestStats}
+              teamMembers={teamMembers}
+              userRole={userRole}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

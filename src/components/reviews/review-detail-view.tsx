@@ -12,25 +12,30 @@ import {
   Chats as MessageSquare,
   Calendar,
   MapPin,
-  BuildingOffice as Building2,
   TrendUp as TrendingUp,
   Tag as Tags,
   Clock,
   ShareNetwork as Share2,
+  Copy,
+  LinkSimple,
+  Palette,
+  GearSix,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { SourceIcon } from "@/components/shared/review-item";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   archiveReview,
   toggleReviewFeatured,
 } from "@/lib/reviews/aggregation-actions";
-import type { AggregatedReview } from "@/lib/reviews/types";
 import { ResponseComposer } from "./response-composer";
 import { SocialPostComposer } from "@/components/social";
 import { toast } from "@/hooks/use-toast";
+import { ensureReviewSmartLink } from "@/lib/share-studio/actions";
+import { ReviewShareAssets } from "./review-share-assets";
+import { AssetCreatorModal } from "@/components/share-studio/asset-creator-modal";
+import { AnimatedPresence, AnimatedSection } from "@/components/motion";
 
 // ============================================================================
 // Types
@@ -120,12 +125,12 @@ function StatusBadge({ status }: { status: ReviewDetail["status"] }) {
 function SentimentBadge({ label }: { label: string | null }) {
   if (!label) return null;
   const colors: Record<string, string> = {
-    positive: "bg-green-100 text-green-700",
-    neutral: "bg-gray-100 text-gray-700",
-    negative: "bg-red-100 text-red-700",
+    positive: "border-green-200 text-green-700 bg-green-50/50",
+    neutral: "border-border text-muted-foreground",
+    negative: "border-red-200 text-red-700 bg-red-50/50",
   };
   return (
-    <Badge className={colors[label.toLowerCase()] || "bg-gray-100 text-gray-700"}>
+    <Badge variant="outline" className={colors[label.toLowerCase()] || "border-border text-muted-foreground"}>
       {label}
     </Badge>
   );
@@ -140,6 +145,12 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
   const [isPending, startTransition] = useTransition();
   const [showResponseForm, setShowResponseForm] = useState(false);
   const [showSocialComposer, setShowSocialComposer] = useState(false);
+  const [assetCreatorOpen, setAssetCreatorOpen] = useState(false);
+  const [shareBusy, setShareBusy] = useState<Set<string>>(new Set());
+  const [assetsRefreshToken, setAssetsRefreshToken] = useState(0);
+
+  const addBusy = (key: string) => setShareBusy(prev => new Set(prev).add(key));
+  const removeBusy = (key: string) => setShareBusy(prev => { const next = new Set(prev); next.delete(key); return next; });
 
   const canManage = userRole === "admin" || userRole === "manager";
 
@@ -184,73 +195,132 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
         .slice(0, 2)
     : "?";
 
+  const resolveSmartLinkUrl = async (): Promise<string | null> => {
+    const result = await ensureReviewSmartLink(review.id);
+    if (!result.success || !result.url) {
+      toast({
+        title: "Unable to create Smart Link",
+        description: result.error || "Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    }
+    return `${window.location.origin}${result.url}`;
+  };
+
+  const handleCopySmartLink = () => {
+    addBusy("link");
+    void (async () => {
+      try {
+        const url = await resolveSmartLinkUrl();
+        if (!url) return;
+        await navigator.clipboard.writeText(url);
+        toast({ title: "Smart Link copied" });
+        setAssetsRefreshToken((value) => value + 1);
+      } catch {
+        toast({
+          title: "Copy failed",
+          description: "Could not copy Smart Link.",
+          variant: "destructive",
+        });
+      } finally {
+        removeBusy("link");
+      }
+    })();
+  };
+
+  const handleOpenSmartLink = () => {
+    addBusy("link");
+    void (async () => {
+      try {
+        const url = await resolveSmartLinkUrl();
+        if (!url) return;
+        window.open(url, "_blank", "noopener,noreferrer");
+        setAssetsRefreshToken((value) => value + 1);
+      } finally {
+        removeBusy("link");
+      }
+    })();
+  };
+
+  const hasAiData = review.sentimentLabel || (review.themes && review.themes.length > 0);
+  const hasSourceInfo = review.sourceUrl || review.sourceReviewId;
+
   return (
     <div className="flex-1 space-y-6">
-      {/* Back link and header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/reviews">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Reviews
-            </Button>
-          </Link>
-          <div className="h-6 w-px bg-border" />
-          <div className="flex items-center gap-2">
-            <StatusBadge status={review.status} />
-            <SourceIcon source={review.source} />
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star
-              key={i}
-              className={`h-5 w-5 ${
-                i < review.rating
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "fill-muted text-muted"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
+      {/* Back link */}
+      <Link href="/dashboard/reviews">
+        <Button variant="ghost" size="sm" className="gap-2 hover:text-repwell-teal-400">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Reviews
+        </Button>
+      </Link>
 
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main content - 2 columns */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Customer & Review */}
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0 text-lg font-semibold">
+          {/* Customer & Review — unified hero card */}
+          <Card className="border border-border shadow-soft overflow-hidden">
+            {/* Gradient header with customer info */}
+            <div className="bg-gradient-to-r from-repwell-sage-100/40 to-transparent px-6 pt-5 pb-4 border-b border-border/50">
+              <div className="flex items-start gap-4">
+                <div
+                  role="img"
+                  aria-label={review.customerName || "Customer avatar"}
+                  className="flex h-12 w-12 items-center justify-center rounded-full bg-repwell-teal-300/10 text-repwell-teal-400 shrink-0 text-base font-semibold"
+                >
                   {customerInitials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="font-semibold text-xl">
-                    {review.customerName || "Anonymous"}
-                  </h2>
-                  {review.customerLocation && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3" />
-                      {review.customerLocation}
+                  <div className="flex items-center justify-between gap-3">
+                    <h2 className="font-semibold text-xl text-repwell-teal-500 truncate">
+                      {review.customerName || "Anonymous"}
+                    </h2>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <StatusBadge status={review.status} />
+                      <SourceIcon source={review.source} />
                     </div>
-                  )}
-                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(review.reviewDate)}
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(review.reviewDate)}
+                    </span>
+                    {review.customerLocation && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {review.customerLocation}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
 
-              <Separator className="my-4" />
-
-              <div className="space-y-3">
-                {review.title && (
-                  <h3 className="font-medium text-lg">{review.title}</h3>
-                )}
+            <CardContent className="pt-5 pb-6 px-6 space-y-5">
+              {/* Review title with star rating */}
+              <div>
+                <div className="flex items-center justify-between gap-3 mb-1.5">
+                  {review.title && (
+                    <h3 className="font-medium text-lg text-repwell-teal-500">{review.title}</h3>
+                  )}
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        weight={i < review.rating ? "fill" : "regular"}
+                        className={`h-4 w-4 ${
+                          i < review.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-repwell-sage-200"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
                 {review.text ? (
-                  <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  <p className="text-foreground/80 whitespace-pre-wrap leading-relaxed">
                     {review.text}
                   </p>
                 ) : (
@@ -259,129 +329,166 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                   </p>
                 )}
               </div>
+
+              {/* AI Analysis — inline box (matching modal pattern) */}
+              {hasAiData && (
+                <div className="rounded-lg border border-border/50 bg-muted/30 p-3.5 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <TrendingUp className="h-3.5 w-3.5 text-repwell-teal-300 mt-0.5 shrink-0" weight="duotone" />
+                    <div className="flex flex-wrap gap-1.5">
+                      {review.sentimentLabel && <SentimentBadge label={review.sentimentLabel} />}
+                      {review.themes?.map((theme, i) => (
+                        <Badge key={i} variant="outline" className="border-border/50 text-muted-foreground">
+                          <Tags className="h-3 w-3 mr-1" />
+                          {theme}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  {review.keyPhrases && review.keyPhrases.length > 0 && (
+                    <p className="text-xs text-muted-foreground pl-5.5">
+                      <span className="font-medium">Key phrases:</span> {review.keyPhrases.join(", ")}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Source info — inline within the card */}
+              {hasSourceInfo && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {review.sourceUrl && (
+                    <a
+                      href={review.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-repwell-teal-400 hover:text-repwell-teal-500 transition-colors inline-flex items-center gap-1"
+                    >
+                      View on {review.source.charAt(0).toUpperCase() + review.source.slice(1)}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                  {review.sourceUrl && review.syncedAt && (
+                    <span className="text-border">&middot;</span>
+                  )}
+                  {review.syncedAt && (
+                    <span className="inline-flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Synced {formatDateTime(review.syncedAt)}
+                    </span>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* AI Analysis */}
-          {(review.sentimentLabel || (review.themes && review.themes.length > 0)) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <TrendingUp className="h-4 w-4" />
-                  AI Analysis
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {review.sentimentLabel && <SentimentBadge label={review.sentimentLabel} />}
-                  {review.themes?.map((theme, i) => (
-                    <Badge key={i} variant="outline" className="flex items-center gap-1">
-                      <Tags className="h-3 w-3" />
-                      {theme}
-                    </Badge>
-                  ))}
-                </div>
-                {review.keyPhrases && review.keyPhrases.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-medium">Key phrases: </span>
-                    {review.keyPhrases.join(", ")}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Response Section */}
+          {/* Response Section — inline box */}
           {review.responseText && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <MessageSquare className="h-4 w-4" />
-                  Response
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-sm whitespace-pre-wrap">{review.responseText}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Responded on {formatDateTime(review.responseAt)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3.5">
+              <div className="flex items-center gap-1.5 mb-2">
+                <MessageSquare className="h-3.5 w-3.5 text-repwell-teal-300" weight="duotone" />
+                <span className="text-xs font-medium text-repwell-teal-400 uppercase tracking-wider">Your Response</span>
+              </div>
+              <p className="text-sm text-foreground/80 whitespace-pre-wrap">{review.responseText}</p>
+              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatDateTime(review.responseAt)}
+              </p>
+            </div>
           )}
 
           {/* Response Form */}
-          {!review.responseText && showResponseForm && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <MessageSquare className="h-4 w-4" />
-                  Compose Response
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponseComposer
-                  review={review as unknown as AggregatedReview}
-                  onSuccess={() => {
-                    setShowResponseForm(false);
-                    router.refresh();
-                  }}
-                  onCancel={() => setShowResponseForm(false)}
-                  hasAiAccess={hasAiAccess}
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Source Info */}
-          {(review.sourceUrl || review.sourceReviewId) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Building2 className="h-4 w-4" />
-                  Source Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {review.sourceUrl && (
-                  <a
-                    href={review.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline flex items-center gap-1"
-                  >
-                    View on {review.source.charAt(0).toUpperCase() + review.source.slice(1)}
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-                {review.syncedAt && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    Last synced: {formatDateTime(review.syncedAt)}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
+          <AnimatedPresence show={!review.responseText && showResponseForm} mode="slide-up">
+            <div className="rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/10 p-4">
+              <div className="flex items-center gap-1.5 mb-3">
+                <MessageSquare className="h-3.5 w-3.5 text-repwell-teal-300" weight="duotone" />
+                <span className="text-xs font-medium text-repwell-teal-400 uppercase tracking-wider">Compose Response</span>
+              </div>
+              <ResponseComposer
+                review={review}
+                onSuccess={() => {
+                  setShowResponseForm(false);
+                  router.refresh();
+                }}
+                onCancel={() => setShowResponseForm(false)}
+                hasAiAccess={hasAiAccess}
+              />
+            </div>
+          </AnimatedPresence>
         </div>
 
         {/* Sidebar - 1 column */}
         <div className="space-y-6">
+          {/* Share Studio */}
+          <AnimatedSection>
+          <Card className="border border-border shadow-soft overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
+                  <Share2 className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
+                </div>
+                Share Studio
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 pt-4">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={handleCopySmartLink}
+                disabled={shareBusy.has("link")}
+                aria-label="Copy smart link to clipboard"
+              >
+                <Copy className="h-4 w-4" weight="duotone" />
+                Copy Smart Link
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={handleOpenSmartLink}
+                disabled={shareBusy.has("link")}
+                aria-label="Open smart link in new tab"
+              >
+                <LinkSimple className="h-4 w-4" weight="duotone" />
+                Open Smart Link
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => setAssetCreatorOpen(true)}
+                aria-label="Create a shareable asset"
+              >
+                <Palette className="h-4 w-4" weight="duotone" />
+                Create Asset
+              </Button>
+            </CardContent>
+          </Card>
+          </AnimatedSection>
+
+          <ReviewShareAssets
+            sourceType="review"
+            sourceId={review.id}
+            refreshToken={assetsRefreshToken}
+          />
+
           {/* Actions */}
           {canManage && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Actions</CardTitle>
+            <AnimatedSection delay={0.1}>
+            <Card className="border border-border shadow-soft overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
+                    <GearSix className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
+                  </div>
+                  Actions
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 pt-4">
                 <Button
                   variant={review.featured ? "default" : "outline"}
                   className="w-full gap-2"
                   onClick={handleToggleFeatured}
                   disabled={isPending}
                 >
-                  <Flag className="h-4 w-4" />
+                  <Flag className="h-4 w-4" weight="duotone" />
                   {review.featured ? "Featured" : "Feature"}
                 </Button>
                 {!review.responseText && (
@@ -390,7 +497,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                     className="w-full gap-2"
                     onClick={() => setShowResponseForm(!showResponseForm)}
                   >
-                    <MessageSquare className="h-4 w-4" />
+                    <MessageSquare className="h-4 w-4" weight="duotone" />
                     Respond
                   </Button>
                 )}
@@ -400,7 +507,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                     className="w-full gap-2"
                     onClick={() => setShowSocialComposer(true)}
                   >
-                    <Share2 className="h-4 w-4" />
+                    <Share2 className="h-4 w-4" weight="duotone" />
                     Share to Social
                   </Button>
                 )}
@@ -411,47 +518,52 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                     onClick={handleArchive}
                     disabled={isPending}
                   >
-                    <Archive className="h-4 w-4" />
+                    <Archive className="h-4 w-4" weight="duotone" />
                     Archive
                   </Button>
                 )}
               </CardContent>
             </Card>
+            </AnimatedSection>
           )}
 
           {/* Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Calendar className="h-4 w-4" />
+          <AnimatedSection delay={0.2}>
+          <Card className="border border-border shadow-soft overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
+                  <Calendar className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
+                </div>
                 Timeline
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Created</dt>
-                  <dd className="font-medium">{formatDateTime(review.createdAt)}</dd>
+                  <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Created</dt>
+                  <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.createdAt)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Updated</dt>
-                  <dd className="font-medium">{formatDateTime(review.updatedAt)}</dd>
+                  <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Updated</dt>
+                  <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.updatedAt)}</dd>
                 </div>
                 {review.approvedAt && (
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Approved</dt>
-                    <dd className="font-medium">{formatDateTime(review.approvedAt)}</dd>
+                    <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Approved</dt>
+                    <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.approvedAt)}</dd>
                   </div>
                 )}
                 {review.publishedAt && (
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Published</dt>
-                    <dd className="font-medium">{formatDateTime(review.publishedAt)}</dd>
+                    <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Published</dt>
+                    <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.publishedAt)}</dd>
                   </div>
                 )}
               </dl>
             </CardContent>
           </Card>
+          </AnimatedSection>
         </div>
       </div>
 
@@ -464,6 +576,20 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
         open={showSocialComposer}
         onOpenChange={setShowSocialComposer}
         onSuccess={() => router.refresh()}
+      />
+
+      {/* Asset Creator Modal */}
+      <AssetCreatorModal
+        open={assetCreatorOpen}
+        onOpenChange={setAssetCreatorOpen}
+        sourceType="review"
+        sourceId={review.id}
+        reviewData={{
+          text: review.text,
+          customerName: review.customerName,
+          rating: review.rating,
+        }}
+        onQueued={() => setAssetsRefreshToken((v) => v + 1)}
       />
     </div>
   );

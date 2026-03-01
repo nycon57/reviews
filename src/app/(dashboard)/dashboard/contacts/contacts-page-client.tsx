@@ -96,14 +96,14 @@ export function ContactsPageClient() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <AddressBook className="h-5 w-5 text-primary" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <AddressBook className="h-6 w-6 text-repwell-teal-300" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold text-repwell-teal-500">
+            <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">
               Contacts
             </h1>
-            <p className="mt-1 text-muted-foreground">
+            <p className="text-sm leading-snug text-repwell-teal-300">
               Manage your organization&apos;s employee directory
             </p>
           </div>

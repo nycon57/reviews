@@ -12,9 +12,7 @@ import {
   CheckCircle as CheckCircle2,
   ArrowsClockwise as RefreshCw,
   Envelope as Mail,
-  Plugs as Webhook,
   ArrowCounterClockwise as RotateCcw,
-  Gear as Settings,
 } from "@phosphor-icons/react";
 import {
   getDistributionQueue,
@@ -22,10 +20,10 @@ import {
   resendSurvey,
 } from "@/lib/distribution/actions";
 import { formatDistanceToNow } from "date-fns";
-import { SendSurveyDialog } from "./send-survey-dialog";
-import { WebhookConfigManager } from "./webhook-config-manager";
-import { WebhookLogsList } from "./webhook-logs-list";
+import { SendReviewRequestDialog } from "@/components/requests/send-review-request-dialog";
+import { Plus } from "@phosphor-icons/react";
 import { useToast } from "@/hooks/use-toast";
+import { AnimatedList, AnimatedItem } from "@/components/motion";
 
 interface QueueItem {
   id: string;
@@ -69,6 +67,7 @@ interface Stats {
 export function DistributionDashboard() {
   const [isPending, startTransition] = useTransition();
   const [resendingId, setResendingId] = useState<string | null>(null);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -268,17 +267,12 @@ export function DistributionDashboard() {
                   <Send className="h-4 w-4" />
                   <span className="hidden sm:inline">Recent</span> Surveys
                 </TabsTrigger>
-                <TabsTrigger value="webhooks" className="flex items-center gap-2 text-xs sm:text-sm">
-                  <Webhook className="h-4 w-4" />
-                  <span className="hidden sm:inline">Webhook</span> Logs
-                </TabsTrigger>
-                <TabsTrigger value="settings" className="flex items-center gap-2 text-xs sm:text-sm">
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </TabsTrigger>
               </TabsList>
               <div className="flex items-center gap-2 shrink-0">
-                <SendSurveyDialog onSuccess={loadData} />
+                <Button onClick={() => setRequestDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Send Review Request
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -300,9 +294,9 @@ export function DistributionDashboard() {
                   <p>No items in distribution queue</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <AnimatedList className="space-y-4">
                   {queueItems.map((item) => (
-                    <div
+                    <AnimatedItem
                       key={item.id}
                       className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors"
                     >
@@ -336,9 +330,9 @@ export function DistributionDashboard() {
                       <div className="flex items-center gap-2">
                         {getStatusBadge(item.status)}
                       </div>
-                    </div>
+                    </AnimatedItem>
                   ))}
-                </div>
+                </AnimatedList>
               )}
             </CardContent>
           </TabsContent>
@@ -351,9 +345,9 @@ export function DistributionDashboard() {
                   <p>No recent surveys found</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <AnimatedList className="space-y-4">
                   {surveys.map((survey) => (
-                    <div
+                    <AnimatedItem
                       key={survey.id}
                       className="flex items-center justify-between p-4 rounded-lg border border-border/50 bg-card hover:bg-muted/30 transition-colors"
                     >
@@ -396,26 +390,21 @@ export function DistributionDashboard() {
                         )}
                         {getStatusBadge(survey.status)}
                       </div>
-                    </div>
+                    </AnimatedItem>
                   ))}
-                </div>
+                </AnimatedList>
               )}
             </CardContent>
           </TabsContent>
 
-          <TabsContent value="webhooks" className="m-0">
-            <CardContent>
-              <WebhookLogsList />
-            </CardContent>
-          </TabsContent>
-
-          <TabsContent value="settings" className="m-0">
-            <CardContent>
-              <WebhookConfigManager />
-            </CardContent>
-          </TabsContent>
         </Tabs>
       </Card>
+
+      <SendReviewRequestDialog
+        open={requestDialogOpen}
+        onOpenChange={setRequestDialogOpen}
+        onSuccess={loadData}
+      />
     </div>
   );
 }

@@ -35,7 +35,7 @@ const SAMPLE_LO_PROFILE = {
   avatar_url: null,
   photo_url: null,
   nmls_id: "1234567",
-  title: "Senior Loan Officer",
+  title: "Senior Professional",
   average_rating: 4.8,
   total_reviews: 127,
   licensing_states: ["CA", "TX", "FL"],
@@ -70,9 +70,9 @@ const SAMPLE_BRANCH_PROFILE = {
   address: { street: "123 Main Street", city: "Austin", state: "TX", zip: "78701" },
   telephone: "+15125551234",
   team_members: [
-    { id: "t1", full_name: "Sarah Johnson", photo_url: null, title: "Senior Loan Officer", nmls_id: "1234567", average_rating: 4.9, total_reviews: 45 },
-    { id: "t2", full_name: "Mike Thompson", photo_url: null, title: "Loan Officer", nmls_id: "2345678", average_rating: 4.6, total_reviews: 28 },
-    { id: "t3", full_name: "Lisa Chen", photo_url: null, title: "Loan Officer", nmls_id: "3456789", average_rating: 4.8, total_reviews: 16 },
+    { id: "t1", full_name: "Sarah Johnson", photo_url: null, title: "Senior Professional", nmls_id: "1234567", average_rating: 4.9, total_reviews: 45 },
+    { id: "t2", full_name: "Mike Thompson", photo_url: null, title: "Professional", nmls_id: "2345678", average_rating: 4.6, total_reviews: 28 },
+    { id: "t3", full_name: "Lisa Chen", photo_url: null, title: "Professional", nmls_id: "3456789", average_rating: 4.8, total_reviews: 16 },
   ],
 };
 

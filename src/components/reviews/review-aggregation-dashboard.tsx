@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,7 @@ import {
   bulkToggleFeatured,
   exportReviews,
 } from "@/lib/reviews/aggregation-actions";
-import { ReviewDetailModal } from "./review-detail-modal";
+import { AnimatedList, AnimatedItem } from "@/components/motion";
 
 interface ReviewAggregationDashboardProps {
   initialReviews: AggregatedReview[];
@@ -69,6 +70,7 @@ export function ReviewAggregationDashboard({
   initialStats,
   teamMembers,
 }: ReviewAggregationDashboardProps) {
+  const router = useRouter();
   const [reviews, setReviews] = useState(initialReviews);
   const [total, setTotal] = useState(initialTotal);
   const [stats] = useState(initialStats);
@@ -86,10 +88,6 @@ export function ReviewAggregationDashboard({
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // Modal
-  const [selectedReview, setSelectedReview] = useState<AggregatedReview | null>(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   // Show advanced filters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -241,11 +239,6 @@ export function ReviewAggregationDashboard({
         URL.revokeObjectURL(url);
       }
     });
-  };
-
-  const openReviewDetail = (review: AggregatedReview) => {
-    setSelectedReview(review);
-    setDetailModalOpen(true);
   };
 
   const clearFilters = () => {
@@ -553,12 +546,12 @@ export function ReviewAggregationDashboard({
               </p>
             </div>
           ) : (
-            <div className="divide-y">
+            <AnimatedList className="divide-y">
               {reviews.map((review) => (
-                <div
+                <AnimatedItem
                   key={review.id}
                   className="flex gap-4 p-4 transition-colors hover:bg-muted/50 cursor-pointer"
-                  onClick={() => openReviewDetail(review)}
+                  onClick={() => router.push(`/dashboard/reviews/${review.id}`)}
                 >
                   <div
                     className="flex items-start pt-1"
@@ -642,7 +635,7 @@ export function ReviewAggregationDashboard({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => openReviewDetail(review)}
+                          onClick={() => router.push(`/dashboard/reviews/${review.id}`)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -668,7 +661,7 @@ export function ReviewAggregationDashboard({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openReviewDetail(review)}>
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/reviews/${review.id}`)}>
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
@@ -686,9 +679,9 @@ export function ReviewAggregationDashboard({
                       </div>
                     </div>
                   </div>
-                </div>
+                </AnimatedItem>
               ))}
-            </div>
+            </AnimatedList>
           )}
         </CardContent>
       </Card>
@@ -725,13 +718,6 @@ export function ReviewAggregationDashboard({
         </div>
       )}
 
-      {/* Review Detail Modal */}
-      <ReviewDetailModal
-        review={selectedReview}
-        open={detailModalOpen}
-        onOpenChange={setDetailModalOpen}
-        onUpdate={refreshReviews}
-      />
     </div>
   );
 }

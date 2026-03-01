@@ -231,28 +231,12 @@ export type WidgetConfigJson = z.infer<typeof widgetConfigJsonSchema>;
 
 // ── Action input schemas ────────────────────────────────────────────────
 
-export const createWidgetInputSchema = z.object({
-  name: z.string().min(1, "Widget name is required").max(100),
-  widget_type: z.enum(WIDGET_TYPES),
-  entity_type: z.enum(WIDGET_ENTITY_TYPES),
-  entity_id: z.string().uuid().optional(),
-  config: widgetConfigJsonSchema.optional().default({}),
-  allowed_domains: z.array(z.string()).optional().default([]),
-  enable_structured_data: z.boolean().optional().default(true),
-  structured_data_type: z.string().optional().default("LocalBusiness"),
-  status: z.enum(WIDGET_STATUSES).optional().default("draft"),
-});
-
-export type CreateWidgetInput = z.input<typeof createWidgetInputSchema>;
-
 export const updateWidgetInputSchema = z.object({
   id: z.string().uuid("Invalid widget ID"),
-  name: z.string().min(1).max(100).optional(),
   config: widgetConfigJsonSchema.partial().optional(),
   allowed_domains: z.array(z.string()).optional(),
   enable_structured_data: z.boolean().optional(),
   structured_data_type: z.string().optional(),
-  status: z.enum(WIDGET_STATUSES).optional(),
   entity_id: z.string().uuid().optional(),
 });
 
@@ -274,15 +258,3 @@ export const getWidgetInputSchema = z.object({
 });
 
 export type GetWidgetInput = z.infer<typeof getWidgetInputSchema>;
-
-export const deleteWidgetInputSchema = z.object({
-  id: z.string().uuid("Invalid widget ID"),
-});
-
-export type DeleteWidgetInput = z.infer<typeof deleteWidgetInputSchema>;
-
-export const duplicateWidgetInputSchema = z.object({
-  id: z.string().uuid("Invalid widget ID"),
-});
-
-export type DuplicateWidgetInput = z.infer<typeof duplicateWidgetInputSchema>;

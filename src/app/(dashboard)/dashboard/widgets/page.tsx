@@ -5,11 +5,27 @@ import { WidgetList } from "@/components/widgets/widget-list";
 import { listWidgets } from "@/lib/widgets/actions";
 import { ensureDefaultWidgets } from "@/lib/widgets/seed-defaults";
 import { getAccessContext } from "@/lib/access";
+import type { WidgetConfig } from "@/lib/widgets/types";
 
 export const metadata = {
-  title: "Widgets | RepWell",
-  description: "Manage your embeddable review widgets",
+  title: "Widget Templates | RepWell",
+  description: "Customize and embed review widgets on your website",
 };
+
+/** Keep one widget per type (oldest, i.e. first-seeded). */
+function deduplicateByType(widgets: WidgetConfig[]): WidgetConfig[] {
+  const seen = new Map<string, WidgetConfig>();
+  // Items arrive newest-first from query; reverse so oldest wins per type
+  const sorted = [...widgets].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  for (const w of sorted) {
+    if (!seen.has(w.widget_type)) {
+      seen.set(w.widget_type, w);
+    }
+  }
+  return Array.from(seen.values());
+}
 
 async function WidgetListLoader() {
   const ctx = await getAccessContext();
@@ -32,9 +48,9 @@ async function WidgetListLoader() {
     );
   }
 
-  return (
-    <WidgetList widgets={result.data.items} total={result.data.total} />
-  );
+  const widgets = deduplicateByType(result.data.items);
+
+  return <WidgetList widgets={widgets} />;
 }
 
 function WidgetListSkeleton() {
@@ -42,19 +58,14 @@ function WidgetListSkeleton() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-4 w-24 mt-2" />
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-64 mt-2" />
         </div>
-        <Skeleton className="h-10 w-36" />
-      </div>
-      <div className="flex gap-3">
-        <Skeleton className="h-10 flex-1" />
-        <Skeleton className="h-10 w-36" />
         <Skeleton className="h-10 w-44" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-40 rounded-xl" />
+        {Array.from({ length: 9 }).map((_, i) => (
+          <Skeleton key={i} className="h-36 rounded-xl" />
         ))}
       </div>
     </div>

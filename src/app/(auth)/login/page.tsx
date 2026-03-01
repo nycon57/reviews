@@ -78,6 +78,7 @@ function LoginContent() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const redirectTo = searchParams.get("redirect") || "/dashboard";
+  const reason = searchParams.get("reason");
 
   // Password form
   const passwordForm = useForm<SignInInput>({
@@ -206,6 +207,11 @@ function LoginContent() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {reason === "deactivated" && (
+          <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
+            Your account has been deactivated. Contact your administrator.
+          </div>
+        )}
         {/* Auth mode toggle */}
         <div className="flex rounded-lg border p-1">
           <button

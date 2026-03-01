@@ -2,32 +2,27 @@
 
 import { useReducer, useCallback, useTransition, useRef, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Save, ArrowLeft, Loader2, FlaskConical } from "lucide-react";
+import { Save, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { WidgetBuilderSidebar } from "./widget-builder-sidebar";
 import { WidgetPreview } from "./widget-preview";
 import { EmbedCodePanel } from "./embed-code-panel";
-import { CreateTestDialog } from "./ab-test/create-test-dialog";
-import { createWidget, updateWidget } from "@/lib/widgets/actions";
+import { updateWidget } from "@/lib/widgets/actions";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
-import type { WidgetConfig, WidgetType, WidgetEntityType, WidgetStatus } from "@/lib/widgets/types";
-import type { AbTestConfig } from "@/lib/widgets/ab-testing";
+import type { WidgetConfig, WidgetType, WidgetEntityType } from "@/lib/widgets/types";
+import { WIDGET_TYPE_LABELS } from "@/lib/widgets/constants";
 import { THEME_PRESETS } from "./theme-preset-selector";
 
 // ── State management ──────────────────────────────────────────────────
 
 interface BuilderState {
-  name: string;
   widgetType: WidgetType;
   entityType: WidgetEntityType;
   entityId: string | null;
   config: WidgetConfigJson;
   allowedDomains: string[];
-  status: WidgetStatus;
   enableStructuredData: boolean;
   structuredDataType: string;
   widgetId: string | null;
@@ -37,10 +32,8 @@ interface BuilderState {
 }
 
 type BuilderAction =
-  | { type: "SET_NAME"; payload: string }
   | { type: "SET_CONFIG"; payload: Partial<WidgetConfigJson> }
   | { type: "SET_DOMAINS"; payload: string[] }
-  | { type: "SET_STATUS"; payload: WidgetStatus }
   | { type: "SET_ENTITY_TYPE"; payload: WidgetEntityType }
   | { type: "SET_ENTITY_ID"; payload: string | null }
   | { type: "SET_STRUCTURED_DATA"; payload: boolean }
@@ -49,9 +42,6 @@ type BuilderAction =
 
 function builderReducer(state: BuilderState, action: BuilderAction): BuilderState {
   switch (action.type) {
-    case "SET_NAME":
-      return { ...state, name: action.payload, isDirty: true };
-
     case "SET_CONFIG": {
       const merged = { ...state.config };
       for (const [key, value] of Object.entries(action.payload)) {
@@ -70,9 +60,6 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
 
     case "SET_DOMAINS":
       return { ...state, allowedDomains: action.payload, isDirty: true };
-
-    case "SET_STATUS":
-      return { ...state, status: action.payload, isDirty: true };
 
     case "SET_ENTITY_TYPE":
       return { ...state, entityType: action.payload, entityId: null, isDirty: true };
@@ -100,59 +87,41 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
   }
 }
 
-function getInitialState(widget?: WidgetConfig | null): BuilderState {
-  if (widget) {
-    const config = (widget.config ?? {}) as WidgetConfigJson;
-    return {
-      name: widget.name,
-      widgetType: widget.widget_type as WidgetType,
-      entityType: widget.entity_type as WidgetEntityType,
-      entityId: widget.entity_id,
-      config,
-      allowedDomains: widget.allowed_domains ?? [],
-      status: widget.status as WidgetStatus,
-      enableStructuredData: widget.enable_structured_data ?? true,
-      structuredDataType: widget.structured_data_type ?? "LocalBusiness",
-      widgetId: widget.widget_id,
-      dbId: widget.id,
-      currentVersion: widget.version ?? 1,
-      isDirty: false,
-    };
-  }
-
+function getInitialState(widget: WidgetConfig): BuilderState {
+  const config = (widget.config ?? {}) as WidgetConfigJson;
   return {
-    name: "",
-    widgetType: "lo_review",
-    entityType: "user",
-    entityId: null,
-    config: {
-      theme: {
-        preset: "clean_white",
-        colors: { ...THEME_PRESETS.clean_white.colors },
-        typography: { ...THEME_PRESETS.clean_white.typography },
-        layout: { ...THEME_PRESETS.clean_white.layout },
-      },
-      content: {
-        showHeader: true,
-        showAvatar: true,
-        showDate: true,
-        showSource: true,
-        showBranding: true,
-        truncateLength: 300,
-      },
-      filters: {
-        minRating: 1,
-        maxReviews: 50,
-        sortOrder: "newest",
-      },
-    },
-    allowedDomains: [],
-    status: "draft",
-    enableStructuredData: true,
-    structuredDataType: "LocalBusiness",
-    widgetId: null,
-    dbId: null,
-    currentVersion: 1,
+    widgetType: widget.widget_type as WidgetType,
+    entityType: widget.entity_type as WidgetEntityType,
+    entityId: widget.entity_id,
+    config: Object.keys(config).length > 0
+      ? config
+      : {
+          theme: {
+            preset: "clean_white",
+            colors: { ...THEME_PRESETS.clean_white.colors },
+            typography: { ...THEME_PRESETS.clean_white.typography },
+            layout: { ...THEME_PRESETS.clean_white.layout },
+          },
+          content: {
+            showHeader: true,
+            showAvatar: true,
+            showDate: true,
+            showSource: true,
+            showBranding: true,
+            truncateLength: 300,
+          },
+          filters: {
+            minRating: 1,
+            maxReviews: 50,
+            sortOrder: "newest",
+          },
+        },
+    allowedDomains: widget.allowed_domains ?? [],
+    enableStructuredData: widget.enable_structured_data ?? true,
+    structuredDataType: widget.structured_data_type ?? "LocalBusiness",
+    widgetId: widget.widget_id,
+    dbId: widget.id,
+    currentVersion: widget.version ?? 1,
     isDirty: false,
   };
 }
@@ -160,7 +129,7 @@ function getInitialState(widget?: WidgetConfig | null): BuilderState {
 // ── Component ─────────────────────────────────────────────────────────
 
 interface WidgetBuilderProps {
-  widget?: WidgetConfig | null;
+  widget: WidgetConfig;
 }
 
 export function WidgetBuilder({ widget }: WidgetBuilderProps) {
@@ -169,15 +138,8 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
   const [isPending, startTransition] = useTransition();
   const [state, dispatch] = useReducer(builderReducer, widget, getInitialState);
   const [mobileTab, setMobileTab] = useState<"settings" | "preview" | "embed">("settings");
-  const [showCreateTest, setShowCreateTest] = useState(false);
 
-  // Determine A/B test state from widget data
-  // ab_test_config column exists in DB but not in generated types yet
-  const abTestConfig = (widget as unknown as Record<string, unknown>)?.ab_test_config as AbTestConfig | null;
-  const hasActiveTest = abTestConfig?.enabled && abTestConfig.status === "running";
-  const hasAnyTest = !!abTestConfig;
-  const isVariant = !!widget?.parent_widget_id;
-  const canCreateTest = !!state.dbId && !isVariant && !hasActiveTest;
+  const templateName = WIDGET_TYPE_LABELS[state.widgetType] ?? state.widgetType;
 
   // Debounced config changes for live preview
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -196,53 +158,26 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
   }, []);
 
   const handleSave = useCallback(() => {
-    if (!state.name.trim()) {
-      toast({ title: "Name required", description: "Enter a widget name before saving.", variant: "destructive" });
-      return;
-    }
+    if (!state.dbId) return;
 
     startTransition(async () => {
-      if (state.dbId) {
-        const result = await updateWidget({
-          id: state.dbId,
-          name: state.name,
-          config: state.config,
-          allowed_domains: state.allowedDomains,
-          enable_structured_data: state.enableStructuredData,
-          structured_data_type: state.structuredDataType,
-          status: state.status,
-          entity_id: state.entityId ?? undefined,
-        });
+      const result = await updateWidget({
+        id: state.dbId!,
+        config: state.config,
+        allowed_domains: state.allowedDomains,
+        enable_structured_data: state.enableStructuredData,
+        structured_data_type: state.structuredDataType,
+        entity_id: state.entityId ?? undefined,
+      });
 
-        if (result.success) {
-          dispatch({ type: "SAVED", payload: { widgetId: result.data.widget_id, dbId: result.data.id, version: result.data.version ?? 1 } });
-          toast({ title: "Widget saved", description: "Your changes have been saved." });
-        } else {
-          toast({ title: "Save failed", description: result.error, variant: "destructive" });
-        }
+      if (result.success) {
+        dispatch({ type: "SAVED", payload: { widgetId: result.data.widget_id, dbId: result.data.id, version: result.data.version ?? 1 } });
+        toast({ title: "Widget saved", description: "Your changes have been saved." });
       } else {
-        const result = await createWidget({
-          name: state.name,
-          widget_type: state.widgetType,
-          entity_type: state.entityType,
-          entity_id: state.entityId ?? undefined,
-          config: state.config,
-          allowed_domains: state.allowedDomains,
-          enable_structured_data: state.enableStructuredData,
-          structured_data_type: state.structuredDataType,
-          status: state.status,
-        });
-
-        if (result.success) {
-          dispatch({ type: "SAVED", payload: { widgetId: result.data.widget_id, dbId: result.data.id, version: result.data.version ?? 1 } });
-          toast({ title: "Widget created", description: "Your widget has been created." });
-          router.replace(`/dashboard/widgets/${result.data.id}`);
-        } else {
-          toast({ title: "Creation failed", description: result.error, variant: "destructive" });
-        }
+        toast({ title: "Save failed", description: result.error, variant: "destructive" });
       }
     });
-  }, [state, router, toast]);
+  }, [state, toast]);
 
   const handleRollbackComplete = useCallback(() => {
     router.refresh();
@@ -253,17 +188,14 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     widgetType: state.widgetType,
     entityType: state.entityType,
     entityId: state.entityId,
-    status: state.status,
-    name: state.name,
     enableStructuredData: state.enableStructuredData,
     structuredDataType: state.structuredDataType,
     allowedDomains: state.allowedDomains,
     widgetConfigId: state.dbId ?? undefined,
     currentVersion: state.currentVersion,
+    templateName,
     onConfigChange: handleConfigChange,
     onDomainsChange: (domains: string[]) => dispatch({ type: "SET_DOMAINS", payload: domains }),
-    onNameChange: (name: string) => dispatch({ type: "SET_NAME", payload: name }),
-    onStatusChange: (status: WidgetStatus) => dispatch({ type: "SET_STATUS", payload: status }),
     onEntityTypeChange: (entityType: WidgetEntityType) => dispatch({ type: "SET_ENTITY_TYPE", payload: entityType }),
     onEntityIdChange: (entityId: string | null) => dispatch({ type: "SET_ENTITY_ID", payload: entityId }),
     onStructuredDataChange: (enabled: boolean) => dispatch({ type: "SET_STRUCTURED_DATA", payload: enabled }),
@@ -274,66 +206,26 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-border">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-border flex-wrap gap-2">
+        <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => router.push("/dashboard/widgets")}
-            className="gap-1 text-muted-foreground"
+            className="gap-1 text-muted-foreground flex-shrink-0"
           >
             <ArrowLeft size={16} />
-            Widgets
+            <span className="hidden sm:inline">Widgets</span>
           </Button>
-          <div className="w-px h-6 bg-border" />
-          <Input
-            value={state.name}
-            onChange={(e) => dispatch({ type: "SET_NAME", payload: e.target.value })}
-            placeholder="Widget name"
-            className="h-8 w-48 text-sm font-medium border-transparent hover:border-border focus:border-border"
-          />
+          <div className="w-px h-6 bg-border flex-shrink-0" />
+          <h2 className="text-sm font-medium text-repwell-teal-500 truncate">
+            {templateName}
+          </h2>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {state.isDirty && (
             <span className="text-xs text-amber-500 font-medium">Unsaved changes</span>
-          )}
-          {hasActiveTest && state.dbId && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              asChild
-            >
-              <Link href={`/dashboard/widgets/${state.dbId}/ab-test`}>
-                <FlaskConical size={14} />
-                View A/B Test
-              </Link>
-            </Button>
-          )}
-          {hasAnyTest && !hasActiveTest && state.dbId && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-muted-foreground"
-              asChild
-            >
-              <Link href={`/dashboard/widgets/${state.dbId}/ab-test`}>
-                <FlaskConical size={14} />
-                Past Tests
-              </Link>
-            </Button>
-          )}
-          {canCreateTest && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={() => setShowCreateTest(true)}
-            >
-              <FlaskConical size={14} />
-              A/B Test
-            </Button>
           )}
           <Button
             size="sm"
@@ -361,14 +253,14 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
       {/* Three-panel layout (desktop) / tabbed (mobile) */}
       <div className="flex-1 overflow-hidden">
         {/* Desktop layout */}
-        <div className="hidden lg:grid lg:grid-cols-[320px_1fr_280px] h-full">
-          <div className="overflow-hidden">
+        <div className="hidden lg:grid lg:grid-cols-[280px_1fr_240px] xl:grid-cols-[320px_1fr_280px] h-full">
+          <div className="overflow-y-auto overflow-x-hidden">
             <WidgetBuilderSidebar {...sidebarProps} />
           </div>
-          <div className="overflow-hidden border-x border-border">
+          <div className="overflow-y-auto border-x border-border">
             <WidgetPreview config={state.config} widgetType={state.widgetType} entityType={state.entityType} entityId={state.entityId} />
           </div>
-          <div className="overflow-hidden">
+          <div className="overflow-y-auto">
             <EmbedCodePanel widgetId={state.widgetId} />
           </div>
         </div>
@@ -382,16 +274,6 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
           {mobileTab === "embed" && <EmbedCodePanel widgetId={state.widgetId} />}
         </div>
       </div>
-
-      {/* A/B Test creation dialog */}
-      {widget && canCreateTest && (
-        <CreateTestDialog
-          widget={widget}
-          open={showCreateTest}
-          onOpenChange={setShowCreateTest}
-          onCreated={() => router.refresh()}
-        />
-      )}
     </div>
   );
 }

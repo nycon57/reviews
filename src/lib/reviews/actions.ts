@@ -26,6 +26,28 @@ async function getUserContext() {
   return userData;
 }
 
+// Get authenticated user context with org — all enterprise roles allowed
+// Returns scopedUserId when the user can only see their own data (role=user)
+async function requireOrgUser(): Promise<{
+  userId: string;
+  organizationId: string;
+  scopedUserId: string | null;
+} | null> {
+  const context = await getUserContext();
+
+  if (!context || !context.organization_id) {
+    return null;
+  }
+
+  const isManagerOrAbove = ["admin", "manager"].includes(context.role);
+
+  return {
+    userId: context.id,
+    organizationId: context.organization_id,
+    scopedUserId: isManagerOrAbove ? null : context.id,
+  };
+}
+
 // Check if user has manager/admin role
 async function requireManagerRole(): Promise<{
   userId: string;
@@ -842,17 +864,23 @@ export async function getReviewStats(): Promise<
     total: number;
   }>
 > {
-  const context = await requireManagerRole();
+  const context = await requireOrgUser();
   if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
+    return { success: false, error: "Unauthorized" };
   }
 
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("reviews")
     .select("status")
     .eq("organization_id", context.organizationId);
+
+  if (context.scopedUserId) {
+    query = query.eq("user_id", context.scopedUserId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching review stats:", error);
@@ -879,9 +907,14 @@ export async function getReviewStats(): Promise<
 export async function getUsersForFilter(): Promise<
   ActionResult<{ id: string; fullName: string }[]>
 > {
-  const context = await requireManagerRole();
+  const context = await requireOrgUser();
   if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
+    return { success: false, error: "Unauthorized" };
+  }
+
+  // Regular users don't need the team filter — return empty list
+  if (context.scopedUserId) {
+    return { success: true, data: [] };
   }
 
   const supabase = createAdminClient();

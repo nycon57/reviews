@@ -68,7 +68,7 @@ export function UserStatsCards({ metrics }: StatsCardsProps) {
             <motion.div
               whileHover={cardHover}
               whileTap={cardTap}
-              className="h-full"
+              className="h-full hover:shadow-md transition-shadow duration-200"
             >
               <Card className="h-full border-border hover:border-repwell-teal-300/30 transition-colors duration-200">
                 <CardContent className="p-6">

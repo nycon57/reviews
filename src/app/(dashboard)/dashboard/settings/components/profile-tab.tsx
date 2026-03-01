@@ -16,25 +16,10 @@ import {
   AccountDangerZone,
 } from '@/components/settings';
 import { fadeInUp, staggerContainer } from '@/lib/motion/variants';
+import type { UserProfileData } from '@/lib/auth/profile-schemas';
 
 interface ProfileTabProps {
-  userEmail?: string;
-  userName?: string;
-  userAvatarUrl?: string | null;
-  userTitle?: string | null;
-  userNmlsId?: string | null;
-  userBio?: string | null;
-  userPhone?: string | null;
-  userPersonalWebsiteUrl?: string | null;
-  userLinkedinUrl?: string | null;
-  userZillowProfileUrl?: string | null;
-  userFacebookUrl?: string | null;
-  userInstagramUrl?: string | null;
-  userTwitterUrl?: string | null;
-  userTimezone?: string | null;
-  userSlug?: string | null;
-  userBannerUrl?: string | null;
-  userId?: string;
+  profile: UserProfileData;
   isAdmin?: boolean;
 }
 
@@ -65,23 +50,7 @@ function QuickActionButton({ icon, title, description, onClick }: QuickActionBut
 }
 
 export function ProfileTab({
-  userEmail,
-  userName,
-  userAvatarUrl,
-  userTitle,
-  userNmlsId,
-  userBio,
-  userPhone,
-  userPersonalWebsiteUrl,
-  userLinkedinUrl,
-  userZillowProfileUrl,
-  userFacebookUrl,
-  userInstagramUrl,
-  userTwitterUrl,
-  userTimezone,
-  userSlug,
-  userBannerUrl,
-  userId,
+  profile,
   isAdmin,
 }: ProfileTabProps) {
   const scrollToSection = (id: string) => {
@@ -120,23 +89,7 @@ export function ProfileTab({
           {/* Profile Form */}
           <motion.div variants={fadeInUp} id="profile-form">
             <ProfileForm
-              initialName={userName}
-              initialEmail={userEmail}
-              initialAvatarUrl={userAvatarUrl}
-              initialTitle={userTitle}
-              initialNmlsId={userNmlsId}
-              initialBio={userBio}
-              initialPhone={userPhone}
-              initialPersonalWebsiteUrl={userPersonalWebsiteUrl}
-              initialLinkedinUrl={userLinkedinUrl}
-              initialZillowProfileUrl={userZillowProfileUrl}
-              initialFacebookUrl={userFacebookUrl}
-              initialInstagramUrl={userInstagramUrl}
-              initialTwitterUrl={userTwitterUrl}
-              initialTimezone={userTimezone}
-              initialSlug={userSlug}
-              initialBannerUrl={userBannerUrl}
-              userId={userId}
+              profile={profile}
               isAdmin={isAdmin}
             />
           </motion.div>

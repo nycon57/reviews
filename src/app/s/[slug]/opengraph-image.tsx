@@ -68,6 +68,7 @@ export default async function OpenGraphImage(
   const item = data.item;
   const organization = data.organization;
   const brand = data.brandTokens;
+  const sourceType = (item.source_type as string | null) || "review";
 
   const quote = (item.quote as string | null) || "Customer feedback shared via Share Studio";
   const customer = (item.customer_name as string | null) || "Verified Customer";
@@ -77,12 +78,112 @@ export default async function OpenGraphImage(
   const filledStars = Math.max(0, rawRating);
   const emptyStars = Math.max(0, 5 - filledStars);
 
+  const secondaryColor = brand.secondaryColor || brand.primaryColor || "#0f172a";
+
   const sourcePlatform = (item.source_platform as string | null) || "";
   const platformLabel = sourcePlatform.toLowerCase() === "google" ? "Google" :
     sourcePlatform.toLowerCase() === "zillow" ? "Zillow" :
     sourcePlatform.toLowerCase() === "facebook" ? "Facebook" :
     sourcePlatform.toLowerCase() === "yelp" ? "Yelp" :
     sourcePlatform ? sourcePlatform.charAt(0).toUpperCase() + sourcePlatform.slice(1) : null;
+
+  if (sourceType === "video_testimonial") {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            background: `linear-gradient(135deg, ${brand.primaryColor}, ${secondaryColor})`,
+            color: "#fff",
+            fontFamily: "Inter",
+            padding: 56,
+            boxSizing: "border-box",
+            flexDirection: "column",
+            justifyContent: "space-between",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div
+              style={{
+                border: "1px solid rgba(255,255,255,0.35)",
+                borderRadius: 999,
+                padding: "10px 22px",
+                fontSize: 24,
+                fontWeight: 700,
+                background: "rgba(0,0,0,0.20)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {orgName}
+            </div>
+            <div
+              style={{
+                border: "1px solid rgba(255,255,255,0.30)",
+                borderRadius: 999,
+                padding: "10px 22px",
+                fontSize: 22,
+                fontWeight: 600,
+                background: "rgba(255,255,255,0.12)",
+              }}
+            >
+              Video Testimonial
+            </div>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid rgba(255,255,255,0.22)",
+              background: "rgba(0,0,0,0.18)",
+              borderRadius: 24,
+              padding: "40px",
+              margin: "28px 0",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 600,
+                opacity: 0.95,
+              }}
+            >
+              Watch {customer} share their experience
+            </div>
+            <div
+              style={{
+                fontSize: 34,
+                lineHeight: 1.3,
+                fontWeight: 400,
+              }}
+            >
+              {quote}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: 24,
+              opacity: 0.95,
+            }}
+          >
+            <span>{customer}</span>
+            <span style={{ fontWeight: 700 }}>Play Video</span>
+          </div>
+        </div>
+      ),
+      {
+        ...size,
+        fonts: await loadFonts(),
+      }
+    );
+  }
 
   return new ImageResponse(
     (
@@ -91,7 +192,7 @@ export default async function OpenGraphImage(
           width: "100%",
           height: "100%",
           display: "flex",
-          background: `linear-gradient(135deg, ${brand.primaryColor}, ${brand.secondaryColor})`,
+          background: `linear-gradient(135deg, ${brand.primaryColor}, ${secondaryColor})`,
           color: "#fff",
           fontFamily: "Inter",
           padding: 56,

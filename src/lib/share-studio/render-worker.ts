@@ -3,11 +3,11 @@ import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { resolveBrandTokens } from "@/lib/share-studio/template-resolver";
 import type { ProofAssetType } from "@/lib/share-studio/template-types";
 import {
-  renderShareStudioStill,
   renderShareStudioVideo,
   type ShareStudioRenderInput,
   type ShareStudioVideoFormat,
 } from "@/lib/share-studio/remotion-renderer";
+import { renderStillWithSatori } from "@/lib/share-studio/satori-renderer";
 
 const RENDER_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -35,6 +35,13 @@ function getRequestedFormat(payload: Record<string, unknown> | null | undefined)
   if (candidate === "1:1") return "1:1";
   if (candidate === "9:16") return "9:16";
   return "16:9";
+}
+
+function getRequestedTemplate(payload: Record<string, unknown> | null | undefined): "modern" | "minimal" | "bold" {
+  const candidate = payload?.template;
+  if (candidate === "minimal") return "minimal";
+  if (candidate === "bold") return "bold";
+  return "modern";
 }
 
 function createStoragePath(
@@ -78,14 +85,15 @@ function buildRenderInput(item: Record<string, unknown>, org: Record<string, unk
 }
 
 async function uploadRenderedAsset(params: {
-  localPath: string;
+  localPath?: string;
+  buffer?: Buffer;
   storagePath: string;
   contentType: string;
 }): Promise<string> {
   const supabase = createUntypedAdminClient();
-  try {
-    const file = await fs.readFile(params.localPath);
+  const file = params.buffer ?? await fs.readFile(params.localPath!);
 
+  try {
     const { error } = await supabase.storage
       .from("share-studio")
       .upload(params.storagePath, file, {
@@ -103,7 +111,9 @@ async function uploadRenderedAsset(params: {
 
     return publicUrl;
   } finally {
-    await fs.unlink(params.localPath).catch(() => undefined);
+    if (params.localPath) {
+      await fs.unlink(params.localPath).catch(() => undefined);
+    }
   }
 }
 
@@ -181,11 +191,13 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
   const org = orgResult.data as Record<string, unknown>;
   const payload = (processingJob.payload as Record<string, unknown> | null) ?? {};
   const requestedFormat = getRequestedFormat(payload);
+  const requestedTemplate = getRequestedTemplate(payload);
 
   const input = buildRenderInput(item, org);
   const assetType = processingJob.asset_type as ProofAssetType;
 
-  let localOutputPath = "";
+  let localOutputPath: string | undefined;
+  let assetBuffer: Buffer | undefined;
   let width = 0;
   let height = 0;
   let durationSeconds: number | undefined;
@@ -196,6 +208,7 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
       renderShareStudioVideo({
         input,
         format: requestedFormat === "og" ? "16:9" : requestedFormat,
+        template: requestedTemplate,
       }),
       RENDER_TIMEOUT_MS,
       "Video rendering timed out"
@@ -207,16 +220,14 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
     durationSeconds = videoResult.durationSeconds;
     contentType = "video/mp4";
   } else {
-    const stillResult = await withTimeout(
-      renderShareStudioStill({
-        input,
-        format: assetType === "smart_link_og" ? "og" : requestedFormat,
-      }),
-      RENDER_TIMEOUT_MS,
-      "Still rendering timed out"
-    );
+    // Stills use Satori (fast JSX→SVG→PNG, no Remotion/Chromium)
+    const stillResult = await renderStillWithSatori({
+      input,
+      format: assetType === "smart_link_og" ? "og" : requestedFormat,
+      template: requestedTemplate,
+    });
 
-    localOutputPath = stillResult.outputPath;
+    assetBuffer = stillResult.buffer;
     width = stillResult.width;
     height = stillResult.height;
     contentType = "image/png";
@@ -231,6 +242,7 @@ async function processOneJob(job: Record<string, unknown>): Promise<boolean> {
 
   const assetUrl = await uploadRenderedAsset({
     localPath: localOutputPath,
+    buffer: assetBuffer,
     storagePath,
     contentType,
   });

@@ -3,6 +3,7 @@ import { Gear } from '@phosphor-icons/react/dist/ssr';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SettingsTabs } from './components';
 import { getUserProfile } from '@/lib/auth/profile-actions';
+import { toUserProfileData } from '@/lib/auth/profile-schemas';
 
 export const metadata = {
   title: 'Settings | RepWell',
@@ -30,30 +31,11 @@ function SettingsPageSkeleton() {
 }
 
 async function SettingsContent() {
-  const profile = await getUserProfile();
+  const raw = await getUserProfile();
+  const profile = toUserProfileData(raw);
 
   return (
-    <SettingsTabs
-      initialTab="account"
-      userEmail={profile?.email}
-      userName={profile?.full_name ?? undefined}
-      userAvatarUrl={profile?.avatar_url}
-      userTitle={profile?.title}
-      userNmlsId={profile?.nmls_id}
-      userBio={profile?.bio}
-      userPhone={profile?.phone}
-      userPersonalWebsiteUrl={profile?.personal_website_url}
-      userLinkedinUrl={profile?.linkedin_url}
-      userZillowProfileUrl={profile?.zillow_profile_url}
-      userFacebookUrl={profile?.facebook_url}
-      userInstagramUrl={profile?.instagram_url}
-      userTwitterUrl={profile?.twitter_url}
-      userTimezone={profile?.timezone}
-      userSlug={profile?.slug}
-      userBannerUrl={profile?.banner_url}
-      userId={profile?.id}
-      userRole={profile?.role}
-    />
+    <SettingsTabs initialTab="account" profile={profile} />
   );
 }
 
@@ -62,12 +44,12 @@ export default function SettingsPage() {
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <Gear className="h-5 w-5 text-primary" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <Gear className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Settings</h1>
+          <p className="text-sm leading-snug text-repwell-teal-300">
             Manage your account settings and preferences
           </p>
         </div>

@@ -47,56 +47,113 @@ async function getBundleLocation(): Promise<string> {
   return bundledApp;
 }
 
-function imageCompositionId(format: "og" | ShareStudioVideoFormat): string {
-  if (format === "og") return "ShareStudio-OG";
-  if (format === "16:9") return "ShareStudio-Image-16-9";
-  if (format === "9:16") return "ShareStudio-Image-9-16";
-  return "ShareStudio-Image-1-1";
+type CompositionKind = "text_testimonial" | "social_clip";
+
+interface CompositionTarget {
+  id: string;
+  kind: CompositionKind;
+  format: ShareStudioVideoFormat;
 }
 
-function videoCompositionId(format: ShareStudioVideoFormat): string {
-  if (format === "1:1") return "ShareStudio-Video-1-1";
-  if (format === "9:16") return "ShareStudio-Video-9-16";
-  return "ShareStudio-Video-16-9";
+function normalizeRating(value: number | null | undefined): number {
+  if (value === null || value === undefined || Number.isNaN(value)) return 5;
+  return Math.max(1, Math.min(5, Math.round(value)));
+}
+
+function getStillComposition(format: "og" | ShareStudioVideoFormat): CompositionTarget {
+  if (format === "9:16") {
+    return { id: "TextTestimonial-9-16", kind: "text_testimonial", format: "9:16" };
+  }
+  if (format === "1:1") {
+    return { id: "TextTestimonial-1-1", kind: "text_testimonial", format: "1:1" };
+  }
+  return { id: "TextTestimonial-16-9", kind: "text_testimonial", format: "16:9" };
+}
+
+function getVideoComposition(format: ShareStudioVideoFormat): CompositionTarget {
+  if (format === "9:16") {
+    return { id: "SocialClip-9-16", kind: "social_clip", format: "9:16" };
+  }
+  if (format === "1:1") {
+    return { id: "SocialClip-1-1", kind: "social_clip", format: "1:1" };
+  }
+  return { id: "SocialClip-16-9", kind: "social_clip", format: "16:9" };
+}
+
+function buildCompositionInputProps(
+  kind: CompositionKind,
+  input: ShareStudioRenderInput,
+  format: ShareStudioVideoFormat,
+  template: "modern" | "minimal" | "bold" = "modern"
+): Record<string, unknown> {
+  const organization = {
+    name: input.organizationName,
+    logoUrl: input.organizationLogoUrl ?? null,
+    primaryColor: input.primaryColor,
+    secondaryColor: input.secondaryColor,
+  };
+  const rating = normalizeRating(input.rating);
+
+  if (kind === "social_clip") {
+    return {
+      type: "testimonial_quote",
+      quote: input.quote || input.title || "Customer feedback shared via Share Studio",
+      author: input.customerName || "Verified Customer",
+      rating,
+      organization,
+      format,
+    };
+  }
+
+  return {
+    text: input.quote || input.title || "Customer feedback shared via Share Studio",
+    author: input.customerName || "Verified Customer",
+    rating,
+    organization,
+    template,
+    format,
+    authorPhotoUrl: null,
+  };
 }
 
 export async function renderShareStudioStill(options: {
   input: ShareStudioRenderInput;
   format: "og" | ShareStudioVideoFormat;
+  template?: "modern" | "minimal" | "bold";
 }): Promise<ShareStudioRenderResult> {
   const serveUrl = await getBundleLocation();
-  const compositionId = imageCompositionId(options.format);
+  const composition = getStillComposition(options.format);
+  const inputProps = buildCompositionInputProps(
+    composition.kind,
+    options.input,
+    composition.format,
+    options.template ?? "modern"
+  );
 
-  const composition = await selectComposition({
+  const selectedComposition = await selectComposition({
     serveUrl,
-    id: compositionId,
-    inputProps: {
-      ...options.input,
-      animate: false,
-    },
+    id: composition.id,
+    inputProps,
   });
 
   const outputPath = path.join(
     "/tmp",
-    `share-studio-${compositionId.toLowerCase()}-${crypto.randomUUID()}.png`
+    `share-studio-${composition.id.toLowerCase()}-${crypto.randomUUID()}.png`
   );
 
   await renderStill({
-    composition,
+    composition: selectedComposition,
     serveUrl,
     output: outputPath,
     imageFormat: "png",
-    inputProps: {
-      ...options.input,
-      animate: false,
-    },
+    inputProps,
     frame: 1,
   });
 
   return {
     outputPath,
-    width: composition.width,
-    height: composition.height,
+    width: selectedComposition.width,
+    height: selectedComposition.height,
     format: "png",
     cleanup: async () => {
       await fs.unlink(outputPath).catch(() => undefined);
@@ -107,33 +164,34 @@ export async function renderShareStudioStill(options: {
 export async function renderShareStudioVideo(options: {
   input: ShareStudioRenderInput;
   format: ShareStudioVideoFormat;
+  template?: "modern" | "minimal" | "bold";
 }): Promise<ShareStudioRenderResult> {
   const serveUrl = await getBundleLocation();
-  const compositionId = videoCompositionId(options.format);
+  const composition = getVideoComposition(options.format);
+  const inputProps = buildCompositionInputProps(
+    composition.kind,
+    options.input,
+    composition.format,
+    options.template ?? "modern"
+  );
 
-  const composition = await selectComposition({
+  const selectedComposition = await selectComposition({
     serveUrl,
-    id: compositionId,
-    inputProps: {
-      ...options.input,
-      animate: true,
-    },
+    id: composition.id,
+    inputProps,
   });
 
   const outputPath = path.join(
     "/tmp",
-    `share-studio-${compositionId.toLowerCase()}-${crypto.randomUUID()}.mp4`
+    `share-studio-${composition.id.toLowerCase()}-${crypto.randomUUID()}.mp4`
   );
 
   await renderMedia({
-    composition,
+    composition: selectedComposition,
     serveUrl,
     codec: "h264",
     outputLocation: outputPath,
-    inputProps: {
-      ...options.input,
-      animate: true,
-    },
+    inputProps,
     concurrency: 2,
     imageFormat: "jpeg",
     jpegQuality: 84,
@@ -141,9 +199,9 @@ export async function renderShareStudioVideo(options: {
 
   return {
     outputPath,
-    width: composition.width,
-    height: composition.height,
-    durationSeconds: composition.durationInFrames / composition.fps,
+    width: selectedComposition.width,
+    height: selectedComposition.height,
+    durationSeconds: selectedComposition.durationInFrames / selectedComposition.fps,
     format: "mp4",
     cleanup: async () => {
       await fs.unlink(outputPath).catch(() => undefined);

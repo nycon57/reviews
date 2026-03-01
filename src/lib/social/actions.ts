@@ -27,6 +27,7 @@ import type {
   SocialPost,
   ActionResult,
 } from './types';
+import { ensureSmartLinkForSource } from '@/lib/share-studio/service';
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -64,6 +65,33 @@ async function requireManagerRole(): Promise<{
     userId: context.id,
     organizationId: context.organization_id,
   };
+}
+
+function getAppBaseUrl(): string {
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.SITE_URL ||
+    'https://app.repwell.com'
+  ).replace(/\/$/, '');
+}
+
+async function resolveReviewSmartLinkUrl(params: {
+  organizationId: string;
+  reviewId: string;
+  actorUserId: string;
+}): Promise<string | null> {
+  try {
+    const ensured = await ensureSmartLinkForSource({
+      organizationId: params.organizationId,
+      sourceType: 'review',
+      sourceId: params.reviewId,
+      actorUserId: params.actorUserId,
+    });
+    return `${getAppBaseUrl()}${ensured.url}`;
+  } catch {
+    return null;
+  }
 }
 
 // Get valid access token (refreshing if needed)
@@ -543,6 +571,15 @@ export async function generatePostPreview(
     .single();
 
   // Fill template
+  const canonicalLink =
+    (await resolveReviewSmartLinkUrl({
+      organizationId: context.organization_id,
+      reviewId,
+      actorUserId: context.id,
+    })) ||
+    review.source_url ||
+    '';
+
   const content = fillTemplatePlaceholders(template.template_text, {
     reviewerName: review.customer_name || 'Happy Customer',
     rating: review.rating,
@@ -551,7 +588,7 @@ export async function generatePostPreview(
     branchName: review.loan_officers?.branch ?? undefined,
     organizationName: org?.name ?? undefined,
     hashtags: template.default_hashtags || [],
-    link: review.source_url || '',
+    link: canonicalLink,
   });
 
   return {
@@ -608,6 +645,15 @@ export async function createSocialPost(params: {
 
   // Determine status
   const status = params.scheduledFor ? 'scheduled' : 'draft';
+  let resolvedLinkUrl = params.linkUrl ?? null;
+
+  if (!resolvedLinkUrl && params.reviewId) {
+    resolvedLinkUrl = await resolveReviewSmartLinkUrl({
+      organizationId: context.organizationId,
+      reviewId: params.reviewId,
+      actorUserId: context.userId,
+    });
+  }
 
   // Create post record
   const { data: post, error: insertError } = await adminClient
@@ -621,7 +667,7 @@ export async function createSocialPost(params: {
       platform,
       content: params.content,
       image_url: params.imageUrl,
-      link_url: params.linkUrl,
+      link_url: resolvedLinkUrl,
       status,
       scheduled_for: params.scheduledFor,
       created_by: context.userId,

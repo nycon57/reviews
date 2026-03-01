@@ -55,12 +55,12 @@ export default async function OrganizationPage() {
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-          <Building2 className="h-5 w-5 text-repwell-teal-300" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <Building2 className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display text-repwell-teal-500">Organization</h1>
-          <p className="text-muted-foreground">
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Organization</h1>
+          <p className="text-sm leading-snug text-repwell-teal-300">
             Manage your organization settings, branding, and team
           </p>
         </div>

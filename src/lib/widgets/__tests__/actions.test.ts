@@ -17,12 +17,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import {
-  createWidget,
   updateWidget,
-  deleteWidget,
   listWidgets,
   getWidget,
-  duplicateWidget,
 } from "../actions";
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -90,102 +87,6 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// ── createWidget ────────────────────────────────────────────────────────
-
-describe("createWidget", () => {
-  it("creates a widget and returns it", async () => {
-    setupAuth();
-
-    const createdWidget = {
-      id: "w-001",
-      widget_id: "my-widget-abc123",
-      name: "My Widget",
-      widget_type: "lo_review",
-      entity_type: "user",
-      organization_id: "org-001",
-      status: "draft",
-      version: 1,
-      config: {},
-    };
-
-    const usersChain = createMockQueryChain({ data: mockUserData });
-    const slugCheckChain = createMockQueryChain({ data: null });
-    const insertChain = createMockQueryChain({ data: createdWidget });
-
-    setupMockSupabase({
-      users: usersChain,
-      widget_configs: slugCheckChain,
-    });
-
-    // Override: second call to widget_configs.from is for insert
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockFrom = (createAdminClient as any)().from;
-    let callCount = 0;
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "users") return usersChain;
-      if (table === "widget_configs") {
-        callCount++;
-        if (callCount === 1) return slugCheckChain; // slug check
-        return insertChain; // insert
-      }
-      return createMockQueryChain({ data: null });
-    });
-
-    const result = await createWidget({
-      name: "My Widget",
-      widget_type: "lo_review",
-      entity_type: "user",
-    });
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.name).toBe("My Widget");
-    }
-    expect(revalidatePath).toHaveBeenCalledWith("/dashboard/widgets");
-  });
-
-  it("rejects when not authenticated", async () => {
-    (unifiedGetUser as ReturnType<typeof vi.fn>).mockResolvedValue(null);
-    setupMockSupabase({});
-
-    const result = await createWidget({
-      name: "My Widget",
-      widget_type: "lo_review",
-      entity_type: "user",
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("Not authenticated");
-  });
-
-  it("rejects invalid input", async () => {
-    const result = await createWidget({
-      name: "",
-      widget_type: "lo_review",
-      entity_type: "user",
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects users without admin/manager role", async () => {
-    (unifiedGetUser as ReturnType<typeof vi.fn>).mockResolvedValue(mockUser);
-    const usersChain = createMockQueryChain({
-      data: { organization_id: "org-001", role: "user" },
-    });
-    setupMockSupabase({ users: usersChain });
-
-    const result = await createWidget({
-      name: "My Widget",
-      widget_type: "lo_review",
-      entity_type: "user",
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toContain("Insufficient permissions");
-  });
-});
-
 // ── updateWidget ────────────────────────────────────────────────────────
 
 describe("updateWidget", () => {
@@ -244,77 +145,11 @@ describe("updateWidget", () => {
 
     const result = await updateWidget({
       id: "123e4567-e89b-12d3-a456-426614174000",
-      name: "New Name",
+      config: { theme: { preset: "dark" } },
     });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("Widget not found");
-  });
-});
-
-// ── deleteWidget ────────────────────────────────────────────────────────
-
-describe("deleteWidget", () => {
-  it("soft-deletes by setting status to inactive", async () => {
-    setupAuth();
-
-    const existingWidget = { id: "w-001", organization_id: "org-001", widget_id: "my-widget" };
-    const usersChain = createMockQueryChain({ data: mockUserData });
-    const fetchChain = createMockQueryChain({ data: existingWidget });
-    const abCheckChain = createMockQueryChain({ data: null, count: 0 });
-    const updateChain = createMockQueryChain({ data: null, error: null });
-
-    const mockFrom = vi.fn();
-    let widgetCallCount = 0;
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "users") return usersChain;
-      if (table === "widget_configs") {
-        widgetCallCount++;
-        if (widgetCallCount === 1) return fetchChain;
-        if (widgetCallCount === 2) return abCheckChain;
-        return updateChain;
-      }
-      return createMockQueryChain({ data: null });
-    });
-
-    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({ from: mockFrom });
-
-    const result = await deleteWidget({
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    });
-
-    expect(result.success).toBe(true);
-    expect(revalidatePath).toHaveBeenCalledWith("/dashboard/widgets");
-  });
-
-  it("prevents deletion when active A/B test variants exist", async () => {
-    setupAuth();
-
-    const existingWidget = { id: "w-001", organization_id: "org-001", widget_id: "my-widget" };
-    const usersChain = createMockQueryChain({ data: mockUserData });
-    const fetchChain = createMockQueryChain({ data: existingWidget });
-    const abCheckChain = createMockQueryChain({ data: null, count: 2 });
-
-    const mockFrom = vi.fn();
-    let widgetCallCount = 0;
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "users") return usersChain;
-      if (table === "widget_configs") {
-        widgetCallCount++;
-        if (widgetCallCount === 1) return fetchChain;
-        return abCheckChain;
-      }
-      return createMockQueryChain({ data: null });
-    });
-
-    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({ from: mockFrom });
-
-    const result = await deleteWidget({
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toContain("A/B test");
   });
 });
 
@@ -416,84 +251,6 @@ describe("getWidget", () => {
     setupMockSupabase({ users: usersChain, widget_configs: getChain });
 
     const result = await getWidget({ idOrSlug: "nonexistent-slug" });
-
-    expect(result.success).toBe(false);
-    if (!result.success) expect(result.error).toBe("Widget not found");
-  });
-});
-
-// ── duplicateWidget ─────────────────────────────────────────────────────
-
-describe("duplicateWidget", () => {
-  it("deep-clones widget with (Copy) suffix and draft status", async () => {
-    setupAuth();
-
-    const sourceWidget = {
-      id: "w-001",
-      widget_id: "original-widget",
-      name: "Original Widget",
-      widget_type: "lo_review",
-      entity_type: "user",
-      entity_id: "entity-001",
-      organization_id: "org-001",
-      config: { theme: { preset: "dark" } },
-      allowed_domains: ["example.com"],
-      enable_structured_data: true,
-      structured_data_type: "LocalBusiness",
-    };
-
-    const duplicatedWidget = {
-      ...sourceWidget,
-      id: "w-002",
-      widget_id: "original-widget-copy-abc123",
-      name: "Original Widget (Copy)",
-      status: "draft",
-      version: 1,
-    };
-
-    const usersChain = createMockQueryChain({ data: mockUserData });
-    const fetchChain = createMockQueryChain({ data: sourceWidget });
-    const slugCheckChain = createMockQueryChain({ data: null });
-    const insertChain = createMockQueryChain({ data: duplicatedWidget });
-
-    const mockFrom = vi.fn();
-    let widgetCallCount = 0;
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "users") return usersChain;
-      if (table === "widget_configs") {
-        widgetCallCount++;
-        if (widgetCallCount === 1) return fetchChain; // fetch source
-        if (widgetCallCount === 2) return slugCheckChain; // slug check
-        return insertChain; // insert
-      }
-      return createMockQueryChain({ data: null });
-    });
-
-    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({ from: mockFrom });
-
-    const result = await duplicateWidget({
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    });
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.name).toBe("Original Widget (Copy)");
-      expect(result.data.status).toBe("draft");
-    }
-    expect(revalidatePath).toHaveBeenCalledWith("/dashboard/widgets");
-  });
-
-  it("returns error when source widget not found", async () => {
-    setupAuth();
-
-    const usersChain = createMockQueryChain({ data: mockUserData });
-    const fetchChain = createMockQueryChain({ data: null, error: { message: "Not found" } });
-
-    setupMockSupabase({ users: usersChain, widget_configs: fetchChain });
-
-    const result = await duplicateWidget({
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    });
 
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error).toBe("Widget not found");

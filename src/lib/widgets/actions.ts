@@ -4,18 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import {
-  createWidgetInputSchema,
   updateWidgetInputSchema,
-  deleteWidgetInputSchema,
   listWidgetsInputSchema,
   getWidgetInputSchema,
-  duplicateWidgetInputSchema,
-  type CreateWidgetInput,
   type UpdateWidgetInput,
-  type DeleteWidgetInput,
   type ListWidgetsInput,
   type GetWidgetInput,
-  type DuplicateWidgetInput,
 } from "./schemas";
 import type { Json } from "@/types/database.types";
 import { sanitizeCustomCSS } from "@/embed/core/css-sanitizer";
@@ -23,7 +17,6 @@ import type {
   ActionResult,
   PaginatedResult,
   WidgetConfig,
-  WidgetConfigInsert,
 } from "./types";
 import { computeDiff, generateChangeSummary } from "./config-diff";
 
@@ -78,36 +71,6 @@ async function createVersionSnapshotInternal(
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-async function generateUniqueWidgetId(
-  supabase: ReturnType<typeof createAdminClient>,
-  name: string
-): Promise<string> {
-  const base = slugify(name);
-  const suffix = crypto.randomUUID().replace(/-/g, "").slice(0, 6);
-  const candidate = `${base}-${suffix}`;
-
-  const { data } = await supabase
-    .from("widget_configs")
-    .select("widget_id")
-    .eq("widget_id", candidate)
-    .maybeSingle();
-
-  if (data) {
-    // Collision; try again with longer suffix
-    return `${base}-${crypto.randomUUID().replace(/-/g, "").slice(0, 8)}`;
-  }
-
-  return candidate;
-}
-
 interface AuthedContext {
   userId: string;
   organizationId: string;
@@ -158,66 +121,6 @@ async function getAuthedUserContext(
   };
 }
 
-// ── Create Widget ───────────────────────────────────────────────────────
-
-export async function createWidget(
-  input: CreateWidgetInput
-): Promise<ActionResult<WidgetConfig>> {
-  try {
-    const validated = createWidgetInputSchema.safeParse(input);
-    if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message ?? "Validation failed" };
-    }
-
-    const supabase = createAdminClient();
-    const ctx = await getAuthedUserContext(supabase);
-    if (!ctx.success) return ctx;
-
-    // Server-side CSS sanitization (defense-in-depth)
-    if (validated.data.config?.advanced?.customCSS) {
-      const { sanitized } = sanitizeCustomCSS(validated.data.config.advanced.customCSS);
-      validated.data.config.advanced.customCSS = sanitized;
-    }
-
-    const widgetId = await generateUniqueWidgetId(supabase, validated.data.name);
-
-    const insertRow: WidgetConfigInsert = {
-      widget_id: widgetId,
-      organization_id: ctx.data.organizationId,
-      created_by: ctx.data.userId,
-      name: validated.data.name,
-      widget_type: validated.data.widget_type,
-      entity_type: validated.data.entity_type,
-      entity_id: validated.data.entity_id ?? null,
-      config: validated.data.config as unknown as Json,
-      allowed_domains: validated.data.allowed_domains,
-      enable_structured_data: validated.data.enable_structured_data,
-      structured_data_type: validated.data.structured_data_type,
-      status: validated.data.status,
-      version: 1,
-    };
-
-    const { data, error } = await supabase
-      .from("widget_configs")
-      .insert(insertRow)
-      .select()
-      .single();
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    // Create initial version snapshot
-    await createVersionSnapshotInternal(supabase, data.id, ctx.data.userId, data, null, "Initial version");
-
-    revalidatePath(WIDGETS_PATH);
-    return { success: true, data };
-  } catch (err) {
-    console.error("createWidget error:", err);
-    return { success: false, error: "An unexpected error occurred" };
-  }
-}
-
 // ── Update Widget ───────────────────────────────────────────────────────
 
 export async function updateWidget(
@@ -264,7 +167,6 @@ export async function updateWidget(
       version: (existing.version ?? 1) + 1,
     };
 
-    if (validated.data.name !== undefined) updatePayload.name = validated.data.name;
     if (validated.data.config !== undefined)
       updatePayload.config = mergedConfig as unknown as Json;
     if (validated.data.allowed_domains !== undefined)
@@ -273,7 +175,6 @@ export async function updateWidget(
       updatePayload.enable_structured_data = validated.data.enable_structured_data;
     if (validated.data.structured_data_type !== undefined)
       updatePayload.structured_data_type = validated.data.structured_data_type;
-    if (validated.data.status !== undefined) updatePayload.status = validated.data.status;
     if (validated.data.entity_id !== undefined) updatePayload.entity_id = validated.data.entity_id;
 
     const { data, error } = await supabase
@@ -302,66 +203,6 @@ export async function updateWidget(
     return { success: true, data };
   } catch (err) {
     console.error("updateWidget error:", err);
-    return { success: false, error: "An unexpected error occurred" };
-  }
-}
-
-// ── Delete Widget (soft-delete) ─────────────────────────────────────────
-
-export async function deleteWidget(
-  input: DeleteWidgetInput
-): Promise<ActionResult<{ id: string }>> {
-  try {
-    const validated = deleteWidgetInputSchema.safeParse(input);
-    if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message ?? "Validation failed" };
-    }
-
-    const supabase = createAdminClient();
-    const ctx = await getAuthedUserContext(supabase);
-    if (!ctx.success) return ctx;
-
-    // Verify widget belongs to user's org
-    const { data: existing, error: fetchError } = await supabase
-      .from("widget_configs")
-      .select("id, organization_id, widget_id")
-      .eq("id", validated.data.id)
-      .eq("organization_id", ctx.data.organizationId)
-      .single();
-
-    if (fetchError || !existing) {
-      return { success: false, error: "Widget not found" };
-    }
-
-    // Prevent deletion of widgets with active A/B test variants
-    const { count } = await supabase
-      .from("widget_configs")
-      .select("id", { count: "exact", head: true })
-      .eq("parent_widget_id", existing.id)
-      .eq("status", "active");
-
-    if (count && count > 0) {
-      return {
-        success: false,
-        error: "Cannot delete a widget with active A/B test variants. End the test first.",
-      };
-    }
-
-    // Soft-delete: set status to inactive
-    const { error } = await supabase
-      .from("widget_configs")
-      .update({ status: "inactive" as const, updated_at: new Date().toISOString() })
-      .eq("id", validated.data.id)
-      .eq("organization_id", ctx.data.organizationId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    revalidatePath(WIDGETS_PATH);
-    return { success: true, data: { id: validated.data.id } };
-  } catch (err) {
-    console.error("deleteWidget error:", err);
     return { success: false, error: "An unexpected error occurred" };
   }
 }
@@ -465,73 +306,6 @@ export async function getWidget(
     return { success: true, data };
   } catch (err) {
     console.error("getWidget error:", err);
-    return { success: false, error: "An unexpected error occurred" };
-  }
-}
-
-// ── Duplicate Widget ────────────────────────────────────────────────────
-
-export async function duplicateWidget(
-  input: DuplicateWidgetInput
-): Promise<ActionResult<WidgetConfig>> {
-  try {
-    const validated = duplicateWidgetInputSchema.safeParse(input);
-    if (!validated.success) {
-      return { success: false, error: validated.error.errors[0]?.message ?? "Validation failed" };
-    }
-
-    const supabase = createAdminClient();
-    const ctx = await getAuthedUserContext(supabase);
-    if (!ctx.success) return ctx;
-
-    // Fetch source widget
-    const { data: source, error: fetchError } = await supabase
-      .from("widget_configs")
-      .select("*")
-      .eq("id", validated.data.id)
-      .eq("organization_id", ctx.data.organizationId)
-      .single();
-
-    if (fetchError || !source) {
-      return { success: false, error: "Widget not found" };
-    }
-
-    const newName = `${source.name} (Copy)`;
-    const newWidgetId = await generateUniqueWidgetId(supabase, newName);
-
-    const duplicateRow: WidgetConfigInsert = {
-      widget_id: newWidgetId,
-      organization_id: source.organization_id,
-      created_by: ctx.data.userId,
-      name: newName,
-      widget_type: source.widget_type,
-      entity_type: source.entity_type,
-      entity_id: source.entity_id,
-      config: source.config,
-      allowed_domains: source.allowed_domains,
-      enable_structured_data: source.enable_structured_data,
-      structured_data_type: source.structured_data_type,
-      status: "draft",
-      version: 1,
-    };
-
-    const { data, error } = await supabase
-      .from("widget_configs")
-      .insert(duplicateRow)
-      .select()
-      .single();
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    // Create initial version snapshot for the duplicate
-    await createVersionSnapshotInternal(supabase, data.id, ctx.data.userId, data, null, "Duplicated widget");
-
-    revalidatePath(WIDGETS_PATH);
-    return { success: true, data };
-  } catch (err) {
-    console.error("duplicateWidget error:", err);
     return { success: false, error: "An unexpected error occurred" };
   }
 }

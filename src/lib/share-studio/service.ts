@@ -78,6 +78,7 @@ export async function isShareStudioSchemaReady(
 export interface CreateProofItemInput {
   organizationId: string;
   createdBy?: string | null;
+  presenterUserId?: string | null;
   source: {
     review_id?: string;
     video_response_id?: string;
@@ -147,6 +148,20 @@ export interface CreateSmartLinkInput {
   createdBy?: string | null;
 }
 
+export interface EnsureSmartLinkForSourceInput {
+  organizationId: string;
+  sourceType: Extract<ProofSourceType, "review" | "video_testimonial">;
+  sourceId: string;
+  actorUserId?: string | null;
+}
+
+export interface EnsureSmartLinkForSourceResult {
+  proofItemId: string;
+  slug: string;
+  url: string;
+  created: boolean;
+}
+
 export interface RecordProofLinkEventInput {
   organizationId: string;
   proofLinkId: string;
@@ -214,6 +229,7 @@ function hashIp(ipAddress?: string | null): string | null {
 async function buildProofItemSnapshot(input: CreateProofItemInput): Promise<{
   sourceType: ProofSourceType;
   sourceId: string | null;
+  presenterUserId: string | null;
   snapshot: Record<string, unknown>;
   content: Omit<ProofItemSnapshot, "source_type" | "source_snapshot" | "source_id">;
 }> {
@@ -248,6 +264,7 @@ async function buildProofItemSnapshot(input: CreateProofItemInput): Promise<{
     return {
       sourceType: "review",
       sourceId: review.id,
+      presenterUserId: (review.user_id as string | null) ?? null,
       snapshot: {
         review_id: review.id,
         rating: review.rating,
@@ -300,6 +317,7 @@ async function buildProofItemSnapshot(input: CreateProofItemInput): Promise<{
     return {
       sourceType: "video_testimonial",
       sourceId: response.id,
+      presenterUserId: (response.user_id as string | null) ?? null,
       snapshot: {
         video_response_id: response.id,
         request_id: response.request_id,
@@ -338,6 +356,7 @@ async function buildProofItemSnapshot(input: CreateProofItemInput): Promise<{
   return {
     sourceType: "manual_json",
     sourceId: null,
+    presenterUserId: null,
     snapshot: {
       manual_json: manual,
     },
@@ -368,6 +387,98 @@ async function getProofItemRow(organizationId: string, itemId: string): Promise<
   return data;
 }
 
+async function getProofItemBySource(
+  organizationId: string,
+  sourceType: Extract<ProofSourceType, "review" | "video_testimonial">,
+  sourceId: string
+): Promise<Record<string, unknown> | null> {
+  const supabase = createUntypedAdminClient();
+
+  const { data, error } = await supabase
+    .from("proof_items")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("source_type", sourceType)
+    .eq("source_id", sourceId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data;
+}
+
+async function getActiveProofLinkByItem(
+  organizationId: string,
+  proofItemId: string
+): Promise<Record<string, unknown> | null> {
+  const supabase = createUntypedAdminClient();
+
+  const { data, error } = await supabase
+    .from("proof_links")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("proof_item_id", proofItemId)
+    .is("archived_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data;
+}
+
+async function resolvePresenterUserIdForSource(
+  organizationId: string,
+  sourceType: Extract<ProofSourceType, "review" | "video_testimonial">,
+  sourceId: string
+): Promise<string | null> {
+  const supabase = createUntypedAdminClient();
+
+  if (sourceType === "review") {
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("user_id")
+      .eq("organization_id", organizationId)
+      .eq("id", sourceId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return (data.user_id as string | null) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from("video_testimonial_responses")
+    .select("user_id")
+    .eq("organization_id", organizationId)
+    .eq("id", sourceId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return (data.user_id as string | null) ?? null;
+}
+
+async function resolvePresenterDestinationUrl(
+  presenterUserId: string | null | undefined
+): Promise<string | null> {
+  if (!presenterUserId) return null;
+
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("cta_button_url, personal_website_url")
+    .eq("id", presenterUserId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return (
+    (data.cta_button_url as string | null) ??
+    (data.personal_website_url as string | null) ??
+    null
+  );
+}
+
 export async function createProofItem(input: CreateProofItemInput): Promise<Record<string, unknown>> {
   const supabase = createUntypedAdminClient();
 
@@ -376,6 +487,7 @@ export async function createProofItem(input: CreateProofItemInput): Promise<Reco
   const itemPayload = {
     organization_id: input.organizationId,
     created_by: input.createdBy ?? null,
+    presenter_user_id: input.presenterUserId ?? built.presenterUserId,
     source_type: built.sourceType,
     source_id: built.sourceId,
     source_snapshot: built.snapshot,
@@ -513,6 +625,40 @@ export async function getProofItemWithDetails(organizationId: string, itemId: st
     assets: (assetsResult.data ?? []) as Record<string, unknown>[],
     jobs: (jobsResult.data ?? []) as Record<string, unknown>[],
     links: (linksResult.data ?? []) as Record<string, unknown>[],
+  };
+}
+
+export async function getShareStudioAssetsBySource(input: {
+  organizationId: string;
+  sourceType: Extract<ProofSourceType, "review" | "video_testimonial">;
+  sourceId: string;
+}): Promise<{
+  item: Record<string, unknown> | null;
+  links: Record<string, unknown>[];
+  assets: Record<string, unknown>[];
+  jobs: Record<string, unknown>[];
+}> {
+  const item = await getProofItemBySource(
+    input.organizationId,
+    input.sourceType,
+    input.sourceId
+  );
+
+  if (!item) {
+    return {
+      item: null,
+      links: [],
+      assets: [],
+      jobs: [],
+    };
+  }
+
+  const details = await getProofItemWithDetails(input.organizationId, String(item.id));
+  return {
+    item: details.item,
+    links: details.links,
+    assets: details.assets,
+    jobs: details.jobs,
   };
 }
 
@@ -763,6 +909,183 @@ export async function createSmartLink(input: CreateSmartLinkInput): Promise<Reco
   }
 
   return data;
+}
+
+export async function ensureSmartLinkForSource(
+  input: EnsureSmartLinkForSourceInput
+): Promise<EnsureSmartLinkForSourceResult> {
+  const supabase = createUntypedAdminClient();
+  const presenterUserId = await resolvePresenterUserIdForSource(
+    input.organizationId,
+    input.sourceType,
+    input.sourceId
+  );
+  const presenterDestinationUrl = await resolvePresenterDestinationUrl(presenterUserId);
+
+  let createdAny = false;
+
+  let item = await getProofItemBySource(
+    input.organizationId,
+    input.sourceType,
+    input.sourceId
+  );
+
+  if (!item) {
+    try {
+      item = await createProofItem({
+        organizationId: input.organizationId,
+        createdBy: input.actorUserId ?? null,
+        presenterUserId,
+        source:
+          input.sourceType === "review"
+            ? { review_id: input.sourceId }
+            : { video_response_id: input.sourceId },
+      });
+      createdAny = true;
+    } catch (error) {
+      console.error("ensureSmartLinkForSource: proof item creation race, retrying", { error });
+      // Handle races against the source-uniqueness index.
+      item = await getProofItemBySource(
+        input.organizationId,
+        input.sourceType,
+        input.sourceId
+      );
+      if (!item) {
+        throw new Error("Failed to create proof item for smart link source");
+      }
+    }
+  }
+
+  if (
+    presenterUserId &&
+    (item.presenter_user_id as string | null) !== presenterUserId
+  ) {
+    const { data: updatedItem, error: presenterError } = await supabase
+      .from("proof_items")
+      .update({
+        presenter_user_id: presenterUserId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("organization_id", input.organizationId)
+      .eq("id", item.id)
+      .select("*")
+      .single();
+
+    if (presenterError || !updatedItem) {
+      throw new Error(
+        presenterError?.message || "Failed to update proof presenter"
+      );
+    }
+    item = updatedItem;
+  }
+
+  if (!item) {
+    throw new Error("Failed to resolve proof item for smart link source");
+  }
+
+  const proofItemId = String(item.id);
+
+  let link = await getActiveProofLinkByItem(input.organizationId, proofItemId);
+
+  if (!link) {
+    try {
+      link = await createSmartLink({
+        organizationId: input.organizationId,
+        proofItemId,
+        destinationUrl: presenterDestinationUrl ?? undefined,
+        createdBy: input.actorUserId ?? null,
+      });
+      createdAny = true;
+    } catch (error) {
+      console.error("ensureSmartLinkForSource: smart link creation race, retrying", { error });
+      // Handle races against one-active-link constraint.
+      link = await getActiveProofLinkByItem(input.organizationId, proofItemId);
+      if (!link) {
+        throw new Error("Failed to create smart link");
+      }
+    }
+  }
+
+  if (!link.destination_url && presenterDestinationUrl) {
+    const { data: updatedLink, error: updateLinkError } = await supabase
+      .from("proof_links")
+      .update({
+        destination_url: presenterDestinationUrl,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", link.id)
+      .eq("organization_id", input.organizationId)
+      .select("*")
+      .single();
+
+    if (updateLinkError) {
+      console.warn("ensureSmartLinkForSource: failed to update link destination_url", { error: updateLinkError });
+    } else if (updatedLink) {
+      link = updatedLink;
+    }
+  }
+
+  if (!link) {
+    throw new Error("Failed to resolve smart link");
+  }
+
+  if (!link.published) {
+    await publishProofItem(input.organizationId, proofItemId, input.actorUserId ?? null);
+
+    const refreshed = await getActiveProofLinkByItem(
+      input.organizationId,
+      proofItemId
+    );
+    if (!refreshed) {
+      throw new Error("Failed to fetch smart link after publish");
+    }
+    link = refreshed;
+  }
+
+  const slug = String(link.slug ?? "");
+  if (!slug) {
+    throw new Error("Smart link slug was not resolved");
+  }
+
+  return {
+    proofItemId,
+    slug,
+    url: `/s/${slug}`,
+    created: createdAny,
+  };
+}
+
+export async function getPublishedSmartLinkBySource(input: {
+  organizationId: string;
+  sourceType: Extract<ProofSourceType, "review" | "video_testimonial">;
+  sourceId: string;
+}): Promise<{ slug: string; proofItemId: string } | null> {
+  const item = await getProofItemBySource(
+    input.organizationId,
+    input.sourceType,
+    input.sourceId
+  );
+
+  if (!item) return null;
+
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("proof_links")
+    .select("slug, proof_item_id")
+    .eq("organization_id", input.organizationId)
+    .eq("proof_item_id", item.id)
+    .eq("published", true)
+    .is("archived_at", null)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data || !data.slug) return null;
+
+  return {
+    slug: String(data.slug),
+    proofItemId: String(data.proof_item_id),
+  };
 }
 
 export async function publishProofItem(

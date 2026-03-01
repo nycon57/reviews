@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getProofLinkBySlug, recordProofLinkEvent } from "@/lib/share-studio/service";
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { platformLabel } from "@/lib/share-studio/utils";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { SmartLinkContent, type Professional } from "./smart-link-content";
 import { getInitials } from "@/lib/utils";
+import { VideoTestimonialPlayer } from "@/app/(public)/testimonials/video/[id]/video-testimonial-player";
+import type { PublicVideoTestimonial } from "@/lib/video-testimonials/public-actions";
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -44,6 +47,7 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
     (link.description as string | null) ||
     (item.summary as string | null) ||
     "Shared from Share Studio";
+  const sourceType = (item.source_type as string | null) || "review";
 
   return {
     title,
@@ -55,7 +59,7 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
       title,
       description,
       url: canonical,
-      type: "article",
+      type: sourceType === "video_testimonial" ? "video.other" : "article",
       images: [{ url: ogImage }],
     },
     twitter: {
@@ -67,17 +71,6 @@ export async function generateMetadata({ params }: RouteParams): Promise<Metadat
   };
 }
 
-function platformLabel(source: string): string {
-  const s = source.toLowerCase();
-  if (s === "google") return "Google Review";
-  if (s === "zillow") return "Zillow Review";
-  if (s === "facebook") return "Facebook Review";
-  if (s === "yelp") return "Yelp Review";
-  if (s === "realtor") return "Realtor.com Review";
-  if (s) return `${source.charAt(0).toUpperCase()}${source.slice(1)} Review`;
-  return "Verified Review";
-}
-
 function formatReviewDate(dateStr: string | null): string | null {
   if (!dateStr) return null;
   try {
@@ -87,6 +80,10 @@ function formatReviewDate(dateStr: string | null): string | null {
   } catch {
     return null;
   }
+}
+
+function sanitizeSignedPath(path: string): string {
+  return path.replace(/^\/+/, "");
 }
 
 export default async function SmartLinkPage({ params }: RouteParams) {
@@ -143,13 +140,16 @@ export default async function SmartLinkPage({ params }: RouteParams) {
   const logoUrl = brand.logoUrl;
   const reviewDate = formatReviewDate((item.source_review_date as string | null) || null);
   const primaryColor = brand.primaryColor || "#0f172a";
+  const sourceType = (item.source_type as string | null) || "review";
 
-  // Fetch professional data from link creator
+  // Fetch professional data from presenter owner (fallback: link creator).
   let professional: Professional | null = null;
   let ctaLabel = `Connect with ${organizationName}`;
-  const createdBy = link.created_by as string | null;
+  const presenterUserId =
+    (item.presenter_user_id as string | null) ||
+    (link.created_by as string | null);
 
-  if (createdBy) {
+  if (presenterUserId) {
     try {
       const supabase = createUntypedAdminClient();
       const { data: userData } = await supabase
@@ -157,7 +157,7 @@ export default async function SmartLinkPage({ params }: RouteParams) {
         .select(
           "full_name, title, photo_url, avatar_url, nmls_id, average_rating, total_reviews, cta_button_text"
         )
-        .eq("id", createdBy)
+        .eq("id", presenterUserId)
         .maybeSingle();
 
       if (userData) {
@@ -181,7 +181,7 @@ export default async function SmartLinkPage({ params }: RouteParams) {
       }
     } catch (err) {
       console.error("Failed to fetch professional data for smart link", {
-        createdBy,
+        presenterUserId,
         slug,
         error: err,
       });
@@ -190,6 +190,123 @@ export default async function SmartLinkPage({ params }: RouteParams) {
   }
 
   const pageUrl = `${baseUrl()}/s/${slug}`;
+
+  if (sourceType === "video_testimonial") {
+    const sourceId = (item.source_id as string | null) || null;
+    if (!sourceId) {
+      notFound();
+    }
+
+    const supabase = createUntypedAdminClient();
+    const { data: videoRow, error: videoError } = await supabase
+      .from("video_testimonial_responses")
+      .select(`
+        id, video_path, video_url, thumbnail_url, duration_seconds, transcription, ai_generated_text,
+        key_phrases, sentiment_label, submitted_at, published_at, user_id,
+        video_testimonial_requests!inner (customer_name, source_metadata),
+        users!user_id (id, full_name, photo_url, title)
+      `)
+      .eq("id", sourceId)
+      .eq("organization_id", data.organization.id)
+      .maybeSingle();
+
+    if (videoError || !videoRow) {
+      notFound();
+    }
+
+    const storageClient = createAdminClient();
+    const signedUrlResult = await storageClient.storage
+      .from("video-testimonials")
+      .createSignedUrl(sanitizeSignedPath(String(videoRow.video_path ?? "")), 86400);
+
+    const signedVideoUrl =
+      signedUrlResult.error || !signedUrlResult.data?.signedUrl
+        ? ((videoRow.video_url as string | null) ?? "")
+        : signedUrlResult.data.signedUrl;
+
+    if (!signedVideoUrl) {
+      notFound();
+    }
+
+    const request = (videoRow.video_testimonial_requests as
+      | {
+          customer_name?: string | null;
+          source_metadata?: {
+            customer_display_name?: string;
+            customer_relationship?: string;
+          } | null;
+        }
+      | null) ?? null;
+
+    const sourceProfessional =
+      (videoRow.users as
+        | {
+            id?: string;
+            full_name?: string | null;
+            photo_url?: string | null;
+            title?: string | null;
+          }
+        | null) ?? null;
+
+    const customerDisplayName =
+      request?.source_metadata?.customer_display_name ||
+      request?.customer_name ||
+      "Verified Customer";
+
+    const videoProfessionalName =
+      sourceProfessional?.full_name ||
+      professional?.fullName ||
+      "Professional";
+
+    const videoData: PublicVideoTestimonial = {
+      id: String(videoRow.id),
+      videoUrl: signedVideoUrl,
+      thumbnailUrl: (videoRow.thumbnail_url as string | null) ?? null,
+      durationSeconds: (videoRow.duration_seconds as number | null) ?? null,
+      transcription: (videoRow.transcription as string | null) ?? null,
+      aiGeneratedText: (videoRow.ai_generated_text as string | null) ?? null,
+      keyPhrases: (videoRow.key_phrases as string[] | null) ?? null,
+      sentimentLabel: (videoRow.sentiment_label as string | null) ?? null,
+      submittedAt: String(videoRow.submitted_at),
+      publishedAt: (videoRow.published_at as string | null) ?? null,
+      customer: {
+        displayName: customerDisplayName,
+        relationship: request?.source_metadata?.customer_relationship ?? null,
+      },
+      professional: {
+        id: String(
+          sourceProfessional?.id ||
+            (videoRow.user_id as string | null) ||
+            presenterUserId ||
+            ""
+        ),
+        fullName: videoProfessionalName,
+        photoUrl:
+          (sourceProfessional?.photo_url as string | null) ??
+          professional?.photoUrl ??
+          null,
+        title:
+          (sourceProfessional?.title as string | null) ??
+          professional?.title ??
+          null,
+      },
+      organization: {
+        id: String(data.organization.id),
+        name: organizationName,
+        logoUrl: logoUrl,
+        primaryColor: primaryColor,
+      },
+    };
+
+    return (
+      <VideoTestimonialPlayer
+        video={videoData}
+        pageUrl={pageUrl}
+        embedUrl={`${baseUrl()}/embed/video/${sourceId}`}
+      />
+    );
+  }
+
   const shareText = quote
     ? `"${quote}" — ${customerName}`
     : `Check out this review from ${organizationName}`;

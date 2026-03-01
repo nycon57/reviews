@@ -22,12 +22,14 @@ interface GamificationStatsCardProps {
   loanOfficerId?: string;
   className?: string;
   showTeamRank?: boolean;
+  layout?: "horizontal" | "vertical";
 }
 
 export function GamificationStatsCard({
   loanOfficerId,
   className,
   showTeamRank = true,
+  layout = "horizontal",
 }: GamificationStatsCardProps) {
   const [stats, setStats] = useState<GamificationStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,11 +58,14 @@ export function GamificationStatsCard({
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className={cn("grid grid-cols-2 gap-4", showTeamRank ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
+          <div className={cn(
+            "grid gap-4",
+            layout === "vertical" ? "grid-cols-1" : cn("grid-cols-2", showTeamRank ? "sm:grid-cols-4" : "sm:grid-cols-3")
+          )}>
             {[...Array(showTeamRank ? 4 : 3)].map((_, i) => (
-              <div key={i} className="space-y-2 text-center">
-                <div className="h-10 w-10 rounded-full bg-muted mx-auto animate-pulse" />
-                <div className="h-4 w-16 bg-muted rounded mx-auto animate-pulse" />
+              <div key={i} className={cn("space-y-2", layout === "vertical" ? "flex items-center gap-3" : "text-center")}>
+                <div className="h-10 w-10 rounded-full bg-muted shrink-0 animate-pulse" />
+                <div className="h-4 w-16 bg-muted rounded animate-pulse" />
               </div>
             ))}
           </div>
@@ -124,100 +129,202 @@ export function GamificationStatsCard({
           Your Progress
         </CardTitle>
       </CardHeader>
-      <CardContent className="pt-6">
-        <div className={cn("grid grid-cols-2 gap-4", showTeamRank ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
-          {/* Reputation Score */}
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 mb-2">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+      <CardContent className="pt-5">
+        {layout === "vertical" ? (
+          <div className="space-y-4">
+            {/* Reputation Score */}
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 shrink-0 rounded-full bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 flex items-center justify-center text-white font-bold text-sm shadow-md">
                 {stats.reputationScore}
               </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-repwell-teal-500">Reputation Score</div>
+                <div className="text-xs text-repwell-teal-400 flex items-center gap-1">
+                  {stats.reputationTrend === "up" ? "Trending up" : stats.reputationTrend === "down" ? "Trending down" : "Stable"}
+                  {getTrendIcon(stats.reputationTrend)}
+                </div>
+              </div>
             </div>
-            <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
-              Reputation
-              {getTrendIcon(stats.reputationTrend)}
-            </div>
-          </div>
 
-          {/* Rank — hidden for individual accounts */}
-          {showTeamRank && (
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
+            {/* Team Rank */}
+            {showTeamRank && (
+              <div className="flex items-center gap-3">
                 <div
                   className={cn(
-                    "h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md",
+                    "h-11 w-11 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md",
                     getRankBadgeColor(stats.currentRank)
                   )}
                 >
                   {stats.currentRank === 1 ? (
-                    <Crown className="h-6 w-6" />
+                    <Crown className="h-5 w-5" />
                   ) : (
                     `#${stats.currentRank || "-"}`
                   )}
                 </div>
-              </div>
-              <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
-                Team Rank
-                {stats.rankChange !== 0 && (
-                  <Badge
-                    variant={stats.rankChange > 0 ? "default" : "destructive"}
-                    className="text-[10px] h-4 px-1"
-                  >
-                    {stats.rankChange > 0 ? `+${stats.rankChange}` : stats.rankChange}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Badges */}
-          <div className="text-center">
-            <div className="flex items-center justify-center mb-2">
-              <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center">
-                <Award className="h-6 w-6 text-purple-500" />
-              </div>
-            </div>
-            <div className="text-sm font-semibold text-repwell-teal-500">
-              {stats.earnedBadges} / {stats.totalBadges}
-            </div>
-            <div className="text-xs text-repwell-teal-400">Badges Earned</div>
-          </div>
-
-          {/* Next Badge Progress */}
-          <div className="text-center">
-            {stats.nextBadgeProgress ? (
-              <>
-                <div className="flex items-center justify-center mb-2">
-                  <BadgeIcon
-                    badge={stats.nextBadgeProgress.badge}
-                    size="lg"
-                    isEarned={false}
-                    showTooltip={false}
-                  />
-                </div>
-                <div className="text-xs text-repwell-teal-400 mb-1">
-                  {stats.nextBadgeProgress.percentComplete}% to{" "}
-                  <span className="font-medium text-repwell-teal-500">
-                    {stats.nextBadgeProgress.badge.name}
-                  </span>
-                </div>
-                <Progress
-                  value={stats.nextBadgeProgress.percentComplete}
-                  className="h-1.5 w-20 mx-auto"
-                />
-              </>
-            ) : (
-              <>
-                <div className="flex items-center justify-center mb-2">
-                  <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-                    <Target className="h-6 w-6 text-green-500" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold text-repwell-teal-500">Team Rank</div>
+                  <div className="text-xs text-repwell-teal-400 flex items-center gap-1">
+                    {stats.rankChange !== 0 ? (
+                      <Badge
+                        variant={stats.rankChange > 0 ? "default" : "destructive"}
+                        className="text-[10px] h-4 px-1"
+                      >
+                        {stats.rankChange > 0 ? `+${stats.rankChange}` : stats.rankChange}
+                      </Badge>
+                    ) : (
+                      "No change"
+                    )}
                   </div>
                 </div>
-                <div className="text-xs text-repwell-teal-400">All badges earned!</div>
-              </>
+              </div>
             )}
+
+            {/* Badges */}
+            <div className="flex items-center gap-3">
+              <div className="h-11 w-11 shrink-0 rounded-full bg-repwell-sage-200/10 flex items-center justify-center">
+                <Award className="h-5 w-5 text-repwell-sage-200" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold text-repwell-teal-500">
+                  {stats.earnedBadges} / {stats.totalBadges}
+                </div>
+                <div className="text-xs text-repwell-teal-400">Badges Earned</div>
+              </div>
+            </div>
+
+            {/* Next Badge Progress */}
+            <div className="flex items-center gap-3">
+              {stats.nextBadgeProgress ? (
+                <>
+                  <div className="shrink-0">
+                    <BadgeIcon
+                      badge={stats.nextBadgeProgress.badge}
+                      size="lg"
+                      isEarned={false}
+                      showTooltip={false}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-repwell-teal-400 mb-1.5">
+                      {stats.nextBadgeProgress.percentComplete}% to{" "}
+                      <span className="font-medium text-repwell-teal-500">
+                        {stats.nextBadgeProgress.badge.name}
+                      </span>
+                    </div>
+                    <Progress
+                      value={stats.nextBadgeProgress.percentComplete}
+                      className="h-1.5"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="h-11 w-11 shrink-0 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <Target className="h-5 w-5 text-green-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-repwell-teal-500">All Done</div>
+                    <div className="text-xs text-repwell-teal-400">All badges earned!</div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className={cn("grid grid-cols-2 gap-4", showTeamRank ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
+            {/* Reputation Score */}
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-1 mb-2">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                  {stats.reputationScore}
+                </div>
+              </div>
+              <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
+                Reputation
+                {getTrendIcon(stats.reputationTrend)}
+              </div>
+            </div>
+
+            {/* Rank — hidden for individual accounts */}
+            {showTeamRank && (
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <div
+                    className={cn(
+                      "h-12 w-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md",
+                      getRankBadgeColor(stats.currentRank)
+                    )}
+                  >
+                    {stats.currentRank === 1 ? (
+                      <Crown className="h-6 w-6" />
+                    ) : (
+                      `#${stats.currentRank || "-"}`
+                    )}
+                  </div>
+                </div>
+                <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
+                  Team Rank
+                  {stats.rankChange !== 0 && (
+                    <Badge
+                      variant={stats.rankChange > 0 ? "default" : "destructive"}
+                      className="text-[10px] h-4 px-1"
+                    >
+                      {stats.rankChange > 0 ? `+${stats.rankChange}` : stats.rankChange}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Badges */}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <div className="h-12 w-12 rounded-full bg-repwell-sage-200/10 flex items-center justify-center">
+                  <Award className="h-6 w-6 text-repwell-sage-200" />
+                </div>
+              </div>
+              <div className="text-sm font-semibold text-repwell-teal-500">
+                {stats.earnedBadges} / {stats.totalBadges}
+              </div>
+              <div className="text-xs text-repwell-teal-400">Badges Earned</div>
+            </div>
+
+            {/* Next Badge Progress */}
+            <div className="text-center">
+              {stats.nextBadgeProgress ? (
+                <>
+                  <div className="flex items-center justify-center mb-2">
+                    <BadgeIcon
+                      badge={stats.nextBadgeProgress.badge}
+                      size="lg"
+                      isEarned={false}
+                      showTooltip={false}
+                    />
+                  </div>
+                  <div className="text-xs text-repwell-teal-400 mb-1">
+                    {stats.nextBadgeProgress.percentComplete}% to{" "}
+                    <span className="font-medium text-repwell-teal-500">
+                      {stats.nextBadgeProgress.badge.name}
+                    </span>
+                  </div>
+                  <Progress
+                    value={stats.nextBadgeProgress.percentComplete}
+                    className="h-1.5 w-20 mx-auto"
+                  />
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center mb-2">
+                    <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <Target className="h-6 w-6 text-green-500" />
+                    </div>
+                  </div>
+                  <div className="text-xs text-repwell-teal-400">All badges earned!</div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

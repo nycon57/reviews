@@ -92,7 +92,7 @@ export function WebflowGuide() {
             Method 3: Collection-Level Embedding
           </h4>
           <p className="text-sm text-muted-foreground mb-3">
-            Display loan officer-specific widgets on CMS collection pages by
+            Display professional-specific widgets on CMS collection pages by
             passing dynamic data attributes.
           </p>
           <CodeBlock code={WEBFLOW_COLLECTION_CODE} language="html" />

@@ -29,14 +29,36 @@ async function getUserContext() {
   return userData;
 }
 
-// Check if user has manager/admin role
+// Get authenticated user context with org — all enterprise roles allowed
+// Returns scopedUserId when the user can only see their own data (role=user)
+async function requireOrgUser(): Promise<{
+  userId: string;
+  organizationId: string;
+  scopedUserId: string | null;
+} | null> {
+  const context = await getUserContext();
+
+  if (!context || !context.organization_id) {
+    return null;
+  }
+
+  const isManagerOrAbove = ["admin", "manager"].includes(context.role);
+
+  return {
+    userId: context.id,
+    organizationId: context.organization_id,
+    scopedUserId: isManagerOrAbove ? null : context.id,
+  };
+}
+
+// Check if user has manager/admin role (for write/management operations)
 async function requireManagerRole(): Promise<{
   userId: string;
   organizationId: string;
 } | null> {
   const context = await getUserContext();
 
-  if (!context) {
+  if (!context || !context.organization_id) {
     return null;
   }
 
@@ -46,7 +68,7 @@ async function requireManagerRole(): Promise<{
 
   return {
     userId: context.id,
-    organizationId: context.organization_id!,
+    organizationId: context.organization_id,
   };
 }
 
@@ -111,9 +133,9 @@ function mapRowToAggregatedReview(
 export async function getAggregatedReviews(
   filters?: AggregatedReviewFilters
 ): Promise<ActionResult<{ reviews: AggregatedReview[]; total: number }>> {
-  const context = await requireManagerRole();
+  const context = await requireOrgUser();
   if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
+    return { success: false, error: "Unauthorized" };
   }
 
   const supabase = createAdminClient();
@@ -188,6 +210,11 @@ export async function getAggregatedReviews(
     .order(sortColumn, { ascending: sortOrder === "asc" })
     .range(offset, offset + limit - 1);
 
+  // Scope to own reviews for regular users
+  if (context.scopedUserId) {
+    query = query.eq("user_id", context.scopedUserId);
+  }
+
   // Apply status filter
   if (filters?.status && filters.status !== "all") {
     query = query.eq("status", filters.status);
@@ -198,8 +225,8 @@ export async function getAggregatedReviews(
     query = query.eq("source", filters.source);
   }
 
-  // Apply user filter
-  if (filters?.loanOfficerId) {
+  // Apply user filter (only for managers who can view all users)
+  if (filters?.loanOfficerId && !context.scopedUserId) {
     query = query.eq("user_id", filters.loanOfficerId);
   }
 
@@ -274,14 +301,14 @@ export async function getAggregatedReviews(
 export async function getAggregatedReviewById(
   reviewId: string
 ): Promise<ActionResult<AggregatedReview>> {
-  const context = await requireManagerRole();
+  const context = await requireOrgUser();
   if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
+    return { success: false, error: "Unauthorized" };
   }
 
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("reviews")
     .select(
       `
@@ -333,8 +360,14 @@ export async function getAggregatedReviewById(
     `
     )
     .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .single();
+    .eq("organization_id", context.organizationId);
+
+  // Scope to own reviews for regular users
+  if (context.scopedUserId) {
+    query = query.eq("user_id", context.scopedUserId);
+  }
+
+  const { data, error } = await query.single();
 
   if (error || !data) {
     return { success: false, error: "Review not found" };
@@ -364,17 +397,23 @@ export async function getAggregatedReviewById(
 export async function getReviewAggregationStats(): Promise<
   ActionResult<ReviewAggregationStats>
 > {
-  const context = await requireManagerRole();
+  const context = await requireOrgUser();
   if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
+    return { success: false, error: "Unauthorized" };
   }
 
   const supabase = createAdminClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("reviews")
     .select("source, status, rating, response_text, featured")
     .eq("organization_id", context.organizationId);
+
+  if (context.scopedUserId) {
+    query = query.eq("user_id", context.scopedUserId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching review stats:", error);

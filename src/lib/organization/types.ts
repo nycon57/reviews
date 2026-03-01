@@ -148,6 +148,7 @@ export const organizationMemberSchema = z.object({
   is_active: z.boolean(),
   last_login_at: z.string().nullable(),
   created_at: z.string(),
+  profile_completion: z.number().min(0).max(100).default(0),
 });
 export type OrganizationMember = z.infer<typeof organizationMemberSchema>;
 
@@ -183,26 +184,7 @@ export interface OrganizationMemberFull {
   created_at: string;
 }
 
-// Update member profile data (admin edit)
-export interface UpdateMemberProfileData {
-  fullName?: string;
-  title?: string;
-  nmlsId?: string;
-  bio?: string;
-  phone?: string;
-  personalWebsiteUrl?: string;
-  linkedinUrl?: string;
-  zillowProfileUrl?: string;
-  facebookUrl?: string;
-  instagramUrl?: string;
-  twitterUrl?: string;
-  timezone?: string;
-  ctaButtonText?: string;
-  ctaButtonUrl?: string;
-  hireDate?: string;
-  industry?: string;
-  region?: string;
-}
+// UpdateMemberProfileData replaced by AdminProfileInput from @/lib/auth/profile-schemas
 
 // Organization stats
 export interface OrganizationStats {

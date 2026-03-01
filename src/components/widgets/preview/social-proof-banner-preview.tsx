@@ -2,6 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Star, X } from "lucide-react";
+import {
+  type WidgetThemeColors,
+  getInitials,
+  truncateText,
+  DEFAULT_STAR_FILLED,
+  DEFAULT_STAR_EMPTY,
+} from "./shared";
 
 /**
  * Dashboard preview for the Social Proof Banner Widget.
@@ -9,17 +16,7 @@ import { Star, X } from "lucide-react";
  * with trigger simulation inside a simulated viewport container.
  */
 
-// ── Types ─────────────────────────────────────────────────────────────
-
-interface WidgetThemeColors {
-  primary?: string;
-  background?: string;
-  text?: string;
-  border?: string;
-  accent?: string;
-  starFilled?: string;
-  starEmpty?: string;
-}
+// ── Component-specific types ─────────────────────────────────────────
 
 interface SocialProofBannerConfig {
   displayMode?: "notification" | "counter_bar" | "floating_badge";
@@ -39,7 +36,7 @@ interface PreviewReview {
   reviewer_name: string;
   rating: number;
   text: string;
-  loan_officer_name?: string;
+  professional_name?: string;
   review_date: string;
 }
 
@@ -62,14 +59,14 @@ const SAMPLE_REVIEWS: PreviewReview[] = [
     reviewer_name: "Sarah M.",
     rating: 5,
     text: "Amazing experience from start to finish. The team was incredibly responsive and made the whole process seamless.",
-    loan_officer_name: "John Davis",
+    professional_name: "John Davis",
     review_date: "2026-01-28",
   },
   {
     reviewer_name: "Michael T.",
     rating: 5,
     text: "Best mortgage experience I've ever had. Highly recommend to anyone looking for a smooth closing.",
-    loan_officer_name: "Lisa Chen",
+    professional_name: "Lisa Chen",
     review_date: "2026-01-25",
   },
   {
@@ -87,17 +84,6 @@ const SAMPLE_PROFILE: PreviewProfile = {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return parts[0][0]?.toUpperCase() ?? "?";
-}
-
-function truncate(str: string, max: number): string {
-  return str.length <= max ? str : str.slice(0, max).trimEnd() + "\u2026";
-}
 
 function StarsRow({
   rating,
@@ -157,8 +143,8 @@ function NotificationPreview({
   }, [reviews.length, interval, rotate]);
 
   const review = reviews[currentIndex];
-  const filledColor = colors.starFilled ?? "#f59e0b";
-  const emptyColor = colors.starEmpty ?? "#d1d5db";
+  const filledColor = colors.starFilled ?? DEFAULT_STAR_FILLED;
+  const emptyColor = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
 
   return (
     <div
@@ -172,6 +158,7 @@ function NotificationPreview({
         width: 340,
         maxWidth: "100%",
         display: "flex",
+        boxSizing: "border-box" as const,
         gap: 12,
         opacity: animating ? 0.5 : 1,
         transition: "opacity 0.25s ease",
@@ -203,9 +190,9 @@ function NotificationPreview({
           >
             {review.reviewer_name}
           </span>
-          {review.loan_officer_name && (
+          {review.professional_name && (
             <span className="text-[11px] text-gray-500 truncate">
-              for {review.loan_officer_name}
+              for {review.professional_name}
             </span>
           )}
         </div>
@@ -220,7 +207,7 @@ function NotificationPreview({
 
         {review.text && (
           <p className="text-[12px] text-gray-500 line-clamp-2">
-            &ldquo;{truncate(review.text, 120)}&rdquo;
+            &ldquo;{truncateText(review.text, 120)}&rdquo;
           </p>
         )}
       </div>
@@ -250,7 +237,7 @@ function CounterBarPreview({
   dismissable: boolean;
   ctaText: string;
 }) {
-  const filledColor = colors.starFilled ?? "#f59e0b";
+  const filledColor = colors.starFilled ?? DEFAULT_STAR_FILLED;
 
   return (
     <div
@@ -310,8 +297,8 @@ function FloatingBadgePreview({
   dismissable: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const filledColor = colors.starFilled ?? "#f59e0b";
-  const emptyColor = colors.starEmpty ?? "#d1d5db";
+  const filledColor = colors.starFilled ?? DEFAULT_STAR_FILLED;
+  const emptyColor = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
 
   return (
     <div
@@ -325,6 +312,7 @@ function FloatingBadgePreview({
           : "0 4px 16px rgba(0,0,0,0.1)",
         padding: "10px 14px",
         width: hovered ? 280 : 220,
+        maxWidth: "100%",
         transition: "width 0.25s ease, box-shadow 0.2s ease",
         overflow: "hidden",
       }}
@@ -375,7 +363,7 @@ function FloatingBadgePreview({
       >
         {review.text && (
           <p className="text-[12px] text-gray-500 line-clamp-3">
-            &ldquo;{truncate(review.text, 150)}&rdquo;
+            &ldquo;{truncateText(review.text, 150)}&rdquo;
           </p>
         )}
       </div>

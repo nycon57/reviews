@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,6 +32,8 @@ import { cn } from "@/lib/utils";
 import type { Review, AggregatedReview } from "@/lib/reviews/types";
 import { useReviewQueue } from "./review-queue-context";
 import { CreateSmartLinkModal } from "@/components/share-studio/create-smart-link-modal";
+import { motion } from "framer-motion";
+import { fadeInUp, transitions } from "@/lib/motion";
 
 function formatDate(dateString: string) {
   const date = new Date(dateString);
@@ -61,6 +64,7 @@ function getStatusBadge(status: Review["status"]) {
 
 export function ReviewListItem({ review }: { review: Review | AggregatedReview }) {
   const { state, actions } = useReviewQueue();
+  const router = useRouter();
   const [shareModalOpen, setShareModalOpen] = useState(false);
 
   const aggregatedReview = review as AggregatedReview;
@@ -69,12 +73,15 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
   const sourceUrl = "sourceUrl" in review ? aggregatedReview.sourceUrl : undefined;
 
   return (
-    <div
+    <motion.div
+      layout
+      variants={fadeInUp}
+      exit={{ opacity: 0, scale: 0.95, transition: transitions.fast }}
       className={cn(
         "flex gap-4 p-4 transition-colors hover:bg-muted/50",
         !state.isPendingMode && "cursor-pointer"
       )}
-      onClick={() => !state.isPendingMode && actions.openReviewDetail(review)}
+      onClick={() => !state.isPendingMode && router.push(`/dashboard/reviews/${review.id}`)}
     >
       <div className="flex items-start pt-1" onClick={(e) => e.stopPropagation()}>
         <Checkbox
@@ -158,7 +165,7 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
             {/* Non-pending mode actions */}
             {!state.isPendingMode && review.status !== "pending" && (
               <>
-                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); actions.openReviewDetail(review); }}>
+                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/reviews/${review.id}`); }}>
                   <Eye className="mr-1 h-3 w-3" />View
                 </Button>
                 {review.status === "approved" && (
@@ -232,6 +239,6 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
         reviewId={review.id}
         reviewTitle={`${review.customerName || "Customer"} review`}
       />
-    </div>
+    </motion.div>
   );
 }

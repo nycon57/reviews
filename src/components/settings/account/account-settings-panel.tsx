@@ -7,6 +7,7 @@ import { ProfileTab } from '@/app/(dashboard)/dashboard/settings/components/prof
 import { BillingTab } from '@/app/(dashboard)/dashboard/settings/components/billing-tab';
 import { NotificationsTab } from '@/app/(dashboard)/dashboard/settings/components/notifications-tab';
 import { SmartLinksTab } from '@/app/(dashboard)/dashboard/settings/components/smart-links-tab';
+import type { UserProfileData } from '@/lib/auth/profile-schemas';
 
 export type AccountSubTab = 'profile' | 'billing' | 'notifications' | 'smart-links';
 
@@ -19,46 +20,12 @@ const subTabs: { value: AccountSubTab; label: string; icon: React.ElementType }[
 
 interface AccountSettingsPanelProps {
   initialSubTab?: AccountSubTab;
-  userEmail?: string;
-  userName?: string;
-  userAvatarUrl?: string | null;
-  userTitle?: string | null;
-  userNmlsId?: string | null;
-  userBio?: string | null;
-  userPhone?: string | null;
-  userPersonalWebsiteUrl?: string | null;
-  userLinkedinUrl?: string | null;
-  userZillowProfileUrl?: string | null;
-  userFacebookUrl?: string | null;
-  userInstagramUrl?: string | null;
-  userTwitterUrl?: string | null;
-  userTimezone?: string | null;
-  userSlug?: string | null;
-  userBannerUrl?: string | null;
-  userId?: string;
-  userRole?: string | null;
+  profile: UserProfileData;
 }
 
 export function AccountSettingsPanel({
   initialSubTab = 'profile',
-  userEmail,
-  userName,
-  userAvatarUrl,
-  userTitle,
-  userNmlsId,
-  userBio,
-  userPhone,
-  userPersonalWebsiteUrl,
-  userLinkedinUrl,
-  userZillowProfileUrl,
-  userFacebookUrl,
-  userInstagramUrl,
-  userTwitterUrl,
-  userTimezone,
-  userSlug,
-  userBannerUrl,
-  userId,
-  userRole,
+  profile,
 }: AccountSettingsPanelProps) {
   const [activeSubTab, setActiveSubTab] = useState<AccountSubTab>(initialSubTab);
 
@@ -98,24 +65,8 @@ export function AccountSettingsPanel({
       <div className="flex-1 min-w-0">
         {activeSubTab === 'profile' && (
           <ProfileTab
-            userEmail={userEmail}
-            userName={userName}
-            userAvatarUrl={userAvatarUrl}
-            userTitle={userTitle}
-            userNmlsId={userNmlsId}
-            userBio={userBio}
-            userPhone={userPhone}
-            userPersonalWebsiteUrl={userPersonalWebsiteUrl}
-            userLinkedinUrl={userLinkedinUrl}
-            userZillowProfileUrl={userZillowProfileUrl}
-            userFacebookUrl={userFacebookUrl}
-            userInstagramUrl={userInstagramUrl}
-            userTwitterUrl={userTwitterUrl}
-            userTimezone={userTimezone}
-            userSlug={userSlug}
-            userBannerUrl={userBannerUrl}
-            userId={userId}
-            isAdmin={userRole === 'admin'}
+            profile={profile}
+            isAdmin={profile.role === 'admin'}
           />
         )}
         {activeSubTab === 'billing' && <BillingTab />}

@@ -11,16 +11,14 @@ import {
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { format } from "date-fns";
-import Link from "next/link";
 
 import { AnalyticsSummary } from "./analytics-summary";
 import { ImpressionsChart } from "./impressions-chart";
 import { WidgetAnalyticsTable } from "./widget-analytics-table";
 import { WidgetDetailAnalyticsPanel } from "./widget-detail-analytics";
 import { CsvExport } from "./csv-export";
-import { AbTestList } from "@/components/widgets/ab-test/ab-test-list";
 
 import {
   getWidgetAnalyticsSummary,
@@ -187,15 +185,10 @@ export function WidgetAnalyticsDashboard() {
           <h2 className="text-lg font-semibold text-repwell-teal-500 mb-2">
             No analytics data yet
           </h2>
-          <p className="text-sm text-muted-foreground max-w-md mb-6">
-            Create and embed a widget on your website to start tracking
+          <p className="text-sm text-muted-foreground max-w-md">
+            Embed a widget on your website to start tracking
             impressions, clicks, and conversions.
           </p>
-          <Button asChild>
-            <Link href="/dashboard/widgets/new" className="gap-2">
-              <Plus size={16} /> Create your first widget
-            </Link>
-          </Button>
         </div>
       ) : (
         <>
@@ -212,8 +205,6 @@ export function WidgetAnalyticsDashboard() {
             onSelectWidget={handleSelectWidget}
           />
 
-          {/* A/B Tests list */}
-          <AbTestList />
         </>
       )}
     </div>

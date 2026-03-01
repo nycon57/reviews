@@ -1,30 +1,33 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Star,
   TrendUp as TrendingUp,
   ShareNetwork as Share2,
   PaperPlaneRight as Send,
   CaretRight,
-  Lightning as Zap,
 } from "@phosphor-icons/react";
+import { SendReviewRequestDialog } from "@/components/requests/send-review-request-dialog";
 
 interface QuickAction {
   icon: React.ReactNode;
   title: string;
   description: string;
-  href: string;
+  href?: string;
+  onClick?: () => void;
 }
 
 export function UserQuickActions() {
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+
   const actions: QuickAction[] = [
     {
       icon: <Send className="h-5 w-5" />,
-      title: "Send Survey",
+      title: "Send Review Request",
       description: "Request a review from a customer",
-      href: "/dashboard/distribution",
+      onClick: () => setRequestDialogOpen(true),
     },
     {
       icon: <Star className="h-5 w-5" />,
@@ -46,36 +49,53 @@ export function UserQuickActions() {
     },
   ];
 
+  const cardClassName = "group flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4 shadow-soft transition-all hover:bg-repwell-sage-100/20 hover:border-repwell-teal-300/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
   return (
-    <Card className="shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-            <Zap className="h-4 w-4 text-repwell-teal-300" />
-          </div>
-          Quick Actions
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-2 pt-4">
-        {actions.map((action) => (
-          <Link
-            key={action.title}
-            href={action.href}
-            className="flex items-center gap-3 rounded-lg border border-border/50 p-3 text-left transition-all hover:bg-repwell-sage-100/20 hover:border-repwell-teal-300/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-repwell-teal-300/10 text-repwell-teal-300">
-              {action.icon}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-repwell-teal-500">{action.title}</div>
-              <div className="text-sm text-repwell-teal-400 truncate">
-                {action.description}
+    <>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {actions.map((action) => {
+          const content = (
+            <>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-repwell-teal-300/10 text-repwell-teal-300 transition-colors group-hover:bg-repwell-teal-300/20">
+                {action.icon}
               </div>
-            </div>
-            <CaretRight className="h-4 w-4 shrink-0 text-repwell-teal-300/50" />
-          </Link>
-        ))}
-      </CardContent>
-    </Card>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-repwell-teal-500">{action.title}</div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {action.description}
+                </div>
+              </div>
+              <CaretRight className="h-4 w-4 shrink-0 text-repwell-teal-300/40 transition-transform group-hover:translate-x-0.5 group-hover:text-repwell-teal-300" />
+            </>
+          );
+
+          if (action.onClick) {
+            return (
+              <button
+                key={action.title}
+                type="button"
+                onClick={action.onClick}
+                className={`${cardClassName} w-full text-left`}
+              >
+                {content}
+              </button>
+            );
+          }
+
+          return (
+            <Link key={action.title} href={action.href!} className={cardClassName}>
+              {content}
+            </Link>
+          );
+        })}
+      </div>
+
+      <SendReviewRequestDialog
+        open={requestDialogOpen}
+        onOpenChange={setRequestDialogOpen}
+        onSuccess={() => setRequestDialogOpen(false)}
+      />
+    </>
   );
 }

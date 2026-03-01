@@ -18,6 +18,7 @@ import {
 } from "./types";
 import { generateReviewFromTranscript } from "@/lib/ai/transcript-to-review";
 import { transcribeWithWordTimestamps } from "@/lib/share-studio/transcription-service";
+import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
 
 // ============================================================================
 // Validation Schemas
@@ -438,7 +439,7 @@ export async function generateShareLink(
     const supabase = createAdminClient();
     const { data: video, error: videoError } = await supabase
       .from("video_testimonial_responses")
-      .select("id, approval_status")
+      .select("id, approval_status, organization_id, user_id")
       .eq("id", videoId)
       .eq("approval_status", "published")
       .single();
@@ -447,8 +448,15 @@ export async function generateShareLink(
       return { success: false, error: "Video not found or not published" };
     }
 
+    const ensured = await ensureSmartLinkForSource({
+      organizationId: video.organization_id as string,
+      sourceType: "video_testimonial",
+      sourceId: videoId,
+      actorUserId: (video.user_id as string | null) ?? null,
+    });
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
-    return { success: true, data: { shareUrl: `${baseUrl}/testimonials/video/${videoId}` } };
+    return { success: true, data: { shareUrl: `${baseUrl}${ensured.url}` } };
   } catch (error) {
     console.error("Error generating share link:", error);
     return { success: false, error: "Failed to generate share link" };

@@ -44,6 +44,7 @@ export default async function DashboardRootLayout({
     avatar_url?: string | null;
     role?: string | null;
     is_owner?: boolean | null;
+    is_active?: boolean | null;
     organization_id?: string | null;
     individual_organization_id?: string | null;
     slug?: string | null;
@@ -52,6 +53,16 @@ export default async function DashboardRootLayout({
       subscription_tier?: string | null;
     } | null;
   } | null;
+
+  // Deactivated users get signed out and redirected
+  if (profile && profile.is_active === false) {
+    try {
+      await unifiedSignOut();
+    } catch {
+      // Sign-out failure is non-fatal; redirect must still run
+    }
+    redirect("/login?reason=deactivated");
+  }
 
   // Handle both Supabase Auth (user_metadata) and Better Auth (name) user structures
   const authUserName =

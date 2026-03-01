@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -11,7 +11,10 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +32,6 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  SpinnerGap as Loader2,
   Plus,
   DotsThree as MoreHorizontal,
   Pencil,
@@ -39,17 +41,32 @@ import {
   MapPin,
   UserCheck,
   Buildings,
+  Funnel,
+  CaretUp,
+  CaretDown,
+  CaretUpDown,
+  X,
+  UploadSimple,
 } from "@phosphor-icons/react";
 import { useToast } from "@/hooks/use-toast";
 import { getBranches, updateBranch } from "@/lib/branches/actions";
 import { CreateBranchDialog } from "./create-branch-dialog";
+import { BulkBranchImportWizard } from "./bulk-branch-import-wizard";
 import type { Branch } from "@/lib/branches/types";
+
+type BranchSortField = "name" | "manager" | "region" | "members" | "status";
+type SortDir = "asc" | "desc";
 
 export function OrganizationBranches() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<BranchSortField>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
@@ -100,6 +117,72 @@ export function OrganizationBranches() {
     });
   }
 
+  const regions = useMemo(
+    () => [...new Set(branches.map((b) => b.region).filter((r): r is string => !!r))].sort(),
+    [branches]
+  );
+
+  const hasActiveFilters = search.trim() !== "" || statusFilter !== "all" || regionFilter !== "all";
+
+  const filteredBranches = useMemo(() => {
+    let result = [...branches];
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (b) =>
+          b.name.toLowerCase().includes(q) ||
+          b.region?.toLowerCase().includes(q) ||
+          b.managerName?.toLowerCase().includes(q) ||
+          b.address?.city?.toLowerCase().includes(q) ||
+          b.address?.state?.toLowerCase().includes(q)
+      );
+    }
+
+    if (statusFilter !== "all") {
+      result = result.filter((b) =>
+        statusFilter === "active" ? b.isActive : !b.isActive
+      );
+    }
+
+    if (regionFilter !== "all") {
+      result = result.filter((b) => b.region === regionFilter);
+    }
+
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "name":
+          cmp = a.name.localeCompare(b.name);
+          break;
+        case "manager":
+          cmp = (a.managerName || "").localeCompare(b.managerName || "");
+          break;
+        case "region":
+          cmp = (a.region || "").localeCompare(b.region || "");
+          break;
+        case "members":
+          cmp = a.totalMembers - b.totalMembers;
+          break;
+        case "status":
+          cmp = Number(b.isActive) - Number(a.isActive);
+          break;
+      }
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+
+    return result;
+  }, [branches, search, statusFilter, regionFilter, sortField, sortDir]);
+
+  function toggleSort(field: BranchSortField) {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  }
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -126,21 +209,6 @@ export function OrganizationBranches() {
     );
   }
 
-  const filtered = branches.filter((b) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      b.name.toLowerCase().includes(q) ||
-      b.region?.toLowerCase().includes(q) ||
-      b.managerName?.toLowerCase().includes(q) ||
-      b.address?.city?.toLowerCase().includes(q) ||
-      b.address?.state?.toLowerCase().includes(q)
-    );
-  });
-
-  const activeBranches = filtered.filter((b) => b.isActive);
-  const inactiveBranches = filtered.filter((b) => !b.isActive);
-
   return (
     <div className="space-y-6">
       <Card className="border border-border shadow-soft">
@@ -153,55 +221,97 @@ export function OrganizationBranches() {
               <div>
                 <CardTitle className="text-lg">Branches</CardTitle>
                 <CardDescription>
-                  Manage your organization&apos;s branch locations
+                  {branches.length} branch{branches.length !== 1 ? "es" : ""}
+                  {filteredBranches.length !== branches.length && ` \u00b7 ${filteredBranches.length} shown`}
                 </CardDescription>
               </div>
             </div>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Branch
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+                <UploadSimple className="mr-2 h-4 w-4" />
+                Import CSV
+              </Button>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Branch
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Search */}
-          <div className="relative max-w-sm">
-            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search branches..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          {/* Search & Filters */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search branches..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Funnel className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              {regions.length > 0 && (
+                <Select value={regionFilter} onValueChange={setRegionFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Regions</SelectItem>
+                    {regions.map((r) => (
+                      <SelectItem key={r} value={r}>{r}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setSearch(""); setStatusFilter("all"); setRegionFilter("all"); }}
+                  className="text-muted-foreground h-8 px-2"
+                >
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
 
-          {/* Table */}
+          {/* Unified Table */}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Branch</TableHead>
-                <TableHead>Manager</TableHead>
-                <TableHead>Region</TableHead>
-                <TableHead className="text-center">Members</TableHead>
-                <TableHead>Status</TableHead>
+                <BranchSortableHead field="name" current={sortField} dir={sortDir} onToggle={toggleSort}>Branch</BranchSortableHead>
+                <BranchSortableHead field="manager" current={sortField} dir={sortDir} onToggle={toggleSort}>Manager</BranchSortableHead>
+                <BranchSortableHead field="region" current={sortField} dir={sortDir} onToggle={toggleSort}>Region</BranchSortableHead>
+                <BranchSortableHead field="members" current={sortField} dir={sortDir} onToggle={toggleSort} className="text-center">Members</BranchSortableHead>
+                <BranchSortableHead field="status" current={sortField} dir={sortDir} onToggle={toggleSort}>Status</BranchSortableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activeBranches.map((branch) => (
+              {filteredBranches.map((branch) => (
                 <TableRow
                   key={branch.id}
-                  className="cursor-pointer"
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/organization/branches/${branch.id}`
-                    )
-                  }
+                  className={`cursor-pointer ${!branch.isActive ? "opacity-60" : ""}`}
+                  onClick={() => router.push(`/dashboard/organization/branches/${branch.id}`)}
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-repwell-teal-300/10">
-                        <Buildings className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
+                      <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${branch.isActive ? "bg-repwell-teal-300/10" : "bg-muted"}`}>
+                        <Buildings className={`h-4 w-4 ${branch.isActive ? "text-repwell-teal-300" : "text-muted-foreground"}`} weight="duotone" />
                       </div>
                       <div>
                         <p className="font-medium">{branch.name}</p>
@@ -223,24 +333,27 @@ export function OrganizationBranches() {
                         {branch.managerName}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-muted-foreground">&mdash;</span>
                     )}
                   </TableCell>
                   <TableCell>
-                    {branch.region || (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    {branch.region || <span className="text-muted-foreground">&mdash;</span>}
                   </TableCell>
                   <TableCell className="text-center">
                     {branch.totalMembers}
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className="border-green-200 bg-green-50 text-green-700"
-                    >
-                      Active
-                    </Badge>
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Switch
+                        checked={branch.isActive}
+                        onCheckedChange={() => handleToggleActive(branch)}
+                        disabled={isPending}
+                        className={branch.isActive ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-gray-300"}
+                      />
+                      <span className={`text-sm font-medium ${branch.isActive ? "text-green-600" : "text-muted-foreground"}`}>
+                        {branch.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -258,9 +371,7 @@ export function OrganizationBranches() {
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(
-                              `/dashboard/organization/branches/${branch.id}`
-                            );
+                            router.push(`/dashboard/organization/branches/${branch.id}`);
                           }}
                         >
                           <Pencil className="mr-2 h-4 w-4" />
@@ -270,10 +381,7 @@ export function OrganizationBranches() {
                           <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(
-                                `/branch/${branch.globalSlug}`,
-                                "_blank"
-                              );
+                              window.open(`/branch/${branch.globalSlug}`, "_blank");
                             }}
                           >
                             <Eye className="mr-2 h-4 w-4" />
@@ -282,7 +390,7 @@ export function OrganizationBranches() {
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          className="text-destructive"
+                          className={branch.isActive ? "text-destructive" : ""}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleToggleActive(branch);
@@ -290,22 +398,17 @@ export function OrganizationBranches() {
                           disabled={isPending}
                         >
                           <Power className="mr-2 h-4 w-4" />
-                          Deactivate
+                          {branch.isActive ? "Deactivate" : "Reactivate"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
-              {activeBranches.length === 0 && (
+              {filteredBranches.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center text-muted-foreground py-8"
-                  >
-                    {search
-                      ? "No branches match your search"
-                      : "No active branches yet"}
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    {hasActiveFilters ? "No branches match your filters" : "No branches yet"}
                   </TableCell>
                 </TableRow>
               )}
@@ -314,85 +417,51 @@ export function OrganizationBranches() {
         </CardContent>
       </Card>
 
-      {/* Inactive branches */}
-      {inactiveBranches.length > 0 && (
-        <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <Buildings className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Inactive Branches</CardTitle>
-                <CardDescription>
-                  Branches that have been deactivated
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Branch</TableHead>
-                  <TableHead>Region</TableHead>
-                  <TableHead className="w-[120px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inactiveBranches.map((branch) => (
-                  <TableRow key={branch.id} className="opacity-60">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-                          <Buildings className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{branch.name}</p>
-                          {(branch.address?.city ||
-                            branch.address?.state) && (
-                            <p className="text-sm text-muted-foreground">
-                              {[branch.address.city, branch.address.state]
-                                .filter(Boolean)
-                                .join(", ")}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {branch.region || (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleToggleActive(branch)}
-                        disabled={isPending}
-                      >
-                        {isPending ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Power className="mr-2 h-4 w-4" />
-                        )}
-                        Reactivate
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
       <CreateBranchDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSuccess={refreshBranches}
       />
+
+      <BulkBranchImportWizard
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={refreshBranches}
+      />
     </div>
+  );
+}
+
+function BranchSortableHead({
+  field,
+  current,
+  dir,
+  onToggle,
+  className,
+  children,
+}: {
+  field: BranchSortField;
+  current: BranchSortField;
+  dir: SortDir;
+  onToggle: (f: BranchSortField) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const active = field === current;
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        onClick={() => onToggle(field)}
+        className="inline-flex items-center gap-1 hover:text-foreground transition-colors -ml-1 px-1 py-0.5 rounded"
+      >
+        {children}
+        {active ? (
+          dir === "asc" ? <CaretUp className="h-3.5 w-3.5" /> : <CaretDown className="h-3.5 w-3.5" />
+        ) : (
+          <CaretUpDown className="h-3.5 w-3.5 opacity-40" />
+        )}
+      </button>
+    </TableHead>
   );
 }

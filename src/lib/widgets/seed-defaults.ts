@@ -1,17 +1,18 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/types/database.types";
 import type { WidgetType } from "./types";
+import { WIDGET_TYPE_LABELS } from "./constants";
 
 const DEFAULT_WIDGETS: { type: WidgetType; name: string }[] = [
-  { type: "lo_review", name: "LO Reviews" },
-  { type: "branch_review", name: "Branch Reviews" },
-  { type: "company_review", name: "Company Reviews" },
-  { type: "review_carousel", name: "Review Carousel" },
-  { type: "star_rating_badge", name: "Star Rating Badge" },
-  { type: "video_testimonial", name: "Video Testimonials" },
-  { type: "review_wall", name: "Review Wall" },
-  { type: "nps_score_badge", name: "NPS Score Badge" },
-  { type: "social_proof_banner", name: "Social Proof Banner" },
+  { type: "lo_review", name: WIDGET_TYPE_LABELS.lo_review },
+  { type: "branch_review", name: WIDGET_TYPE_LABELS.branch_review },
+  { type: "company_review", name: WIDGET_TYPE_LABELS.company_review },
+  { type: "review_carousel", name: WIDGET_TYPE_LABELS.review_carousel },
+  { type: "star_rating_badge", name: WIDGET_TYPE_LABELS.star_rating_badge },
+  { type: "video_testimonial", name: WIDGET_TYPE_LABELS.video_testimonial },
+  { type: "review_wall", name: WIDGET_TYPE_LABELS.review_wall },
+  { type: "nps_score_badge", name: WIDGET_TYPE_LABELS.nps_score_badge },
+  { type: "social_proof_banner", name: WIDGET_TYPE_LABELS.social_proof_banner },
 ];
 
 function slugify(text: string): string {

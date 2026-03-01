@@ -4,6 +4,7 @@ import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admi
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { formatDuration, formatRelationship, type ActionResult } from "./types";
+import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
 
 // ============================================================================
 // Types
@@ -219,7 +220,7 @@ export async function generateVideoPostPreview(
   const { data: video, error: videoError } = await supabase
     .from("video_testimonial_responses")
     .select(`
-      id, video_url, thumbnail_url, duration_seconds, ai_generated_text, approval_status,
+      id, video_url, thumbnail_url, duration_seconds, ai_generated_text, approval_status, organization_id, user_id,
       video_testimonial_requests!inner (customer_name, source_metadata),
       users!user_id (full_name, title),
       organizations!inner (name)
@@ -245,7 +246,13 @@ export async function generateVideoPostPreview(
   const organization = video.organizations as unknown as OrgData;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
-  const pageUrl = `${baseUrl}/testimonials/video/${videoResponseId}`;
+  const smartLink = await ensureSmartLinkForSource({
+    organizationId: video.organization_id as string,
+    sourceType: "video_testimonial",
+    sourceId: videoResponseId,
+    actorUserId: (video.user_id as string | null) ?? context.userId,
+  });
+  const pageUrl = `${baseUrl}${smartLink.url}`;
 
   let content: string;
   if (customContent) {
@@ -301,7 +308,7 @@ export async function createVideoSocialPost(params: {
   // Verify video exists and is approved/published
   const { data: video, error: videoError } = await adminSupabase
     .from("video_testimonial_responses")
-    .select("id, approval_status")
+    .select("id, approval_status, organization_id, user_id")
     .eq("id", params.videoResponseId)
     .eq("organization_id", context.organizationId)
     .single();
@@ -340,7 +347,13 @@ export async function createVideoSocialPost(params: {
 
   const status = params.publishImmediately ? "publishing" : params.scheduledFor ? "scheduled" : "draft";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
-  const pageUrl = `${baseUrl}/testimonials/video/${params.videoResponseId}`;
+  const smartLink = await ensureSmartLinkForSource({
+    organizationId: video.organization_id as string,
+    sourceType: "video_testimonial",
+    sourceId: params.videoResponseId,
+    actorUserId: (video.user_id as string | null) ?? context.userId,
+  });
+  const pageUrl = `${baseUrl}${smartLink.url}`;
 
   const { data: post, error: insertError } = await untypedAdmin
     .from("social_posts")

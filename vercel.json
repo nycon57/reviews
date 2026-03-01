@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/share-render-jobs",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

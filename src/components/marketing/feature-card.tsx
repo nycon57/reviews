@@ -51,7 +51,7 @@ export function FeatureCard({
       variants={fadeInUp}
       whileHover={cardHover}
       whileTap={cardTap}
-      className="h-full"
+      className="h-full hover:shadow-md transition-shadow duration-200"
     >
       <Card
         className={cn(

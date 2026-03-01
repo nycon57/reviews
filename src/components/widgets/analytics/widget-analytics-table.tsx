@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { WidgetTableRow } from "@/lib/widgets/analytics-actions";
+import { WIDGET_TYPE_LABELS } from "@/lib/widgets/constants";
 
 const TYPE_ICONS: Record<
   string,
@@ -46,18 +47,6 @@ const TYPE_ICONS: Record<
   review_wall: LayoutGrid,
   nps_score_badge: TrendingUp,
   social_proof_banner: Megaphone,
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  lo_review: "LO Reviews",
-  branch_review: "Branch",
-  company_review: "Company",
-  review_carousel: "Carousel",
-  star_rating_badge: "Star Badge",
-  video_testimonial: "Video",
-  review_wall: "Wall",
-  nps_score_badge: "NPS",
-  social_proof_banner: "Banner",
 };
 
 const STATUS_VARIANTS: Record<
@@ -215,7 +204,7 @@ export const WidgetAnalyticsTable = memo(function WidgetAnalyticsTable({
                 const Icon =
                   TYPE_ICONS[row.widgetType] ?? BadgeIcon;
                 const typeLabel =
-                  TYPE_LABELS[row.widgetType] ?? row.widgetType;
+                  WIDGET_TYPE_LABELS[row.widgetType as keyof typeof WIDGET_TYPE_LABELS] ?? row.widgetType;
                 return (
                   <TableRow
                     key={row.widgetId}

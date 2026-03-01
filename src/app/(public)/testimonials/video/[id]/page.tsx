@@ -1,11 +1,13 @@
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   getPublicVideoTestimonial,
   getPublicVideoMetadata,
 } from "@/lib/video-testimonials/public-actions";
 import { VideoTestimonialPlayer } from "./video-testimonial-player";
 import { JsonLd } from "@/components/seo/json-ld";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getPublishedSmartLinkBySource } from "@/lib/share-studio/service";
 
 interface PageProps {
   params: Promise<{
@@ -15,6 +17,22 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
+  const supabase = createAdminClient();
+  const { data: sourceRow } = await supabase
+    .from("video_testimonial_responses")
+    .select("organization_id")
+    .eq("id", id)
+    .eq("approval_status", "published")
+    .maybeSingle();
+
+  const smartLink = sourceRow
+    ? await getPublishedSmartLinkBySource({
+        organizationId: String(sourceRow.organization_id),
+        sourceType: "video_testimonial",
+        sourceId: id,
+      })
+    : null;
+
   const result = await getPublicVideoMetadata(id);
 
   if (!result.success || !result.data) {
@@ -30,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const { title, description, customerName, thumbnailUrl, durationSeconds } = result.data;
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
-  const pageUrl = `${baseUrl}/testimonials/video/${id}`;
+  const pageUrl = smartLink ? `${baseUrl}/s/${smartLink.slug}` : `${baseUrl}/testimonials/video/${id}`;
 
   // Format duration for schema.org (ISO 8601 duration)
   const isoDuration = durationSeconds
@@ -85,6 +103,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function PublicVideoTestimonialPage({ params }: PageProps) {
   const { id } = await params;
+  const supabase = createAdminClient();
+  const { data: sourceRow } = await supabase
+    .from("video_testimonial_responses")
+    .select("organization_id")
+    .eq("id", id)
+    .eq("approval_status", "published")
+    .maybeSingle();
+
+  if (sourceRow) {
+    const smartLink = await getPublishedSmartLinkBySource({
+      organizationId: String(sourceRow.organization_id),
+      sourceType: "video_testimonial",
+      sourceId: id,
+    });
+    if (smartLink) {
+      redirect(`/s/${smartLink.slug}`);
+    }
+  }
+
   const result = await getPublicVideoTestimonial(id);
 
   if (!result.success || !result.data) {

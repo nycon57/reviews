@@ -10,71 +10,21 @@ import {
   type ChangePasswordInput,
   type ProfileResult,
 } from "./profile-schemas";
+import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
 import { validateUserSlug, generateUserSlug } from "@/lib/users/slug-utils";
 
 export async function updateProfile(formData: UpdateProfileInput): Promise<ProfileResult> {
-  // Validate input
   const result = updateProfileSchema.safeParse(formData);
   if (!result.success) {
     return { success: false, error: result.error.errors[0].message };
   }
 
-  const {
-    fullName,
-    avatarUrl,
-    bannerUrl,
-    title,
-    nmlsId,
-    bio,
-    phone,
-    personalWebsiteUrl,
-    linkedinUrl,
-    zillowProfileUrl,
-    facebookUrl,
-    instagramUrl,
-    twitterUrl,
-    timezone,
-  } = result.data;
-
-  // Get current user
   const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = createAdminClient();
-
-  // Update user record in database with all profile fields
-  const { error: dbError } = await supabase
-    .from("users")
-    .update({
-      full_name: fullName,
-      avatar_url: avatarUrl || null,
-      photo_url: avatarUrl || null,
-      banner_url: bannerUrl || null,
-      title: title || null,
-      nmls_id: nmlsId || null,
-      bio: bio || null,
-      phone: phone || null,
-      personal_website_url: personalWebsiteUrl || null,
-      linkedin_url: linkedinUrl || null,
-      zillow_profile_url: zillowProfileUrl || null,
-      facebook_url: facebookUrl || null,
-      instagram_url: instagramUrl || null,
-      twitter_url: twitterUrl || null,
-      timezone: timezone || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", user.id);
-
-  if (dbError) {
-    return { success: false, error: dbError.message };
-  }
-
-  revalidatePath("/profile");
-  revalidatePath("/dashboard", "layout");
-  revalidatePath("/dashboard/settings");
-  return { success: true };
+  return writeProfileUpdate(user.id, result.data);
 }
 
 export async function changePassword(formData: ChangePasswordInput): Promise<ProfileResult> {
@@ -133,84 +83,7 @@ export async function uploadAvatar(
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = createAdminClient();
-  const file = formData.get("file") as File;
-  if (!file) {
-    return { success: false, error: "No file provided" };
-  }
-
-  // Validate file type
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
-    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
-  }
-
-  // Validate file size (5MB max)
-  if (file.size > 5 * 1024 * 1024) {
-    return { success: false, error: "File too large. Maximum size is 5MB." };
-  }
-
-  // Get old avatar URL before uploading new one (for cleanup later)
-  const { data: currentProfile } = await supabase
-    .from("users")
-    .select("avatar_url")
-    .eq("id", user.id)
-    .single();
-  const oldAvatarUrl = currentProfile?.avatar_url;
-
-  // Generate unique filename
-  const fileExt = file.name.split(".").pop() || "jpg";
-  const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
-
-  // Upload to Supabase Storage
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(fileName, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error("Upload error:", uploadError);
-    return { success: false, error: "Failed to upload image. Please try again." };
-  }
-
-  // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(fileName);
-
-  // Update both avatar_url and photo_url to keep them in sync
-  // (photo_url is used by directory/public profile, avatar_url by dashboard)
-  const { error: dbError } = await supabase
-    .from("users")
-    .update({
-      avatar_url: publicUrl,
-      photo_url: publicUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", user.id);
-
-  if (dbError) {
-    console.error("Database update error:", dbError);
-    // Try to delete the uploaded file if database update fails
-    await supabase.storage.from("avatars").remove([fileName]);
-    return { success: false, error: "Failed to update profile. Please try again." };
-  }
-
-  // Delete old avatar if it exists and is from our storage
-  if (oldAvatarUrl && oldAvatarUrl.includes("/avatars/")) {
-    const oldPath = oldAvatarUrl.split("/avatars/").pop();
-    if (oldPath && oldPath !== fileName) {
-      await supabase.storage.from("avatars").remove([oldPath]);
-    }
-  }
-
-  revalidatePath("/profile");
-  revalidatePath("/dashboard", "layout");
-  revalidatePath("/dashboard/settings");
-
-  return { success: true, url: publicUrl };
+  return writeAvatarUpload(user.id, formData);
 }
 
 export async function uploadCoverPhoto(
@@ -221,74 +94,7 @@ export async function uploadCoverPhoto(
     return { success: false, error: "Not authenticated" };
   }
 
-  const supabase = createAdminClient();
-  const file = formData.get("file") as File;
-  if (!file) {
-    return { success: false, error: "No file provided" };
-  }
-
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
-    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
-  }
-
-  // 10MB max for cover photos (larger than avatars)
-  if (file.size > 10 * 1024 * 1024) {
-    return { success: false, error: "File too large. Maximum size is 10MB." };
-  }
-
-  const fileExt = file.name.split(".").pop() || "jpg";
-  const fileName = `${user.id}/cover-${Date.now()}.${fileExt}`;
-
-  // Get old banner URL before updating
-  const { data: currentProfile } = await supabase
-    .from("users")
-    .select("banner_url")
-    .eq("id", user.id)
-    .single();
-
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(fileName, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-
-  if (uploadError) {
-    console.error("Cover photo upload error:", uploadError);
-    return { success: false, error: "Failed to upload image. Please try again." };
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(fileName);
-
-  const { error: dbError } = await supabase
-    .from("users")
-    .update({
-      banner_url: publicUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", user.id);
-
-  if (dbError) {
-    console.error("Database update error:", dbError);
-    await supabase.storage.from("avatars").remove([fileName]);
-    return { success: false, error: "Failed to update profile. Please try again." };
-  }
-
-  // Delete old cover photo if it exists in our storage
-  if (currentProfile?.banner_url && currentProfile.banner_url.includes("/avatars/")) {
-    const oldPath = currentProfile.banner_url.split("/avatars/").pop();
-    if (oldPath && oldPath !== fileName) {
-      await supabase.storage.from("avatars").remove([oldPath]);
-    }
-  }
-
-  revalidatePath("/dashboard/settings");
-  revalidatePath("/dashboard");
-
-  return { success: true, url: publicUrl };
+  return writeBannerUpload(user.id, formData);
 }
 
 export async function removeCoverPhoto(): Promise<ProfileResult> {

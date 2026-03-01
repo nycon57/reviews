@@ -2,7 +2,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -104,44 +103,7 @@ export function ReviewQueueContent() {
         </div>
       )}
 
-      {/* Filters */}
-      <ReviewFiltersPanel />
-
-      {/* Bulk Actions */}
-      {state.selectedIds.size > 0 && (
-        <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30">
-          <span className="text-sm font-medium text-repwell-teal-500">
-            {state.selectedIds.size} review{state.selectedIds.size !== 1 ? "s" : ""} selected
-          </span>
-          {state.isPendingMode ? (
-            <>
-              <Button size="sm" onClick={actions.handleBulkApprove} disabled={state.isPending}>
-                <Check className="h-4 w-4 mr-1" />Approve All
-              </Button>
-              <Button size="sm" variant="destructive" onClick={() => actions.setBulkRejectDialogOpen(true)} disabled={state.isPending}>
-                <X className="h-4 w-4 mr-1" />Reject All
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(true)}>
-                <Flag className="h-4 w-4 mr-1" />Feature
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(false)}>
-                Unfeature
-              </Button>
-              <Button size="sm" variant="outline" onClick={actions.handleBulkArchive}>
-                <Archive className="h-4 w-4 mr-1" />Archive
-              </Button>
-            </>
-          )}
-          <Button size="sm" variant="ghost" onClick={() => actions.toggleSelectAll()}>
-            Cancel
-          </Button>
-        </div>
-      )}
-
-      {/* Reviews List */}
+      {/* Main Card: Filters + Reviews List + Pagination */}
       <Card className="border border-border shadow-soft overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
           <div className="flex items-center justify-between">
@@ -163,7 +125,45 @@ export function ReviewQueueContent() {
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-6 space-y-4">
+          {/* Inline Filters */}
+          <ReviewFiltersPanel />
+
+          {/* Bulk Actions */}
+          {state.selectedIds.size > 0 && (
+            <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30">
+              <span className="text-sm font-medium text-repwell-teal-500">
+                {state.selectedIds.size} review{state.selectedIds.size !== 1 ? "s" : ""} selected
+              </span>
+              {state.isPendingMode ? (
+                <>
+                  <Button size="sm" onClick={actions.handleBulkApprove} disabled={state.isPending}>
+                    <Check className="h-4 w-4 mr-1" />Approve All
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => actions.setBulkRejectDialogOpen(true)} disabled={state.isPending}>
+                    <X className="h-4 w-4 mr-1" />Reject All
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(true)}>
+                    <Flag className="h-4 w-4 mr-1" />Feature
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(false)}>
+                    Unfeature
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={actions.handleBulkArchive}>
+                    <Archive className="h-4 w-4 mr-1" />Archive
+                  </Button>
+                </>
+              )}
+              <Button size="sm" variant="ghost" onClick={() => actions.toggleSelectAll()}>
+                Cancel
+              </Button>
+            </div>
+          )}
+
+          {/* Reviews List */}
           {state.reviews.length === 0 ? (
             <div className="relative flex flex-col items-center justify-center py-16 text-center overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
@@ -180,68 +180,68 @@ export function ReviewQueueContent() {
               </div>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y rounded-lg border border-border/50 overflow-hidden">
               {state.reviews.map((review) => (
                 <ReviewListItem key={review.id} review={review} />
               ))}
             </div>
           )}
+
+          {/* Pagination */}
+          {state.totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border/50 pt-4">
+              <p className="text-xs text-muted-foreground">
+                Showing {(state.filters.page - 1) * state.limit + 1} to{" "}
+                {Math.min(state.filters.page * state.limit, state.total)} of {state.total} reviews
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => actions.handlePageChange(state.filters.page - 1)}
+                  disabled={state.filters.page === 1 || state.isPending}
+                >
+                  <ChevronLeft className="mr-1 h-3.5 w-3.5" />Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, state.totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (state.totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (state.filters.page <= 3) {
+                      pageNum = i + 1;
+                    } else if (state.filters.page >= state.totalPages - 2) {
+                      pageNum = state.totalPages - 4 + i;
+                    } else {
+                      pageNum = state.filters.page - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={state.filters.page === pageNum ? "default" : "outline"}
+                        size="sm"
+                        className="w-8 h-8 p-0"
+                        onClick={() => actions.handlePageChange(pageNum)}
+                        disabled={state.isPending}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => actions.handlePageChange(state.filters.page + 1)}
+                  disabled={state.filters.page === state.totalPages || state.isPending}
+                >
+                  Next<ChevronRight className="ml-1 h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Pagination */}
-      {state.totalPages > 1 && (
-        <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card p-4">
-          <p className="text-sm text-muted-foreground">
-            Showing {(state.filters.page - 1) * state.limit + 1} to{" "}
-            {Math.min(state.filters.page * state.limit, state.total)} of {state.total} reviews
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => actions.handlePageChange(state.filters.page - 1)}
-              disabled={state.filters.page === 1 || state.isPending}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />Previous
-            </Button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, state.totalPages) }, (_, i) => {
-                let pageNum: number;
-                if (state.totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (state.filters.page <= 3) {
-                  pageNum = i + 1;
-                } else if (state.filters.page >= state.totalPages - 2) {
-                  pageNum = state.totalPages - 4 + i;
-                } else {
-                  pageNum = state.filters.page - 2 + i;
-                }
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={state.filters.page === pageNum ? "default" : "outline"}
-                    size="sm"
-                    className="w-8 h-8 p-0"
-                    onClick={() => actions.handlePageChange(pageNum)}
-                    disabled={state.isPending}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => actions.handlePageChange(state.filters.page + 1)}
-              disabled={state.filters.page === state.totalPages || state.isPending}
-            >
-              Next<ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* Dialogs */}
       <ReviewDialogs />

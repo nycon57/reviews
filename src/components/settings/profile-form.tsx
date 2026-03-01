@@ -37,7 +37,7 @@ import { updateMemberProfile, uploadMemberAvatar } from '@/lib/organization/acti
 import { AvatarUpload } from '@/components/shared/avatar-upload';
 import { CoverPhotoUpload } from '@/components/settings/cover-photo-upload';
 import { EditSlugDialog } from '@/components/shared/edit-slug-dialog';
-import { updateProfileSchema } from '@/lib/auth/profile-schemas';
+import { updateProfileSchema, type UserProfileData } from '@/lib/auth/profile-schemas';
 import { Link as LinkIcon, PencilSimple } from "@phosphor-icons/react";
 
 type ProfileFormData = z.infer<typeof updateProfileSchema>;
@@ -54,49 +54,36 @@ const TIMEZONES = [
 ];
 
 interface ProfileFormProps {
-  initialName?: string;
-  initialEmail?: string;
-  initialAvatarUrl?: string | null;
-  initialTitle?: string | null;
-  initialNmlsId?: string | null;
-  initialBio?: string | null;
-  initialPhone?: string | null;
-  initialPersonalWebsiteUrl?: string | null;
-  initialLinkedinUrl?: string | null;
-  initialZillowProfileUrl?: string | null;
-  initialFacebookUrl?: string | null;
-  initialInstagramUrl?: string | null;
-  initialTwitterUrl?: string | null;
-  initialTimezone?: string | null;
-  initialSlug?: string | null;
-  initialBannerUrl?: string | null;
-  userId?: string;
+  profile: UserProfileData;
   isAdmin?: boolean;
   /** When set, edits this user's profile instead of the logged-in user */
   targetUserId?: string;
 }
 
 export function ProfileForm({
-  initialName,
-  initialEmail,
-  initialAvatarUrl,
-  initialTitle,
-  initialNmlsId,
-  initialBio,
-  initialPhone,
-  initialPersonalWebsiteUrl,
-  initialLinkedinUrl,
-  initialZillowProfileUrl,
-  initialFacebookUrl,
-  initialInstagramUrl,
-  initialTwitterUrl,
-  initialTimezone,
-  initialSlug,
-  initialBannerUrl,
-  userId,
+  profile,
   isAdmin = false,
   targetUserId,
 }: ProfileFormProps) {
+  const {
+    id: userId,
+    email: initialEmail,
+    fullName: initialName,
+    avatarUrl: initialAvatarUrl,
+    bannerUrl: initialBannerUrl,
+    title: initialTitle,
+    nmlsId: initialNmlsId,
+    bio: initialBio,
+    phone: initialPhone,
+    personalWebsiteUrl: initialPersonalWebsiteUrl,
+    linkedinUrl: initialLinkedinUrl,
+    zillowProfileUrl: initialZillowProfileUrl,
+    facebookUrl: initialFacebookUrl,
+    instagramUrl: initialInstagramUrl,
+    twitterUrl: initialTwitterUrl,
+    timezone: initialTimezone,
+    slug: initialSlug,
+  } = profile;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl ?? null);
   const [avatarChanged, setAvatarChanged] = useState(false);

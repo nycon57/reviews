@@ -3,6 +3,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Star, Home } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import {
+  type WidgetThemeColors,
+  type WidgetContent,
+  type PreviewReview,
+  DEFAULT_STAR_FILLED,
+  DEFAULT_STAR_EMPTY,
+  SOURCE_LABELS,
+  getInitials,
+  truncateText,
+  formatDate,
+  getLoanTypeColor,
+} from "./shared";
 
 /**
  * Dashboard preview component for the Review Wall Widget.
@@ -11,34 +23,6 @@ import { Slider } from "@/components/ui/slider";
  */
 
 // ── Types ────────────────────────────────────────────────────────────
-
-interface WidgetThemeColors {
-  primary?: string;
-  background?: string;
-  text?: string;
-  accent?: string;
-  border?: string;
-  starFilled?: string;
-  starEmpty?: string;
-}
-
-interface WidgetContent {
-  showHeader?: boolean;
-  headerText?: string;
-  showCTA?: boolean;
-  ctaText?: string;
-  ctaUrl?: string;
-  showSource?: boolean;
-  showDate?: boolean;
-  showAvatar?: boolean;
-  showBranding?: boolean;
-  truncateLength?: number;
-  showDisclaimer?: boolean;
-  disclaimerText?: string;
-  dateFormat?: "relative" | "absolute";
-  cardStyle?: "bordered" | "shadow" | "flat";
-  reviewsPerPage?: number;
-}
 
 interface WidgetWall {
   columns?: number;
@@ -54,18 +38,6 @@ interface WidgetFilters {
   featuredOnly?: boolean;
 }
 
-interface PreviewReview {
-  id: string;
-  reviewer_name: string | null;
-  rating: number;
-  text: string | null;
-  review_date: string;
-  source: string;
-  avatar_url: string | null;
-  loan_type: string | null;
-  first_time_homebuyer: boolean | null;
-}
-
 interface ReviewWallPreviewProps {
   reviews: PreviewReview[];
   content?: WidgetContent;
@@ -76,86 +48,6 @@ interface ReviewWallPreviewProps {
   borderRadius?: string;
   onColumnsChange?: (columns: number) => void;
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────
-
-function getInitials(name: string | null): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2)
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return parts[0][0]?.toUpperCase() ?? "?";
-}
-
-function truncateText(str: string, max: number): string {
-  if (str.length <= max) return str;
-  return str.slice(0, max).trimEnd() + "\u2026";
-}
-
-function formatRelativeDate(dateStr: string): string {
-  try {
-    const diffDays = Math.floor(
-      (Date.now() - new Date(dateStr).getTime()) / 86_400_000,
-    );
-    if (diffDays < 1) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365)
-      return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-  } catch {
-    return dateStr;
-  }
-}
-
-function formatAbsoluteDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return dateStr;
-  }
-}
-
-function formatDate(
-  dateStr: string,
-  format: "relative" | "absolute",
-): string {
-  return format === "relative"
-    ? formatRelativeDate(dateStr)
-    : formatAbsoluteDate(dateStr);
-}
-
-const LOAN_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  purchase: { bg: "#dbeafe", text: "#1d4ed8" },
-  refinance: { bg: "#fef3c7", text: "#92400e" },
-  va: { bg: "#d1fae5", text: "#065f46" },
-  fha: { bg: "#e0e7ff", text: "#3730a3" },
-  jumbo: { bg: "#fce7f3", text: "#9d174d" },
-  usda: { bg: "#fef9c3", text: "#854d0e" },
-  conventional: { bg: "#f0f9ff", text: "#075985" },
-};
-
-function getLoanTypeColor(
-  loanType: string,
-): { bg: string; text: string } {
-  return (
-    LOAN_TYPE_COLORS[loanType.toLowerCase().trim()] ?? {
-      bg: "#f3f4f6",
-      text: "#6b7280",
-    }
-  );
-}
-
-const SOURCE_LABELS: Record<string, string> = {
-  google: "Google",
-  zillow: "Zillow",
-  internal: "RepWell",
-};
 
 // ── Stars ────────────────────────────────────────────────────────────
 
@@ -361,8 +253,8 @@ export function ReviewWallPreview({
   borderRadius,
   onColumnsChange,
 }: ReviewWallPreviewProps) {
-  const starFilled = colors.starFilled ?? "#f59e0b";
-  const starEmpty = colors.starEmpty ?? "#d1d5db";
+  const starFilled = colors.starFilled ?? DEFAULT_STAR_FILLED;
+  const starEmpty = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
   const accentColor = colors.accent ?? colors.primary ?? "#52796f";
 
   const columns = Math.min(Math.max(wall.columns ?? 3, 2), 5);

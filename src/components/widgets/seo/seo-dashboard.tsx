@@ -18,7 +18,6 @@ import {
   Bell,
   FileText,
 } from "lucide-react";
-import Link from "next/link";
 import { toast } from "@/hooks/use-toast";
 
 import { BulkValidation } from "./bulk-validation";
@@ -275,15 +274,10 @@ export function SeoDashboard() {
           <h2 className="text-lg font-semibold text-repwell-teal-500 mb-2">
             No widgets to validate
           </h2>
-          <p className="text-sm text-muted-foreground max-w-md mb-6">
+          <p className="text-sm text-muted-foreground max-w-md">
             Enable structured data on a widget to validate its JSON-LD and
             track rich snippet readiness.
           </p>
-          <Button asChild>
-            <Link href="/dashboard/widgets/new" className="gap-2">
-              Create your first widget
-            </Link>
-          </Button>
         </div>
       ) : (
         <>

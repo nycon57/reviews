@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +8,11 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -21,29 +20,34 @@ import {
   UserPlus,
   DotsThree as MoreHorizontal,
   Envelope as Mail,
-  Shield,
-  UserMinus as UserX,
-  UserCheck,
+
   X,
   Clock,
   Pencil,
   SignIn,
   UsersThree,
+  UploadSimple,
+  MagnifyingGlass,
+  Funnel,
+  CaretUp,
+  CaretDown,
+  CaretUpDown,
 } from "@phosphor-icons/react";
+import { BulkUserImportWizard } from "./bulk-user-import-wizard";
 import {
   getOrganizationMembers,
   getPendingInvitations,
-  createInvitation,
   revokeInvitation,
-  updateMemberRole,
+  createOrganizationUser,
   deactivateMember,
   reactivateMember,
-  createInvitationSchema,
   type OrganizationMember,
   type Invitation,
-  type CreateInvitation,
 } from "@/lib/organization";
 import { usePermissions } from "@/lib/permissions/context";
+
+type SortField = "name" | "role" | "status" | "joined" | "completion";
+type SortDir = "asc" | "desc";
 
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },
@@ -55,20 +59,21 @@ export function OrganizationTeam() {
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"admin" | "manager" | "user">("user");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
-  const { canInviteTeam } = usePermissions();
+  const { canInviteTeam, userContext } = usePermissions();
   const showInviteButton = canInviteTeam();
-
-  const form = useForm<CreateInvitation>({
-    resolver: zodResolver(createInvitationSchema),
-    defaultValues: {
-      email: "",
-      role: "user",
-    },
-  });
 
   useEffect(() => {
     let mounted = true;
@@ -111,9 +116,14 @@ export function OrganizationTeam() {
     }
   }
 
-  function onSubmitInvite(data: CreateInvitation) {
+  function handleAddUser() {
+    if (!newUserEmail.trim() || !newUserName.trim()) return;
     startTransition(async () => {
-      const result = await createInvitation(data);
+      const result = await createOrganizationUser({
+        email: newUserEmail.trim(),
+        fullName: newUserName.trim(),
+        role: newUserRole,
+      });
 
       if (result.error) {
         toast({
@@ -121,14 +131,16 @@ export function OrganizationTeam() {
           description: result.error,
           variant: "destructive",
         });
-      } else {
+      } else if (result.userId) {
         toast({
-          title: "Invitation sent",
-          description: `Invitation sent to ${data.email}`,
+          title: "User created",
+          description: `Account created for ${newUserName.trim()}`,
         });
-        form.reset();
-        setInviteDialogOpen(false);
-        refreshData();
+        setAddUserDialogOpen(false);
+        setNewUserEmail("");
+        setNewUserName("");
+        setNewUserRole("user");
+        router.push(`/dashboard/organization/users/${result.userId}`);
       }
     });
   }
@@ -153,25 +165,6 @@ export function OrganizationTeam() {
     });
   }
 
-  async function handleUpdateRole(memberId: string, newRole: "admin" | "manager" | "user") {
-    startTransition(async () => {
-      const result = await updateMemberRole(memberId, newRole);
-
-      if (result.error) {
-        toast({
-          title: "Error",
-          description: result.error,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Role updated",
-          description: "Member role has been updated.",
-        });
-        refreshData();
-      }
-    });
-  }
 
   async function handleDeactivate(memberId: string) {
     startTransition(async () => {
@@ -213,6 +206,69 @@ export function OrganizationTeam() {
     });
   }
 
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir("asc");
+    }
+  }
+
+  const filteredMembers = useMemo(() => {
+    let result = [...members];
+
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (m) =>
+          (m.full_name || "").toLowerCase().includes(q) ||
+          m.email.toLowerCase().includes(q),
+      );
+    }
+
+    // Role filter
+    if (roleFilter !== "all") {
+      result = result.filter((m) => m.role === roleFilter);
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      const wantActive = statusFilter === "active";
+      result = result.filter((m) => m.is_active === wantActive);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortField) {
+        case "name":
+          cmp = (a.full_name || a.email).localeCompare(b.full_name || b.email);
+          break;
+        case "role": {
+          const order = { admin: 0, manager: 1, user: 2 };
+          cmp = (order[a.role] ?? 3) - (order[b.role] ?? 3);
+          break;
+        }
+        case "status":
+          cmp = Number(b.is_active) - Number(a.is_active); // active first
+          break;
+        case "joined":
+          cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case "completion":
+          cmp = Number(a.profile_completion) - Number(b.profile_completion);
+          break;
+      }
+      return sortDir === "desc" ? -cmp : cmp;
+    });
+
+    return result;
+  }, [members, searchQuery, roleFilter, statusFilter, sortField, sortDir]);
+
+  const hasActiveFilters = searchQuery.trim() !== "" || roleFilter !== "all" || statusFilter !== "all";
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -239,9 +295,6 @@ export function OrganizationTeam() {
     );
   }
 
-  const activeMembers = members.filter((m) => m.is_active);
-  const inactiveMembers = members.filter((m) => !m.is_active);
-
   return (
     <div className="space-y-6">
       {/* Team members */}
@@ -259,185 +312,265 @@ export function OrganizationTeam() {
                 </CardDescription>
               </div>
             </div>
-            {showInviteButton && (
-              <Dialog open={inviteDialogOpen} onOpenChange={(open) => {
-                setInviteDialogOpen(open);
-                if (!open) form.reset();
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => setBulkImportOpen(true)}>
+                <UploadSimple className="mr-2 h-4 w-4" />
+                Import CSV
+              </Button>
+              <Dialog open={addUserDialogOpen} onOpenChange={(open) => {
+                setAddUserDialogOpen(open);
+                if (!open) {
+                  setNewUserEmail("");
+                  setNewUserName("");
+                  setNewUserRole("user");
+                }
               }}>
                 <DialogTrigger asChild>
                   <Button>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Invite Member
+                    Add User
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Invite Team Member</DialogTitle>
+                    <DialogTitle>Add Team Member</DialogTitle>
                     <DialogDescription>
-                      Send an invitation to add a new member to your organization.
-                  </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmitInvite)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type="email" placeholder="john@example.com" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                      Create a new user account. You&apos;ll be taken to their profile to fill in details.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="add-user-name" className="text-sm font-medium">Full Name</label>
+                      <Input
+                        id="add-user-name"
+                        placeholder="John Smith"
+                        value={newUserName}
+                        onChange={(e) => setNewUserName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="add-user-email" className="text-sm font-medium">Email</label>
+                      <Input
+                        id="add-user-email"
+                        type="email"
+                        placeholder="john@example.com"
+                        value={newUserEmail}
+                        onChange={(e) => setNewUserEmail(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="add-user-role" className="text-sm font-medium">Role</label>
+                      <Select value={newUserRole} onValueChange={(v) => setNewUserRole(v as "admin" | "manager" | "user")}>
+                        <SelectTrigger id="add-user-role">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">Admin - Full access</SelectItem>
+                          <SelectItem value="manager">Manager - Team management</SelectItem>
+                          <SelectItem value="user">User - Basic access</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setAddUserDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleAddUser}
+                      disabled={isPending || !newUserEmail.trim() || !newUserName.trim()}
+                    >
+                      {isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="mr-2 h-4 w-4" />
+                          Create &amp; Edit Profile
+                        </>
                       )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Role</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select role" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="admin">Admin - Full access</SelectItem>
-                              <SelectItem value="manager">Manager - Team management</SelectItem>
-                              <SelectItem value="user">User - Basic access</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            Choose the role that best fits their responsibilities
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button type="submit" disabled={isPending}>
-                        {isPending ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Sending...
-                          </>
-                        ) : (
-                          <>
-                            <Mail className="mr-2 h-4 w-4" />
-                            Send Invitation
-                          </>
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </DialogContent>
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
               </Dialog>
-            )}
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Search & Filters */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1">
+              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Funnel className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="user">User</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setSearchQuery(""); setRoleFilter("all"); setStatusFilter("all"); }}
+                  className="text-muted-foreground h-8 px-2"
+                >
+                  <X className="h-3.5 w-3.5 mr-1" />
+                  Clear
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Unified Table */}
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Member</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Joined</TableHead>
+                <SortableHead field="name" current={sortField} dir={sortDir} onToggle={toggleSort}>Member</SortableHead>
+                <SortableHead field="role" current={sortField} dir={sortDir} onToggle={toggleSort}>Role</SortableHead>
+                <SortableHead field="completion" current={sortField} dir={sortDir} onToggle={toggleSort}>Profile</SortableHead>
+                <SortableHead field="status" current={sortField} dir={sortDir} onToggle={toggleSort}>Status</SortableHead>
+                <SortableHead field="joined" current={sortField} dir={sortDir} onToggle={toggleSort}>Joined</SortableHead>
                 <TableHead className="w-[70px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {activeMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={member.avatar_url || undefined} />
-                        <AvatarFallback>
-                          {(member.full_name || member.email)
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{member.full_name || "No name"}</p>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
+              {filteredMembers.map((member) => {
+                const isEnterpriseOwnerSelf = userContext?.isOwner && userContext.accountType !== "individual" && member.id === userContext.userId;
+
+                return (
+                  <TableRow key={member.id} className={member.is_active ? "" : "opacity-60"}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={member.avatar_url || undefined} />
+                          <AvatarFallback>
+                            {(member.full_name || member.email)
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()
+                              .slice(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{member.full_name || "No name"}</p>
+                          <p className="text-sm text-muted-foreground">{member.email}</p>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={ROLE_LABELS[member.role]?.variant || "outline"}>
-                      {ROLE_LABELS[member.role]?.label || member.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">
-                      Active
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {new Date(member.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "admin")}>
-                          <Shield className="mr-2 h-4 w-4" />
-                          Make Admin
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "manager")}>
-                          <Shield className="mr-2 h-4 w-4" />
-                          Make Manager
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleUpdateRole(member.id, "user")}>
-                          <Shield className="mr-2 h-4 w-4" />
-                          Make User
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => router.push(`/dashboard/organization/users/${member.id}`)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        {showInviteButton && (
-                          <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Login as user will be available soon." })}>
-                            <SignIn className="mr-2 h-4 w-4" />
-                            Login
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={ROLE_LABELS[member.role]?.variant || "outline"}>
+                        {ROLE_LABELS[member.role]?.label || member.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <ProfileCompletionCell value={member.profile_completion} />
+                    </TableCell>
+                    <TableCell>
+                      {member.is_active ? (
+                        isEnterpriseOwnerSelf ? (
+                          <div className="flex items-center gap-2">
+                            <Switch checked disabled className="data-[state=checked]:bg-green-500 opacity-50" />
+                            <span className="text-sm font-medium text-green-600">Active</span>
+                          </div>
+                        ) : (
+                          <AlertDialog>
+                            <div className="flex items-center gap-2">
+                              <AlertDialogTrigger asChild>
+                                <button type="button" className="focus:outline-none" disabled={isPending}>
+                                  <Switch checked className="pointer-events-none data-[state=checked]:bg-green-500" />
+                                </button>
+                              </AlertDialogTrigger>
+                              <span className="text-sm font-medium text-green-600">Active</span>
+                            </div>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Deactivate member?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will immediately revoke {member.full_name || member.email}&apos;s access to RepWell. They will be signed out on their next page load.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeactivate(member.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Deactivate
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={false}
+                            onCheckedChange={() => handleReactivate(member.id)}
+                            disabled={isPending}
+                            className="data-[state=unchecked]:bg-gray-300"
+                          />
+                          <span className="text-sm font-medium text-muted-foreground">Inactive</span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {new Date(member.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => router.push(`/dashboard/organization/users/${member.id}`)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleDeactivate(member.id)}
-                        >
-                          <UserX className="mr-2 h-4 w-4" />
-                          Deactivate
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {activeMembers.length === 0 && (
+                          {showInviteButton && (
+                            <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Login as user will be available soon." })}>
+                              <SignIn className="mr-2 h-4 w-4" />
+                              Login
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {filteredMembers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No active team members
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    {hasActiveFilters ? "No members match your filters" : "No team members"}
                   </TableCell>
                 </TableRow>
               )}
@@ -513,76 +646,76 @@ export function OrganizationTeam() {
         </Card>
       )}
 
-      {/* Inactive members */}
-      {inactiveMembers.length > 0 && (
-        <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <UserX className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Inactive Members</CardTitle>
-                <CardDescription>
-                  Members who have been deactivated
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="w-[120px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {inactiveMembers.map((member) => (
-                  <TableRow key={member.id} className="opacity-60">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                          <AvatarImage src={member.avatar_url || undefined} />
-                          <AvatarFallback>
-                            {(member.full_name || member.email)
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()
-                              .slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{member.full_name || "No name"}</p>
-                          <p className="text-sm text-muted-foreground">{member.email}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {ROLE_LABELS[member.role]?.label || member.role}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleReactivate(member.id)}
-                        disabled={isPending}
-                      >
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Reactivate
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+      <BulkUserImportWizard
+        open={bulkImportOpen}
+        onOpenChange={setBulkImportOpen}
+        onComplete={() => {
+          setBulkImportOpen(false);
+          refreshData();
+        }}
+      />
     </div>
+  );
+}
+
+function ProfileCompletionCell({ value }: { value: number }) {
+  const pct = value ?? 0;
+  const color = pct >= 80 ? "text-green-600" : pct >= 50 ? "text-yellow-600" : "text-orange-500";
+  const strokeColor = pct >= 80 ? "stroke-green-500" : pct >= 50 ? "stroke-yellow-500" : "stroke-orange-400";
+  const r = 14;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference - (pct / 100) * circumference;
+
+  return (
+    <div className="flex items-center gap-2">
+      <svg width="32" height="32" viewBox="0 0 32 32" className="shrink-0">
+        <circle cx="16" cy="16" r={r} fill="none" stroke="currentColor" strokeWidth="3" className="text-muted/30" />
+        <circle
+          cx="16"
+          cy="16"
+          r={r}
+          fill="none"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          className={strokeColor}
+          transform="rotate(-90 16 16)"
+        />
+      </svg>
+      <span className={`text-sm font-medium tabular-nums ${color}`}>{pct}%</span>
+    </div>
+  );
+}
+
+function SortableHead({
+  field,
+  current,
+  dir,
+  onToggle,
+  children,
+}: {
+  field: SortField;
+  current: SortField;
+  dir: SortDir;
+  onToggle: (f: SortField) => void;
+  children: React.ReactNode;
+}) {
+  const active = field === current;
+  return (
+    <TableHead>
+      <button
+        type="button"
+        onClick={() => onToggle(field)}
+        className="inline-flex items-center gap-1 hover:text-foreground transition-colors -ml-1 px-1 py-0.5 rounded"
+      >
+        {children}
+        {active ? (
+          dir === "asc" ? <CaretUp className="h-3.5 w-3.5" /> : <CaretDown className="h-3.5 w-3.5" />
+        ) : (
+          <CaretUpDown className="h-3.5 w-3.5 opacity-40" />
+        )}
+      </button>
+    </TableHead>
   );
 }

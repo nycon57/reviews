@@ -350,6 +350,13 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Redirect old /dashboard/requests to /dashboard/reviews?tab=requests
+  if (request.nextUrl.pathname.startsWith("/dashboard/requests")) {
+    const redirectUrl = new URL("/dashboard/reviews", request.url);
+    redirectUrl.searchParams.set("tab", "requests");
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // Auth routes - redirect to dashboard if already logged in
   const authPaths = ["/login", "/signup", "/forgot-password"];
   const isAuthPath = authPaths.some((path) => request.nextUrl.pathname.startsWith(path));

@@ -59,7 +59,7 @@ export function PricingCard({
       variants={fadeInUp}
       whileHover={cardHover}
       whileTap={cardTap}
-      className={cn("relative", className)}
+      className={cn("relative hover:shadow-md transition-shadow duration-200", className)}
     >
       {badge && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">

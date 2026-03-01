@@ -12,7 +12,6 @@ import {
   type Organization,
   type OrganizationMember,
   type OrganizationMemberFull,
-  type UpdateMemberProfileData,
   type Invitation,
   type OrganizationStats,
   type AuditLog,
@@ -23,7 +22,10 @@ import {
   type SubscriptionTier,
   type SubscriptionStatus,
 } from "./types";
-import { validateOrgSlug, generateUserSlug } from "@/lib/users/slug-utils";
+import { adminProfileSchema, type AdminProfileInput } from "@/lib/auth/profile-schemas";
+import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
+import { validateOrgSlug, generateUserSlug, generateUniqueUserSlug } from "@/lib/users/slug-utils";
+import crypto from "crypto";
 
 // Transform database row to full Organization type
 function transformDbOrganization(row: Tables<"organizations">): Organization {
@@ -299,10 +301,10 @@ export async function getOrganizationMembers(): Promise<{
     return { members: [], error: "No organization found" };
   }
 
-  // Get members
+  // Get members (expanded SELECT for profile completion calc)
   const { data: members, error } = await supabase
     .from("users")
-    .select("id, email, full_name, avatar_url, slug, role, is_active, last_login_at, created_at")
+    .select("id, email, full_name, avatar_url, slug, role, is_active, last_login_at, created_at, photo_url, bio, nmls_id, phone, title, branch_id, region, address, linkedin_url, zillow_profile_url, google_place_id")
     .eq("organization_id", userData.organization_id)
     .order("created_at", { ascending: false });
 
@@ -310,7 +312,51 @@ export async function getOrganizationMembers(): Promise<{
     return { members: [], error: error.message };
   }
 
-  return { members: members as OrganizationMember[], error: null };
+  // Calculate lightweight profile completion % per member (profile fields only)
+  const enriched = (members || []).map((m) => {
+    const r = m as Record<string, unknown>;
+    let filled = 0;
+    let total = 0;
+
+    // Profile field checks (matching profile-completion-types point weights roughly)
+    const checks: [string, boolean][] = [
+      ["photo_url", !!r.photo_url],
+      ["full_name", !!r.full_name],
+      ["email", !!r.email],
+      ["phone", !!r.phone],
+      ["title", !!r.title],
+      ["bio", !!(r.bio && typeof r.bio === "string" && r.bio.length >= 50)],
+      ["nmls_id", !!r.nmls_id],
+      ["branch_id", !!r.branch_id],
+      ["region", !!r.region],
+      ["address", !!(r.address && typeof r.address === "object" && Object.keys(r.address as object).length > 0)],
+      ["linkedin_url", !!r.linkedin_url],
+      ["zillow_profile_url", !!r.zillow_profile_url],
+      ["google_place_id", !!r.google_place_id],
+    ];
+
+    for (const [, passed] of checks) {
+      total++;
+      if (passed) filled++;
+    }
+
+    const profile_completion = total > 0 ? Math.round((filled / total) * 100) : 0;
+
+    return {
+      id: m.id,
+      email: m.email,
+      full_name: m.full_name,
+      avatar_url: m.avatar_url,
+      slug: m.slug,
+      role: m.role,
+      is_active: m.is_active,
+      last_login_at: m.last_login_at,
+      created_at: m.created_at,
+      profile_completion,
+    };
+  });
+
+  return { members: enriched as OrganizationMember[], error: null };
 }
 
 // Update member role (enterprise accounts only)
@@ -957,8 +1003,14 @@ export async function getOrganizationMemberFull(
 // Update full member profile (admin only)
 export async function updateMemberProfile(
   memberId: string,
-  data: UpdateMemberProfileData
+  data: AdminProfileInput
 ): Promise<{ success: boolean; error: string | null }> {
+  // Validate with Zod (previously missing!)
+  const validated = adminProfileSchema.safeParse(data);
+  if (!validated.success) {
+    return { success: false, error: validated.error.errors[0].message };
+  }
+
   const user = await unifiedGetUser();
   if (!user) {
     return { success: false, error: "Not authenticated" };
@@ -966,65 +1018,21 @@ export async function updateMemberProfile(
 
   const supabase = createAdminClient();
 
-  // Get current user's org and role
-  const { data: userData } = await supabase
-    .from("users")
-    .select("organization_id, role")
-    .eq("id", user.id)
-    .single();
+  // Parallel: verify admin role + member org membership
+  const [{ data: userData }, { data: memberData }] = await Promise.all([
+    supabase.from("users").select("organization_id, role").eq("id", user.id).single(),
+    supabase.from("users").select("organization_id").eq("id", memberId).single(),
+  ]);
 
   if (!userData?.organization_id || userData.role !== "admin") {
     return { success: false, error: "Only admins can update member profiles" };
   }
-
-  // Verify member belongs to same organization
-  const { data: memberDataRaw } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", memberId)
-    .single();
-
-  const memberData = memberDataRaw as { organization_id?: string; is_owner?: boolean } | null;
-
   if (memberData?.organization_id !== userData.organization_id) {
     return { success: false, error: "Member not found in organization" };
   }
 
-  // Build update object, converting camelCase to snake_case
-  const updateData: Record<string, unknown> = {
-    updated_at: new Date().toISOString(),
-  };
-
-  if (data.fullName !== undefined) updateData.full_name = data.fullName || null;
-  if (data.title !== undefined) updateData.title = data.title || null;
-  if (data.nmlsId !== undefined) updateData.nmls_id = data.nmlsId || null;
-  if (data.bio !== undefined) updateData.bio = data.bio || null;
-  if (data.phone !== undefined) updateData.phone = data.phone || null;
-  if (data.personalWebsiteUrl !== undefined) updateData.personal_website_url = data.personalWebsiteUrl || null;
-  if (data.linkedinUrl !== undefined) updateData.linkedin_url = data.linkedinUrl || null;
-  if (data.zillowProfileUrl !== undefined) updateData.zillow_profile_url = data.zillowProfileUrl || null;
-  if (data.facebookUrl !== undefined) updateData.facebook_url = data.facebookUrl || null;
-  if (data.instagramUrl !== undefined) updateData.instagram_url = data.instagramUrl || null;
-  if (data.twitterUrl !== undefined) updateData.twitter_url = data.twitterUrl || null;
-  if (data.timezone !== undefined) updateData.timezone = data.timezone || null;
-  if (data.ctaButtonText !== undefined) updateData.cta_button_text = data.ctaButtonText || null;
-  if (data.ctaButtonUrl !== undefined) updateData.cta_button_url = data.ctaButtonUrl || null;
-  if (data.hireDate !== undefined) updateData.hire_date = data.hireDate || null;
-  if (data.industry !== undefined) updateData.industry = data.industry || null;
-  if (data.region !== undefined) updateData.region = data.region || null;
-
-  const { error } = await supabase
-    .from("users")
-    .update(updateData)
-    .eq("id", memberId);
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/dashboard/team");
-  revalidatePath(`/dashboard/organization/users/${memberId}`);
-  return { success: true, error: null };
+  const result = await writeProfileUpdate(memberId, validated.data);
+  return { success: result.success, error: result.error ?? null };
 }
 
 // Upload avatar for a team member (admin only)
@@ -1039,82 +1047,19 @@ export async function uploadMemberAvatar(
 
   const supabase = createAdminClient();
 
-  // Verify admin + same org
-  const { data: userData } = await supabase
-    .from("users")
-    .select("organization_id, role")
-    .eq("id", user.id)
-    .single();
+  const [{ data: userData }, { data: memberData }] = await Promise.all([
+    supabase.from("users").select("organization_id, role").eq("id", user.id).single(),
+    supabase.from("users").select("organization_id").eq("id", memberId).single(),
+  ]);
 
   if (!userData?.organization_id || userData.role !== "admin") {
     return { success: false, error: "Only admins can update member avatars" };
   }
-
-  const { data: memberData } = await supabase
-    .from("users")
-    .select("organization_id, avatar_url")
-    .eq("id", memberId)
-    .single();
-
   if (memberData?.organization_id !== userData.organization_id) {
     return { success: false, error: "Member not found in organization" };
   }
 
-  const file = formData.get("file") as File;
-  if (!file) {
-    return { success: false, error: "No file provided" };
-  }
-
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
-    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
-  }
-
-  if (file.size > 5 * 1024 * 1024) {
-    return { success: false, error: "File too large. Maximum size is 5MB." };
-  }
-
-  const oldAvatarUrl = memberData?.avatar_url;
-  const fileExt = file.name.split(".").pop() || "jpg";
-  const fileName = `${memberId}/avatar-${Date.now()}.${fileExt}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(fileName, file, { cacheControl: "3600", upsert: false });
-
-  if (uploadError) {
-    return { success: false, error: "Failed to upload image. Please try again." };
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(fileName);
-
-  const { error: dbError } = await supabase
-    .from("users")
-    .update({
-      avatar_url: publicUrl,
-      photo_url: publicUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", memberId);
-
-  if (dbError) {
-    await supabase.storage.from("avatars").remove([fileName]);
-    return { success: false, error: "Failed to update profile. Please try again." };
-  }
-
-  // Cleanup old avatar
-  if (oldAvatarUrl && oldAvatarUrl.includes("/avatars/")) {
-    const oldPath = oldAvatarUrl.split("/avatars/").pop();
-    if (oldPath && oldPath !== fileName) {
-      await supabase.storage.from("avatars").remove([oldPath]);
-    }
-  }
-
-  revalidatePath("/dashboard/team");
-  revalidatePath(`/dashboard/organization/users/${memberId}`);
-  return { success: true, url: publicUrl };
+  return writeAvatarUpload(memberId, formData);
 }
 
 // Upload banner for a team member (admin only)
@@ -1129,79 +1074,19 @@ export async function uploadMemberBanner(
 
   const supabase = createAdminClient();
 
-  // Verify admin + same org
-  const { data: userData } = await supabase
-    .from("users")
-    .select("organization_id, role")
-    .eq("id", user.id)
-    .single();
+  const [{ data: userData }, { data: memberData }] = await Promise.all([
+    supabase.from("users").select("organization_id, role").eq("id", user.id).single(),
+    supabase.from("users").select("organization_id").eq("id", memberId).single(),
+  ]);
 
   if (!userData?.organization_id || userData.role !== "admin") {
     return { success: false, error: "Only admins can update member banners" };
   }
-
-  const { data: memberData } = await supabase
-    .from("users")
-    .select("organization_id, banner_url")
-    .eq("id", memberId)
-    .single();
-
   if (memberData?.organization_id !== userData.organization_id) {
     return { success: false, error: "Member not found in organization" };
   }
 
-  const file = formData.get("file") as File;
-  if (!file) {
-    return { success: false, error: "No file provided" };
-  }
-
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
-    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
-  }
-
-  if (file.size > 10 * 1024 * 1024) {
-    return { success: false, error: "File too large. Maximum size is 10MB." };
-  }
-
-  const fileExt = file.name.split(".").pop() || "jpg";
-  const fileName = `${memberId}/cover-${Date.now()}.${fileExt}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(fileName, file, { cacheControl: "3600", upsert: false });
-
-  if (uploadError) {
-    return { success: false, error: "Failed to upload image. Please try again." };
-  }
-
-  const { data: { publicUrl } } = supabase.storage
-    .from("avatars")
-    .getPublicUrl(fileName);
-
-  const { error: dbError } = await supabase
-    .from("users")
-    .update({
-      banner_url: publicUrl,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", memberId);
-
-  if (dbError) {
-    await supabase.storage.from("avatars").remove([fileName]);
-    return { success: false, error: "Failed to update profile. Please try again." };
-  }
-
-  // Cleanup old banner
-  if (memberData?.banner_url && memberData.banner_url.includes("/avatars/")) {
-    const oldPath = memberData.banner_url.split("/avatars/").pop();
-    if (oldPath && oldPath !== fileName) {
-      await supabase.storage.from("avatars").remove([oldPath]);
-    }
-  }
-
-  revalidatePath(`/dashboard/organization/users/${memberId}`);
-  return { success: true, url: publicUrl };
+  return writeBannerUpload(memberId, formData);
 }
 
 /**
@@ -1229,4 +1114,87 @@ export async function getSuggestedOrgSlug(
 
   // Slug is invalid and no suggestion exists
   return { slug: "" };
+}
+
+/**
+ * Create a new user account directly in the organization.
+ * Returns the new user's ID so the caller can navigate to their profile edit page.
+ */
+export async function createOrganizationUser(data: {
+  email: string;
+  fullName: string;
+  role: "admin" | "manager" | "user";
+}): Promise<{ userId?: string; error?: string }> {
+  const authUser = await unifiedGetUser();
+  if (!authUser) return { error: "Not authenticated" };
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", authUser.id)
+    .single();
+
+  if (!userData?.organization_id || userData.role !== "admin") {
+    return { error: "Admin access required" };
+  }
+
+  const orgId = userData.organization_id;
+  const email = data.email.toLowerCase().trim();
+
+  // Check if email already exists in org
+  const { data: existing } = await supabase
+    .from("users")
+    .select("id")
+    .eq("organization_id", orgId)
+    .eq("email", email)
+    .maybeSingle();
+
+  if (existing) return { error: "A user with this email already exists in your organization" };
+
+  // Check global email uniqueness
+  const { data: globalExisting } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (globalExisting) return { error: "This email is already registered in the system" };
+
+  // Create auth user with random password
+  const randomPassword = crypto.randomBytes(20).toString("hex");
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    email,
+    password: randomPassword,
+    email_confirm: true,
+  });
+
+  if (authError || !authData.user) {
+    return { error: authError?.message ?? "Failed to create user account" };
+  }
+
+  // Generate unique slug
+  const slug = await generateUniqueUserSlug(data.fullName);
+
+  // Insert into users table
+  const { error: insertError } = await supabase.from("users").insert({
+    id: authData.user.id,
+    organization_id: orgId,
+    email,
+    full_name: data.fullName.trim(),
+    role: data.role,
+    is_active: false,
+    slug,
+  });
+
+  if (insertError) {
+    // Clean up orphaned auth user
+    await supabase.auth.admin.deleteUser(authData.user.id).catch(() => {});
+    return { error: insertError.message };
+  }
+
+  revalidatePath("/dashboard/organization");
+
+  return { userId: authData.user.id };
 }

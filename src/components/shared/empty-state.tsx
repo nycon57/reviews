@@ -1,7 +1,9 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { scaleIn, staggerContainer, staggerContainerDelayed, fadeInUp } from "@/lib/motion";
 import {
   ChartBar,
   PaperPlaneRight,
@@ -44,6 +46,7 @@ interface EmptyStateProps {
   actions?: EmptyStateAction[];
   className?: string;
   compact?: boolean;
+  animated?: boolean;
 }
 
 // Server-compatible empty state (no animations, string icon names)
@@ -54,8 +57,17 @@ export function EmptyState({
   actions,
   className,
   compact = false,
+  animated = false,
 }: EmptyStateProps) {
   const Icon = iconMap[iconName] || ChartBar;
+
+  const Wrapper = animated ? motion.div : "div";
+  const ItemWrapper = animated ? motion.div : "div";
+  const wrapperProps = animated
+    ? { variants: staggerContainer, initial: "hidden" as const, animate: "visible" as const }
+    : {};
+  const iconProps = animated ? { variants: scaleIn } : {};
+  const itemProps = animated ? { variants: fadeInUp } : {};
 
   return (
     <div
@@ -82,48 +94,54 @@ export function EmptyState({
         </svg>
       </div>
 
-      <div className="relative flex flex-col items-center text-center">
+      <Wrapper className="relative flex flex-col items-center text-center" {...wrapperProps}>
         {/* Icon container */}
-        <div
+        <ItemWrapper
           className={cn(
             "mb-4 flex items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/10 shadow-sm",
             compact ? "h-14 w-14" : "h-16 w-16 md:h-20 md:w-20"
           )}
+          {...iconProps}
         >
           <Icon
             weight="duotone"
             size={compact ? 28 : 40}
             className="text-repwell-teal-300"
           />
-        </div>
+        </ItemWrapper>
 
         {/* Title */}
-        <h3
-          className={cn(
-            "font-semibold text-repwell-teal-500",
-            compact ? "text-base" : "text-lg md:text-xl"
-          )}
-        >
-          {title}
-        </h3>
+        <ItemWrapper {...itemProps}>
+          <h3
+            className={cn(
+              "font-semibold text-repwell-teal-500",
+              compact ? "text-base" : "text-lg md:text-xl"
+            )}
+          >
+            {title}
+          </h3>
+        </ItemWrapper>
 
         {/* Description */}
-        <p
-          className={cn(
-            "mt-2 text-repwell-teal-400 max-w-md",
-            compact ? "text-sm" : "text-sm md:text-base"
-          )}
-        >
-          {description}
-        </p>
+        <ItemWrapper {...itemProps}>
+          <p
+            className={cn(
+              "mt-2 text-repwell-teal-400 max-w-md",
+              compact ? "text-sm" : "text-sm md:text-base"
+            )}
+          >
+            {description}
+          </p>
+        </ItemWrapper>
 
         {/* Actions */}
         {actions && actions.length > 0 && (
-          <div
+          <ItemWrapper
             className={cn(
               "flex flex-wrap justify-center gap-3",
               compact ? "mt-4" : "mt-6"
             )}
+            {...itemProps}
           >
             {actions.map((action, index) => {
               const ActionIcon = action.iconName ? iconMap[action.iconName] : undefined;
@@ -145,9 +163,9 @@ export function EmptyState({
                 </Button>
               );
             })}
-          </div>
+          </ItemWrapper>
         )}
-      </div>
+      </Wrapper>
     </div>
   );
 }
@@ -215,7 +233,7 @@ export function WelcomeBanner({
 }: WelcomeBannerProps) {
   const steps = [
     { label: "Complete your profile", href: "/dashboard/settings", done: completionPercent > 25 },
-    { label: "Send your first survey", href: "/dashboard/requests", done: false },
+    { label: "Send your first survey", href: "/dashboard/reviews?tab=requests", done: false },
     { label: "Connect review sources", href: "/dashboard/settings#integrations", done: false },
   ];
 
@@ -242,11 +260,17 @@ export function WelcomeBanner({
           Let&apos;s get you set up to start collecting reviews and growing your reputation.
         </p>
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        <motion.div
+          className="mt-5 flex flex-wrap gap-3"
+          variants={staggerContainerDelayed}
+          initial="hidden"
+          animate="visible"
+        >
           {steps.map((step, i) => (
-            <a
+            <motion.a
               key={i}
               href={step.href}
+              variants={fadeInUp}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
                 step.done
@@ -263,9 +287,9 @@ export function WelcomeBanner({
                 {step.done ? "✓" : i + 1}
               </span>
               {step.label}
-            </a>
+            </motion.a>
           ))}
-        </div>
+        </motion.div>
       </div>
     </div>
   );

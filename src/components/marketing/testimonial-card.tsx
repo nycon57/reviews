@@ -49,7 +49,7 @@ export function TestimonialCard({
       variants={fadeInUp}
       whileHover={variant !== "minimal" ? cardHover : undefined}
       whileTap={variant !== "minimal" ? cardTap : undefined}
-      className="h-full"
+      className={cn("h-full", variant !== "minimal" && "hover:shadow-md transition-shadow duration-200")}
     >
       <Card
         className={cn(

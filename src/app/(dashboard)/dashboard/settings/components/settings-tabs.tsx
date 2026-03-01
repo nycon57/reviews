@@ -17,6 +17,7 @@ import { AccountSettingsPanel, type AccountSubTab } from '@/components/settings/
 import { SmsSettingsPanel, type SmsSubTab } from '@/components/settings/sms/sms-settings-panel';
 import { WebhookSettingsPanel, type WebhookSubTab } from '@/components/settings/webhooks/webhook-settings-panel';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { UserProfileData } from '@/lib/auth/profile-schemas';
 
 type SettingsTab = 'account' | 'integrations' | 'api' | 'sms' | 'webhooks';
 
@@ -71,46 +72,12 @@ function TabSkeleton() {
 
 interface SettingsTabsProps {
   initialTab?: string;
-  userEmail?: string;
-  userName?: string;
-  userAvatarUrl?: string | null;
-  userTitle?: string | null;
-  userNmlsId?: string | null;
-  userBio?: string | null;
-  userPhone?: string | null;
-  userPersonalWebsiteUrl?: string | null;
-  userLinkedinUrl?: string | null;
-  userZillowProfileUrl?: string | null;
-  userFacebookUrl?: string | null;
-  userInstagramUrl?: string | null;
-  userTwitterUrl?: string | null;
-  userTimezone?: string | null;
-  userSlug?: string | null;
-  userBannerUrl?: string | null;
-  userId?: string;
-  userRole?: string | null;
+  profile: UserProfileData;
 }
 
 export function SettingsTabs({
   initialTab = 'account',
-  userEmail,
-  userName,
-  userAvatarUrl,
-  userTitle,
-  userNmlsId,
-  userBio,
-  userPhone,
-  userPersonalWebsiteUrl,
-  userLinkedinUrl,
-  userZillowProfileUrl,
-  userFacebookUrl,
-  userInstagramUrl,
-  userTwitterUrl,
-  userTimezone,
-  userSlug,
-  userBannerUrl,
-  userId,
-  userRole,
+  profile,
 }: SettingsTabsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -159,24 +126,7 @@ export function SettingsTabs({
           <Suspense fallback={<TabSkeleton />}>
             <AccountSettingsPanel
               initialSubTab={accountSubTab}
-              userEmail={userEmail}
-              userName={userName}
-              userAvatarUrl={userAvatarUrl}
-              userTitle={userTitle}
-              userNmlsId={userNmlsId}
-              userBio={userBio}
-              userPhone={userPhone}
-              userPersonalWebsiteUrl={userPersonalWebsiteUrl}
-              userLinkedinUrl={userLinkedinUrl}
-              userZillowProfileUrl={userZillowProfileUrl}
-              userFacebookUrl={userFacebookUrl}
-              userInstagramUrl={userInstagramUrl}
-              userTwitterUrl={userTwitterUrl}
-              userTimezone={userTimezone}
-              userSlug={userSlug}
-              userBannerUrl={userBannerUrl}
-              userId={userId}
-              userRole={userRole}
+              profile={profile}
             />
           </Suspense>
         </TabsContent>

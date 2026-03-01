@@ -37,10 +37,21 @@ import {
   type ResponseTemplate,
 } from "@/lib/reviews/response-actions";
 import { applyTemplateVariables } from "@/lib/reviews/utils";
-import type { AggregatedReview } from "@/lib/reviews/types";
+import { AnimatedPresence } from "@/components/motion";
+/**
+ * Minimal review shape consumed by ResponseComposer.
+ * Accepts both AggregatedReview and ReviewDetail without unsafe casts.
+ */
+interface ResponseComposerReview {
+  id: string;
+  source: string;
+  customerName: string | null;
+  responseText: string | null;
+  loanOfficer?: { id: string; fullName: string } | null;
+}
 
 interface ResponseComposerProps {
-  review: AggregatedReview;
+  review: ResponseComposerReview;
   onSuccess?: () => void;
   onCancel?: () => void;
   hasAiAccess?: boolean;
@@ -339,17 +350,17 @@ export function ResponseComposer({
       </div>
 
       {/* Status Messages */}
-      {error && (
+      <AnimatedPresence show={!!error} mode="slide-up">
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
         </div>
-      )}
-      {success && (
+      </AnimatedPresence>
+      <AnimatedPresence show={!!success} mode="slide-up">
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
           <CheckCircle className="h-4 w-4" />
           {success}
         </div>
-      )}
+      </AnimatedPresence>
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-2">

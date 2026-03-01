@@ -2,6 +2,21 @@
 
 import { useState, useCallback } from "react";
 import { Star, Home, MapPin, Phone } from "lucide-react";
+import {
+  type WidgetThemeColors,
+  type WidgetContent,
+  type PreviewReview,
+  type RatingDistribution,
+  type SourceBreakdown,
+  DEFAULT_STAR_FILLED,
+  DEFAULT_STAR_EMPTY,
+  SOURCE_LABELS,
+  SOURCE_ICONS,
+  getInitials,
+  truncateText,
+  formatDate,
+  getLoanTypeColor,
+} from "./shared";
 
 /**
  * Dashboard preview component for the Branch Review Widget.
@@ -9,55 +24,6 @@ import { Star, Home, MapPin, Phone } from "lucide-react";
  */
 
 // ── Types ────────────────────────────────────────────────────────────
-
-interface WidgetThemeColors {
-  primary?: string;
-  background?: string;
-  text?: string;
-  accent?: string;
-  border?: string;
-  starFilled?: string;
-  starEmpty?: string;
-}
-
-interface WidgetContent {
-  showHeader?: boolean;
-  headerText?: string;
-  showCTA?: boolean;
-  ctaText?: string;
-  ctaUrl?: string;
-  showSource?: boolean;
-  showDate?: boolean;
-  showAvatar?: boolean;
-  showBranding?: boolean;
-  truncateLength?: number;
-  showDisclaimer?: boolean;
-  disclaimerText?: string;
-  showWriteReview?: boolean;
-  writeReviewUrl?: string;
-  columns?: number;
-  dateFormat?: "relative" | "absolute";
-  cardStyle?: "bordered" | "shadow" | "flat";
-  showFilters?: boolean;
-  showRatingDistribution?: boolean;
-  showSourceBreakdown?: boolean;
-  reviewsPerPage?: number;
-  showTeam?: boolean;
-}
-
-interface RatingDistribution {
-  5: number;
-  4: number;
-  3: number;
-  2: number;
-  1: number;
-}
-
-interface SourceBreakdown {
-  source: string;
-  count: number;
-  average: number;
-}
 
 interface TeamMember {
   id: string;
@@ -88,18 +54,6 @@ interface BranchProfile {
   team_members?: TeamMember[] | null;
 }
 
-interface PreviewReview {
-  id: string;
-  reviewer_name: string | null;
-  rating: number;
-  text: string | null;
-  review_date: string;
-  source: string;
-  avatar_url: string | null;
-  loan_type: string | null;
-  first_time_homebuyer: boolean | null;
-}
-
 interface BranchReviewPreviewProps {
   profile: BranchProfile | null;
   reviews: PreviewReview[];
@@ -110,44 +64,6 @@ interface BranchReviewPreviewProps {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
-
-function getInitials(name: string | null): string {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return parts[0][0]?.toUpperCase() ?? "?";
-}
-
-function truncateText(str: string, max: number): string {
-  if (str.length <= max) return str;
-  return str.slice(0, max).trimEnd() + "\u2026";
-}
-
-function formatRelativeDate(dateStr: string): string {
-  try {
-    const diffDays = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
-    if (diffDays < 1) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-    return `${Math.floor(diffDays / 365)} years ago`;
-  } catch {
-    return dateStr;
-  }
-}
-
-function formatAbsoluteDate(dateStr: string): string {
-  try {
-    return new Date(dateStr).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-  } catch {
-    return dateStr;
-  }
-}
-
-function formatDate(dateStr: string, format: "relative" | "absolute"): string {
-  return format === "relative" ? formatRelativeDate(dateStr) : formatAbsoluteDate(dateStr);
-}
 
 function formatAddress(addr: BranchProfile["address"]): string | null {
   if (!addr) return null;
@@ -172,27 +88,6 @@ function formatPhoneDisplay(phone: string): string {
   if (digits.length === 11 && digits[0] === "1") return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
   return phone;
 }
-
-const LOAN_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  purchase: { bg: "#dbeafe", text: "#1d4ed8" },
-  refinance: { bg: "#fef3c7", text: "#92400e" },
-  va: { bg: "#d1fae5", text: "#065f46" },
-  fha: { bg: "#e0e7ff", text: "#3730a3" },
-  jumbo: { bg: "#fce7f3", text: "#9d174d" },
-  usda: { bg: "#fef9c3", text: "#854d0e" },
-  conventional: { bg: "#f0f9ff", text: "#075985" },
-};
-
-function getLoanTypeColor(loanType: string): { bg: string; text: string } {
-  return LOAN_TYPE_COLORS[loanType.toLowerCase().trim()] ?? { bg: "#f3f4f6", text: "#6b7280" };
-}
-
-const SOURCE_LABELS: Record<string, string> = { google: "Google", zillow: "Zillow", internal: "RepWell" };
-const SOURCE_ICONS: Record<string, { bg: string; letter: string }> = {
-  google: { bg: "#4285f4", letter: "G" },
-  zillow: { bg: "#006aff", letter: "Z" },
-  internal: { bg: "#52796f", letter: "R" },
-};
 
 // ── Stars ────────────────────────────────────────────────────────────
 
@@ -525,8 +420,8 @@ export function BranchReviewPreview({
   maxWidth,
   borderRadius,
 }: BranchReviewPreviewProps) {
-  const starFilled = colors.starFilled ?? "#f59e0b";
-  const starEmpty = colors.starEmpty ?? "#d1d5db";
+  const starFilled = colors.starFilled ?? DEFAULT_STAR_FILLED;
+  const starEmpty = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
   const columns = content.columns ?? 1;
   const perPage = content.reviewsPerPage ?? 10;
 

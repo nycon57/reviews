@@ -215,8 +215,11 @@ export const publicUserFields = [
 
 // Transform functions
 export function rowToPublicUser(row: Partial<UserRow>): PublicUser {
+  if (!row.id) {
+    throw new Error("Missing user id in rowToPublicUser");
+  }
   return {
-    id: row.id!,
+    id: row.id,
     fullName: row.full_name ?? null,
     avatarUrl: row.avatar_url ?? null,
     title: row.title ?? null,

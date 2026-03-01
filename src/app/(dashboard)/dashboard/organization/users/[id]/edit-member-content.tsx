@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useMemo, useTransition } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
   UserCircle,
   ShieldCheck,
@@ -17,14 +19,19 @@ import {
   MapPin,
   Link as LinkIcon,
   PencilSimple,
+  Info,
+  Briefcase,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { ProfileForm } from "@/components/settings/profile-form";
+import { ProfileBanner } from "@/components/settings/profile-banner";
 import { CoverPhotoUpload } from "@/components/settings/cover-photo-upload";
 import { EditSlugDialog } from "@/components/shared/edit-slug-dialog";
+import { toUserProfileData } from "@/lib/auth/profile-schemas";
 import {
   updateMemberRole,
+  updateMemberProfile,
   deactivateMember,
   reactivateMember,
 } from "@/lib/organization/actions";
@@ -37,19 +44,31 @@ type EditTab = "profile" | "account";
 
 interface EditMemberContentProps {
   member: OrganizationMemberFull;
+  isEditingSelf?: boolean;
 }
 
-export function EditMemberContent({ member }: EditMemberContentProps) {
+export function EditMemberContent({ member, isEditingSelf = false }: EditMemberContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  const [isAdminSaving, startAdminTransition] = useTransition();
   const [currentRole, setCurrentRole] = useState(member.role);
   const [isActive, setIsActive] = useState(member.is_active);
   const [currentBranchId, setCurrentBranchId] = useState(member.branch_id);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [slugDialogOpen, setSlugDialogOpen] = useState(false);
   const [currentSlug, setCurrentSlug] = useState(member.slug || "");
+
+  // Admin-only fields state
+  const [ctaButtonText, setCtaButtonText] = useState(member.cta_button_text || "");
+  const [ctaButtonUrl, setCtaButtonUrl] = useState(member.cta_button_url || "");
+  const [hireDate, setHireDate] = useState(member.hire_date || "");
+  const [industry, setIndustry] = useState(member.industry || "");
+  const [region, setRegion] = useState(member.region || "");
+  const [adminFieldsDirty, setAdminFieldsDirty] = useState(false);
+
+  const memberProfile = useMemo(() => toUserProfileData(member), [member]);
 
   const tabParam = searchParams.get("tab");
   const currentTab: EditTab =
@@ -132,8 +151,41 @@ export function EditMemberContent({ member }: EditMemberContentProps) {
     });
   }
 
+  function handleSaveAdminFields() {
+    startAdminTransition(async () => {
+      const result = await updateMemberProfile(member.id, {
+        ctaButtonText,
+        ctaButtonUrl,
+        hireDate,
+        industry,
+        region,
+      });
+      if (result.error) {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      } else {
+        setAdminFieldsDirty(false);
+        toast({ title: "Saved", description: "Admin fields updated." });
+      }
+    });
+  }
+
   return (
     <>
+      {/* Self-edit banner */}
+      {isEditingSelf && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 mb-6">
+          <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-blue-800">
+              Viewing your own profile as admin
+            </p>
+            <p className="text-sm text-blue-600 mt-0.5">
+              Go to <Link href="/dashboard/settings?tab=account" className="underline font-medium">Settings</Link> for password, billing, and notifications.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Tabs
         value={currentTab}
         onValueChange={handleTabChange}
@@ -174,24 +226,13 @@ export function EditMemberContent({ member }: EditMemberContentProps) {
         <div className="mt-6">
           {/* Profile Tab */}
           <TabsContent value="profile" className="m-0 space-y-6">
+            <ProfileBanner loanOfficerId={member.id} />
             <CoverPhotoUpload
               currentBannerUrl={member.banner_url}
               targetUserId={member.id}
             />
             <ProfileForm
-              initialName={member.full_name ?? undefined}
-              initialEmail={member.email}
-              initialAvatarUrl={member.avatar_url}
-              initialTitle={member.title}
-              initialNmlsId={member.nmls_id}
-              initialBio={member.bio}
-              initialPhone={member.phone}
-              initialPersonalWebsiteUrl={member.personal_website_url}
-              initialLinkedinUrl={member.linkedin_url}
-              initialZillowProfileUrl={member.zillow_profile_url}
-              initialTimezone={member.timezone}
-              initialSlug={member.slug}
-              userId={member.id}
+              profile={memberProfile}
               isAdmin
               targetUserId={member.id}
             />
@@ -215,7 +256,7 @@ export function EditMemberContent({ member }: EditMemberContentProps) {
                   <Select
                     value={currentRole}
                     onValueChange={handleRoleChange}
-                    disabled={isPending || member.is_owner}
+                    disabled={isPending || member.is_owner || isEditingSelf}
                   >
                     <SelectTrigger id="member-role">
                       <SelectValue />
@@ -230,6 +271,11 @@ export function EditMemberContent({ member }: EditMemberContentProps) {
                     <p className="text-xs text-muted-foreground mt-2">
                       This member is the organization owner. Their role cannot
                       be changed.
+                    </p>
+                  )}
+                  {isEditingSelf && !member.is_owner && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      You cannot change your own role.
                     </p>
                   )}
                 </div>
@@ -263,7 +309,7 @@ export function EditMemberContent({ member }: EditMemberContentProps) {
                           variant="outline"
                           size="sm"
                           className="text-destructive hover:text-destructive"
-                          disabled={isPending || member.is_owner}
+                          disabled={isPending || member.is_owner || isEditingSelf}
                         >
                           Deactivate
                         </Button>
@@ -346,6 +392,81 @@ export function EditMemberContent({ member }: EditMemberContentProps) {
               </CardContent>
             </Card>
 
+            {/* Admin-Only Fields */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Organization-Managed Fields
+                </CardTitle>
+                <CardDescription>
+                  These fields are managed by admins and not visible in the member&apos;s own Settings page.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="cta-button-text">CTA Button Text</Label>
+                    <Input
+                      id="cta-button-text"
+                      value={ctaButtonText}
+                      onChange={(e) => { setCtaButtonText(e.target.value); setAdminFieldsDirty(true); }}
+                      placeholder="e.g., Schedule a Call"
+                      maxLength={50}
+                    />
+                    <p className="text-xs text-muted-foreground">{ctaButtonText.length}/50 characters</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cta-button-url">CTA Button URL</Label>
+                    <Input
+                      id="cta-button-url"
+                      type="url"
+                      value={ctaButtonUrl}
+                      onChange={(e) => { setCtaButtonUrl(e.target.value); setAdminFieldsDirty(true); }}
+                      placeholder="https://calendly.com/..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hire-date">Hire Date</Label>
+                    <Input
+                      id="hire-date"
+                      type="date"
+                      value={hireDate}
+                      onChange={(e) => { setHireDate(e.target.value); setAdminFieldsDirty(true); }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="industry">Industry</Label>
+                    <Input
+                      id="industry"
+                      value={industry}
+                      onChange={(e) => { setIndustry(e.target.value); setAdminFieldsDirty(true); }}
+                      placeholder="e.g., Mortgage, Real Estate"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="region">Region</Label>
+                    <Input
+                      id="region"
+                      value={region}
+                      onChange={(e) => { setRegion(e.target.value); setAdminFieldsDirty(true); }}
+                      placeholder="e.g., Northeast, California"
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button
+                    onClick={handleSaveAdminFields}
+                    disabled={isAdminSaving || !adminFieldsDirty}
+                    size="sm"
+                  >
+                    {isAdminSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Admin Fields
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Profile URL */}
             {currentSlug && (
               <Card>
@@ -384,7 +505,7 @@ export function EditMemberContent({ member }: EditMemberContentProps) {
             )}
 
             {/* Danger Zone */}
-            {!member.is_owner && isActive && (
+            {!member.is_owner && !isEditingSelf && isActive && (
               <Card className="border-destructive/50">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2 text-destructive">

@@ -22,6 +22,7 @@ export {
   getTeamMetrics,
   getUserComparison,
   getFilterOptions,
+  getEnterpriseFilterOptions,
   getLeaderboard,
   getLowPerformers,
   getTeamNPSTrend,

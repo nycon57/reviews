@@ -44,12 +44,12 @@ export default function HelpPage() {
     <div className="flex-1 space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <HelpCircle className="h-5 w-5 text-primary" />
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <HelpCircle className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Help Center</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">Help Center</h1>
+          <p className="text-sm leading-snug text-repwell-teal-300">
             Find answers to common questions and get support
           </p>
         </div>

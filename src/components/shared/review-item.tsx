@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -145,7 +145,7 @@ export interface ReviewItemProps {
   attribution?: ReviewItemAttribution;
   /** Label before the loan officer name in attribution (default: "Review for") */
   attributionLabel?: string;
-  shareConfig?: { profileUrl: string; subjectName: string };
+  shareConfig?: { profileUrl: string; subjectName: string; reviewUrl?: string | null };
   onFlag?: (reviewId: string) => void;
   animate?: boolean;
   className?: string;
@@ -162,13 +162,18 @@ export function ReviewItem({
   className,
 }: ReviewItemProps) {
   const [copied, setCopied] = useState(false);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+    };
+  }, []);
 
   const isFeatured = review.featured;
 
   // Share logic
-  const reviewUrl = shareConfig
-    ? `${shareConfig.profileUrl}#review-${review.id}`
-    : undefined;
+  const reviewUrl = shareConfig?.reviewUrl || undefined;
   const shareText =
     shareConfig && review.text
       ? `"${review.text.slice(0, 100)}${review.text.length > 100 ? "..." : ""}" - Review of ${shareConfig.subjectName}`
@@ -192,7 +197,7 @@ export function ReviewItem({
     try {
       await navigator.clipboard.writeText(reviewUrl);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
       console.error("Failed to copy to clipboard");
     }

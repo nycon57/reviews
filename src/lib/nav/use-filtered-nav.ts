@@ -23,10 +23,13 @@ export interface FilteredNav {
  * Shared between sidebar and mobile nav so both render identical items.
  */
 export function useFilteredNav(): FilteredNav {
-  const { hasPermission, canAccessProFeature } = usePermissions();
+  const { hasPermission, canAccessProFeature, userContext } = usePermissions();
   const proAccess = canAccessProFeature();
 
   return useMemo(() => {
+    const isEnterpriseUser =
+      userContext?.accountType === "enterprise" && userContext.role === "user";
+
     const filterItems = (items: NavItemConfig[]): FilteredNavItem[] =>
       items
         .filter((item) => !item.permission || hasPermission(item.permission))
@@ -37,6 +40,7 @@ export function useFilteredNav(): FilteredNav {
 
     const filterSections = (sections: NavSectionConfig[]): FilteredNavSection[] =>
       sections
+        .filter((section) => !(section.hideForEnterpriseUser && isEnterpriseUser))
         .map((section) => ({
           label: section.label,
           items: filterItems(section.items),
@@ -48,5 +52,5 @@ export function useFilteredNav(): FilteredNav {
       sections: filterSections(NAV_CONFIG.sections),
       bottomItems: filterItems(NAV_CONFIG.bottomItems),
     };
-  }, [hasPermission, proAccess]);
+  }, [hasPermission, proAccess, userContext]);
 }

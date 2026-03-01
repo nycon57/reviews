@@ -20,6 +20,7 @@ import type {
 } from './types';
 import type { Json } from '@/types/database.types';
 import { ensureUniqueBranchSlug } from '@/lib/users/slug-utils';
+import { generateSlug, geocodeBranchAddress } from './utils';
 
 // Zod schemas for validation
 const addressSchema = z.object({
@@ -131,35 +132,8 @@ function mapRowToBranch(row: BranchRow): Branch {
   };
 }
 
-// Generate a unique slug from name
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
-/**
- * Geocode a branch address and return coordinates
- */
-async function geocodeBranchAddress(
-  address: BranchAddress | undefined
-): Promise<{ latitude: number; longitude: number } | null> {
-  if (!address) return null;
-
-  // Import geocoding at runtime to avoid circular dependencies
-  const { geocodeAddressWithFallback } = await import('@/lib/directory/geocoding');
-
-  return geocodeAddressWithFallback(
-    address.street,
-    address.city,
-    address.state,
-    address.postal_code
-  );
-}
-
 // Common authorization check
-async function requireAccess(): Promise<
+export async function requireAccess(): Promise<
   | { success: true; organizationId: string; userId: string; role: string }
   | { success: false; error: string }
 > {

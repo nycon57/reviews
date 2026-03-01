@@ -187,12 +187,12 @@ export default async function EXSurveysPage() {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Users className="h-5 w-5 text-primary" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+            <Users className="h-6 w-6 text-repwell-teal-300" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Employee Experience</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">Employee Experience</h1>
+            <p className="text-sm leading-snug text-repwell-teal-300">
               Measure engagement, collect feedback, and drive improvements
             </p>
           </div>

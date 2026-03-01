@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 /**
  * Email Sequence Orchestration Engine - Sequence Registry
@@ -131,6 +131,51 @@ export function getAllEmailSenders(): Map<
   (ctx: EmailContext) => Promise<{ subject: string; html: string }>
 > {
   return new Map(globalRegistry.emailSenders);
+}
+
+// ============================================================================
+// Campaign-Specific Definition Management
+// ============================================================================
+
+/**
+ * Separate registry for campaign definitions keyed by campaignId.
+ * Avoids collisions when multiple campaigns share type "custom".
+ */
+const campaignDefinitions = new Map<string, SequenceDefinition>();
+
+/**
+ * Register a campaign sequence definition by campaign ID.
+ */
+export function registerCampaignSequenceDefinition(
+  campaignId: string,
+  definition: SequenceDefinition
+): void {
+  campaignDefinitions.set(campaignId, definition);
+  // Also register under the shared "custom" type for queue processing
+  globalRegistry.definitions.set(definition.type, definition);
+}
+
+/**
+ * Get a campaign sequence definition by campaign ID.
+ */
+export function getCampaignSequenceDefinition(
+  campaignId: string
+): SequenceDefinition | undefined {
+  return campaignDefinitions.get(campaignId);
+}
+
+/**
+ * Remove a campaign's definition from the registry.
+ */
+export function unregisterCampaignSequenceDefinition(campaignId: string): boolean {
+  return campaignDefinitions.delete(campaignId);
+}
+
+/**
+ * Get all registered campaign definitions.
+ */
+export function getAllCampaignDefinitions(): Map<string, SequenceDefinition> {
+  return new Map(campaignDefinitions);
 }
 
 // ============================================================================

@@ -262,7 +262,6 @@ export function NpsScoreBadgePreview({
           background: colors.background ?? "#fff",
           border: `1px solid ${colors.border ?? "#e5e7eb"}`,
           borderRadius: borderRadius ?? "12px",
-          fontFamily: "system-ui, -apple-system, sans-serif",
           lineHeight: 1,
           maxWidth: "100%",
           boxSizing: "border-box",

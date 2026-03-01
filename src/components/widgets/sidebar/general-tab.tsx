@@ -47,12 +47,14 @@ export function GeneralTab({
         </Select>
       </div>
 
-      <EntitySelector
-        entityType={entityType}
-        entityId={entityId}
-        onSelect={(id) => onEntityIdChange(id)}
-        label="Entity"
-      />
+      {entityType !== "organization" && (
+        <EntitySelector
+          entityType={entityType}
+          entityId={entityId}
+          onSelect={(id) => onEntityIdChange(id)}
+          label="Entity"
+        />
+      )}
     </div>
   );
 }

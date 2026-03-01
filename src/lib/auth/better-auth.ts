@@ -67,6 +67,24 @@ export const auth = betterAuth({
     // Admin plugin for user management and impersonation
     admin({
       impersonationSessionDuration: 60 * 60, // 1 hour
+      // Admin plugin fields use camelCase by default; map them to our snake_case schema.
+      schema: {
+        user: {
+          modelName: "users",
+          fields: {
+            role: "role",
+            banned: "banned",
+            banReason: "ban_reason",
+            banExpires: "ban_expires",
+          },
+        },
+        session: {
+          modelName: "sessions",
+          fields: {
+            impersonatedBy: "impersonated_by",
+          },
+        },
+      },
     }),
 
     // Magic link authentication

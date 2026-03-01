@@ -176,8 +176,6 @@ function Badge({
     height: badge.height ?? "48px",
     maxWidth: "100%",
     boxSizing: "border-box",
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
   };
 
   const ariaLabel = `Rated ${rating.toFixed(1)} out of 5 based on ${totalReviews} review${totalReviews === 1 ? "" : "s"}`;

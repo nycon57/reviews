@@ -1,6 +1,14 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Palette,
   Type,
@@ -21,8 +29,22 @@ import {
   DomainTab,
   AdvancedTab,
 } from "./sidebar";
+import { EmbedCodePanel } from "./embed-code-panel";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType } from "@/lib/widgets/types";
+
+// ── Tab definitions ─────────────────────────────────────────────────────
+
+const SIDEBAR_TABS = [
+  { value: "general", label: "General", icon: Settings2 },
+  { value: "theme", label: "Theme", icon: Palette },
+  { value: "content", label: "Content", icon: Type },
+  { value: "filters", label: "Filters", icon: Filter },
+  { value: "seo", label: "SEO", icon: SearchIcon },
+  { value: "domains", label: "Domains", icon: Globe },
+  { value: "advanced", label: "Advanced", icon: Code2 },
+  { value: "history", label: "History", icon: History },
+] as const;
 
 // ── Props ──────────────────────────────────────────────────────────────
 
@@ -37,6 +59,7 @@ interface WidgetBuilderSidebarProps {
   widgetConfigId?: string;
   currentVersion?: number;
   templateName: string;
+  widgetId: string | null;
   onRollbackComplete?: () => void;
   onConfigChange: (config: Partial<WidgetConfigJson>) => void;
   onDomainsChange: (domains: string[]) => void;
@@ -59,6 +82,7 @@ export function WidgetBuilderSidebar({
   widgetConfigId,
   currentVersion,
   templateName,
+  widgetId,
   onRollbackComplete,
   onConfigChange,
   onDomainsChange,
@@ -67,52 +91,48 @@ export function WidgetBuilderSidebar({
   onStructuredDataChange,
   onStructuredDataTypeChange,
 }: WidgetBuilderSidebarProps) {
+  const [activeTab, setActiveTab] = useState("general");
+
   return (
     <div className="h-full flex flex-col bg-white border-r border-border">
-      <Tabs defaultValue="general" className="flex-1 flex flex-col">
-        <TabsList className="w-full grid grid-cols-8 h-10 rounded-none border-b border-border bg-gray-50/50">
-          <TabsTrigger value="general" className="text-xs gap-1 data-[state=active]:bg-white">
-            <Settings2 size={14} />
-            <span className="hidden xl:inline">General</span>
-          </TabsTrigger>
-          <TabsTrigger value="theme" className="text-xs gap-1 data-[state=active]:bg-white">
-            <Palette size={14} />
-            <span className="hidden xl:inline">Theme</span>
-          </TabsTrigger>
-          <TabsTrigger value="content" className="text-xs gap-1 data-[state=active]:bg-white">
-            <Type size={14} />
-            <span className="hidden xl:inline">Content</span>
-          </TabsTrigger>
-          <TabsTrigger value="filters" className="text-xs gap-1 data-[state=active]:bg-white">
-            <Filter size={14} />
-            <span className="hidden xl:inline">Filters</span>
-          </TabsTrigger>
-          <TabsTrigger value="seo" className="text-xs gap-1 data-[state=active]:bg-white">
-            <SearchIcon size={14} />
-            <span className="hidden xl:inline">SEO</span>
-          </TabsTrigger>
-          <TabsTrigger value="domains" className="text-xs gap-1 data-[state=active]:bg-white">
-            <Globe size={14} />
-            <span className="hidden xl:inline">Domains</span>
-          </TabsTrigger>
-          <TabsTrigger value="advanced" className="text-xs gap-1 data-[state=active]:bg-white">
-            <Code2 size={14} />
-            <span className="hidden xl:inline">Advanced</span>
-          </TabsTrigger>
-          <TabsTrigger value="history" className="text-xs gap-1 data-[state=active]:bg-white">
-            <History size={14} />
-            <span className="hidden xl:inline">History</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Section selector */}
+      <div className="px-3 py-2.5 border-b border-border bg-gray-50/50">
+        <Select value={activeTab} onValueChange={setActiveTab}>
+          <SelectTrigger className="h-9 text-xs font-medium bg-white">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SIDEBAR_TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <SelectItem key={tab.value} value={tab.value} className="text-xs">
+                  <span className="flex items-center gap-2">
+                    <Icon size={14} className="text-muted-foreground shrink-0" />
+                    {tab.label}
+                  </span>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      </div>
 
+      {/* Tab content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
         <div className="flex-1 overflow-y-auto p-4">
-          <TabsContent value="general" className="mt-0">
+          <TabsContent value="general" className="mt-0 space-y-6">
             <GeneralTab
               entityType={entityType}
               entityId={entityId}
               onEntityTypeChange={onEntityTypeChange}
               onEntityIdChange={onEntityIdChange}
             />
+            <div className="pt-4 border-t border-border">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Embed Code
+              </h3>
+              <EmbedCodePanel widgetId={widgetId} />
+            </div>
           </TabsContent>
           <TabsContent value="theme" className="mt-0">
             <ThemeTab config={config} onConfigChange={onConfigChange} />

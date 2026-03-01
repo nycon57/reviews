@@ -457,10 +457,8 @@ export function BranchReviewPreview({
     "--rw-bg": colors.background ?? "#ffffff",
     "--rw-text": colors.text ?? "#1a1a2e",
     "--rw-border": colors.border ?? "#e5e7eb",
-    maxWidth: maxWidth ?? "100%",
     borderRadius: borderRadius ?? "8px",
     padding: "16px",
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
     background: colors.background ?? "#ffffff",
     color: colors.text ?? "#1a1a2e",
   } as React.CSSProperties;

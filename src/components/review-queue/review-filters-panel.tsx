@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/select";
 import {
   X,
-  ArrowCounterClockwise as RefreshCcw,
   MagnifyingGlass as Search,
   DownloadSimple as Download,
   Calendar as CalendarIcon,
@@ -35,8 +34,20 @@ export function ReviewFiltersPanel() {
             placeholder="Search reviews by text, customer name..."
             value={state.filters.searchQuery}
             onChange={(e) => actions.dispatch({ type: "SET_SEARCH", value: e.target.value })}
-            className="pl-10"
+            className={cn("pl-10", state.filters.searchQuery && "pr-9")}
           />
+          {state.filters.searchQuery && (
+            <button
+              type="button"
+              onClick={() => {
+                actions.dispatch({ type: "SET_SEARCH", value: "" });
+                actions.handleFilterChange();
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <Button type="submit" disabled={state.isPending}>
           Search
@@ -139,10 +150,7 @@ export function ReviewFiltersPanel() {
           </Button>
         )}
 
-        <div className="ml-auto flex items-center gap-2">
-          <Button variant="outline" size="icon" className="h-9 w-9" onClick={actions.refreshReviews} disabled={state.isPending}>
-            <RefreshCcw className={cn("h-4 w-4", state.isPending && "animate-spin")} />
-          </Button>
+        <div className="ml-auto">
           <Button variant="outline" size="sm" className="h-9" onClick={actions.handleExport} disabled={state.isPending}>
             <Download className="h-4 w-4 mr-1" />
             Export

@@ -28,7 +28,7 @@ export function ContentTab({ config, widgetType, onConfigChange }: ContentTabPro
   };
 
   const isMortgageRelated = ["lo_review", "branch_review", "company_review"].includes(widgetType);
-  const isLOWidget = widgetType === "lo_review";
+  const isProWidget = widgetType === "lo_review";
 
   return (
     <div className="space-y-4">
@@ -146,7 +146,7 @@ export function ContentTab({ config, widgetType, onConfigChange }: ContentTabPro
           <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
             Compliance
           </Label>
-          {isLOWidget ? (
+          {isProWidget ? (
             <div className="flex items-center justify-between py-1">
               <Label className="text-xs font-medium text-repwell-teal-400">Show NMLS Number</Label>
               <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Required</span>

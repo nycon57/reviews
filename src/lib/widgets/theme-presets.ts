@@ -137,7 +137,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePresetConfig> = {
   },
 
   mortgage_classic: {
-    label: "Mortgage Classic",
+    label: "Professional Classic",
     colors: {
       primary: "#1e3a5f",
       secondary: "#2c5282",

@@ -15,7 +15,7 @@ import {
 } from "./shared";
 
 /**
- * Dashboard preview component for the LO Review Widget.
+ * Dashboard preview component for the Pro Review Widget.
  * Mirrors the embed.js renderer output using React for WYSIWYG editing.
  */
 
@@ -32,7 +32,7 @@ interface EntityProfile {
   licensing_states: string[] | null;
 }
 
-interface LOReviewPreviewProps {
+interface ProReviewPreviewProps {
   profile: EntityProfile | null;
   reviews: PreviewReview[];
   content?: WidgetContent;
@@ -120,7 +120,7 @@ function ProfileHeader({
           <div className="text-[13px] text-gray-500 mb-1">{profile.title}</div>
         )}
 
-        {/* NMLS is mandatory for LO widgets per SAFE Act */}
+        {/* NMLS is mandatory for Pro widgets per SAFE Act */}
         {profile.nmls_id && (
           <a
             href={`https://www.nmlsconsumeraccess.org/EntityDetails.aspx/INDIVIDUAL/${encodeURIComponent(profile.nmls_id)}`}
@@ -272,14 +272,14 @@ function ReviewCard({
 
 // ── Main Preview Component ──────────────────────────────────────────
 
-export function LOReviewPreview({
+export function ProReviewPreview({
   profile,
   reviews,
   content = {},
   colors = {},
   maxWidth,
   borderRadius,
-}: LOReviewPreviewProps) {
+}: ProReviewPreviewProps) {
   const starFilled = colors.starFilled ?? DEFAULT_STAR_FILLED;
   const starEmpty = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
   const columns = content.columns ?? 1;
@@ -289,11 +289,8 @@ export function LOReviewPreview({
     "--rw-bg": colors.background ?? "#ffffff",
     "--rw-text": colors.text ?? "#1a1a2e",
     "--rw-border": colors.border ?? "#e5e7eb",
-    maxWidth: maxWidth ?? "100%",
     borderRadius: borderRadius ?? "8px",
     padding: "16px",
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
     background: colors.background ?? "#ffffff",
     color: colors.text ?? "#1a1a2e",
   } as React.CSSProperties;
@@ -308,7 +305,7 @@ export function LOReviewPreview({
         `Reviews for ${profile?.full_name ?? "Professional"}`
       }
     >
-      {/* LO Profile */}
+      {/* Pro Profile */}
       {profile && (
         <ProfileHeader
           profile={profile}

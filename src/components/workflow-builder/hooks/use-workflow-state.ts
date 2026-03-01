@@ -83,42 +83,57 @@ export const useWorkflowState = create<WorkflowState>((set, get) => ({
   },
 
   onConnect: (connection) => {
-    get().pushUndo();
+    try {
+      const snapshot = createSnapshot(get().nodes, get().edges);
 
-    set((state) => ({
-      edges: addEdge(
-        {
-          ...connection,
-          type: connection.type || "workflow",
-          animated: true,
-        },
-        state.edges
-      ) as WorkflowEdge[],
-      isDirty: true,
-      redoStack: [],
-    }));
+      set((state) => ({
+        edges: addEdge(
+          {
+            ...connection,
+            type: connection.type || "workflow",
+            animated: true,
+          },
+          state.edges
+        ) as WorkflowEdge[],
+        isDirty: true,
+        undoStack: state.undoStack.concat(snapshot).slice(-HISTORY_LIMIT),
+        redoStack: [],
+      }));
+    } catch (error) {
+      console.error("[WorkflowState] onConnect failed:", error);
+    }
   },
 
   addNode: (type, position) => {
-    get().pushUndo();
+    try {
+      const snapshot = createSnapshot(get().nodes, get().edges);
 
-    set((state) => ({
-      nodes: state.nodes.concat(createWorkflowNode(type, position)),
-      isDirty: true,
-      redoStack: [],
-    }));
+      set((state) => ({
+        nodes: state.nodes.concat(createWorkflowNode(type, position)),
+        isDirty: true,
+        undoStack: state.undoStack.concat(snapshot).slice(-HISTORY_LIMIT),
+        redoStack: [],
+      }));
+    } catch (error) {
+      console.error("[WorkflowState] addNode failed:", error);
+    }
   },
 
   removeNode: (id) => {
-    get().pushUndo();
+    try {
+      const snapshot = createSnapshot(get().nodes, get().edges);
 
-    set((state) => ({
-      nodes: state.nodes.filter((node) => node.id !== id),
-      edges: state.edges.filter((edge) => edge.source !== id && edge.target !== id),
-      selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
-      isDirty: true,
-      redoStack: [],
-    }));
+      set((state) => ({
+        nodes: state.nodes.filter((node) => node.id !== id),
+        edges: state.edges.filter((edge) => edge.source !== id && edge.target !== id),
+        selectedNodeId: state.selectedNodeId === id ? null : state.selectedNodeId,
+        isDirty: true,
+        undoStack: state.undoStack.concat(snapshot).slice(-HISTORY_LIMIT),
+        redoStack: [],
+      }));
+    } catch (error) {
+      console.error("[WorkflowState] removeNode failed:", error);
+    }
   },
 
   removeEdge: (id) => {
@@ -132,31 +147,42 @@ export const useWorkflowState = create<WorkflowState>((set, get) => ({
   },
 
   updateNodeData: (id, data) => {
-    if (updateNodeDebounceTimer) {
-      clearTimeout(updateNodeDebounceTimer);
-    } else {
-      get().pushUndo();
+    try {
+      const isFirstInBurst = !updateNodeDebounceTimer;
+      if (updateNodeDebounceTimer) {
+        clearTimeout(updateNodeDebounceTimer);
+      }
+      const snapshot = isFirstInBurst ? createSnapshot(get().nodes, get().edges) : null;
+
+      set((state) => ({
+        nodes: state.nodes.map((node) =>
+          node.id === id
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  ...data,
+                },
+              }
+            : node
+        ),
+        isDirty: true,
+        redoStack: [],
+        ...(snapshot ? {
+          undoStack: state.undoStack.concat(snapshot).slice(-HISTORY_LIMIT),
+        } : {}),
+      }));
+
+      updateNodeDebounceTimer = setTimeout(() => {
+        updateNodeDebounceTimer = null;
+      }, UPDATE_NODE_DEBOUNCE_MS);
+    } catch (error) {
+      if (updateNodeDebounceTimer) {
+        clearTimeout(updateNodeDebounceTimer);
+        updateNodeDebounceTimer = null;
+      }
+      console.error("[WorkflowState] updateNodeData failed:", error);
     }
-
-    updateNodeDebounceTimer = setTimeout(() => {
-      updateNodeDebounceTimer = null;
-    }, UPDATE_NODE_DEBOUNCE_MS);
-
-    set((state) => ({
-      nodes: state.nodes.map((node) =>
-        node.id === id
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                ...data,
-              },
-            }
-          : node
-      ),
-      isDirty: true,
-      redoStack: [],
-    }));
   },
 
   selectNode: (id) => {

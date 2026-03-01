@@ -1,13 +1,20 @@
 import type { Viewport } from "@xyflow/react";
+import { incomingEdges, outgoingEdges } from "./graph-helpers";
 import {
   EMPTY_CANVAS_METADATA,
   getNodeFamily,
   type WorkflowCanvasMetadata,
+  type WorkflowCondition,
   type WorkflowEdge,
   type WorkflowNode,
   type WorkflowNodeData,
   type WorkflowNodeType,
+  type WorkflowVariant,
 } from "./workflow-types";
+
+// ============================================================================
+// Sanitization helpers
+// ============================================================================
 
 function sanitizeNodeData(data: WorkflowNodeData): Record<string, unknown> {
   const clean: Record<string, unknown> = {};
@@ -55,6 +62,10 @@ function createBasicNode(type: WorkflowNodeType, position: { x: number; y: numbe
   };
 }
 
+// ============================================================================
+// Canvas metadata serialization
+// ============================================================================
+
 export function toCanvasMetadata(
   nodes: WorkflowNode[],
   edges: WorkflowEdge[],
@@ -67,6 +78,82 @@ export function toCanvasMetadata(
     viewport: viewport ?? EMPTY_CANVAS_METADATA.viewport,
   };
 }
+
+// ============================================================================
+// Graph traversal helpers
+// ============================================================================
+
+/** Walk backward from a node to find the nearest delay node in its incoming path. */
+function findUpstreamDelay(
+  nodeId: string,
+  nodesById: Map<string, WorkflowNode>,
+  edges: WorkflowEdge[],
+  visited: Set<string> = new Set()
+): WorkflowNode | null {
+  if (visited.has(nodeId)) return null;
+  visited.add(nodeId);
+
+  for (const edge of incomingEdges(nodeId, edges)) {
+    const sourceNode = nodesById.get(edge.source);
+    if (!sourceNode) continue;
+
+    if (sourceNode.type === "delay-wait") {
+      return sourceNode;
+    }
+
+    // Walk through non-action nodes (conditions, etc.) to find delay
+    const family = getNodeFamily(sourceNode.type ?? "");
+    if (family === "condition" || family === "delay") {
+      const deeper = findUpstreamDelay(sourceNode.id, nodesById, edges, visited);
+      if (deeper) return deeper;
+    }
+  }
+
+  return null;
+}
+
+/** Topological sort of nodes starting from trigger. Returns node IDs in order. */
+function topologicalOrder(nodes: WorkflowNode[], edges: WorkflowEdge[]): string[] {
+  const triggerNode = nodes.find((n) => getNodeFamily(n.type ?? "") === "trigger");
+  if (!triggerNode) {
+    return nodes.map((n) => n.id);
+  }
+
+  const nodesById = new Map(nodes.map((n) => [n.id, n]));
+  const visited = new Set<string>();
+  const ordered: string[] = [];
+  const queue: string[] = [triggerNode.id];
+
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    ordered.push(id);
+
+    const out = outgoingEdges(id, edges).sort((a, b) => {
+      const an = nodesById.get(a.target);
+      const bn = nodesById.get(b.target);
+      return (an?.position.y ?? 0) - (bn?.position.y ?? 0);
+    });
+
+    for (const edge of out) {
+      if (!visited.has(edge.target)) {
+        queue.push(edge.target);
+      }
+    }
+  }
+
+  // Append unvisited nodes
+  for (const n of nodes) {
+    if (!visited.has(n.id)) ordered.push(n.id);
+  }
+
+  return ordered;
+}
+
+// ============================================================================
+// Canvas → SequenceDefinition
+// ============================================================================
 
 function mapTriggerNodeToDefinition(node: WorkflowNode | undefined): Record<string, unknown> {
   if (!node) {
@@ -87,7 +174,7 @@ function mapTriggerNodeToDefinition(node: WorkflowNode | undefined): Record<stri
     return {
       type: "time",
       schedule: `${frequency}:${time}:${days}`,
-      conditions: node.data.conditions ?? [],
+      conditions: serializeConditions(node.data.conditions),
       allowMultiple: node.data.allowMultiple ?? false,
       replaceExisting: node.data.replaceExisting ?? false,
     };
@@ -97,7 +184,7 @@ function mapTriggerNodeToDefinition(node: WorkflowNode | undefined): Record<stri
     return {
       type: "manual",
       customEvent: node.data.customEvent || "manual_start",
-      conditions: node.data.conditions ?? [],
+      conditions: serializeConditions(node.data.conditions),
       allowMultiple: node.data.allowMultiple ?? true,
       replaceExisting: node.data.replaceExisting ?? false,
     };
@@ -110,69 +197,33 @@ function mapTriggerNodeToDefinition(node: WorkflowNode | undefined): Record<stri
       node.data.event === "custom_event"
         ? node.data.customEvent || "workflow_started"
         : undefined,
-    conditions: node.data.conditions ?? [],
+    conditions: serializeConditions(node.data.conditions),
     allowMultiple: node.data.allowMultiple ?? false,
     replaceExisting: node.data.replaceExisting ?? false,
   };
 }
 
-function collectLinearNodeOrder(nodes: WorkflowNode[], edges: WorkflowEdge[]): WorkflowNode[] {
-  const triggerNode = nodes.find((node) => getNodeFamily(node.type ?? "") === "trigger");
-  if (!triggerNode) {
-    return [...nodes].sort((a, b) => a.position.y - b.position.y);
-  }
-
-  const mapById = new Map(nodes.map((node) => [node.id, node]));
-  const visited = new Set<string>();
-  const ordered: WorkflowNode[] = [];
-  const queue: string[] = [triggerNode.id];
-
-  while (queue.length > 0) {
-    const nodeId = queue.shift() as string;
-    if (visited.has(nodeId)) {
-      continue;
-    }
-
-    visited.add(nodeId);
-    const node = mapById.get(nodeId);
-    if (node) {
-      ordered.push(node);
-    }
-
-    const outgoing = edges
-      .filter((edge) => edge.source === nodeId)
-      .sort((left, right) => {
-        const leftNode = mapById.get(left.target);
-        const rightNode = mapById.get(right.target);
-        return (leftNode?.position.y ?? 0) - (rightNode?.position.y ?? 0);
-      });
-
-    for (const edge of outgoing) {
-      if (!visited.has(edge.target)) {
-        queue.push(edge.target);
-      }
-    }
-  }
-
-  const remainder = nodes
-    .filter((node) => !visited.has(node.id))
-    .sort((a, b) => a.position.y - b.position.y);
-
-  return ordered.concat(remainder);
+function serializeConditions(conditions: WorkflowCondition[] | undefined): Record<string, unknown>[] {
+  if (!Array.isArray(conditions) || conditions.length === 0) return [];
+  return conditions.map((c) => ({
+    field: c.field,
+    operator: c.operator,
+    value: c.value,
+  }));
 }
 
 function buildStepFromActionNode(node: WorkflowNode, step: number): Record<string, unknown> {
   if (node.type === "action-sms") {
     return {
       step,
-      template: { name: "survey_invitation" },
+      template: { name: node.data.smsTemplateName || "sms_template" },
       delay: { value: 0, unit: "hours" },
       channelConfig: {
         channel: "sms",
         smsTemplate: { templateId: node.data.smsTemplateName || "sms_template" },
         fallbackChannel: node.data.fallbackToEmail ? "email" : undefined,
       },
-      description: `Send SMS ${node.data.smsTemplateName ? `(${String(node.data.smsTemplateName)})` : ""}`,
+      description: `Send SMS${node.data.smsTemplateName ? ` (${String(node.data.smsTemplateName)})` : ""}`,
     };
   }
 
@@ -199,6 +250,7 @@ function buildStepFromActionNode(node: WorkflowNode, step: number): Record<strin
     };
   }
 
+  // Default: action-email
   return {
     step,
     template: {
@@ -206,29 +258,82 @@ function buildStepFromActionNode(node: WorkflowNode, step: number): Record<strin
       subjectOverride: node.data.subjectOverride || undefined,
     },
     delay: { value: 0, unit: "hours" },
-    description: `Send email ${node.data.templateName ? `(${String(node.data.templateName)})` : ""}`,
+    channelConfig: { channel: "email" },
+    description: `Send email${node.data.templateName ? ` (${String(node.data.templateName)})` : ""}`,
   };
 }
 
-function inferDelayForActionNode(
-  node: WorkflowNode,
+/**
+ * For a given action node, find the step number of the target node reachable
+ * from a given source handle of a condition/AB-split node.
+ */
+function resolveTargetStepNumber(
+  fromNodeId: string,
+  sourceHandle: string | undefined,
+  edges: WorkflowEdge[],
   nodesById: Map<string, WorkflowNode>,
-  edges: WorkflowEdge[]
-): { value: number; unit: string } {
-  const incoming = edges.find((edge) => edge.target === node.id);
-  if (!incoming) {
-    return { value: 0, unit: "hours" };
+  actionStepMap: Map<string, number>
+): number | undefined {
+  const edge = edges.find(
+    (e) => e.source === fromNodeId && e.sourceHandle === sourceHandle
+  );
+  if (!edge) return undefined;
+
+  // Walk forward until we hit an action node
+  const visited = new Set<string>();
+  const queue = [edge.target];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+
+    const stepNum = actionStepMap.get(id);
+    if (stepNum !== undefined) return stepNum;
+
+    // Continue through delay/condition nodes
+    const node = nodesById.get(id);
+    if (node) {
+      const family = getNodeFamily(node.type ?? "");
+      if (family !== "action" && family !== "exit") {
+        for (const e of outgoingEdges(id, edges)) {
+          if (!visited.has(e.target)) queue.push(e.target);
+        }
+      }
+    }
   }
 
-  const sourceNode = nodesById.get(incoming.source);
-  if (!sourceNode || sourceNode.type !== "delay-wait") {
-    return { value: 0, unit: "hours" };
+  return undefined;
+}
+
+/**
+ * Find which action step a condition/exit node is logically parented to
+ * by walking backward through the graph.
+ */
+function findParentActionStep(
+  nodeId: string,
+  nodesById: Map<string, WorkflowNode>,
+  edges: WorkflowEdge[],
+  actionStepMap: Map<string, number>,
+  visited: Set<string> = new Set()
+): number | undefined {
+  if (visited.has(nodeId)) return undefined;
+  visited.add(nodeId);
+
+  for (const edge of incomingEdges(nodeId, edges)) {
+    const step = actionStepMap.get(edge.source);
+    if (step !== undefined) return step;
+
+    const sourceNode = nodesById.get(edge.source);
+    if (sourceNode) {
+      const family = getNodeFamily(sourceNode.type ?? "");
+      if (family !== "trigger") {
+        const parentStep = findParentActionStep(edge.source, nodesById, edges, actionStepMap, visited);
+        if (parentStep !== undefined) return parentStep;
+      }
+    }
   }
 
-  return {
-    value: Number(sourceNode.data.value ?? 0),
-    unit: String(sourceNode.data.unit ?? "hours"),
-  };
+  return undefined;
 }
 
 export function canvasToSequenceDefinition(
@@ -236,20 +341,160 @@ export function canvasToSequenceDefinition(
   edges: WorkflowEdge[],
   campaignName?: string
 ): Record<string, unknown> {
-  const orderedNodes = collectLinearNodeOrder(nodes, edges);
-  const nodesById = new Map(nodes.map((node) => [node.id, node]));
-  const triggerNode = orderedNodes.find((node) => getNodeFamily(node.type ?? "") === "trigger");
+  const order = topologicalOrder(nodes, edges);
+  const nodesById = new Map(nodes.map((n) => [n.id, n]));
+  const triggerNode = nodes.find((n) => getNodeFamily(n.type ?? "") === "trigger");
 
-  const actionNodes = orderedNodes.filter((node) => {
-    const family = getNodeFamily(node.type ?? "");
-    return family === "action";
-  });
+  // Collect action nodes in topological order
+  const actionNodes = order
+    .map((id) => nodesById.get(id)!)
+    .filter((n) => n && getNodeFamily(n.type ?? "") === "action");
 
-  const steps = actionNodes.map((node, index) => {
+  // Build action node ID → step number mapping
+  const actionStepMap = new Map<string, number>();
+  actionNodes.forEach((n, i) => actionStepMap.set(n.id, i + 1));
+
+  // Build steps from action nodes
+  const steps: Record<string, unknown>[] = actionNodes.map((node, index) => {
     const step = buildStepFromActionNode(node, index + 1);
-    step.delay = inferDelayForActionNode(node, nodesById, edges);
+
+    // Infer delay by walking backward through all incoming paths
+    const delayNode = findUpstreamDelay(node.id, nodesById, edges);
+    if (delayNode) {
+      step.delay = {
+        value: Number(delayNode.data.value ?? 0),
+        unit: String(delayNode.data.unit ?? "hours"),
+      };
+    }
+
+    // Attach A/B test config from the action node itself (inline AB test)
+    if (node.data.enableAbTest && Array.isArray(node.data.abVariants) && node.data.abVariants.length >= 2) {
+      const variants = node.data.abVariants as WorkflowVariant[];
+      step.abTest = {
+        testId: `step_${index + 1}_ab`,
+        variants: variants.map((v) => ({
+          id: v.id,
+          weight: v.weight,
+        })),
+        winningMetric: node.data.winningMetric || "open_rate",
+      };
+    }
+
     return step;
   });
+
+  // Process condition nodes → attach branches to parent steps
+  const conditionNodes = nodes.filter((n) => n.type === "condition-ifelse");
+  for (const condNode of conditionNodes) {
+    const parentStep = findParentActionStep(condNode.id, nodesById, edges, actionStepMap);
+    if (parentStep === undefined) continue;
+
+    const stepObj = steps[parentStep - 1];
+    if (!stepObj) continue;
+
+    const conditions = serializeConditions(condNode.data.conditions as WorkflowCondition[] | undefined);
+
+    const yesTarget = resolveTargetStepNumber(condNode.id, "yes", edges, nodesById, actionStepMap);
+    const noTarget = resolveTargetStepNumber(condNode.id, "no", edges, nodesById, actionStepMap);
+
+    // Check if yes/no lead to exit nodes
+    const yesEdge = edges.find((e) => e.source === condNode.id && e.sourceHandle === "yes");
+    const noEdge = edges.find((e) => e.source === condNode.id && e.sourceHandle === "no");
+    const yesNode = yesEdge ? nodesById.get(yesEdge.target) : undefined;
+    const noNode = noEdge ? nodesById.get(noEdge.target) : undefined;
+
+    const branches: Record<string, unknown>[] = [];
+
+    // Yes branch
+    if (yesNode && getNodeFamily(yesNode.type ?? "") === "exit") {
+      branches.push({
+        conditions,
+        action: "exit",
+        exitReason: yesNode.data.reason || "custom",
+      });
+    } else if (yesTarget !== undefined) {
+      branches.push({
+        conditions,
+        action: "goto_step",
+        targetStep: yesTarget,
+      });
+    }
+
+    // No branch (inverse of conditions)
+    if (noNode && getNodeFamily(noNode.type ?? "") === "exit") {
+      branches.push({
+        conditions: conditions.length > 0
+          ? [{ field: "__branch", operator: "equals", value: "no" }]
+          : [],
+        action: "exit",
+        exitReason: noNode.data.reason || "custom",
+      });
+    } else if (noTarget !== undefined) {
+      branches.push({
+        conditions: conditions.length > 0
+          ? [{ field: "__branch", operator: "equals", value: "no" }]
+          : [],
+        action: "goto_step",
+        targetStep: noTarget,
+      });
+    }
+
+    if (branches.length > 0) {
+      stepObj.branches = branches;
+    }
+  }
+
+  // Process AB split nodes → attach abTest config to parent steps
+  const abSplitNodes = nodes.filter((n) => n.type === "condition-absplit");
+  for (const abNode of abSplitNodes) {
+    const parentStep = findParentActionStep(abNode.id, nodesById, edges, actionStepMap);
+    if (parentStep === undefined) continue;
+
+    const stepObj = steps[parentStep - 1];
+    if (!stepObj) continue;
+
+    const variants = (abNode.data.variants as WorkflowVariant[] | undefined) ?? [];
+    if (variants.length >= 2) {
+      stepObj.abTest = {
+        testId: `absplit_${abNode.id}`,
+        variants: variants.map((v, i) => {
+          const target = resolveTargetStepNumber(abNode.id, `variant_${i}`, edges, nodesById, actionStepMap);
+          return {
+            id: v.id,
+            weight: v.weight,
+            targetStep: target,
+          };
+        }),
+        winningMetric: abNode.data.winningMetric || "open_rate",
+      };
+    }
+  }
+
+  // Process exit nodes → collect as top-level exit conditions or attach to parent step
+  const exitConditions: Record<string, unknown>[] = [];
+  const exitNodes = nodes.filter((n) => n.type === "control-exit");
+  for (const exitNode of exitNodes) {
+    const parentStep = findParentActionStep(exitNode.id, nodesById, edges, actionStepMap);
+
+    const exitCondition: Record<string, unknown> = {
+      conditions: [],
+      reason: exitNode.data.reason || "action_completed",
+      milestone: exitNode.data.milestone || undefined,
+      message: exitNode.data.message || undefined,
+    };
+
+    if (parentStep !== undefined) {
+      const stepObj = steps[parentStep - 1];
+      if (stepObj) {
+        const existingExitConditions = (stepObj.exitConditions as Record<string, unknown>[]) ?? [];
+        stepObj.exitConditions = [...existingExitConditions, exitCondition];
+        continue;
+      }
+    }
+
+    // No parent action found — add as top-level exit
+    exitConditions.push(exitCondition);
+  }
 
   return {
     type: "custom",
@@ -257,16 +502,21 @@ export function canvasToSequenceDefinition(
     description: "Generated from visual workflow builder",
     triggers: [mapTriggerNodeToDefinition(triggerNode)],
     steps,
+    exitConditions: exitConditions.length > 0 ? exitConditions : undefined,
     metadata: {
       generatedBy: "visual-workflow-builder",
       graph: {
         nodeCount: nodes.length,
         edgeCount: edges.length,
-        nodeTypes: nodes.map((node) => node.type),
+        nodeTypes: nodes.map((n) => n.type),
       },
     },
   };
 }
+
+// ============================================================================
+// SequenceDefinition → Canvas (deserialization)
+// ============================================================================
 
 function inferActionTypeFromStep(step: Record<string, unknown>): WorkflowNodeType {
   const channelConfig = (step.channelConfig || {}) as { channel?: unknown; smsTemplate?: unknown };
@@ -373,21 +623,57 @@ export function sequenceDefinitionToCanvas(definition: unknown): {
 
   const nodes: WorkflowNode[] = [];
   const edges: WorkflowEdge[] = [];
+  let layoutIndex = 0;
 
+  // Build trigger node
   const triggerConfig = toRecord(triggers[0]);
   const triggerType = String(triggerConfig.type || "event");
-  const triggerNode = createBasicNode(
-    triggerType === "time"
-      ? "trigger-time"
-      : triggerType === "manual" || triggerType === "api"
-        ? "trigger-manual"
-        : "trigger-event",
-    safePosition(0)
-  );
+
+  let triggerNodeType: WorkflowNodeType;
+  if (triggerType === "time") {
+    triggerNodeType = "trigger-time";
+  } else if (triggerType === "manual" || triggerType === "api") {
+    triggerNodeType = "trigger-manual";
+  } else {
+    triggerNodeType = "trigger-event";
+  }
+
+  const triggerNode = createBasicNode(triggerNodeType, safePosition(layoutIndex++));
 
   triggerNode.id = "trigger_1";
   triggerNode.data.event = String(triggerConfig.event || "user_signup") as WorkflowNodeData["event"];
   triggerNode.data.customEvent = String(triggerConfig.customEvent || "");
+
+  // Restore trigger conditions
+  if (Array.isArray(triggerConfig.conditions) && triggerConfig.conditions.length > 0) {
+    triggerNode.data.conditions = triggerConfig.conditions.map((c: unknown) => {
+      const cond = toRecord(c);
+      return {
+        id: `cond_${Math.random().toString(36).slice(2, 9)}`,
+        field: String(cond.field ?? ""),
+        operator: String(cond.operator ?? "equals"),
+        value: cond.value !== undefined ? String(cond.value) : undefined,
+      };
+    }) as WorkflowCondition[];
+  }
+
+  // Restore trigger flags
+  if (triggerConfig.allowMultiple !== undefined) {
+    triggerNode.data.allowMultiple = Boolean(triggerConfig.allowMultiple);
+  }
+  if (triggerConfig.replaceExisting !== undefined) {
+    triggerNode.data.replaceExisting = Boolean(triggerConfig.replaceExisting);
+  }
+  // Restore schedule data for time triggers
+  if (triggerType === "time" && typeof triggerConfig.schedule === "string") {
+    const parts = triggerConfig.schedule.split(":");
+    if (parts.length >= 3) {
+      triggerNode.data.frequency = parts[0] as WorkflowNodeData["frequency"];
+      triggerNode.data.time = parts.slice(1, -1).join(":");
+      triggerNode.data.daysOfWeek = parts[parts.length - 1].split(",");
+    }
+  }
+
   nodes.push(triggerNode);
 
   let previousNodeId = triggerNode.id;
@@ -397,8 +683,9 @@ export function sequenceDefinitionToCanvas(definition: unknown): {
     const delay = toRecord(step.delay);
     const hasDelay = Number(delay.value ?? 0) > 0;
 
+    // Create delay node if needed
     if (hasDelay) {
-      const delayNode = createBasicNode("delay-wait", safePosition(index * 2 + 1));
+      const delayNode = createBasicNode("delay-wait", safePosition(layoutIndex++));
       delayNode.id = `delay_${index + 1}`;
       delayNode.data.value = Number(delay.value ?? 0);
       delayNode.data.unit = String(delay.unit || "hours") as WorkflowNodeData["unit"];
@@ -412,19 +699,42 @@ export function sequenceDefinitionToCanvas(definition: unknown): {
       previousNodeId = delayNode.id;
     }
 
+    // Create action node
     const actionType = inferActionTypeFromStep(step);
-    const actionNode = createBasicNode(actionType, safePosition(index * 2 + (hasDelay ? 2 : 1)));
+    const actionNode = createBasicNode(actionType, safePosition(layoutIndex++));
     actionNode.id = `action_${index + 1}`;
 
     const template = toRecord(step.template);
     const channelConfig = toRecord(step.channelConfig);
+
     if (actionType === "action-sms") {
       const smsTemplate = toRecord(channelConfig.smsTemplate);
       actionNode.data.smsTemplateName = String(smsTemplate.templateId || "");
       actionNode.data.fallbackToEmail = Boolean(channelConfig.fallbackChannel === "email");
+    } else if (actionType === "action-smart") {
+      actionNode.data.templateName = String(template.name || "");
+      const smartChannel = toRecord(step.smartChannel);
+      actionNode.data.strategy = smartChannel.strategy as WorkflowNodeData["strategy"];
+      actionNode.data.smsRequirements = toRecord(smartChannel.smsRequirements) as WorkflowNodeData["smsRequirements"];
+      actionNode.data.smsTemplateName = String(toRecord(channelConfig.smsTemplate).templateId || "");
     } else {
       actionNode.data.templateName = String(template.name || "");
       actionNode.data.subjectOverride = String(template.subjectOverride || "");
+    }
+
+    // Restore A/B test config on the action node
+    const abTest = toRecord(step.abTest);
+    if (Array.isArray(abTest.variants) && abTest.variants.length >= 2) {
+      actionNode.data.enableAbTest = true;
+      actionNode.data.abVariants = abTest.variants.map((v: unknown) => {
+        const variant = toRecord(v);
+        return {
+          id: String(variant.id ?? `variant_${Math.random().toString(36).slice(2, 7)}`),
+          name: String(variant.id ?? "Variant"),
+          weight: Number(variant.weight ?? 50),
+        };
+      }) as WorkflowVariant[];
+      actionNode.data.winningMetric = (abTest.winningMetric as WorkflowNodeData["winningMetric"]) || "open_rate";
     }
 
     nodes.push(actionNode);
@@ -435,14 +745,120 @@ export function sequenceDefinitionToCanvas(definition: unknown): {
       type: "workflow",
     });
 
-    previousNodeId = actionNode.id;
+    // Restore branches as condition nodes
+    const branches = Array.isArray(step.branches) ? step.branches : [];
+    if (branches.length > 0) {
+      const condNode = createBasicNode("condition-ifelse", safePosition(layoutIndex++, 480));
+      condNode.id = `condition_${index + 1}`;
+
+      // Extract conditions from the first branch
+      const firstBranch = toRecord(branches[0]);
+      const branchConditions = Array.isArray(firstBranch.conditions) ? firstBranch.conditions : [];
+      condNode.data.conditions = branchConditions
+        .filter((c: unknown) => {
+          const cond = toRecord(c);
+          return String(cond.field ?? "") !== "__branch";
+        })
+        .map((c: unknown) => {
+          const cond = toRecord(c);
+          return {
+            id: `cond_${Math.random().toString(36).slice(2, 9)}`,
+            field: String(cond.field ?? ""),
+            operator: String(cond.operator ?? "equals"),
+            value: cond.value !== undefined ? String(cond.value) : undefined,
+          };
+        }) as WorkflowCondition[];
+
+      nodes.push(condNode);
+      edges.push({
+        id: `edge_${actionNode.id}_${condNode.id}`,
+        source: actionNode.id,
+        target: condNode.id,
+        type: "workflow",
+      });
+
+      // Don't chain to next action from this one — the condition does the routing
+      previousNodeId = condNode.id;
+
+      // Create exit nodes for exit branches
+      for (const rawBranch of branches) {
+        const branch = toRecord(rawBranch);
+        const branchConds = Array.isArray(branch.conditions) ? branch.conditions : [];
+        const isNoBranch = branchConds.some((c: unknown) => {
+          const cond = toRecord(c);
+          return cond.field === "__branch" && cond.value === "no";
+        });
+        const handle = isNoBranch ? "no" : "yes";
+
+        if (branch.action === "exit") {
+          const exitNode = createBasicNode("control-exit", safePosition(layoutIndex++, isNoBranch ? 600 : 360));
+          exitNode.id = `exit_branch_${index + 1}_${handle}`;
+          exitNode.data.reason = String(branch.exitReason || "action_completed") as WorkflowNodeData["reason"];
+          nodes.push(exitNode);
+          edges.push({
+            id: `edge_${condNode.id}_${exitNode.id}`,
+            source: condNode.id,
+            sourceHandle: handle,
+            target: exitNode.id,
+            type: "workflow",
+          });
+        }
+      }
+    } else {
+      previousNodeId = actionNode.id;
+    }
+
+    // Restore step-level exit conditions as exit nodes
+    const stepExitConditions = Array.isArray(step.exitConditions) ? step.exitConditions : [];
+    for (let ei = 0; ei < stepExitConditions.length; ei++) {
+      const exitCond = toRecord(stepExitConditions[ei]);
+      const exitNode = createBasicNode("control-exit", safePosition(layoutIndex++, 600));
+      exitNode.id = `exit_step_${index + 1}_${ei}`;
+      exitNode.data.reason = String(exitCond.reason || "action_completed") as WorkflowNodeData["reason"];
+      exitNode.data.milestone = String(exitCond.milestone || "");
+      exitNode.data.message = String(exitCond.message || "");
+      nodes.push(exitNode);
+      edges.push({
+        id: `edge_${actionNode.id}_${exitNode.id}`,
+        source: actionNode.id,
+        target: exitNode.id,
+        type: "workflow",
+      });
+    }
   });
+
+  // Restore top-level exit conditions as exit nodes
+  const topExitConditions = Array.isArray(record.exitConditions) ? record.exitConditions : [];
+  for (let i = 0; i < topExitConditions.length; i++) {
+    const exitCond = toRecord(topExitConditions[i]);
+    const exitNode = createBasicNode("control-exit", safePosition(layoutIndex++, 600));
+    exitNode.id = `exit_top_${i}`;
+    exitNode.data.reason = String(exitCond.reason || "action_completed") as WorkflowNodeData["reason"];
+    exitNode.data.milestone = String(exitCond.milestone || "");
+    exitNode.data.message = String(exitCond.message || "");
+    nodes.push(exitNode);
+
+    // Connect to the last node if possible
+    if (previousNodeId) {
+      edges.push({
+        id: `edge_${previousNodeId}_${exitNode.id}`,
+        source: previousNodeId,
+        sourceHandle: `exit_${i}`,
+        target: exitNode.id,
+        type: "workflow",
+      });
+    }
+  }
 
   return {
     nodes,
     edges,
   };
 }
+
+// ============================================================================
+// Canvas metadata parser
+// ============================================================================
 
 export function parseCanvasMetadata(input: unknown): WorkflowCanvasMetadata {
   const record = toRecord(input);

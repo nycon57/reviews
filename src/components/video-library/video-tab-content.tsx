@@ -5,23 +5,22 @@ import {
   CaretRight as ChevronRight,
   FilmStrip as Film,
   MagnifyingGlass as Search,
-  ArrowsClockwise as RefreshCw,
-  GridFour as LayoutGrid,
-  List,
+
   ClockCounterClockwise,
   CheckCircle,
   ShareNetwork,
   Timer,
   WarningCircle as AlertCircle,
+  DownloadSimple as Download,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -31,15 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
-import { cn } from "@/lib/utils";
+
 import { useVideoLibrary } from "./video-library-context";
 import { VideoBulkActionBar } from "./video-bulk-action-bar";
 import { VideoCard } from "./video-card";
-import { VideoListRow } from "./video-list-row";
 import { VideoDialogs } from "./video-dialogs";
 
 // ============================================================================
@@ -98,55 +92,53 @@ export function VideoTabContent() {
     <div className="space-y-6">
       <VideoStatsCards />
 
-      <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="border border-border shadow-soft overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Film className="h-5 w-5 text-repwell-teal-300" />
               </div>
-              <div>
-                <CardTitle className="text-lg">Video Reviews</CardTitle>
-                <CardDescription>
-                  {state.total} total video{state.total !== 1 ? "s" : ""}
-                </CardDescription>
-              </div>
+              <CardTitle className="text-lg">Video Reviews ({state.total})</CardTitle>
             </div>
-            <ToggleGroup
-              type="single"
-              value={state.viewMode}
-              onValueChange={(value) => value && actions.setViewMode(value as "grid" | "list")}
-            >
-              <ToggleGroupItem value="grid" aria-label="Grid view" size="sm">
-                <LayoutGrid className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="list" aria-label="List view" size="sm">
-                <List className="h-4 w-4" />
-              </ToggleGroupItem>
-            </ToggleGroup>
+            {state.responses.length > 0 && state.canManage && (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="select-all-videos"
+                  checked={state.allSelected}
+                  onCheckedChange={() => {
+                    if (state.allSelected) actions.handleClearSelection();
+                    else actions.handleSelectAll();
+                  }}
+                />
+                <Label htmlFor="select-all-videos" className="text-sm cursor-pointer">Select all</Label>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
-          {/* Filters */}
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Label htmlFor="search-videos" className="sr-only">
-                Search videos
-              </Label>
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="search-videos"
-                placeholder="Search by customer name..."
-                value={state.searchQuery}
-                onChange={(e) => actions.setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+          {/* Search Bar */}
+          <div className="relative">
+            <Label htmlFor="search-videos" className="sr-only">
+              Search videos
+            </Label>
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="search-videos"
+              placeholder="Search videos by customer name..."
+              value={state.searchQuery}
+              onChange={(e) => actions.setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Filters Row */}
+          <div className="flex flex-wrap items-center gap-3">
             <Select
               value={state.approvalFilter}
               onValueChange={actions.setApprovalFilter}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="h-9 w-[140px]">
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +154,7 @@ export function VideoTabContent() {
                 value={state.memberFilter}
                 onValueChange={actions.setMemberFilter}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="h-9 w-[180px]">
                   <SelectValue placeholder="All Team Members" />
                 </SelectTrigger>
                 <SelectContent>
@@ -175,15 +167,14 @@ export function VideoTabContent() {
                 </SelectContent>
               </Select>
             )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={actions.fetchResponses}
-              disabled={state.isLoading}
-              aria-label="Refresh"
-            >
-              <RefreshCw className={cn("h-4 w-4", state.isLoading && "animate-spin")} />
-            </Button>
+
+            {/* TODO: Implement video export functionality */}
+            <div className="ml-auto">
+              <Button variant="outline" size="sm" className="h-9" disabled title="Export coming soon">
+                <Download className="h-4 w-4 mr-1" />
+                Export
+              </Button>
+            </div>
           </div>
 
           {/* Bulk Action Bar */}
@@ -207,25 +198,10 @@ export function VideoTabContent() {
                 </p>
               </div>
             </div>
-          ) : state.viewMode === "grid" ? (
+          ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {state.responses.map((video) => (
                 <VideoCard key={video.id} video={video} />
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="hidden items-center gap-4 px-3 py-2 text-xs font-medium text-muted-foreground sm:flex">
-                {state.canManage && <div className="w-4" />}
-                <div className="w-28">Preview</div>
-                <div className="flex-1">Customer / Professional</div>
-                <div className="w-28">Status</div>
-                <div className="hidden w-20 sm:block">Sentiment</div>
-                <div className="hidden w-24 text-right md:block">Date</div>
-                {state.canManage && <div className="w-8" />}
-              </div>
-              {state.responses.map((video) => (
-                <VideoListRow key={video.id} video={video} />
               ))}
             </div>
           )}

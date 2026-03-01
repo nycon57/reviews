@@ -595,7 +595,7 @@ export async function executeStep(
 /**
  * Check if a sequence is ready to execute (next_email_at has passed)
  */
-export function isReadyToExecute(sequence: SequenceRecord): boolean {
+export async function isReadyToExecute(sequence: SequenceRecord): Promise<boolean> {
   if (!sequence.next_email_at) return false;
   return new Date(sequence.next_email_at) <= new Date();
 }

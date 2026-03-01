@@ -318,8 +318,8 @@ export function NewCampaignModal({
                       type="button"
                       className={cn(
                         "flex h-full flex-col items-start gap-3 rounded-xl border p-4 text-left transition",
-                        "hover:border-primary hover:bg-accent",
-                        selected && "border-primary bg-primary/5",
+                        "hover:border-repwell-teal-300 hover:shadow-sm",
+                        selected && "border-repwell-teal-300 ring-1 ring-repwell-teal-300/30",
                         isPending && "cursor-not-allowed opacity-60"
                       )}
                       onClick={() => setPreviewTemplateId(template.id)}

@@ -3,19 +3,13 @@ import "server-only";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
   CampaignStatusSchema,
+  parseJsonObject,
   type CampaignListItem,
   type CampaignStatus,
   type CampaignWorkflow,
   WorkflowTemplateCategorySchema,
   type WorkflowTemplate,
 } from "./types";
-
-function parseJsonObject(value: unknown): Record<string, unknown> {
-  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return {};
-}
 
 function parseCampaignStatus(value: unknown): CampaignStatus {
   const parsed = CampaignStatusSchema.safeParse(value);
@@ -220,4 +214,62 @@ export async function getWorkflowTemplates(): Promise<WorkflowTemplate[]> {
   }
 
   return ((data || []) as Record<string, unknown>[]).map(toWorkflowTemplate);
+}
+
+export interface CampaignExecutionStats {
+  active: number;
+  completed: number;
+  exited: number;
+  paused: number;
+  cancelled: number;
+  total: number;
+}
+
+export async function getCampaignExecutionStats(
+  campaignId: string
+): Promise<CampaignExecutionStats> {
+  const supabase = createUntypedAdminClient();
+
+  const { data, error } = await supabase
+    .from("email_sequences")
+    .select("status")
+    .eq("campaign_workflow_id", campaignId);
+
+  if (error) {
+    throw new Error(`Failed to fetch campaign stats: ${error.message}`);
+  }
+
+  const rows = (data ?? []) as { status: string }[];
+
+  const stats: CampaignExecutionStats = {
+    active: 0,
+    completed: 0,
+    exited: 0,
+    paused: 0,
+    cancelled: 0,
+    total: rows.length,
+  };
+
+  for (const row of rows) {
+    switch (row.status) {
+      case "active":
+      case "processing":
+        stats.active++;
+        break;
+      case "completed":
+        stats.completed++;
+        break;
+      case "exited":
+        stats.exited++;
+        break;
+      case "paused":
+        stats.paused++;
+        break;
+      case "cancelled":
+        stats.cancelled++;
+        break;
+    }
+  }
+
+  return stats;
 }

@@ -1,3 +1,4 @@
+import { incomingEdges, outgoingEdges } from "./graph-helpers";
 import type {
   ValidationIssue,
   ValidationResult,
@@ -11,14 +12,6 @@ const WEIGHT_EPS = 1e-6;
 
 function makeIssueId(prefix: string, token: string): string {
   return `${prefix}:${token}`;
-}
-
-function outgoingEdgesForNode(nodeId: string, edges: WorkflowEdge[]): WorkflowEdge[] {
-  return edges.filter((edge) => edge.source === nodeId);
-}
-
-function incomingEdgesForNode(nodeId: string, edges: WorkflowEdge[]): WorkflowEdge[] {
-  return edges.filter((edge) => edge.target === nodeId);
 }
 
 function detectCycles(nodes: WorkflowNode[], edges: WorkflowEdge[]): string[] {
@@ -105,8 +98,8 @@ export function validateGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): Val
   const triggerNode = triggerNodes[0];
 
   for (const node of nodes) {
-    const incoming = incomingEdgesForNode(node.id, edges);
-    const outgoing = outgoingEdgesForNode(node.id, edges);
+    const incoming = incomingEdges(node.id, edges);
+    const outgoing = outgoingEdges(node.id, edges);
 
     if (incoming.length === 0 && outgoing.length === 0) {
       errors.push({
@@ -131,11 +124,21 @@ export function validateGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): Val
 
     if (node.type === "condition-ifelse") {
       const hasYesEdge = outgoing.some((edge) => edge.sourceHandle === "yes");
+      const hasNoEdge = outgoing.some((edge) => edge.sourceHandle === "no");
       if (!hasYesEdge) {
         errors.push({
           id: makeIssueId("if-yes", node.id),
           message: "If / Else nodes must include a Yes branch.",
           severity: "error",
+          nodeId: node.id,
+        });
+      }
+      // Bug 6: warn about orphaned (disconnected) No branch
+      if (hasYesEdge && !hasNoEdge) {
+        warnings.push({
+          id: makeIssueId("if-no-missing", node.id),
+          message: "If / Else node has no No branch connected. Users failing the condition will stop here.",
+          severity: "warning",
           nodeId: node.id,
         });
       }
@@ -158,6 +161,28 @@ export function validateGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): Val
           id: makeIssueId("ab-weight", node.id),
           message: `A/B split weights must sum to 100 (currently ${totalWeight}).`,
           severity: "error",
+          nodeId: node.id,
+        });
+      }
+
+      // Bug 8: validate variant names are non-empty and unique
+      const variantNames = variants.map((v) => (v.name ?? "").trim());
+      const hasEmptyName = variantNames.some((name) => !name);
+      if (hasEmptyName) {
+        warnings.push({
+          id: makeIssueId("ab-empty-name", node.id),
+          message: "A/B split has variants with empty names.",
+          severity: "warning",
+          nodeId: node.id,
+        });
+      }
+
+      const uniqueNames = new Set(variantNames.filter(Boolean));
+      if (uniqueNames.size < variantNames.filter(Boolean).length) {
+        warnings.push({
+          id: makeIssueId("ab-duplicate-name", node.id),
+          message: "A/B split has duplicate variant names.",
+          severity: "warning",
           nodeId: node.id,
         });
       }
@@ -201,6 +226,23 @@ export function validateGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): Val
     }
   }
 
+  // Bug 7: duplicate edge prevention — each source handle can have at most 1 outgoing edge
+  const sourceHandleMap = new Map<string, number>();
+  for (const edge of edges) {
+    const key = `${edge.source}::${edge.sourceHandle ?? "default"}`;
+    sourceHandleMap.set(key, (sourceHandleMap.get(key) ?? 0) + 1);
+  }
+  for (const [key, count] of sourceHandleMap) {
+    if (count <= 1) continue;
+    const [nodeId] = key.split("::");
+    errors.push({
+      id: makeIssueId("duplicate-edge", key),
+      message: "Multiple edges from the same output. Remove duplicate connections.",
+      severity: "error",
+      nodeId,
+    });
+  }
+
   if (triggerNode) {
     const visited = new Set<string>();
     const queue: string[] = [triggerNode.id];
@@ -213,7 +255,7 @@ export function validateGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): Val
 
       visited.add(current);
 
-      for (const edge of outgoingEdgesForNode(current, edges)) {
+      for (const edge of outgoingEdges(current, edges)) {
         if (!visited.has(edge.target)) {
           queue.push(edge.target);
         }

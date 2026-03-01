@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/share-render-jobs",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-campaigns",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

@@ -42,6 +42,15 @@ interface HeaderProps {
   className?: string;
   user?: HeaderUser | null;
   onSignOut?: () => void;
+  impersonation?: {
+    active: boolean;
+    impersonatorId?: string | null;
+    targetName?: string | null;
+    targetEmail?: string | null;
+    expiresAt?: string | null;
+  } | null;
+  onStopImpersonation?: () => void;
+  isStoppingImpersonation?: boolean;
   mobileMenuTrigger?: React.ReactNode;
   sidebarCollapsed?: boolean;
   onSidebarCollapsedChange?: (collapsed: boolean) => void;
@@ -51,6 +60,9 @@ export function Header({
   className,
   user,
   onSignOut,
+  impersonation,
+  onStopImpersonation,
+  isStoppingImpersonation = false,
   mobileMenuTrigger,
   sidebarCollapsed,
   onSidebarCollapsedChange,
@@ -158,6 +170,9 @@ export function Header({
           <UserMenu
             user={user}
             onSignOut={onSignOut}
+            impersonation={impersonation}
+            onStopImpersonation={onStopImpersonation}
+            isStoppingImpersonation={isStoppingImpersonation}
             role={userContext?.role}
             accountType={userContext?.accountType}
           />
@@ -176,6 +191,15 @@ export function Header({
 interface UserMenuProps {
   user: HeaderUser;
   onSignOut?: () => void;
+  impersonation?: {
+    active: boolean;
+    impersonatorId?: string | null;
+    targetName?: string | null;
+    targetEmail?: string | null;
+    expiresAt?: string | null;
+  } | null;
+  onStopImpersonation?: () => void;
+  isStoppingImpersonation?: boolean;
   role?: string | null;
   accountType?: string | null;
 }
@@ -192,7 +216,15 @@ function getUserRoleLabel(role: string | null | undefined, accountType: string |
   return "";
 }
 
-function UserMenu({ user, onSignOut, role, accountType }: UserMenuProps) {
+function UserMenu({
+  user,
+  onSignOut,
+  impersonation,
+  onStopImpersonation,
+  isStoppingImpersonation = false,
+  role,
+  accountType,
+}: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -244,6 +276,16 @@ function UserMenu({ user, onSignOut, role, accountType }: UserMenuProps) {
             <span>Billing</span>
           </Link>
         </DropdownMenuItem>
+        {impersonation?.active && onStopImpersonation && (
+          <DropdownMenuItem
+            onClick={onStopImpersonation}
+            disabled={isStoppingImpersonation}
+            className="text-amber-700 hover:text-amber-800 hover:bg-amber-50 cursor-pointer focus:text-amber-800 focus:bg-amber-50"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>{isStoppingImpersonation ? "Stopping..." : "Stop impersonating"}</span>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem
           onClick={onSignOut}

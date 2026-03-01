@@ -1,14 +1,12 @@
 "use client";
 
-import { useReducer, useCallback, useTransition, useRef, useEffect, useState } from "react";
+import { useReducer, useCallback, useTransition, useRef, useEffect, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Save, ArrowLeft, Loader2 } from "lucide-react";
+import { Save, ArrowLeft, Loader2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { WidgetBuilderSidebar } from "./widget-builder-sidebar";
 import { WidgetPreview } from "./widget-preview";
-import { EmbedCodePanel } from "./embed-code-panel";
 import { updateWidget } from "@/lib/widgets/actions";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetConfig, WidgetType, WidgetEntityType } from "@/lib/widgets/types";
@@ -126,6 +124,74 @@ function getInitialState(widget: WidgetConfig): BuilderState {
   };
 }
 
+// ── Resizable layout ──────────────────────────────────────────────────
+
+const SIDEBAR_DEFAULT = 380;
+const SIDEBAR_MIN = 280;
+const SIDEBAR_MAX = 560;
+
+function ResizableLayout({
+  className,
+  sidebar,
+  main,
+}: {
+  className?: string;
+  sidebar: React.ReactNode;
+  main: React.ReactNode;
+}) {
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT);
+  const dragging = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const onPointerDown = useCallback((e: ReactPointerEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, []);
+
+  useEffect(() => {
+    function onPointerMove(e: globalThis.PointerEvent) {
+      if (!dragging.current || !containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      setSidebarWidth(Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, x)));
+    }
+    function onPointerUp() {
+      if (!dragging.current) return;
+      dragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    }
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, []);
+
+  return (
+    <div ref={containerRef} className={className}>
+      <div className="overflow-y-auto overflow-x-hidden" style={{ width: sidebarWidth, flexShrink: 0 }}>
+        {sidebar}
+      </div>
+      {/* Drag handle */}
+      <div
+        onPointerDown={onPointerDown}
+        className="relative flex w-px items-center justify-center bg-border cursor-col-resize select-none shrink-0 hover:bg-repwell-teal-200 active:bg-repwell-teal-300 transition-colors"
+      >
+        <div className="z-10 flex h-5 w-3.5 items-center justify-center rounded-sm border bg-muted">
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
+        </div>
+      </div>
+      <div className="flex-1 min-w-0 overflow-hidden">
+        {main}
+      </div>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────
 
 interface WidgetBuilderProps {
@@ -137,7 +203,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [state, dispatch] = useReducer(builderReducer, widget, getInitialState);
-  const [mobileTab, setMobileTab] = useState<"settings" | "preview" | "embed">("settings");
+  const [mobileTab, setMobileTab] = useState<"settings" | "preview">("settings");
 
   const templateName = WIDGET_TYPE_LABELS[state.widgetType] ?? state.widgetType;
 
@@ -157,7 +223,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     };
   }, []);
 
-  const handleSave = useCallback(() => {
+  const handleSave = () => {
     if (!state.dbId) return;
 
     startTransition(async () => {
@@ -177,7 +243,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
         toast({ title: "Save failed", description: result.error, variant: "destructive" });
       }
     });
-  }, [state, toast]);
+  };
 
   const handleRollbackComplete = useCallback(() => {
     router.refresh();
@@ -194,6 +260,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     widgetConfigId: state.dbId ?? undefined,
     currentVersion: state.currentVersion,
     templateName,
+    widgetId: state.widgetId,
     onConfigChange: handleConfigChange,
     onDomainsChange: (domains: string[]) => dispatch({ type: "SET_DOMAINS", payload: domains }),
     onEntityTypeChange: (entityType: WidgetEntityType) => dispatch({ type: "SET_ENTITY_TYPE", payload: entityType }),
@@ -241,37 +308,37 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
 
       {/* Mobile tab navigation */}
       <div className="lg:hidden border-b border-border bg-white">
-        <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as "settings" | "preview" | "embed")}>
-          <TabsList className="w-full grid grid-cols-3 h-10 rounded-none">
-            <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
-            <TabsTrigger value="preview" className="text-xs">Preview</TabsTrigger>
-            <TabsTrigger value="embed" className="text-xs">Embed</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="grid grid-cols-2 h-10">
+          <button
+            onClick={() => setMobileTab("settings")}
+            className={`text-xs font-medium transition-colors ${mobileTab === "settings" ? "text-repwell-teal-500 border-b-2 border-repwell-teal-300" : "text-muted-foreground"}`}
+          >
+            Settings
+          </button>
+          <button
+            onClick={() => setMobileTab("preview")}
+            className={`text-xs font-medium transition-colors ${mobileTab === "preview" ? "text-repwell-teal-500 border-b-2 border-repwell-teal-300" : "text-muted-foreground"}`}
+          >
+            Preview
+          </button>
+        </div>
       </div>
 
-      {/* Three-panel layout (desktop) / tabbed (mobile) */}
+      {/* Two-panel layout (desktop) / tabbed (mobile) */}
       <div className="flex-1 overflow-hidden">
-        {/* Desktop layout */}
-        <div className="hidden lg:grid lg:grid-cols-[280px_1fr_240px] xl:grid-cols-[320px_1fr_280px] h-full">
-          <div className="overflow-y-auto overflow-x-hidden">
-            <WidgetBuilderSidebar {...sidebarProps} />
-          </div>
-          <div className="overflow-y-auto border-x border-border">
-            <WidgetPreview config={state.config} widgetType={state.widgetType} entityType={state.entityType} entityId={state.entityId} />
-          </div>
-          <div className="overflow-y-auto">
-            <EmbedCodePanel widgetId={state.widgetId} />
-          </div>
-        </div>
+        {/* Desktop layout — drag-resizable sidebar */}
+        <ResizableLayout
+          className="hidden lg:flex h-full"
+          sidebar={<WidgetBuilderSidebar {...sidebarProps} />}
+          main={<WidgetPreview config={state.config} widgetType={state.widgetType} entityType={state.entityType} entityId={state.entityId} />}
+        />
 
         {/* Mobile layout */}
-        <div className="lg:hidden h-full">
+        <div className="lg:hidden h-full overflow-y-auto">
           {mobileTab === "settings" && <WidgetBuilderSidebar {...sidebarProps} />}
           {mobileTab === "preview" && (
             <WidgetPreview config={state.config} widgetType={state.widgetType} entityType={state.entityType} entityId={state.entityId} />
           )}
-          {mobileTab === "embed" && <EmbedCodePanel widgetId={state.widgetId} />}
         </div>
       </div>
     </div>

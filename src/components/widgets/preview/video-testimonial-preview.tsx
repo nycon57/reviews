@@ -457,7 +457,7 @@ function VideoPlayerCard({
             )}
           </div>
 
-          {/* LO info */}
+          {/* Pro info */}
           {profile && content.showHeader !== false && (
             <div
               className="flex items-center gap-2.5 px-4 py-2.5 border-t bg-gray-50"
@@ -556,10 +556,8 @@ export function VideoTestimonialPreview({
     "--rw-text": colors.text ?? "#1a1a2e",
     "--rw-border": colors.border ?? "#e5e7eb",
     "--rw-radius": borderRadius ?? "8px",
-    maxWidth: maxWidth ?? "100%",
     borderRadius: borderRadius ?? "8px",
     padding: "16px",
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
     background: colors.background ?? "#ffffff",
     color: colors.text ?? "#1a1a2e",
   } as React.CSSProperties;

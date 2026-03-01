@@ -2,7 +2,9 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { auth } from "@/lib/auth/better-auth";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import type { Tables } from "@/types/database.types";
 import {
   updateOrganizationSettingsSchema,
@@ -26,6 +28,58 @@ import { adminProfileSchema, type AdminProfileInput } from "@/lib/auth/profile-s
 import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
 import { validateOrgSlug, generateUserSlug, generateUniqueUserSlug } from "@/lib/users/slug-utils";
 import crypto from "crypto";
+
+const IMPERSONATION_SOURCE = "organization_team";
+
+type ImpersonationAuditAction =
+  | "impersonation_started"
+  | "impersonation_stopped"
+  | "impersonation_start_denied";
+
+function isImpersonationEnabled(): boolean {
+  const serverFlag = process.env.ENABLE_USER_IMPERSONATION;
+  const publicFlag = process.env.NEXT_PUBLIC_ENABLE_USER_IMPERSONATION;
+  return serverFlag !== "false" && publicFlag !== "false";
+}
+
+async function writeImpersonationAuditLog({
+  organizationId,
+  action,
+  entityId,
+  impersonatorUserId,
+  impersonatedUserId,
+  reason,
+}: {
+  organizationId: string | null;
+  action: ImpersonationAuditAction;
+  entityId: string | null;
+  impersonatorUserId: string | null;
+  impersonatedUserId: string | null;
+  reason?: string;
+}) {
+  if (!organizationId) return;
+
+  const supabase = createAdminClient();
+  const { error } = await (supabase as any)
+    .from("organization_audit_logs")
+    .insert({
+      organization_id: organizationId,
+      user_id: impersonatorUserId,
+      action,
+      entity_type: "user_session",
+      entity_id: entityId,
+      new_values: {
+        impersonator_user_id: impersonatorUserId,
+        impersonated_user_id: impersonatedUserId,
+        reason: reason ?? null,
+        source: IMPERSONATION_SOURCE,
+      },
+    });
+
+  if (error) {
+    console.error("[Impersonation] Failed to write audit log:", error);
+  }
+}
 
 // Transform database row to full Organization type
 function transformDbOrganization(row: Tables<"organizations">): Organization {
@@ -834,6 +888,246 @@ export async function getAuditLogs(limit = 50): Promise<{
   }
 
   return { logs: logs as AuditLog[], error: null };
+}
+
+/**
+ * Start a Better Auth impersonation session for an organization member.
+ * Enterprise admins can impersonate active non-admin users in their own organization.
+ */
+export async function startUserImpersonation(
+  targetUserId: string
+): Promise<{ success: boolean; error: string | null }> {
+  if (!isImpersonationEnabled()) {
+    return { success: false, error: "User impersonation is currently disabled." };
+  }
+
+  const actor = await unifiedGetUser();
+  if (!actor) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  // Prevent impersonation chaining — block if already in an impersonated session
+  const reqHeaders = await headers();
+  const currentSessionPayload = await auth.api.getSession({ headers: reqHeaders });
+  const impersonatedByField =
+    (currentSessionPayload as any)?.session?.impersonatedBy ??
+    (currentSessionPayload as any)?.session?.impersonated_by ??
+    null;
+  if (impersonatedByField) {
+    return { success: false, error: "Cannot start impersonation while impersonating another user." };
+  }
+
+  const supabase = createAdminClient();
+  const permissionError = "You don't have permission to impersonate users.";
+  const invalidTargetError = "This user can't be impersonated.";
+
+  const { data: actorRaw, error: actorError } = await supabase
+    .from("users")
+    .select(`
+      id,
+      organization_id,
+      role,
+      organizations (
+        account_type
+      )
+    `)
+    .eq("id", actor.id)
+    .single();
+
+  const actorProfile = actorRaw as {
+    id: string;
+    organization_id: string | null;
+    role: string | null;
+    organizations?: { account_type?: string | null } | null;
+  } | null;
+
+  if (actorError || !actorProfile?.organization_id) {
+    return { success: false, error: permissionError };
+  }
+
+  const actorIsEnterpriseAdmin =
+    actorProfile.role === "admin" &&
+    actorProfile.organizations?.account_type === "enterprise";
+
+  if (!actorIsEnterpriseAdmin) {
+    await writeImpersonationAuditLog({
+      organizationId: actorProfile.organization_id,
+      action: "impersonation_start_denied",
+      entityId: targetUserId,
+      impersonatorUserId: actor.id,
+      impersonatedUserId: targetUserId,
+      reason: "actor_not_enterprise_admin",
+    });
+    return { success: false, error: permissionError };
+  }
+
+  const { data: targetRaw, error: targetError } = await supabase
+    .from("users")
+    .select("id, organization_id, role, is_active")
+    .eq("id", targetUserId)
+    .single();
+
+  const target = targetRaw as {
+    id: string;
+    organization_id: string | null;
+    role: string | null;
+    is_active: boolean | null;
+  } | null;
+
+  const deny = async (reason: string) => {
+    await writeImpersonationAuditLog({
+      organizationId: actorProfile.organization_id,
+      action: "impersonation_start_denied",
+      entityId: targetUserId,
+      impersonatorUserId: actor.id,
+      impersonatedUserId: targetUserId,
+      reason,
+    });
+  };
+
+  if (targetError || !target) {
+    await deny("target_not_found");
+    return { success: false, error: invalidTargetError };
+  }
+
+  if (target.id === actor.id) {
+    await deny("self_impersonation_blocked");
+    return { success: false, error: invalidTargetError };
+  }
+
+  if (target.organization_id !== actorProfile.organization_id) {
+    await deny("cross_organization_target_blocked");
+    return { success: false, error: invalidTargetError };
+  }
+
+  if (!target.is_active) {
+    await deny("inactive_target_blocked");
+    return { success: false, error: invalidTargetError };
+  }
+
+  if (target.role === "admin") {
+    await deny("admin_target_blocked");
+    return { success: false, error: invalidTargetError };
+  }
+
+  try {
+    const requestHeaders = await headers();
+    await auth.api.impersonateUser({
+      body: {
+        userId: targetUserId,
+      },
+      headers: requestHeaders,
+    });
+
+    await writeImpersonationAuditLog({
+      organizationId: actorProfile.organization_id,
+      action: "impersonation_started",
+      entityId: targetUserId,
+      impersonatorUserId: actor.id,
+      impersonatedUserId: targetUserId,
+    });
+
+    console.info("[Impersonation] Started", {
+      organizationId: actorProfile.organization_id,
+      impersonatorUserId: actor.id,
+      impersonatedUserId: targetUserId,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/organization");
+    return { success: true, error: null };
+  } catch (error) {
+    await deny("impersonation_api_failed");
+    console.error("[Impersonation] Failed to start:", error);
+    return {
+      success: false,
+      error: "Couldn't start impersonation. Try again.",
+    };
+  }
+}
+
+/**
+ * End the current Better Auth impersonation session and restore the admin account.
+ */
+export async function stopUserImpersonation(): Promise<{
+  success: boolean;
+  error: string | null;
+}> {
+  if (!isImpersonationEnabled()) {
+    return { success: false, error: "User impersonation is currently disabled." };
+  }
+
+  const requestHeaders = await headers();
+
+  try {
+    const sessionPayload = await auth.api.getSession({
+      headers: requestHeaders,
+    });
+
+    const currentSession = (sessionPayload as {
+      session?: {
+        impersonatedBy?: string | null;
+        impersonated_by?: string | null;
+      } | null;
+      user?: { id?: string | null } | null;
+    } | null)?.session;
+
+    const impersonatorUserId =
+      currentSession?.impersonatedBy ??
+      currentSession?.impersonated_by ??
+      null;
+    const impersonatedUserId =
+      (sessionPayload as { user?: { id?: string | null } | null } | null)?.user?.id ??
+      null;
+
+    if (!impersonatorUserId) {
+      return { success: true, error: null };
+    }
+
+    if (!impersonatedUserId) {
+      await auth.api.stopImpersonating({
+        headers: requestHeaders,
+      });
+      revalidatePath("/dashboard");
+      revalidatePath("/dashboard/organization");
+      return { success: true, error: null };
+    }
+
+    const supabase = createAdminClient();
+    const { data: targetProfile } = await supabase
+      .from("users")
+      .select("organization_id")
+      .eq("id", impersonatedUserId)
+      .single();
+
+    await auth.api.stopImpersonating({
+      headers: requestHeaders,
+    });
+
+    await writeImpersonationAuditLog({
+      organizationId: targetProfile?.organization_id ?? null,
+      action: "impersonation_stopped",
+      entityId: impersonatedUserId,
+      impersonatorUserId,
+      impersonatedUserId,
+    });
+
+    console.info("[Impersonation] Stopped", {
+      organizationId: targetProfile?.organization_id ?? null,
+      impersonatorUserId,
+      impersonatedUserId,
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/organization");
+    return { success: true, error: null };
+  } catch (error) {
+    console.error("[Impersonation] Failed to stop:", error);
+    return {
+      success: false,
+      error: "Couldn't stop impersonation. Try again.",
+    };
+  }
 }
 
 // Check if user is organization admin

@@ -33,8 +33,6 @@ interface TeamMember {
   email?: string;
 }
 
-type ViewMode = "grid" | "list";
-
 type OpenDialog =
   | null
   | "reject"
@@ -47,7 +45,7 @@ interface VideoLibraryState {
   total: number;
   isLoading: boolean;
   isUpdating: boolean;
-  viewMode: ViewMode;
+
   approvalFilter: string;
   memberFilter: string;
   searchQuery: string;
@@ -66,7 +64,7 @@ interface VideoLibraryState {
 }
 
 interface VideoLibraryActions {
-  setViewMode: (mode: ViewMode) => void;
+
   setApprovalFilter: (filter: string) => void;
   setMemberFilter: (filter: string) => void;
   setSearchQuery: (query: string) => void;
@@ -137,7 +135,7 @@ export function VideoLibraryProvider({
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+
   const [approvalFilter, setApprovalFilter] = useState<string>("all");
   const [memberFilter, setMemberFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -434,7 +432,6 @@ export function VideoLibraryProvider({
         total,
         isLoading,
         isUpdating,
-        viewMode,
         approvalFilter,
         memberFilter,
         searchQuery,
@@ -452,7 +449,6 @@ export function VideoLibraryProvider({
         videoStats,
       },
       actions: {
-        setViewMode,
         setApprovalFilter: setApprovalFilterWithReset,
         setMemberFilter: setMemberFilterWithReset,
         setSearchQuery: setSearchQueryDirect,
@@ -478,7 +474,7 @@ export function VideoLibraryProvider({
       },
     }),
     [
-      responses, total, isLoading, isUpdating, viewMode, approvalFilter,
+      responses, total, isLoading, isUpdating, approvalFilter,
       memberFilter, searchQuery, page, pageSize, totalPages, selectedIds,
       allSelected, openDialog, videoToReject, videoToDelete, canManage,
       canDelete, teamMembers, videoStats, setApprovalFilterWithReset, setMemberFilterWithReset,

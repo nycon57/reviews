@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/dashboard";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { unifiedSignOut, unifiedGetUser } from "@/lib/auth/actions";
+import { unifiedSignOut, unifiedGetSession, unifiedGetUser } from "@/lib/auth/actions";
 import type { UserContext, AccountType, SubscriptionTier } from "@/lib/permissions";
 
 function getInitials(name: string | null): string {
@@ -20,6 +20,7 @@ export default async function DashboardRootLayout({
   children: React.ReactNode;
 }) {
   const authUser = await unifiedGetUser();
+  const authSession = await unifiedGetSession();
 
   if (!authUser) {
     redirect("/login");
@@ -107,8 +108,38 @@ export default async function DashboardRootLayout({
     redirect("/onboarding");
   }
 
+  const sessionData = authSession as {
+    session?: {
+      impersonatedBy?: string | null;
+      impersonated_by?: string | null;
+      expiresAt?: string | null;
+      expires_at?: string | null;
+    } | null;
+  } | null;
+
+  const impersonatorId =
+    sessionData?.session?.impersonatedBy ??
+    sessionData?.session?.impersonated_by ??
+    null;
+
+  const impersonation = {
+    active: Boolean(impersonatorId),
+    impersonatorId,
+    targetName: user.name,
+    targetEmail: user.email,
+    expiresAt:
+      sessionData?.session?.expiresAt ??
+      sessionData?.session?.expires_at ??
+      null,
+  };
+
   return (
-    <DashboardLayout user={user} userContext={userContext} onSignOut={unifiedSignOut}>
+    <DashboardLayout
+      user={user}
+      userContext={userContext}
+      impersonation={impersonation}
+      onSignOut={unifiedSignOut}
+    >
       {children}
     </DashboardLayout>
   );

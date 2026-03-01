@@ -36,6 +36,7 @@ export const PERMISSIONS = {
   MANAGE_ORGANIZATION: "manage:organization",
   MANAGE_BILLING: "manage:billing",
   INVITE_USERS: "invite:users",
+  IMPERSONATE_USER: "impersonate:user",
   ELEVATE_ROLES: "elevate:roles",
   MANAGE_SURVEY_TEMPLATES: "manage:survey_templates",
 
@@ -97,6 +98,7 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
     case PERMISSIONS.MANAGE_ORGANIZATION:
     case PERMISSIONS.MANAGE_BILLING:
     case PERMISSIONS.INVITE_USERS:
+    case PERMISSIONS.IMPERSONATE_USER:
     case PERMISSIONS.ELEVATE_ROLES:
     case PERMISSIONS.VIEW_ADMIN_ANALYTICS:
     case PERMISSIONS.MANAGE_SURVEY_TEMPLATES:
@@ -162,6 +164,14 @@ export function canInviteTeam(ctx: UserContext | null): boolean {
   if (ctx.accountType === "enterprise") return false;
   // For individual accounts, only owners can invite
   return ctx.isOwner;
+}
+
+/**
+ * Check if user can impersonate organization members
+ * Enterprise admins only
+ */
+export function canImpersonateUsers(ctx: UserContext | null): boolean {
+  return hasPermission(ctx, PERMISSIONS.IMPERSONATE_USER);
 }
 
 /**

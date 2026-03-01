@@ -2,7 +2,7 @@
 
 import { Monitor, Tablet, Smartphone } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { LOReviewPreview } from "./preview/lo-review-preview";
+import { ProReviewPreview } from "./preview/pro-review-preview";
 import { CompanyReviewPreview } from "./preview/company-review-preview";
 import { BranchReviewPreview } from "./preview/branch-review-preview";
 import { StarRatingBadgePreview } from "./preview/star-rating-badge-preview";
@@ -30,7 +30,7 @@ const VIEWPORT_WIDTHS: Record<ViewportSize, number | "100%"> = {
 };
 
 // Sample data for preview when no real data is available
-const SAMPLE_LO_PROFILE = {
+const SAMPLE_PRO_PROFILE = {
   full_name: "Sarah Johnson",
   avatar_url: null,
   photo_url: null,
@@ -193,7 +193,7 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
   // Use real data if available, otherwise sample data
   const profileData: PreviewProfile | null = liveData?.profile ?? null;
 
-  const loProfile = profileData
+  const proProfile = profileData
     ? {
         full_name: profileData.full_name ?? null,
         avatar_url: profileData.avatar_url ?? null,
@@ -204,7 +204,7 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
         total_reviews: profileData.total_reviews ?? 0,
         licensing_states: profileData.licensing_states ?? null,
       }
-    : SAMPLE_LO_PROFILE;
+    : SAMPLE_PRO_PROFILE;
 
   const orgProfile = profileData
     ? {
@@ -269,20 +269,9 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
     );
   }
 
-  switch (widgetType) {
-    case "lo_review":
-      return (
-        <LOReviewPreview
-          profile={loProfile}
-          reviews={reviews}
-          content={content}
-          colors={colors}
-          maxWidth={maxWidth}
-          borderRadius={borderRadius}
-        />
-      );
-
-    case "branch_review":
+  // For entity-specific review templates, adapt preview to selected entity type
+  const reviewPreviewByEntity = () => {
+    if (entityType === "branch") {
       return (
         <BranchReviewPreview
           profile={branchProfile}
@@ -293,8 +282,8 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
           borderRadius={borderRadius}
         />
       );
-
-    case "company_review":
+    }
+    if (entityType === "organization") {
       return (
         <CompanyReviewPreview
           profile={orgProfile}
@@ -305,6 +294,24 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
           borderRadius={borderRadius}
         />
       );
+    }
+    return (
+      <ProReviewPreview
+        profile={proProfile}
+        reviews={reviews}
+        content={content}
+        colors={colors}
+        maxWidth={maxWidth}
+        borderRadius={borderRadius}
+      />
+    );
+  };
+
+  switch (widgetType) {
+    case "lo_review":
+    case "branch_review":
+    case "company_review":
+      return reviewPreviewByEntity();
 
     case "star_rating_badge":
       return (
@@ -352,7 +359,7 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
     case "video_testimonial":
       return (
         <VideoTestimonialPreview
-          profile={loProfile}
+          profile={proProfile}
           testimonials={SAMPLE_VIDEO_TESTIMONIALS}
           content={content}
           video={config.video}

@@ -1,9 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireEnterpriseManager } from "@/lib/access";
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
-import { parseCanvasMetadata } from "@/components/workflow-builder/lib/serializer";
+import {
+  canvasToSequenceDefinition,
+  parseCanvasMetadata,
+} from "@/components/workflow-builder/lib/serializer";
 import {
   hasBlockingActivationWarnings,
   validateGraph,
@@ -12,6 +16,7 @@ import {
   CreateCampaignInputSchema,
   UpdateCampaignInputSchema,
   CampaignStatusSchema,
+  parseJsonObject,
   type CampaignListItem,
   type CampaignLockResult,
   type CampaignStatus,
@@ -24,16 +29,35 @@ import {
   getCampaignById,
   getCampaignsByOrg,
 } from "./queries";
+import {
+  registerCampaignDefinition,
+  unregisterCampaignDefinition,
+  pauseCampaignSequences,
+  cancelCampaignSequences,
+  resumeCampaignSequences,
+} from "./campaign-engine";
+
+/** Structural validation for sequence_definition before DB write. */
+const SequenceDefinitionSchema = z.object({
+  type: z.string().optional(),
+  name: z.string().optional(),
+  description: z.string().optional(),
+  triggers: z.array(z.record(z.unknown())).optional(),
+  steps: z.array(z.record(z.unknown())).optional(),
+  exitConditions: z.array(z.record(z.unknown())).optional(),
+  metadata: z.record(z.unknown()).optional(),
+}).passthrough();
+
+function validateSequenceDefinition(value: unknown): Record<string, unknown> {
+  const parsed = SequenceDefinitionSchema.safeParse(value);
+  if (!parsed.success) {
+    throw new Error(`Invalid sequence definition: ${parsed.error.issues.map((i) => i.message).join(", ")}`);
+  }
+  return parsed.data as Record<string, unknown>;
+}
 
 const CAMPAIGNS_PATH = "/dashboard/campaigns";
 const LOCK_TTL_MS = 15 * 60 * 1000;
-
-function parseJsonObject(value: unknown): Record<string, unknown> {
-  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return {};
-}
 
 function isLockExpired(lockedAt: string | null): boolean {
   if (!lockedAt) {
@@ -62,21 +86,11 @@ function ensureUnlocked(campaign: CampaignWorkflow, currentUserId: string) {
 }
 
 function hasSequenceContent(sequenceDefinition: Record<string, unknown>): boolean {
-  if (Object.keys(sequenceDefinition).length === 0) {
-    return false;
-  }
-
-  const steps = sequenceDefinition.steps;
-  if (Array.isArray(steps) && steps.length > 0) {
-    return true;
-  }
-
-  const triggers = sequenceDefinition.triggers;
-  if (Array.isArray(triggers) && triggers.length > 0) {
-    return true;
-  }
-
-  return false;
+  const { steps, triggers } = sequenceDefinition;
+  return (
+    (Array.isArray(steps) && steps.length > 0) ||
+    (Array.isArray(triggers) && triggers.length > 0)
+  );
 }
 
 function formatValidationMessage(messages: string[]): string {
@@ -178,8 +192,10 @@ export async function updateCampaign(
   }
 
   if (parsed.sequenceDefinition !== undefined) {
-    updatePayload.sequence_definition = parsed.sequenceDefinition;
-    updatePayload.trigger_type = deriveTriggerType(parsed.sequenceDefinition);
+    // Bug 10: validate structure before writing to DB
+    const validated = validateSequenceDefinition(parsed.sequenceDefinition);
+    updatePayload.sequence_definition = validated;
+    updatePayload.trigger_type = deriveTriggerType(validated);
   }
 
   if (parsed.canvasMetadata !== undefined) {
@@ -236,6 +252,10 @@ export async function deleteCampaign(
     revalidatePath(CAMPAIGNS_PATH);
     return { id, action: "deleted" };
   }
+
+  // Unregister and cancel all active sequences before archiving
+  await unregisterCampaignDefinition(id);
+  await cancelCampaignSequences(id, "campaign_archived");
 
   const { error } = await supabase
     .from("campaign_workflows")
@@ -322,45 +342,33 @@ export async function duplicateCampaign(id: string): Promise<CampaignWorkflow> {
 export async function acquireLock(id: string): Promise<CampaignLockResult> {
   const ctx = await requireEnterpriseManager();
   const supabase = createUntypedAdminClient();
-  const now = new Date().toISOString();
-  const lockExpiry = new Date(Date.now() - LOCK_TTL_MS).toISOString();
 
-  // Atomic check-and-set: only acquire if unlocked, expired, or already ours
-  const { data, error } = await supabase
-    .from("campaign_workflows")
-    .update({
-      locked_by: ctx.userId,
-      locked_at: now,
-      updated_by: ctx.userId,
-      updated_at: now,
-    })
-    .eq("id", id)
-    .eq("organization_id", ctx.organizationId)
-    .or(`locked_by.is.null,locked_by.eq.${ctx.userId},locked_at.lt.${lockExpiry}`)
-    .select("id");
+  const { data, error } = await supabase.rpc("acquire_campaign_lock", {
+    p_campaign_id: id,
+    p_user_id: ctx.userId,
+    p_organization_id: ctx.organizationId,
+    p_lock_ttl_ms: LOCK_TTL_MS,
+  });
 
   if (error) {
     throw new Error(`Failed to acquire lock: ${error.message}`);
   }
 
-  if (!Array.isArray(data) || data.length === 0) {
-    // Lock held by someone else — fetch current state for the response
-    const campaign = await getCampaignById(id, ctx.organizationId);
-    if (!campaign) {
-      throw new Error("Campaign not found.");
-    }
-    return {
-      acquired: false,
-      lockedByName: campaign.lockedByName,
-      lockedAt: campaign.lockedAt,
-    };
+  const row = Array.isArray(data) ? data[0] : data;
+
+  if (!row) {
+    throw new Error("Campaign not found or lock status could not be determined.");
   }
 
-  revalidatePath(`${CAMPAIGNS_PATH}/${id}`);
+  if (row.acquired) {
+    revalidatePath(`${CAMPAIGNS_PATH}/${id}`);
+    return { acquired: true, lockedByName: null, lockedAt: new Date().toISOString() };
+  }
+
   return {
-    acquired: true,
-    lockedByName: null,
-    lockedAt: now,
+    acquired: false,
+    lockedByName: row.locked_by_name ?? null,
+    lockedAt: row.current_locked_at ?? null,
   };
 }
 
@@ -368,24 +376,17 @@ export async function releaseLock(id: string): Promise<{ released: boolean }> {
   const ctx = await requireEnterpriseManager();
   const supabase = createUntypedAdminClient();
 
-  const { data, error } = await supabase
-    .from("campaign_workflows")
-    .update({
-      locked_by: null,
-      locked_at: null,
-      updated_by: ctx.userId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", id)
-    .eq("organization_id", ctx.organizationId)
-    .eq("locked_by", ctx.userId)
-    .select("id");
+  const { data, error } = await supabase.rpc("release_campaign_lock", {
+    p_campaign_id: id,
+    p_user_id: ctx.userId,
+    p_organization_id: ctx.organizationId,
+  });
 
   if (error) {
     throw new Error(`Failed to release lock: ${error.message}`);
   }
 
-  const released = Array.isArray(data) && data.length > 0;
+  const released = data === true;
   if (released) {
     revalidatePath(`${CAMPAIGNS_PATH}/${id}`);
   }
@@ -424,7 +425,20 @@ export async function activateCampaign(id: string): Promise<CampaignWorkflow> {
     }
   }
 
-  if (!hasSequenceContent(campaign.sequenceDefinition)) {
+  // Bug 11: re-serialize canvas → sequence_definition at activation time
+  // so we never trust stale sequence_definition from a previous save
+  let freshSequenceDefinition: Record<string, unknown>;
+  if (canvas.nodes.length > 0) {
+    freshSequenceDefinition = canvasToSequenceDefinition(
+      canvas.nodes,
+      canvas.edges,
+      campaign.name
+    ) as Record<string, unknown>;
+  } else {
+    freshSequenceDefinition = campaign.sequenceDefinition;
+  }
+
+  if (!hasSequenceContent(freshSequenceDefinition)) {
     throw new Error("Cannot activate an empty campaign. Add workflow steps first.");
   }
 
@@ -439,6 +453,9 @@ export async function activateCampaign(id: string): Promise<CampaignWorkflow> {
       activated_by: ctx.userId,
       updated_by: ctx.userId,
       updated_at: now,
+      // Write the fresh definition so it's always in sync with canvas
+      sequence_definition: freshSequenceDefinition,
+      trigger_type: deriveTriggerType(freshSequenceDefinition),
     })
     .eq("id", id)
     .eq("organization_id", ctx.organizationId)
@@ -458,6 +475,14 @@ export async function activateCampaign(id: string): Promise<CampaignWorkflow> {
   const updated = await getCampaignById(id, ctx.organizationId);
   if (!updated) {
     throw new Error("Campaign no longer exists.");
+  }
+
+  // Register campaign definition with orchestration engine
+  await registerCampaignDefinition(updated);
+
+  // Resume any previously paused sequences when reactivating
+  if (campaign.status === "paused") {
+    await resumeCampaignSequences(id);
   }
 
   revalidatePath(CAMPAIGNS_PATH);
@@ -505,6 +530,10 @@ export async function pauseCampaign(id: string): Promise<CampaignWorkflow> {
       "Campaign status has changed since it was loaded. Please refresh and try again."
     );
   }
+
+  // Unregister from orchestration engine and pause active sequences
+  await unregisterCampaignDefinition(id);
+  await pauseCampaignSequences(id);
 
   const updated = await getCampaignById(id, ctx.organizationId);
   if (!updated) {

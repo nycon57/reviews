@@ -8,6 +8,7 @@ import {
   canAccessProFeature,
   shouldShowUpgradeCTA,
   canInviteTeam,
+  canImpersonateUsers,
   getUserTierLabel,
 } from "./index";
 
@@ -17,6 +18,7 @@ interface PermissionContextValue {
   canAccessProFeature: () => boolean;
   shouldShowUpgradeCTA: () => boolean;
   canInviteTeam: () => boolean;
+  canImpersonateUsers: () => boolean;
   getUserTierLabel: () => string;
   isLoading: boolean;
 }
@@ -41,6 +43,7 @@ export function PermissionProvider({
       canAccessProFeature: () => canAccessProFeature(userContext),
       shouldShowUpgradeCTA: () => shouldShowUpgradeCTA(userContext),
       canInviteTeam: () => canInviteTeam(userContext),
+      canImpersonateUsers: () => canImpersonateUsers(userContext),
       getUserTierLabel: () => getUserTierLabel(userContext),
       isLoading,
     }),

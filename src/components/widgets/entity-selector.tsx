@@ -21,14 +21,11 @@ const ENTITY_ICONS: Record<WidgetEntityType, typeof User> = {
   organization: Briefcase,
 };
 
-function getInitials(name: string): string {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
+const ENTITY_TYPE_PLURALS: Record<WidgetEntityType, string> = {
+  user: "users",
+  branch: "branches",
+  organization: "organizations",
+};
 
 export function EntitySelector({
   entityType,
@@ -41,17 +38,59 @@ export function EntitySelector({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [lastEntityType, setLastEntityType] = useState(entityType);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onSelectRef = useRef(onSelect);
+  useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);
 
   const Icon = ENTITY_ICONS[entityType];
 
-  // Load initial results on mount or entity type change
-  useEffect(() => {
+  // Reset when entity type changes (derived state pattern)
+  if (entityType !== lastEntityType) {
+    setLastEntityType(entityType);
     setSelectedName(null);
     setQuery("");
-    loadEntities("");
-  }, [entityType]);
+    setResults([]);
+  }
+
+  const loadEntities = useCallback(
+    async (search: string) => {
+      setIsLoading(true);
+      const result = await searchEntities(entityType, search);
+      if (result.success) {
+        setResults(result.data);
+        if (entityId && !selectedName) {
+          const match = result.data.find((e) => e.id === entityId);
+          if (match) setSelectedName(match.name);
+        }
+      }
+      setIsLoading(false);
+    },
+    [entityType, entityId, selectedName]
+  );
+
+  // Load initial results on mount or entity type change
+  useEffect(() => {
+    let cancelled = false;
+    searchEntities(entityType, "").then((result) => {
+      if (cancelled) return;
+      if (result.success) {
+        setResults(result.data);
+        if (entityId) {
+          // Restore the selected name for the current entity
+          const match = result.data.find((e) => e.id === entityId);
+          if (match) setSelectedName(match.name);
+        } else if (result.data.length > 0) {
+          // Auto-select the first alphabetical result
+          const first = result.data[0];
+          setSelectedName(first.name);
+          onSelectRef.current(first.id, first.name);
+        }
+      }
+    });
+    return () => { cancelled = true; };
+  }, [entityType, entityId]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -63,23 +102,6 @@ export function EntitySelector({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const loadEntities = useCallback(
-    async (search: string) => {
-      setIsLoading(true);
-      const result = await searchEntities(entityType, search);
-      if (result.success) {
-        setResults(result.data);
-        // If we have an entityId, find and set the name
-        if (entityId && !selectedName) {
-          const match = result.data.find((e) => e.id === entityId);
-          if (match) setSelectedName(match.name);
-        }
-      }
-      setIsLoading(false);
-    },
-    [entityType, entityId, selectedName]
-  );
 
   const handleSearchChange = (value: string) => {
     setQuery(value);
@@ -95,6 +117,8 @@ export function EntitySelector({
     setQuery("");
     onSelect(entity.id, entity.name);
   };
+
+  const entityLabel = ENTITY_TYPE_LABELS[entityType];
 
   return (
     <div ref={containerRef} className="relative">
@@ -116,7 +140,7 @@ export function EntitySelector({
           <Input
             value={query}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder={`Search ${ENTITY_TYPE_LABELS[entityType].toLowerCase()}s...`}
+            placeholder={`Search ${ENTITY_TYPE_PLURALS[entityType]}...`}
             className="h-6 border-0 p-0 text-xs focus-visible:ring-0 shadow-none"
             autoFocus
           />
@@ -124,7 +148,7 @@ export function EntitySelector({
           <span
             className={`truncate ${selectedName ? "text-repwell-teal-400" : "text-muted-foreground"}`}
           >
-            {selectedName ?? `Select a ${ENTITY_TYPE_LABELS[entityType].toLowerCase()}...`}
+            {selectedName ?? `Select ${/^[aeiou]/i.test(entityLabel) ? "an" : "a"} ${entityLabel.toLowerCase()}...`}
           </span>
         )}
       </div>
@@ -141,7 +165,7 @@ export function EntitySelector({
             </div>
           ) : results.length === 0 ? (
             <div className="px-3 py-4 text-xs text-muted-foreground text-center">
-              No {ENTITY_TYPE_LABELS[entityType].toLowerCase()}s found.
+              No {ENTITY_TYPE_PLURALS[entityType]} found.
             </div>
           ) : (
             results.map((entity) => (

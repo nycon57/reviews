@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -41,6 +42,7 @@ import {
   createOrganizationUser,
   deactivateMember,
   reactivateMember,
+  startUserImpersonation,
   type OrganizationMember,
   type Invitation,
 } from "@/lib/organization";
@@ -69,11 +71,13 @@ export function OrganizationTeam() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
+  const [impersonationTarget, setImpersonationTarget] = useState<OrganizationMember | null>(null);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
-  const { canInviteTeam, userContext } = usePermissions();
-  const showInviteButton = canInviteTeam();
+  const { canImpersonateUsers, userContext } = usePermissions();
+  const impersonationFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_USER_IMPERSONATION !== "false";
+  const showImpersonationAction = impersonationFeatureEnabled && canImpersonateUsers();
 
   useEffect(() => {
     let mounted = true;
@@ -203,6 +207,51 @@ export function OrganizationTeam() {
         });
         refreshData();
       }
+    });
+  }
+
+  function getImpersonationDisabledReason(member: OrganizationMember): string | null {
+    if (!userContext) return "You don't have permission to impersonate users.";
+    if (member.id === userContext.userId) return "You can't impersonate yourself.";
+    if (member.role === "admin") return "Admin accounts cannot be impersonated.";
+    if (!member.is_active) return "Cannot impersonate inactive users.";
+    return null;
+  }
+
+  function openImpersonationConfirm(member: OrganizationMember) {
+    const reason = getImpersonationDisabledReason(member);
+    if (reason) {
+      toast({
+        title: "Unable to impersonate user",
+        description: reason,
+        variant: "destructive",
+      });
+      return;
+    }
+    setImpersonationTarget(member);
+  }
+
+  function handleStartImpersonation() {
+    if (!impersonationTarget) return;
+
+    startTransition(async () => {
+      const result = await startUserImpersonation(impersonationTarget.id);
+
+      if (result.error) {
+        toast({
+          title: "Impersonation failed",
+          description: result.error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Impersonation started",
+        description: `You are now impersonating ${impersonationTarget.full_name || impersonationTarget.email}.`,
+      });
+      setImpersonationTarget(null);
+      window.location.href = "/dashboard";
     });
   }
 
@@ -462,6 +511,7 @@ export function OrganizationTeam() {
             <TableBody>
               {filteredMembers.map((member) => {
                 const isEnterpriseOwnerSelf = userContext?.isOwner && userContext.accountType !== "individual" && member.id === userContext.userId;
+                const impersonationDisabledReason = getImpersonationDisabledReason(member);
 
                 return (
                   <TableRow key={member.id} className={member.is_active ? "" : "opacity-60"}>
@@ -503,9 +553,11 @@ export function OrganizationTeam() {
                           <AlertDialog>
                             <div className="flex items-center gap-2">
                               <AlertDialogTrigger asChild>
-                                <button type="button" className="focus:outline-none" disabled={isPending}>
-                                  <Switch checked className="pointer-events-none data-[state=checked]:bg-green-500" />
-                                </button>
+                                <Switch
+                                  checked
+                                  disabled={isPending}
+                                  className="data-[state=checked]:bg-green-500"
+                                />
                               </AlertDialogTrigger>
                               <span className="text-sm font-medium text-green-600">Active</span>
                             </div>
@@ -555,11 +607,33 @@ export function OrganizationTeam() {
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          {showInviteButton && (
-                            <DropdownMenuItem onClick={() => toast({ title: "Coming soon", description: "Login as user will be available soon." })}>
-                              <SignIn className="mr-2 h-4 w-4" />
-                              Login
-                            </DropdownMenuItem>
+                          {showImpersonationAction && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="block w-full">
+                                    <DropdownMenuItem
+                                      disabled={Boolean(impersonationDisabledReason)}
+                                      onSelect={(event) => {
+                                        if (impersonationDisabledReason) {
+                                          event.preventDefault();
+                                          return;
+                                        }
+                                        openImpersonationConfirm(member);
+                                      }}
+                                    >
+                                      <SignIn className="mr-2 h-4 w-4" />
+                                      Impersonate user
+                                    </DropdownMenuItem>
+                                  </span>
+                                </TooltipTrigger>
+                                {impersonationDisabledReason && (
+                                  <TooltipContent>
+                                    {impersonationDisabledReason}
+                                  </TooltipContent>
+                                )}
+                              </Tooltip>
+                            </TooltipProvider>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -645,6 +719,42 @@ export function OrganizationTeam() {
           </CardContent>
         </Card>
       )}
+
+      <AlertDialog
+        open={Boolean(impersonationTarget)}
+        onOpenChange={(open) => {
+          if (!open) setImpersonationTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Impersonate this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to sign in as{" "}
+              <span className="font-medium">
+                {impersonationTarget?.full_name || impersonationTarget?.email}
+              </span>
+              . All actions will be audited and attributed to your admin account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleStartImpersonation}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                "Start impersonation"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BulkUserImportWizard
         open={bulkImportOpen}

@@ -465,6 +465,7 @@ export async function searchEntities(
         .select("id, full_name, title, avatar_url, photo_url, nmls_id")
         .eq("organization_id", ctx.data.organizationId)
         .ilike("full_name", `%${escaped}%`)
+        .order("full_name", { ascending: true })
         .limit(20);
 
       if (error) return { success: false, error: error.message };
@@ -483,6 +484,7 @@ export async function searchEntities(
         .select("id, name, region, photo_url")
         .eq("organization_id", ctx.data.organizationId)
         .ilike("name", `%${escaped}%`)
+        .order("name", { ascending: true })
         .limit(20);
 
       if (error) return { success: false, error: error.message };
@@ -501,6 +503,7 @@ export async function searchEntities(
         .from("organizations")
         .select("id, name, logo_url")
         .eq("id", ctx.data.organizationId)
+        .order("name", { ascending: true })
         .limit(5);
 
       if (error) return { success: false, error: error.message };

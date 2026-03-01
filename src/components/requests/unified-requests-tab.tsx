@@ -18,7 +18,6 @@ import {
   VideoCamera,
   Envelope,
   MagnifyingGlass as Search,
-  ArrowsClockwise as RefreshCw,
   PaperPlaneRight as Send,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
@@ -54,7 +53,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+
 import type {
   UnifiedRequest,
   UnifiedRequestStats,
@@ -558,14 +557,6 @@ export function UnifiedRequestsTab({
                 </SelectContent>
               </Select>
             )}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={fetchRequests}
-              disabled={isLoading}
-            >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-            </Button>
           </div>
 
           <UnifiedRequestTable

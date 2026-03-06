@@ -51,7 +51,7 @@ const US_BOUNDS = {
 
 function NoLocationData({ professionals }: { professionals: DirectoryProfessional[] }) {
   const uniqueStates = new Set(
-    professionals.map((prof) => prof.address?.state || prof.region).filter(Boolean)
+    professionals.map((prof) => prof.address?.state).filter(Boolean)
   );
 
   return (

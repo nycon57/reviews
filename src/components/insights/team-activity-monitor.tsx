@@ -30,24 +30,24 @@ interface TeamActivityMonitorProps {
 const statusConfig = {
   active: {
     label: "Active",
-    class: "bg-green-100 text-green-800",
+    class: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400",
     icon: CheckCircle,
   },
   slowing: {
     label: "Slowing",
-    class: "bg-amber-100 text-amber-800",
+    class: "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400",
     icon: Clock,
   },
   inactive: {
     label: "Inactive",
-    class: "bg-red-100 text-red-800",
+    class: "bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400",
     icon: WarningCircle,
   },
 };
 
 const defaultStatus = {
   label: "Unknown",
-  class: "bg-gray-100 text-gray-800",
+  class: "bg-muted text-foreground",
   icon: Clock,
 };
 
@@ -133,8 +133,8 @@ function LORow({ member }: { member: LOActivityStatus }) {
               className={cn(
                 "flex items-center gap-1.5 rounded px-2 py-1 text-xs",
                 alert.severity === "critical"
-                  ? "bg-red-50 text-red-700"
-                  : "bg-amber-50 text-amber-700"
+                  ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400"
+                  : "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
               )}
             >
               {alert.severity === "critical" ? (
@@ -159,7 +159,7 @@ export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
   if (data.teamMembers.length === 0) {
     return (
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <UsersThree className="h-5 w-5 text-repwell-teal-300" />
@@ -176,7 +176,7 @@ export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -187,14 +187,14 @@ export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
           <div className="flex gap-1.5">
             <Badge
               variant="secondary"
-              className="bg-green-100 text-green-800"
+              className="bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400"
             >
               {data.orgMetrics.activeCount} active
             </Badge>
             {data.orgMetrics.slowingCount > 0 && (
               <Badge
                 variant="secondary"
-                className="bg-amber-100 text-amber-800"
+                className="bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
               >
                 {data.orgMetrics.slowingCount} slowing
               </Badge>
@@ -202,7 +202,7 @@ export function TeamActivityMonitorCard({ data }: TeamActivityMonitorProps) {
             {data.orgMetrics.inactiveCount > 0 && (
               <Badge
                 variant="secondary"
-                className="bg-red-100 text-red-800"
+                className="bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400"
               >
                 {data.orgMetrics.inactiveCount} inactive
               </Badge>

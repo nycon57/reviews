@@ -26,7 +26,6 @@ export interface Branch {
   managerId: string | null;
   managerName: string | null;
   managerEmail: string | null;
-  region: string | null;
   description: string | null;
   photoUrl: string | null;
   coverImageUrl: string | null;
@@ -53,7 +52,6 @@ export interface CreateBranchInput {
   managerId?: string;
   managerName?: string;
   managerEmail?: string;
-  region?: string;
   description?: string;
 }
 
@@ -67,7 +65,6 @@ export interface UpdateBranchInput {
   managerId?: string | null;
   managerName?: string | null;
   managerEmail?: string | null;
-  region?: string | null;
   description?: string | null;
   isActive?: boolean;
   isPublic?: boolean;
@@ -75,7 +72,6 @@ export interface UpdateBranchInput {
 
 export interface BranchFilters {
   isActive?: boolean;
-  region?: string;
   search?: string;
 }
 

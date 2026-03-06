@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config = {
+  darkMode: ["class"],
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -82,10 +83,18 @@ const config = {
   				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
   				accent: 'hsl(var(--sidebar-accent))',
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-  				border: 'hsl(var(--sidebar-border))',
-  				ring: 'hsl(var(--sidebar-ring))'
+  				border: 'hsl(var(--sidebar-border))'
   			},
   			// RepWell Design System Colors (hex values - source of truth)
+  			heading: {
+  				DEFAULT: 'hsl(var(--heading))',
+  				accent: 'hsl(var(--heading-accent))',
+  			},
+  			label: 'hsl(var(--label))',
+  			surface: {
+  				soft: 'hsl(var(--surface-soft))',
+  				subtle: 'hsl(var(--surface-subtle))',
+  			},
   			'repwell-sage': {
 				'50': '#f0f4ef',
   				'100': '#cad2c5',

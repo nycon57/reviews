@@ -336,7 +336,7 @@ export function CreateApiKeyDialog({ onKeyCreated }: CreateApiKeyDialogProps) {
                   <div className="rounded-lg border p-4 space-y-4 max-h-[200px] overflow-y-auto">
                     {scopeGroups.map((group) => (
                       <div key={group.name}>
-                        <div className="text-sm font-medium text-repwell-teal-500 mb-2">
+                        <div className="text-sm font-medium text-heading mb-2">
                           {group.name}
                         </div>
                         <div className="grid gap-2 sm:grid-cols-2">

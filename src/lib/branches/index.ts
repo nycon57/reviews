@@ -15,7 +15,6 @@ export {
   updateBranch,
   deleteBranch,
   assignUserToBranch,
-  getBranchRegions,
   uploadBranchPhoto,
   uploadBranchCoverImage,
   updateBranchSlug,

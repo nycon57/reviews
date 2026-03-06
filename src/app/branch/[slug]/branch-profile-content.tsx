@@ -126,7 +126,7 @@ export function BranchProfileContent({
 
   const locationString = address
     ? [address.city, address.state].filter(Boolean).join(", ")
-    : branch.region || "";
+    : "";
 
   const directionsUrl = branch.google_maps_url
     || (address && (address.street || address.city)

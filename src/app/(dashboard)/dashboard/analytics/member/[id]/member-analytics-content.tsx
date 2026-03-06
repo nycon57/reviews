@@ -193,7 +193,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
       {/* Recognition and Surveys */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Award className="h-5 w-5 text-repwell-teal-300" />
@@ -219,7 +219,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
         </Card>
 
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Mail className="h-5 w-5 text-repwell-teal-300" />
@@ -255,7 +255,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
       {/* Review Trends */}
       {trends.reviewsTrend.length > 0 && (
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <BarChart className="h-5 w-5 text-repwell-teal-300" />
@@ -297,7 +297,7 @@ export function MemberAnalyticsContent({ memberId }: MemberAnalyticsContentProps
 
       {/* Team Comparison */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Users className="h-5 w-5 text-repwell-teal-300" />
@@ -355,7 +355,7 @@ function MetricCard({
         {icon}
       </div>
       <div>
-        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value}</p>
+        <p className="text-2xl font-semibold tracking-tight text-heading">{value}</p>
         <p className="text-xs text-muted-foreground">{title}</p>
         {subtitle}
       </div>

@@ -86,10 +86,10 @@ export function EXSurveyPreview({
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-repwell-sage-200/20 text-repwell-sage-200">
               <CheckCircle weight="fill" size={32} />
             </div>
-            <h2 className="font-display text-2xl font-bold text-repwell-teal-500">
+            <h2 className="font-display text-2xl font-bold text-heading">
               {thankYouConfig.title}
             </h2>
-            <p className="mt-3 font-sans text-repwell-teal-400 leading-relaxed">
+            <p className="mt-3 font-sans text-label leading-relaxed">
               {thankYouConfig.message}
             </p>
             {showPreviewBadge && (
@@ -138,7 +138,7 @@ export function EXSurveyPreview({
       {/* Preview mode badge */}
       {showPreviewBadge && (
         <div className="mb-4 flex items-center justify-center gap-2">
-          <Badge variant="secondary" className="bg-repwell-sage-100/50 text-repwell-teal-400">
+          <Badge variant="secondary" className="bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label">
             <Eye weight="regular" size={14} className="mr-1.5" />
             Preview Mode
           </Badge>
@@ -160,11 +160,11 @@ export function EXSurveyPreview({
 
           {/* Survey Title */}
           <div className="text-center">
-            <CardTitle className="font-display text-xl font-bold text-repwell-teal-500">
+            <CardTitle className="font-display text-xl font-bold text-heading">
               {template.name}
             </CardTitle>
             {template.description && (
-              <CardDescription className="mt-1.5 font-sans text-repwell-teal-400">
+              <CardDescription className="mt-1.5 font-sans text-label">
                 {template.description}
               </CardDescription>
             )}

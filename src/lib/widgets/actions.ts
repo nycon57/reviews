@@ -375,7 +375,7 @@ export async function getPreviewData(
     } else if (entityType === "branch") {
       const { data: branch } = await supabase
         .from("branches")
-        .select("id, name, photo_url, average_rating, total_reviews, region")
+        .select("id, name, photo_url, average_rating, total_reviews")
         .eq("id", entityId)
         .eq("organization_id", ctx.data.organizationId)
         .single();
@@ -481,7 +481,7 @@ export async function searchEntities(
     } else if (entityType === "branch") {
       const { data, error } = await supabase
         .from("branches")
-        .select("id, name, region, photo_url")
+        .select("id, name, photo_url")
         .eq("organization_id", ctx.data.organizationId)
         .ilike("name", `%${escaped}%`)
         .order("name", { ascending: true })
@@ -493,7 +493,7 @@ export async function searchEntities(
         results.push({
           id: b.id,
           name: b.name,
-          subtitle: b.region ?? null,
+          subtitle: null,
           avatarUrl: b.photo_url ?? null,
         });
       }

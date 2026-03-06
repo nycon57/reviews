@@ -59,12 +59,12 @@ export function SmartLinkQRCode({ url, title, className }: SmartLinkQRCodeProps)
   }
 
   return (
-    <div className={cn("flex flex-col items-center gap-4 rounded-lg bg-white p-6", className)}>
+    <div className={cn("flex flex-col items-center gap-4 rounded-lg bg-card p-6", className)}>
       {title && (
         <p className="text-sm font-medium text-foreground">{title}</p>
       )}
 
-      <div className="rounded-lg border border-border bg-white p-3">
+      <div className="rounded-lg border border-border bg-white dark:bg-white p-3">
         <QRCode ref={qrSvgRef} value={url} size={200} />
       </div>
 

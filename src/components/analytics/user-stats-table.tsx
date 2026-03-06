@@ -28,7 +28,7 @@ export const TeamPerformanceTable = memo(function TeamPerformanceTable({
   if (stats.length === 0) {
     return (
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Users className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
@@ -53,7 +53,7 @@ export const TeamPerformanceTable = memo(function TeamPerformanceTable({
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Users className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />

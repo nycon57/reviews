@@ -79,7 +79,7 @@ export function UserComparisonTable({ data }: UserComparisonTableProps) {
     switch (status) {
       case "excellent":
         return (
-          <Badge variant="default" className="bg-green-500/10 text-green-700 hover:bg-green-500/20">
+          <Badge variant="default" className="bg-green-500/10 text-green-700 dark:text-green-400 hover:bg-green-500/20">
             <CheckCircle className="mr-1 h-3 w-3" />
             Excellent
           </Badge>
@@ -92,7 +92,7 @@ export function UserComparisonTable({ data }: UserComparisonTableProps) {
         );
       case "needs_attention":
         return (
-          <Badge variant="default" className="bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20">
+          <Badge variant="default" className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-500/20">
             <AlertTriangle className="mr-1 h-3 w-3" />
             Needs Attention
           </Badge>
@@ -221,9 +221,9 @@ export function UserComparisonTable({ data }: UserComparisonTableProps) {
                       </Avatar>
                       <div>
                         <div className="font-medium">{member.fullName}</div>
-                        {(member.branch || member.region) && (
+                        {member.branch && (
                           <div className="text-xs text-muted-foreground">
-                            {[member.branch, member.region].filter(Boolean).join(" - ")}
+                            {member.branch}
                           </div>
                         )}
                       </div>
@@ -233,7 +233,7 @@ export function UserComparisonTable({ data }: UserComparisonTableProps) {
                     <div className="flex flex-col items-end">
                       <span className="font-medium">{member.totalReviews}</span>
                       {member.reviewsThisMonth > 0 && (
-                        <span className="text-xs text-green-600">
+                        <span className="text-xs text-green-600 dark:text-green-400">
                           +{member.reviewsThisMonth} this month
                         </span>
                       )}
@@ -249,10 +249,10 @@ export function UserComparisonTable({ data }: UserComparisonTableProps) {
                     <span
                       className={`font-medium ${
                         member.npsScore >= 50
-                          ? "text-green-600"
+                          ? "text-green-600 dark:text-green-400"
                           : member.npsScore >= 0
-                            ? "text-yellow-600"
-                            : "text-red-600"
+                            ? "text-yellow-600 dark:text-yellow-400"
+                            : "text-red-600 dark:text-red-400"
                       }`}
                     >
                       {member.npsScore > 0 ? "+" : ""}

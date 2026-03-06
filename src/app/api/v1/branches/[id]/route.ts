@@ -27,7 +27,6 @@ function mapBranchRow(row: Record<string, unknown>): BranchResource {
     manager_id: row.manager_id as string | null,
     manager_name: row.manager_name as string | null,
     manager_email: row.manager_email as string | null,
-    region: row.region as string | null,
     is_active: row.is_active as boolean,
     average_rating: row.average_rating as number | null,
     total_reviews: (row.total_reviews as number) || 0,
@@ -150,9 +149,6 @@ async function handlePatch(
   }
   if (validation.data.manager_email !== undefined) {
     updateData.manager_email = validation.data.manager_email;
-  }
-  if (validation.data.region !== undefined) {
-    updateData.region = validation.data.region;
   }
   if (validation.data.is_active !== undefined) {
     updateData.is_active = validation.data.is_active;

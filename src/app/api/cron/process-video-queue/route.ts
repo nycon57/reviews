@@ -98,21 +98,8 @@ export async function POST(request: NextRequest) {
 /**
  * GET /api/cron/process-video-queue
  *
- * Health check endpoint for the video testimonial queue processor.
- * Returns the current status of the endpoint.
+ * Vercel crons send GET requests — alias to POST so the cron actually processes the queue.
  */
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-video-queue",
-    description: "Video testimonial email distribution queue processor",
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

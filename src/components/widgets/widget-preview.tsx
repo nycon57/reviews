@@ -397,7 +397,7 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
 
     default:
       return (
-        <div className="p-8 text-center text-gray-400 text-sm">
+        <div className="p-8 text-center text-muted-foreground text-sm">
           Preview not available for this widget type.
         </div>
       );
@@ -452,9 +452,9 @@ export function WidgetPreview({ config, widgetType, entityType, entityId }: Widg
   const shadowValue = shadow ? (SHADOW_VALUES[shadow] ?? "none") : "0 1px 2px 0 rgba(0,0,0,0.05)";
 
   return (
-    <div className="h-full flex flex-col bg-gray-50/50">
+    <div className="h-full flex flex-col bg-muted/50">
       {/* Viewport controls */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-border">
+      <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
           Preview
         </span>

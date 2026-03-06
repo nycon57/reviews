@@ -81,7 +81,7 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
       {/* Opt-Out Settings */}
       <Card className="border border-border/50 shadow-sm">
         <CardHeader>
-          <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+          <CardTitle className="text-lg text-heading flex items-center gap-2">
             <Prohibit weight="duotone" className="h-5 w-5" />
             Opt-Out Settings
           </CardTitle>
@@ -92,7 +92,7 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
         <CardContent className="space-y-5">
           {/* STOP Response */}
           <div>
-            <Label className="text-sm font-medium text-repwell-teal-500">
+            <Label className="text-sm font-medium text-heading-accent">
               STOP response message
             </Label>
             <Textarea
@@ -115,7 +115,7 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
 
           {/* HELP Response */}
           <div>
-            <Label className="text-sm font-medium text-repwell-teal-500">
+            <Label className="text-sm font-medium text-heading-accent">
               HELP response message
             </Label>
             <Textarea
@@ -155,7 +155,7 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+              <CardTitle className="text-lg text-heading flex items-center gap-2">
                 <HandPalm weight="duotone" className="h-5 w-5" />
                 Double Opt-In
               </CardTitle>
@@ -172,7 +172,7 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
         </CardHeader>
         <CardContent className="space-y-4">
           <fieldset disabled={!doubleOptInEnabled} className={`border-0 p-0 m-0 ${!doubleOptInEnabled ? 'opacity-50' : ''}`}>
-            <Label className="text-sm font-medium text-repwell-teal-500">
+            <Label className="text-sm font-medium text-heading-accent">
               Confirmation message
             </Label>
             <Textarea
@@ -193,10 +193,10 @@ export function OptOutSettingsForm({ settings, onSaved }: OptOutSettingsFormProp
 
             {/* Preview */}
             {doubleOptInEnabled && (
-              <div className="mt-4 p-3 rounded-lg bg-repwell-sage-100/20 border border-border/50">
-                <p className="text-xs font-medium text-repwell-teal-500 mb-1.5">Preview</p>
-                <div className="bg-white rounded-lg p-3 shadow-sm border border-border/30">
-                  <p className="text-sm text-repwell-teal-400 whitespace-pre-wrap">
+              <div className="mt-4 p-3 rounded-lg bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 border border-border/50">
+                <p className="text-xs font-medium text-heading mb-1.5">Preview</p>
+                <div className="bg-card rounded-lg p-3 shadow-sm border border-border/30">
+                  <p className="text-sm text-label whitespace-pre-wrap">
                     {doubleOptInMessage.replace(/\{\{company_name\}\}/g, 'Your Company')}
                   </p>
                 </div>

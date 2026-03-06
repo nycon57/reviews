@@ -186,7 +186,7 @@ export function OrganizationBilling() {
     return (
       <div className="space-y-6">
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-72" />
           </CardHeader>
@@ -236,7 +236,7 @@ export function OrganizationBilling() {
 
       {/* Current Plan */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <CreditCard className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
@@ -333,7 +333,7 @@ export function OrganizationBilling() {
 
       {/* Usage Limits */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <TrendingUp className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
@@ -402,7 +402,7 @@ export function OrganizationBilling() {
       {/* Upgrade Plans */}
       {currentTier !== "enterprise" && (
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Zap className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
@@ -429,7 +429,7 @@ export function OrganizationBilling() {
                       className="p-4 rounded-xl border border-border/50 hover:border-repwell-teal-300 transition-colors"
                     >
                       <h4 className="font-semibold">{info.name}</h4>
-                      <p className="text-2xl font-bold mt-1 text-repwell-teal-500 tracking-tight">
+                      <p className="text-2xl font-bold mt-1 text-heading-accent tracking-tight">
                         ${info.monthly}
                         <span className="text-sm font-normal text-muted-foreground">/mo</span>
                       </p>
@@ -467,7 +467,7 @@ export function OrganizationBilling() {
 
       {/* Payment Methods */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -540,7 +540,7 @@ export function OrganizationBilling() {
 
       {/* Invoice History */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Calendar className="h-5 w-5 text-repwell-teal-300" weight="duotone" />

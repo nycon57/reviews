@@ -26,7 +26,6 @@ const FIELD_MAP: Record<string, string> = {
   ctaButtonUrl: "cta_button_url",
   hireDate: "hire_date",
   industry: "industry",
-  region: "region",
 };
 
 function revalidateProfilePaths(userId: string) {

@@ -17,7 +17,7 @@ export function WidgetList({ widgets }: WidgetListProps) {
           <Code className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-repwell-teal-500">Widget Templates</h1>
+          <h1 className="text-2xl font-bold text-heading">Widget Templates</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Customize and embed review widgets on your website
           </p>

@@ -51,7 +51,7 @@ function StatCard({ title, value, change, icon, isLoading }: StatCardProps) {
     ? "text-green-600"
     : change && change < 0
       ? "text-red-600"
-      : "text-gray-500";
+      : "text-muted-foreground";
 
   return (
     <Card>

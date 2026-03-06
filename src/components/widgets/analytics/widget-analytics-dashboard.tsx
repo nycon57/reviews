@@ -122,7 +122,7 @@ export function WidgetAnalyticsDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-repwell-teal-500">
+          <h1 className="text-2xl font-bold tracking-tight text-heading">
             Widget Analytics
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -179,10 +179,10 @@ export function WidgetAnalyticsDashboard() {
       {/* Empty state */}
       {hasNoWidgets ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-repwell-sage-100/50 flex items-center justify-center text-repwell-teal-300 mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center text-repwell-teal-300 mb-4">
             <CalendarDays size={28} />
           </div>
-          <h2 className="text-lg font-semibold text-repwell-teal-500 mb-2">
+          <h2 className="text-lg font-semibold text-heading mb-2">
             No analytics data yet
           </h2>
           <p className="text-sm text-muted-foreground max-w-md">

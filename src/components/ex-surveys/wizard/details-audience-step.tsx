@@ -19,24 +19,24 @@ export function DetailsAudienceStep({ formData, setFormData, departments }: Step
     <div className="space-y-8">
       {/* Section header */}
       <div>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500">
+        <h2 className="font-display text-2xl font-bold text-heading">
           Survey Details
         </h2>
-        <p className="mt-1 text-repwell-teal-400">
+        <p className="mt-1 text-label">
           Configure the name, description, and target audience
         </p>
       </div>
 
       {/* Survey Details Card */}
-      <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
-        <h3 className="font-sans text-lg font-semibold text-repwell-teal-500 mb-4">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <h3 className="font-sans text-lg font-semibold text-heading mb-4">
           Basic Information
         </h3>
 
         <div className="space-y-4">
           {/* Survey Name */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-repwell-teal-500">
+            <Label htmlFor="name" className="text-heading">
               Survey Name <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -50,7 +50,7 @@ export function DetailsAudienceStep({ formData, setFormData, departments }: Step
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-repwell-teal-500">
+            <Label htmlFor="description" className="text-heading">
               Description <span className="text-muted-foreground">(optional)</span>
             </Label>
             <Textarea
@@ -66,10 +66,10 @@ export function DetailsAudienceStep({ formData, setFormData, departments }: Step
       </div>
 
       {/* Anonymous Toggle Card */}
-      <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 text-repwell-teal-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label">
               {formData.isAnonymous ? (
                 <EyeSlash weight="duotone" className="h-5 w-5" />
               ) : (
@@ -77,10 +77,10 @@ export function DetailsAudienceStep({ formData, setFormData, departments }: Step
               )}
             </div>
             <div>
-              <Label htmlFor="anonymous" className="text-base font-semibold text-repwell-teal-500">
+              <Label htmlFor="anonymous" className="text-base font-semibold text-heading">
                 Anonymous Responses
               </Label>
-              <p className="mt-1 text-sm text-repwell-teal-400">
+              <p className="mt-1 text-sm text-label">
                 {formData.isAnonymous
                   ? "Responses will not be linked to individual employees, encouraging honest feedback."
                   : "Responses will be linked to employees, allowing for follow-up conversations."}
@@ -98,23 +98,23 @@ export function DetailsAudienceStep({ formData, setFormData, departments }: Step
       </div>
 
       {/* Target Audience Card */}
-      <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-start gap-4 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 text-repwell-teal-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label">
             <Users weight="duotone" className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-sans text-lg font-semibold text-repwell-teal-500">
+            <h3 className="font-sans text-lg font-semibold text-heading">
               Target Audience
             </h3>
-            <p className="mt-1 text-sm text-repwell-teal-400">
+            <p className="mt-1 text-sm text-label">
               Choose which employees should receive this survey
             </p>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="department" className="text-repwell-teal-500">
+          <Label htmlFor="department" className="text-heading">
             Department
           </Label>
           <Select

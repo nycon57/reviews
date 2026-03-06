@@ -89,14 +89,14 @@ export function DomainAllowlistEditor({ domains, onChange }: DomainAllowlistEdit
             <span
               key={domain}
               className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium
-                bg-repwell-sage-100/40 text-repwell-teal-400 rounded-md border border-repwell-sage-200/50"
+                bg-repwell-sage-100/40 text-label rounded-md border border-repwell-sage-200/50"
             >
               <Globe size={12} className="text-repwell-teal-300" />
               {domain}
               <button
                 type="button"
                 onClick={() => removeDomain(domain)}
-                className="ml-0.5 text-repwell-teal-400/50 hover:text-red-500 transition-colors"
+                className="ml-0.5 text-label/50 hover:text-red-500 transition-colors"
                 aria-label={`Remove ${domain}`}
               >
                 <X size={12} />

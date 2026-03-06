@@ -117,7 +117,7 @@ function StatsCards({ stats }: { stats: UnifiedRequestStats }) {
               <Icon className="h-5 w-5 text-repwell-teal-300" />
             </div>
             <div>
-              <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+              <p className="text-2xl font-semibold tracking-tight text-heading-accent">
                 {stat.value}
               </p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -140,7 +140,7 @@ function StatusBadge({ status }: { status: string }) {
   > = {
     pending: {
       label: "Pending",
-      className: "text-amber-600 border-amber-300 bg-amber-50",
+      className: "text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30",
       icon: Clock,
     },
     sent: {
@@ -150,7 +150,7 @@ function StatusBadge({ status }: { status: string }) {
     },
     opened: {
       label: "Opened",
-      className: "text-repwell-teal-400 border-repwell-teal-400/30 bg-repwell-teal-400/5",
+      className: "text-label border-repwell-teal-400/30 bg-repwell-teal-400/5",
       icon: Eye,
     },
     completed: {
@@ -199,7 +199,7 @@ function TypeBadge({ type }: { type: RequestType }) {
     );
   }
   return (
-    <Badge variant="outline" className="gap-1 text-purple-600 border-purple-300 bg-purple-50">
+    <Badge variant="outline" className="gap-1 text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950/30">
       <VideoCamera className="h-3 w-3" />
       Video
     </Badge>
@@ -246,7 +246,7 @@ function UnifiedRequestTable({
         <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-repwell-teal-300/10">
           <Send className="h-7 w-7 text-repwell-teal-300" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-repwell-teal-500">
+        <h3 className="mt-4 text-lg font-semibold text-heading-accent">
           No requests yet
         </h3>
         <p className="mt-1.5 text-sm text-muted-foreground text-center max-w-sm">
@@ -479,7 +479,7 @@ export function UnifiedRequestsTab({
       <StatsCards stats={stats} />
 
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">

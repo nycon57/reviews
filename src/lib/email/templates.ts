@@ -1187,8 +1187,8 @@ export function getVideoTestimonialInvitationEmail(
 
         <div style="background-color: #eff6ff; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
           <p style="margin: 0; font-size: 14px; color: #1e40af;">
-            <strong>Recording a video is easy:</strong><br>
-            Just click the button below and record from your phone or computer ${durationText}
+            <strong>Recording is quick and mobile-friendly:</strong><br>
+            Open this link on your phone or computer and record in about 2-3 minutes ${durationText}
           </p>
         </div>
 
@@ -1201,6 +1201,9 @@ export function getVideoTestimonialInvitationEmail(
         </div>
         <p style="margin: 32px 0 0 0; font-size: 14px; color: #71717a; text-align: center;">
           Your testimonial helps others make informed decisions and means a lot to us.
+        </p>
+        <p style="margin: 12px 0 0 0; font-size: 12px; color: #71717a; text-align: center;">
+          If your camera has issues, the recording page includes a video file upload fallback.
         </p>
       </td>
     </tr>
@@ -1246,10 +1249,10 @@ export function getVideoTestimonialReminder3DayEmail(
           Hi ${safeCustomerName},
         </h1>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          We noticed you haven't had a chance to share your video testimonial about your experience with ${safeLOName} yet.
+          We noticed you haven&apos;t had a chance to share your video testimonial about your experience with ${safeLOName} yet.
         </p>
         <p style="margin: 0 0 24px 0; font-size: 16px; color: #52525b; text-align: center;">
-          Your story matters! A quick video testimonial takes less than 2 minutes and helps others make informed decisions.
+          Your story matters. A quick testimonial helps future customers make informed decisions, and you can complete it from mobile or desktop.
         </p>
 
         <div style="background-color: #fef3c7; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center;">
@@ -1260,7 +1263,7 @@ export function getVideoTestimonialReminder3DayEmail(
 
         <div style="text-align: center; margin-top: 32px;">
           <a href="${safeRequestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #18181b; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
-            Record Your Video
+            Resume Video Request
           </a>
         </div>
       </td>
@@ -1325,7 +1328,7 @@ export function getVideoTestimonialReminder7DayEmail(
 
         <div style="text-align: center; margin-top: 32px;">
           <a href="${safeRequestUrl}" style="display: inline-block; padding: 16px 32px; background-color: #dc2626; color: #ffffff; text-decoration: none; font-weight: 600; border-radius: 8px; font-size: 16px;">
-            Record Video Now
+            Complete Video Request
           </a>
         </div>
       </td>

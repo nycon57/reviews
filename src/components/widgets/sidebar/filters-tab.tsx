@@ -65,11 +65,11 @@ export function FiltersTab({ config, entityType, entityId, onConfigChange }: Fil
   return (
     <div className="space-y-4">
       {/* Matching review count banner */}
-      <div className="flex items-center justify-between rounded-md border border-repwell-sage-200/50 bg-repwell-sage-100/20 px-3 py-2">
-        <span className="text-xs font-medium text-repwell-teal-400">
+      <div className="flex items-center justify-between rounded-md border border-repwell-sage-200/50 bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 px-3 py-2">
+        <span className="text-xs font-medium text-label">
           Matching reviews
         </span>
-        <span className="text-sm font-semibold text-repwell-teal-500 tabular-nums">
+        <span className="text-sm font-semibold text-heading tabular-nums">
           {isCountLoading ? (
             <span className="inline-block w-6 h-4 bg-repwell-sage-200/40 rounded animate-pulse" />
           ) : (
@@ -152,7 +152,7 @@ export function FiltersTab({ config, entityType, entityId, onConfigChange }: Fil
                 className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors capitalize ${
                   isActive
                     ? "bg-repwell-teal-300 text-white border-repwell-teal-300"
-                    : "bg-white text-muted-foreground border-border hover:border-repwell-sage-200"
+                    : "bg-card text-muted-foreground border-border hover:border-repwell-sage-200"
                 }`}
               >
                 {source === "internal" ? "RepWell" : source.charAt(0).toUpperCase() + source.slice(1)}
@@ -163,7 +163,7 @@ export function FiltersTab({ config, entityType, entityId, onConfigChange }: Fil
       </div>
 
       <div className="border-t border-border pt-4">
-        <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
+        <Label className="text-sm font-semibold text-heading mb-3 block">
           Date Range
         </Label>
         <div className="mb-3">
@@ -248,7 +248,7 @@ export function FiltersTab({ config, entityType, entityId, onConfigChange }: Fil
                 className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors capitalize ${
                   isActive
                     ? "bg-repwell-teal-300 text-white border-repwell-teal-300"
-                    : "bg-white text-muted-foreground border-border hover:border-repwell-sage-200"
+                    : "bg-card text-muted-foreground border-border hover:border-repwell-sage-200"
                 }`}
               >
                 {loanType}

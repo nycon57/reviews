@@ -16,7 +16,7 @@ export function AdvancedTab({ config, onConfigChange }: AdvancedTabProps) {
   return (
     <div className="space-y-6">
       <div>
-        <Label className="text-sm font-semibold text-repwell-teal-500 mb-1 block">
+        <Label className="text-sm font-semibold text-heading mb-1 block">
           Custom CSS
         </Label>
         <p className="text-xs text-muted-foreground mb-3">

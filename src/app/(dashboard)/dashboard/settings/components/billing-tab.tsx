@@ -44,14 +44,14 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
   active: { label: 'Active', variant: 'default', className: 'bg-repwell-sage-200/20 text-repwell-sage-200 border-repwell-sage-200/30' },
   trialing: { label: 'Trial', variant: 'secondary', className: 'bg-amber-100 text-amber-700 border-amber-200' },
   past_due: { label: 'Past Due', variant: 'destructive', className: 'bg-red-100 text-red-700 border-red-200' },
-  canceled: { label: 'Canceled', variant: 'outline', className: 'bg-gray-100 text-gray-600 border-gray-200' },
-  cancelled: { label: 'Cancelled', variant: 'outline', className: 'bg-gray-100 text-gray-600 border-gray-200' },
-  paused: { label: 'Paused', variant: 'outline', className: 'bg-gray-100 text-gray-600 border-gray-200' },
+  canceled: { label: 'Canceled', variant: 'outline', className: 'bg-muted text-muted-foreground border-border' },
+  cancelled: { label: 'Cancelled', variant: 'outline', className: 'bg-muted text-muted-foreground border-border' },
+  paused: { label: 'Paused', variant: 'outline', className: 'bg-muted text-muted-foreground border-border' },
   unpaid: { label: 'Unpaid', variant: 'destructive', className: 'bg-red-100 text-red-700 border-red-200' },
 };
 
 const TIER_CONFIG: Record<string, { name: string; gradient: string; icon: React.ReactNode }> = {
-  free: { name: 'Free', gradient: 'from-gray-400 to-gray-500', icon: <Sparkle weight="duotone" className="h-6 w-6" /> },
+  free: { name: 'Free', gradient: 'from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700', icon: <Sparkle weight="duotone" className="h-6 w-6" /> },
   starter: { name: 'Starter', gradient: 'from-repwell-sage-200 to-repwell-teal-300', icon: <Zap weight="duotone" className="h-6 w-6" /> },
   professional: { name: 'Professional', gradient: 'from-repwell-teal-300 to-repwell-teal-400', icon: <Crown weight="duotone" className="h-6 w-6" /> },
   enterprise: { name: 'Enterprise', gradient: 'from-repwell-teal-400 to-repwell-teal-500', icon: <ShieldCheck weight="duotone" className="h-6 w-6" /> },
@@ -146,7 +146,7 @@ export function BillingTab() {
     >
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
           Billing & Subscription
         </h2>
         <p className="text-repwell-teal-300 mt-1">
@@ -157,7 +157,7 @@ export function BillingTab() {
       {/* Trial Alert */}
       {isTrialing && (
         <motion.div variants={fadeInUp}>
-          <Alert className="border-amber-200 bg-gradient-to-r from-amber-50 to-amber-100/50">
+          <Alert className="border-amber-200 bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 dark:border-amber-800/50">
             <Zap weight="duotone" className="h-5 w-5 text-amber-600" />
             <AlertTitle className="text-amber-800 font-semibold">Trial Period Active</AlertTitle>
             <AlertDescription className="text-amber-700">
@@ -173,7 +173,7 @@ export function BillingTab() {
       {/* Past Due Alert */}
       {currentStatus === 'past_due' && (
         <motion.div variants={fadeInUp}>
-          <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-red-100/50">
+          <Alert variant="destructive" className="border-red-200 bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/30 dark:to-red-900/20 dark:border-red-800/50">
             <AlertTriangle weight="duotone" className="h-5 w-5" />
             <AlertTitle className="font-semibold">Payment Past Due</AlertTitle>
             <AlertDescription>
@@ -237,7 +237,7 @@ export function BillingTab() {
 
             {/* Card Body */}
             <CardContent className="p-6 space-y-6">
-              <p className="text-repwell-teal-400">
+              <p className="text-repwell-teal-400 dark:text-repwell-sage-100/80">
                 {billingData?.tier?.description || 'Get started with basic features to manage your reputation.'}
               </p>
 
@@ -272,7 +272,7 @@ export function BillingTab() {
                   <Button
                     variant="outline"
                     onClick={() => router.push('/pricing')}
-                    className="border-repwell-teal-300 text-repwell-teal-400 hover:bg-repwell-sage-100/50"
+                    className="border-repwell-teal-300 text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10"
                   >
                     View All Plans
                     <ArrowRight className="ml-2 h-4 w-4" />
@@ -287,7 +287,7 @@ export function BillingTab() {
         <motion.div variants={fadeInUp}>
           <Card className="h-full border-border/50">
             <CardContent className="p-6 space-y-4">
-              <h4 className="font-semibold text-repwell-teal-500">Quick Actions</h4>
+              <h4 className="font-semibold text-heading-accent">Quick Actions</h4>
 
               {hasPaidSubscription ? (
                 <div className="space-y-3">
@@ -295,13 +295,13 @@ export function BillingTab() {
                     type="button"
                     onClick={handleManageSubscription}
                     disabled={portalLoading}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 transition-colors text-left group"
                   >
-                    <div className="p-2 rounded-lg bg-repwell-sage-100/50 group-hover:bg-repwell-sage-200/50 transition-colors">
+                    <div className="p-2 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 group-hover:bg-repwell-sage-200/50 transition-colors">
                       <CreditCard weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-repwell-teal-500">Update Payment</p>
+                      <p className="text-sm font-medium text-heading-accent">Update Payment</p>
                       <p className="text-xs text-repwell-teal-300">Change card or billing info</p>
                     </div>
                   </button>
@@ -310,13 +310,13 @@ export function BillingTab() {
                     type="button"
                     onClick={handleManageSubscription}
                     disabled={portalLoading}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 transition-colors text-left group"
                   >
-                    <div className="p-2 rounded-lg bg-repwell-sage-100/50 group-hover:bg-repwell-sage-200/50 transition-colors">
+                    <div className="p-2 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 group-hover:bg-repwell-sage-200/50 transition-colors">
                       <EnvelopeSimple weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-repwell-teal-500">View Invoices</p>
+                      <p className="text-sm font-medium text-heading-accent">View Invoices</p>
                       <p className="text-xs text-repwell-teal-300">Download past invoices</p>
                     </div>
                   </button>
@@ -325,24 +325,24 @@ export function BillingTab() {
                     type="button"
                     onClick={handleManageSubscription}
                     disabled={portalLoading}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group"
+                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 transition-colors text-left group"
                   >
-                    <div className="p-2 rounded-lg bg-repwell-sage-100/50 group-hover:bg-repwell-sage-200/50 transition-colors">
+                    <div className="p-2 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 group-hover:bg-repwell-sage-200/50 transition-colors">
                       <Crown weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-repwell-teal-500">Change Plan</p>
+                      <p className="text-sm font-medium text-heading-accent">Change Plan</p>
                       <p className="text-xs text-repwell-teal-300">Upgrade or downgrade</p>
                     </div>
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4 text-center py-4">
-                  <div className="w-12 h-12 mx-auto bg-repwell-sage-100/50 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 mx-auto bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 rounded-xl flex items-center justify-center">
                     <Sparkle weight="duotone" className="h-6 w-6 text-repwell-teal-300" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-repwell-teal-500">Unlock More Features</p>
+                    <p className="text-sm font-medium text-heading-accent">Unlock More Features</p>
                     <p className="text-xs text-repwell-teal-300 mt-1">
                       Upgrade to access advanced analytics, AI insights, and more.
                     </p>
@@ -367,11 +367,11 @@ export function BillingTab() {
           <Card className="border-repwell-sage-200/30 bg-gradient-to-r from-repwell-sage-100/10 to-transparent">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-repwell-sage-100/30">
+                <div className="p-3 rounded-xl bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
                   <CreditCard weight="duotone" className="h-5 w-5 text-repwell-teal-300" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="font-semibold text-repwell-teal-500">Need to make billing changes?</h4>
+                  <h4 className="font-semibold text-heading-accent">Need to make billing changes?</h4>
                   <p className="text-sm text-repwell-teal-300">
                     Billing management is available to organization administrators.
                     Contact your admin to upgrade plans, update payment methods, or manage your subscription.

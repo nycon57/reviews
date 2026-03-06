@@ -94,11 +94,11 @@ export function WidgetBuilderSidebar({
   const [activeTab, setActiveTab] = useState("general");
 
   return (
-    <div className="h-full flex flex-col bg-white border-r border-border">
+    <div className="h-full flex flex-col bg-card border-r border-border">
       {/* Section selector */}
-      <div className="px-3 py-2.5 border-b border-border bg-gray-50/50">
+      <div className="px-3 py-2.5 border-b border-border bg-muted/50">
         <Select value={activeTab} onValueChange={setActiveTab}>
-          <SelectTrigger className="h-9 text-xs font-medium bg-white">
+          <SelectTrigger className="h-9 text-xs font-medium bg-card">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

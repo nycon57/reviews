@@ -146,8 +146,8 @@ export function UserRecentReviews({
 
   return (
     <Card className="col-span-1 shadow-soft">
-      <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Star className="h-4 w-4 text-repwell-teal-300" />
           </div>
@@ -191,12 +191,12 @@ export function UserRecentReviews({
             </div>
           }
           empty={
-            <div className="flex h-[280px] flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-gradient-to-br from-repwell-sage-100/30 to-white p-6 text-center">
+            <div className="flex h-[280px] flex-col items-center justify-center rounded-lg border border-dashed border-border/60 bg-gradient-to-br from-repwell-sage-100/30 to-card dark:from-repwell-teal-300/10 p-6 text-center">
               <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-amber-50 to-amber-100">
                 <Star className="h-7 w-7 text-amber-500" />
               </div>
-              <h4 className="text-base font-semibold text-repwell-teal-500">No reviews yet</h4>
-              <p className="mt-1 max-w-[280px] text-sm text-repwell-teal-400">
+              <h4 className="text-base font-semibold text-heading">No reviews yet</h4>
+              <p className="mt-1 max-w-[280px] text-sm text-label">
                 Start collecting customer feedback to build your reputation and grow your business.
               </p>
               <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -220,7 +220,7 @@ export function UserRecentReviews({
               {reviews.map((review) => (
                 <AnimatedItem
                   key={review.id}
-                  className="group flex gap-3 rounded-lg border border-border/50 p-3 transition-all hover:bg-repwell-sage-100/20 hover:border-repwell-teal-300/30"
+                  className="group flex gap-3 rounded-lg border border-border/50 p-3 transition-all hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 hover:border-repwell-teal-300/30"
                 >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-repwell-teal-300/10 text-repwell-teal-300 font-medium text-sm">
                     {review.customerName
@@ -231,7 +231,7 @@ export function UserRecentReviews({
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-repwell-teal-500">
+                        <span className="font-medium text-heading">
                           {review.customerName || "Anonymous"}
                         </span>
                         <Badge
@@ -261,7 +261,7 @@ export function UserRecentReviews({
                       </div>
                     </div>
                     {review.text && (
-                      <p className="line-clamp-2 text-sm text-repwell-teal-400">
+                      <p className="line-clamp-2 text-sm text-label">
                         {review.text}
                       </p>
                     )}

@@ -357,7 +357,6 @@ export async function getEnhancedLeaderboard(
       full_name,
       photo_url,
       branch,
-      region,
       total_reviews,
       average_rating,
       nps_score,
@@ -371,10 +370,6 @@ export async function getEnhancedLeaderboard(
 
   if (filters.branch && filters.branch !== "all") {
     query = query.eq("branch", filters.branch);
-  }
-
-  if (filters.region && filters.region !== "all") {
-    query = query.eq("region", filters.region);
   }
 
   const { data: users, error } = await query;
@@ -466,7 +461,6 @@ export async function getEnhancedLeaderboard(
         fullName: user.full_name || 'Unknown',
         photoUrl: user.photo_url,
         branch: user.branch,
-        region: user.region,
         totalReviews: user.total_reviews || 0,
         averageRating: user.average_rating || 0,
         npsScore: user.nps_score || 0,

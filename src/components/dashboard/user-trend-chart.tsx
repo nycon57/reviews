@@ -56,8 +56,8 @@ export function UserTrendChart({
   if (!hasData) {
     return (
       <Card className="shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Icon className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -67,8 +67,8 @@ export function UserTrendChart({
         <CardContent className="pt-4">
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm font-medium text-repwell-teal-500">{config.emptyTitle}</p>
-              <p className="text-xs text-repwell-teal-400 mt-1">{config.emptyDescription}</p>
+              <p className="text-sm font-medium text-heading">{config.emptyTitle}</p>
+              <p className="text-xs text-label mt-1">{config.emptyDescription}</p>
             </div>
           </div>
         </CardContent>
@@ -83,8 +83,8 @@ export function UserTrendChart({
 
   return (
     <Card className="shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Icon className="h-4 w-4 text-repwell-teal-300" />
           </div>

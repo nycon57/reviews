@@ -72,7 +72,7 @@ function DiffRow({ entry }: { entry: DiffEntry }) {
   const section = pathParts.length > 1 ? pathParts.slice(0, -1).join(" > ") : null;
 
   return (
-    <div className="flex items-start gap-3 py-2.5 px-3 rounded-md hover:bg-gray-50/50 transition-colors">
+    <div className="flex items-start gap-3 py-2.5 px-3 rounded-md hover:bg-muted/50 transition-colors">
       <DiffBadge type={entry.type} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
@@ -81,7 +81,7 @@ function DiffRow({ entry }: { entry: DiffEntry }) {
               {section} &rsaquo;
             </span>
           )}
-          <span className="text-xs font-medium text-repwell-teal-500">
+          <span className="text-xs font-medium text-heading">
             {fieldName}
           </span>
         </div>
@@ -164,8 +164,8 @@ export function VersionDiff({
           <div className="space-y-4">
             {Object.entries(grouped).map(([section, entries]) => (
               <div key={section}>
-                <div className="sticky top-0 bg-white/95 backdrop-blur-sm px-3 py-1.5 border-b border-border">
-                  <span className="text-[11px] font-semibold text-repwell-teal-400 uppercase tracking-wider">
+                <div className="sticky top-0 bg-card/95 backdrop-blur-sm px-3 py-1.5 border-b border-border">
+                  <span className="text-[11px] font-semibold text-label uppercase tracking-wider">
                     {section}
                   </span>
                 </div>

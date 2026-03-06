@@ -382,7 +382,7 @@ export function VideoUpload({
                       <Upload className="h-10 w-10 text-repwell-teal-300" />
                     )}
                   </div>
-                  <h3 className="mb-2 text-center font-sans text-lg font-semibold text-repwell-teal-500">
+                  <h3 className="mb-2 text-center font-sans text-lg font-semibold text-heading">
                     {isDragActive ? "Drop your video here" : "Upload Your Video"}
                   </h3>
                   <p className="mb-6 max-w-sm text-center font-sans text-sm text-muted-foreground">
@@ -422,7 +422,7 @@ export function VideoUpload({
           {validationInProgress && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-repwell-teal-500/10 p-6">
               <Loader2 className="mb-4 h-12 w-12 animate-spin text-repwell-teal-300" />
-              <p className="font-sans text-lg font-medium text-repwell-teal-500">
+              <p className="font-sans text-lg font-medium text-heading">
                 Validating video...
               </p>
               <p className="mt-2 font-sans text-sm text-muted-foreground">
@@ -455,9 +455,9 @@ export function VideoUpload({
               >
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg">
                   {isVideoPlaying ? (
-                    <Pause className="h-8 w-8 text-repwell-teal-500" />
+                    <Pause className="h-8 w-8 text-heading" />
                   ) : (
-                    <Play className="h-8 w-8 text-repwell-teal-500 ml-1" />
+                    <Play className="h-8 w-8 text-heading ml-1" />
                   )}
                 </div>
               </button>
@@ -525,7 +525,7 @@ export function VideoUpload({
                 <div className="flex items-center gap-3">
                   <FileVideo className="h-5 w-5 flex-shrink-0 text-repwell-teal-300" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-sans text-sm font-medium text-repwell-teal-500">
+                    <p className="truncate font-sans text-sm font-medium text-heading">
                       {selectedFile.name}
                     </p>
                     <p className="font-sans text-xs text-muted-foreground">

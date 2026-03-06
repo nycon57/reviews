@@ -28,6 +28,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/lib/permissions/context";
+import { ThemeToggle } from "@/components/dashboard/theme-toggle";
 
 interface HeaderUser {
   name: string;
@@ -89,7 +90,7 @@ export function Header({
   return (
     <header
       className={cn(
-        "sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border bg-white/95 px-4 backdrop-blur-sm supports-[backdrop-filter]:bg-white/80",
+        "sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border bg-background/95 px-4 backdrop-blur-sm supports-[backdrop-filter]:bg-background/80",
         className
       )}
     >
@@ -103,7 +104,7 @@ export function Header({
         <Button
           variant="ghost"
           size="icon"
-          className="hidden md:flex h-9 w-9 text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 transition-colors duration-150"
+          className="hidden md:flex h-9 w-9 text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 transition-colors duration-150"
           onClick={() => onSidebarCollapsedChange(!sidebarCollapsed)}
           aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
@@ -124,13 +125,13 @@ export function Header({
         <Button
           variant="ghost"
           size="sm"
-          className="h-9 px-3 text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 gap-2 hidden sm:flex"
+          className="h-9 px-3 text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 gap-2 hidden sm:flex"
           aria-label="Search"
           onClick={() => setSearchOpen(true)}
         >
           <Search className="h-4 w-4" />
           <span className="text-sm font-normal">Search</span>
-          <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-repwell-teal-400">
+          <kbd className="hidden md:inline-flex h-5 items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-repwell-teal-400 dark:text-repwell-sage-100/80">
             <Command className="h-3 w-3" />K
           </kbd>
         </Button>
@@ -139,7 +140,7 @@ export function Header({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 sm:hidden"
+          className="h-9 w-9 text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 sm:hidden"
           aria-label="Search"
           onClick={() => setSearchOpen(true)}
         >
@@ -161,6 +162,9 @@ export function Header({
             Invite Team
           </Button>
         )}
+
+        {/* Theme toggle */}
+        <ThemeToggle />
 
         {/* Notifications */}
         <NotificationCenter />
@@ -230,12 +234,12 @@ function UserMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="relative h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-repwell-sage-100 hover:ring-offset-2 transition-all duration-150"
+          className="relative h-9 w-9 rounded-full p-0 hover:ring-2 hover:ring-repwell-sage-100 dark:hover:ring-repwell-teal-300/20 hover:ring-offset-2 dark:ring-offset-background transition-all duration-150"
           aria-label="User menu"
         >
           <Avatar className="h-9 w-9">
             <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback className="bg-repwell-sage-100 text-repwell-teal-300 font-semibold text-sm">
+            <AvatarFallback className="bg-surface-soft text-repwell-teal-300 font-semibold text-sm">
               {user.initials}
             </AvatarFallback>
           </Avatar>
@@ -244,8 +248,8 @@ function UserMenu({
       <DropdownMenuContent className="w-56 border-border" align="end" forceMount>
         <DropdownMenuLabel className="font-normal p-3">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-semibold leading-none text-repwell-teal-500">{user.name}</p>
-            <p className="text-xs leading-none text-repwell-teal-400">
+            <p className="text-sm font-semibold leading-none text-heading-accent">{user.name}</p>
+            <p className="text-xs leading-none text-repwell-teal-400 dark:text-repwell-sage-100/80">
               {user.email}
             </p>
             {(role || accountType) && (
@@ -257,20 +261,20 @@ function UserMenu({
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-border" />
         {(user.slug || user.loanOfficerId) && (
-          <DropdownMenuItem asChild className="text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 cursor-pointer">
+          <DropdownMenuItem asChild className="text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 cursor-pointer">
             <Link href={`/pro/${user.slug || user.loanOfficerId}`} target="_blank" className="flex items-center">
               <ExternalLink className="mr-2 h-4 w-4" />
               <span>View Public Profile</span>
             </Link>
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem asChild className="text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 cursor-pointer">
+        <DropdownMenuItem asChild className="text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 cursor-pointer">
           <Link href="/dashboard/settings" className="flex items-center">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild className="text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100 cursor-pointer">
+        <DropdownMenuItem asChild className="text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 cursor-pointer">
           <Link href="/dashboard/settings?tab=billing" className="flex items-center">
             <CreditCard className="mr-2 h-4 w-4" />
             <span>Billing</span>
@@ -280,7 +284,7 @@ function UserMenu({
           <DropdownMenuItem
             onClick={onStopImpersonation}
             disabled={isStoppingImpersonation}
-            className="text-amber-700 hover:text-amber-800 hover:bg-amber-50 cursor-pointer focus:text-amber-800 focus:bg-amber-50"
+            className="text-amber-700 dark:text-amber-400 hover:text-amber-800 hover:bg-amber-50 dark:hover:bg-amber-950/30 cursor-pointer focus:text-amber-800 focus:bg-amber-50 dark:focus:bg-amber-950/30"
           >
             <LogOut className="mr-2 h-4 w-4" />
             <span>{isStoppingImpersonation ? "Stopping..." : "Stop impersonating"}</span>
@@ -289,7 +293,7 @@ function UserMenu({
         <DropdownMenuSeparator className="bg-border" />
         <DropdownMenuItem
           onClick={onSignOut}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer focus:text-red-700 focus:bg-red-50"
+          className="text-red-600 dark:text-red-400 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer focus:text-red-700 focus:bg-red-50 dark:focus:bg-red-950/30"
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>

@@ -16,21 +16,17 @@ import type { FilterOptions } from "@/lib/dashboard";
 interface TeamFiltersProps {
   options: FilterOptions;
   selectedBranch: string;
-  selectedRegion: string;
   onBranchChange: (branch: string) => void;
-  onRegionChange: (region: string) => void;
   onClearFilters: () => void;
 }
 
 export function TeamFilters({
   options,
   selectedBranch,
-  selectedRegion,
   onBranchChange,
-  onRegionChange,
   onClearFilters,
 }: TeamFiltersProps) {
-  const hasFilters = selectedBranch !== "all" || selectedRegion !== "all";
+  const hasFilters = selectedBranch !== "all";
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -44,22 +40,6 @@ export function TeamFilters({
             {options.branches.map((branch) => (
               <SelectItem key={branch} value={branch}>
                 {branch}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
-
-      {options.regions.length > 0 && (
-        <Select value={selectedRegion} onValueChange={onRegionChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All Regions" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Regions</SelectItem>
-            {options.regions.map((region) => (
-              <SelectItem key={region} value={region}>
-                {region}
               </SelectItem>
             ))}
           </SelectContent>

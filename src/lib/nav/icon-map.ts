@@ -1,54 +1,9 @@
-import {
-  House,
-  Star,
-  FileText,
-  PaperPlaneRight,
-  Quotes,
-  ChatCircle,
-  Medal,
-  ChartBar,
-  TrendUp,
-  Trophy,
-  Sparkle,
-  Eye,
-  SquaresFour,
-  Users,
-  ClipboardText,
-  Envelope,
-  Buildings,
-  Code,
-  Gear,
-  Question,
-  AddressBook,
-  Lightning,
-} from "@phosphor-icons/react";
-import type { Icon } from "@phosphor-icons/react";
+import { ICON_REGISTRY } from "@/lib/icons/registry";
 
 /**
  * Maps PascalCase icon names from NavConfig → Phosphor icon components.
  * Keeps config serializable (no JSX in config.ts).
+ *
+ * Delegates to the centralized icon registry.
  */
-export const ICON_MAP: Record<string, Icon> = {
-  House,
-  Star,
-  FileText,
-  PaperPlaneRight,
-  Quotes,
-  ChatCircle,
-  Medal,
-  ChartBar,
-  TrendUp,
-  Trophy,
-  Sparkle,
-  Eye,
-  SquaresFour,
-  Users,
-  ClipboardText,
-  Envelope,
-  Buildings,
-  Code,
-  Gear,
-  Question,
-  AddressBook,
-  Lightning,
-};
+export const ICON_MAP = ICON_REGISTRY;

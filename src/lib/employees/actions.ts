@@ -1,21 +1,24 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck -- TODO: Run `npm run db:types` once contacts table is in Supabase schema to remove this suppression
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import type { Database } from "@/types/database.types";
 import {
-  createContactSchema,
-  updateContactSchema,
-  MAX_CONTACT_IMPORT_ROWS,
-  type Contact,
-  type CreateContactInput,
-  type UpdateContactInput,
-  type ContactCSVRow,
-  type ContactImportResult,
-  type ContactBulkImportResult,
+  createEmployeeSchema,
+  updateEmployeeSchema,
+  employeeSchema,
+  MAX_EMPLOYEE_IMPORT_ROWS,
+  type Employee,
+  type CreateEmployeeInput,
+  type UpdateEmployeeInput,
+  type EmployeeCSVRow,
+  type EmployeeImportResult,
+  type EmployeeBulkImportResult,
 } from "./types";
+
+type EmployeeRow = Database["public"]["Tables"]["employees"]["Row"];
+type EmployeeUpdate = Database["public"]["Tables"]["employees"]["Update"];
 
 // ==================== Auth Helpers ====================
 
@@ -36,13 +39,13 @@ async function getUserOrganization() {
     return { error: "No organization found" };
   }
 
-  // Contacts is enterprise-only
-  const org = userData.organizations as { account_type?: string } | null;
+  // Employees is enterprise-only
+  const org = userData.organizations as { account_type: string | null } | null;
   if (!org) {
     return { error: "Organization not found" };
   }
   if (org.account_type !== "enterprise") {
-    return { error: "Contacts requires an enterprise account" };
+    return { error: "Employees requires an enterprise account" };
   }
 
   return { userId: user.id, organizationId: userData.organization_id, role: userData.role };
@@ -61,31 +64,31 @@ async function checkManagerAccess() {
 
 // ==================== DB → TS Mapper ====================
 
-function mapContact(d: Record<string, unknown>): Contact {
-  return {
-    id: d.id as string,
-    organizationId: d.organization_id as string,
-    email: d.email as string,
-    fullName: d.full_name as string,
-    department: d.department as string | null,
-    branchId: d.branch_id as string | null,
-    title: d.title as string | null,
-    phone: d.phone as string | null,
-    isActive: d.is_active as boolean,
-    userId: d.user_id as string | null,
+function mapEmployee(d: EmployeeRow): Employee {
+  return employeeSchema.parse({
+    id: d.id,
+    organizationId: d.organization_id,
+    email: d.email,
+    fullName: d.full_name,
+    department: d.department ?? null,
+    branchId: d.branch_id ?? null,
+    title: d.title ?? null,
+    phone: d.phone ?? null,
+    isActive: d.is_active,
+    userId: d.user_id ?? null,
     metadata: (d.metadata as Record<string, unknown>) ?? {},
-    createdAt: d.created_at as string,
-    updatedAt: d.updated_at as string,
-  };
+    createdAt: d.created_at,
+    updatedAt: d.updated_at,
+  });
 }
 
 // ==================== CRUD Actions ====================
 
-export async function getContacts(
+export async function getEmployees(
   page = 1,
   pageSize = 25,
   search?: string,
-): Promise<{ success: boolean; data?: Contact[]; total?: number; error?: string }> {
+): Promise<{ success: boolean; data?: Employee[]; total?: number; error?: string }> {
   const result = await getUserOrganization();
   if ("error" in result) return { success: false, error: result.error };
 
@@ -93,7 +96,7 @@ export async function getContacts(
   const offset = (page - 1) * pageSize;
 
   let query = supabase
-    .from("contacts")
+    .from("employees")
     .select("*", { count: "exact" })
     .eq("organization_id", result.organizationId)
     .order("full_name");
@@ -114,18 +117,18 @@ export async function getContacts(
 
   return {
     success: true,
-    data: data?.map(mapContact) ?? [],
+    data: data?.map(mapEmployee) ?? [],
     total: count ?? 0,
   };
 }
 
-export async function createContact(
-  input: CreateContactInput,
-): Promise<{ success: boolean; data?: Contact; error?: string }> {
+export async function createEmployee(
+  input: CreateEmployeeInput,
+): Promise<{ success: boolean; data?: Employee; error?: string }> {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const parsed = createContactSchema.safeParse(input);
+  const parsed = createEmployeeSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0].message };
   }
@@ -141,7 +144,7 @@ export async function createContact(
     .single();
 
   const { data, error } = await supabase
-    .from("contacts")
+    .from("employees")
     .insert({
       organization_id: result.organizationId,
       email: parsed.data.email,
@@ -157,30 +160,30 @@ export async function createContact(
 
   if (error) {
     if (error.code === "23505") {
-      return { success: false, error: "A contact with this email already exists in your organization" };
+      return { success: false, error: "An employee with this email already exists in your organization" };
     }
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/contacts");
-  return { success: true, data: mapContact(data) };
+  revalidatePath("/dashboard/employees");
+  return { success: true, data: mapEmployee(data) };
 }
 
-export async function updateContact(
+export async function updateEmployee(
   id: string,
-  input: UpdateContactInput,
-): Promise<{ success: boolean; data?: Contact; error?: string }> {
+  input: UpdateEmployeeInput,
+): Promise<{ success: boolean; data?: Employee; error?: string }> {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  const parsed = updateContactSchema.safeParse(input);
+  const parsed = updateEmployeeSchema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0].message };
   }
 
   const supabase = createAdminClient();
 
-  const updateData: Record<string, unknown> = {};
+  const updateData: EmployeeUpdate = {};
   if (parsed.data.email !== undefined) updateData.email = parsed.data.email;
   if (parsed.data.fullName !== undefined) updateData.full_name = parsed.data.fullName;
   if (parsed.data.department !== undefined) updateData.department = parsed.data.department || null;
@@ -190,7 +193,7 @@ export async function updateContact(
   if (parsed.data.isActive !== undefined) updateData.is_active = parsed.data.isActive;
 
   const { data, error } = await supabase
-    .from("contacts")
+    .from("employees")
     .update(updateData)
     .eq("id", id)
     .eq("organization_id", result.organizationId)
@@ -202,14 +205,14 @@ export async function updateContact(
   }
 
   if (!data) {
-    return { success: false, error: "Contact not found" };
+    return { success: false, error: "Employee not found" };
   }
 
-  revalidatePath("/dashboard/contacts");
-  return { success: true, data: mapContact(data) };
+  revalidatePath("/dashboard/employees");
+  return { success: true, data: mapEmployee(data) };
 }
 
-export async function deleteContact(
+export async function deleteEmployee(
   id: string,
 ): Promise<{ success: boolean; error?: string }> {
   const result = await checkManagerAccess();
@@ -219,7 +222,7 @@ export async function deleteContact(
 
   // Soft delete
   const { data, error } = await supabase
-    .from("contacts")
+    .from("employees")
     .update({ is_active: false })
     .eq("id", id)
     .eq("organization_id", result.organizationId)
@@ -230,23 +233,23 @@ export async function deleteContact(
   }
 
   if (!data || data.length === 0) {
-    return { success: false, error: "Contact not found" };
+    return { success: false, error: "Employee not found" };
   }
 
-  revalidatePath("/dashboard/contacts");
+  revalidatePath("/dashboard/employees");
   return { success: true };
 }
 
 // ==================== Bulk Import ====================
 
-export async function bulkImportContacts(
-  rows: ContactCSVRow[],
-): Promise<{ success: boolean; data?: ContactBulkImportResult; error?: string }> {
+export async function bulkImportEmployees(
+  rows: EmployeeCSVRow[],
+): Promise<{ success: boolean; data?: EmployeeBulkImportResult; error?: string }> {
   const result = await checkManagerAccess();
   if ("error" in result) return { success: false, error: result.error };
 
-  if (rows.length > MAX_CONTACT_IMPORT_ROWS) {
-    return { success: false, error: `Too many rows; max is ${MAX_CONTACT_IMPORT_ROWS}` };
+  if (rows.length > MAX_EMPLOYEE_IMPORT_ROWS) {
+    return { success: false, error: `Too many rows; max is ${MAX_EMPLOYEE_IMPORT_ROWS}` };
   }
 
   const supabase = createAdminClient();
@@ -263,15 +266,15 @@ export async function bulkImportContacts(
     (existingUsers ?? []).map((u) => [u.email.toLowerCase(), u.id]),
   );
 
-  // Batch lookup: existing contacts to detect duplicates
-  const { data: existingContacts } = await supabase
-    .from("contacts")
+  // Batch lookup: existing employees to detect duplicates
+  const { data: existingEmployees } = await supabase
+    .from("employees")
     .select("email")
     .eq("organization_id", result.organizationId)
     .in("email", emails);
 
-  const existingContactEmails = new Set(
-    (existingContacts ?? []).map((c) => (c.email as string).toLowerCase()),
+  const existingEmployeeEmails = new Set(
+    (existingEmployees ?? []).map((e) => e.email.toLowerCase()),
   );
 
   // Batch lookup: branches by name for branch_name resolution
@@ -284,11 +287,11 @@ export async function bulkImportContacts(
       .eq("organization_id", result.organizationId);
 
     branchByName = new Map(
-      (branches ?? []).map((b) => [(b.name as string).toLowerCase(), b.id as string]),
+      (branches ?? []).map((b) => [b.name.toLowerCase(), b.id]),
     );
   }
 
-  const results: ContactImportResult[] = [];
+  const results: EmployeeImportResult[] = [];
   let successCount = 0;
   let failureCount = 0;
 
@@ -308,14 +311,14 @@ export async function bulkImportContacts(
       continue;
     }
 
-    if (existingContactEmails.has(email)) {
-      results.push({ email, fullName, success: false, error: "Contact already exists" });
+    if (existingEmployeeEmails.has(email)) {
+      results.push({ email, fullName, success: false, error: "Employee already exists" });
       failureCount++;
       continue;
     }
 
     try {
-      const { error } = await supabase.from("contacts").insert({
+      const { error } = await supabase.from("employees").insert({
         organization_id: result.organizationId,
         email,
         full_name: fullName,
@@ -327,12 +330,17 @@ export async function bulkImportContacts(
       });
 
       if (error) {
-        results.push({ email, fullName, success: false, error: error.message });
+        if (error.code === "23505") {
+          existingEmployeeEmails.add(email);
+          results.push({ email, fullName, success: false, error: "Employee already exists" });
+        } else {
+          results.push({ email, fullName, success: false, error: error.message });
+        }
         failureCount++;
       } else {
         results.push({ email, fullName, success: true });
         successCount++;
-        existingContactEmails.add(email);
+        existingEmployeeEmails.add(email);
       }
     } catch (err) {
       results.push({
@@ -345,7 +353,7 @@ export async function bulkImportContacts(
     }
   }
 
-  revalidatePath("/dashboard/contacts");
+  revalidatePath("/dashboard/employees");
   return {
     success: true,
     data: { results, successCount, failureCount },
@@ -354,7 +362,7 @@ export async function bulkImportContacts(
 
 // ==================== Department Helpers ====================
 
-export async function getContactDepartments(): Promise<{
+export async function getEmployeeDepartments(): Promise<{
   success: boolean;
   data?: string[];
   error?: string;
@@ -364,7 +372,7 @@ export async function getContactDepartments(): Promise<{
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
-    .from("contacts")
+    .from("employees")
     .select("department")
     .eq("organization_id", result.organizationId)
     .not("department", "is", null)
@@ -377,8 +385,8 @@ export async function getContactDepartments(): Promise<{
   // Extract unique department names
   const departments = [...new Set(
     (data ?? [])
-      .map((d) => d.department as string)
-      .filter(Boolean),
+      .map((d) => d.department)
+      .filter((d): d is string => d !== null && d !== undefined),
   )].sort();
 
   return { success: true, data: departments };

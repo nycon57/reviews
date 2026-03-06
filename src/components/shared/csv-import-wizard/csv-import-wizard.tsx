@@ -17,28 +17,18 @@ import {
   ArrowRight,
   UploadSimple,
 } from "@phosphor-icons/react";
-import { UploadStep } from "./bulk-import-steps/upload-step";
-import { MappingStep } from "./bulk-import-steps/mapping-step";
-import { ValidationStep } from "./bulk-import-steps/validation-step";
-import { CompleteStep } from "./bulk-import-steps/complete-step";
-import {
-  autoDetectMappings,
-  applyMappings,
-  getMissingRequiredFields,
-} from "@/lib/organization/bulk-import-validation";
-import {
-  validateImportData,
-  bulkImportUsers,
-} from "@/lib/organization/bulk-import-actions";
+import { CsvUploadStep } from "./steps/upload-step";
+import { CsvMappingStep } from "./steps/mapping-step";
+import { CsvValidationStep } from "./steps/validation-step";
+import { CsvCompleteStep } from "./steps/complete-step";
 import type {
-  CSVFieldKey,
+  CsvImportConfig,
   FieldMapping,
+  ImportResult,
   ParsedCSVRow,
-  ParsedUserData,
-  ValidateImportResponse,
-  BulkImportResult,
+  ValidationResponse,
   WizardStep,
-} from "@/lib/organization/bulk-import-types";
+} from "./types";
 
 const STEPS: { key: WizardStep; label: string }[] = [
   { key: "upload", label: "Upload" },
@@ -47,45 +37,36 @@ const STEPS: { key: WizardStep; label: string }[] = [
   { key: "complete", label: "Results" },
 ];
 
-interface BulkUserImportWizardProps {
+export interface CsvImportWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete: () => void;
+  config: CsvImportConfig;
+  className?: string;
 }
 
-export function BulkUserImportWizard({
+export function CsvImportWizard({
   open,
   onOpenChange,
   onComplete,
-}: BulkUserImportWizardProps) {
+  config,
+}: CsvImportWizardProps) {
   const [step, setStep] = useState<WizardStep>("upload");
   const [isPending, startTransition] = useTransition();
 
-  // Upload state
   const [rawRows, setRawRows] = useState<ParsedCSVRow[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
-
-  // Mapping state
   const [mappings, setMappings] = useState<FieldMapping[]>([]);
-
-  // Validation state
+  const [mappedData, setMappedData] = useState<Record<string, unknown>[]>([]);
   const [validationResult, setValidationResult] =
-    useState<ValidateImportResponse | null>(null);
-  const [mappedUsers, setMappedUsers] = useState<Partial<ParsedUserData>[]>([]);
-
-  // Import result state
-  const [importResult, setImportResult] = useState<BulkImportResult | null>(
-    null
-  );
+    useState<ValidationResponse | null>(null);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Clear any pending reset timeout on unmount
   useEffect(() => {
     return () => {
-      if (closeTimeoutRef.current) {
-        clearTimeout(closeTimeoutRef.current);
-      }
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     };
   }, []);
 
@@ -97,38 +78,32 @@ export function BulkUserImportWizard({
     setRawRows([]);
     setHeaders([]);
     setMappings([]);
+    setMappedData([]);
     setValidationResult(null);
-    setMappedUsers([]);
     setImportResult(null);
   }, []);
 
   const handleClose = useCallback(() => {
-    if (step === "complete") {
-      onComplete();
-    }
+    if (step === "complete") onComplete();
     onOpenChange(false);
-    // Clear any existing timeout before setting a new one
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-    }
-    // Reset after dialog animation
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
     closeTimeoutRef.current = setTimeout(resetWizard, 300);
   }, [step, onComplete, onOpenChange, resetWizard]);
 
-  // Step 1: Upload complete
+  // Step 1 → 2
   const handleUpload = useCallback(
     (rows: ParsedCSVRow[], csvHeaders: string[]) => {
       setRawRows(rows);
       setHeaders(csvHeaders);
-      setMappings(autoDetectMappings(csvHeaders));
+      setMappings(config.autoDetect(csvHeaders));
       setStep("mapping");
     },
-    []
+    [config]
   );
 
-  // Step 2: Mapping change
+  // Mapping change
   const handleMappingChange = useCallback(
-    (index: number, fieldKey: CSVFieldKey | null) => {
+    (index: number, fieldKey: string | null) => {
       setMappings((prev) => {
         const next = [...prev];
         next[index] = { ...next[index], fieldKey };
@@ -138,42 +113,31 @@ export function BulkUserImportWizard({
     []
   );
 
-  // Step 2 → 3: Validate
+  // Step 2 → 3
   const handleValidate = useCallback(() => {
-    const users = applyMappings(rawRows, mappings);
-    setMappedUsers(users);
+    const mapped = config.applyMappings(rawRows, mappings);
+    setMappedData(mapped);
 
     startTransition(async () => {
-      const result = await validateImportData(users);
+      const result = await config.validate(mapped);
       setValidationResult(result);
       setStep("validation");
     });
-  }, [rawRows, mappings]);
+  }, [rawRows, mappings, config]);
 
-  // Step 3 → 4: Import
+  // Step 3 → 4
   const handleImport = useCallback(() => {
     if (!validationResult) return;
 
-    // Only import valid rows (no errors) — Zod validation guarantees required fields
-    const validUsers = validationResult.rows
-      .filter((r) => r.status !== "error")
-      .map((r) => r.data as ParsedUserData);
-
-    // If tier limit exceeded, only take remaining seats (clamp to 0 minimum)
-    const toImport = validationResult.tierLimitExceeded
-      ? validUsers.slice(0, Math.max(0, validationResult.remainingSeats))
-      : validUsers;
-
     startTransition(async () => {
-      const result = await bulkImportUsers(toImport);
+      const result = await config.import(mappedData, validationResult);
       setImportResult(result);
       setStep("complete");
     });
-  }, [validationResult]);
+  }, [validationResult, mappedData, config]);
 
   const canProceedFromMapping =
-    getMissingRequiredFields(mappings).length === 0;
-
+    config.getMissingRequired(mappings).length === 0;
   const canImport =
     validationResult !== null && validationResult.validCount > 0;
 
@@ -181,11 +145,14 @@ export function BulkUserImportWizard({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Import Users from CSV</DialogTitle>
+          <DialogTitle>{config.title}</DialogTitle>
           <DialogDescription>
-            {step === "upload" && "Upload a CSV file with user data"}
-            {step === "mapping" && "Map CSV columns to user fields"}
-            {step === "validation" && "Review validation results before importing"}
+            {step === "upload" &&
+              `Upload a CSV file with ${config.entityName.toLowerCase()} data`}
+            {step === "mapping" &&
+              `Map CSV columns to ${config.entityName.toLowerCase()} fields`}
+            {step === "validation" &&
+              "Review validation results before importing"}
             {step === "complete" && "Import complete"}
           </DialogDescription>
         </DialogHeader>
@@ -207,40 +174,51 @@ export function BulkUserImportWizard({
 
         {/* Step content */}
         <div className="min-h-[300px]">
-          {step === "upload" && <UploadStep onUpload={handleUpload} />}
+          {step === "upload" && (
+            <CsvUploadStep
+              onUpload={handleUpload}
+              maxRows={config.maxRows}
+              templateFilename={config.templateFilename}
+              templateContent={config.templateContent}
+              entityNamePlural={config.entityNamePlural}
+            />
+          )}
           {step === "mapping" && (
-            <MappingStep
+            <CsvMappingStep
               headers={headers}
               mappings={mappings}
               previewRows={rawRows.slice(0, 3)}
+              fieldDefinitions={config.fieldDefinitions}
+              missingRequired={config.getMissingRequired(mappings)}
               onMappingChange={handleMappingChange}
             />
           )}
           {step === "validation" && validationResult && (
-            <ValidationStep validation={validationResult} />
+            <CsvValidationStep
+              validation={validationResult}
+              columns={config.validationColumns}
+              renderExtra={config.renderValidationExtra}
+            />
           )}
           {step === "complete" && importResult && (
-            <CompleteStep result={importResult} />
+            <CsvCompleteStep
+              result={importResult}
+              entityNamePlural={config.entityNamePlural}
+              message={config.completeMessage}
+              columns={config.resultColumns}
+            />
           )}
         </div>
 
         {/* Footer */}
         <DialogFooter className="flex-row justify-between sm:justify-between">
           <div>
-            {step === "mapping" && (
+            {(step === "mapping" || step === "validation") && (
               <Button
                 variant="outline"
-                onClick={() => setStep("upload")}
-                disabled={isPending}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-            )}
-            {step === "validation" && (
-              <Button
-                variant="outline"
-                onClick={() => setStep("mapping")}
+                onClick={() =>
+                  setStep(step === "validation" ? "mapping" : "upload")
+                }
                 disabled={isPending}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
@@ -251,7 +229,11 @@ export function BulkUserImportWizard({
 
           <div className="flex gap-2">
             {step !== "complete" && (
-              <Button variant="outline" onClick={handleClose} disabled={isPending}>
+              <Button
+                variant="outline"
+                onClick={handleClose}
+                disabled={isPending}
+              >
                 Cancel
               </Button>
             )}
@@ -276,7 +258,10 @@ export function BulkUserImportWizard({
             )}
 
             {step === "validation" && (
-              <Button onClick={handleImport} disabled={!canImport || isPending}>
+              <Button
+                onClick={handleImport}
+                disabled={!canImport || isPending}
+              >
                 {isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -285,7 +270,8 @@ export function BulkUserImportWizard({
                 ) : (
                   <>
                     <UploadSimple className="mr-2 h-4 w-4" />
-                    Import {validationResult?.validCount ?? 0} Users
+                    Import {validationResult?.validCount ?? 0}{" "}
+                    {config.entityNamePlural}
                   </>
                 )}
               </Button>

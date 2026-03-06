@@ -23,32 +23,24 @@ export function ManagerDashboardClient({
 }: ManagerDashboardClientProps) {
   const [comparison, setComparison] = useState(initialComparison);
   const [selectedBranch, setSelectedBranch] = useState("all");
-  const [selectedRegion, setSelectedRegion] = useState("all");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   const handleBranchChange = (branch: string) => {
     setSelectedBranch(branch);
-    fetchFilteredData(branch, selectedRegion);
-  };
-
-  const handleRegionChange = (region: string) => {
-    setSelectedRegion(region);
-    fetchFilteredData(selectedBranch, region);
+    fetchFilteredData(branch);
   };
 
   const handleClearFilters = () => {
     setSelectedBranch("all");
-    setSelectedRegion("all");
-    fetchFilteredData("all", "all");
+    fetchFilteredData("all");
   };
 
-  const fetchFilteredData = (branch: string, region: string) => {
+  const fetchFilteredData = (branch: string) => {
     startTransition(async () => {
       try {
         const result = await getUserComparison(
-          branch !== "all" ? branch : undefined,
-          region !== "all" ? region : undefined
+          branch !== "all" ? branch : undefined
         );
         if (result.success && result.data) {
           setComparison(result.data);
@@ -69,9 +61,7 @@ export function ManagerDashboardClient({
         <TeamFilters
           options={filterOptions}
           selectedBranch={selectedBranch}
-          selectedRegion={selectedRegion}
           onBranchChange={handleBranchChange}
-          onRegionChange={handleRegionChange}
           onClearFilters={handleClearFilters}
         />
       </div>

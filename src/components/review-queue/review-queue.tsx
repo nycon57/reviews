@@ -34,8 +34,8 @@ export function ReviewQueueContent() {
     <div className="space-y-6">
       {/* Mode Indicator */}
       {state.isPendingMode && (
-        <div className="flex items-center gap-3 rounded-xl border border-amber-200/50 bg-amber-50/50 px-4 py-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+        <div className="flex items-center gap-3 rounded-xl border border-amber-200/50 bg-amber-50/50 px-4 py-3 dark:border-amber-800/40 dark:bg-amber-950/20">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-950/30">
             <Sparkles className="h-4 w-4 text-amber-600" />
           </div>
           <div>
@@ -64,7 +64,7 @@ export function ReviewQueueContent() {
                   <Icon className={`h-5 w-5 ${stat.color}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                  <p className="text-2xl font-semibold tracking-tight text-heading">
                     {stat.value}
                   </p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -92,7 +92,7 @@ export function ReviewQueueContent() {
                   <Icon className={`h-5 w-5 ${"isStar" in stat ? "fill-yellow-400 text-yellow-400" : "text-repwell-teal-300"}`} />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                  <p className="text-2xl font-semibold tracking-tight text-heading">
                     {stat.value}
                   </p>
                   <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -105,7 +105,7 @@ export function ReviewQueueContent() {
 
       {/* Main Card: Filters + Reviews List + Pagination */}
       <Card className="border border-border shadow-soft overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -131,8 +131,8 @@ export function ReviewQueueContent() {
 
           {/* Bulk Actions */}
           {state.selectedIds.size > 0 && (
-            <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30">
-              <span className="text-sm font-medium text-repwell-teal-500">
+            <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
+              <span className="text-sm font-medium text-heading">
                 {state.selectedIds.size} review{state.selectedIds.size !== 1 ? "s" : ""} selected
               </span>
               {state.isPendingMode ? (
@@ -169,9 +169,9 @@ export function ReviewQueueContent() {
               <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
               <div className="relative">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50">
-                  <AlertCircle className="h-7 w-7 text-repwell-teal-400" />
+                  <AlertCircle className="h-7 w-7 text-label" />
                 </div>
-                <p className="font-medium text-repwell-teal-500">No reviews found</p>
+                <p className="font-medium text-heading">No reviews found</p>
                 <p className="mt-1 text-sm text-repwell-teal-300">
                   {state.filters.statusFilter === "pending"
                     ? "All reviews have been processed!"

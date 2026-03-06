@@ -116,7 +116,7 @@ export function TemplateEditorDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-repwell-teal-500">
+          <DialogTitle className="text-heading">
             {dialogTitle}
           </DialogTitle>
         </DialogHeader>

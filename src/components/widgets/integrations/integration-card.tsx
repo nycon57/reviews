@@ -60,7 +60,7 @@ export function CodeBlock({ code, language }: { code: string; language?: string 
   return (
     <div className="relative group">
       {language && (
-        <span className="absolute top-2 left-3 text-[10px] uppercase tracking-wider text-gray-400 font-mono">
+        <span className="absolute top-2 left-3 text-[10px] uppercase tracking-wider text-muted-foreground font-mono">
           {language}
         </span>
       )}

@@ -7,18 +7,20 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { fadeIn } from "@/lib/motion";
+import { useAuth } from "@/hooks/use-auth";
 import { MobileMenu } from "./mobile-menu";
 import { MegaMenu } from "./mega-menu";
 
 export function MarketingNav() {
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const { isAuthenticated } = useAuth();
 
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -59,16 +61,20 @@ export function MarketingNav() {
 
         {/* Auth Buttons */}
         <div className="hidden items-center gap-3 lg:flex">
-          <Link href="/login">
-            <Button variant="ghost" size="sm" className="font-medium">
-              Sign In
+          {isAuthenticated ? (
+            <Button asChild size="sm">
+              <Link href="/dashboard">Dashboard</Link>
             </Button>
-          </Link>
-          <Link href="/signup">
-            <Button variant="default" size="sm">
-              Get Started
-            </Button>
-          </Link>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm" className="font-medium">
+                <Link href="/login">Sign In</Link>
+              </Button>
+              <Button asChild variant="default" size="sm">
+                <Link href="/signup">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}

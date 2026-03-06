@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  Star,
-  Trophy,
-  Medal,
-  Crown,
-  Shield,
-  Heart,
-  Fire,
-  TrendUp,
-  ThumbsUp,
-  EnvelopeSimple,
-  type IconProps,
-} from "@phosphor-icons/react";
+import { Medal } from "@phosphor-icons/react";
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { getIconOrDefault } from "@/lib/icons/registry";
 import type { Badge, BadgeTier } from "@/lib/gamification/types";
 
 interface BadgeIconProps {
@@ -30,42 +19,26 @@ interface BadgeIconProps {
   className?: string;
 }
 
-type PhosphorIcon = React.ComponentType<IconProps>;
-
-const iconMap: Record<string, PhosphorIcon> = {
-  star: Star,
-  trophy: Trophy,
-  medal: Medal,
-  award: Medal,
-  crown: Crown,
-  shield: Shield,
-  heart: Heart,
-  flame: Fire,
-  "trending-up": TrendUp,
-  "thumbs-up": ThumbsUp,
-  "mail-check": EnvelopeSimple,
-};
-
 const tierColors: Record<BadgeTier, { bg: string; border: string; icon: string }> = {
   bronze: {
-    bg: "bg-gradient-to-br from-amber-100 to-amber-200",
+    bg: "bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-800 dark:to-amber-700",
     border: "border-amber-400/50",
-    icon: "text-amber-700",
+    icon: "text-amber-700 dark:text-amber-300",
   },
   silver: {
-    bg: "bg-gradient-to-br from-gray-100 to-gray-200",
-    border: "border-gray-400/50",
-    icon: "text-gray-600",
+    bg: "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600",
+    border: "border-gray-400/50 dark:border-gray-500/50",
+    icon: "text-muted-foreground",
   },
   gold: {
-    bg: "bg-gradient-to-br from-yellow-100 to-yellow-200",
+    bg: "bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-800 dark:to-yellow-700",
     border: "border-yellow-400/50",
-    icon: "text-yellow-600",
+    icon: "text-yellow-600 dark:text-yellow-300",
   },
   platinum: {
-    bg: "bg-gradient-to-br from-purple-100 to-blue-100",
+    bg: "bg-gradient-to-br from-purple-100 to-blue-100 dark:from-purple-800 dark:to-blue-800",
     border: "border-purple-400/50",
-    icon: "text-purple-600",
+    icon: "text-purple-600 dark:text-purple-300",
   },
 };
 
@@ -95,7 +68,7 @@ export function BadgeIcon({
   isEarned = true,
   className,
 }: BadgeIconProps) {
-  const Icon = iconMap[badge.icon] || Medal;
+  const Icon = getIconOrDefault(badge.icon, Medal);
   const tier = badge.tier || "bronze";
   const colors = tierColors[tier];
   const sizeClasses = sizeConfig[size];
@@ -133,7 +106,7 @@ export function BadgeIcon({
           <div className="text-sm font-medium">{badge.name}</div>
           <div className="text-xs text-muted-foreground">{badge.description}</div>
           {!isEarned && (
-            <div className="text-xs text-amber-600 mt-1">Not yet earned</div>
+            <div className="text-xs text-amber-600 dark:text-amber-400 mt-1">Not yet earned</div>
           )}
         </TooltipContent>
       </Tooltip>

@@ -114,8 +114,8 @@ export const NAV_CONFIG: NavConfig = {
           permission: PERMISSIONS.VIEW_TEAM,
         },
         {
-          title: "Contacts",
-          href: "/dashboard/contacts",
+          title: "Employees",
+          href: "/dashboard/employees",
           icon: "AddressBook",
           permission: PERMISSIONS.VIEW_EX_SURVEYS,
         },

@@ -105,21 +105,12 @@ export async function getEntityProfile(
   const { data, error } = await supabase
     .from("users")
     .select(
-      "full_name, avatar_url, photo_url, nmls_id, title, average_rating, total_reviews, region"
+      "full_name, avatar_url, photo_url, nmls_id, title, average_rating, total_reviews"
     )
     .eq("id", entityId)
     .maybeSingle();
 
   if (error || !data) return null;
-
-  // Parse region as licensing states (comma-separated or array stored in region)
-  let licensingStates: string[] | null = null;
-  if (data.region) {
-    licensingStates = data.region
-      .split(",")
-      .map((s: string) => s.trim())
-      .filter(Boolean);
-  }
 
   return {
     full_name: data.full_name,
@@ -129,7 +120,7 @@ export async function getEntityProfile(
     title: data.title,
     average_rating: data.average_rating,
     total_reviews: data.total_reviews,
-    licensing_states: licensingStates,
+    licensing_states: null,
   };
 }
 

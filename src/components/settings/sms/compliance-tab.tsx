@@ -70,7 +70,7 @@ export function ComplianceTab() {
           <Warning weight="duotone" className="h-7 w-7 text-amber-500" />
         </div>
         <div>
-          <p className="text-lg font-semibold text-repwell-teal-500">SMS not configured</p>
+          <p className="text-lg font-semibold text-heading">SMS not configured</p>
           <p className="text-sm text-muted-foreground mt-1">
             Set up your Twilio credentials in the SMS tab before configuring compliance settings.
           </p>
@@ -83,7 +83,7 @@ export function ComplianceTab() {
     <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-8">
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading tracking-tight">
           SMS Compliance
         </h2>
         <p className="text-repwell-teal-300 mt-1">
@@ -152,7 +152,7 @@ function HealthScoreCard({ score }: { score: ComplianceHealthScore | null }) {
   return (
     <Card className="border-border/50 sticky top-6">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+        <CardTitle className="text-lg text-heading flex items-center gap-2">
           <ShieldCheck weight="duotone" className="h-5 w-5" />
           Compliance Health
         </CardTitle>
@@ -176,7 +176,7 @@ function HealthScoreCard({ score }: { score: ComplianceHealthScore | null }) {
                 ) : (
                   <XCircle weight="fill" className="h-4 w-4 text-red-400 flex-shrink-0" />
                 )}
-                <span className={item.ok ? 'text-repwell-teal-400' : 'text-repwell-teal-300'}>
+                <span className={item.ok ? 'text-label' : 'text-repwell-teal-300'}>
                   {item.label}
                 </span>
               </div>
@@ -194,7 +194,7 @@ function ComplianceInfoCards() {
       description:
         'The TCPA requires prior express written consent before sending marketing SMS. Messages must not be sent during quiet hours (9 PM\u20138 AM local time).',
       badge: 'Federal Law',
-      badgeColor: 'bg-red-50 text-red-600 border-red-200',
+      badgeColor: 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50',
     },
     {
       title: 'CAN-SPAM Compliance',
@@ -220,7 +220,7 @@ function ComplianceInfoCards() {
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
                 <Info weight="duotone" className="h-4 w-4 text-repwell-teal-300 flex-shrink-0" />
-                <h4 className="text-sm font-semibold text-repwell-teal-500">{card.title}</h4>
+                <h4 className="text-sm font-semibold text-heading">{card.title}</h4>
               </div>
               <Badge variant="outline" className={`text-xs ${card.badgeColor} border`}>
                 {card.badge}

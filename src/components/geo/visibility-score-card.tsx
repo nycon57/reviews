@@ -71,7 +71,7 @@ export function VisibilityScoreCard({ score, isLoading }: VisibilityScoreCardPro
     ? "text-green-600"
     : score.scoreChange && score.scoreChange < 0
       ? "text-red-600"
-      : "text-gray-500";
+      : "text-muted-foreground";
 
   return (
     <Card>

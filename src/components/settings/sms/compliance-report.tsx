@@ -89,7 +89,7 @@ export function ComplianceReport() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+            <CardTitle className="text-lg text-heading flex items-center gap-2">
               <ChartBar weight="duotone" className="h-5 w-5" />
               Compliance Report
             </CardTitle>
@@ -113,7 +113,7 @@ export function ComplianceReport() {
         {/* Date Range Picker */}
         <div className="flex items-end gap-3">
           <div className="flex-1">
-            <Label className="text-sm font-medium text-repwell-teal-500">Start date</Label>
+            <Label className="text-sm font-medium text-heading">Start date</Label>
             <div className="relative mt-1.5">
               <CalendarBlank className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
@@ -125,7 +125,7 @@ export function ComplianceReport() {
             </div>
           </div>
           <div className="flex-1">
-            <Label className="text-sm font-medium text-repwell-teal-500">End date</Label>
+            <Label className="text-sm font-medium text-heading">End date</Label>
             <div className="relative mt-1.5">
               <CalendarBlank className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
@@ -150,7 +150,7 @@ export function ComplianceReport() {
           <>
             {report.length === 0 ? (
               <div className="text-center py-10 space-y-2">
-                <div className="mx-auto w-10 h-10 rounded-full bg-repwell-sage-100/50 flex items-center justify-center">
+                <div className="mx-auto w-10 h-10 rounded-full bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center">
                   <ChartBar weight="duotone" className="h-5 w-5 text-repwell-teal-300" />
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -162,17 +162,17 @@ export function ComplianceReport() {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      <TableHead className="text-repwell-teal-500 font-semibold">Date</TableHead>
-                      <TableHead className="text-repwell-teal-500 font-semibold text-right">
+                      <TableHead className="text-heading font-semibold">Date</TableHead>
+                      <TableHead className="text-heading font-semibold text-right">
                         Opted In
                       </TableHead>
-                      <TableHead className="text-repwell-teal-500 font-semibold text-right">
+                      <TableHead className="text-heading font-semibold text-right">
                         Opted Out
                       </TableHead>
-                      <TableHead className="text-repwell-teal-500 font-semibold text-right">
+                      <TableHead className="text-heading font-semibold text-right">
                         Net Change
                       </TableHead>
-                      <TableHead className="text-repwell-teal-500 font-semibold text-right">
+                      <TableHead className="text-heading font-semibold text-right">
                         Compliance Rate
                       </TableHead>
                     </TableRow>
@@ -180,14 +180,14 @@ export function ComplianceReport() {
                   <TableBody>
                     {report.map((row) => (
                       <TableRow key={row.date} className="hover:bg-muted/20">
-                        <TableCell className="text-sm text-repwell-teal-400">
+                        <TableCell className="text-sm text-label">
                           {formatDate(row.date)}
                         </TableCell>
-                        <TableCell className="text-sm text-repwell-teal-400 text-right tabular-nums">
+                        <TableCell className="text-sm text-label text-right tabular-nums">
                           {row.optedIn}
                         </TableCell>
                         <TableCell className="text-sm text-right tabular-nums">
-                          <span className={row.optedOut > 0 ? 'text-red-500' : 'text-repwell-teal-400'}>
+                          <span className={row.optedOut > 0 ? 'text-red-500' : 'text-label'}>
                             {row.optedOut}
                           </span>
                         </TableCell>
@@ -198,7 +198,7 @@ export function ComplianceReport() {
                                 ? 'text-repwell-sage-200'
                                 : row.netChange < 0
                                   ? 'text-red-500'
-                                  : 'text-repwell-teal-400'
+                                  : 'text-label'
                             }
                           >
                             {row.netChange > 0 ? '+' : ''}
@@ -213,7 +213,7 @@ export function ComplianceReport() {
                                 ? 'bg-repwell-sage-200/10 text-repwell-sage-200 border-repwell-sage-200/30'
                                 : row.complianceRate >= 70
                                   ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                  : 'bg-red-50 text-red-600 border-red-200'
+                                  : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50'
                             }
                           >
                             {row.complianceRate}%

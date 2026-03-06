@@ -70,7 +70,7 @@ export function RecentMentions({ mentions, isLoading, onViewAll }: RecentMention
       case 'negative':
         return <ThumbsDown className="h-3 w-3 text-red-500" />;
       default:
-        return <Minus className="h-3 w-3 text-gray-500" />;
+        return <Minus className="h-3 w-3 text-muted-foreground" />;
     }
   };
 
@@ -81,7 +81,7 @@ export function RecentMentions({ mentions, isLoading, onViewAll }: RecentMention
       case 'negative':
         return 'text-red-700 bg-red-50';
       default:
-        return 'text-gray-700 bg-gray-50';
+        return 'text-foreground bg-muted';
     }
   };
 

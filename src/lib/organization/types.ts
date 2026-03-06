@@ -41,6 +41,23 @@ export const organizationFeaturesSchema = z.object({
 });
 export type OrganizationFeatures = z.infer<typeof organizationFeaturesSchema>;
 
+// Integration management
+export const INTEGRATION_KEYS = ["google", "social", "slack", "teams"] as const;
+export type IntegrationKey = (typeof INTEGRATION_KEYS)[number];
+
+export const integrationConfigSchema = z.object({
+  enabled: z.boolean(),
+});
+export type IntegrationConfig = z.infer<typeof integrationConfigSchema>;
+
+export const orgIntegrationsSchema = z.object({
+  google: integrationConfigSchema.optional(),
+  social: integrationConfigSchema.optional(),
+  slack: integrationConfigSchema.optional(),
+  teams: integrationConfigSchema.optional(),
+});
+export type OrgIntegrations = z.infer<typeof orgIntegrationsSchema>;
+
 // Full organization schema
 export const organizationSchema = z.object({
   id: z.string().uuid(),
@@ -48,6 +65,8 @@ export const organizationSchema = z.object({
   slug: z.string().min(1, "Organization slug is required"),
   domain: z.string().nullable().optional(),
   logo_url: z.string().url().nullable().optional(),
+  avatar_url: z.string().url().nullable().optional(),
+  banner_url: z.string().url().nullable().optional(),
   primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").default("#3B82F6"),
   secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").default("#1E40AF"),
   font_family: z.string().default("Inter"),
@@ -104,6 +123,8 @@ export type UpdateOrganizationSettings = z.infer<typeof updateOrganizationSettin
 // Update organization branding schema
 export const updateOrganizationBrandingSchema = z.object({
   logo_url: z.string().url("Invalid URL").nullable().optional(),
+  avatar_url: z.string().url("Invalid URL").nullable().optional(),
+  banner_url: z.string().url("Invalid URL").nullable().optional(),
   primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").optional(),
   secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").optional(),
   font_family: z.string().optional(),
@@ -171,7 +192,6 @@ export interface OrganizationMemberFull {
   twitter_url: string | null;
   timezone: string | null;
   branch_id: string | null;
-  region: string | null;
   role: "admin" | "manager" | "user";
   is_active: boolean;
   is_owner: boolean;

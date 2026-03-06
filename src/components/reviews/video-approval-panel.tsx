@@ -88,7 +88,7 @@ export function VideoApprovalPanel({ video, canManage, onAction }: VideoApproval
                 <Button
                   variant="outline"
                   onClick={() => onAction("request_changes")}
-                  className="w-full gap-2 border-amber-500/50 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+                  className="w-full gap-2 border-amber-500/50 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-700"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Request Changes
@@ -96,7 +96,7 @@ export function VideoApprovalPanel({ video, canManage, onAction }: VideoApproval
                 <Button
                   variant="outline"
                   onClick={() => onAction("reject")}
-                  className="w-full gap-2 border-[#c47c7c]/50 text-[#c47c7c] hover:bg-red-50 hover:text-[#c47c7c]"
+                  className="w-full gap-2 border-[#c47c7c]/50 text-[#c47c7c] hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-[#c47c7c]"
                 >
                   <ThumbsDown className="h-4 w-4" />
                   Reject

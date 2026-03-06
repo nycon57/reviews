@@ -23,7 +23,7 @@ export type EXSurveyFrequency = "once" | "weekly" | "monthly" | "quarterly" | "a
 export type EXSurveyStatus = "draft" | "scheduled" | "active" | "closed" | "archived";
 export type TenureRange = "0-6months" | "6-12months" | "1-2years" | "2-5years" | "5-10years" | "10+years";
 
-/** @deprecated Use contacts.department (free-text) instead. See getContactDepartments() in @/lib/contacts/actions. */
+/** @deprecated Use employees.department (free-text) instead. See getEmployeeDepartments() in @/lib/employees/actions. */
 export interface Department {
   id: string;
   organizationId: string;

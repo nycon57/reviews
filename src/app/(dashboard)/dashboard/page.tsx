@@ -127,7 +127,8 @@ function FullProfileCompletionCard() {
 
 export default async function DashboardPage() {
   const userResult = await getCurrentUser();
-  const userName = userResult.success ? userResult.data?.fullName : null;
+  const user = userResult.success ? userResult.data : null;
+  const userName = user?.fullName ?? null;
 
   return (
     <DashboardEntrance className="flex-1 space-y-8">
@@ -140,7 +141,7 @@ export default async function DashboardPage() {
       </Suspense>
 
       {/* Quick Actions */}
-      <UserQuickActions />
+      <UserQuickActions profileSlug={user?.slug ?? null} userName={userName} />
 
       {/* Charts grid */}
       <section>
@@ -148,7 +149,7 @@ export default async function DashboardPage() {
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <TrendUp className="h-4 w-4 text-repwell-teal-300" />
           </div>
-          <h2 className="text-heading-sm font-semibold text-repwell-teal-500">
+          <h2 className="text-heading-sm font-semibold text-heading-accent">
             Performance Trends
           </h2>
         </div>

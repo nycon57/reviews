@@ -25,7 +25,7 @@ function highlightJson(json: string): ReactNode[] {
   while ((match = regex.exec(json)) !== null) {
     if (match.index > lastIndex) {
       parts.push(
-        <span key={`t${i++}`} className="text-gray-500">
+        <span key={`t${i++}`} className="text-muted-foreground">
           {json.slice(lastIndex, match.index)}
         </span>
       );
@@ -62,7 +62,7 @@ function highlightJson(json: string): ReactNode[] {
 
   if (lastIndex < json.length) {
     parts.push(
-      <span key={`e${i++}`} className="text-gray-500">
+      <span key={`e${i++}`} className="text-muted-foreground">
         {json.slice(lastIndex)}
       </span>
     );
@@ -115,13 +115,13 @@ export function StructuredDataPreview({ data }: StructuredDataPreviewProps) {
             JSON-LD Structured Data
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-gray-500 font-mono">
+            <span className="text-[10px] text-muted-foreground font-mono">
               application/ld+json
             </span>
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-gray-400 hover:text-white hover:bg-gray-800"
+              className="h-7 px-2 text-muted-foreground hover:text-white hover:bg-gray-800"
               onClick={handleCopy}
             >
               {copied ? <Check size={14} /> : <Copy size={14} />}
@@ -137,13 +137,13 @@ export function StructuredDataPreview({ data }: StructuredDataPreviewProps) {
       </Card>
 
       {/* Embed note */}
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardContent className="p-4">
           <p className="text-xs text-muted-foreground mb-2 font-medium">
             This structured data is automatically injected by the embed script
             when loaded on your website. No manual installation needed.
           </p>
-          <code className="text-xs text-repwell-teal-400 bg-repwell-sage-100/30 px-2 py-1 rounded font-mono">
+          <code className="text-xs text-label bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 px-2 py-1 rounded font-mono">
             {'<script type="application/ld+json">...</script>'}
           </code>
         </CardContent>

@@ -268,7 +268,7 @@ export function EXTemplateBuilder({ template, mode }: EXTemplateBuilderProps) {
             <ArrowLeft weight="bold" size={20} />
           </Button>
           <div>
-            <h1 className="font-display text-2xl font-bold text-repwell-teal-500">
+            <h1 className="font-display text-2xl font-bold text-heading">
               {mode === "create" ? "Create Template" : "Edit Template"}
             </h1>
             <p className="font-sans text-sm text-muted-foreground">
@@ -720,7 +720,7 @@ export function EXTemplateBuilder({ template, mode }: EXTemplateBuilderProps) {
                   </div>
 
                   <div className="border-t pt-4 space-y-4">
-                    <h4 className="font-medium text-repwell-teal-500">Reminder Settings</h4>
+                    <h4 className="font-medium text-heading">Reminder Settings</h4>
 
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">

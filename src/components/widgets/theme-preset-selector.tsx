@@ -110,15 +110,15 @@ export function ThemePresetSelector({ value, onChange }: ThemePresetSelectorProp
               transition-all duration-200
               ${
                 isSelected
-                  ? "border-repwell-teal-300 ring-2 ring-repwell-teal-300/20 bg-repwell-sage-100/20"
-                  : "border-border bg-white hover:border-repwell-sage-200 hover:shadow-sm"
+                  ? "border-repwell-teal-300 ring-2 ring-repwell-teal-300/20 bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10"
+                  : "border-border bg-card hover:border-repwell-sage-200 hover:shadow-sm"
               }
             `}
           >
             <PresetThumbnail preset={preset} presetKey={key} />
             <span
               className={`text-xs font-medium ${
-                isSelected ? "text-repwell-teal-300" : "text-repwell-teal-500"
+                isSelected ? "text-repwell-teal-300" : "text-heading"
               }`}
             >
               {preset.label}

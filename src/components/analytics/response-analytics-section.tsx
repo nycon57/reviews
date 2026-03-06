@@ -35,9 +35,9 @@ export function getResponseTimeLabel(hours: number): string {
 
 /** Return a Tailwind color class based on response time */
 export function getResponseTimeColor(hours: number): string {
-  if (hours < GOOD_RESPONSE_TIME_HOURS) return "text-green-600";
-  if (hours < WARNING_RESPONSE_TIME_HOURS) return "text-yellow-600";
-  return "text-red-600";
+  if (hours < GOOD_RESPONSE_TIME_HOURS) return "text-green-600 dark:text-green-400";
+  if (hours < WARNING_RESPONSE_TIME_HOURS) return "text-yellow-600 dark:text-yellow-400";
+  return "text-red-600 dark:text-red-400";
 }
 
 export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
@@ -64,7 +64,7 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
             <Chats className="h-5 w-5 text-repwell-teal-300" />
           </div>
           <div>
-            <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{analytics.totalResponses}</p>
+            <p className="text-2xl font-semibold tracking-tight text-heading">{analytics.totalResponses}</p>
             <p className="text-xs text-muted-foreground">Total Responses</p>
             <p className="text-xs text-muted-foreground">Responses sent to customers</p>
           </div>
@@ -75,7 +75,7 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
             <TrendUp className="h-5 w-5 text-repwell-teal-300" />
           </div>
           <div className="flex-1">
-            <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{analytics.responseRate}%</p>
+            <p className="text-2xl font-semibold tracking-tight text-heading">{analytics.responseRate}%</p>
             <p className="text-xs text-muted-foreground">Response Rate</p>
             <p className="text-xs text-muted-foreground">Of reviews have responses</p>
             <Progress value={analytics.responseRate} className="mt-2" aria-label="Response rate" aria-valuetext={`${analytics.responseRate}%`} />
@@ -100,7 +100,7 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
             <CheckCircle className="h-5 w-5 text-repwell-teal-300" />
           </div>
           <div>
-            <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+            <p className="text-2xl font-semibold tracking-tight text-heading">
               {analytics.pendingApprovals}
               {analytics.pendingApprovals > 0 && (
                 <Badge variant="secondary" className="ml-2 text-xs">Needs attention</Badge>
@@ -115,7 +115,7 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
       {/* Platform and AI Usage */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <ChartBar className="h-5 w-5 text-repwell-teal-300" />
@@ -145,7 +145,7 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
                       </div>
                       <div className="h-2 bg-muted rounded-full overflow-hidden">
                         <div
-                          className={`h-full ${colors[platform] || "bg-gray-500"}`}
+                          className={`h-full ${colors[platform] || "bg-muted-foreground"}`}
                           style={{ width: `${percentage}%` }}
                           role="progressbar"
                           aria-valuenow={percentage}
@@ -164,7 +164,7 @@ export const ResponseAnalyticsSection = memo(function ResponseAnalyticsSection({
         </Card>
 
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Sparkle className="h-5 w-5 text-repwell-teal-300" />

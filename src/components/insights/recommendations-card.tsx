@@ -23,17 +23,17 @@ interface RecommendationsCardProps {
 
 const priorityConfig = {
   high: {
-    badge: "bg-red-100 text-red-800",
+    badge: "bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400",
     icon: AlertTriangle,
     label: "High Priority",
   },
   medium: {
-    badge: "bg-amber-100 text-amber-800",
+    badge: "bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400",
     icon: Lightbulb,
     label: "Medium Priority",
   },
   low: {
-    badge: "bg-green-100 text-green-800",
+    badge: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400",
     icon: CheckSquare,
     label: "Opportunity",
   },
@@ -43,7 +43,7 @@ export function RecommendationsCard({ data }: RecommendationsCardProps) {
   if (data.length === 0) {
     return (
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Lightbulb className="h-5 w-5 text-repwell-teal-300" />
@@ -60,7 +60,7 @@ export function RecommendationsCard({ data }: RecommendationsCardProps) {
               <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Lightbulb className="h-7 w-7 text-repwell-teal-300" />
               </div>
-              <p className="text-sm font-medium text-repwell-teal-500">No recommendations available</p>
+              <p className="text-sm font-medium text-heading">No recommendations available</p>
               <p className="mt-1 text-xs">Collect more feedback to generate suggestions</p>
             </div>
           </div>
@@ -77,7 +77,7 @@ export function RecommendationsCard({ data }: RecommendationsCardProps) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Lightbulb className="h-5 w-5 text-repwell-teal-300" />

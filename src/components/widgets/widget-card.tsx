@@ -58,18 +58,18 @@ export function WidgetCard({ widget }: WidgetCardProps) {
 
   return (
     <div
-      className="group relative bg-white border border-border rounded-xl p-5 shadow-sm
+      className="group relative bg-card border border-border rounded-xl p-5 shadow-sm
         hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
     >
       {/* Top row: icon */}
       <div className="flex items-start mb-3">
-        <div className="w-10 h-10 rounded-lg bg-repwell-sage-100/50 flex items-center justify-center text-repwell-teal-400">
+        <div className="w-10 h-10 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center text-label">
           <Icon size={20} />
         </div>
       </div>
 
       {/* Type label */}
-      <h3 className="text-sm font-semibold text-repwell-teal-500 truncate mb-1">
+      <h3 className="text-sm font-semibold text-heading truncate mb-1">
         {typeLabel}
       </h3>
 

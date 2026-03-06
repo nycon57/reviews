@@ -1,7 +1,6 @@
 // CSV field definitions for bulk branch import
 export const BRANCH_CSV_FIELDS = [
   { key: "name", label: "Branch Name", required: true },
-  { key: "region", label: "Region", required: false },
   { key: "phone", label: "Phone", required: false },
   { key: "email", label: "Email", required: false },
   { key: "description", label: "Description", required: false },
@@ -26,7 +25,6 @@ export interface ParsedCSVRow {
 // Mapped branch data ready for validation
 export interface ParsedBranchData {
   name: string;
-  region?: string;
   phone?: string;
   email?: string;
   description?: string;
@@ -65,7 +63,6 @@ export interface ValidateBranchImportResponse {
 // Per-branch import result
 export interface BranchImportResult {
   name: string;
-  region?: string;
   success: boolean;
   error?: string;
 }

@@ -9,7 +9,6 @@ export const CSV_FIELDS = [
   { key: "branch_name", label: "Branch Name", required: false },
   { key: "manager_email", label: "Manager Email", required: false },
   { key: "hire_date", label: "Hire Date", required: false },
-  { key: "region", label: "Region", required: false },
 ] as const;
 
 export type CSVFieldKey = (typeof CSV_FIELDS)[number]["key"];
@@ -34,7 +33,6 @@ export interface ParsedUserData {
   branch_name?: string;
   manager_email?: string;
   hire_date?: string;
-  region?: string;
 }
 
 // Field mapping: CSV header → our field key

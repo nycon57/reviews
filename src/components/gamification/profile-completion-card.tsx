@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -105,8 +105,8 @@ export function ProfileCompletionCard({
   if (isLoading) {
     return (
       <Card className={cn("shadow-soft", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Target className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -138,19 +138,16 @@ export function ProfileCompletionCard({
   }
 
   const getScoreColor = (percentage: number) => {
-    if (percentage >= 80) return "text-green-600";
+    if (percentage >= 80) return "text-green-600 dark:text-green-400";
     if (percentage >= 50) return "text-yellow-600";
     return "text-orange-600";
   };
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return "bg-green-500";
-    if (percentage >= 50) return "bg-yellow-500";
-    return "bg-orange-500";
-  };
+  /** Smooth hue from red (0) → green (120) based on percentage */
+  const getProgressHue = (pct: number) => Math.round((Math.min(pct, 100) / 100) * 120);
 
   const getSearchRankLabel = (score: number) => {
-    if (score >= 750) return { label: "Excellent", color: "text-green-600" };
+    if (score >= 750) return { label: "Excellent", color: "text-green-600 dark:text-green-400" };
     if (score >= 600) return { label: "Good", color: "text-blue-600" };
     if (score >= 400) return { label: "Fair", color: "text-yellow-600" };
     return { label: "Needs Work", color: "text-orange-600" };
@@ -162,9 +159,9 @@ export function ProfileCompletionCard({
 
   return (
     <Card className={cn("shadow-soft", className)}>
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+      <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+          <div className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Target className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -210,24 +207,26 @@ export function ProfileCompletionCard({
           {/* Score Details */}
           <div className="flex-1 space-y-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-repwell-teal-500">
+              <span className="text-2xl font-bold text-heading">
                 {data.earnedPoints}
               </span>
-              <span className="text-sm text-repwell-teal-400">
+              <span className="text-sm text-repwell-teal-400 dark:text-repwell-sage-100/80">
                 / {data.totalPoints} points
               </span>
             </div>
 
             <Progress
               value={data.percentage}
-              className={cn("h-2", getProgressColor(data.percentage))}
+              className="h-2"
+              indicatorClassName="!bg-[var(--progress-fill)]"
+              indicatorStyle={{ "--progress-fill": `hsl(${getProgressHue(data.percentage)} 65% 45%)` } as CSSProperties}
             />
 
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1.5">
                 <Star className="h-4 w-4 text-yellow-500" />
-                <span className="font-medium text-repwell-teal-500">{data.searchRankScore}</span>
-                <span className="text-repwell-teal-400">/ 850</span>
+                <span className="font-medium text-heading-accent">{data.searchRankScore}</span>
+                <span className="text-label">/ 850</span>
               </div>
               <span className={cn("font-medium", searchRank.color)}>
                 {searchRank.label}
@@ -240,8 +239,8 @@ export function ProfileCompletionCard({
         {showMilestones && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-repwell-teal-500">Milestones</span>
-              <span className="text-repwell-teal-400">
+              <span className="font-medium text-heading-accent">Milestones</span>
+              <span className="text-label">
                 {earnedMilestones.length} / {data.milestones.length} achieved
               </span>
             </div>
@@ -271,7 +270,7 @@ export function ProfileCompletionCard({
                           </p>
                           <p className="text-xs mt-1">
                             {milestone.achieved ? (
-                              <span className="text-green-600">+{milestone.bonusPoints} bonus points earned!</span>
+                              <span className="text-green-600 dark:text-green-400">+{milestone.bonusPoints} bonus points earned!</span>
                             ) : (
                               <span>+{milestone.bonusPoints} bonus points</span>
                             )}
@@ -284,8 +283,8 @@ export function ProfileCompletionCard({
               })}
             </div>
             {nextMilestone && (
-              <p className="text-xs text-repwell-teal-400">
-                Next: <span className="font-medium text-repwell-teal-500">{nextMilestone.name}</span> at{" "}
+              <p className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
+                Next: <span className="font-medium text-heading-accent">{nextMilestone.name}</span> at{" "}
                 {nextMilestone.threshold}% completion
               </p>
             )}
@@ -295,7 +294,7 @@ export function ProfileCompletionCard({
         {/* Section Breakdown */}
         {showSections && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium text-repwell-teal-500">Profile Sections</h4>
+            <h4 className="text-sm font-medium text-heading-accent">Profile Sections</h4>
             <div className="space-y-1.5">
               {data.sections.map((section) => (
                 <SectionRow
@@ -314,13 +313,13 @@ export function ProfileCompletionCard({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-yellow-500" />
-              <h4 className="text-sm font-medium text-repwell-teal-500">Quick Wins</h4>
+              <h4 className="text-sm font-medium text-heading-accent">Quick Wins</h4>
             </div>
             <div className="space-y-1.5">
               {data.nextActions.slice(0, 3).map((tip) => (
                 <div
                   key={tip.field.id}
-                  className="flex items-center justify-between rounded-md bg-repwell-sage-100/20 px-3 py-2"
+                  className="flex items-center justify-between rounded-md bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 px-3 py-2"
                 >
                   <div className="flex items-center gap-2">
                     <TrendingUp
@@ -333,7 +332,7 @@ export function ProfileCompletionCard({
                             : "text-muted-foreground"
                       )}
                     />
-                    <span className="text-sm text-repwell-teal-500">{tip.field.label}</span>
+                    <span className="text-sm text-heading">{tip.field.label}</span>
                   </div>
                   <Badge variant="secondary" className="text-xs">
                     +{tip.impact} pts
@@ -369,12 +368,12 @@ function SectionRow({
   return (
     <Collapsible open={isExpanded} onOpenChange={onToggle}>
       <CollapsibleTrigger className="w-full">
-        <div className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-repwell-sage-100/20 transition-colors">
+        <div className="flex items-center gap-3 rounded-md px-3 py-2 hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 transition-colors">
           <div
             className={cn(
               "h-8 w-8 rounded-full flex items-center justify-center",
               section.completed
-                ? "bg-green-100 text-green-600"
+                ? "bg-green-100 dark:bg-green-950/30 text-green-600 dark:text-green-400"
                 : "bg-muted text-muted-foreground"
             )}
           >
@@ -382,9 +381,9 @@ function SectionRow({
           </div>
           <div className="flex-1 text-left">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-repwell-teal-500">{section.section.name}</span>
+              <span className="text-sm font-medium text-heading-accent">{section.section.name}</span>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-repwell-teal-400">
+                <span className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
                   {section.earnedPoints}/{section.maxPoints} pts
                 </span>
                 {isExpanded ? (
@@ -414,8 +413,8 @@ function SectionRow({
                 <span
                   className={cn(
                     fieldStatus.completed
-                      ? "text-repwell-teal-400 line-through"
-                      : "text-repwell-teal-500"
+                      ? "text-label line-through"
+                      : "text-heading"
                   )}
                 >
                   {fieldStatus.field.label}
@@ -424,7 +423,7 @@ function SectionRow({
               <span
                 className={cn(
                   "text-xs",
-                  fieldStatus.completed ? "text-green-600" : "text-repwell-teal-400"
+                  fieldStatus.completed ? "text-green-600 dark:text-green-400" : "text-repwell-teal-400"
                 )}
               >
                 {fieldStatus.completed ? "+" : ""}
@@ -485,12 +484,12 @@ export function ProfileCompletionWidget({
         >
           {data.percentage}
         </div>
-        <span className="text-repwell-teal-400">profile</span>
+        <span className="text-label">profile</span>
       </div>
       <div className="flex items-center gap-1.5">
         <Star className="h-4 w-4 text-yellow-500" />
-        <span className="font-medium text-repwell-teal-500">{data.searchRankScore}</span>
-        <span className="text-xs text-repwell-teal-400">rank</span>
+        <span className="font-medium text-heading-accent">{data.searchRankScore}</span>
+        <span className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">rank</span>
       </div>
     </div>
   );

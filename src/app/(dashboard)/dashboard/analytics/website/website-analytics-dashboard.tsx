@@ -103,7 +103,7 @@ function StatCard({ title, value, subtitle, icon, trend }: StatCardProps) {
               <p className="text-xs text-muted-foreground">{subtitle}</p>
             )}
           </div>
-          <div className="rounded-lg bg-repwell-sage-100 p-2">
+          <div className="rounded-lg bg-surface-soft p-2">
             {icon}
           </div>
         </div>
@@ -355,7 +355,7 @@ function SEORecommendationsList({ recommendations }: { recommendations: WebsiteS
   return (
     <div className="space-y-2">
       {recommendations.slice(0, 5).map((rec) => (
-        <div key={rec.id} className="flex items-start gap-3 p-3 rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/30">
+        <div key={rec.id} className="flex items-start gap-3 p-3 rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
           <div className="rounded-full bg-repwell-teal-300/10 p-1">
             <TrendingUp className="h-4 w-4 text-repwell-teal-300" />
           </div>

@@ -94,7 +94,7 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+            <CardTitle className="text-lg text-heading flex items-center gap-2">
               <Clock weight="duotone" className="h-5 w-5" />
               Quiet Hours
             </CardTitle>
@@ -114,7 +114,7 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
           {/* Time Range */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-sm font-medium text-repwell-teal-500">Start time</Label>
+              <Label className="text-sm font-medium text-heading">Start time</Label>
               <Select value={startTime} onValueChange={setStartTime}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select start time" />
@@ -129,7 +129,7 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
               </Select>
             </div>
             <div>
-              <Label className="text-sm font-medium text-repwell-teal-500">End time</Label>
+              <Label className="text-sm font-medium text-heading">End time</Label>
               <Select value={endTime} onValueChange={setEndTime}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue placeholder="Select end time" />
@@ -147,7 +147,7 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
 
           {/* Timezone */}
           <div className="mt-4">
-            <Label className="text-sm font-medium text-repwell-teal-500">Timezone</Label>
+            <Label className="text-sm font-medium text-heading">Timezone</Label>
             <Select value={timezone} onValueChange={setTimezone}>
               <SelectTrigger className="mt-1.5">
                 <SelectValue placeholder="Select timezone" />
@@ -163,9 +163,9 @@ export function QuietHoursForm({ settings, onSaved }: QuietHoursFormProps) {
           </div>
 
           {/* Recipient Timezone Toggle */}
-          <div className="mt-4 flex items-center justify-between gap-3 p-3 rounded-lg bg-repwell-sage-100/20">
+          <div className="mt-4 flex items-center justify-between gap-3 p-3 rounded-lg bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10">
             <div className="flex items-center gap-2">
-              <Label htmlFor="use-recipient-tz" className="text-sm text-repwell-teal-400 cursor-pointer">
+              <Label htmlFor="use-recipient-tz" className="text-sm text-label cursor-pointer">
                 Use recipient&apos;s timezone
               </Label>
               <TooltipProvider>

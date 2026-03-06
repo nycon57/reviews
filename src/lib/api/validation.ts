@@ -77,7 +77,6 @@ export const createBranchSchema = z.object({
   manager_id: z.string().uuid().optional(),
   manager_name: z.string().max(200).optional(),
   manager_email: emailSchema.optional(),
-  region: z.string().max(100).optional(),
 });
 
 export const updateBranchSchema = z.object({
@@ -89,7 +88,6 @@ export const updateBranchSchema = z.object({
   manager_id: z.string().uuid().optional().nullable(),
   manager_name: z.string().max(200).optional().nullable(),
   manager_email: emailSchema.optional().nullable(),
-  region: z.string().max(100).optional().nullable(),
   is_active: z.boolean().optional(),
 });
 
@@ -186,7 +184,6 @@ export const reviewFiltersSchema = z.object({
 
 export const branchFiltersSchema = z.object({
   is_active: z.enum(['true', 'false']).optional(),
-  region: z.string().max(100).optional(),
   search: z.string().max(200).optional(),
 });
 

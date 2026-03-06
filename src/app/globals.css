@@ -81,7 +81,76 @@
     --sidebar-accent: 133 17% 90%;
     --sidebar-accent-foreground: 201 20% 23%;
     --sidebar-border: 97 14% 85%;
-    --sidebar-ring: 165 19% 40%;
+
+    /* Semantic tokens — headings, labels, surfaces */
+    --heading: 201 20% 23%;
+    --heading-accent: 201 20% 23%;
+    --label: 186 21% 33%;
+    --surface-soft: 97 14% 80%;
+    --surface-subtle: 97 14% 80%;
+  }
+
+  .dark {
+    /* Surfaces — teal-tinted layers, not generic gray */
+    --background: 195 21% 11%;
+    --foreground: 97 8% 92%;
+
+    --card: 195 18% 14%;
+    --card-foreground: 97 8% 92%;
+
+    --popover: 195 18% 14%;
+    --popover-foreground: 97 8% 92%;
+
+    /* Primary: teal-300 lifted for dark bg visibility */
+    --primary: 165 22% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: muted teal layer */
+    --secondary: 195 15% 20%;
+    --secondary-foreground: 97 8% 85%;
+
+    /* Muted: subtle teal surface */
+    --muted: 195 15% 18%;
+    --muted-foreground: 165 8% 65%;
+
+    /* Accent: sage-200 adjusted for dark */
+    --accent: 133 15% 32%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Borders & inputs — visible teal-tinted dividers */
+    --border: 195 12% 26%;
+    --input: 195 12% 26%;
+    --ring: 165 22% 48%;
+
+    --success: 165 22% 48%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 0 0% 10%;
+    --info: 201 25% 52%;
+    --info-foreground: 0 0% 100%;
+
+    /* Charts — lifted for dark readability */
+    --chart-1: 165 22% 52%;
+    --chart-2: 133 20% 52%;
+    --chart-3: 186 21% 42%;
+    --chart-4: 201 25% 52%;
+    --chart-5: 97 14% 48%;
+
+    /* Sidebar — darkest layer (visual anchoring) */
+    --sidebar-background: 195 22% 9%;
+    --sidebar-foreground: 97 8% 92%;
+    --sidebar-primary: 165 22% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 195 15% 16%;
+    --sidebar-accent-foreground: 97 8% 92%;
+    --sidebar-border: 195 12% 20%;
+
+    /* Semantic tokens — dark overrides */
+    --heading: 97 8% 92%;
+    --heading-accent: 97 10% 88%;
+    --label: 165 8% 65%;
+    --surface-soft: 195 15% 20%;
+    --surface-subtle: 195 15% 18%;
   }
 }
 

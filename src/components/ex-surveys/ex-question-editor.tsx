@@ -144,7 +144,7 @@ export function EXQuestionEditor({
 
           {/* Question number and type icon */}
           <div className="flex items-center gap-2 mt-1">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-repwell-sage-100/50 text-xs font-semibold text-repwell-teal-400">
+            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-xs font-semibold text-label">
               {index + 1}
             </span>
             {questionTypeIcons[question.type]}
@@ -162,7 +162,7 @@ export function EXQuestionEditor({
             ) : (
               <button
                 onClick={() => setIsExpanded(true)}
-                className="w-full text-left font-medium text-repwell-teal-500 truncate hover:text-repwell-teal-400"
+                className="w-full text-left font-medium text-heading truncate hover:text-repwell-teal-400 dark:hover:text-muted-foreground"
               >
                 {question.text || "Untitled question"}
               </button>
@@ -207,7 +207,7 @@ export function EXQuestionEditor({
           {/* Question Type and Required */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label className="text-sm font-medium text-repwell-teal-500">
+              <Label className="text-sm font-medium text-heading">
                 Question Type
               </Label>
               <Select
@@ -231,7 +231,7 @@ export function EXQuestionEditor({
             </div>
 
             <div className="flex items-center justify-between sm:justify-start gap-3 pt-6">
-              <Label htmlFor={`required-${question.id}`} className="text-sm font-medium text-repwell-teal-500">
+              <Label htmlFor={`required-${question.id}`} className="text-sm font-medium text-heading">
                 Required
               </Label>
               <Switch
@@ -244,7 +244,7 @@ export function EXQuestionEditor({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium text-repwell-teal-500">
+            <Label className="text-sm font-medium text-heading">
               Description (optional)
             </Label>
             <Textarea
@@ -258,7 +258,7 @@ export function EXQuestionEditor({
           {/* Type-specific configuration */}
           {(question.type === "rating" || question.type === "nps") && (
             <div className="space-y-3 rounded-lg border border-border p-4 bg-background-subtle">
-              <Label className="text-sm font-medium text-repwell-teal-500">
+              <Label className="text-sm font-medium text-heading">
                 Scale Labels
               </Label>
               <div className="space-y-2">
@@ -325,14 +325,14 @@ export function EXQuestionEditor({
           {(question.type === "single_choice" || question.type === "multiple_choice") && (
             <div className="space-y-3 rounded-lg border border-border p-4 bg-background-subtle">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium text-repwell-teal-500">
+                <Label className="text-sm font-medium text-heading">
                   Answer Options
                 </Label>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleAddOption}
-                  className="h-8 text-repwell-teal-300 hover:text-repwell-teal-400"
+                  className="h-8 text-repwell-teal-300 hover:text-repwell-teal-400 dark:hover:text-muted-foreground"
                 >
                   <Plus weight="bold" size={16} className="mr-1" />
                   Add Option

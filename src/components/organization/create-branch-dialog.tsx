@@ -32,7 +32,6 @@ import { createBranch } from "@/lib/branches/actions";
 
 const createBranchFormSchema = z.object({
   name: z.string().min(1, "Branch name is required").max(200),
-  region: z.string().max(100).optional(),
   phone: z.string().max(30).optional(),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   description: z.string().max(2000).optional(),
@@ -58,7 +57,6 @@ export function CreateBranchDialog({
     resolver: zodResolver(createBranchFormSchema),
     defaultValues: {
       name: "",
-      region: "",
       phone: "",
       email: "",
       description: "",
@@ -75,7 +73,6 @@ export function CreateBranchDialog({
     startTransition(async () => {
       const result = await createBranch({
         name: data.name,
-        region: data.region || undefined,
         phone: data.phone || undefined,
         email: data.email || undefined,
         description: data.description || undefined,
@@ -119,20 +116,6 @@ export function CreateBranchDialog({
                   <FormLabel>Branch Name *</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g. Downtown Office" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="region"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Region</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. Northeast" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

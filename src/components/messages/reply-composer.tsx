@@ -87,7 +87,7 @@ export function ReplyComposer({
   }
 
   return (
-    <div className="border-t border-border bg-white flex-shrink-0">
+    <div className="border-t border-border bg-card flex-shrink-0">
       {/* Error banner */}
       {error && (
         <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-700 text-xs">

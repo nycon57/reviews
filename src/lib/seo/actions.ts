@@ -24,7 +24,6 @@ export interface PublicBranch {
   google_maps_url: string | null;
   photo_url: string | null;
   cover_image_url: string | null;
-  region: string | null;
   average_rating: number | null;
   total_reviews: number | null;
   total_members: number | null;
@@ -101,7 +100,6 @@ export interface PublicProfessionalListItem {
   email: string | null;
   phone: string | null;
   branch: string | null;
-  region: string | null;
   nmls_id: string | null;
   address: User["address"];
   linkedin_url: string | null;
@@ -222,7 +220,6 @@ export async function getPublicLOProfile(
         phone,
         branch,
         branch_id,
-        region,
         nmls_id,
         address,
         linkedin_url,
@@ -424,7 +421,6 @@ export async function getPublicLOProfile(
           phone: user.phone,
           branch: user.branch,
           branch_id: user.branch_id,
-          region: user.region,
           nmls_id: user.nmls_id,
           address: user.address ?? branchAddress,
           linkedin_url: user.linkedin_url,
@@ -521,7 +517,6 @@ export async function getPublicLOList(
         email,
         phone,
         branch,
-        region,
         nmls_id,
         address,
         linkedin_url,
@@ -684,7 +679,6 @@ export async function getPublicBranchProfile(
         google_maps_url,
         photo_url,
         cover_image_url,
-        region,
         average_rating,
         total_reviews,
         total_members,
@@ -831,7 +825,6 @@ export async function getPublicBranchProfile(
           google_maps_url: branch.google_maps_url,
           photo_url: branch.photo_url,
           cover_image_url: branch.cover_image_url,
-          region: branch.region,
           average_rating: branch.average_rating,
           total_reviews: branch.total_reviews,
           total_members: branch.total_members,
@@ -957,7 +950,6 @@ export interface PublicOrgBranch {
   address: Branch["address"];
   phone: string | null;
   photo_url: string | null;
-  region: string | null;
   average_rating: number | null;
   total_reviews: number | null;
   total_members: number | null;
@@ -1125,7 +1117,6 @@ export async function getPublicOrganizationProfile(
         address,
         phone,
         photo_url,
-        region,
         average_rating,
         total_reviews,
         total_members
@@ -1291,7 +1282,6 @@ export async function getPublicOrganizationProfile(
           address: b.address,
           phone: b.phone,
           photo_url: b.photo_url,
-          region: b.region,
           average_rating: b.average_rating,
           total_reviews: b.total_reviews,
           total_members: b.total_members,

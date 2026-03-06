@@ -51,7 +51,6 @@ export interface User {
 
   // Location
   branchId: string | null;
-  region: string | null;
   address: UserAddress | null;
 
   // Employment
@@ -161,7 +160,6 @@ export interface Professional {
   bio: string | null;
   photoUrl: string | null;
   branch: string | null;
-  region: string | null;
   googleBusinessId: string | null;
   zillowProfileUrl: string | null;
   linkedinUrl: string | null;

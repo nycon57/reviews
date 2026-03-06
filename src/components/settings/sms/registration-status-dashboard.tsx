@@ -46,13 +46,13 @@ function getStatusDisplay(status: string): {
     case 'rejected':
       return {
         label: 'Rejected',
-        color: 'bg-red-50 text-red-600 border border-red-200',
+        color: 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50',
         icon: <XCircle weight="fill" className="h-4 w-4" />,
       };
     default:
       return {
         label: 'Not Started',
-        color: 'bg-gray-50 text-gray-500 border border-gray-200',
+        color: 'bg-muted text-muted-foreground border border-border',
         icon: <Clock className="h-4 w-4" />,
       };
   }
@@ -109,11 +109,11 @@ export function RegistrationStatusDashboard({
       )}
 
       {isRejected && (
-        <div className="rounded-lg bg-red-50 border border-red-200 p-4 flex items-start gap-3">
+        <div className="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 p-4 flex items-start gap-3">
           <Warning weight="fill" className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-red-700">Registration Rejected</p>
-            <p className="text-xs text-red-600 mt-1">
+            <p className="text-sm font-semibold text-red-700 dark:text-red-400">Registration Rejected</p>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">
               Review the rejection reasons below and resubmit with corrected information.
             </p>
           </div>
@@ -123,7 +123,7 @@ export function RegistrationStatusDashboard({
       {/* Brand Status Card */}
       <div className="rounded-lg border border-border/50 p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-repwell-teal-500">Brand Registration</h4>
+          <h4 className="text-sm font-semibold text-heading-accent">Brand Registration</h4>
           <Badge className={brandDisplay.color}>
             {brandDisplay.icon}
             <span className="ml-1">{brandDisplay.label}</span>
@@ -136,12 +136,12 @@ export function RegistrationStatusDashboard({
             </p>
             <p>
               <span className="font-medium">Brand ID:</span>{' '}
-              <code className="font-mono text-repwell-teal-400">{brandId}</code>
+              <code className="font-mono text-label">{brandId}</code>
             </p>
           </div>
         )}
         {brandFailureReason && brandStatus === 'rejected' && (
-          <div className="mt-2 rounded-md bg-red-50 p-3 text-xs text-red-700">
+          <div className="mt-2 rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-xs text-red-700 dark:text-red-300">
             <p className="font-medium">Rejection reason:</p>
             <p className="mt-1">{brandFailureReason}</p>
           </div>
@@ -156,7 +156,7 @@ export function RegistrationStatusDashboard({
       {/* Campaign Status Card */}
       <div className="rounded-lg border border-border/50 p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-semibold text-repwell-teal-500">Campaign Registration</h4>
+          <h4 className="text-sm font-semibold text-heading-accent">Campaign Registration</h4>
           <Badge className={campaignDisplay.color}>
             {campaignDisplay.icon}
             <span className="ml-1">{campaignDisplay.label}</span>
@@ -166,12 +166,12 @@ export function RegistrationStatusDashboard({
           <div className="text-xs text-muted-foreground">
             <p>
               <span className="font-medium">Campaign ID:</span>{' '}
-              <code className="font-mono text-repwell-teal-400">{campaignId}</code>
+              <code className="font-mono text-label">{campaignId}</code>
             </p>
           </div>
         )}
         {campaignFailureReason && campaignStatus === 'rejected' && (
-          <div className="mt-2 rounded-md bg-red-50 p-3 text-xs text-red-700">
+          <div className="mt-2 rounded-md bg-red-50 dark:bg-red-950/30 p-3 text-xs text-red-700 dark:text-red-300">
             <p className="font-medium">Rejection reason:</p>
             <p className="mt-1">{campaignFailureReason}</p>
           </div>

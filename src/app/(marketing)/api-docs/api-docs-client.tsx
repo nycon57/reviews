@@ -177,7 +177,6 @@ const apiEndpoints: ApiEndpoint[] = [
     parameters: [
       { name: "page", in: "query", type: "integer", description: "Page number" },
       { name: "is_active", in: "query", type: "boolean", description: "Filter by active status" },
-      { name: "region", in: "query", type: "string", description: "Filter by region" },
     ],
   },
   {

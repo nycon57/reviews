@@ -322,11 +322,11 @@ export function AnnouncementsClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2">
             <Megaphone className="h-6 w-6" />
             Announcements
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Create and send product updates, feature announcements, and notifications
           </p>
         </div>
@@ -369,7 +369,7 @@ export function AnnouncementsClient() {
                             "flex flex-col items-center p-4 rounded-lg border-2 transition-all",
                             formData.type === type.value
                               ? "border-primary bg-primary/5"
-                              : "border-gray-200 hover:border-gray-300"
+                              : "border-border hover:border-border/80"
                           )}
                         >
                           <div className={cn("p-2 rounded-lg mb-2", type.color)}>
@@ -719,7 +719,7 @@ export function AnnouncementsClient() {
                 <CardTitle className="text-lg">Email Preview</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="border rounded-lg bg-white overflow-hidden">
+                <div className="border rounded-lg bg-white dark:bg-card overflow-hidden">
                   <iframe
                     srcDoc={previewHtml}
                     className="w-full h-[600px]"
@@ -743,10 +743,10 @@ export function AnnouncementsClient() {
             <CardContent>
               {isLoadingHistory ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
               ) : announcements.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-muted-foreground">
                   <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No announcements sent yet</p>
                   <p className="text-sm mt-1">
@@ -777,7 +777,7 @@ export function AnnouncementsClient() {
                         </div>
                         <div>
                           <h4 className="font-medium">{announcement.title}</h4>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {formatAnnouncementDate(announcement)}
                           </p>
                         </div>
@@ -787,15 +787,15 @@ export function AnnouncementsClient() {
                           <div className="font-semibold">
                             {announcement.totalRecipients}
                           </div>
-                          <div className="text-gray-500">Recipients</div>
+                          <div className="text-muted-foreground">Recipients</div>
                         </div>
                         <div className="text-center">
                           <div className="font-semibold">{announcement.totalOpened}</div>
-                          <div className="text-gray-500">Opened</div>
+                          <div className="text-muted-foreground">Opened</div>
                         </div>
                         <div className="text-center">
                           <div className="font-semibold">{announcement.totalClicked}</div>
-                          <div className="text-gray-500">Clicked</div>
+                          <div className="text-muted-foreground">Clicked</div>
                         </div>
                         <Badge variant={getStatusBadgeVariant(announcement.status)}>
                           {announcement.status}

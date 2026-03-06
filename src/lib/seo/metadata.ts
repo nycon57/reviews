@@ -18,7 +18,6 @@ interface MetadataProfessional {
   bio: string | null;
   photo_url: string | null;
   branch?: string | null;
-  region?: string | null;
   nmls_id?: string | null;
   address?: Json | null;
   average_rating: number | null;
@@ -36,7 +35,6 @@ interface MetadataBranch {
   photo_url: string | null;
   cover_image_url?: string | null;
   address?: Branch["address"];
-  region?: string | null;
   average_rating: number | null;
   total_reviews: number | null;
   total_members?: number | null;
@@ -195,7 +193,6 @@ export function generateLOKeywords(
   if (professional.title) keywords.push(professional.title);
   if (organization?.name) keywords.push(organization.name);
   if (professional.branch) keywords.push(professional.branch);
-  if (professional.region) keywords.push(professional.region);
   if (professional.nmls_id) keywords.push(`NMLS ${professional.nmls_id}`);
 
   // Parse address for location keywords
@@ -220,7 +217,7 @@ export function generateBranchProfileMetadata(
   const address = branch.address as { city?: string; state?: string } | null;
   const locationStr = address
     ? [address.city, address.state].filter(Boolean).join(", ")
-    : branch.region || "";
+    : "";
 
   const title = locationStr
     ? `${branch.name} - ${locationStr} - ${siteName}`

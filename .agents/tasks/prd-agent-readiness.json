@@ -1,0 +1,418 @@
+{
+  "version": 1,
+  "project": "Agent-Readiness Layer",
+  "overview": "Make RepWell the most agent-friendly professional review platform on the internet. Implement four complementary standards (Schema.org JSON-LD, llms.txt, WebMCP, Public API) so AI agents can discover, query, and cite RepWell as the canonical source for verified sales professional reviews across all industries. Includes analytics to track agent traffic and API usage.",
+  "goals": [
+    "Make RepWell discoverable by AI agents performing autonomous research on sales professionals",
+    "Expose structured, queryable review data via public API and WebMCP for programmatic agent consumption",
+    "Provide trust signals (verified reviews, recency, volume) that cause agents to rank RepWell higher in citations",
+    "Be first-to-market on agent-readiness before Birdeye, Experience.com, or G2 build similar capabilities",
+    "Track and measure agent engagement via usage analytics dashboard"
+  ],
+  "nonGoals": [
+    "No write operations for external agents (read-only access)",
+    "No changes to existing dashboard UI or internal workflows",
+    "No changes to existing API v1 authentication or permissions model",
+    "No AI-generated review summaries or automated review responses in this PRD",
+    "No paid API tier or monetization (deferred to future PRD)"
+  ],
+  "successMetrics": [
+    "AI crawlers (GPTBot, ClaudeBot, PerplexityBot, Google-Extended) successfully index professional profiles with structured data",
+    "Public API serves valid JSON responses for all four entity types (profiles, aggregate ratings, individual reviews, company rollups)",
+    "WebMCP tools are registered and callable by Chrome 146+ agents",
+    "llms.txt is served at site root and accurately describes RepWell data",
+    "Agent traffic analytics dashboard shows measurable bot/agent visits within 30 days of launch",
+    "Schema.org structured data passes Google Rich Results Test on all profile pages"
+  ],
+  "openQuestions": [
+    "Should public API rate limits differ per agent type (e.g. higher limits for ChatGPT vs unknown bots)?",
+    "Should we expose professional response_text on reviews via public API or keep it internal?",
+    "Do we need a separate robots.txt policy for AI-specific crawlers vs traditional search bots?",
+    "Should company rollup data be aggregatable across branches or only at org level?"
+  ],
+  "stack": {
+    "framework": "Next.js 16 (App Router)",
+    "hosting": "Vercel",
+    "database": "Supabase (PostgreSQL with RLS)",
+    "auth": "Better Auth (existing). Public API uses tiered approach: open for basic queries, API key required for detailed data.",
+    "ai": "OpenAI (existing sentiment analysis)",
+    "ui": "Tailwind CSS + ShadCN (dashboard analytics only)"
+  },
+  "routes": [
+    { "path": "/llms.txt", "name": "LLM Manifest", "purpose": "Markdown manifest describing RepWell data for AI crawlers" },
+    { "path": "/api/v2/professionals", "name": "Public Professionals API", "purpose": "Agent-queryable endpoint for professional profiles and aggregate ratings (open tier)" },
+    { "path": "/api/v2/professionals/[id]", "name": "Professional Detail API", "purpose": "Full profile + reviews for a specific professional (API key tier)" },
+    { "path": "/api/v2/professionals/[id]/reviews", "name": "Professional Reviews API", "purpose": "Paginated reviews for a professional (API key tier)" },
+    { "path": "/api/v2/reviews", "name": "Public Reviews API", "purpose": "Search/filter reviews across professionals (API key tier)" },
+    { "path": "/api/v2/companies", "name": "Company Rollups API", "purpose": "Company-level aggregate scores and team summaries (API key tier)" },
+    { "path": "/api/v2/companies/[id]", "name": "Company Detail API", "purpose": "Detailed company profile with team roster and metrics (API key tier)" },
+    { "path": "/api/v2/schema", "name": "API Schema/OpenAPI", "purpose": "OpenAPI 3.1 spec describing all public endpoints for agent discovery" },
+    { "path": "/api/webmcp/professionals", "name": "WebMCP Professional Search Proxy", "purpose": "Server-side proxy for WebMCP search tool calls to professionals API with internal key" },
+    { "path": "/api/webmcp/professionals/[id]", "name": "WebMCP Professional Detail Proxy", "purpose": "Server-side proxy returning a specific professional's profile via internal API key" },
+    { "path": "/api/webmcp/professionals/[id]/reviews", "name": "WebMCP Professional Reviews Proxy", "purpose": "Server-side proxy returning paginated reviews for a specific professional via internal API key" },
+    { "path": "/api/webmcp/companies", "name": "WebMCP Company Search Proxy", "purpose": "Server-side proxy for WebMCP search tool calls to companies API with internal key" },
+    { "path": "/api/webmcp/companies/[id]", "name": "WebMCP Company Detail Proxy", "purpose": "Server-side proxy returning a specific company's profile and team roster via internal API key" },
+    { "path": "/dashboard/analytics/agents", "name": "Agent Analytics", "purpose": "Dashboard page showing agent traffic, API usage, and citation tracking" }
+  ],
+  "uiNotes": [
+    "Agent analytics dashboard follows existing RepWell design system (see docs/design/REPWELL_DESIGN_SYSTEM)",
+    "No public-facing UI changes — all agent-facing surfaces are API/data layers",
+    "Schema.org JSON-LD is server-rendered in page <head> — invisible to users, visible to agents",
+    "WebMCP tool registration happens via navigator.modelContext API in client-side script"
+  ],
+  "dataModel": [
+    {
+      "entity": "api_usage_logs (new table)",
+      "fields": ["id", "api_key_id (nullable)", "endpoint", "method", "query_params", "user_agent", "ip_address", "response_status", "response_time_ms", "tier (open/keyed)", "created_at"]
+    },
+    {
+      "entity": "agent_traffic_logs (new table)",
+      "fields": ["id", "page_path", "user_agent", "bot_name", "bot_category (search/llm/agent/unknown)", "referrer", "created_at"]
+    },
+    {
+      "entity": "Existing: users (professionals)",
+      "fields": ["id", "full_name", "email", "title", "bio", "photo_url", "nmls_id", "average_rating", "total_reviews", "reputation_score", "nps_score", "organization_id", "branch_id", "is_active"]
+    },
+    {
+      "entity": "Existing: reviews",
+      "fields": ["id", "user_id", "organization_id", "rating", "text", "customer_name", "review_date", "source", "sentiment_score", "sentiment_label", "key_phrases", "status"],
+      "apiFieldMappings": {
+        "text": "review_text",
+        "customer_name": "reviewer_name",
+        "source": "platform"
+      },
+      "note": "DB columns use text/customer_name/source; public API v2 responses (US-005, US-006, US-016) expose these as review_text/reviewer_name/platform. Serialization layer must apply this mapping."
+    },
+    {
+      "entity": "Existing: organizations",
+      "fields": ["id", "name", "slug", "industry", "logo_url", "website_url", "is_active"]
+    }
+  ],
+  "importFormat": {
+    "description": "Not applicable — this feature exposes existing data, no imports needed",
+    "example": {}
+  },
+  "rules": [
+    "Public API open tier: only returns professionals with is_active=true and at least 1 approved review",
+    "Public API open tier: returns profile summary + aggregate rating only (no individual reviews)",
+    "Public API keyed tier: returns full profile + individual approved reviews with pagination",
+    "Reviews exposed via public API must have status=approved — never pending/rejected/archived",
+    "Rate limiting: open tier 60 req/min per IP, keyed tier 300 req/min per API key",
+    "Schema.org JSON-LD only rendered on public-facing professional profile pages (not dashboard)",
+    "WebMCP tools only expose read operations — no mutations",
+    "Agent traffic detection: classify user-agent strings against known bot list (GPTBot, ClaudeBot, PerplexityBot, Googlebot, BingBot, etc.)",
+    "API responses must include Cache-Control headers (5 min TTL for profiles, 15 min for aggregates)",
+    "All public API responses include X-RepWell-Source header for citation tracking",
+    "llms.txt must be regenerated whenever organization or professional count changes significantly (cron or on-demand)",
+    "Company rollup scores are computed from active professionals with approved reviews only",
+    "API key validation reuses existing api_keys table and withApiAuth middleware pattern"
+  ],
+  "qualityGates": ["npm run build", "npm run lint", "npm run type-check"],
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Schema.org JSON-LD on professional profile pages",
+      "status": "open",
+      "dependsOn": [],
+      "description": "As an AI agent crawling RepWell, I want to find structured JSON-LD data on every professional's profile page so I can extract verified review data without parsing HTML.",
+      "acceptanceCriteria": [
+        "Server-rendered JSON-LD <script type='application/ld+json'> in page <head> on all public professional profile pages",
+        "Schema includes: @type Person, name, jobTitle, worksFor (Organization), address (PostalAddress with locality/region)",
+        "Schema includes: @type AggregateRating with ratingValue, reviewCount, bestRating (5), worstRating (1)",
+        "Schema includes: array of @type Review objects (up to 10 most recent approved reviews) with author, datePublished, reviewBody, reviewRating",
+        "Schema includes: @type Organization for the professional's company with name, url, logo",
+        "Example: Professional 'Jane Smith' at 'ABC Financial' with 4.8 rating and 47 reviews renders valid JSON-LD with all fields populated",
+        "Example: Professional with NMLS ID includes identifier field with @type PropertyValue, propertyID 'NMLS', value",
+        "Negative case: Professional with is_active=false does NOT render JSON-LD (page returns 404 or noindex)",
+        "Negative case: Professional with 0 approved reviews renders JSON-LD without AggregateRating or Review sections",
+        "JSON-LD passes Google Rich Results Test (https://search.google.com/test/rich-results) without errors",
+        "dateModified meta tag added to page reflecting most recent review or profile update date"
+      ]
+    },
+    {
+      "id": "US-002",
+      "title": "Schema.org JSON-LD on company/organization pages",
+      "status": "open",
+      "dependsOn": ["US-001"],
+      "description": "As an AI agent, I want structured data on company pages so I can understand aggregate team performance and company identity.",
+      "acceptanceCriteria": [
+        "Server-rendered JSON-LD on public organization profile pages",
+        "Schema includes: @type Organization with name, url, logo, description, industry, address",
+        "Schema includes: @type AggregateRating computed across all active professionals in the org",
+        "Schema includes: numberOfEmployees reflecting count of active professionals",
+        "Example: 'ABC Financial' with 12 active pros, 4.6 avg rating, 230 total reviews renders correct JSON-LD",
+        "Negative case: Organization with is_active=false does NOT render structured data",
+        "Negative case: Organization with 0 active professionals renders org identity but no AggregateRating"
+      ]
+    },
+    {
+      "id": "US-003",
+      "title": "llms.txt manifest at site root",
+      "status": "open",
+      "dependsOn": [],
+      "description": "As an LLM crawler, I want a /llms.txt file that describes what RepWell contains so I can understand the site's data without crawling every page.",
+      "acceptanceCriteria": [
+        "GET /llms.txt returns a valid Markdown document with Content-Type: text/markdown",
+        "Document includes: site name, purpose statement ('Verified reviews of sales professionals across all industries'), data freshness date",
+        "Document includes: summary of data available (professional profiles, verified reviews, aggregate ratings, company rollups)",
+        "Document includes: list of industries covered with counts (e.g., 'Mortgage: 1,200 professionals, Real Estate: 800 professionals')",
+        "Document includes: links to key pages (API docs, top-rated professionals by industry, how reviews are verified)",
+        "Document includes: structured description of review verification methodology",
+        "Document includes: link to /api/v2/schema for programmatic access",
+        "Example: llms.txt for a RepWell instance with 5,000 professionals across 8 industries renders all sections with accurate counts",
+        "Negative case: If no professionals exist, llms.txt still renders with zero counts and platform description",
+        "Counts are dynamically generated (not hardcoded) — either via ISR/revalidation or on-demand computation with caching",
+        "Response includes Cache-Control: public, max-age=3600 (1 hour TTL)"
+      ]
+    },
+    {
+      "id": "US-004",
+      "title": "Public API v2 — Professional search endpoint (open tier)",
+      "status": "open",
+      "dependsOn": [],
+      "description": "As an AI agent researching a sales professional, I want to search RepWell's API by name, industry, location, or rating so I can find relevant professionals without an API key.",
+      "acceptanceCriteria": [
+        "GET /api/v2/professionals returns paginated JSON array of professional summaries",
+        "Query params: name (fuzzy match), industry, location (city/state), min_rating, sort_by (rating/reviews/recent), page, per_page (max 50)",
+        "Response shape per professional: { id, full_name, title, company_name, industry, location, average_rating, total_reviews, profile_url }",
+        "Only returns professionals with is_active=true AND at least 1 approved review",
+        "Response includes pagination metadata: { total, page, per_page, total_pages }",
+        "Response includes X-RepWell-Source: 'repwell-public-api-v2' header",
+        "Response includes Cache-Control: public, max-age=300 (5 min TTL)",
+        "Rate limit: 60 requests/min per IP address. Returns 429 with Retry-After header when exceeded",
+        "Example: GET /api/v2/professionals?name=jane+smith&industry=mortgage returns matching professionals sorted by rating",
+        "Example: GET /api/v2/professionals?location=chicago&min_rating=4.5 returns 4.5+ rated pros in Chicago",
+        "Negative case: Empty results return { data: [], total: 0, page: 1, per_page: 20, total_pages: 0 }",
+        "Negative case: Invalid query params return 400 with descriptive error message",
+        "Negative case: Inactive or zero-review professionals never appear in results"
+      ]
+    },
+    {
+      "id": "US-005",
+      "title": "Public API v2 — Professional detail endpoint (keyed tier)",
+      "status": "open",
+      "dependsOn": ["US-004"],
+      "description": "As an AI agent with an API key, I want to retrieve a professional's full profile including their reviews so I can provide comprehensive reputation data to my user.",
+      "acceptanceCriteria": [
+        "GET /api/v2/professionals/[id] returns full professional profile with reviews",
+        "Requires valid API key via Authorization: Bearer <key> header (reuses existing api_keys table)",
+        "Response includes: full profile (all fields from open tier + bio, photo_url, social_links, nmls_id, nps_score, reputation_score)",
+        "Response includes: array of up to 25 most recent approved reviews with { rating, review_text, reviewer_name, review_date, platform, sentiment_label, key_phrases }",
+        "Response includes: rating_distribution { 1: count, 2: count, 3: count, 4: count, 5: count }",
+        "Response includes: recency_stats { reviews_last_30_days, reviews_last_90_days, reviews_last_year }",
+        "Rate limit: 300 requests/min per API key. Returns 429 with Retry-After header when exceeded",
+        "Example: Full profile for professional with 47 reviews returns top 25 reviews, rating distribution, and recency stats",
+        "Negative case: Invalid/missing API key returns 401 { error: 'api_key_required', message: 'This endpoint requires an API key. Register at repwell.com/developers' }",
+        "Negative case: Non-existent professional ID returns 404",
+        "Negative case: Inactive professional returns 404 (not exposed via API)"
+      ]
+    },
+    {
+      "id": "US-006",
+      "title": "Public API v2 — Professional reviews endpoint (keyed tier)",
+      "status": "open",
+      "dependsOn": ["US-004"],
+      "description": "As an AI agent, I want to paginate through all approved reviews for a professional so I can analyze patterns across their full review history.",
+      "acceptanceCriteria": [
+        "GET /api/v2/professionals/[id]/reviews returns paginated approved reviews",
+        "Requires valid API key via Authorization: Bearer <key> header",
+        "Query params: page, per_page (max 100), sort_by (date_desc/date_asc/rating_desc/rating_asc), platform, min_rating",
+        "Response shape per review: { id, rating, review_text, reviewer_name, review_date, platform, sentiment_label, key_phrases, verified }",
+        "Never returns reviews with status != approved",
+        "Response includes pagination metadata",
+        "Example: GET /api/v2/professionals/123/reviews?sort_by=date_desc&per_page=50 returns 50 most recent approved reviews",
+        "Negative case: Professional with 0 approved reviews returns { data: [], total: 0 }",
+        "Negative case: Requesting reviews for inactive professional returns 404"
+      ]
+    },
+    {
+      "id": "US-007",
+      "title": "Public API v2 — Company rollups endpoint (keyed tier)",
+      "status": "open",
+      "dependsOn": ["US-004"],
+      "description": "As an AI agent evaluating a company, I want aggregate performance data across all their sales professionals so I can assess team quality.",
+      "acceptanceCriteria": [
+        "GET /api/v2/companies returns paginated list of companies with aggregate metrics",
+        "GET /api/v2/companies/[id] returns detailed company profile with team roster summary",
+        "Requires valid API key via Authorization: Bearer <key> header",
+        "Company list response: { id, name, slug, industry, logo_url, website_url, professional_count, avg_team_rating, total_team_reviews }",
+        "Company detail response adds: team roster as array of { id, full_name, title, average_rating, total_reviews, profile_url }",
+        "Aggregates computed from active professionals with approved reviews only",
+        "Query params for list: industry, min_avg_rating, sort_by (rating/size/reviews), page, per_page",
+        "Example: GET /api/v2/companies?industry=insurance&sort_by=rating returns top-rated insurance companies",
+        "Example: GET /api/v2/companies/456 returns company with 8 professionals, 4.7 avg, 180 total reviews",
+        "Negative case: Company with 0 active professionals returns in list but with null aggregates",
+        "Negative case: Invalid company ID returns 404"
+      ]
+    },
+    {
+      "id": "US-008",
+      "title": "Public API v2 — OpenAPI 3.1 specification",
+      "status": "open",
+      "dependsOn": ["US-004", "US-005", "US-006", "US-007", "US-016"],
+      "description": "As an AI agent or developer, I want a machine-readable API specification so I can auto-generate client code and understand all available endpoints.",
+      "acceptanceCriteria": [
+        "GET /api/v2/schema returns valid OpenAPI 3.1 JSON specification",
+        "Spec documents all v2 endpoints with request/response schemas, query parameters, and examples",
+        "Spec includes authentication schemes (none for open tier, Bearer token for keyed tier)",
+        "Spec includes rate limit documentation",
+        "Spec includes server URL and version info",
+        "Spec passes OpenAPI validation (e.g., swagger-cli validate)",
+        "Example: Agent parses /api/v2/schema and programmatically discovers all queryable endpoints",
+        "Negative case: Spec does not expose any internal/dashboard API routes"
+      ]
+    },
+    {
+      "id": "US-009",
+      "title": "API usage logging and rate limiting middleware",
+      "status": "open",
+      "dependsOn": ["US-004"],
+      "description": "As a platform operator, I want all public API requests logged and rate-limited so I can monitor usage and prevent abuse.",
+      "acceptanceCriteria": [
+        "Create api_usage_logs table via Supabase migration: id (uuid), api_key_id (nullable FK), endpoint, method, query_params (jsonb), user_agent, ip_address, response_status, response_time_ms, tier (open/keyed), created_at",
+        "Middleware logs every /api/v2/* request to api_usage_logs",
+        "Rate limiting enforced: 60 req/min per IP for open tier, 300 req/min per API key for keyed tier",
+        "429 response includes Retry-After header with seconds until limit resets",
+        "Logging is async (does not block response)",
+        "Example: 61st request in a minute from same IP returns 429 { error: 'rate_limit_exceeded', retry_after: 45 }",
+        "Negative case: Requests to /api/v1/* are NOT affected by new rate limiting (existing behavior preserved)",
+        "Negative case: Logging failures do not cause API requests to fail (fire-and-forget)"
+      ]
+    },
+    {
+      "id": "US-010",
+      "title": "Agent traffic detection middleware",
+      "status": "open",
+      "dependsOn": [],
+      "description": "As a platform operator, I want to detect and log AI agent/bot traffic across all public pages so I can measure agent engagement.",
+      "acceptanceCriteria": [
+        "Create agent_traffic_logs table via Supabase migration: id (uuid), page_path, user_agent, bot_name, bot_category (search/llm/agent/unknown), referrer, created_at",
+        "Next.js middleware detects known bot user-agents on public pages and logs to agent_traffic_logs",
+        "Bot detection list includes at minimum: GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot, Googlebot, Bingbot, Google-Extended, Applebot-Extended, Bytespider, CCBot, cohere-ai",
+        "Bot category classification: search (Googlebot, Bingbot), llm (GPTBot, ClaudeBot, PerplexityBot, CCBot, cohere-ai), agent (ChatGPT-User), unknown (unrecognized bots)",
+        "Logging is async and does not impact page load performance",
+        "Example: Request with User-Agent containing 'ClaudeBot' is logged as bot_name='ClaudeBot', bot_category='llm'",
+        "Example: Request with User-Agent containing 'ChatGPT-User' is logged as bot_category='agent'",
+        "Negative case: Regular browser traffic (Chrome, Firefox, Safari) is NOT logged to this table",
+        "Negative case: Dashboard routes are NOT logged (only public-facing pages)"
+      ]
+    },
+    {
+      "id": "US-011",
+      "title": "Agent analytics dashboard page",
+      "status": "open",
+      "dependsOn": ["US-009", "US-010"],
+      "description": "As an admin, I want a dashboard page showing agent traffic patterns and API usage so I can understand how AI agents interact with RepWell.",
+      "acceptanceCriteria": [
+        "New dashboard page at /dashboard/analytics/agents (accessible to admin and manager roles)",
+        "Section 1 - Agent Traffic: time-series chart of bot visits by category (search/llm/agent) over last 30 days",
+        "Section 1 includes: top 10 bots by visit count, breakdown by bot_category, top visited pages",
+        "Section 2 - API Usage: time-series chart of API requests by tier (open/keyed) over last 30 days",
+        "Section 2 includes: top endpoints by request count, average response time, error rate (4xx/5xx), usage by API key",
+        "Section 3 - Summary Cards: total agent visits (7d), total API requests (7d), unique API keys active (7d), most queried professional",
+        "Follows existing RepWell design system (ShadCN components, existing chart library)",
+        "Data queries use Supabase with appropriate date filtering and aggregation",
+        "Example: Dashboard shows 1,200 GPTBot visits, 340 ClaudeBot visits, and 89 API key requests in the last 7 days",
+        "Negative case: Users with 'user' role cannot access this page (redirected to /dashboard)",
+        "Negative case: Empty state when no agent traffic or API usage exists — shows explanatory message"
+      ]
+    },
+    {
+      "id": "US-012",
+      "title": "WebMCP tool registration for browser-based agents",
+      "status": "open",
+      "dependsOn": ["US-004", "US-005"],
+      "description": "As a browser-based AI agent (Chrome 146+), I want RepWell to register WebMCP tools so I can query review data through structured tool calls instead of scraping the page.",
+      "acceptanceCriteria": [
+        "Client-side script registers tools via navigator.modelContext API on public professional and company pages",
+        "Tool 1: searchProfessionals — input: { name?, industry?, location?, min_rating? } → calls /api/v2/professionals and returns structured results",
+        "Tool 2: getProfessionalProfile — input: { id } → calls /api/v2/professionals/[id] and returns full profile (open tier fields)",
+        "Tool 3: getProfessionalReviews — input: { id, page?, per_page? } → calls server-side proxy /api/webmcp/professionals/[id]/reviews which forwards to /api/v2/professionals/[id]/reviews using a server-only internal API key (returns up to 10 reviews per page)",
+        "Tool 4: getCompanyProfile — input: { id } → calls server-side proxy /api/webmcp/companies/[id] which forwards to /api/v2/companies/[id] using the server-only internal API key",
+        "Tools include JSON Schema definitions for inputs and outputs",
+        "Feature detection: only registers tools if navigator.modelContext is available",
+        "Security: WebMCP proxy endpoints (/api/webmcp/*) read the internal API key from a server-only environment variable (WEBMCP_INTERNAL_API_KEY) — the key is never injected into client bundles or exposed to the browser",
+        "Security: WebMCP proxy endpoints enforce per-origin rate limiting (60 req/min per origin) to prevent global exhaustion of the keyed-tier limit (300 req/min shared across the internal key)",
+        "Security: The internal API key is scoped to read-only access, must not be reused for other purposes, and rotation procedures are documented (update env var in Vercel dashboard, redeploy)",
+        "Example: Agent calls searchProfessionals({ industry: 'insurance', location: 'Denver', min_rating: 4.5 }) and gets structured JSON results",
+        "Negative case: Browsers without WebMCP support (no navigator.modelContext) skip registration silently — no errors",
+        "Negative case: WebMCP tools never expose keyed-tier data beyond review text summaries (no detailed analytics or internal metrics)",
+        "Negative case: Client-side JavaScript never contains or references the internal API key — all keyed-tier access goes through /api/webmcp/* server proxy"
+      ]
+    },
+    {
+      "id": "US-013",
+      "title": "Robots.txt updates for AI crawler access",
+      "status": "open",
+      "dependsOn": [],
+      "description": "As an AI crawler, I want RepWell's robots.txt to explicitly allow access to public content so I can index professional profiles and reviews.",
+      "acceptanceCriteria": [
+        "robots.txt explicitly allows GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended, CCBot, cohere-ai",
+        "robots.txt allows access to: /professionals/*, /companies/*, /llms.txt, /api/v2/*",
+        "robots.txt disallows access to: /dashboard/*, /api/v1/*, /api/auth/*, /api/webhooks/*, /api/cron/*, /api/admin/*",
+        "Sitemap reference included pointing to existing sitemap.xml",
+        "Example: GPTBot can crawl /professionals/jane-smith and /api/v2/professionals but not /dashboard/reviews",
+        "Negative case: No changes to existing Googlebot/Bingbot rules (preserve current SEO behavior)",
+        "Negative case: /api/v1/* remains blocked for external crawlers"
+      ]
+    },
+    {
+      "id": "US-014",
+      "title": "Professional profile page — dateModified and meta enhancements",
+      "status": "open",
+      "dependsOn": [],
+      "description": "As an AI agent evaluating content freshness, I want dateModified signals on profile pages so I can trust that the data is current.",
+      "acceptanceCriteria": [
+        "Professional profile pages include <meta property='article:modified_time'> with ISO 8601 date of most recent update (profile edit or new approved review)",
+        "Pages include <meta name='description'> with format: '{Name} is a {rating}-star rated {title} at {company} with {count} verified reviews on RepWell'",
+        "Pages include <link rel='canonical'> pointing to the canonical profile URL",
+        "Pages include Open Graph tags (og:title, og:description, og:image) for when agents share links",
+        "Example: Profile updated today shows today's date in article:modified_time",
+        "Example: Profile with new review approved today updates the modified_time even if profile fields unchanged",
+        "Negative case: Inactive profiles return noindex meta tag"
+      ]
+    },
+    {
+      "id": "US-015",
+      "title": "API developer documentation page",
+      "status": "open",
+      "dependsOn": ["US-008"],
+      "description": "As a developer or AI agent builder, I want clear documentation for RepWell's public API so I can integrate professional review data into my agent workflows.",
+      "acceptanceCriteria": [
+        "Public page at /developers (or /docs/api) with API documentation",
+        "Documents all v2 endpoints with examples, request/response shapes, and authentication requirements",
+        "Includes 'Getting Started' section explaining open tier vs keyed tier",
+        "Includes API key registration link (points to existing /dashboard/settings API keys section)",
+        "Includes code examples in Python, JavaScript, and curl",
+        "Includes rate limit documentation",
+        "Links to /api/v2/schema for machine-readable OpenAPI spec",
+        "Page itself has JSON-LD structured data (@type TechArticle or WebAPI)",
+        "Example: Developer reads docs and makes first API call within 5 minutes",
+        "Negative case: Documentation never exposes internal v1 endpoints or dashboard API routes"
+      ]
+    },
+    {
+      "id": "US-016",
+      "title": "Public API v2 — Cross-professional review search endpoint (keyed tier)",
+      "status": "open",
+      "dependsOn": ["US-006"],
+      "description": "As an AI agent, I want to search and filter reviews across all professionals so I can find reviews by keyword, platform, rating, or date range without specifying a single professional. Unlike US-006 which scopes reviews to a single professional, this endpoint enables cross-professional discovery.",
+      "acceptanceCriteria": [
+        "GET /api/v2/reviews returns paginated approved reviews across all professionals",
+        "Requires valid API key via Authorization: Bearer <key> header",
+        "Query params: keyword (full-text search on review_text), platform, min_rating, max_rating, date_from, date_to, industry, location, sort_by (date_desc/date_asc/rating_desc/rating_asc), page, per_page (max 100)",
+        "Response shape per review: { id, rating, review_text, reviewer_name, review_date, platform, sentiment_label, key_phrases, professional: { id, full_name, title, company_name, profile_url } }",
+        "Only returns reviews with status=approved from active professionals with at least 1 approved review",
+        "Response includes pagination metadata: { total, page, per_page, total_pages }",
+        "Response includes X-RepWell-Source: 'repwell-public-api-v2' header",
+        "Rate limit: 300 requests/min per API key. Returns 429 with Retry-After header when exceeded",
+        "Example: GET /api/v2/reviews?keyword=responsive&min_rating=4&platform=google returns matching reviews across all professionals",
+        "Example: GET /api/v2/reviews?industry=mortgage&date_from=2025-01-01&sort_by=date_desc returns recent mortgage industry reviews",
+        "Negative case: Empty results return { data: [], total: 0, page: 1, per_page: 20, total_pages: 0 }",
+        "Negative case: Invalid query params return 400 with descriptive error message",
+        "Negative case: Request without API key returns 401",
+        "Scope difference from US-006: US-006 returns reviews for a single professional (/api/v2/professionals/[id]/reviews), this endpoint searches across all professionals"
+      ]
+    }
+  ]
+}

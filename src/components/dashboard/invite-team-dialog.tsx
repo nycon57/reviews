@@ -79,23 +79,23 @@ export function InviteTeamDialog({ open, onOpenChange }: InviteTeamDialogProps) 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md border-border">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-repwell-teal-500">
+          <DialogTitle className="flex items-center gap-2 text-heading-accent">
             <UserPlus className="h-5 w-5" />
             Invite Team Member
           </DialogTitle>
-          <DialogDescription className="text-repwell-teal-400">
+          <DialogDescription className="text-repwell-teal-400 dark:text-repwell-sage-100/80">
             Send an invitation to add a new team member to your organization.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-repwell-teal-500">
+            <Label htmlFor="email" className="text-heading-accent">
               Email address
             </Label>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-repwell-teal-400" />
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-repwell-teal-400 dark:text-repwell-sage-100/80" />
                 <Input
                   id="email"
                   type="email"
@@ -109,7 +109,7 @@ export function InviteTeamDialog({ open, onOpenChange }: InviteTeamDialogProps) 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="role" className="text-repwell-teal-500">
+            <Label htmlFor="role" className="text-heading-accent">
               Role
             </Label>
             <Select value={role} onValueChange={setRole}>
@@ -122,7 +122,7 @@ export function InviteTeamDialog({ open, onOpenChange }: InviteTeamDialogProps) 
                 <SelectItem value="viewer">Viewer</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-repwell-teal-400">
+            <p className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
               {role === "admin" && "Full access to all features and settings"}
               {role === "member" && "Can manage reviews and clients"}
               {role === "viewer" && "Read-only access to dashboard"}
@@ -134,7 +134,7 @@ export function InviteTeamDialog({ open, onOpenChange }: InviteTeamDialogProps) 
               <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-repwell-teal-400">Or share link</span>
+              <span className="bg-background px-2 text-repwell-teal-400 dark:text-repwell-sage-100/80">Or share link</span>
             </div>
           </div>
 
@@ -142,7 +142,7 @@ export function InviteTeamDialog({ open, onOpenChange }: InviteTeamDialogProps) 
             <Input
               readOnly
               value={inviteLink}
-              className="flex-1 text-sm text-repwell-teal-400 bg-background"
+              className="flex-1 text-sm text-repwell-teal-400 dark:text-repwell-sage-100/80 bg-background"
             />
             <Button
               type="button"

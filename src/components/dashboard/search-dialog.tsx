@@ -248,7 +248,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
       <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden border-border">
         <DialogTitle className="sr-only">Search</DialogTitle>
         <div className="flex items-center border-b border-border px-3">
-          <Search className="h-4 w-4 text-repwell-teal-400 shrink-0" />
+          <Search className="h-4 w-4 text-repwell-teal-400 dark:text-repwell-sage-100/80 shrink-0" />
           <Input
             ref={inputRef}
             value={query}
@@ -260,7 +260,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         </div>
         <div className="max-h-[300px] overflow-y-auto p-2">
           {filteredResults.length === 0 ? (
-            <div className="py-6 text-center text-sm text-repwell-teal-400">
+            <div className="py-6 text-center text-sm text-repwell-teal-400 dark:text-repwell-sage-100/80">
               No results found for "{query}"
             </div>
           ) : (
@@ -274,20 +274,20 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
                     className={cn(
                       "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors",
                       selectedIndex === index
-                        ? "bg-repwell-sage-100 text-repwell-teal-500"
-                        : "text-repwell-teal-400 hover:bg-background hover:text-repwell-teal-500"
+                        ? "bg-surface-soft text-heading-accent"
+                        : "text-repwell-teal-400 dark:text-repwell-sage-100/80 hover:bg-background hover:text-repwell-teal-500 dark:hover:text-repwell-sage-100"
                     )}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium">{result.title}</div>
                       {result.description && (
-                        <div className="text-xs text-repwell-teal-400 truncate">
+                        <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 truncate">
                           {result.description}
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-repwell-teal-400/60">
+                    <span className="text-xs text-repwell-teal-400/60 dark:text-repwell-sage-100/50">
                       {result.category}
                     </span>
                   </button>
@@ -296,7 +296,7 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs text-repwell-teal-400">
+        <div className="flex items-center justify-between border-t border-border px-3 py-2 text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
           <div className="flex items-center gap-2">
             <kbd className="rounded border border-border bg-background px-1.5 py-0.5">
               ↑↓

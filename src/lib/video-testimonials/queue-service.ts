@@ -230,12 +230,14 @@ export async function getVideoTestimonialRequestForSending(
 ): Promise<VideoTestimonialRequestWithDetails | null> {
   const supabase = createAdminClient();
 
+  // Fetch request + organization (no user_id FK exists, so query user separately)
   const { data: request, error } = await supabase
     .from("video_testimonial_requests")
     .select(
       `
       id,
       token,
+      user_id,
       customer_name,
       customer_email,
       customer_phone,
@@ -247,12 +249,6 @@ export async function getVideoTestimonialRequestForSending(
       expires_at,
       max_duration_seconds,
       prompt_text,
-      users!user_id (
-        id,
-        full_name,
-        email,
-        photo_url
-      ),
       organizations!inner (
         id,
         name,
@@ -268,12 +264,17 @@ export async function getVideoTestimonialRequestForSending(
     return null;
   }
 
-  const loanOfficer = request.users as unknown as {
-    id: string;
-    full_name: string;
-    email: string;
-    photo_url: string | null;
-  };
+  // Fetch loan officer separately (user_id has no FK constraint)
+  const { data: loanOfficer, error: userError } = await supabase
+    .from("users")
+    .select("id, full_name, email, photo_url")
+    .eq("id", request.user_id)
+    .single();
+
+  if (userError || !loanOfficer) {
+    console.error("Failed to get loan officer for video testimonial request:", userError);
+    return null;
+  }
 
   const organization = request.organizations as unknown as {
     id: string;
@@ -297,7 +298,7 @@ export async function getVideoTestimonialRequestForSending(
     prompt_text: request.prompt_text,
     loan_officer: {
       id: loanOfficer.id,
-      full_name: loanOfficer.full_name,
+      full_name: loanOfficer.full_name ?? "",
       email: loanOfficer.email,
       photo_url: loanOfficer.photo_url,
     },
@@ -388,16 +389,22 @@ export async function processVideoTestimonialQueueItem(
   if (request.expires_at && new Date(request.expires_at) < new Date()) {
     await cancelQueueItem(item.id, "Request expired");
     // Update request status to expired
+    const now = new Date().toISOString();
     await supabase
       .from("video_testimonial_requests")
-      .update({ status: "expired" })
+      .update({
+        status: "expired",
+        last_transition_at: now,
+        last_transition_source: "queue_expiry",
+        last_transition_reason: "Queue worker detected expired request",
+      } as Record<string, unknown>)
       .eq("id", item.request_id);
     return { success: true };
   }
 
-  // For reminders, check if request has already been opened (no need to remind)
-  if (item.type !== "initial" && request.opened_at) {
-    await cancelQueueItem(item.id, "Customer already opened the request");
+  // For reminders, suppress once user has opened or started recording.
+  if (item.type !== "initial" && (request.opened_at || request.status === "recording")) {
+    await cancelQueueItem(item.id, "Customer already opened or started recording");
     return { success: true };
   }
 
@@ -426,11 +433,15 @@ export async function processVideoTestimonialQueueItem(
 
     if (result.success) {
       // Update request status to sent
+      const now = new Date().toISOString();
       await supabase
         .from("video_testimonial_requests")
         .update({
           status: "sent",
-          sent_at: new Date().toISOString(),
+          sent_at: now,
+          last_transition_at: now,
+          last_transition_source: "queue_send",
+          last_transition_reason: "Initial invitation sent",
         })
         .eq("id", request.id);
     }
@@ -556,9 +567,15 @@ export async function sendInitialVideoTestimonialEmailImmediately(
 
   if (request.expires_at && new Date(request.expires_at) < new Date()) {
     console.error("[VideoTestimonial] Request expired", { requestId });
+    const now = new Date().toISOString();
     await supabase
       .from("video_testimonial_requests")
-      .update({ status: "expired" })
+      .update({
+        status: "expired",
+        last_transition_at: now,
+        last_transition_source: "immediate_send",
+        last_transition_reason: "Request expired before send",
+      } as Record<string, unknown>)
       .eq("id", requestId);
     return { success: false, error: "Request expired" };
   }
@@ -597,11 +614,15 @@ export async function sendInitialVideoTestimonialEmailImmediately(
 
   if (result.success) {
     // Update request status to sent
+    const now = new Date().toISOString();
     const { error: updateError } = await supabase
       .from("video_testimonial_requests")
       .update({
         status: "sent",
-        sent_at: new Date().toISOString(),
+        sent_at: now,
+        last_transition_at: now,
+        last_transition_source: "immediate_send",
+        last_transition_reason: "Initial invitation sent immediately",
       })
       .eq("id", requestId);
 

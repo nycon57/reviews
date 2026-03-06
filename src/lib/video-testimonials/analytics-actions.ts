@@ -95,6 +95,11 @@ type VideoTestimonialRequestStatus =
 type _VideoTestimonialApprovalStatus =
   Database["public"]["Enums"]["video_testimonial_approval_status"];
 
+// Shared status arrays for consistent funnel metrics across all functions
+const SENT_STATUSES: VideoTestimonialRequestStatus[] = ["sent", "opened", "recording", "submitted", "completed"];
+const OPENED_STATUSES: VideoTestimonialRequestStatus[] = ["opened", "recording", "submitted", "completed"];
+const COMPLETED_STATUSES: VideoTestimonialRequestStatus[] = ["submitted", "completed"];
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -218,10 +223,9 @@ export async function getVideoTestimonialFunnelMetrics(params?: {
 
     // Calculate request funnel metrics
     const totalRequests = requests?.length || 0;
-    const sentStatuses: VideoTestimonialRequestStatus[] = ["sent", "opened", "recording", "submitted"];
-    const sent = requests?.filter(r => sentStatuses.includes(r.status as VideoTestimonialRequestStatus) || r.sent_at).length || 0;
-    const opened = requests?.filter(r => r.opened_at || ["opened", "recording", "submitted"].includes(r.status)).length || 0;
-    const completed = requests?.filter(r => r.status === "submitted").length || 0;
+    const sent = requests?.filter(r => SENT_STATUSES.includes(r.status as VideoTestimonialRequestStatus) || r.sent_at).length || 0;
+    const opened = requests?.filter(r => r.opened_at || OPENED_STATUSES.includes(r.status as VideoTestimonialRequestStatus)).length || 0;
+    const completed = requests?.filter(r => COMPLETED_STATUSES.includes(r.status as VideoTestimonialRequestStatus)).length || 0;
     const expired = requests?.filter(r => r.status === "expired").length || 0;
     const cancelled = requests?.filter(r => r.status === "cancelled").length || 0;
 
@@ -589,16 +593,15 @@ export async function getVideoTestimonialStatsByUser(params?: {
     }
 
     // Calculate stats for each user
-    const sentStatuses: VideoTestimonialRequestStatus[] = ["sent", "opened", "recording", "submitted"];
     const stats: UserVideoStats[] = [];
 
     for (const user of users || []) {
       const requests = requestsByUser.get(user.id) || [];
       const responses = responsesByUser.get(user.id) || [];
 
-      const sent = requests.filter(r => sentStatuses.includes(r.status as VideoTestimonialRequestStatus) || r.sent_at).length;
-      const opened = requests.filter(r => r.opened_at || ["opened", "recording", "submitted"].includes(r.status)).length;
-      const completed = requests.filter(r => r.status === "submitted").length;
+      const sent = requests.filter(r => SENT_STATUSES.includes(r.status as VideoTestimonialRequestStatus) || r.sent_at).length;
+      const opened = requests.filter(r => r.opened_at || OPENED_STATUSES.includes(r.status as VideoTestimonialRequestStatus)).length;
+      const completed = requests.filter(r => COMPLETED_STATUSES.includes(r.status as VideoTestimonialRequestStatus)).length;
       const approved = responses.filter(r => r.approval_status === "approved" || r.approval_status === "published").length;
       const published = responses.filter(r => r.approval_status === "published").length;
 

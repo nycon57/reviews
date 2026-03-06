@@ -13,7 +13,7 @@ interface CharacterCounterProps {
 function segmentTextColor(segments: number): string {
   if (segments <= 1) return 'text-repwell-teal-300';
   if (segments <= 2) return 'text-amber-600';
-  return 'text-red-600';
+  return 'text-red-600 dark:text-red-400';
 }
 
 function segmentBarColor(segments: number): string {

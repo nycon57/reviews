@@ -34,7 +34,6 @@ function mapBranchRow(row: Record<string, unknown>): BranchResource {
     manager_id: row.manager_id as string | null,
     manager_name: row.manager_name as string | null,
     manager_email: row.manager_email as string | null,
-    region: row.region as string | null,
     is_active: row.is_active as boolean,
     average_rating: row.average_rating as number | null,
     total_reviews: (row.total_reviews as number) || 0,
@@ -66,7 +65,7 @@ async function handleGet(
   // Parse sorting
   const { sortBy, sortOrder } = parseSortParams(
     searchParams,
-    ['created_at', 'name', 'region', 'average_rating', 'total_reviews'],
+    ['created_at', 'name', 'average_rating', 'total_reviews'],
     'name'
   );
 
@@ -85,9 +84,6 @@ async function handleGet(
   // Apply filters
   if (filters.is_active !== undefined) {
     query = query.eq('is_active', filters.is_active === 'true');
-  }
-  if (filters.region) {
-    query = query.eq('region', filters.region);
   }
   if (filters.search) {
     query = query.or(
@@ -184,7 +180,6 @@ async function handlePost(
       manager_id: input.manager_id,
       manager_name: input.manager_name,
       manager_email: input.manager_email,
-      region: input.region,
       is_active: true,
     })
     .select('*')

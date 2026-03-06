@@ -4,33 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { scaleIn, staggerContainer, staggerContainerDelayed, fadeInUp } from "@/lib/motion";
-import {
-  ChartBar,
-  PaperPlaneRight,
-  Star,
-  Users,
-  TrendUp,
-  FileText,
-  Plus,
-  Gear,
-  Lock,
-  type IconProps,
-} from "@phosphor-icons/react";
-
-type PhosphorIcon = React.ComponentType<IconProps>;
-
-// Icon map for server component compatibility
-const iconMap: Record<string, PhosphorIcon> = {
-  "bar-chart": ChartBar,
-  send: PaperPlaneRight,
-  star: Star,
-  users: Users,
-  "trending-up": TrendUp,
-  "file-text": FileText,
-  plus: Plus,
-  settings: Gear,
-  lock: Lock,
-};
+import { getIconOrDefault } from "@/lib/icons/registry";
 
 interface EmptyStateAction {
   label: string;
@@ -59,7 +33,7 @@ export function EmptyState({
   compact = false,
   animated = false,
 }: EmptyStateProps) {
-  const Icon = iconMap[iconName] || ChartBar;
+  const Icon = getIconOrDefault(iconName);
 
   const Wrapper = animated ? motion.div : "div";
   const ItemWrapper = animated ? motion.div : "div";
@@ -72,7 +46,7 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-white via-white to-repwell-sage-100/30",
+        "relative overflow-hidden rounded-xl border border-border/60 bg-gradient-to-br from-card via-card to-repwell-sage-100/30 dark:to-repwell-teal-300/10",
         compact ? "p-6" : "p-8 md:p-12",
         className
       )}
@@ -114,7 +88,7 @@ export function EmptyState({
         <ItemWrapper {...itemProps}>
           <h3
             className={cn(
-              "font-semibold text-repwell-teal-500",
+              "font-semibold text-heading",
               compact ? "text-base" : "text-lg md:text-xl"
             )}
           >
@@ -126,7 +100,7 @@ export function EmptyState({
         <ItemWrapper {...itemProps}>
           <p
             className={cn(
-              "mt-2 text-repwell-teal-400 max-w-md",
+              "mt-2 text-label max-w-md",
               compact ? "text-sm" : "text-sm md:text-base"
             )}
           >
@@ -144,7 +118,7 @@ export function EmptyState({
             {...itemProps}
           >
             {actions.map((action, index) => {
-              const ActionIcon = action.iconName ? iconMap[action.iconName] : undefined;
+              const ActionIcon = action.iconName ? getIconOrDefault(action.iconName) : undefined;
               const buttonContent = (
                 <>
                   {ActionIcon && <ActionIcon size={16} className="mr-2" />}
@@ -186,30 +160,28 @@ export function EmptyStateCard({
   action,
   className,
 }: EmptyStateCardProps) {
-  const Icon = iconMap[iconName] || ChartBar;
+  const Icon = getIconOrDefault(iconName);
 
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-repwell-sage-100/20 p-6 text-center",
+        "flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 p-6 text-center",
         className
       )}
     >
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-sm">
-        <Icon weight="duotone" size={24} className="text-repwell-teal-400" />
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-card shadow-sm">
+        <Icon weight="duotone" size={24} className="text-label" />
       </div>
-      <h4 className="text-sm font-medium text-repwell-teal-500">{title}</h4>
-      <p className="mt-1 text-xs text-repwell-teal-400 max-w-[200px]">{description}</p>
+      <h4 className="text-sm font-medium text-heading">{title}</h4>
+      <p className="mt-1 text-xs text-label max-w-[200px]">{description}</p>
       {action && action.href && (
         <div className="mt-4">
           <Button variant={action.variant || "outline"} size="sm" asChild>
             <a href={action.href}>
-              {action.iconName && iconMap[action.iconName] && (
-                (() => {
-                  const ActionIcon = iconMap[action.iconName];
+              {action.iconName && (() => {
+                  const ActionIcon = getIconOrDefault(action.iconName);
                   return <ActionIcon size={14} className="mr-1.5" />;
-                })()
-              )}
+                })()}
               {action.label}
             </a>
           </Button>

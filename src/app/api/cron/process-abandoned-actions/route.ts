@@ -71,7 +71,7 @@ function verifyCronSecret(request: NextRequest): boolean {
  *
  * Action Types:
  * - survey_creation: Started creating a survey template
- * - survey_send: Selected contacts but didn't send
+ * - survey_send: Selected employees but didn't send
  * - video_request: Started video testimonial request
  * - billing_upgrade: Visited pricing/upgrade page
  * - profile_completion: Started editing profile

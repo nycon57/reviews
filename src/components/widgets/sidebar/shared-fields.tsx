@@ -18,7 +18,7 @@ export function SwitchField({
 }) {
   return (
     <div className="flex items-center justify-between py-1">
-      <Label className="text-xs font-medium text-repwell-teal-400">{label}</Label>
+      <Label className="text-xs font-medium text-label">{label}</Label>
       <Switch checked={checked} onCheckedChange={onChange} />
     </div>
   );
@@ -162,13 +162,13 @@ export function ChipInput({
             <span
               key={chip}
               className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium
-                bg-repwell-sage-100/40 text-repwell-teal-400 rounded-md border border-repwell-sage-200/50"
+                bg-repwell-sage-100/40 text-label rounded-md border border-repwell-sage-200/50"
             >
               {chip}
               <button
                 type="button"
                 onClick={() => onChange(values.filter((v) => v !== chip))}
-                className="text-repwell-teal-400/50 hover:text-red-500 transition-colors"
+                className="text-label/50 hover:text-red-500 transition-colors"
                 aria-label={`Remove ${chip}`}
               >
                 <X size={10} />

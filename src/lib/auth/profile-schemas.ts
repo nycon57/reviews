@@ -42,8 +42,18 @@ export const adminProfileSchema = profileFieldsSchema.partial().extend({
   ctaButtonUrl: optionalUrl("CTA button"),
   hireDate: z.string().optional().or(z.literal("")),
   industry: optionalString(100, "Industry"),
-  region: optionalString(100, "Region"),
 });
+
+// -- Org-managed fields (individual users can self-edit these) --
+
+export const orgFieldsSchema = z.object({
+  ctaButtonText: optionalString(50, "CTA button text"),
+  ctaButtonUrl: optionalUrl("CTA button"),
+  hireDate: z.string().optional().or(z.literal("")),
+  industry: optionalString(100, "Industry"),
+});
+
+export type OrgFieldsInput = z.infer<typeof orgFieldsSchema>;
 
 // -- Password change --
 
@@ -94,6 +104,11 @@ export interface UserProfileData {
   timezone?: string | null;
   slug?: string | null;
   role?: string | null;
+  accountType?: 'individual' | 'enterprise';
+  ctaButtonText?: string | null;
+  ctaButtonUrl?: string | null;
+  hireDate?: string | null;
+  industry?: string | null;
 }
 
 /** Map a snake_case DB row (or partial) to UserProfileData. */
@@ -119,5 +134,10 @@ export function toUserProfileData(row: Record<string, any> | null | undefined): 
     timezone: row.timezone ?? undefined,
     slug: row.slug ?? undefined,
     role: row.role ?? undefined,
+    accountType: row.account_type ?? row.organization?.account_type ?? undefined,
+    ctaButtonText: row.cta_button_text ?? undefined,
+    ctaButtonUrl: row.cta_button_url ?? undefined,
+    hireDate: row.hire_date ?? undefined,
+    industry: row.industry ?? undefined,
   };
 }

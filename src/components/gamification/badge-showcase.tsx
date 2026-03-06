@@ -53,8 +53,8 @@ export function BadgeShowcase({
   if (isLoading) {
     return (
       <Card className={cn("shadow-soft", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-repwell-teal-500">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Award className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -82,9 +82,9 @@ export function BadgeShowcase({
 
   return (
     <Card className={cn("shadow-soft", className)}>
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-repwell-teal-500">
+          <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Award className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -124,8 +124,8 @@ export function BadgeShowcase({
             <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-repwell-sage-100/50 to-repwell-teal-300/10">
               <Lock size={24} className="text-repwell-teal-300" />
             </div>
-            <p className="text-sm font-medium text-repwell-teal-500">No badges earned yet</p>
-            <p className="mt-1 max-w-[220px] text-xs text-repwell-teal-400">
+            <p className="text-sm font-medium text-heading-accent">No badges earned yet</p>
+            <p className="mt-1 max-w-[220px] text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
               Complete reviews, surveys, and milestones to unlock achievement badges.
             </p>
           </div>
@@ -147,10 +147,10 @@ export function BadgeShowcase({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium truncate text-repwell-teal-500">
+                    <span className="text-xs font-medium truncate text-heading-accent">
                       {bp.badge.name}
                     </span>
-                    <span className="text-xs text-repwell-teal-400 ml-2">
+                    <span className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 ml-2">
                       {bp.percentComplete}%
                     </span>
                   </div>

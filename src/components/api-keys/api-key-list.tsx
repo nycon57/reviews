@@ -161,7 +161,7 @@ export function ApiKeyList({
     }
 
     return (
-      <Badge variant="default" className="bg-repwell-sage-200 text-repwell-teal-500 text-xs">
+      <Badge variant="default" className="bg-repwell-sage-200 text-heading text-xs">
         <CheckCircle className="mr-1 h-3 w-3" />
         Active
       </Badge>
@@ -174,7 +174,7 @@ export function ApiKeyList({
         <div className="rounded-full bg-muted p-3 mb-4">
           <Key className="h-6 w-6 text-muted-foreground" />
         </div>
-        <h3 className="font-medium text-repwell-teal-500 mb-1">No API keys yet</h3>
+        <h3 className="font-medium text-heading mb-1">No API keys yet</h3>
         <p className="text-sm text-muted-foreground max-w-sm">
           Create your first API key to start integrating with the RepWell API.
         </p>
@@ -196,7 +196,7 @@ export function ApiKeyList({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-repwell-teal-500 truncate">
+                  <span className="font-medium text-heading truncate">
                     {apiKey.name}
                   </span>
                   {getStatusBadge(apiKey)}

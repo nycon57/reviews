@@ -96,7 +96,7 @@ export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartPro
       <Card className="border-border/50">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+            <CardTitle className="text-lg text-heading flex items-center gap-2">
               <ChartBar weight="duotone" className="h-5 w-5" />
               Usage History
             </CardTitle>
@@ -104,7 +104,7 @@ export function UsageChart({ dailyStats, periodStart, periodEnd }: UsageChartPro
               variant="outline"
               size="sm"
               onClick={handleExportCsv}
-              className="text-xs border-repwell-teal-300/30 text-repwell-teal-400 hover:bg-repwell-sage-100/30"
+              className="text-xs border-repwell-teal-300/30 text-label hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10"
             >
               <DownloadSimple weight="bold" className="h-3.5 w-3.5 mr-1.5" />
               Export CSV
@@ -198,7 +198,7 @@ export function UsageTable({ dailyStats }: { dailyStats: DailyUsageStat[] }) {
     <motion.div variants={fadeInUp}>
       <Card className="border-border/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-repwell-teal-500">Daily Breakdown</CardTitle>
+          <CardTitle className="text-lg text-heading">Daily Breakdown</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -227,25 +227,25 @@ export function UsageTable({ dailyStats }: { dailyStats: DailyUsageStat[] }) {
               </thead>
               <tbody>
                 {displayData.map((d) => (
-                  <tr key={d.date} className="border-b border-border/30 hover:bg-repwell-sage-100/20 transition-colors">
-                    <td className="py-2 px-3 text-repwell-teal-500 font-medium tabular-nums">
+                  <tr key={d.date} className="border-b border-border/30 hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 transition-colors">
+                    <td className="py-2 px-3 text-heading font-medium tabular-nums">
                       {formatDate(d.date)}
                     </td>
-                    <td className="py-2 px-3 text-right text-repwell-teal-400 tabular-nums">{d.sent}</td>
-                    <td className="py-2 px-3 text-right text-repwell-sage-200 tabular-nums">{d.delivered}</td>
+                    <td className="py-2 px-3 text-right text-label tabular-nums">{d.sent}</td>
+                    <td className="py-2 px-3 text-right text-repwell-sage-200 dark:text-repwell-sage-200 tabular-nums">{d.delivered}</td>
                     <td className="py-2 px-3 text-right text-red-500 tabular-nums">{d.failed}</td>
-                    <td className="py-2 px-3 text-right text-repwell-teal-400 tabular-nums">{d.segments}</td>
-                    <td className="py-2 px-3 text-right text-repwell-teal-400 tabular-nums">{formatCents(d.costCents)}</td>
+                    <td className="py-2 px-3 text-right text-label tabular-nums">{d.segments}</td>
+                    <td className="py-2 px-3 text-right text-label tabular-nums">{formatCents(d.costCents)}</td>
                   </tr>
                 ))}
                 {/* Totals row */}
-                <tr className="bg-repwell-sage-100/20 font-semibold">
-                  <td className="py-2.5 px-3 text-repwell-teal-500">Total</td>
-                  <td className="py-2.5 px-3 text-right text-repwell-teal-500 tabular-nums">{totals.sent}</td>
-                  <td className="py-2.5 px-3 text-right text-repwell-teal-500 tabular-nums">{totals.delivered}</td>
-                  <td className="py-2.5 px-3 text-right text-repwell-teal-500 tabular-nums">{totals.failed}</td>
-                  <td className="py-2.5 px-3 text-right text-repwell-teal-500 tabular-nums">{totals.segments}</td>
-                  <td className="py-2.5 px-3 text-right text-repwell-teal-500 tabular-nums">{formatCents(totals.costCents)}</td>
+                <tr className="bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 font-semibold">
+                  <td className="py-2.5 px-3 text-heading">Total</td>
+                  <td className="py-2.5 px-3 text-right text-heading tabular-nums">{totals.sent}</td>
+                  <td className="py-2.5 px-3 text-right text-heading tabular-nums">{totals.delivered}</td>
+                  <td className="py-2.5 px-3 text-right text-heading tabular-nums">{totals.failed}</td>
+                  <td className="py-2.5 px-3 text-right text-heading tabular-nums">{totals.segments}</td>
+                  <td className="py-2.5 px-3 text-right text-heading tabular-nums">{formatCents(totals.costCents)}</td>
                 </tr>
               </tbody>
             </table>
@@ -254,7 +254,7 @@ export function UsageTable({ dailyStats }: { dailyStats: DailyUsageStat[] }) {
             <div className="mt-3 text-center">
               <button
                 onClick={() => setShowAll(!showAll)}
-                className="text-xs text-repwell-teal-300 hover:text-repwell-teal-400 font-medium transition-colors"
+                className="text-xs text-repwell-teal-300 hover:text-repwell-teal-400 dark:hover:text-muted-foreground font-medium transition-colors"
               >
                 {showAll ? 'Show less' : `Show all ${dailyStats.length} days`}
               </button>

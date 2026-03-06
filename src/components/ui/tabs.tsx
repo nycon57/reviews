@@ -32,9 +32,9 @@ const tabsTriggerVariants = cva(
         default:
           "rounded-md px-3 py-1.5 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
         underline:
-          "relative px-1 py-3 text-repwell-teal-400 hover:text-repwell-teal-500 data-[state=active]:text-repwell-teal-300 data-[state=active]:font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-repwell-teal-300 after:scale-x-0 after:transition-transform after:duration-200 after:ease-out data-[state=active]:after:scale-x-100",
+          "relative px-1 py-3 text-label hover:text-repwell-teal-500 dark:hover:text-foreground data-[state=active]:text-repwell-teal-300 data-[state=active]:font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-repwell-teal-300 after:scale-x-0 after:transition-transform after:duration-200 after:ease-out data-[state=active]:after:scale-x-100",
         pills:
-          "rounded-full px-4 py-2 text-repwell-teal-400 hover:bg-repwell-sage-100 hover:text-repwell-teal-500 data-[state=active]:bg-repwell-teal-300 data-[state=active]:text-white data-[state=active]:shadow-sm",
+          "rounded-full px-4 py-2 text-label hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-500 dark:hover:text-foreground data-[state=active]:bg-repwell-teal-300 data-[state=active]:text-white data-[state=active]:shadow-sm",
       },
     },
     defaultVariants: {

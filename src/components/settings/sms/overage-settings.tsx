@@ -33,18 +33,18 @@ export function OverageSettings({ balance, usage }: OverageSettingsProps) {
     <motion.div variants={fadeInUp}>
       <Card className="border-border/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+          <CardTitle className="text-lg text-heading flex items-center gap-2">
             <Gauge weight="duotone" className="h-5 w-5" />
             Overage Settings
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Status */}
-          <div className="flex items-center justify-between rounded-lg bg-repwell-sage-100/20 px-4 py-3">
+          <div className="flex items-center justify-between rounded-lg bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 px-4 py-3">
             <div className="flex items-center gap-3">
               <ShieldCheck weight="duotone" className="h-5 w-5 text-repwell-teal-300" />
               <div>
-                <p className="text-sm font-medium text-repwell-teal-500">Overage sends</p>
+                <p className="text-sm font-medium text-heading">Overage sends</p>
                 <p className="text-xs text-repwell-teal-300">
                   {balance.overageAllowed
                     ? 'Sends continue after included credits are used'
@@ -57,7 +57,7 @@ export function OverageSettings({ balance, usage }: OverageSettingsProps) {
               className={
                 balance.overageAllowed
                   ? 'bg-repwell-sage-200/10 text-repwell-sage-200 border-repwell-sage-200/30'
-                  : 'bg-red-50 text-red-600 border-red-200'
+                  : 'bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50'
               }
             >
               {balance.overageAllowed ? 'Allowed' : 'Blocked'}
@@ -71,7 +71,7 @@ export function OverageSettings({ balance, usage }: OverageSettingsProps) {
                 <Info weight="bold" className="h-3 w-3" />
                 Overage rate
               </p>
-              <p className="text-lg font-bold text-repwell-teal-500 tabular-nums">
+              <p className="text-lg font-bold text-heading tabular-nums">
                 {formatCents(balance.overageRateCents)}
               </p>
               <p className="text-[10px] text-repwell-teal-300">per segment</p>
@@ -82,7 +82,7 @@ export function OverageSettings({ balance, usage }: OverageSettingsProps) {
                 <TrendUp weight="bold" className="h-3 w-3" />
                 Projected overage
               </p>
-              <p className="text-lg font-bold text-repwell-teal-500 tabular-nums">
+              <p className="text-lg font-bold text-heading tabular-nums">
                 {projectedOverage > 0
                   ? `${projectedOverage.toLocaleString()} credits`
                   : 'None'}

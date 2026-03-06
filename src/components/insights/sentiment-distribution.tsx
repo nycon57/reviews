@@ -34,7 +34,7 @@ export function SentimentDistribution({
   if (total === 0) {
     return (
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <ChartPie className="h-5 w-5 text-repwell-teal-300" />
@@ -48,7 +48,7 @@ export function SentimentDistribution({
         <CardContent>
           <div className="flex h-[150px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm font-medium text-repwell-teal-500">No sentiment data available</p>
+              <p className="text-sm font-medium text-heading">No sentiment data available</p>
               <p className="mt-1 text-xs">Reviews need analysis to show distribution</p>
             </div>
           </div>
@@ -59,7 +59,7 @@ export function SentimentDistribution({
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <ChartPie className="h-5 w-5 text-repwell-teal-300" />
@@ -89,7 +89,7 @@ export function SentimentDistribution({
           )}
           {neutralPercent > 0 && (
             <div
-              className="flex items-center justify-center bg-gray-400 transition-all"
+              className="flex items-center justify-center bg-muted-foreground transition-all"
               style={{ width: `${neutralPercent}%` }}
               role="progressbar"
               aria-valuenow={neutralPercent}
@@ -121,28 +121,28 @@ export function SentimentDistribution({
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-1">
-              <SmilePlus className="h-5 w-5 text-green-600" />
-              <span className="text-2xl font-bold text-green-600">{positive}</span>
+              <SmilePlus className="h-5 w-5 text-green-600 dark:text-green-400" />
+              <span className="text-2xl font-bold text-green-600 dark:text-green-400">{positive}</span>
             </div>
-            <p className="text-sm font-medium text-green-700">Positive</p>
+            <p className="text-sm font-medium text-green-700 dark:text-green-400">Positive</p>
             <p className="text-xs text-muted-foreground">{positivePercent}%</p>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-1">
-              <Meh className="h-5 w-5 text-gray-500" />
-              <span className="text-2xl font-bold text-gray-600">{neutral}</span>
+              <Meh className="h-5 w-5 text-muted-foreground" />
+              <span className="text-2xl font-bold text-muted-foreground">{neutral}</span>
             </div>
-            <p className="text-sm font-medium text-gray-600">Neutral</p>
+            <p className="text-sm font-medium text-muted-foreground">Neutral</p>
             <p className="text-xs text-muted-foreground">{neutralPercent}%</p>
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-1">
-              <Frown className="h-5 w-5 text-red-600" />
-              <span className="text-2xl font-bold text-red-600">{negative}</span>
+              <Frown className="h-5 w-5 text-red-600 dark:text-red-400" />
+              <span className="text-2xl font-bold text-red-600 dark:text-red-400">{negative}</span>
             </div>
-            <p className="text-sm font-medium text-red-700">Negative</p>
+            <p className="text-sm font-medium text-red-700 dark:text-red-400">Negative</p>
             <p className="text-xs text-muted-foreground">{negativePercent}%</p>
           </div>
         </div>
@@ -151,10 +151,10 @@ export function SentimentDistribution({
         <div className={cn(
           "rounded-lg p-3 text-sm",
           positivePercent >= EXCELLENT_SENTIMENT_PERCENT
-            ? "bg-green-50 text-green-800"
+            ? "bg-green-50 text-green-800 dark:bg-green-950/30 dark:text-green-400"
             : positivePercent >= GOOD_SENTIMENT_PERCENT
-              ? "bg-amber-50 text-amber-800"
-              : "bg-red-50 text-red-800"
+              ? "bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400"
+              : "bg-red-50 text-red-800 dark:bg-red-950/30 dark:text-red-400"
         )}>
           {positivePercent >= EXCELLENT_SENTIMENT_PERCENT ? (
             <p>Your sentiment score is excellent. Most customers have a positive experience.</p>

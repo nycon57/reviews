@@ -46,7 +46,6 @@ const createBranchSchema = z.object({
   managerId: z.string().uuid().optional(),
   managerName: z.string().max(200).optional(),
   managerEmail: z.string().email().optional(),
-  region: z.string().max(100).optional(),
   description: z.string().max(2000).optional(),
 });
 
@@ -60,7 +59,6 @@ const updateBranchSchema = z.object({
   managerId: z.string().uuid().optional().nullable(),
   managerName: z.string().max(200).optional().nullable(),
   managerEmail: z.string().email().optional().nullable(),
-  region: z.string().max(100).optional().nullable(),
   description: z.string().max(2000).optional().nullable(),
   isActive: z.boolean().optional(),
   isPublic: z.boolean().optional(),
@@ -82,7 +80,6 @@ interface BranchRow {
   manager_id: string | null;
   manager_name: string | null;
   manager_email: string | null;
-  region: string | null;
   description: string | null;
   photo_url: string | null;
   cover_image_url: string | null;
@@ -115,7 +112,6 @@ function mapRowToBranch(row: BranchRow): Branch {
     managerId: row.manager_id,
     managerName: row.manager_name,
     managerEmail: row.manager_email,
-    region: row.region,
     description: row.description,
     photoUrl: row.photo_url,
     coverImageUrl: row.cover_image_url,
@@ -185,13 +181,13 @@ export async function getBranches(
       query = query.eq('is_active', filters.isActive);
     }
 
-    if (filters?.region) {
-      query = query.eq('region', filters.region);
-    }
-
     if (filters?.search) {
+      const escaped = filters.search
+        .replace(/\\/g, '\\\\')
+        .replace(/%/g, '\\%')
+        .replace(/_/g, '\\_');
       query = query.or(
-        `name.ilike.%${filters.search}%,manager_name.ilike.%${filters.search}%,region.ilike.%${filters.search}%`
+        `name.ilike.%${escaped}%,manager_name.ilike.%${escaped}%`
       );
     }
 
@@ -417,7 +413,6 @@ export async function createBranch(
         manager_id: validated.data.managerId,
         manager_name: validated.data.managerName,
         manager_email: validated.data.managerEmail,
-        region: validated.data.region,
         description: validated.data.description,
         is_active: true,
         is_public: true,
@@ -537,9 +532,6 @@ export async function updateBranch(
     }
     if (validated.data.managerEmail !== undefined) {
       updateData.manager_email = validated.data.managerEmail;
-    }
-    if (validated.data.region !== undefined) {
-      updateData.region = validated.data.region;
     }
     if (validated.data.description !== undefined) {
       updateData.description = validated.data.description;
@@ -1073,34 +1065,3 @@ export async function getUnassignedMembers(): Promise<
   }
 }
 
-/**
- * Get unique regions for filter dropdown
- */
-export async function getBranchRegions(): Promise<ActionResult<string[]>> {
-  try {
-    const auth = await requireAccess();
-    if (!auth.success) {
-      return { success: false, error: auth.error };
-    }
-
-    const supabase = createAdminClient();
-
-    const { data, error } = await supabase
-      .from('branches')
-      .select('region')
-      .eq('organization_id', auth.organizationId)
-      .not('region', 'is', null);
-
-    if (error) {
-      console.error('Error fetching regions:', error);
-      return { success: false, error: 'Failed to fetch regions' };
-    }
-
-    const regions = [...new Set((data || []).map((b) => b.region).filter(Boolean))] as string[];
-
-    return { success: true, data: regions.sort() };
-  } catch (error) {
-    console.error('Error fetching regions:', error);
-    return { success: false, error: 'Failed to fetch regions' };
-  }
-}

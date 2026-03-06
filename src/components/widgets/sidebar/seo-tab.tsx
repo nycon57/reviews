@@ -89,7 +89,7 @@ function highlightJson(json: string): ReactNode[] {
   while ((match = regex.exec(json)) !== null) {
     if (match.index > lastIndex) {
       parts.push(
-        <span key={`t${i++}`} className="text-gray-500">
+        <span key={`t${i++}`} className="text-muted-foreground">
           {json.slice(lastIndex, match.index)}
         </span>
       );
@@ -118,7 +118,7 @@ function highlightJson(json: string): ReactNode[] {
 
   if (lastIndex < json.length) {
     parts.push(
-      <span key={`e${i++}`} className="text-gray-500">
+      <span key={`e${i++}`} className="text-muted-foreground">
         {json.slice(lastIndex)}
       </span>
     );

@@ -233,7 +233,7 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
     <div className="space-y-6">
       {/* Preset selector */}
       <div>
-        <Label className="text-sm font-semibold text-repwell-teal-500 mb-2 block">
+        <Label className="text-sm font-semibold text-heading mb-2 block">
           Theme Preset
         </Label>
         <ThemePresetSelector value={preset} onChange={handlePresetChange} />
@@ -246,7 +246,7 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
 
       {/* Colors */}
       <div>
-        <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
+        <Label className="text-sm font-semibold text-heading mb-3 block">
           Colors
         </Label>
         <div className="grid grid-cols-2 gap-3">
@@ -294,7 +294,7 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
 
       {/* Typography */}
       <div>
-        <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
+        <Label className="text-sm font-semibold text-heading mb-3 block">
           Typography
         </Label>
         <div className="space-y-3">
@@ -336,7 +336,7 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
 
       {/* Layout */}
       <div>
-        <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
+        <Label className="text-sm font-semibold text-heading mb-3 block">
           Layout
         </Label>
         <div className="space-y-4">
@@ -422,7 +422,7 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
                     className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
                       isActive
                         ? "bg-repwell-teal-300 text-white border-repwell-teal-300 shadow-sm"
-                        : "bg-white text-repwell-teal-400 border-border hover:border-repwell-sage-200"
+                        : "bg-card text-label border-border hover:border-repwell-sage-200"
                     }`}
                   >
                     {style.label}

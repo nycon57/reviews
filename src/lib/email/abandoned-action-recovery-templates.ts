@@ -8,7 +8,7 @@
  *
  * Action types:
  * - survey_creation: Started creating a survey template
- * - survey_send: Selected contacts but didn't send
+ * - survey_send: Selected employees but didn't send
  * - video_request: Started video testimonial request
  * - billing_upgrade: Visited pricing/upgrade page
  * - profile_completion: Started editing profile
@@ -88,9 +88,9 @@ export const ABANDONED_ACTION_SUBJECT_LINES = {
     `${firstName}, your survey is waiting`,
   survey_creation_2: (firstName: string) =>
     `${firstName}, finish your survey in 2 minutes`,
-  survey_send_1: (contactCount: number) =>
-    `${contactCount} contacts ready for your survey`,
-  survey_send_2: () => `Your survey contacts are still waiting`,
+  survey_send_1: (employeeCount: number) =>
+    `${employeeCount} employees ready for your survey`,
+  survey_send_2: () => `Your survey employees are still waiting`,
   video_request_1: (firstName: string) =>
     `${firstName}, send that video request`,
   video_request_2: () => `Video testimonials = 4x more conversions`,
@@ -458,13 +458,13 @@ export function getAbandonedSurveyCreation2Email(
 // ============================================================================
 
 /**
- * Email 1: Gentle reminder 1 hour after selecting contacts
+ * Email 1: Gentle reminder 1 hour after selecting employees
  */
 export function getAbandonedSurveySend1Email(
   data: AbandonedSurveySendEmailData
 ): { subject: string; html: string } {
   const subject = sanitizeSubject(
-    ABANDONED_ACTION_SUBJECT_LINES.survey_send_1(data.contactsSelected)
+    ABANDONED_ACTION_SUBJECT_LINES.survey_send_1(data.employeesSelected)
   );
 
   const content = `
@@ -479,22 +479,22 @@ export function getAbandonedSurveySend1Email(
           <span style="font-size: 32px;">📨</span>
         </div>
         <h1 style="margin: 0 0 8px 0; font-size: 26px; font-weight: 700; color: ${colors.text.primary};">
-          Your contacts are ready
+          Your employees are ready
         </h1>
         <p style="margin: 0; font-size: 16px; color: ${colors.text.secondary};">
-          ${data.contactsSelected} ${data.contactsSelected === 1 ? "contact is" : "contacts are"} waiting for your survey
+          ${data.employeesSelected} ${data.employeesSelected === 1 ? "employee is" : "employees are"} waiting for your survey
         </p>
       </td>
     </tr>
-    <!-- Contact Count Highlight -->
+    <!-- Employee Count Highlight -->
     <tr>
       <td style="padding: 0 40px 24px 40px;">
         <div style="background-color: ${colors.primaryLight}20; border-radius: 12px; padding: 24px; text-align: center;">
           <div style="font-size: 48px; font-weight: 700; color: ${colors.primary}; line-height: 1;">
-            ${data.contactsSelected}
+            ${data.employeesSelected}
           </div>
           <p style="margin: 8px 0 0 0; font-size: 14px; color: ${colors.text.secondary};">
-            ${data.contactsSelected === 1 ? "contact" : "contacts"} selected and ready to send
+            ${data.employeesSelected === 1 ? "employee" : "employees"} selected and ready to send
           </p>
         </div>
       </td>
@@ -514,7 +514,7 @@ export function getAbandonedSurveySend1Email(
       <td style="padding: 0 40px 32px 40px; text-align: center;">
         ${createButton("Send Survey Now", data.resumeUrl, "primary")}
         <p style="margin: 16px 0 0 0; font-size: 13px; color: ${colors.text.muted};">
-          One click to reach all your contacts
+          One click to reach all your employees
         </p>
       </td>
     </tr>
@@ -533,13 +533,13 @@ export function getAbandonedSurveySend1Email(
     html: wrapInRecoveryEmailTemplate(
       content,
       data.unsubscribeUrl,
-      `${data.contactsSelected} contacts ready for your survey`
+      `${data.employeesSelected} employees ready for your survey`
     ),
   };
 }
 
 /**
- * Email 2: More urgency 24 hours after selecting contacts
+ * Email 2: More urgency 24 hours after selecting employees
  */
 export function getAbandonedSurveySend2Email(
   data: AbandonedSurveySendEmailData
@@ -582,11 +582,11 @@ export function getAbandonedSurveySend2Email(
         </div>
       </td>
     </tr>
-    <!-- Contact Reminder -->
+    <!-- Employee Reminder -->
     <tr>
       <td style="padding: 0 40px 24px 40px; text-align: center;">
         <p style="margin: 0; font-size: 16px; color: ${colors.text.primary};">
-          <strong>${data.contactsSelected} ${data.contactsSelected === 1 ? "contact" : "contacts"}</strong> still waiting
+          <strong>${data.employeesSelected} ${data.employeesSelected === 1 ? "employee" : "employees"}</strong> still waiting
         </p>
       </td>
     </tr>
@@ -611,7 +611,7 @@ export function getAbandonedSurveySend2Email(
     html: wrapInRecoveryEmailTemplate(
       content,
       data.unsubscribeUrl,
-      `Your survey contacts are still waiting`
+      `Your survey employees are still waiting`
     ),
   };
 }

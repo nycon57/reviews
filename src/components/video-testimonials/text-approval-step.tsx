@@ -193,7 +193,7 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
         <Card className="mx-auto max-w-2xl shadow-lg">
           <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-repwell-teal-300" />
-            <p className="mt-4 font-sans text-lg font-medium text-repwell-teal-500">
+            <p className="mt-4 font-sans text-lg font-medium text-heading">
               Submitting your review...
             </p>
             <p className="mt-2 font-sans text-sm text-muted-foreground">
@@ -214,7 +214,7 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <XCircle className="h-10 w-10" aria-label="Error" />
             </div>
-            <h2 className="font-sans text-2xl font-semibold text-repwell-teal-500">
+            <h2 className="font-sans text-2xl font-semibold text-heading">
               Something went wrong
             </h2>
             <p className="mt-2 font-sans text-muted-foreground">{submitError}</p>
@@ -243,16 +243,16 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-repwell-sage-200/20 text-repwell-sage-200">
               <CheckCircle2 className="h-10 w-10" />
             </div>
-            <h2 className="font-sans text-2xl font-semibold text-repwell-teal-500">
+            <h2 className="font-sans text-2xl font-semibold text-heading">
               Thank you for your review!
             </h2>
             <p className="mt-2 font-sans text-muted-foreground">
-              Your testimonial has been submitted successfully.
+              Your testimonial has been submitted and the team has been notified.
             </p>
 
             {rating >= 4 && data.googleBusinessProfileUrl && !googleReviewClicked && (
-              <div className="mt-8 rounded-lg border border-repwell-sage-200/30 bg-repwell-sage-100/20 p-6">
-                <p className="font-sans text-sm text-repwell-teal-400">
+              <div className="mt-8 rounded-lg border border-repwell-sage-200/30 bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 p-6">
+                <p className="font-sans text-sm text-label">
                   Would you also like to share your experience on Google?
                 </p>
                 <Button
@@ -304,7 +304,7 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
           )}
 
           <div className="text-center">
-            <CardTitle className="font-sans text-xl text-repwell-teal-500">
+            <CardTitle className="font-sans text-xl text-heading">
               Review Your Testimonial
             </CardTitle>
             <CardDescription className="mt-1.5 font-sans">
@@ -364,7 +364,7 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
                     size="sm"
                     onClick={handleRegenerate}
                     disabled={isRegenerating || isSubmitting}
-                    className="gap-1.5 text-muted-foreground hover:text-repwell-teal-500"
+                    className="gap-1.5 text-muted-foreground hover:text-repwell-teal-500 dark:hover:text-foreground"
                   >
                     {isRegenerating ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -390,13 +390,14 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
               </div>
               {hasEdited && (
                 <p className="text-xs text-muted-foreground">
-                  Your changes will be saved when you submit
+                  Keep edits focused on clarity and factual accuracy. Avoid adding claims that were
+                  not in your video.
                 </p>
               )}
             </div>
           ) : (
             <div className="rounded-lg border bg-muted/30 p-6">
-              <blockquote className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-repwell-teal-500">
+              <blockquote className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-heading">
                 &ldquo;{reviewText}&rdquo;
               </blockquote>
               <p className="mt-4 text-right font-sans text-sm text-muted-foreground">
@@ -446,11 +447,11 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
 
           {/* Google review redirect (for 4-5 stars) */}
           {showGoogleRedirect && (
-            <div className="rounded-lg border border-repwell-sage-200/30 bg-repwell-sage-100/20 p-4">
+            <div className="rounded-lg border border-repwell-sage-200/30 bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 p-4">
               <div className="flex items-start gap-3">
                 <ExternalLink className="mt-0.5 h-5 w-5 text-repwell-teal-300" />
                 <div>
-                  <p className="font-sans text-sm font-medium text-repwell-teal-500">
+                  <p className="font-sans text-sm font-medium text-heading">
                     Share on Google Reviews
                   </p>
                   <p className="mt-1 font-sans text-xs text-muted-foreground">
@@ -472,11 +473,11 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
           )}
 
           {/* Final consent */}
-          <div className="space-y-4 rounded-lg border p-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-repwell-teal-500">
-              <Shield className="h-4 w-4" />
-              <span className="font-sans">Final Consent</span>
-            </div>
+            <div className="space-y-4 rounded-lg border p-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-heading">
+                <Shield className="h-4 w-4" />
+                <span className="font-sans">Final Consent</span>
+              </div>
 
             <div className="flex items-start gap-3">
               <Checkbox
@@ -491,11 +492,13 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
                   htmlFor="finalConsent"
                   className="cursor-pointer font-sans text-sm font-medium"
                 >
-                  I approve this review <span className="text-destructive">*</span>
+                  I approve this review and release for publication{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <p className="font-sans text-xs text-muted-foreground">
                   I confirm that this review accurately reflects my experience and I consent to its
-                  publication on {data.organizationName}&apos;s website and marketing materials.
+                  publication on {data.organizationName}&apos;s website and marketing materials
+                  under consent version {data.consentVersion || "legacy"}.
                 </p>
               </div>
             </div>
@@ -532,7 +535,7 @@ export function TextApprovalStep({ token, data }: TextApprovalStepProps) {
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4" />
-                Submit My Review
+                Submit and Notify Team
               </>
             )}
           </Button>
@@ -563,7 +566,7 @@ function StepContainer({
   statusMessage?: string;
 }) {
   return (
-    <div className="min-h-screen bg-[#f8faf8] px-4 py-8 sm:py-12">
+    <div className="min-h-screen bg-background px-4 py-8 sm:py-12">
       {/* ARIA live region for screen reader announcements */}
       <div role="status" aria-live="polite" className="sr-only">
         {statusMessage}

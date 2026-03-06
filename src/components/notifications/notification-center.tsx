@@ -62,7 +62,7 @@ const notificationColors: Record<NotificationType, string> = {
   mention: "bg-blue-100 text-blue-600",
   report_ready: "bg-indigo-100 text-indigo-600",
   digest: "bg-indigo-100 text-indigo-600",
-  system: "bg-gray-100 text-gray-600",
+  system: "bg-muted text-muted-foreground",
 };
 
 export function NotificationCenter({ className }: NotificationCenterProps) {

@@ -129,7 +129,7 @@ export function EntitySelector({
       {/* Selected entity display / search input */}
       <div
         className="flex items-center gap-2 h-8 px-2 text-xs border border-border rounded-md
-          bg-white cursor-pointer hover:border-repwell-sage-200 transition-colors"
+          bg-card cursor-pointer hover:border-repwell-sage-200 transition-colors"
         onClick={() => {
           setIsOpen(true);
           loadEntities(query);
@@ -146,7 +146,7 @@ export function EntitySelector({
           />
         ) : (
           <span
-            className={`truncate ${selectedName ? "text-repwell-teal-400" : "text-muted-foreground"}`}
+            className={`truncate ${selectedName ? "text-label" : "text-muted-foreground"}`}
           >
             {selectedName ?? `Select ${/^[aeiou]/i.test(entityLabel) ? "an" : "a"} ${entityLabel.toLowerCase()}...`}
           </span>
@@ -157,7 +157,7 @@ export function EntitySelector({
       {isOpen && (
         <div
           className="absolute z-50 left-0 right-0 mt-1 max-h-48 overflow-y-auto
-            bg-white border border-border rounded-md shadow-lg"
+            bg-popover border border-border rounded-md shadow-lg"
         >
           {isLoading ? (
             <div className="flex items-center justify-center py-4">
@@ -174,9 +174,9 @@ export function EntitySelector({
                 type="button"
                 onClick={() => handleSelect(entity)}
                 className={`w-full flex items-center gap-2.5 px-3 py-2 text-left
-                  hover:bg-repwell-sage-100/30 transition-colors ${
+                  hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10 transition-colors ${
                     entity.id === entityId
-                      ? "bg-repwell-sage-100/50"
+                      ? "bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15"
                       : ""
                   }`}
               >
@@ -187,12 +187,12 @@ export function EntitySelector({
                     className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-7 h-7 rounded-full bg-repwell-sage-100 flex items-center justify-center flex-shrink-0">
-                    <Icon size={14} className="text-repwell-teal-400" />
+                  <div className="w-7 h-7 rounded-full bg-surface-soft flex items-center justify-center flex-shrink-0">
+                    <Icon size={14} className="text-label" />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-medium text-repwell-teal-400 truncate">
+                  <div className="text-xs font-medium text-label truncate">
                     {entity.name}
                   </div>
                   {entity.subtitle && (

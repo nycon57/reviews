@@ -41,7 +41,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex h-full flex-col border-r border-border bg-white transition-all duration-300 ease-out",
+        "flex h-full flex-col border-r border-border bg-sidebar transition-all duration-300 ease-out",
         collapsed ? "w-16" : "w-64",
         className
       )}
@@ -127,7 +127,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
             <Link href="/dashboard/settings?tab=billing">
               <Button
                 size="sm"
-                className="w-full bg-white text-repwell-teal-300 hover:bg-white/90 font-medium text-sm h-9 group"
+                className="w-full bg-white text-repwell-teal-300 hover:bg-white/90 dark:bg-foreground dark:text-repwell-teal-300 dark:hover:bg-foreground/90 font-medium text-sm h-9 group"
               >
                 View Plans
                 <ArrowRight className="ml-2 h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
@@ -167,7 +167,7 @@ function SectionDivider({ section, isActive, collapsed }: SectionDividerProps) {
       {!collapsed ? (
         <>
           <div className="my-3 h-px bg-border" />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-repwell-teal-400/70 px-3 py-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-repwell-teal-400/70 dark:text-repwell-sage-100/50 px-3 py-2">
             {section.label}
           </span>
         </>
@@ -207,10 +207,10 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLi
         "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 ease-out",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30",
         isActive && !isProLocked
-          ? "bg-repwell-sage-100 text-repwell-teal-300"
+          ? "bg-surface-soft text-repwell-teal-300"
           : isProLocked
-            ? "text-repwell-teal-400/60 hover:bg-repwell-sage-100/30 hover:text-repwell-teal-400"
-            : "text-repwell-teal-400 hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500",
+            ? "text-label/60 hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-400"
+            : "text-label hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-500 dark:hover:text-foreground",
         collapsed && "justify-center px-2"
       )}
       aria-current={isActive && !isProLocked ? "page" : undefined}
@@ -230,8 +230,8 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLi
         isActive && !isProLocked
           ? "text-repwell-teal-300"
           : isProLocked
-            ? "text-repwell-teal-400/60 group-hover:text-repwell-teal-400"
-            : "text-repwell-teal-400 group-hover:text-repwell-teal-500"
+            ? "text-label/60 group-hover:text-repwell-teal-400 dark:group-hover:text-muted-foreground"
+            : "text-label group-hover:text-repwell-teal-500 dark:group-hover:text-foreground"
       )}>
         {IconComponent ? <IconComponent className="h-4 w-4" /> : null}
       </span>
@@ -242,7 +242,7 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={cn("flex-1", isProLocked && "text-repwell-teal-400/60")}
+            className={cn("flex-1", isProLocked && "text-label/60")}
           >
             {item.title}
           </motion.span>
@@ -251,7 +251,7 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLi
 
       {/* Pro lock icon */}
       {!collapsed && isProLocked && (
-        <Lock className="h-3.5 w-3.5 text-repwell-teal-400/50" />
+        <Lock className="h-3.5 w-3.5 text-label/50" />
       )}
 
       {/* NEW badge - don't show if Pro locked */}
@@ -270,7 +270,7 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLi
 
       {/* Badge count */}
       {!collapsed && item.badge && !isProLocked && (
-        <span className="rounded-full bg-repwell-sage-100 px-2 py-0.5 text-xs font-semibold text-repwell-teal-300">
+        <span className="rounded-full bg-surface-soft px-2 py-0.5 text-xs font-semibold text-repwell-teal-300">
           {item.badge}
         </span>
       )}

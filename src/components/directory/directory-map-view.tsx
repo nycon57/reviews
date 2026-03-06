@@ -105,7 +105,7 @@ function MapLoadingSkeleton() {
 function NoLocationData({ professionals }: { professionals: DirectoryProfessional[] }) {
   // Count unique states for the badge display
   const uniqueStates = new Set(
-    professionals.map((prof) => prof.address?.state || prof.region).filter(Boolean)
+    professionals.map((prof) => prof.address?.state).filter(Boolean)
   );
 
   return (

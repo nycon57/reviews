@@ -47,7 +47,7 @@ export const FunnelStageCard = memo(function FunnelStageCard({
         <Icon className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
       </div>
       <div>
-        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value.toLocaleString()}</p>
+        <p className="text-2xl font-semibold tracking-tight text-heading">{value.toLocaleString()}</p>
         <p className="text-xs text-muted-foreground">{label}</p>
         {description && <p className="text-xs text-muted-foreground">{description}</p>}
         {conversionRate !== undefined && (
@@ -79,7 +79,7 @@ export const FunnelVisualization = memo(function FunnelVisualization({
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <ChartBar className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
@@ -90,7 +90,7 @@ export const FunnelVisualization = memo(function FunnelVisualization({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-6" role="figure" aria-label="Review funnel chart">
+      <CardContent className="p-6" role="figure" aria-label="Video funnel chart">
         <div className="space-y-4" role="list" aria-label="Video testimonial funnel stages">
           {stages.map((stage, index) => {
             const percentage = maxValue > 0 ? (stage.value / maxValue) * 100 : 0;
@@ -166,7 +166,7 @@ export const ConversionRateCards = memo(function ConversionRateCards({
                   {isAboveTarget ? (
                     <Badge variant="secondary" className="bg-repwell-sage-200/20 text-repwell-sage-200 border border-repwell-sage-200/30">On track</Badge>
                   ) : (
-                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border border-amber-200">Below target</Badge>
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">Below target</Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">{rate.description}</p>
@@ -210,7 +210,7 @@ export const TimeMetricsCards = memo(function TimeMetricsCards({
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Clock className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />

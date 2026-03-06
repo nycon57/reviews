@@ -39,7 +39,7 @@ export function ConsentLanguageForm({ settings, onSaved }: ConsentLanguageFormPr
   return (
     <Card className="border border-border/50 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+        <CardTitle className="text-lg text-heading flex items-center gap-2">
           <TextAlignLeft weight="duotone" className="h-5 w-5" />
           Consent Language
         </CardTitle>
@@ -49,7 +49,7 @@ export function ConsentLanguageForm({ settings, onSaved }: ConsentLanguageFormPr
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label className="text-sm font-medium text-repwell-teal-500">
+          <Label className="text-sm font-medium text-heading-accent">
             Consent text
           </Label>
           <Textarea
@@ -71,11 +71,11 @@ export function ConsentLanguageForm({ settings, onSaved }: ConsentLanguageFormPr
         </div>
 
         {/* Preview */}
-        <div className="p-4 rounded-lg bg-repwell-sage-100/20 border border-border/50">
-          <p className="text-xs font-medium text-repwell-teal-500 mb-2">Form preview</p>
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-border/30 space-y-3">
+        <div className="p-4 rounded-lg bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 border border-border/50">
+          <p className="text-xs font-medium text-heading mb-2">Form preview</p>
+          <div className="bg-card rounded-lg p-4 shadow-sm border border-border/30 space-y-3">
             <div>
-              <label className="block text-sm font-medium text-repwell-teal-500 mb-1">
+              <label className="block text-sm font-medium text-heading mb-1">
                 Phone number
               </label>
               <div className="h-9 rounded-md border border-border bg-muted/30 px-3 flex items-center">

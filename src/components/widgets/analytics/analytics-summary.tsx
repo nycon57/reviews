@@ -77,18 +77,18 @@ export const AnalyticsSummary = memo(function AnalyticsSummary({
         return (
           <Card
             key={card.key}
-            className="border-border bg-white hover:shadow-md transition-shadow duration-200"
+            className="border-border bg-card hover:shadow-md transition-shadow duration-200"
           >
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-repwell-sage-100/50 flex items-center justify-center text-repwell-teal-300">
+                <div className="w-8 h-8 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center text-repwell-teal-300">
                   <Icon size={16} />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground">
                   {card.label}
                 </span>
               </div>
-              <p className="text-2xl font-bold text-repwell-teal-500 tracking-tight">
+              <p className="text-2xl font-bold text-heading tracking-tight">
                 {card.format(value)}
               </p>
             </CardContent>

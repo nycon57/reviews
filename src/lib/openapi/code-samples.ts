@@ -154,7 +154,6 @@ export const exampleRequestBodies: Record<string, Record<string, unknown>> = {
     },
     phone: "+1 (555) 123-4567",
     email: "downtown@example.com",
-    region: "Northeast",
   },
   "POST /api/v1/reviews/{id}/respond": {
     response_text: "Thank you for your wonderful review! We truly appreciate your business and look forward to serving you again.",

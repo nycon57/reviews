@@ -39,10 +39,10 @@ export function TemplateStep({ formData, setFormData, templates }: StepProps) {
     <div className="space-y-6">
       {/* Section header */}
       <div>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500">
+        <h2 className="font-display text-2xl font-bold text-heading">
           Choose a Template
         </h2>
-        <p className="mt-1 text-repwell-teal-400">
+        <p className="mt-1 text-label">
           Select the type of employee survey you want to create
         </p>
       </div>
@@ -59,7 +59,7 @@ export function TemplateStep({ formData, setFormData, templates }: StepProps) {
               type="button"
               onClick={() => handleSelectTemplate(template.id)}
               className={cn(
-                "group relative flex flex-col items-start rounded-xl border bg-white p-6 text-left transition-all duration-200",
+                "group relative flex flex-col items-start rounded-xl border bg-card p-6 text-left transition-all duration-200",
                 "hover:shadow-md hover:border-repwell-teal-300/50",
                 isSelected
                   ? "border-repwell-teal-300 ring-2 ring-repwell-teal-300/20 shadow-md"
@@ -73,7 +73,7 @@ export function TemplateStep({ formData, setFormData, templates }: StepProps) {
                     "flex h-12 w-12 items-center justify-center rounded-xl transition-colors",
                     isSelected
                       ? "bg-repwell-teal-300 text-white"
-                      : "bg-repwell-sage-100/50 text-repwell-teal-400 group-hover:bg-repwell-sage-100"
+                      : "bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label group-hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 dark:group-hover:bg-repwell-teal-300/10"
                   )}
                 >
                   {Icon}
@@ -85,10 +85,10 @@ export function TemplateStep({ formData, setFormData, templates }: StepProps) {
 
               {/* Template info */}
               <div className="mt-4">
-                <h3 className="font-sans text-lg font-semibold text-repwell-teal-500">
+                <h3 className="font-sans text-lg font-semibold text-heading">
                   {template.name}
                 </h3>
-                <p className="mt-1 text-sm text-repwell-teal-400 line-clamp-2">
+                <p className="mt-1 text-sm text-label line-clamp-2">
                   {template.description}
                 </p>
               </div>
@@ -118,7 +118,7 @@ export function TemplateStep({ formData, setFormData, templates }: StepProps) {
       {templates.length === 0 && (
         <div className="rounded-xl border border-dashed border-border bg-muted/30 p-12 text-center">
           <ClipboardText className="mx-auto h-12 w-12 text-muted-foreground" />
-          <h3 className="mt-4 font-semibold text-repwell-teal-500">No templates found</h3>
+          <h3 className="mt-4 font-semibold text-heading">No templates found</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Create a template first to get started with surveys.
           </p>

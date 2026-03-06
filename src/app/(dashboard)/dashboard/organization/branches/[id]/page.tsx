@@ -29,7 +29,7 @@ export default async function EditBranchPage({
           <PencilSimple className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">Edit Branch</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading-accent">Edit Branch</h1>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Link
               href="/dashboard/organization?tab=branches"

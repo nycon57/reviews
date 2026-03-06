@@ -2226,9 +2226,9 @@ export interface AbandonedSurveyCreationEmailData extends AbandonedActionEmailBa
   helpText?: string;
 }
 
-// Abandoned Survey Send Email Data (selected contacts but didn't send)
+// Abandoned Survey Send Email Data (selected employees but didn't send)
 export interface AbandonedSurveySendEmailData extends AbandonedActionEmailBaseData {
-  contactsSelected: number;
+  employeesSelected: number;
   templateName?: string;
   sendSurveyUrl: string;
   helpText?: string;

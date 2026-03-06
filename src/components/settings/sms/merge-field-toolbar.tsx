@@ -70,7 +70,7 @@ export function MergeFieldToolbar({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 px-2 text-xs font-mono border-dashed hover:border-repwell-teal-300 hover:text-repwell-teal-400"
+                className="h-7 px-2 text-xs font-mono border-dashed hover:border-repwell-teal-300 hover:text-repwell-teal-400 dark:hover:text-muted-foreground"
                 onClick={() => insertField(field)}
               >
                 {`{{${MERGE_FIELD_LABELS[field] ?? field}}}`}

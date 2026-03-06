@@ -38,7 +38,7 @@ const roleProtectedRoutes: RouteConfig[] = [
   { path: "/dashboard/campaigns", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/approvals", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/ex-surveys", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
-  { path: "/dashboard/contacts", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
+  { path: "/dashboard/employees", requiresEnterprise: true, allowedRoles: ["admin", "manager"] },
   { path: "/dashboard/recognition", requiresEnterprise: true },
   { path: "/dashboard/analytics/leaderboard", requiresEnterprise: true },
 

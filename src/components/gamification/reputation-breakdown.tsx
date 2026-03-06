@@ -38,8 +38,8 @@ const componentLabels = {
 
 function RepBreakdownHeader() {
   return (
-    <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-      <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+    <CardHeader className="pb-4">
+      <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
           <BarChart3 className="h-4 w-4 text-repwell-teal-300" />
         </div>
@@ -95,8 +95,8 @@ export function ReputationBreakdownCard({
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100/50 to-repwell-teal-300/10">
               <BarChart3 className="h-8 w-8 text-repwell-teal-300" />
             </div>
-            <p className="text-sm font-medium text-repwell-teal-500">Build your reputation score</p>
-            <p className="mt-1 max-w-[280px] text-xs text-repwell-teal-400">
+            <p className="text-sm font-medium text-heading-accent">Build your reputation score</p>
+            <p className="mt-1 max-w-[280px] text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
               Your reputation score is calculated from NPS, customer satisfaction, response rates, and reviews. Start collecting feedback to see your breakdown.
             </p>
             <Button variant="default" size="sm" className="mt-4" asChild>
@@ -161,10 +161,10 @@ export function ReputationBreakdownCard({
 
   return (
     <Card className={cn("shadow-soft", className)}>
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+            <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <BarChart3 className="h-4 w-4 text-repwell-teal-300" />
               </div>
@@ -187,7 +187,7 @@ export function ReputationBreakdownCard({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className="flex items-center gap-1.5 cursor-help">
-                      <span className="font-medium text-repwell-teal-500">{component.label}</span>
+                      <span className="font-medium text-heading">{component.label}</span>
                       <Info className="h-3 w-3 text-repwell-teal-300" />
                     </div>
                   </TooltipTrigger>
@@ -198,7 +198,7 @@ export function ReputationBreakdownCard({
                 </Tooltip>
               </TooltipProvider>
               <div className="flex items-center gap-2">
-                <span className="text-repwell-teal-400">{component.displayValue}</span>
+                <span className="text-label">{component.displayValue}</span>
                 <Badge variant="secondary" className="text-xs font-normal">
                   +{component.contribution} pts
                 </Badge>
@@ -212,7 +212,7 @@ export function ReputationBreakdownCard({
         ))}
 
         <div className="pt-3 border-t border-border/50">
-          <div className="flex items-center justify-between text-xs text-repwell-teal-400">
+          <div className="flex items-center justify-between text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
             <span>Total from all components</span>
             <span className="font-medium">
               {components.reduce((sum, c) => sum + c.contribution, 0)} / 100 points
@@ -266,8 +266,8 @@ export function ImprovementTipsCard({
   if (isLoading) {
     return (
       <Card className={cn("shadow-soft", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Target className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -288,8 +288,8 @@ export function ImprovementTipsCard({
   if (tips.length === 0) {
     return (
       <Card className={cn("shadow-soft", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Target className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -301,8 +301,8 @@ export function ImprovementTipsCard({
             <div className="h-12 w-12 rounded-xl bg-green-500/10 flex items-center justify-center mb-3">
               <TrendingUp className="h-6 w-6 text-green-500" />
             </div>
-            <p className="text-sm font-medium text-repwell-teal-500">Great job!</p>
-            <p className="text-xs text-repwell-teal-400 max-w-[200px]">
+            <p className="text-sm font-medium text-heading-accent">Great job!</p>
+            <p className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 max-w-[200px]">
               You&apos;re performing well across all metrics. Keep up the excellent work!
             </p>
           </div>
@@ -313,8 +313,8 @@ export function ImprovementTipsCard({
 
   return (
     <Card className={cn("shadow-soft", className)}>
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Target className="h-4 w-4 text-repwell-teal-300" />
           </div>

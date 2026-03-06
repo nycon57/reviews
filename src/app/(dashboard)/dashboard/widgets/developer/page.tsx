@@ -8,7 +8,7 @@ export default function DeveloperPage() {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 space-y-10">
       <div>
-        <h1 className="text-2xl font-bold text-repwell-teal-500">
+        <h1 className="text-2xl font-bold text-heading">
           Widget Developer API
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -20,8 +20,8 @@ export default function DeveloperPage() {
       {/* Event Hooks */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Webhook size={18} className="text-repwell-teal-400" />
-          <h2 className="text-lg font-semibold text-repwell-teal-500">
+          <Webhook size={18} className="text-label" />
+          <h2 className="text-lg font-semibold text-heading">
             Event Hooks
           </h2>
         </div>
@@ -35,7 +35,7 @@ export default function DeveloperPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs border border-border rounded-md">
-            <thead className="bg-gray-50">
+            <thead className="bg-muted">
               <tr>
                 <th className="text-left px-3 py-2 font-medium">Event</th>
                 <th className="text-left px-3 py-2 font-medium">Fired when</th>
@@ -94,8 +94,8 @@ RepWell.off('my-widget-slug', 'ready', handler);`}
       {/* Runtime Configuration */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Code2 size={18} className="text-repwell-teal-400" />
-          <h2 className="text-lg font-semibold text-repwell-teal-500">
+          <Code2 size={18} className="text-label" />
+          <h2 className="text-lg font-semibold text-heading">
             Runtime Configuration
           </h2>
         </div>
@@ -131,8 +131,8 @@ RepWell.off('my-widget-slug', 'ready', handler);`}
       {/* Custom CSS */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Paintbrush size={18} className="text-repwell-teal-400" />
-          <h2 className="text-lg font-semibold text-repwell-teal-500">
+          <Paintbrush size={18} className="text-label" />
+          <h2 className="text-lg font-semibold text-heading">
             Custom CSS
           </h2>
         </div>
@@ -146,8 +146,8 @@ RepWell.off('my-widget-slug', 'ready', handler);`}
       {/* Security */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Shield size={18} className="text-repwell-teal-400" />
-          <h2 className="text-lg font-semibold text-repwell-teal-500">
+          <Shield size={18} className="text-label" />
+          <h2 className="text-lg font-semibold text-heading">
             Security
           </h2>
         </div>

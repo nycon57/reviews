@@ -245,7 +245,7 @@ export function ElementPalette({ editor }: ElementPaletteProps) {
             key={item.label}
             variant="ghost"
             size="sm"
-            className="h-auto flex-col gap-1 px-2 py-2 text-[11px] font-normal hover:bg-repwell-sage-100/50"
+            className="h-auto flex-col gap-1 px-2 py-2 text-[11px] font-normal hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10"
             onClick={() => handleAdd(item.create)}
           >
             {item.icon}

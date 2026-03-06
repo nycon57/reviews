@@ -10,6 +10,7 @@ import {
   Users,
   Buildings,
   FileText,
+  PlugsConnected,
   CreditCard,
 } from "@phosphor-icons/react/dist/ssr";
 import { OrganizationSettings } from "@/components/organization/organization-settings";
@@ -19,6 +20,7 @@ import { OrganizationBilling } from "@/components/organization/organization-bill
 import { OrganizationOverview } from "@/components/organization/organization-overview";
 import { OrganizationBranches } from "@/components/organization/organization-branches";
 import { ResponseTemplatesTab } from "@/components/organization/response-templates-tab";
+import { OrganizationIntegrations } from "@/components/organization/organization-integrations";
 import { requireEnterpriseAdmin } from "@/lib/access";
 
 export const metadata = {
@@ -29,7 +31,7 @@ export const metadata = {
 function TabSkeleton() {
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-4 w-72" />
       </CardHeader>
@@ -45,7 +47,7 @@ function TabSkeleton() {
   );
 }
 
-const triggerClassName = "relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-repwell-teal-400 data-[state=active]:text-repwell-teal-300 border-b-2 border-transparent data-[state=active]:border-repwell-teal-300 rounded-none bg-transparent shadow-none transition-colors duration-200 flex items-center gap-2 whitespace-nowrap";
+const triggerClassName = "relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80 data-[state=active]:text-repwell-teal-300 border-b-2 border-transparent data-[state=active]:border-repwell-teal-300 rounded-none bg-transparent shadow-none transition-colors duration-200 flex items-center gap-2 whitespace-nowrap";
 
 export default async function OrganizationPage() {
   // Check access - requires enterprise account + admin role
@@ -59,7 +61,7 @@ export default async function OrganizationPage() {
           <Building2 className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Organization</h1>
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading-accent">Organization</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
             Manage your organization settings, branding, and team
           </p>
@@ -92,6 +94,10 @@ export default async function OrganizationPage() {
           <TabsTrigger value="templates" className={triggerClassName}>
             <FileText className="h-4 w-4" />
             Templates
+          </TabsTrigger>
+          <TabsTrigger value="integrations" className={triggerClassName}>
+            <PlugsConnected className="h-4 w-4" />
+            Integrations
           </TabsTrigger>
           <TabsTrigger value="billing" className={triggerClassName}>
             <CreditCard className="h-4 w-4" />
@@ -132,6 +138,12 @@ export default async function OrganizationPage() {
         <TabsContent value="templates" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>
             <ResponseTemplatesTab />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="integrations" className="space-y-6">
+          <Suspense fallback={<TabSkeleton />}>
+            <OrganizationIntegrations />
           </Suspense>
         </TabsContent>
 

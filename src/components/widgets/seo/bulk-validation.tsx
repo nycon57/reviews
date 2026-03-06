@@ -68,7 +68,7 @@ export function BulkValidation({
 
   if (isLoading) {
     return (
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardContent className="p-0">
           <div className="p-4 border-b border-border">
             <Skeleton className="h-9 w-full max-w-sm" />
@@ -89,7 +89,7 @@ export function BulkValidation({
   }
 
   return (
-    <Card className="border-border bg-white overflow-hidden">
+    <Card className="border-border bg-card overflow-hidden">
       <CardContent className="p-0">
         {/* Filters */}
         <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
@@ -180,7 +180,7 @@ export function BulkValidation({
                 return (
                   <TableRow
                     key={widget.widgetId}
-                    className="cursor-pointer hover:bg-repwell-sage-100/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-1"
+                    className="cursor-pointer hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300 focus-visible:ring-offset-1"
                     onClick={() => onSelectWidget(widget.configId)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -193,7 +193,7 @@ export function BulkValidation({
                   >
                     <TableCell>
                       <div>
-                        <p className="text-sm font-medium text-repwell-teal-500">
+                        <p className="text-sm font-medium text-heading">
                           {widget.widgetName}
                         </p>
                         <p className="text-xs text-muted-foreground">

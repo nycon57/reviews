@@ -101,7 +101,7 @@ function IssueRow({
         {issue.fix && (
           <div className="mt-2 flex items-center gap-2">
             <Sparkles size={12} className="text-repwell-teal-300" />
-            <span className="text-xs text-repwell-teal-400 font-medium">
+            <span className="text-xs text-label font-medium">
               {issue.fix.label}
             </span>
             {onApplyFix && (
@@ -172,13 +172,13 @@ export function ValidationPanel({
   return (
     <div className="space-y-4">
       {/* Status header */}
-      <Card className="border-border bg-white">
+      <Card className="border-border bg-card">
         <CardContent className="p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {statusIcon}
               <div>
-                <p className="text-sm font-semibold text-repwell-teal-500">
+                <p className="text-sm font-semibold text-heading">
                   {statusText}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -204,7 +204,7 @@ export function ValidationPanel({
 
       {/* Schema recommendation */}
       {data.schemaType !== recommendation.type && (
-        <Card className="border-repwell-sage-200/50 bg-repwell-sage-100/20">
+        <Card className="border-repwell-sage-200/50 bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <Lightbulb
@@ -212,12 +212,12 @@ export function ValidationPanel({
                 className="text-repwell-teal-300 mt-0.5 shrink-0"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-repwell-teal-500">
+                <p className="text-sm font-medium text-heading">
                   Schema type recommendation
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
                   Consider using{" "}
-                  <strong className="text-repwell-teal-400">
+                  <strong className="text-label">
                     {recommendation.type}
                   </strong>{" "}
                   instead of{" "}
@@ -250,10 +250,10 @@ export function ValidationPanel({
 
       {/* Issues list */}
       {validation.issues.length === 0 ? (
-        <Card className="border-border bg-white">
+        <Card className="border-border bg-card">
           <CardContent className="py-12 flex flex-col items-center text-center">
             <CheckCircle2 size={32} className="text-emerald-600 mb-3" />
-            <p className="text-sm font-medium text-repwell-teal-500">
+            <p className="text-sm font-medium text-heading">
               All checks passed
             </p>
             <p className="text-xs text-muted-foreground mt-1">

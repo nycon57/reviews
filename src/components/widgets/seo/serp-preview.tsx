@@ -58,18 +58,18 @@ export function SerpPreview({ data }: SerpPreviewProps) {
       </div>
 
       {/* Google-style SERP result card */}
-      <Card className="border-border bg-white max-w-2xl">
+      <Card className="border-border bg-card max-w-2xl">
         <CardContent className="p-6">
           <div className="space-y-1">
             {/* Favicon + breadcrumb */}
             <div className="flex items-center gap-1">
-              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center mr-2">
-                <span className="text-xs font-bold text-gray-600">
+              <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center mr-2">
+                <span className="text-xs font-bold text-muted-foreground">
                   {entityName.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <p className="text-sm text-gray-700">{displayUrl}</p>
+                <p className="text-sm text-foreground">{displayUrl}</p>
               </div>
             </div>
 
@@ -82,7 +82,7 @@ export function SerpPreview({ data }: SerpPreviewProps) {
             {/* Star rating */}
             {ratingValue !== null && (
               <div className="flex items-center gap-1.5 pt-0.5">
-                <span className="text-sm text-gray-700 font-medium">
+                <span className="text-sm text-foreground font-medium">
                   {ratingValue.toFixed(1)}
                 </span>
                 <div className="flex items-center">
@@ -98,14 +98,14 @@ export function SerpPreview({ data }: SerpPreviewProps) {
                     />
                   ))}
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-muted-foreground">
                   ({reviewCount.toLocaleString()})
                 </span>
               </div>
             )}
 
             {/* Description snippet */}
-            <p className="text-sm text-gray-600 leading-relaxed line-clamp-2 pt-0.5">
+            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 pt-0.5">
               {description}
             </p>
           </div>

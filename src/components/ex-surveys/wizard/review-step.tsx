@@ -22,12 +22,12 @@ interface ReviewItemProps {
 function ReviewItem({ icon, label, value }: ReviewItemProps) {
   return (
     <div className="flex items-start gap-4 py-4 border-b border-border last:border-0">
-      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 text-repwell-teal-400 flex-shrink-0">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label flex-shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
         <span className="block text-sm text-muted-foreground">{label}</span>
-        <span className="block mt-0.5 font-medium text-repwell-teal-500">{value}</span>
+        <span className="block mt-0.5 font-medium text-heading">{value}</span>
       </div>
     </div>
   );
@@ -44,16 +44,16 @@ export function ReviewStep({ formData, templates }: StepProps) {
     <div className="space-y-8">
       {/* Section header */}
       <div>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500">
+        <h2 className="font-display text-2xl font-bold text-heading">
           Review & Create
         </h2>
-        <p className="mt-1 text-repwell-teal-400">
+        <p className="mt-1 text-label">
           Review your survey configuration before creating
         </p>
       </div>
 
       {/* Summary Card */}
-      <div className="rounded-xl border border-border bg-white shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
         {/* Header with gradient */}
         <div className="bg-gradient-to-r from-repwell-teal-300 to-repwell-teal-400 px-6 py-4">
           <h3 className="font-semibold text-white text-lg">{formData.name}</h3>
@@ -141,24 +141,24 @@ export function ReviewStep({ formData, templates }: StepProps) {
       </div>
 
       {/* Checklist */}
-      <div className="rounded-xl border border-border bg-repwell-sage-100/30 p-6">
-        <h4 className="font-semibold text-repwell-teal-500 mb-4">
+      <div className="rounded-xl border border-border bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 p-6">
+        <h4 className="font-semibold text-heading mb-4">
           Ready to launch
         </h4>
         <ul className="space-y-3">
-          <li className="flex items-center gap-3 text-sm text-repwell-teal-400">
+          <li className="flex items-center gap-3 text-sm text-label">
             <Check weight="bold" className="h-4 w-4 text-repwell-sage-200" />
             Survey template selected
           </li>
-          <li className="flex items-center gap-3 text-sm text-repwell-teal-400">
+          <li className="flex items-center gap-3 text-sm text-label">
             <Check weight="bold" className="h-4 w-4 text-repwell-sage-200" />
             Name and details configured
           </li>
-          <li className="flex items-center gap-3 text-sm text-repwell-teal-400">
+          <li className="flex items-center gap-3 text-sm text-label">
             <Check weight="bold" className="h-4 w-4 text-repwell-sage-200" />
             Target audience defined
           </li>
-          <li className="flex items-center gap-3 text-sm text-repwell-teal-400">
+          <li className="flex items-center gap-3 text-sm text-label">
             <Check weight="bold" className="h-4 w-4 text-repwell-sage-200" />
             Schedule configured
           </li>

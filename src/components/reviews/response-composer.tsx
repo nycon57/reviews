@@ -203,9 +203,9 @@ export function ResponseComposer({
       professional: "bg-blue-100 text-blue-700",
       friendly: "bg-green-100 text-green-700",
       empathetic: "bg-purple-100 text-purple-700",
-      formal: "bg-gray-100 text-gray-700",
+      formal: "bg-muted text-foreground",
     };
-    return colors[tone] || "bg-gray-100 text-gray-700";
+    return colors[tone] || "bg-muted text-foreground";
   };
 
   const wordCount = responseText.trim().split(/\s+/).filter(Boolean).length;
@@ -312,11 +312,11 @@ export function ResponseComposer({
           </Button>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border">
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <Lock className="h-4 w-4 text-gray-400" />
-              <span className="text-sm font-medium text-gray-600">AI Response Suggestion</span>
+              <Lock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-muted-foreground">AI Response Suggestion</span>
               <Badge variant="outline" className="text-xs">Pro</Badge>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">

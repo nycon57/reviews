@@ -28,14 +28,14 @@ export default async function EditMemberPage({
   const isEditingSelf = currentUser?.id === member.id;
 
   return (
-    <div className="flex-1 space-y-6">
+    <div className="space-y-6">
       {/* Page header */}
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
           <PencilSimple className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">
+          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading-accent">
             Edit Team Member
           </h1>
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">

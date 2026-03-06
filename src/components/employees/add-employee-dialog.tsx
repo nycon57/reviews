@@ -13,16 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SpinnerGap as Loader2 } from "@phosphor-icons/react";
-import { createContact } from "@/lib/contacts/actions";
+import { createEmployee } from "@/lib/employees/actions";
 import { useToast } from "@/hooks/use-toast";
 
-interface AddContactDialogProps {
+interface AddEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
 
-export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDialogProps) {
+export function AddEmployeeDialog({ open, onOpenChange, onSuccess }: AddEmployeeDialogProps) {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [form, setForm] = useState({
@@ -41,7 +41,7 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
     if (!form.email.trim() || !form.fullName.trim()) return;
 
     startTransition(async () => {
-      const result = await createContact({
+      const result = await createEmployee({
         email: form.email.trim(),
         fullName: form.fullName.trim(),
         department: form.department.trim() || undefined,
@@ -50,12 +50,12 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
       });
 
       if (result.success) {
-        toast({ title: "Contact added", description: `${form.fullName} has been added.` });
+        toast({ title: "Employee added", description: `${form.fullName} has been added.` });
         resetForm();
         onOpenChange(false);
         onSuccess();
       } else {
-        toast({ title: "Error", description: result.error || "Failed to add contact", variant: "destructive" });
+        toast({ title: "Error", description: result.error || "Failed to add employee", variant: "destructive" });
       }
     });
   };
@@ -64,21 +64,21 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
     <Dialog open={open} onOpenChange={(v) => { if (!v) resetForm(); onOpenChange(v); }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl text-repwell-teal-500">
-            Add Contact
+          <DialogTitle className="font-display text-xl text-heading-accent">
+            Add Employee
           </DialogTitle>
           <DialogDescription>
-            Add an employee to your organization&apos;s contact directory.
+            Add an employee to your organization&apos;s employee directory.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="contact-email" className="text-repwell-teal-500">
+            <Label htmlFor="employee-email" className="text-heading-accent">
               Email <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="contact-email"
+              id="employee-email"
               type="email"
               value={form.email}
               onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
@@ -88,11 +88,11 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="contact-name" className="text-repwell-teal-500">
+            <Label htmlFor="employee-name" className="text-heading-accent">
               Full Name <span className="text-red-500">*</span>
             </Label>
             <Input
-              id="contact-name"
+              id="employee-name"
               value={form.fullName}
               onChange={(e) => setForm((prev) => ({ ...prev, fullName: e.target.value }))}
               placeholder="Jane Smith"
@@ -101,11 +101,11 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="contact-department" className="text-repwell-teal-500">
+            <Label htmlFor="employee-department" className="text-heading-accent">
               Department
             </Label>
             <Input
-              id="contact-department"
+              id="employee-department"
               value={form.department}
               onChange={(e) => setForm((prev) => ({ ...prev, department: e.target.value }))}
               placeholder="e.g., Lending, Operations"
@@ -114,11 +114,11 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="contact-title" className="text-repwell-teal-500">
+            <Label htmlFor="employee-title" className="text-heading-accent">
               Job Title
             </Label>
             <Input
-              id="contact-title"
+              id="employee-title"
               value={form.title}
               onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
               placeholder="e.g., Loan Officer"
@@ -127,11 +127,11 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="contact-phone" className="text-repwell-teal-500">
+            <Label htmlFor="employee-phone" className="text-heading-accent">
               Phone
             </Label>
             <Input
-              id="contact-phone"
+              id="employee-phone"
               type="tel"
               value={form.phone}
               onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
@@ -156,7 +156,7 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
                 Adding...
               </>
             ) : (
-              "Add Contact"
+              "Add Employee"
             )}
           </Button>
         </DialogFooter>

@@ -48,8 +48,8 @@ export function WizardStepIndicator({ currentStep }: WizardStepIndicatorProps) {
                   <p
                     className={cn(
                       "text-sm font-medium transition-colors",
-                      state === "completed" && "text-repwell-teal-400",
-                      state === "current" && "text-repwell-teal-500",
+                      state === "completed" && "text-label",
+                      state === "current" && "text-heading",
                       state === "upcoming" && "text-muted-foreground"
                     )}
                   >

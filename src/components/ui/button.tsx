@@ -14,12 +14,12 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border-2 border-repwell-teal-300 bg-transparent text-repwell-teal-400 font-semibold hover:border-repwell-teal-400 hover:text-repwell-teal-400 hover:bg-repwell-sage-100/50",
+          "border-2 border-repwell-teal-300 bg-transparent text-repwell-teal-400 dark:text-repwell-sage-100/80 font-semibold hover:border-repwell-teal-400 hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10",
         secondary:
-          "bg-repwell-sage-100 text-repwell-teal-500 hover:bg-repwell-sage-200/50",
+          "bg-surface-soft text-heading hover:bg-repwell-sage-200/50 dark:hover:bg-repwell-teal-300/20",
         ghost:
-          "text-repwell-teal-400 hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500",
-        link: "text-repwell-teal-300 underline-offset-4 hover:underline hover:text-repwell-teal-400",
+          "text-label hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-500 dark:hover:text-foreground",
+        link: "text-repwell-teal-300 underline-offset-4 hover:underline hover:text-repwell-teal-400 dark:hover:text-repwell-teal-200",
       },
       size: {
         default: "h-10 px-4 py-2 rounded-lg",

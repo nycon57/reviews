@@ -208,10 +208,10 @@ export const WidgetAnalyticsTable = memo(function WidgetAnalyticsTable({
                 return (
                   <TableRow
                     key={row.widgetId}
-                    className="cursor-pointer hover:bg-repwell-sage-100/20 transition-colors"
+                    className="cursor-pointer hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 transition-colors"
                     onClick={() => onSelectWidget(row.widgetId)}
                   >
-                    <TableCell className="font-medium text-repwell-teal-500">
+                    <TableCell className="font-medium text-heading">
                       {row.name}
                     </TableCell>
                     <TableCell>

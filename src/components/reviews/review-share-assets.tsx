@@ -189,7 +189,7 @@ export function ReviewShareAssets({
 
   return (
     <Card className={cn("border border-border shadow-soft overflow-hidden", className)}>
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2 text-lg">
           <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
             <Package className="h-4 w-4 text-repwell-teal-300" weight="duotone" />

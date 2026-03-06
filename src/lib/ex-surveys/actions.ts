@@ -47,8 +47,8 @@ async function checkManagerAccess() {
 }
 
 // ==================== DEPARTMENT ACTIONS (DEPRECATED) ====================
-// Department CRUD removed — use getContactDepartments() from @/lib/contacts/actions instead.
-// Departments are now free-text fields on the contacts table.
+// Department CRUD removed — use getEmployeeDepartments() from @/lib/employees/actions instead.
+// Departments are now free-text fields on the employees table.
 
 // ==================== TEMPLATE ACTIONS ====================
 
@@ -604,53 +604,53 @@ export async function launchEXSurvey(surveyId: string): Promise<{ success: boole
     return { success: false, error: "Survey must be in draft status to launch" };
   }
 
-  // Get contacts to invite (includes both linked users and non-user employees)
-  let contactQuery = supabase
-    .from("contacts")
+  // Get employees to invite (includes both linked users and non-user employees)
+  let employeeQuery = supabase
+    .from("employees")
     .select("id, email, user_id, department")
     .eq("organization_id", result.organizationId)
     .eq("is_active", true);
 
   if (survey.target_departments && survey.target_departments.length > 0) {
-    contactQuery = contactQuery.in("department", survey.target_departments);
+    employeeQuery = employeeQuery.in("department", survey.target_departments);
   }
 
-  const { data: contacts, error: contactsError } = await contactQuery;
+  const { data: employees, error: employeesError } = await employeeQuery;
 
-  // Also get users who may not be in contacts table yet
+  // Also get users who may not be in employees table yet
   const { data: users, error: usersError } = await supabase
     .from("users")
     .select("id, email")
     .eq("organization_id", result.organizationId)
     .eq("is_active", true);
 
-  if (contactsError || usersError) {
+  if (employeesError || usersError) {
     return { success: false, error: "Failed to get recipients" };
   }
 
   // Build deduplicated invitation list
-  const invitations: { survey_id: string; user_id?: string; contact_id?: string; contact_email?: string }[] = [];
+  const invitations: { survey_id: string; user_id?: string; employee_id?: string; employee_email?: string }[] = [];
   const seenUserIds = new Set<string>();
   const seenEmails = new Set<string>();
 
-  // Process contacts first
-  for (const contact of contacts ?? []) {
-    const email = contact.email ? String(contact.email).toLowerCase() : null;
-    if (contact.user_id) {
-      if (!seenUserIds.has(contact.user_id)) {
-        invitations.push({ survey_id: surveyId, user_id: contact.user_id, contact_id: contact.id });
-        seenUserIds.add(contact.user_id);
+  // Process employees first
+  for (const employee of employees ?? []) {
+    const email = employee.email ? String(employee.email).toLowerCase() : null;
+    if (employee.user_id) {
+      if (!seenUserIds.has(employee.user_id)) {
+        invitations.push({ survey_id: surveyId, user_id: employee.user_id, employee_id: employee.id });
+        seenUserIds.add(employee.user_id);
         if (email) seenEmails.add(email);
       }
     } else if (email) {
       if (!seenEmails.has(email)) {
-        invitations.push({ survey_id: surveyId, contact_id: contact.id, contact_email: email });
+        invitations.push({ survey_id: surveyId, employee_id: employee.id, employee_email: email });
         seenEmails.add(email);
       }
     }
   }
 
-  // Add users not already covered by contacts (only when no department filter)
+  // Add users not already covered by employees (only when no department filter)
   if (!survey.target_departments || survey.target_departments.length === 0) {
     for (const user of users ?? []) {
       if (!seenUserIds.has(user.id)) {

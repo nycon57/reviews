@@ -205,9 +205,9 @@ export function ResponseTemplatesTab() {
       apologetic: "bg-red-100 text-red-700",
       follow_up: "bg-blue-100 text-blue-700",
       promotional: "bg-purple-100 text-purple-700",
-      custom: "bg-gray-100 text-gray-700",
+      custom: "bg-muted text-foreground",
     };
-    return colors[category] || "bg-gray-100 text-gray-700";
+    return colors[category] || "bg-muted text-foreground";
   };
 
   const getToneLabel = (tone: string) => {
@@ -227,7 +227,7 @@ export function ResponseTemplatesTab() {
   return (
     <div className="space-y-6">
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -249,14 +249,14 @@ export function ResponseTemplatesTab() {
         <CardContent>
           {/* Status Messages */}
           {success && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2">
+            <div className="mb-4 p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
               {success}
             </div>
           )}
 
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-2">
+            <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2">
               <AlertCircle className="h-5 w-5" />
               {error}
               <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setError(null)}>
@@ -303,7 +303,7 @@ export function ResponseTemplatesTab() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => setDeleteTemplate(template)}
-                            className="text-red-600"
+                            className="text-red-600 dark:text-red-400"
                           >
                             <Trash className="h-4 w-4 mr-2" />
                             Delete

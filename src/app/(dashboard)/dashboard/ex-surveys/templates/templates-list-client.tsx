@@ -140,12 +140,12 @@ export function TemplatesListClient({ templates }: TemplatesListClientProps) {
           <Card key={template.id} className="overflow-hidden border border-border transition-all hover:shadow-md">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <div className={`rounded-lg p-2 ${templateColors[template.surveyType] || "bg-gray-100 text-gray-600"}`}>
+                <div className={`rounded-lg p-2 ${templateColors[template.surveyType] || "bg-muted text-muted-foreground"}`}>
                   {templateIcons[template.surveyType] || <ClipboardList weight="duotone" className="h-6 w-6" />}
                 </div>
                 <div className="flex items-center gap-2">
                   {template.isDefault && (
-                    <Badge variant="secondary" className="bg-repwell-sage-100/50 text-repwell-teal-400">
+                    <Badge variant="secondary" className="bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label">
                       Default
                     </Badge>
                   )}
@@ -192,10 +192,10 @@ export function TemplatesListClient({ templates }: TemplatesListClientProps) {
                   </DropdownMenu>
                 </div>
               </div>
-              <CardTitle className="mt-3 font-display text-lg text-repwell-teal-500">
+              <CardTitle className="mt-3 font-display text-lg text-heading">
                 {template.name}
               </CardTitle>
-              <CardDescription className="font-sans text-repwell-teal-400">
+              <CardDescription className="font-sans text-label">
                 {template.description}
               </CardDescription>
             </CardHeader>
@@ -246,10 +246,10 @@ export function TemplatesListClient({ templates }: TemplatesListClientProps) {
       <AlertDialog open={!!deleteTemplate} onOpenChange={(open) => !open && setDeleteTemplate(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-repwell-teal-500">
+            <AlertDialogTitle className="font-display text-heading">
               Delete Template
             </AlertDialogTitle>
-            <AlertDialogDescription className="font-sans text-repwell-teal-400">
+            <AlertDialogDescription className="font-sans text-label">
               Are you sure you want to delete &quot;{deleteTemplate?.name}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -63,7 +63,7 @@ export function CreditPacksSection({ onPurchased }: CreditPacksSectionProps) {
     <motion.div variants={fadeInUp}>
       <Card className="border-border/50">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+          <CardTitle className="text-lg text-heading flex items-center gap-2">
             <Package weight="duotone" className="h-5 w-5" />
             Credit Packs
           </CardTitle>
@@ -97,14 +97,14 @@ export function CreditPacksSection({ onPurchased }: CreditPacksSectionProps) {
 
                   <div className="text-center space-y-3">
                     <div>
-                      <p className="text-3xl font-bold text-repwell-teal-500 tabular-nums">
+                      <p className="text-3xl font-bold text-heading tabular-nums">
                         {pack.credits.toLocaleString()}
                       </p>
                       <p className="text-xs text-repwell-teal-300 mt-0.5">credits</p>
                     </div>
 
                     <div>
-                      <p className="text-xl font-semibold text-repwell-teal-500">
+                      <p className="text-xl font-semibold text-heading">
                         {formatCents(pack.priceCents)}
                       </p>
                       <p className="text-[10px] text-repwell-teal-300">
@@ -119,7 +119,7 @@ export function CreditPacksSection({ onPurchased }: CreditPacksSectionProps) {
                       className={`w-full ${
                         isBestValue
                           ? 'bg-repwell-teal-300 hover:bg-repwell-teal-400 text-white'
-                          : 'bg-repwell-sage-100/50 hover:bg-repwell-sage-100 text-repwell-teal-500 border border-repwell-sage-200/30'
+                          : 'bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 text-heading border border-repwell-sage-200/30'
                       }`}
                     >
                       {isLoading ? (

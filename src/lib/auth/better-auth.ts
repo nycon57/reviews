@@ -241,7 +241,6 @@ export const auth = betterAuth({
       bio: { type: "string", required: false },
       photo_url: { type: "string", required: false },
       timezone: { type: "string", required: false },
-      region: { type: "string", required: false },
       industry: { type: "string", required: false },
 
       // Employment fields

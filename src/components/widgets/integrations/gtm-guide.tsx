@@ -18,7 +18,7 @@ export function GtmGuide() {
   return (
     <IntegrationCard
       id="gtm"
-      icon={<Tags size={20} className="text-repwell-teal-500" />}
+      icon={<Tags size={20} className="text-heading" />}
       title="Google Tag Manager"
       description="Deploy the widget via GTM using a custom template or Custom HTML tag."
     >

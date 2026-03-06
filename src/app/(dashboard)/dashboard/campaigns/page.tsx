@@ -24,7 +24,7 @@ export default async function CampaignsPage() {
           <Mail className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Campaigns</h1>
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading">Campaigns</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
             Create and manage automated multi-channel workflows
           </p>

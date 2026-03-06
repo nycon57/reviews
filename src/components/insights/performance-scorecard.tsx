@@ -37,7 +37,7 @@ function TrendIndicator({
 }) {
   if (direction === "up") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-green-600">
+      <span className="inline-flex items-center gap-0.5 text-xs text-green-600 dark:text-green-400">
         <TrendUp className="h-3 w-3" weight="bold" />
         {value}
       </span>
@@ -45,7 +45,7 @@ function TrendIndicator({
   }
   if (direction === "down") {
     return (
-      <span className="inline-flex items-center gap-0.5 text-xs text-red-600">
+      <span className="inline-flex items-center gap-0.5 text-xs text-red-600 dark:text-red-400">
         <TrendDown className="h-3 w-3" weight="bold" />
         {value}
       </span>
@@ -81,7 +81,7 @@ function MetricCard({
         {label}
       </div>
       <div className="mt-1.5 flex items-baseline gap-2">
-        <span className="text-xl font-semibold tracking-tight text-repwell-teal-500 tabular-nums">{value}</span>
+        <span className="text-xl font-semibold tracking-tight text-heading tabular-nums">{value}</span>
         {trend && <TrendIndicator direction={trend} value={trendValue} />}
       </div>
       {subtext && (
@@ -92,18 +92,18 @@ function MetricCard({
 }
 
 export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
-  const fallbackBadge = { label: "Unknown", class: "bg-gray-100 text-gray-800" };
+  const fallbackBadge = { label: "Unknown", class: "bg-muted text-foreground" };
   const sentimentBadge: Record<string, { label: string; class: string }> = {
-    improving: { label: "Improving", class: "bg-green-100 text-green-800" },
-    stable: { label: "Stable", class: "bg-blue-100 text-blue-800" },
-    declining: { label: "Declining", class: "bg-red-100 text-red-800" },
+    improving: { label: "Improving", class: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400" },
+    stable: { label: "Stable", class: "bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400" },
+    declining: { label: "Declining", class: "bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400" },
   };
 
   const sentiment = sentimentBadge[data.sentimentTrajectory] ?? fallbackBadge;
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -189,7 +189,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
           <div className="grid gap-3 sm:grid-cols-2">
             {data.topPositiveThemes.length > 0 && (
               <div className="space-y-1.5">
-                <h4 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-green-700">
+                <h4 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">
                   <Smiley className="h-3.5 w-3.5" />
                   Top Strengths
                 </h4>
@@ -198,7 +198,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
                     <Badge
                       key={theme}
                       variant="secondary"
-                      className="bg-green-100 text-green-800"
+                      className="bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400"
                     >
                       {theme}
                     </Badge>
@@ -208,7 +208,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
             )}
             {data.riskThemes.length > 0 && (
               <div className="space-y-1.5">
-                <h4 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-red-700">
+                <h4 className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-400">
                   <TrendDown className="h-3.5 w-3.5" />
                   Areas to Watch
                 </h4>
@@ -217,7 +217,7 @@ export function PerformanceScorecard({ data }: PerformanceScorecardProps) {
                     <Badge
                       key={theme}
                       variant="secondary"
-                      className="bg-red-100 text-red-800"
+                      className="bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400"
                     >
                       {theme}
                     </Badge>

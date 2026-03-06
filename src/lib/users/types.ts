@@ -38,7 +38,6 @@ export interface UserRow {
 
   // Location
   branch_id: string | null;
-  region: string | null;
   address: UserAddress | null;
 
   // Employment
@@ -50,6 +49,9 @@ export interface UserRow {
   total_reviews: number;
   nps_score: number | null;
   reputation_score: number;
+
+  // Public profile
+  slug: string | null;
 
   // External Integrations
   google_business_id: string | null;
@@ -86,7 +88,6 @@ export interface User {
 
   // Location
   branchId: string | null;
-  region: string | null;
   address: UserAddress | null;
 
   // Employment
@@ -98,6 +99,9 @@ export interface User {
   totalReviews: number;
   npsScore: number | null;
   reputationScore: number;
+
+  // Public profile
+  slug: string | null;
 
   // External Integrations
   googleBusinessId: string | null;
@@ -120,7 +124,6 @@ export interface PublicUser {
   personalWebsiteUrl: string | null;
   linkedinUrl: string | null;
   zillowProfileUrl: string | null;
-  region: string | null;
   averageRating: number;
   totalReviews: number;
   reputationScore: number;
@@ -182,7 +185,6 @@ export const updateUserByAdminSchema = z.object({
   bio: z.string().max(2000).optional().nullable(),
   photoUrl: z.string().url().optional().nullable(),
   branchId: z.string().uuid().optional().nullable(),
-  region: z.string().max(100).optional().nullable(),
   managerUserId: z.string().uuid().optional().nullable(),
   hireDate: z.string().optional().nullable(),
   googleBusinessId: z.string().optional().nullable(),
@@ -207,7 +209,6 @@ export const publicUserFields = [
   "personal_website_url",
   "linkedin_url",
   "zillow_profile_url",
-  "region",
   "average_rating",
   "total_reviews",
   "reputation_score",
@@ -228,7 +229,6 @@ export function rowToPublicUser(row: Partial<UserRow>): PublicUser {
     personalWebsiteUrl: row.personal_website_url ?? null,
     linkedinUrl: row.linkedin_url ?? null,
     zillowProfileUrl: row.zillow_profile_url ?? null,
-    region: row.region ?? null,
     averageRating: row.average_rating ?? 0,
     totalReviews: row.total_reviews ?? 0,
     reputationScore: row.reputation_score ?? 0,
@@ -260,7 +260,6 @@ export function rowToUser(row: UserRow): User {
 
     // Location
     branchId: row.branch_id,
-    region: row.region,
     address: row.address,
 
     // Employment
@@ -272,6 +271,9 @@ export function rowToUser(row: UserRow): User {
     totalReviews: row.total_reviews ?? 0,
     npsScore: row.nps_score,
     reputationScore: row.reputation_score ?? 0,
+
+    // Public profile
+    slug: row.slug,
 
     // External Integrations
     googleBusinessId: row.google_business_id,

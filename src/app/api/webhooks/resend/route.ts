@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Webhook } from "svix";
 import { z } from "zod";
@@ -121,6 +122,9 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = parseResult.data;
+    const providerEventId =
+      request.headers.get("svix-id") ||
+      `${payload.type}:${payload.data.email_id}:${payload.created_at || "unknown"}`;
 
     const { type, data } = payload;
     const supabase = createAdminClient();
@@ -144,6 +148,8 @@ export async function POST(request: NextRequest) {
     // Build update data based on event type
     const updateData: Record<string, string> = {
       status: newStatus,
+      provider_event_id: providerEventId,
+      provider_event_type: type,
     };
 
     switch (type) {
@@ -158,22 +164,38 @@ export async function POST(request: NextRequest) {
         break;
     }
 
-    // Update email log by resend message ID and get the template info
+    // Atomic deduplication: update only if this provider_event_id hasn't been
+    // processed yet. Replaces SELECT-then-update to eliminate TOCTOU race.
+    // Requires UNIQUE constraint on email_logs.provider_event_id.
+    // Escape providerEventId for PostgREST filter (wrap in double quotes, escape \ and ")
+    const providerEventIdEscaped = providerEventId
+      .replace(/\\/g, "\\\\")
+      .replace(/"/g, '\\"');
     const { data: emailLog, error } = await supabase
       .from("email_logs")
       .update(updateData)
       .eq("resend_message_id", data.email_id)
-      .select("template_name")
-      .single();
+      .or(`provider_event_id.is.null,provider_event_id.neq."${providerEventIdEscaped}"`)
+      .select("template_name, request_id, to_email")
+      .maybeSingle();
 
     if (error) {
       console.error("Failed to update email log:", error);
       // Still continue processing
     }
 
+    // No row returned and no error means this event was already processed
+    if (!emailLog && !error) {
+      return NextResponse.json({ received: true, deduplicated: true });
+    }
+
     // Handle video testimonial-specific status updates
     if (emailLog?.template_name && VIDEO_TESTIMONIAL_TEMPLATES.includes(emailLog.template_name)) {
-      await handleVideoTestimonialEmailEvent(supabase, type, data);
+      await handleVideoTestimonialEmailEvent(supabase, type, data, {
+        requestIdFromLog: emailLog.request_id,
+        recipientEmailFromLog: emailLog.to_email,
+        providerEventId,
+      });
     }
 
     // Handle welcome sequence-specific status updates
@@ -214,32 +236,61 @@ export async function POST(request: NextRequest) {
 async function handleVideoTestimonialEmailEvent(
   supabase: ReturnType<typeof createAdminClient>,
   eventType: string,
-  eventData: ResendWebhookPayload["data"]
+  eventData: ResendWebhookPayload["data"],
+  options: {
+    requestIdFromLog?: string | null;
+    recipientEmailFromLog?: string | null;
+    providerEventId: string;
+  }
 ) {
   // Try to extract request_id from tags
-  const requestId = eventData.tags?.request_id;
+  const taggedRequestId = eventData.tags?.request_id;
+  const requestId = taggedRequestId || options.requestIdFromLog || null;
 
-  if (!requestId) {
-    // No request ID in tags, try to find by email
-    const toEmail = eventData.to?.[0];
-    if (!toEmail) return;
-
-    // Find the most recent pending request for this email
-    const { data: request } = await supabase
-      .from("video_testimonial_requests")
-      .select("id")
-      .eq("customer_email", toEmail.toLowerCase())
-      .in("status", ["pending", "sent"])
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!request) return;
-
-    await updateVideoTestimonialRequest(supabase, request.id, eventType);
-  } else {
+  if (requestId) {
     await updateVideoTestimonialRequest(supabase, requestId, eventType);
+    return;
   }
+
+  // Strict fallback: only attribute by email if exactly one eligible request exists.
+  const toEmail = eventData.to?.[0] || options.recipientEmailFromLog;
+  if (!toEmail) {
+    console.error("Video webhook missing request_id and recipient email", {
+      providerEventId: options.providerEventId,
+      eventType,
+    });
+    return;
+  }
+
+  const { data: candidates, error: candidateError } = await supabase
+    .from("video_testimonial_requests")
+    .select("id")
+    .eq("customer_email", toEmail.toLowerCase())
+    .in("status", ["pending", "queued", "sent", "opened", "recording"])
+    .order("created_at", { ascending: false })
+    .limit(2);
+
+  if (candidateError || !candidates) {
+    console.error("Failed to resolve webhook request candidate:", {
+      providerEventId: options.providerEventId,
+      eventType,
+      error: candidateError,
+    });
+    return;
+  }
+
+  if (candidates.length !== 1) {
+    const emailHash = createHash("sha256").update(toEmail.toLowerCase()).digest("hex").slice(0, 12);
+    console.error("Ambiguous webhook attribution. Event quarantined.", {
+      providerEventId: options.providerEventId,
+      eventType,
+      candidateCount: candidates.length,
+      recipientEmailHash: emailHash,
+    });
+    return;
+  }
+
+  await updateVideoTestimonialRequest(supabase, candidates[0].id, eventType);
 }
 
 /**
@@ -257,7 +308,12 @@ async function updateVideoTestimonialRequest(
       // Update delivered timestamp
       await supabase
         .from("video_testimonial_requests")
-        .update({ email_delivered_at: now })
+        .update({
+          email_delivered_at: now,
+          last_transition_at: now,
+          last_transition_source: "webhook",
+          last_transition_reason: "Email delivered",
+        })
         .eq("id", requestId)
         .is("email_delivered_at", null);
       break;
@@ -269,8 +325,12 @@ async function updateVideoTestimonialRequest(
         .update({
           opened_at: now,
           status: "opened",
+          last_transition_at: now,
+          last_transition_source: "webhook",
+          last_transition_reason: "Email opened",
         })
         .eq("id", requestId)
+        .in("status", ["pending", "queued", "sent"])
         .is("opened_at", null);
 
       // Cancel pending reminder queue items since customer opened the email
@@ -291,7 +351,12 @@ async function updateVideoTestimonialRequest(
       // Note: clicked_at column exists in DB, types may need regeneration
       await supabase
         .from("video_testimonial_requests")
-        .update({ clicked_at: now } as Record<string, unknown>)
+        .update({
+          clicked_at: now,
+          last_transition_at: now,
+          last_transition_source: "webhook",
+          last_transition_reason: "Email link clicked",
+        } as Record<string, unknown>)
         .eq("id", requestId)
         .is("clicked_at", null);
       break;
@@ -299,15 +364,16 @@ async function updateVideoTestimonialRequest(
     case "email.bounced":
     case "email.complained":
       // Mark request as failed due to bounced email
-      // Note: failed status and failure_reason exist in DB, types may need regeneration
       await supabase
         .from("video_testimonial_requests")
         .update({
           status: "failed",
-          failure_reason: eventType === "email.bounced" ? "Email bounced" : "Email reported as spam",
+          last_transition_at: now,
+          last_transition_source: "webhook",
+          last_transition_reason: eventType === "email.bounced" ? "Email bounced" : "Email reported as spam",
         } as Record<string, unknown>)
         .eq("id", requestId)
-        .in("status", ["pending", "sent"]);
+        .in("status", ["pending", "queued", "sent"]);
 
       // Cancel all pending queue items for this request
       await supabase

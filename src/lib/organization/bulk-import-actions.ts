@@ -383,7 +383,6 @@ export async function bulkImportUsers(
           branch_id: branchId,
           manager_id: managerId,
           hire_date: user.hire_date || null,
-          region: user.region || null,
         });
 
         if (insertError) {

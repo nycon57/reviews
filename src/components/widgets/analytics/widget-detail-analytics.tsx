@@ -218,7 +218,7 @@ export const WidgetDetailAnalyticsPanel = memo(
               <ArrowLeft size={14} /> Back
             </Button>
             <div>
-              <h2 className="text-lg font-semibold text-repwell-teal-500">
+              <h2 className="text-lg font-semibold text-heading">
                 {widgetName ?? widgetId}
               </h2>
               <p className="text-xs text-muted-foreground">
@@ -470,7 +470,7 @@ export const WidgetDetailAnalyticsPanel = memo(
                         href={item.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-repwell-teal-300 hover:text-repwell-teal-400 truncate flex items-center gap-1 max-w-[80%]"
+                        className="text-xs text-repwell-teal-300 hover:text-repwell-teal-400 dark:hover:text-muted-foreground truncate flex items-center gap-1 max-w-[80%]"
                       >
                         {item.url}
                         <ExternalLink size={10} className="flex-shrink-0" />
@@ -505,7 +505,7 @@ export const WidgetDetailAnalyticsPanel = memo(
                       key={item.referrer}
                       className="flex items-center justify-between gap-3 py-2 border-b border-border-subtle last:border-0"
                     >
-                      <span className="text-xs text-repwell-teal-400 truncate max-w-[80%]">
+                      <span className="text-xs text-label truncate max-w-[80%]">
                         {item.referrer}
                       </span>
                       <span className="text-xs font-medium tabular-nums text-muted-foreground">
@@ -552,7 +552,7 @@ export const WidgetDetailAnalyticsPanel = memo(
                     >
                       {item.ipHash.slice(0, 8)}&hellip;
                     </span>
-                    <span className="text-xs font-medium tabular-nums text-repwell-teal-500">
+                    <span className="text-xs font-medium tabular-nums text-heading">
                       {item.count.toLocaleString()}
                     </span>
                   </div>

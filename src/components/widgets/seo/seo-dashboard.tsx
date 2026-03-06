@@ -145,7 +145,7 @@ export function SeoDashboard() {
           <Button variant="ghost" size="sm" onClick={handleBackToOverview}>
             &larr; Back to overview
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight text-repwell-teal-500">
+          <h1 className="text-2xl font-bold tracking-tight text-heading">
             {selectedWidget.widgetName}
           </h1>
         </div>
@@ -204,7 +204,7 @@ export function SeoDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-repwell-teal-500">
+          <h1 className="text-2xl font-bold tracking-tight text-heading">
             SEO & Structured Data
           </h1>
           <p className="text-sm text-muted-foreground">
@@ -216,7 +216,7 @@ export function SeoDashboard() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 border-red-200 text-red-600 hover:bg-red-50"
+              className="gap-2 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
               onClick={() => setShowAlerts(!showAlerts)}
             >
               <Bell size={14} />
@@ -268,10 +268,10 @@ export function SeoDashboard() {
       {/* Empty state */}
       {hasNoWidgets ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-repwell-sage-100/50 flex items-center justify-center text-repwell-teal-300 mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center text-repwell-teal-300 mb-4">
             <FileCode2 size={28} />
           </div>
-          <h2 className="text-lg font-semibold text-repwell-teal-500 mb-2">
+          <h2 className="text-lg font-semibold text-heading mb-2">
             No widgets to validate
           </h2>
           <p className="text-sm text-muted-foreground max-w-md">
@@ -336,11 +336,11 @@ function ValidationAlertsBanner({
           {alerts.map((alert) => (
             <button
               key={alert.configId}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-white border border-red-200 hover:border-red-300 transition-colors text-left"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-card border border-red-200 dark:border-red-800/50 hover:border-red-300 dark:hover:border-red-700/50 transition-colors text-left"
               onClick={() => onSelectWidget(alert.configId)}
             >
               <div>
-                <p className="text-sm font-medium text-repwell-teal-500">
+                <p className="text-sm font-medium text-heading">
                   {alert.widgetName}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -425,11 +425,11 @@ function SeoSummaryCards({
         return (
           <Card
             key={card.key}
-            className="border-border bg-white hover:shadow-md transition-shadow duration-200"
+            className="border-border bg-card hover:shadow-md transition-shadow duration-200"
           >
             <CardContent className="p-5">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-repwell-sage-100/50 flex items-center justify-center text-repwell-teal-300">
+                <div className="w-8 h-8 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center text-repwell-teal-300">
                   <Icon size={16} />
                 </div>
                 <span className="text-xs font-medium text-muted-foreground">
@@ -437,7 +437,7 @@ function SeoSummaryCards({
                 </span>
               </div>
               <p
-                className={`text-2xl font-bold tracking-tight ${card.color ?? "text-repwell-teal-500"}`}
+                className={`text-2xl font-bold tracking-tight ${card.color ?? "text-heading"}`}
               >
                 {value}
               </p>
@@ -453,14 +453,14 @@ function SeoSummaryCards({
 
 function SearchConsoleGuidance() {
   return (
-    <Card className="border-border bg-white">
+    <Card className="border-border bg-card">
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-lg bg-repwell-sage-100/50 flex items-center justify-center text-repwell-teal-300 shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center text-repwell-teal-300 shrink-0">
             <Search size={20} />
           </div>
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-repwell-teal-500">
+            <h3 className="text-sm font-semibold text-heading">
               Google Search Console Integration
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
@@ -470,7 +470,7 @@ function SearchConsoleGuidance() {
             <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
               <li>
                 Open{" "}
-                <span className="font-medium text-repwell-teal-400">
+                <span className="font-medium text-label">
                   Google Search Console
                 </span>{" "}
                 and verify ownership of your domain.

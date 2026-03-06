@@ -257,7 +257,7 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">{test.name}</h1>
+                <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading">{test.name}</h1>
                 <StatusBadge status={test.status} />
               </div>
               {test.description && (
@@ -474,7 +474,7 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
                         key={data.variant}
                         className={cn(
                           "p-4 rounded-lg border",
-                          data.isSignificant ? "bg-green-50 border-green-200" : "bg-gray-50"
+                          data.isSignificant ? "bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800/50" : "bg-muted"
                         )}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -611,7 +611,7 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
                       key={variant.id}
                       className={cn(
                         "p-4 rounded-lg border",
-                        variant.isControl && "bg-blue-50 border-blue-200"
+                        variant.isControl && "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800/50"
                       )}
                     >
                       <div className="flex items-center justify-between mb-2">

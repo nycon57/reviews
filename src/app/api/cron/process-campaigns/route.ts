@@ -182,14 +182,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 }
 
+/**
+ * Vercel crons send GET requests — alias to POST so the cron actually processes campaigns.
+ */
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-campaigns",
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

@@ -1,13 +1,13 @@
 import { requireEnterpriseManager } from "@/lib/access";
-import { ContactsPageClient } from "./contacts-page-client";
+import { EmployeesPageClient } from "./employees-page-client";
 
 export const metadata = {
-  title: "Contacts | RepWell",
+  title: "Employees | RepWell",
   description: "Manage your organization's employee directory",
 };
 
-export default async function ContactsPage() {
+export default async function EmployeesPage() {
   await requireEnterpriseManager();
 
-  return <ContactsPageClient />;
+  return <EmployeesPageClient />;
 }

@@ -14,7 +14,6 @@ export interface UserProfile {
   title: string | null;
   bio: string | null;
   branch: string | null;
-  region: string | null;
   nmlsId: string | null;
   linkedinUrl: string | null;
   zillowProfileUrl: string | null;
@@ -490,7 +489,6 @@ export async function getUserProfile(
       title,
       bio,
       branch,
-      region,
       nmls_id,
       linkedin_url,
       zillow_profile_url,
@@ -519,7 +517,6 @@ export async function getUserProfile(
       title: data.title,
       bio: data.bio,
       branch: data.branch,
-      region: data.region,
       nmlsId: data.nmls_id,
       linkedinUrl: data.linkedin_url,
       zillowProfileUrl: data.zillow_profile_url,

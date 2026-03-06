@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { FileText, ShieldWarning } from "@phosphor-icons/react/dist/ssr";
+import { ShieldWarning } from "@phosphor-icons/react/dist/ssr";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { getAccessContext, isEnterprise, isAdmin } from "@/lib/access";
 import { SurveyTemplatesList } from "./survey-templates-list";
-import { CardSkeleton } from "@/components/shared/skeletons";
 
 export const metadata = {
   title: "Survey Templates | RepWell",
@@ -39,32 +39,34 @@ export default async function SurveysPage() {
 
   // Both individual users and enterprise admins can manage templates
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-          <FileText className="h-6 w-6 text-repwell-teal-300" />
-        </div>
-        <div>
-          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Survey Templates</h1>
-          <p className="text-sm leading-snug text-repwell-teal-300">
-            {isEnterprise(ctx)
-              ? "Create and manage customizable survey templates"
-              : "Create and manage your survey templates"}
-          </p>
-        </div>
-      </div>
-
-      <Suspense
-        fallback={
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
-          </div>
-        }
-      >
-        <SurveyTemplatesList />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <Card className="border border-border shadow-soft overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-muted animate-pulse" />
+                <div className="h-5 w-48 rounded bg-muted animate-pulse" />
+              </div>
+              <div className="h-9 w-36 rounded bg-muted animate-pulse" />
+            </div>
+          </CardHeader>
+          <CardContent className="p-6 space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-4 p-4 animate-pulse">
+                <div className="h-10 w-10 rounded-full bg-muted shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/3 rounded bg-muted" />
+                  <div className="h-3 w-2/3 rounded bg-muted" />
+                </div>
+                <div className="h-6 w-16 rounded bg-muted" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      }
+    >
+      <SurveyTemplatesList />
+    </Suspense>
   );
 }

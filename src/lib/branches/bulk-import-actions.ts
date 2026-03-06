@@ -192,7 +192,6 @@ export async function bulkImportBranches(
       manager_id: string | null;
       manager_name: string | null;
       manager_email: string | null;
-      region: string | null;
       description: string | null;
       is_active: boolean;
       is_public: boolean;
@@ -200,7 +199,6 @@ export async function bulkImportBranches(
       longitude: number | null;
     };
     name: string;
-    region?: string;
   }[] = [];
   const preparationFailures: BranchImportResult[] = [];
   const usedSlugs = new Set<string>();
@@ -212,7 +210,6 @@ export async function bulkImportBranches(
       if (!zodResult.success) {
         preparationFailures.push({
           name: branch.name || "Unknown",
-          region: branch.region,
           success: false,
           error: zodResult.error.errors[0]?.message || "Validation failed",
         });
@@ -292,7 +289,6 @@ export async function bulkImportBranches(
           manager_id: managerId,
           manager_name: managerName,
           manager_email: managerEmail,
-          region: branch.region || null,
           description: branch.description || null,
           is_active: true,
           is_public: true,
@@ -300,12 +296,10 @@ export async function bulkImportBranches(
           longitude: coords?.longitude ?? null,
         },
         name,
-        region: branch.region,
       });
     } catch (err) {
       preparationFailures.push({
         name: branch.name || "Unknown",
-        region: branch.region,
         success: false,
         error: err instanceof Error ? err.message : "Unknown error",
       });
@@ -365,7 +359,6 @@ export async function bulkImportBranches(
             retryFailedIndices.push(ri);
             preparationFailures.push({
               name: row.name,
-              region: row.region,
               success: false,
               error: err instanceof Error ? err.message : "Slug generation failed",
             });
@@ -394,7 +387,6 @@ export async function bulkImportBranches(
               ...preparationFailures,
               ...preparedRows.map((r) => ({
                 name: r.name,
-                region: r.region,
                 success: false as const,
                 error: retryError.message,
               })),
@@ -410,7 +402,6 @@ export async function bulkImportBranches(
             ...preparationFailures,
             ...preparedRows.map((r) => ({
               name: r.name,
-              region: r.region,
               success: true as const,
             })),
           ],
@@ -424,7 +415,6 @@ export async function bulkImportBranches(
           ...preparationFailures,
           ...preparedRows.map((r) => ({
             name: r.name,
-            region: r.region,
             success: false as const,
             error: batchError.message,
           })),
@@ -440,7 +430,6 @@ export async function bulkImportBranches(
         ...preparationFailures,
         ...preparedRows.map((r) => ({
           name: r.name,
-          region: r.region,
           success: true as const,
         })),
       ],

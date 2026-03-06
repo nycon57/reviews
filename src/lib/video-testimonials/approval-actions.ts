@@ -35,6 +35,7 @@ export interface TextApprovalData {
   organizationLogoUrl: string | null;
   organizationPrimaryColor: string | null;
   googleBusinessProfileUrl: string | null;
+  consentVersion: string | null;
 }
 
 // =============================================================================
@@ -119,7 +120,8 @@ export async function getTextApprovalData(
         video_testimonial_responses(
           id,
           ai_generated_text,
-          ai_generation_status
+          ai_generation_status,
+          consent_version
         )
       `)
       .eq("token", token)
@@ -143,6 +145,7 @@ export async function getTextApprovalData(
       id: string;
       ai_generated_text: string | null;
       ai_generation_status: string | null;
+      consent_version: string | null;
     }>;
 
     const response = responses?.[0];
@@ -192,6 +195,7 @@ export async function getTextApprovalData(
         organizationLogoUrl: validateSafeUrl(organization.logo_url),
         organizationPrimaryColor: validateHexColor(organization.primary_color),
         googleBusinessProfileUrl: buildGoogleReviewUrl(loanOfficer.google_place_id),
+        consentVersion: response.consent_version || null,
       },
     };
   } catch (error) {
@@ -231,6 +235,7 @@ export async function submitApprovedText(
       .select(`
         id,
         request_id,
+        consent_version,
         video_testimonial_requests!inner(
           token,
           status,
@@ -262,6 +267,13 @@ export async function submitApprovedText(
 
     if (request.expires_at && new Date(request.expires_at) < new Date()) {
       return { success: false, error: "This request has expired" };
+    }
+
+    if (!response.consent_version) {
+      return {
+        success: false,
+        error: "Required legal consent version is missing. Please contact support.",
+      };
     }
 
     // Update response with approved text using conditional update to prevent race conditions

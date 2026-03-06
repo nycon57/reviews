@@ -125,12 +125,12 @@ export function EmbedCodePanel({ widgetId }: EmbedCodePanelProps) {
         </TabsContent>
       </Tabs>
 
-      <div className="p-3 bg-repwell-sage-100/30 rounded-lg border border-repwell-sage-200/50">
-        <h4 className="text-xs font-semibold text-repwell-teal-500 mb-1">
+      <div className="p-3 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 rounded-lg border border-repwell-sage-200/50">
+        <h4 className="text-xs font-semibold text-heading mb-1">
           Widget ID
         </h4>
         <div className="flex items-center gap-2">
-          <code className="text-xs font-mono text-repwell-teal-400 flex-1 truncate">
+          <code className="text-xs font-mono text-label flex-1 truncate">
             {widgetId}
           </code>
           <CopyButton text={widgetId} />
@@ -152,7 +152,7 @@ export function EmbedCodePanel({ widgetId }: EmbedCodePanelProps) {
             <Link
               key={guide.hash}
               href={`/dashboard/widgets/integrations#${guide.hash}`}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-repwell-teal-500 transition-colors py-0.5"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-repwell-teal-500 dark:hover:text-foreground transition-colors py-0.5"
             >
               <ExternalLink size={10} />
               {guide.label}

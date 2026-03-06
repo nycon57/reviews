@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/process-campaigns",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-video-ai",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/process-video-queue",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

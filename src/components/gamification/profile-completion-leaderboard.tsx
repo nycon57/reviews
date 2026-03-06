@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -60,12 +60,12 @@ export function ProfileCompletionLeaderboard({
   if (isLoading) {
     return (
       <Card className={cn("border border-border/50 shadow-soft rounded-xl", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+        <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Target className="h-5 w-5 text-repwell-teal-300" />
             </div>
-            <CardTitle className="text-lg text-repwell-teal-500">Profile Completion</CardTitle>
+            <CardTitle className="text-lg text-heading-accent">Profile Completion</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
@@ -88,12 +88,12 @@ export function ProfileCompletionLeaderboard({
   if (entries.length === 0) {
     return (
       <Card className={cn("border border-border/50 shadow-soft rounded-xl overflow-hidden", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+        <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Target className="h-5 w-5 text-repwell-teal-300" />
             </div>
-            <CardTitle className="text-lg text-repwell-teal-500">Profile Completion</CardTitle>
+            <CardTitle className="text-lg text-heading-accent">Profile Completion</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -101,9 +101,9 @@ export function ProfileCompletionLeaderboard({
             <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
             <div className="relative">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50">
-                <Users className="h-7 w-7 text-repwell-teal-400" />
+                <Users className="h-7 w-7 text-label" />
               </div>
-              <p className="font-medium text-repwell-teal-500">No team members found</p>
+              <p className="font-medium text-heading-accent">No team members found</p>
             </div>
           </div>
         </CardContent>
@@ -116,12 +116,12 @@ export function ProfileCompletionLeaderboard({
 
   return (
     <Card className={cn("border border-border/50 shadow-soft rounded-xl overflow-hidden", className)}>
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+      <CardHeader className="pb-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Target className="h-5 w-5 text-repwell-teal-300" />
           </div>
-          <CardTitle className="text-lg text-repwell-teal-500">Profile Completion</CardTitle>
+          <CardTitle className="text-lg text-heading-accent">Profile Completion</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="p-5 space-y-5">
@@ -159,7 +159,7 @@ export function ProfileCompletionLeaderboard({
           <div className="rounded-xl border border-border/50 overflow-hidden">
             <Table>
               <TableHeader>
-                <TableRow className="bg-repwell-sage-100/10">
+                <TableRow className="bg-repwell-sage-100/10 dark:bg-repwell-teal-300/5">
                   <TableHead className="w-16">Rank</TableHead>
                   <TableHead>Team Member</TableHead>
                   <TableHead className="w-24 text-right">Points</TableHead>
@@ -169,20 +169,20 @@ export function ProfileCompletionLeaderboard({
               </TableHeader>
               <TableBody>
                 {restOfList.map((entry) => (
-                  <TableRow key={entry.id} className="hover:bg-repwell-sage-100/10">
-                    <TableCell className="font-medium text-repwell-teal-400">#{entry.rank}</TableCell>
+                  <TableRow key={entry.id} className="hover:bg-repwell-sage-100/10 dark:hover:bg-repwell-teal-300/10 dark:bg-repwell-teal-300/5">
+                    <TableCell className="font-medium text-repwell-teal-400 dark:text-repwell-sage-100/80">#{entry.rank}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
                           {entry.photoUrl && (
                             <AvatarImage src={entry.photoUrl} alt={entry.fullName} />
                           )}
-                          <AvatarFallback className="text-xs bg-repwell-teal-300/10 text-repwell-teal-400">
+                          <AvatarFallback className="text-xs bg-repwell-teal-300/10 text-label">
                             {getInitials(entry.fullName)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-sm text-repwell-teal-500">{entry.fullName}</p>
+                          <p className="font-medium text-sm text-heading-accent">{entry.fullName}</p>
                           {entry.branch && (
                             <p className="text-xs text-muted-foreground">
                               {entry.branch}
@@ -192,7 +192,7 @@ export function ProfileCompletionLeaderboard({
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="font-medium text-repwell-teal-500">{entry.earnedPoints}</span>
+                      <span className="font-medium text-heading-accent">{entry.earnedPoints}</span>
                       <span className="text-muted-foreground text-xs">
                         /{entry.totalPoints}
                       </span>
@@ -200,23 +200,18 @@ export function ProfileCompletionLeaderboard({
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         <Star className="h-3 w-3 text-yellow-500" />
-                        <span className="font-medium text-repwell-teal-500">{entry.searchRankScore}</span>
+                        <span className="font-medium text-heading-accent">{entry.searchRankScore}</span>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Progress
                           value={entry.percentage}
-                          className={cn(
-                            "h-2 flex-1",
-                            entry.percentage >= 80
-                              ? "[&>div]:bg-green-500"
-                              : entry.percentage >= 50
-                                ? "[&>div]:bg-yellow-500"
-                                : "[&>div]:bg-orange-500"
-                          )}
+                          className="h-2 flex-1"
+                          indicatorClassName="!bg-[var(--progress-fill)]"
+                          indicatorStyle={{ "--progress-fill": `hsl(${Math.round((Math.min(entry.percentage, 100) / 100) * 120)} 65% 45%)` } as CSSProperties}
                         />
-                        <span className="text-xs font-medium w-8 text-repwell-teal-400">
+                        <span className="text-xs font-medium w-8 text-label">
                           {entry.percentage}%
                         </span>
                       </div>
@@ -229,16 +224,17 @@ export function ProfileCompletionLeaderboard({
         )}
 
         {/* Info card */}
-        <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 p-4">
+        <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/5 p-4">
           <div className="flex items-start gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-repwell-teal-300/10 shrink-0">
               <Lightning className="h-4 w-4 text-repwell-teal-300" />
             </div>
             <div>
-              <h4 className="font-medium text-sm text-repwell-teal-500 mb-1.5">How Profile Scores Work</h4>
+              <h4 className="font-medium text-sm text-heading-accent mb-1.5">How Profile Scores Work</h4>
+
               <ul className="text-xs text-muted-foreground space-y-1">
-                <li><strong className="text-repwell-teal-400">Points</strong> are earned by completing profile fields</li>
-                <li><strong className="text-repwell-teal-400">Search Rank</strong> (0-850) combines profile completion with reviews and engagement</li>
+                <li><strong className="text-repwell-teal-400 dark:text-repwell-sage-100/80">Points</strong> are earned by completing profile fields</li>
+                <li><strong className="text-repwell-teal-400 dark:text-repwell-sage-100/80">Search Rank</strong> (0-850) combines profile completion with reviews and engagement</li>
                 <li>Higher scores improve visibility in search results and client matching</li>
                 <li>Connect external platforms like Google Business and Zillow for bonus points</li>
               </ul>
@@ -278,7 +274,7 @@ function PodiumCard({
     <div className={cn(
       "rounded-xl border border-border/50 p-5 transition-all hover:shadow-soft",
       isWinner
-        ? "border-yellow-200/50 bg-gradient-to-b from-yellow-50/30 to-transparent"
+        ? "border-yellow-200/50 dark:border-yellow-800/30 bg-gradient-to-b from-yellow-50/30 dark:from-yellow-950/20 to-transparent"
         : "bg-card"
     )}>
       <div className="flex flex-col items-center text-center">
@@ -301,10 +297,10 @@ function PodiumCard({
               className={cn(
                 isWinner ? "text-xl" : "text-lg",
                 entry.rank === 1
-                  ? "bg-yellow-50 text-yellow-700"
+                  ? "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400"
                   : entry.rank === 2
-                    ? "bg-repwell-sage-100/30 text-repwell-sage-200"
-                    : "bg-amber-50 text-amber-700"
+                    ? "bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 text-repwell-sage-200"
+                    : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
               )}
             >
               {getInitials(entry.fullName)}
@@ -320,12 +316,12 @@ function PodiumCard({
           )}
         </div>
 
-        <p className="font-semibold text-repwell-teal-500 truncate max-w-full">{entry.fullName}</p>
+        <p className="font-semibold text-heading-accent truncate max-w-full">{entry.fullName}</p>
         <p
           className={cn(
             "text-xs font-medium",
             entry.rank === 1
-              ? "text-yellow-600"
+              ? "text-yellow-600 dark:text-yellow-400"
               : "text-muted-foreground"
           )}
         >
@@ -335,24 +331,19 @@ function PodiumCard({
         <div className="mt-3 w-full space-y-2">
           <Progress
             value={entry.percentage}
-            className={cn(
-              "h-2",
-              entry.percentage >= 80
-                ? "[&>div]:bg-green-500"
-                : entry.percentage >= 50
-                  ? "[&>div]:bg-yellow-500"
-                  : "[&>div]:bg-orange-500"
-            )}
+            className="h-2"
+            indicatorClassName="!bg-[var(--progress-fill)]"
+            indicatorStyle={{ "--progress-fill": `hsl(${Math.round((Math.min(entry.percentage, 100) / 100) * 120)} 65% 45%)` } as CSSProperties}
           />
           <div className="flex items-center justify-between text-xs">
             <span className="font-medium text-muted-foreground">{entry.earnedPoints} pts</span>
-            <span className="font-bold text-repwell-teal-400">{entry.percentage}%</span>
+            <span className="font-bold text-repwell-teal-400 dark:text-repwell-sage-100/80">{entry.percentage}%</span>
           </div>
         </div>
 
         <div className="mt-2 flex items-center gap-1 text-sm">
           <Star className="h-3.5 w-3.5 text-yellow-500" />
-          <span className="font-medium text-repwell-teal-500">{entry.searchRankScore}</span>
+          <span className="font-medium text-heading-accent">{entry.searchRankScore}</span>
           <span className="text-xs text-muted-foreground">rank</span>
         </div>
       </div>
@@ -416,7 +407,7 @@ export function CompactProfileLeaderboard({
   return (
     <Card className={cn("border border-border/50 shadow-soft rounded-xl", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2 text-repwell-teal-500">
+        <CardTitle className="text-base flex items-center gap-2 text-heading-accent">
           <Target className="h-4 w-4 text-repwell-teal-300" />
           Profile Leaders
         </CardTitle>
@@ -430,7 +421,7 @@ export function CompactProfileLeaderboard({
                   {entry.photoUrl && (
                     <AvatarImage src={entry.photoUrl} alt={entry.fullName} />
                   )}
-                  <AvatarFallback className="text-xs bg-repwell-teal-300/10 text-repwell-teal-400">
+                  <AvatarFallback className="text-xs bg-repwell-teal-300/10 text-label">
                     {getInitials(entry.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -447,9 +438,15 @@ export function CompactProfileLeaderboard({
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-repwell-teal-500 truncate">{entry.fullName}</p>
+                <p className="text-sm font-medium text-heading-accent truncate">{entry.fullName}</p>
+
                 <div className="flex items-center gap-2">
-                  <Progress value={entry.percentage} className="h-1 flex-1" />
+                  <Progress
+                    value={entry.percentage}
+                    className="h-1 flex-1"
+                    indicatorClassName="!bg-[var(--progress-fill)]"
+                    indicatorStyle={{ "--progress-fill": `hsl(${Math.round((Math.min(entry.percentage, 100) / 100) * 120)} 65% 45%)` } as CSSProperties}
+                  />
                   <span className="text-xs text-muted-foreground w-8">
                     {entry.percentage}%
                   </span>

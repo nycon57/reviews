@@ -41,7 +41,7 @@ function StatCard({ title, value, icon }: StatCardProps) {
         {icon}
       </div>
       <div>
-        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value}</p>
+        <p className="text-2xl font-semibold tracking-tight text-heading-accent">{value}</p>
         <p className="text-xs text-muted-foreground">{title}</p>
       </div>
     </div>
@@ -115,7 +115,7 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
 
   const tier = organization.subscription_tier || "free";
   const tierColors: Record<string, string> = {
-    free: "bg-gray-100 text-gray-800",
+    free: "bg-muted text-foreground",
     starter: "bg-blue-100 text-blue-800",
     professional: "bg-purple-100 text-purple-800",
     enterprise: "bg-amber-100 text-amber-800",
@@ -125,7 +125,7 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
     <div className="space-y-6">
       {/* Organization info card */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               {organization.logo_url ? (

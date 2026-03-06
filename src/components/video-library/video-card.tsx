@@ -66,7 +66,7 @@ export const VideoCard = memo(function VideoCard({
         {/* Play overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg">
-            <Play className="h-6 w-6 text-repwell-teal-400 ml-1" />
+            <Play className="h-6 w-6 text-label ml-1" />
           </div>
         </div>
 
@@ -103,7 +103,7 @@ export const VideoCard = memo(function VideoCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate font-semibold text-repwell-teal-500">
+            <h3 className="truncate font-semibold text-heading">
               {video.customerName}
             </h3>
             <p className="truncate text-sm text-muted-foreground">

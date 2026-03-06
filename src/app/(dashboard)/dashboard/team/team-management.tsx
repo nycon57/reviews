@@ -269,7 +269,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         </div>
         {/* Table skeleton */}
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-10 rounded-xl" />
               <div className="space-y-1.5">
@@ -326,7 +326,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                 <Icon className="h-5 w-5 text-repwell-teal-300" />
               </div>
               <div>
-                <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                <p className="text-2xl font-semibold tracking-tight text-heading-accent">
                   {stat.value}
                 </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -338,7 +338,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
 
       {/* Active Team Members */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -471,7 +471,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
                           <AvatarImage src={member.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs bg-repwell-sage-100/50 text-repwell-teal-400">
+                          <AvatarFallback className="text-xs bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-repwell-teal-400 dark:text-repwell-sage-100/80">
                             {(member.full_name || member.email)
                               .split(" ")
                               .map((n) => n[0])
@@ -486,7 +486,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                             {member.role === "user" && (
                               <Link
                                 href={`/dashboard/analytics/member/${member.id}`}
-                                className="text-muted-foreground hover:text-repwell-teal-400 transition-colors"
+                                className="text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-muted-foreground transition-colors"
                               >
                                 <ExternalLink className="h-3.5 w-3.5" />
                               </Link>
@@ -514,7 +514,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className="border-repwell-sage-200 bg-repwell-sage-100/30 text-repwell-teal-400"
+                        className="border-repwell-sage-200 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 text-label"
                       >
                         Active
                       </Badge>
@@ -561,7 +561,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
             </Table>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-repwell-sage-100/30 mb-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 mb-3">
                 <Users className="h-6 w-6 text-repwell-teal-300/50" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">
@@ -578,7 +578,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
       {/* Pending Invitations */}
       {invitations.length > 0 && (
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <EnvelopeSimple className="h-5 w-5 text-repwell-teal-300" />
@@ -606,7 +606,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                   <TableRow key={invite.id} className="group">
                     <TableCell className="pl-6">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-repwell-sage-100/50">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15">
                           <Mail className="h-4 w-4 text-repwell-teal-300" />
                         </div>
                         <span className="text-sm">{invite.email}</span>
@@ -645,7 +645,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
       {/* Inactive Members */}
       {inactiveMembers.length > 0 && (
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <UserCircleMinus className="h-5 w-5 text-repwell-teal-300" />
@@ -674,7 +674,7 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
                           <AvatarImage src={member.avatar_url || undefined} />
-                          <AvatarFallback className="text-xs bg-repwell-sage-100/50 text-repwell-teal-400">
+                          <AvatarFallback className="text-xs bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-repwell-teal-400 dark:text-repwell-sage-100/80">
                             {(member.full_name || member.email)
                               .split(" ")
                               .map((n) => n[0])

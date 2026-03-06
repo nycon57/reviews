@@ -168,7 +168,7 @@ export function EditSlugDialog({
             {/* URL Preview */}
             <div className="rounded-lg border bg-muted/50 p-3">
               <p className="text-xs text-muted-foreground mb-1">Preview</p>
-              <p className="text-sm font-mono break-all text-repwell-teal-400">
+              <p className="text-sm font-mono break-all text-label">
                 {previewUrl}
               </p>
             </div>

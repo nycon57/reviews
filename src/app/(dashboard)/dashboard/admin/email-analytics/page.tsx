@@ -44,7 +44,7 @@ export default async function EmailAnalyticsPage() {
           <Mail className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">Email Analytics</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading">Email Analytics</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
             Monitor email performance, delivery rates, and engagement metrics
           </p>

@@ -11,7 +11,7 @@
  *
  * Action types:
  * - survey_creation: Started creating a survey template
- * - survey_send: Selected contacts but didn't send
+ * - survey_send: Selected employees but didn't send
  * - video_request: Started video testimonial request
  * - billing_upgrade: Visited pricing/upgrade page
  * - profile_completion: Started editing profile
@@ -505,7 +505,7 @@ async function sendRecoveryEmail(
     case "survey_send":
       emailData = {
         ...baseEmailData,
-        contactsSelected: safeInteger(context.contacts_selected, 0, 0, 10000),
+        employeesSelected: safeInteger(context.contacts_selected, 0, 0, 10000),
         templateName: safeString(context.template_name),
         sendSurveyUrl: `${baseUrl}/dashboard/surveys/send`,
       };

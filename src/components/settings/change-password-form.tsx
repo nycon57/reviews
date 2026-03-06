@@ -80,6 +80,12 @@ export function ChangePasswordForm() {
           variant: 'destructive',
         });
       }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred',
+        variant: 'destructive',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -89,7 +95,7 @@ export function ChangePasswordForm() {
     <Card className="border border-border shadow-soft">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Lock className="h-5 w-5 text-repwell-teal-400" />
+          <Lock className="h-5 w-5 text-label" />
           <CardTitle>Change Password</CardTitle>
         </div>
         <CardDescription>

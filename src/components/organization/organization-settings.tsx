@@ -147,60 +147,64 @@ export function OrganizationSettings() {
 
   if (loading) {
     return (
-      <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-72" />
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {[...Array(5)].map((_, i) => (
+          <Card key={i} className="border border-border shadow-soft">
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-72" />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {[...Array(3)].map((_, j) => (
+                <div key={j} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     );
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* General Settings */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <GearSix className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* General Settings */}
+          <Card className="border border-border shadow-soft">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <GearSix className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">General Settings</CardTitle>
+                  <CardDescription>
+                    Basic information about your organization
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg">General Settings</CardTitle>
-                <CardDescription>
-                  Basic information about your organization
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Organization Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Acme Corp" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    This name will appear across the platform
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Organization Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Acme Corp" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      This name will appear across the platform
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="company_email"
@@ -228,115 +232,178 @@ export function OrganizationSettings() {
                   </FormItem>
                 )}
               />
-            </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timezone</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select timezone" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {TIMEZONES.map((tz) => (
+                            <SelectItem key={tz.value} value={tz.value}>
+                              {tz.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="date_format"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Date Format</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select format" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {DATE_FORMATS.map((fmt) => (
+                            <SelectItem key={fmt.value} value={fmt.value}>
+                              {fmt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Address */}
+          <Card className="border border-border shadow-soft">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <MapPin className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Company Address</CardTitle>
+                  <CardDescription>
+                    Your organization&apos;s physical address
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="timezone"
+                name="company_address.street"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timezone</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Street Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="123 Main St" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="company_address.street2"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Street Address 2</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Suite 100" {...field} value={field.value || ""} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid gap-4 sm:grid-cols-3">
+                <FormField
+                  control={form.control}
+                  name="company_address.city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">City</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select timezone" />
-                        </SelectTrigger>
+                        <Input placeholder="New York" {...field} value={field.value || ""} />
                       </FormControl>
-                      <SelectContent>
-                        {TIMEZONES.map((tz) => (
-                          <SelectItem key={tz.value} value={tz.value}>
-                            {tz.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="date_format"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Date Format</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormField
+                  control={form.control}
+                  name="company_address.state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">State</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select format" />
-                        </SelectTrigger>
+                        <Input placeholder="NY" {...field} value={field.value || ""} />
                       </FormControl>
-                      <SelectContent>
-                        {DATE_FORMATS.map((fmt) => (
-                          <SelectItem key={fmt.value} value={fmt.value}>
-                            {fmt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </CardContent>
-        </Card>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-        {/* Address */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <MapPin className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                <FormField
+                  control={form.control}
+                  name="company_address.postal_code"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ZIP Code</FormLabel>
+                      <FormControl>
+                        <Input placeholder="10001" {...field} value={field.value || ""} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              <div>
-                <CardTitle className="text-lg">Company Address</CardTitle>
-                <CardDescription>
-                  Your organization&apos;s physical address
-                </CardDescription>
+            </CardContent>
+          </Card>
+
+          {/* Public Profile */}
+          <Card className="border border-border shadow-soft">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <Globe className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Public Profile</CardTitle>
+                  <CardDescription>
+                    These appear on your public organization profile page
+                  </CardDescription>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="company_address.street"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Street Address</FormLabel>
-                  <FormControl>
-                    <Input placeholder="123 Main St" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="company_address.street2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Street Address 2</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Suite 100" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid gap-4 sm:grid-cols-3">
+            </CardHeader>
+            <CardContent className="space-y-4">
               <FormField
                 control={form.control}
-                name="company_address.city"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">City</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Public Contact Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="New York" {...field} value={field.value || ""} />
+                      <div className="relative">
+                        <Envelope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input type="email" placeholder="info@company.com" className="pl-9" {...field} value={field.value || ""} />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -345,12 +412,15 @@ export function OrganizationSettings() {
 
               <FormField
                 control={form.control}
-                name="company_address.state"
+                name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">State</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Public Contact Phone</FormLabel>
                     <FormControl>
-                      <Input placeholder="NY" {...field} value={field.value || ""} />
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input placeholder="+1 (555) 000-0000" className="pl-9" {...field} value={field.value || ""} />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -359,107 +429,39 @@ export function OrganizationSettings() {
 
               <FormField
                 control={form.control}
-                name="company_address.postal_code"
+                name="website_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">ZIP Code</FormLabel>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Website</FormLabel>
                     <FormControl>
-                      <Input placeholder="10001" {...field} value={field.value || ""} />
+                      <div className="relative">
+                        <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input type="url" placeholder="https://www.company.com" className="pl-9" {...field} value={field.value || ""} />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Public Profile */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <Globe className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+          {/* Social Links */}
+          <Card className="border border-border shadow-soft">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <ShareNetwork className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Social Links</CardTitle>
+                  <CardDescription>
+                    Link your social media profiles
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg">Public Profile</CardTitle>
-                <CardDescription>
-                  These appear on your public organization profile page
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Public Contact Email</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Envelope className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input type="email" placeholder="info@company.com" className="pl-9" {...field} value={field.value || ""} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Public Contact Phone</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input placeholder="+1 (555) 000-0000" className="pl-9" {...field} value={field.value || ""} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="website_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Website</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input type="url" placeholder="https://www.company.com" className="pl-9" {...field} value={field.value || ""} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Social Links */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <ShareNetwork className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Social Links</CardTitle>
-                <CardDescription>
-                  Link your social media profiles
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 sm:grid-cols-2">
+            </CardHeader>
+            <CardContent className="space-y-4">
               <FormField
                 control={form.control}
                 name="linkedin_url"
@@ -527,59 +529,59 @@ export function OrganizationSettings() {
                   </FormItem>
                 )}
               />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Headquarters Branch */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <Buildings className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+          {/* Headquarters Branch — spans full width */}
+          <Card className="border border-border shadow-soft lg:col-span-2">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <Buildings className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Headquarters Branch</CardTitle>
+                  <CardDescription>
+                    The headquarters address and contact info will appear on your public profile
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg">Headquarters Branch</CardTitle>
-                <CardDescription>
-                  The headquarters address and contact info will appear on your public profile
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="headquarters_branch_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Headquarters</FormLabel>
-                  <Select onValueChange={(v) => field.onChange(v === "none" ? "" : v)} value={field.value || "none"}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <SelectValue placeholder="Select a branch" />
-                        </div>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id}>
-                          {branch.name}
-                          {branch.address?.city && branch.address?.state
-                            ? ` — ${branch.address.city}, ${branch.address.state}`
-                            : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="headquarters_branch_id"
+                render={({ field }) => (
+                  <FormItem className="max-w-md">
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Headquarters</FormLabel>
+                    <Select onValueChange={(v) => field.onChange(v === "none" ? "" : v)} value={field.value || "none"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <SelectValue placeholder="Select a branch" />
+                          </div>
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        {branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id}>
+                            {branch.name}
+                            {branch.address?.city && branch.address?.state
+                              ? ` — ${branch.address.city}, ${branch.address.state}`
+                              : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isPending}>

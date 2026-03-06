@@ -115,10 +115,10 @@ export function ConversationDetail({
         {/* Mobile back button */}
         <button
           onClick={onBack}
-          className="md:hidden flex items-center justify-center h-8 w-8 rounded-lg hover:bg-repwell-sage-100/50 transition-colors"
+          className="md:hidden flex items-center justify-center h-8 w-8 rounded-lg hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 transition-colors"
           aria-label="Back to conversations"
         >
-          <ArrowLeft className="h-4 w-4 text-repwell-teal-400" />
+          <ArrowLeft className="h-4 w-4 text-label" />
         </button>
 
         <Avatar className="h-9 w-9 flex-shrink-0">
@@ -131,7 +131,7 @@ export function ConversationDetail({
         </Avatar>
 
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-repwell-teal-500 truncate">
+          <p className="text-sm font-semibold text-heading truncate">
             {conversation.borrowerName ?? conversation.borrowerPhoneDisplay}
           </p>
           {conversation.borrowerName && (
@@ -146,7 +146,7 @@ export function ConversationDetail({
           className={cn(
             "px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide",
             conversation.status === "active" && "bg-green-100 text-green-700",
-            conversation.status === "closed" && "bg-gray-100 text-gray-600",
+            conversation.status === "closed" && "bg-muted text-muted-foreground",
             conversation.status === "archived" && "bg-amber-100 text-amber-700"
           )}
         >
@@ -159,7 +159,7 @@ export function ConversationDetail({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-repwell-teal-400 hover:text-repwell-teal-500"
+              className="h-8 w-8 p-0 text-label hover:text-repwell-teal-500 dark:hover:text-foreground"
               disabled={isUpdating}
             >
               <MoreHorizontal className="h-4 w-4" />
@@ -230,7 +230,7 @@ export function ConversationDetail({
         ) : messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-center">
             <div>
-              <p className="text-sm font-medium text-repwell-teal-400">
+              <p className="text-sm font-medium text-label">
                 No messages yet
               </p>
               <p className="text-xs text-repwell-teal-300/60 mt-1">
@@ -295,7 +295,7 @@ function MessageBubble({ message, showTimestamp }: MessageBubbleProps) {
             "max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
             isOutbound
               ? "bg-repwell-teal-300 text-white rounded-br-md"
-              : "bg-background-muted text-repwell-teal-500 rounded-bl-md"
+              : "bg-background-muted text-heading rounded-bl-md"
           )}
         >
           <p className="whitespace-pre-wrap break-words">{message.body}</p>

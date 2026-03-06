@@ -74,21 +74,21 @@ export function UserStatsCards({ metrics }: StatsCardsProps) {
                 <CardContent className="p-6">
                   {/* Header with title and icon */}
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-body-sm font-medium text-repwell-teal-400">
+                    <span className="text-body-sm font-medium text-label">
                       {stat.title}
                     </span>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-soft">
                       <Icon className="h-5 w-5 text-repwell-teal-300" />
                     </div>
                   </div>
 
                   {/* Value */}
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-repwell-teal-500 tracking-tight">
+                    <span className="text-3xl font-bold text-heading tracking-tight">
                       {stat.value}
                     </span>
                     {stat.suffix && (
-                      <span className="text-lg font-normal text-repwell-teal-400">
+                      <span className="text-lg font-normal text-label">
                         {stat.suffix}
                       </span>
                     )}
@@ -101,7 +101,7 @@ export function UserStatsCards({ metrics }: StatsCardsProps) {
                         className={cn(
                           "flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-semibold",
                           isPositive && "bg-success/10 text-success",
-                          isNegative && "bg-red-50 text-red-600"
+                          isNegative && "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"
                         )}
                       >
                         {isPositive ? (
@@ -112,7 +112,7 @@ export function UserStatsCards({ metrics }: StatsCardsProps) {
                         {isPositive ? "+" : ""}
                         {stat.change}%
                       </div>
-                      <span className="text-xs text-repwell-teal-400">vs last month</span>
+                      <span className="text-xs text-label">vs last month</span>
                     </div>
                   )}
                 </CardContent>

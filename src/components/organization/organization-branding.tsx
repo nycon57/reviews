@@ -13,15 +13,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   SpinnerGap as Loader2,
-  BuildingOffice as Building2,
   Palette,
   Image as ImageIcon,
   TextAa,
 } from "@phosphor-icons/react";
+import { ImageUpload } from "@/components/shared/image-upload";
 import {
   getCurrentOrganization,
   updateOrganizationBranding,
   updateOrganizationBrandingSchema,
+  uploadOrganizationLogo,
+  removeOrganizationLogo,
+  uploadOrganizationAvatar,
+  removeOrganizationAvatar,
+  uploadOrganizationBanner,
+  removeOrganizationBanner,
   type UpdateOrganizationBranding,
 } from "@/lib/organization";
 import { cn } from "@/lib/utils";
@@ -57,6 +63,8 @@ export function OrganizationBranding() {
     resolver: zodResolver(updateOrganizationBrandingSchema),
     defaultValues: {
       logo_url: "",
+      avatar_url: "",
+      banner_url: "",
       primary_color: "#3B82F6",
       secondary_color: "#1E40AF",
       font_family: "Inter",
@@ -73,6 +81,8 @@ export function OrganizationBranding() {
       if (org) {
         form.reset({
           logo_url: org.logo_url || "",
+          avatar_url: org.avatar_url || "",
+          banner_url: org.banner_url || "",
           primary_color: org.primary_color || "#3B82F6",
           secondary_color: org.secondary_color || "#1E40AF",
           font_family: org.font_family || "Inter",
@@ -111,7 +121,7 @@ export function OrganizationBranding() {
   if (loading) {
     return (
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <Skeleton className="h-6 w-48" />
           <Skeleton className="h-4 w-72" />
         </CardHeader>
@@ -129,48 +139,72 @@ export function OrganizationBranding() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Logo */}
+        {/* Logo & Profile Photo */}
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <ImageIcon className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
               </div>
               <div>
-                <CardTitle className="text-lg">Logo</CardTitle>
+                <CardTitle className="text-lg">Images</CardTitle>
                 <CardDescription>
-                  Upload your organization&apos;s logo
+                  Upload your organization&apos;s logo, profile photo, and cover image
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div
-              className="relative flex h-32 w-32 items-center justify-center rounded-lg border-2 border-dashed"
-              style={{ backgroundColor: watchPrimaryColor + "10" }}
-            >
-              {form.watch("logo_url") ? (
-                <img
-                  src={form.watch("logo_url") || ""}
-                  alt="Organization logo"
-                  className="h-full w-full rounded-lg object-contain p-2"
+          <CardContent>
+            <div className="grid gap-8 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Logo</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Used in emails, widgets, and branding
+                </p>
+                <ImageUpload
+                  variant="logo"
+                  currentUrl={form.watch("logo_url")}
+                  primaryColor={watchPrimaryColor}
+                  onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationLogo(fd); }}
+                  onRemove={removeOrganizationLogo}
+                  onChange={(url) => form.setValue("logo_url", url || "")}
                 />
-              ) : (
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <Building2 className="h-8 w-8" />
-                  <span className="text-xs">No logo</span>
-                </div>
-              )}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Profile Photo</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Shown as your organization&apos;s avatar
+                </p>
+                <ImageUpload
+                  variant="avatar"
+                  currentUrl={form.watch("avatar_url")}
+                  primaryColor={watchPrimaryColor}
+                  onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationAvatar(fd); }}
+                  onRemove={removeOrganizationAvatar}
+                  onChange={(url) => form.setValue("avatar_url", url || "")}
+                />
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Logo file upload coming soon
-            </p>
+            <div className="mt-8 space-y-2">
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cover Photo</Label>
+              <p className="text-xs text-muted-foreground mb-3">
+                Banner displayed on your organization&apos;s public page
+              </p>
+              <ImageUpload
+                variant="banner"
+                currentUrl={form.watch("banner_url")}
+                primaryColor={watchPrimaryColor}
+                onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationBanner(fd); }}
+                onRemove={removeOrganizationBanner}
+                onChange={(url) => form.setValue("banner_url", url || "")}
+              />
+            </div>
           </CardContent>
         </Card>
 
         {/* Colors */}
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Palette className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
@@ -184,39 +218,7 @@ export function OrganizationBranding() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Color presets */}
-            <div>
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Color Presets</Label>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {PRESET_COLORS.map((preset) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    onClick={() => applyPresetColors(preset)}
-                    className={cn(
-                      "flex h-10 items-center gap-2 rounded-md border px-3 transition-colors hover:bg-muted",
-                      watchPrimaryColor === preset.primary && watchSecondaryColor === preset.secondary
-                        ? "border-primary bg-primary/5"
-                        : "border-border"
-                    )}
-                  >
-                    <div className="flex gap-1">
-                      <div
-                        className="h-4 w-4 rounded-full"
-                        style={{ backgroundColor: preset.primary }}
-                      />
-                      <div
-                        className="h-4 w-4 rounded-full"
-                        style={{ backgroundColor: preset.secondary }}
-                      />
-                    </div>
-                    <span className="text-sm">{preset.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom colors */}
+            {/* Custom colors — primary experience */}
             <div className="grid gap-6 sm:grid-cols-2">
               <FormField
                 control={form.control}
@@ -225,15 +227,24 @@ export function OrganizationBranding() {
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Primary Color</FormLabel>
                     <div className="flex gap-2">
-                      <div
-                        className="h-10 w-10 rounded-md border"
-                        style={{ backgroundColor: field.value || "#3B82F6" }}
-                      />
+                      <label className="relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-md border transition-shadow hover:shadow-md">
+                        <div
+                          className="absolute inset-0"
+                          style={{ backgroundColor: field.value || "#3B82F6" }}
+                        />
+                        <input
+                          type="color"
+                          value={field.value || "#3B82F6"}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          className="absolute inset-0 cursor-pointer opacity-0"
+                        />
+                      </label>
                       <FormControl>
                         <Input
                           type="text"
                           placeholder="#3B82F6"
                           {...field}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                           className="font-mono"
                         />
                       </FormControl>
@@ -253,15 +264,24 @@ export function OrganizationBranding() {
                   <FormItem>
                     <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Secondary Color</FormLabel>
                     <div className="flex gap-2">
-                      <div
-                        className="h-10 w-10 rounded-md border"
-                        style={{ backgroundColor: field.value || "#1E40AF" }}
-                      />
+                      <label className="relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-md border transition-shadow hover:shadow-md">
+                        <div
+                          className="absolute inset-0"
+                          style={{ backgroundColor: field.value || "#1E40AF" }}
+                        />
+                        <input
+                          type="color"
+                          value={field.value || "#1E40AF"}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          className="absolute inset-0 cursor-pointer opacity-0"
+                        />
+                      </label>
                       <FormControl>
                         <Input
                           type="text"
                           placeholder="#1E40AF"
                           {...field}
+                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                           className="font-mono"
                         />
                       </FormControl>
@@ -278,7 +298,7 @@ export function OrganizationBranding() {
             {/* Preview */}
             <div className="rounded-lg border p-4">
               <p className="mb-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Preview</p>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <button
                   type="button"
                   className="rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
@@ -308,12 +328,45 @@ export function OrganizationBranding() {
                 </div>
               </div>
             </div>
+
+            {/* Presets — quick start shortcuts */}
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quick Start Presets</Label>
+              <p className="mt-0.5 mb-2 text-xs text-muted-foreground">Pick a preset to get started, then customize above</p>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_COLORS.map((preset) => (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    onClick={() => applyPresetColors(preset)}
+                    className={cn(
+                      "flex h-10 items-center gap-2 rounded-md border px-3 transition-colors hover:bg-muted",
+                      watchPrimaryColor === preset.primary && watchSecondaryColor === preset.secondary
+                        ? "border-primary bg-primary/5"
+                        : "border-border"
+                    )}
+                  >
+                    <div className="flex gap-1">
+                      <div
+                        className="h-4 w-4 rounded-full"
+                        style={{ backgroundColor: preset.primary }}
+                      />
+                      <div
+                        className="h-4 w-4 rounded-full"
+                        style={{ backgroundColor: preset.secondary }}
+                      />
+                    </div>
+                    <span className="text-sm">{preset.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
         {/* Typography */}
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <TextAa className="h-5 w-5 text-repwell-teal-300" weight="duotone" />

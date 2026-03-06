@@ -122,6 +122,24 @@ export default [
       "no-console": "off",
     },
   },
+  // Shared components must not import server actions directly
+  {
+    files: ["src/components/shared/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: ["@/lib/*/actions*"],
+              message:
+                "Shared components must not import server actions. Pass callbacks via props.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     ignores: [
       "node_modules/**",

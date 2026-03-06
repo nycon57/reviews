@@ -11,16 +11,16 @@ interface KeyPhrasesCardProps {
 }
 
 const sentimentColors = {
-  positive: "bg-green-100 text-green-800",
-  neutral: "bg-gray-100 text-gray-800",
-  negative: "bg-red-100 text-red-800",
+  positive: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400",
+  neutral: "bg-muted text-foreground",
+  negative: "bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400",
 };
 
 export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
   if (data.length === 0) {
     return (
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Quotes aria-hidden="true" className="h-5 w-5 text-repwell-teal-300" />
@@ -34,7 +34,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
         <CardContent>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground">
             <div className="text-center">
-              <p className="text-sm font-medium text-repwell-teal-500">No key phrases extracted yet</p>
+              <p className="text-sm font-medium text-heading">No key phrases extracted yet</p>
               <p className="mt-1 text-xs">Phrases are identified from review analysis</p>
             </div>
           </div>
@@ -49,7 +49,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Quotes className="h-5 w-5 text-repwell-teal-300" />
@@ -83,7 +83,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
           {/* Positive phrases */}
           {positiveData.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-green-700">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-green-700 dark:text-green-400">
                 Positive Mentions
               </h4>
               <ul className="space-y-1">
@@ -95,7 +95,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
                     <span className="truncate text-muted-foreground">
                       &quot;{phrase.phrase}&quot;
                     </span>
-                    <span className="ml-2 text-xs text-green-600">
+                    <span className="ml-2 text-xs text-green-600 dark:text-green-400">
                       {phrase.count}×
                     </span>
                   </li>
@@ -107,7 +107,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
           {/* Negative phrases */}
           {negativeData.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-red-700">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-red-700 dark:text-red-400">
                 Areas of Concern
               </h4>
               <ul className="space-y-1">
@@ -119,7 +119,7 @@ export function KeyPhrasesCard({ data }: KeyPhrasesCardProps) {
                     <span className="truncate text-muted-foreground">
                       &quot;{phrase.phrase}&quot;
                     </span>
-                    <span className="ml-2 text-xs text-red-600">
+                    <span className="ml-2 text-xs text-red-600 dark:text-red-400">
                       {phrase.count}×
                     </span>
                   </li>

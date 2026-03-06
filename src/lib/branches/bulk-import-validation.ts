@@ -15,7 +15,6 @@ export const branchImportRowSchema = z.object({
     .min(1, "Branch name is required")
     .max(200, "Branch name must be 200 characters or less")
     .transform((v) => v.trim()),
-  region: z.string().max(100).optional().or(z.literal("")),
   phone: z
     .string()
     .max(30, "Phone must be 30 characters or less")
@@ -50,9 +49,6 @@ const BRANCH_HEADER_ALIASES: Record<string, BranchCSVFieldKey> = {
   branch: "name",
   location: "name",
   office: "name",
-  region: "region",
-  area: "region",
-  territory: "region",
   phone: "phone",
   phonenumber: "phone",
   phone_number: "phone",
@@ -204,7 +200,6 @@ export function generateBranchCSVTemplate(): string {
   const headers = BRANCH_CSV_FIELDS.map((f) => f.key);
   const exampleRow = [
     "Downtown Office",
-    "Northeast",
     "555-0100",
     "downtown@example.com",
     "Main downtown location",

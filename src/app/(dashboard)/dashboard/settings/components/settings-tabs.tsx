@@ -105,7 +105,7 @@ export function SettingsTabs({
               value={tab.value}
               className={cn(
                 'relative px-4 py-3 text-sm font-medium',
-                'text-muted-foreground hover:text-repwell-teal-400',
+                'text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80',
                 'data-[state=active]:text-repwell-teal-300',
                 'border-b-2 border-transparent',
                 'data-[state=active]:border-repwell-teal-300',

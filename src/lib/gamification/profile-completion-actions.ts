@@ -80,7 +80,6 @@ export async function getProfileCompletionScore(
       title,
       bio,
       branch,
-      region,
       address,
       nmls_id,
       linkedin_url,
@@ -160,7 +159,6 @@ export async function getProfileCompletionScore(
     title: !!userData.title,
     bio: !!userData.bio && userData.bio.length >= 50,
     branch: !!userData.branch,
-    region: !!userData.region,
     address: hasJsonContent(userData.address),
     nmls_id: !!userData.nmls_id,
     linkedin_url: !!userData.linkedin_url,
@@ -251,7 +249,6 @@ export async function getProfileCompletionScore(
       title,
       bio,
       branch,
-      region,
       address,
       nmls_id,
       linkedin_url,
@@ -277,7 +274,6 @@ export async function getProfileCompletionScore(
       if (user.title) score += 25;
       if (user.bio && user.bio.length >= 50) score += 75;
       if (user.branch) score += 25;
-      if (user.region) score += 25;
       if (hasJsonContent(user.address)) score += 25;
       if (user.nmls_id) score += 50;
       if (user.linkedin_url) score += 50;
@@ -380,7 +376,6 @@ export async function getProfileCompletionLeaderboard(
       phone,
       title,
       bio,
-      region,
       address,
       nmls_id,
       linkedin_url,
@@ -448,7 +443,6 @@ export async function getProfileCompletionLeaderboard(
       if (user.bio && user.bio.length >= 50) earnedPoints += 75;
       if (user.nmls_id) earnedPoints += 50;
       if (user.branch) earnedPoints += 25;
-      if (user.region) earnedPoints += 25;
       if (hasJsonContent(user.address)) earnedPoints += 25;
 
       // External connections (300 pts max) — includes has_social_connection
@@ -477,7 +471,7 @@ export async function getProfileCompletionLeaderboard(
 
       // Calculate section completion
       const basicInfoComplete = user.photo_url && user.full_name && user.email && user.phone && user.title;
-      const professionalComplete = user.bio && user.nmls_id && user.branch && user.region;
+      const professionalComplete = user.bio && user.nmls_id && user.branch;
       const externalComplete = user.google_place_id && user.zillow_profile_url && user.linkedin_url;
       const socialPresenceComplete = hasReviews && hasTestimonials && responseRate >= 50;
 

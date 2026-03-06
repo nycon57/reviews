@@ -273,7 +273,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-border flex-wrap gap-2">
+      <div className="flex items-center justify-between px-4 py-3 bg-card border-b border-border flex-wrap gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
@@ -285,7 +285,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
             <span className="hidden sm:inline">Widgets</span>
           </Button>
           <div className="w-px h-6 bg-border flex-shrink-0" />
-          <h2 className="text-sm font-medium text-repwell-teal-500 truncate">
+          <h2 className="text-sm font-medium text-heading truncate">
             {templateName}
           </h2>
         </div>
@@ -307,17 +307,17 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
       </div>
 
       {/* Mobile tab navigation */}
-      <div className="lg:hidden border-b border-border bg-white">
+      <div className="lg:hidden border-b border-border bg-card">
         <div className="grid grid-cols-2 h-10">
           <button
             onClick={() => setMobileTab("settings")}
-            className={`text-xs font-medium transition-colors ${mobileTab === "settings" ? "text-repwell-teal-500 border-b-2 border-repwell-teal-300" : "text-muted-foreground"}`}
+            className={`text-xs font-medium transition-colors ${mobileTab === "settings" ? "text-heading border-b-2 border-repwell-teal-300" : "text-muted-foreground"}`}
           >
             Settings
           </button>
           <button
             onClick={() => setMobileTab("preview")}
-            className={`text-xs font-medium transition-colors ${mobileTab === "preview" ? "text-repwell-teal-500 border-b-2 border-repwell-teal-300" : "text-muted-foreground"}`}
+            className={`text-xs font-medium transition-colors ${mobileTab === "preview" ? "text-heading border-b-2 border-repwell-teal-300" : "text-muted-foreground"}`}
           >
             Preview
           </button>

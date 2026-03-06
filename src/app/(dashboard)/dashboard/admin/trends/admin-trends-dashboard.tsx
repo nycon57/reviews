@@ -175,7 +175,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-repwell-sage-100/30">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
                   <Users className="h-5 w-5 text-repwell-sage-200" />
                 </div>
                 <div>
@@ -195,7 +195,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-repwell-teal-400/10">
-                  <MessageSquare className="h-5 w-5 text-repwell-teal-400" />
+                  <MessageSquare className="h-5 w-5 text-label" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Total Reviews</p>
@@ -214,7 +214,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Team Rating Trend */}
         <Card className="rounded-xl border-border/50 shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Star className="h-5 w-5 text-repwell-teal-300" />
@@ -255,7 +255,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
 
         {/* Team NPS Trend */}
         <Card className="rounded-xl border-border/50 shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
@@ -293,7 +293,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Review Volume */}
         <Card className="rounded-xl border-border/50 shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <MessageSquare className="h-5 w-5 text-repwell-teal-300" />
@@ -328,7 +328,7 @@ export function AdminTrendsDashboard({ timeRange }: AdminTrendsDashboardProps) {
 
         {/* Response Rate Trend */}
         <Card className="rounded-xl border-border/50 shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Users className="h-5 w-5 text-repwell-teal-300" />

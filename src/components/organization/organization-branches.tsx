@@ -51,10 +51,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { getBranches, updateBranch } from "@/lib/branches/actions";
 import { CreateBranchDialog } from "./create-branch-dialog";
-import { BulkBranchImportWizard } from "./bulk-branch-import-wizard";
+import { CsvImportWizard } from "@/components/shared/csv-import-wizard";
+import { createBranchImportConfig } from "@/lib/branches/branch-import-config";
 import type { Branch } from "@/lib/branches/types";
 
-type BranchSortField = "name" | "manager" | "region" | "members" | "status";
+type BranchSortField = "name" | "manager" | "members" | "status";
 type SortDir = "asc" | "desc";
 
 export function OrganizationBranches() {
@@ -62,11 +63,11 @@ export function OrganizationBranches() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [regionFilter, setRegionFilter] = useState<string>("all");
   const [sortField, setSortField] = useState<BranchSortField>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const branchImportConfig = useMemo(() => createBranchImportConfig(), []);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
@@ -117,12 +118,7 @@ export function OrganizationBranches() {
     });
   }
 
-  const regions = useMemo(
-    () => [...new Set(branches.map((b) => b.region).filter((r): r is string => !!r))].sort(),
-    [branches]
-  );
-
-  const hasActiveFilters = search.trim() !== "" || statusFilter !== "all" || regionFilter !== "all";
+  const hasActiveFilters = search.trim() !== "" || statusFilter !== "all";
 
   const filteredBranches = useMemo(() => {
     let result = [...branches];
@@ -132,7 +128,6 @@ export function OrganizationBranches() {
       result = result.filter(
         (b) =>
           b.name.toLowerCase().includes(q) ||
-          b.region?.toLowerCase().includes(q) ||
           b.managerName?.toLowerCase().includes(q) ||
           b.address?.city?.toLowerCase().includes(q) ||
           b.address?.state?.toLowerCase().includes(q)
@@ -145,10 +140,6 @@ export function OrganizationBranches() {
       );
     }
 
-    if (regionFilter !== "all") {
-      result = result.filter((b) => b.region === regionFilter);
-    }
-
     result.sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -157,9 +148,6 @@ export function OrganizationBranches() {
           break;
         case "manager":
           cmp = (a.managerName || "").localeCompare(b.managerName || "");
-          break;
-        case "region":
-          cmp = (a.region || "").localeCompare(b.region || "");
           break;
         case "members":
           cmp = a.totalMembers - b.totalMembers;
@@ -172,7 +160,7 @@ export function OrganizationBranches() {
     });
 
     return result;
-  }, [branches, search, statusFilter, regionFilter, sortField, sortDir]);
+  }, [branches, search, statusFilter, sortField, sortDir]);
 
   function toggleSort(field: BranchSortField) {
     if (sortField === field) {
@@ -187,7 +175,7 @@ export function OrganizationBranches() {
     return (
       <div className="space-y-6">
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-72" />
           </CardHeader>
@@ -212,7 +200,7 @@ export function OrganizationBranches() {
   return (
     <div className="space-y-6">
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -262,24 +250,11 @@ export function OrganizationBranches() {
                   <SelectItem value="inactive">Inactive</SelectItem>
                 </SelectContent>
               </Select>
-              {regions.length > 0 && (
-                <Select value={regionFilter} onValueChange={setRegionFilter}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Region" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Regions</SelectItem>
-                    {regions.map((r) => (
-                      <SelectItem key={r} value={r}>{r}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => { setSearch(""); setStatusFilter("all"); setRegionFilter("all"); }}
+                  onClick={() => { setSearch(""); setStatusFilter("all"); }}
                   className="text-muted-foreground h-8 px-2"
                 >
                   <X className="h-3.5 w-3.5 mr-1" />
@@ -295,7 +270,6 @@ export function OrganizationBranches() {
               <TableRow>
                 <BranchSortableHead field="name" current={sortField} dir={sortDir} onToggle={toggleSort}>Branch</BranchSortableHead>
                 <BranchSortableHead field="manager" current={sortField} dir={sortDir} onToggle={toggleSort}>Manager</BranchSortableHead>
-                <BranchSortableHead field="region" current={sortField} dir={sortDir} onToggle={toggleSort}>Region</BranchSortableHead>
                 <BranchSortableHead field="members" current={sortField} dir={sortDir} onToggle={toggleSort} className="text-center">Members</BranchSortableHead>
                 <BranchSortableHead field="status" current={sortField} dir={sortDir} onToggle={toggleSort}>Status</BranchSortableHead>
                 <TableHead className="w-[70px]"></TableHead>
@@ -336,9 +310,6 @@ export function OrganizationBranches() {
                       <span className="text-muted-foreground">&mdash;</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    {branch.region || <span className="text-muted-foreground">&mdash;</span>}
-                  </TableCell>
                   <TableCell className="text-center">
                     {branch.totalMembers}
                   </TableCell>
@@ -348,7 +319,7 @@ export function OrganizationBranches() {
                         checked={branch.isActive}
                         onCheckedChange={() => handleToggleActive(branch)}
                         disabled={isPending}
-                        className={branch.isActive ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-gray-300"}
+                        className={branch.isActive ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-muted"}
                       />
                       <span className={`text-sm font-medium ${branch.isActive ? "text-green-600" : "text-muted-foreground"}`}>
                         {branch.isActive ? "Active" : "Inactive"}
@@ -423,10 +394,11 @@ export function OrganizationBranches() {
         onSuccess={refreshBranches}
       />
 
-      <BulkBranchImportWizard
+      <CsvImportWizard
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
-        onSuccess={refreshBranches}
+        onComplete={refreshBranches}
+        config={branchImportConfig}
       />
     </div>
   );

@@ -73,18 +73,18 @@ export function DocsSidebar({ className, onNavigate }: DocsSidebarProps) {
               onClick={() => toggleSection(section.id)}
               className={cn(
                 "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-body-sm font-medium transition-colors",
-                "hover:bg-repwell-sage-100/50",
+                "hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10",
                 sectionActive
-                  ? "text-repwell-teal-300 bg-repwell-sage-100/30"
-                  : "text-repwell-teal-500"
+                  ? "text-repwell-teal-300 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10"
+                  : "text-heading"
               )}
             >
               <Icon size={16} className="shrink-0" />
               <span className="flex-1 text-left">{section.title}</span>
               {isExpanded ? (
-                <CaretDown size={16} className="shrink-0 text-repwell-teal-400" />
+                <CaretDown size={16} className="shrink-0 text-label" />
               ) : (
-                <CaretRight size={16} className="shrink-0 text-repwell-teal-400" />
+                <CaretRight size={16} className="shrink-0 text-label" />
               )}
             </button>
 
@@ -110,8 +110,8 @@ export function DocsSidebar({ className, onNavigate }: DocsSidebarProps) {
                           className={cn(
                             "block rounded-md px-3 py-1.5 text-body-sm transition-colors",
                             active
-                              ? "text-repwell-teal-300 font-medium bg-repwell-sage-100/40"
-                              : "text-repwell-teal-400 hover:text-repwell-teal-500 hover:bg-repwell-sage-100/30"
+                              ? "text-repwell-teal-300 font-medium bg-repwell-sage-100/40 dark:bg-repwell-teal-300/15"
+                              : "text-label hover:text-repwell-teal-500 dark:hover:text-foreground hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10"
                           )}
                         >
                           {article.title}

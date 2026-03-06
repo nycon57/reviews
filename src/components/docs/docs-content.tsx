@@ -61,7 +61,7 @@ function renderContent(content: string): React.ReactNode {
       elements.push(
         <h1
           key={`h1-${index}`}
-          className="text-display-sm text-repwell-teal-500 mb-4 mt-8 first:mt-0"
+          className="text-display-sm text-heading mb-4 mt-8 first:mt-0"
         >
           {line.slice(2)}
         </h1>
@@ -73,7 +73,7 @@ function renderContent(content: string): React.ReactNode {
       elements.push(
         <h2
           key={`h2-${index}`}
-          className="text-heading-lg text-repwell-teal-500 mb-3 mt-8 border-b border-border/30 pb-2"
+          className="text-heading-lg text-heading mb-3 mt-8 border-b border-border/30 pb-2"
         >
           {line.slice(3)}
         </h2>
@@ -83,7 +83,7 @@ function renderContent(content: string): React.ReactNode {
 
     if (line.startsWith("### ")) {
       elements.push(
-        <h3 key={`h3-${index}`} className="text-heading-md text-repwell-teal-500 mb-2 mt-6">
+        <h3 key={`h3-${index}`} className="text-heading-md text-heading mb-2 mt-6">
           {line.slice(4)}
         </h3>
       );
@@ -94,7 +94,7 @@ function renderContent(content: string): React.ReactNode {
     if (line.startsWith("- ")) {
       const content = line.slice(2);
       elements.push(
-        <li key={`li-${index}`} className="text-body-md text-repwell-teal-400 ml-4 my-1">
+        <li key={`li-${index}`} className="text-body-md text-label ml-4 my-1">
           {renderInlineContent(content)}
         </li>
       );
@@ -105,7 +105,7 @@ function renderContent(content: string): React.ReactNode {
     const numberedMatch = line.match(/^(\d+)\.\s(.+)/);
     if (numberedMatch) {
       elements.push(
-        <li key={`oli-${index}`} className="text-body-md text-repwell-teal-400 ml-4 my-1 list-decimal">
+        <li key={`oli-${index}`} className="text-body-md text-label ml-4 my-1 list-decimal">
           {renderInlineContent(numberedMatch[2])}
         </li>
       );
@@ -120,7 +120,7 @@ function renderContent(content: string): React.ReactNode {
 
     // Regular paragraph
     elements.push(
-      <p key={`p-${index}`} className="text-body-md text-repwell-teal-400 my-2">
+      <p key={`p-${index}`} className="text-body-md text-label my-2">
         {renderInlineContent(line)}
       </p>
     );
@@ -164,7 +164,7 @@ function renderInlineContent(text: string): React.ReactNode {
         parts.push(
           <code
             key={`inline-code-${key++}`}
-            className="rounded bg-repwell-sage-100 px-1.5 py-0.5 text-body-sm font-mono text-repwell-teal-500"
+            className="rounded bg-repwell-sage-100 dark:bg-repwell-teal-300/15 px-1.5 py-0.5 text-body-sm font-mono text-heading"
           >
             {earliest.match[1]}
           </code>
@@ -172,7 +172,7 @@ function renderInlineContent(text: string): React.ReactNode {
         remaining = remaining.slice(earliest.index + earliest.match[0].length);
       } else if (earliest.type === "bold" && earliest.match) {
         parts.push(
-          <strong key={`bold-${key++}`} className="font-semibold text-repwell-teal-500">
+          <strong key={`bold-${key++}`} className="font-semibold text-heading">
             {earliest.match[1]}
           </strong>
         );
@@ -272,31 +272,31 @@ export function DocsContent({ article }: DocsContentProps) {
     >
       {/* Breadcrumb */}
       <motion.nav variants={fadeInUp} className="mb-6 flex items-center gap-2 text-body-sm">
-        <Link href="/docs" className="text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors">
+        <Link href="/docs" className="text-label hover:text-repwell-teal-300 transition-colors">
           Docs
         </Link>
         <ChevronRight className="h-4 w-4 text-border" />
         <Link
           href={`/docs/${article.section}`}
-          className="text-repwell-teal-400 hover:text-repwell-teal-300 transition-colors"
+          className="text-label hover:text-repwell-teal-300 transition-colors"
         >
           {article.sectionTitle}
         </Link>
         <ChevronRight className="h-4 w-4 text-border" />
-        <span className="text-repwell-teal-500 font-medium">{article.title}</span>
+        <span className="text-heading font-medium">{article.title}</span>
       </motion.nav>
 
       {/* Article Header */}
       <motion.header variants={fadeInUp} className="mb-8">
-        <h1 className="text-display-sm text-repwell-teal-500 mb-3">{article.title}</h1>
-        <p className="text-body-lg text-repwell-teal-400 mb-4">{article.description}</p>
+        <h1 className="text-display-sm text-heading mb-3">{article.title}</h1>
+        <p className="text-body-lg text-label mb-4">{article.description}</p>
         <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-1.5 text-body-sm text-repwell-teal-400">
+          <div className="flex items-center gap-1.5 text-body-sm text-label">
             <Clock className="h-4 w-4" />
             <span>{readingTime} min read</span>
           </div>
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-repwell-teal-400" />
+            <Tag className="h-4 w-4 text-label" />
             <div className="flex flex-wrap gap-1.5">
               {article.tags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="text-caption">
@@ -313,10 +313,10 @@ export function DocsContent({ article }: DocsContentProps) {
         variants={fadeInUp}
         className={cn(
           "prose prose-slate max-w-none",
-          "[&>h1]:text-display-sm [&>h1]:text-repwell-teal-500",
-          "[&>h2]:text-heading-lg [&>h2]:text-repwell-teal-500 [&>h2]:border-b [&>h2]:border-border/30 [&>h2]:pb-2",
-          "[&>h3]:text-heading-md [&>h3]:text-repwell-teal-500",
-          "[&>p]:text-body-md [&>p]:text-repwell-teal-400",
+          "[&>h1]:text-display-sm [&>h1]:text-repwell-teal-500 dark:[&>h1]:text-foreground",
+          "[&>h2]:text-heading-lg [&>h2]:text-repwell-teal-500 dark:[&>h2]:text-foreground [&>h2]:border-b [&>h2]:border-border/30 [&>h2]:pb-2",
+          "[&>h3]:text-heading-md [&>h3]:text-repwell-teal-500 dark:[&>h3]:text-foreground",
+          "[&>p]:text-body-md [&>p]:text-repwell-teal-400 dark:[&>p]:text-muted-foreground",
           "[&>ul]:list-disc [&>ol]:list-decimal"
         )}
       >
@@ -333,7 +333,7 @@ export function DocsContent({ article }: DocsContentProps) {
             <Button variant="ghost" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
               <span className="hidden sm:inline">Previous:</span>
-              <span className="text-repwell-teal-400">{prev.title}</span>
+              <span className="text-label">{prev.title}</span>
             </Button>
           </Link>
         ) : (
@@ -343,7 +343,7 @@ export function DocsContent({ article }: DocsContentProps) {
           <Link href={next.href}>
             <Button variant="ghost" className="gap-2">
               <span className="hidden sm:inline">Next:</span>
-              <span className="text-repwell-teal-400">{next.title}</span>
+              <span className="text-label">{next.title}</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

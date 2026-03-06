@@ -92,7 +92,7 @@ export function CreditBalanceCard({ balance, usage }: CreditBalanceCardProps) {
     <motion.div variants={fadeInUp}>
       <Card className="border-border/50 overflow-hidden">
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+          <CardTitle className="text-lg text-heading flex items-center gap-2">
             <Coins weight="duotone" className="h-5 w-5" />
             Current Balance
           </CardTitle>
@@ -110,13 +110,13 @@ export function CreditBalanceCard({ balance, usage }: CreditBalanceCardProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center space-y-0.5">
-              <p className="text-2xl font-bold text-repwell-teal-500 tabular-nums">
+              <p className="text-2xl font-bold text-heading tabular-nums">
                 {balance.remaining.toLocaleString()}
               </p>
               <p className="text-xs text-repwell-teal-300">Credits remaining</p>
             </div>
             <div className="text-center space-y-0.5">
-              <p className="text-2xl font-bold text-repwell-teal-500 tabular-nums">
+              <p className="text-2xl font-bold text-heading tabular-nums">
                 {balance.used.toLocaleString()}
               </p>
               <p className="text-xs text-repwell-teal-300">
@@ -145,7 +145,7 @@ export function CreditBalanceCard({ balance, usage }: CreditBalanceCardProps) {
                 <TrendUp weight="bold" className="h-3 w-3" />
                 Overage charges
               </div>
-              <p className="text-sm font-semibold text-repwell-teal-500 tabular-nums">
+              <p className="text-sm font-semibold text-heading tabular-nums">
                 {balance.overageCostCents > 0 ? formatCents(balance.overageCostCents) : 'None'}
               </p>
             </div>
@@ -154,7 +154,7 @@ export function CreditBalanceCard({ balance, usage }: CreditBalanceCardProps) {
                 <Calendar weight="bold" className="h-3 w-3" />
                 Days remaining
               </div>
-              <p className="text-sm font-semibold text-repwell-teal-500 tabular-nums">
+              <p className="text-sm font-semibold text-heading tabular-nums">
                 {usage.daysRemaining}
               </p>
             </div>
@@ -198,8 +198,8 @@ export function UsageAlertBanner({ alertLevel, onBuyCredits }: { alertLevel: Ale
       <div className={`flex items-start gap-3 rounded-xl border p-4 ${config.bg}`}>
         <Warning weight="duotone" className={`h-5 w-5 flex-shrink-0 mt-0.5 ${config.icon}`} />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-repwell-teal-500">{config.title}</p>
-          <p className="text-sm text-repwell-teal-400 mt-0.5">{config.text}</p>
+          <p className="text-sm font-semibold text-heading">{config.title}</p>
+          <p className="text-sm text-label mt-0.5">{config.text}</p>
         </div>
         <Button
           onClick={onBuyCredits}

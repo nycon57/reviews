@@ -166,7 +166,6 @@ export interface BranchResource {
   manager_id: string | null;
   manager_name: string | null;
   manager_email: string | null;
-  region: string | null;
   is_active: boolean;
   average_rating: number | null;
   total_reviews: number;
@@ -256,7 +255,6 @@ export interface CreateBranchInput {
   website_url?: string;
   manager_name?: string;
   manager_email?: string;
-  region?: string;
 }
 
 export interface UpdateBranchInput {
@@ -273,7 +271,6 @@ export interface UpdateBranchInput {
   website_url?: string;
   manager_name?: string;
   manager_email?: string;
-  region?: string;
   is_active?: boolean;
 }
 

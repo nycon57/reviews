@@ -15,10 +15,10 @@ export function ScheduleStep({ formData, setFormData }: StepProps) {
     <div className="space-y-8">
       {/* Section header */}
       <div>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500">
+        <h2 className="font-display text-2xl font-bold text-heading">
           Schedule Survey
         </h2>
-        <p className="mt-1 text-repwell-teal-400">
+        <p className="mt-1 text-label">
           Choose when to launch the survey and set an optional end date
         </p>
       </div>
@@ -26,7 +26,7 @@ export function ScheduleStep({ formData, setFormData }: StepProps) {
       {/* Launch Now Toggle Card */}
       <div
         className={cn(
-          "rounded-xl border bg-white p-6 shadow-sm transition-all",
+          "rounded-xl border bg-card p-6 shadow-sm transition-all",
           formData.launchImmediately
             ? "border-repwell-teal-300 ring-2 ring-repwell-teal-300/20"
             : "border-border"
@@ -39,7 +39,7 @@ export function ScheduleStep({ formData, setFormData }: StepProps) {
                 "flex h-10 w-10 items-center justify-center rounded-lg transition-colors",
                 formData.launchImmediately
                   ? "bg-repwell-teal-300 text-white"
-                  : "bg-repwell-sage-100/50 text-repwell-teal-400"
+                  : "bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label"
               )}
             >
               <Lightning weight="fill" className="h-5 w-5" />
@@ -47,11 +47,11 @@ export function ScheduleStep({ formData, setFormData }: StepProps) {
             <div>
               <Label
                 htmlFor="launch-now"
-                className="text-base font-semibold text-repwell-teal-500 cursor-pointer"
+                className="text-base font-semibold text-heading cursor-pointer"
               >
                 Launch Immediately
               </Label>
-              <p className="mt-1 text-sm text-repwell-teal-400">
+              <p className="mt-1 text-sm text-label">
                 Survey will be sent to recipients as soon as you create it
               </p>
             </div>
@@ -73,16 +73,16 @@ export function ScheduleStep({ formData, setFormData }: StepProps) {
 
       {/* Scheduled Start Card - Only show if not launching immediately */}
       {!formData.launchImmediately && (
-        <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-start gap-4 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 text-repwell-teal-400">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label">
               <Clock weight="duotone" className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-sans text-lg font-semibold text-repwell-teal-500">
+              <h3 className="font-sans text-lg font-semibold text-heading">
                 Start Date
               </h3>
-              <p className="mt-1 text-sm text-repwell-teal-400">
+              <p className="mt-1 text-sm text-label">
                 When should the survey be sent to recipients?
               </p>
             </div>
@@ -120,16 +120,16 @@ export function ScheduleStep({ formData, setFormData }: StepProps) {
       )}
 
       {/* End Date Card */}
-      <div className="rounded-xl border border-border bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
         <div className="flex items-start gap-4 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 text-repwell-teal-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-label">
             <CalendarBlank weight="duotone" className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-sans text-lg font-semibold text-repwell-teal-500">
+            <h3 className="font-sans text-lg font-semibold text-heading">
               End Date
             </h3>
-            <p className="mt-1 text-sm text-repwell-teal-400">
+            <p className="mt-1 text-sm text-label">
               Optionally set a deadline for survey responses
             </p>
           </div>

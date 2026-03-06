@@ -58,12 +58,12 @@ function getDirectionsUrl(address: DirectoryProfessional["address"]): string | n
 }
 
 export function DirectoryCard({ professional, variant = "grid", isHovered = false, onMessage }: DirectoryCardProps) {
-  // Prefer user's address, fall back to branch address, then branch name + region
+  // Prefer user's address, fall back to branch address, then branch name
   const location = professional.address?.city || professional.address?.state
     ? [professional.address.city, professional.address.state].filter(Boolean).join(", ")
     : professional.branch_info?.address?.city || professional.branch_info?.address?.state
       ? [professional.branch_info.address.city, professional.branch_info.address.state].filter(Boolean).join(", ")
-      : [professional.branch, professional.region].filter(Boolean).join(", ");
+      : professional.branch || "";
 
   const directionsUrl = getDirectionsUrl(professional.address) || getDirectionsUrl(professional.branch_info?.address ?? null);
 

@@ -223,7 +223,7 @@ export function PlanSelectionClient() {
               )}
 
               {/* Gradient header */}
-              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 text-center pb-4">
+              <CardHeader className="text-center pb-4">
                 <div className="flex justify-center mb-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                     <IconComponent className="h-5 w-5 text-repwell-teal-300" weight="duotone" />

@@ -23,7 +23,7 @@ export default async function GeoPage() {
           <Eye className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">AI Visibility & GEO</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading">AI Visibility & GEO</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
             Optimize your content for AI search engines like ChatGPT, Perplexity, and Google AI Overviews
           </p>

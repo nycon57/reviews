@@ -177,8 +177,8 @@ export function EmailPreferencesContent() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 rounded-md bg-repwell-sage-100/50 p-2">
-                        <Icon className="h-4 w-4 text-repwell-teal-400" />
+                      <div className="mt-0.5 rounded-md bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 p-2">
+                        <Icon className="h-4 w-4 text-label" />
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ export function EmailPreferencesContent() {
                     tabIndex={0}
                     className={`cursor-pointer rounded-lg border p-4 transition-colors focus:outline-none focus:ring-2 focus:ring-repwell-teal-300 focus:ring-offset-2 ${
                       preferences?.email_frequency_mode === option.value
-                        ? "border-repwell-teal-300 bg-repwell-sage-100/30"
+                        ? "border-repwell-teal-300 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10"
                         : "hover:bg-muted/50"
                     }`}
                     onClick={() => handleSave({ email_frequency_mode: option.value })}

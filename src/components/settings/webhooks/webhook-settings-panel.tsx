@@ -62,7 +62,7 @@ export function WebhookSettingsPanel({ initialSubTab = 'configurations' }: Webho
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
           Webhooks
         </h2>
         <p className="text-repwell-teal-300 mt-1">
@@ -86,8 +86,8 @@ export function WebhookSettingsPanel({ initialSubTab = 'configurations' }: Webho
                   className={cn(
                     'flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-sans transition-all duration-200',
                     isActive
-                      ? 'bg-repwell-sage-100/50 text-repwell-teal-500 font-semibold'
-                      : 'text-repwell-teal-300 hover:text-repwell-teal-400 hover:bg-repwell-sage-100/30'
+                      ? 'bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-heading-accent font-semibold'
+                      : 'text-repwell-teal-300 hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80 hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10'
                   )}
                 >
                   <Icon

@@ -23,6 +23,9 @@ import {
   type CreateInvitation,
   type SubscriptionTier,
   type SubscriptionStatus,
+  INTEGRATION_KEYS,
+  orgIntegrationsSchema,
+  type OrgIntegrations,
 } from "./types";
 import { adminProfileSchema, type AdminProfileInput } from "@/lib/auth/profile-schemas";
 import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
@@ -90,6 +93,8 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
     slug: row.slug,
     domain: row.domain ?? null,
     logo_url: row.logo_url ?? null,
+    avatar_url: (row as Record<string, unknown>).avatar_url as string ?? null,
+    banner_url: (row as Record<string, unknown>).banner_url as string ?? null,
     primary_color: (settings?.primary_color as string) ?? row.primary_color ?? "#3B82F6",
     secondary_color: (settings?.secondary_color as string) ?? "#1E40AF",
     font_family: (settings?.font_family as string) ?? "Inter",
@@ -283,6 +288,446 @@ export async function updateOrganizationBranding(
   return { success: true, error: null };
 }
 
+const LOGO_ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+];
+
+// Upload organization logo
+export async function uploadOrganizationLogo(
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can upload organization logo" };
+  }
+
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  if (!LOGO_ALLOWED_TYPES.includes(file.type)) {
+    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, WebP, or SVG image." };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: "File too large. Maximum size is 5MB." };
+  }
+
+  // Get old logo URL for cleanup
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("logo_url")
+    .eq("id", userData.organization_id)
+    .single();
+  const oldLogoUrl = orgData?.logo_url;
+
+  const fileExt = file.name.split(".").pop() || "png";
+  const fileName = `${userData.organization_id}/logo-${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("logos")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) {
+    console.error("Logo upload error:", uploadError);
+    return { success: false, error: "Failed to upload logo. Please try again." };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("logos").getPublicUrl(fileName);
+
+  const { error: dbError } = await supabase
+    .from("organizations")
+    .update({
+      logo_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userData.organization_id);
+
+  if (dbError) {
+    console.error("Logo DB update error:", dbError);
+    await supabase.storage.from("logos").remove([fileName]);
+    return { success: false, error: "Failed to update organization. Please try again." };
+  }
+
+  // Clean up old logo file
+  if (oldLogoUrl && oldLogoUrl.includes("/logos/")) {
+    const oldPath = oldLogoUrl.split("/logos/").pop();
+    if (oldPath && oldPath !== fileName) {
+      await supabase.storage.from("logos").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/organization");
+  return { success: true, url: publicUrl };
+}
+
+// Remove organization logo
+export async function removeOrganizationLogo(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can remove organization logo" };
+  }
+
+  // Get current logo URL for storage cleanup
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("logo_url")
+    .eq("id", userData.organization_id)
+    .single();
+
+  const { error: dbError } = await supabase
+    .from("organizations")
+    .update({
+      logo_url: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userData.organization_id);
+
+  if (dbError) {
+    return { success: false, error: dbError.message };
+  }
+
+  // Remove file from storage
+  if (orgData?.logo_url && orgData.logo_url.includes("/logos/")) {
+    const oldPath = orgData.logo_url.split("/logos/").pop();
+    if (oldPath) {
+      await supabase.storage.from("logos").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/organization");
+  return { success: true };
+}
+
+const AVATAR_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+// Upload organization profile photo (avatar)
+export async function uploadOrganizationAvatar(
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can upload organization avatar" };
+  }
+
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { success: false, error: "File too large. Maximum size is 5MB." };
+  }
+
+  // Get old avatar URL for cleanup
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("avatar_url")
+    .eq("id", userData.organization_id)
+    .single();
+  const oldAvatarUrl = (orgData as unknown as Record<string, unknown>)?.avatar_url as string | null;
+
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const fileName = `${userData.organization_id}/avatar-${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("logos")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) {
+    console.error("Org avatar upload error:", uploadError);
+    return { success: false, error: "Failed to upload image. Please try again." };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("logos").getPublicUrl(fileName);
+
+  const { error: dbError } = await supabase
+    .from("organizations")
+    .update({
+      avatar_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq("id", userData.organization_id);
+
+  if (dbError) {
+    console.error("Org avatar DB update error:", dbError);
+    await supabase.storage.from("logos").remove([fileName]);
+    return { success: false, error: "Failed to update organization. Please try again." };
+  }
+
+  // Clean up old avatar
+  if (oldAvatarUrl && oldAvatarUrl.includes("/logos/")) {
+    const oldPath = oldAvatarUrl.split("/logos/").pop();
+    if (oldPath && oldPath !== fileName) {
+      await supabase.storage.from("logos").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/organization");
+  return { success: true, url: publicUrl };
+}
+
+// Remove organization profile photo (avatar)
+export async function removeOrganizationAvatar(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can remove organization avatar" };
+  }
+
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("avatar_url")
+    .eq("id", userData.organization_id)
+    .single();
+  const oldAvatarUrl = (orgData as unknown as Record<string, unknown>)?.avatar_url as string | null;
+
+  const { error: dbError } = await supabase
+    .from("organizations")
+    .update({
+      avatar_url: null,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq("id", userData.organization_id);
+
+  if (dbError) {
+    return { success: false, error: dbError.message };
+  }
+
+  if (oldAvatarUrl && oldAvatarUrl.includes("/logos/")) {
+    const oldPath = oldAvatarUrl.split("/logos/").pop();
+    if (oldPath) {
+      await supabase.storage.from("logos").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/organization");
+  return { success: true };
+}
+
+// Upload organization cover photo (banner)
+export async function uploadOrganizationBanner(
+  formData: FormData
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can upload organization banner" };
+  }
+
+  const file = formData.get("file") as File;
+  if (!file) {
+    return { success: false, error: "No file provided" };
+  }
+
+  if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+    return { success: false, error: "Invalid file type. Please upload a JPG, PNG, or WebP image." };
+  }
+
+  if (file.size > 10 * 1024 * 1024) {
+    return { success: false, error: "File too large. Maximum size is 10MB." };
+  }
+
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("banner_url")
+    .eq("id", userData.organization_id)
+    .single();
+  const oldBannerUrl = (orgData as unknown as Record<string, unknown>)?.banner_url as string | null;
+
+  const fileExt = file.name.split(".").pop() || "jpg";
+  const fileName = `${userData.organization_id}/banner-${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("logos")
+    .upload(fileName, file, { cacheControl: "3600", upsert: false });
+
+  if (uploadError) {
+    console.error("Org banner upload error:", uploadError);
+    return { success: false, error: "Failed to upload image. Please try again." };
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("logos").getPublicUrl(fileName);
+
+  const { error: dbError } = await supabase
+    .from("organizations")
+    .update({
+      banner_url: publicUrl,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq("id", userData.organization_id);
+
+  if (dbError) {
+    console.error("Org banner DB update error:", dbError);
+    await supabase.storage.from("logos").remove([fileName]);
+    return { success: false, error: "Failed to update organization. Please try again." };
+  }
+
+  if (oldBannerUrl && oldBannerUrl.includes("/logos/")) {
+    const oldPath = oldBannerUrl.split("/logos/").pop();
+    if (oldPath && oldPath !== fileName) {
+      await supabase.storage.from("logos").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/organization");
+  return { success: true, url: publicUrl };
+}
+
+// Remove organization cover photo (banner)
+export async function removeOrganizationBanner(): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can remove organization banner" };
+  }
+
+  const { data: orgData } = await supabase
+    .from("organizations")
+    .select("banner_url")
+    .eq("id", userData.organization_id)
+    .single();
+  const oldBannerUrl = (orgData as unknown as Record<string, unknown>)?.banner_url as string | null;
+
+  const { error: dbError } = await supabase
+    .from("organizations")
+    .update({
+      banner_url: null,
+      updated_at: new Date().toISOString(),
+    } as Record<string, unknown>)
+    .eq("id", userData.organization_id);
+
+  if (dbError) {
+    return { success: false, error: dbError.message };
+  }
+
+  if (oldBannerUrl && oldBannerUrl.includes("/logos/")) {
+    const oldPath = oldBannerUrl.split("/logos/").pop();
+    if (oldPath) {
+      await supabase.storage.from("logos").remove([oldPath]);
+    }
+  }
+
+  revalidatePath("/dashboard/organization");
+  return { success: true };
+}
+
 // Update organization billing
 export async function updateOrganizationBilling(
   data: UpdateOrganizationBilling
@@ -358,7 +803,7 @@ export async function getOrganizationMembers(): Promise<{
   // Get members (expanded SELECT for profile completion calc)
   const { data: members, error } = await supabase
     .from("users")
-    .select("id, email, full_name, avatar_url, slug, role, is_active, last_login_at, created_at, photo_url, bio, nmls_id, phone, title, branch_id, region, address, linkedin_url, zillow_profile_url, google_place_id")
+    .select("id, email, full_name, avatar_url, slug, role, is_active, last_login_at, created_at, photo_url, bio, nmls_id, phone, title, branch_id, address, linkedin_url, zillow_profile_url, google_place_id")
     .eq("organization_id", userData.organization_id)
     .order("created_at", { ascending: false });
 
@@ -382,7 +827,6 @@ export async function getOrganizationMembers(): Promise<{
       ["bio", !!(r.bio && typeof r.bio === "string" && r.bio.length >= 50)],
       ["nmls_id", !!r.nmls_id],
       ["branch_id", !!r.branch_id],
-      ["region", !!r.region],
       ["address", !!(r.address && typeof r.address === "object" && Object.keys(r.address as object).length > 0)],
       ["linkedin_url", !!r.linkedin_url],
       ["zillow_profile_url", !!r.zillow_profile_url],
@@ -1278,7 +1722,6 @@ export async function getOrganizationMemberFull(
       twitter_url: (m.twitter_url as string) ?? null,
       timezone: (m.timezone as string) ?? null,
       branch_id: (m.branch_id as string) ?? null,
-      region: (m.region as string) ?? null,
       role: (m.role as "admin" | "manager" | "user") ?? "user",
       is_active: (m.is_active as boolean) ?? true,
       is_owner: (m.is_owner as boolean) ?? false,
@@ -1491,4 +1934,115 @@ export async function createOrganizationUser(data: {
   revalidatePath("/dashboard/organization");
 
   return { userId: authData.user.id };
+}
+
+// ─── Integration Settings ────────────────────────────────────────────
+
+export async function getOrgIntegrationSettings(): Promise<{
+  integrations: OrgIntegrations | null;
+  error: string | null;
+}> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { integrations: null, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { integrations: null, error: "No organization found" };
+  }
+
+  const { data: org, error } = await supabase
+    .from("organizations")
+    .select("settings")
+    .eq("id", userData.organization_id)
+    .single();
+
+  if (error) {
+    return { integrations: null, error: error.message };
+  }
+
+  const settings = org?.settings as Record<string, unknown> | null;
+  const raw = settings?.integrations;
+  const parsed = orgIntegrationsSchema.safeParse(raw);
+
+  if (!parsed.success || !raw) {
+    // Default: all integrations enabled
+    const defaults: OrgIntegrations = {};
+    for (const key of INTEGRATION_KEYS) {
+      defaults[key] = { enabled: true };
+    }
+    return { integrations: defaults, error: null };
+  }
+
+  // Fill missing keys with enabled: true
+  const result = { ...parsed.data };
+  for (const key of INTEGRATION_KEYS) {
+    if (!result[key]) {
+      result[key] = { enabled: true };
+    }
+  }
+
+  return { integrations: result, error: null };
+}
+
+export async function updateOrgIntegrationSettings(
+  data: OrgIntegrations
+): Promise<{ success: boolean; error: string | null }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const validated = orgIntegrationsSchema.safeParse(data);
+  if (!validated.success) {
+    return { success: false, error: validated.error.errors[0].message };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can update integration settings" };
+  }
+
+  // Read current settings, merge integrations key
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("settings")
+    .eq("id", userData.organization_id)
+    .single();
+
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
+  const updatedSettings = { ...currentSettings, integrations: validated.data };
+
+  const { error } = await supabase
+    .from("organizations")
+    .update({ settings: updatedSettings, updated_at: new Date().toISOString() })
+    .eq("id", userData.organization_id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/organization");
+  revalidatePath("/dashboard/settings");
+
+  return { success: true, error: null };
 }

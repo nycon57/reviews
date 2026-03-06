@@ -72,7 +72,7 @@ export function LayerPanel({ editor }: LayerPanelProps) {
                 onClick={() => select(el.id)}
                 className={`flex cursor-pointer items-center gap-1.5 px-2 py-1.5 transition-colors ${
                   selectedId === el.id
-                    ? "bg-repwell-sage-100/50"
+                    ? "bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15"
                     : "hover:bg-muted/50"
                 }`}
               >

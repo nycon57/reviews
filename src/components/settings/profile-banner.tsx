@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 import {
   Star,
@@ -61,16 +61,14 @@ export function ProfileBanner({ loanOfficerId, className }: ProfileBannerProps) 
     return null;
   }
 
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return 'bg-green-500';
-    if (percentage >= 50) return 'bg-yellow-500';
-    return 'bg-orange-500';
-  };
+  /** Smooth hue: 0% → red (0°), 100% → green (120°) */
+  const hue = Math.round((Math.min(data.percentage, 100) / 100) * 120);
+  const fillColor = `hsl(${hue} 65% 45%)`;
 
   const getScoreColor = (percentage: number) => {
-    if (percentage >= 80) return 'text-green-600';
-    if (percentage >= 50) return 'text-yellow-600';
-    return 'text-orange-600';
+    if (percentage >= 80) return 'text-green-600 dark:text-green-400';
+    if (percentage >= 50) return 'text-yellow-600 dark:text-yellow-400';
+    return 'text-orange-600 dark:text-orange-400';
   };
 
   const nextAction = data.nextActions[0];
@@ -86,15 +84,8 @@ export function ProfileBanner({ loanOfficerId, className }: ProfileBannerProps) 
         <div className="flex items-center gap-4 flex-1 min-w-0">
           {/* Score Circle */}
           <div
-            className={cn(
-              'h-12 w-12 shrink-0 rounded-full flex items-center justify-center',
-              'bg-white border-2 shadow-sm',
-              data.percentage >= 80
-                ? 'border-green-500'
-                : data.percentage >= 50
-                  ? 'border-yellow-500'
-                  : 'border-orange-500'
-            )}
+            className="h-12 w-12 shrink-0 rounded-full flex items-center justify-center bg-card border-2 shadow-sm"
+            style={{ borderColor: fillColor }}
           >
             <span className={cn('text-sm font-bold', getScoreColor(data.percentage))}>
               {data.percentage}%
@@ -103,8 +94,8 @@ export function ProfileBanner({ loanOfficerId, className }: ProfileBannerProps) 
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <Target className="h-4 w-4 text-repwell-teal-400" />
-              <span className="text-sm font-medium text-repwell-teal-500">
+              <Target className="h-4 w-4 text-repwell-teal-400 dark:text-repwell-sage-100/80" />
+              <span className="text-sm font-medium text-heading-accent">
                 Profile Completion
               </span>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -114,7 +105,9 @@ export function ProfileBanner({ loanOfficerId, className }: ProfileBannerProps) 
             </div>
             <Progress
               value={data.percentage}
-              className={cn('h-2 max-w-xs', getProgressColor(data.percentage))}
+              className="h-2 max-w-xs"
+              indicatorClassName="!bg-[var(--progress-fill)]"
+              indicatorStyle={{ "--progress-fill": fillColor } as React.CSSProperties}
             />
             {nextAction && (
               <p className="text-xs text-muted-foreground mt-1 truncate">

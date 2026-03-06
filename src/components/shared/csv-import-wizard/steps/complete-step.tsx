@@ -10,13 +10,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CheckCircle, XCircle } from "@phosphor-icons/react";
-import type { BulkBranchImportResult } from "@/lib/branches/bulk-import-types";
+import type { ImportResult } from "../types";
 
-interface CompleteStepProps {
-  result: BulkBranchImportResult;
+interface CsvCompleteStepProps {
+  result: ImportResult;
+  entityName?: string;
+  entityNamePlural: string;
+  message?: string;
+  columns?: { key: string; label: string }[];
 }
 
-export function BranchCompleteStep({ result }: CompleteStepProps) {
+export function CsvCompleteStep({
+  result,
+  entityName,
+  entityNamePlural,
+  message,
+  columns,
+}: CsvCompleteStepProps) {
+  const singularName = entityName ?? entityNamePlural;
+  const showColumns = columns && columns.length > 0;
+
   return (
     <div className="space-y-6">
       {/* Summary */}
@@ -35,10 +48,8 @@ export function BranchCompleteStep({ result }: CompleteStepProps) {
         )}
       </div>
 
-      {result.successCount > 0 && (
-        <p className="text-sm text-muted-foreground">
-          Imported branches are active by default.
-        </p>
+      {result.successCount > 0 && message && (
+        <p className="text-sm text-muted-foreground">{message}</p>
       )}
 
       {/* Results table */}
@@ -46,8 +57,11 @@ export function BranchCompleteStep({ result }: CompleteStepProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Branch Name</TableHead>
-              <TableHead>Region</TableHead>
+              {showColumns
+                ? columns.map((col) => (
+                    <TableHead key={col.key}>{col.label}</TableHead>
+                  ))
+                : <TableHead>{singularName}</TableHead>}
               <TableHead>Status</TableHead>
               <TableHead>Details</TableHead>
             </TableRow>
@@ -55,8 +69,13 @@ export function BranchCompleteStep({ result }: CompleteStepProps) {
           <TableBody>
             {result.results.map((r, i) => (
               <TableRow key={i}>
-                <TableCell className="font-medium">{r.name}</TableCell>
-                <TableCell>{r.region || "—"}</TableCell>
+                {showColumns
+                  ? columns.map((col) => (
+                      <TableCell key={col.key} className="text-sm">
+                        {String(r.data?.[col.key] ?? "—")}
+                      </TableCell>
+                    ))
+                  : <TableCell className="text-sm">{r.label}</TableCell>}
                 <TableCell>
                   {r.success ? (
                     <Badge variant="default" className="gap-1">

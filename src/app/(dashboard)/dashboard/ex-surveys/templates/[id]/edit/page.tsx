@@ -81,10 +81,10 @@ export default async function EditTemplatePage({ params }: EditTemplatePageProps
           </Link>
         </Button>
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-repwell-teal-500">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-heading">
             Edit Template
           </h1>
-          <p className="font-sans text-repwell-teal-400">
+          <p className="font-sans text-label">
             Modify your custom survey template
           </p>
         </div>

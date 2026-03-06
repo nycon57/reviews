@@ -31,11 +31,11 @@ import {
   FacebookLogo,
   InstagramLogo,
   XLogo,
+  ShieldCheck,
 } from "@phosphor-icons/react";
-import { updateProfile, uploadAvatar, updateUserSlug } from '@/lib/auth/profile-actions';
-import { updateMemberProfile, uploadMemberAvatar } from '@/lib/organization/actions';
-import { AvatarUpload } from '@/components/shared/avatar-upload';
-import { CoverPhotoUpload } from '@/components/settings/cover-photo-upload';
+import { updateProfile, uploadAvatar, updateUserSlug, uploadCoverPhoto, removeCoverPhoto } from '@/lib/auth/profile-actions';
+import { updateMemberProfile, uploadMemberAvatar, uploadMemberBanner } from '@/lib/organization/actions';
+import { ImageUpload } from '@/components/shared/image-upload';
 import { EditSlugDialog } from '@/components/shared/edit-slug-dialog';
 import { updateProfileSchema, type UserProfileData } from '@/lib/auth/profile-schemas';
 import { Link as LinkIcon, PencilSimple } from "@phosphor-icons/react";
@@ -58,12 +58,18 @@ interface ProfileFormProps {
   isAdmin?: boolean;
   /** When set, edits this user's profile instead of the logged-in user */
   targetUserId?: string;
+  /** Display name of the member being edited (admin-edit mode) */
+  memberName?: string;
+  /** Account type — individual users can edit their own slug */
+  accountType?: 'individual' | 'enterprise';
 }
 
 export function ProfileForm({
   profile,
   isAdmin = false,
   targetUserId,
+  memberName,
+  accountType,
 }: ProfileFormProps) {
   const {
     id: userId,
@@ -192,26 +198,46 @@ export function ProfileForm({
   return (
     <>
     <Card className="border border-border shadow-soft overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <User className="h-5 w-5 text-repwell-teal-300" />
           </div>
           <div>
-            <CardTitle className="text-lg">Profile Information</CardTitle>
+            <CardTitle className="text-lg">
+              {targetUserId && memberName
+                ? `${memberName}'s Profile`
+                : 'Your Professional Profile'}
+            </CardTitle>
             <CardDescription>
-              Manage your personal and professional details
+              {targetUserId && memberName
+                ? `Manage ${memberName}'s personal and professional details`
+                : 'Your personal and professional details visible on your public profile'}
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
+        {/* Admin context banner */}
+        {targetUserId && memberName && (
+          <div className="flex items-start gap-3 border-b border-border/50 bg-blue-50 dark:bg-blue-950/30 p-4">
+            <ShieldCheck className="h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Admin edit mode</p>
+              <p className="text-sm text-blue-600 dark:text-blue-400 mt-0.5">
+                Changes here update {memberName}&apos;s profile directly. They can also edit these fields from their own Settings.
+              </p>
+            </div>
+          </div>
+        )}
         <form onSubmit={handleSubmit(onSubmit)}>
           {/* Section 1: Photo & Cover */}
           <div className="p-6 border-b border-border/50">
             <div className="flex items-stretch gap-6">
-              <AvatarUpload
-                currentAvatarUrl={avatarUrl}
+              <ImageUpload
+                variant="profile-photo"
+                currentUrl={avatarUrl}
+                label="Profile Photo"
                 onUpload={handleAvatarUpload}
                 onRemove={() => {
                   setAvatarUrl(null);
@@ -220,55 +246,70 @@ export function ProfileForm({
                 fallbackInitials={initialName?.trim().split(/\s+/).filter(Boolean).map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'}
               />
               <div className="flex-1 min-w-0">
-                <CoverPhotoUpload currentBannerUrl={initialBannerUrl} targetUserId={targetUserId} embedded />
+                <ImageUpload
+                  variant="banner"
+                  currentUrl={initialBannerUrl}
+                  label="Cover Photo"
+                  onUpload={async (file) => {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    return targetUserId
+                      ? await uploadMemberBanner(targetUserId, formData)
+                      : await uploadCoverPhoto(formData);
+                  }}
+                  onRemove={removeCoverPhoto}
+                />
               </div>
             </div>
           </div>
 
-          {/* Section 2: Public Profile URL */}
-          {initialSlug && (
-            <div className="p-6 border-b border-border/50">
-              <div className="flex items-center gap-2 mb-4">
-                <LinkIcon className="h-4 w-4 text-repwell-teal-300" />
-                <h3 className="text-sm font-semibold text-repwell-teal-500 uppercase tracking-wide">
-                  Public Profile URL
-                </h3>
-              </div>
-              <div className="rounded-lg border bg-muted/50 p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground mb-1">Your public profile can be accessed at:</p>
-                    <p className="text-sm font-mono break-all text-repwell-teal-400">
-                      {typeof window !== 'undefined' ? window.location.origin : ''}/pro/{currentSlug}
-                    </p>
+          {/* Section 2: Public Profile URL — hidden for enterprise users on /settings (use /organization/users/[id] instead) */}
+          {initialSlug && (accountType === 'individual' || !!targetUserId) && (() => {
+            const canEditSlug = isAdmin || accountType === 'individual';
+            return (
+              <div className="p-6 border-b border-border/50">
+                <div className="flex items-center gap-2 mb-4">
+                  <LinkIcon className="h-4 w-4 text-repwell-teal-300" />
+                  <h3 className="text-sm font-semibold text-heading-accent uppercase tracking-wide">
+                    Public Profile URL
+                  </h3>
+                </div>
+                <div className="rounded-lg border bg-muted/50 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">Your public profile can be accessed at:</p>
+                      <p className="text-sm font-mono break-all text-repwell-teal-400 dark:text-repwell-sage-100/80">
+                        {typeof window !== 'undefined' ? window.location.origin : ''}/pro/{currentSlug}
+                      </p>
+                    </div>
+                    {canEditSlug && userId && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSlugDialogOpen(true)}
+                        className="shrink-0"
+                      >
+                        <PencilSimple className="h-4 w-4 mr-2" />
+                        Edit URL
+                      </Button>
+                    )}
                   </div>
-                  {isAdmin && userId && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSlugDialogOpen(true)}
-                      className="shrink-0"
-                    >
-                      <PencilSimple className="h-4 w-4 mr-2" />
-                      Edit URL
-                    </Button>
+                  {!canEditSlug && (
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Contact your admin to change your profile URL.
+                    </p>
                   )}
                 </div>
-                {!isAdmin && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Contact your admin to change your profile URL.
-                  </p>
-                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Section 3: Professional Details */}
           <div className="p-6 border-b border-border/50">
             <div className="flex items-center gap-2 mb-4">
               <Briefcase className="h-4 w-4 text-repwell-teal-300" />
-              <h3 className="text-sm font-semibold text-repwell-teal-500 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-heading-accent uppercase tracking-wide">
                 Professional Details
               </h3>
             </div>
@@ -364,7 +405,7 @@ export function ProfileForm({
           <div className="p-6 border-b border-border/50">
             <div className="flex items-center gap-2 mb-4">
               <Globe className="h-4 w-4 text-repwell-teal-300" />
-              <h3 className="text-sm font-semibold text-repwell-teal-500 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-heading-accent uppercase tracking-wide">
                 Contact & Social
               </h3>
             </div>
@@ -487,7 +528,7 @@ export function ProfileForm({
           <div className="p-6 border-b border-border/50">
             <div className="flex items-center gap-2 mb-4">
               <Clock className="h-4 w-4 text-repwell-teal-300" />
-              <h3 className="text-sm font-semibold text-repwell-teal-500 uppercase tracking-wide">
+              <h3 className="text-sm font-semibold text-heading-accent uppercase tracking-wide">
                 Preferences
               </h3>
             </div>
@@ -539,7 +580,7 @@ export function ProfileForm({
     </Card>
 
       {/* Slug Edit Dialog */}
-      {isAdmin && userId && (
+      {(isAdmin || accountType === 'individual') && userId && (
         <EditSlugDialog
           open={slugDialogOpen}
           onOpenChange={setSlugDialogOpen}

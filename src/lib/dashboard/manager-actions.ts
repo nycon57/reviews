@@ -24,7 +24,6 @@ export interface UserComparison {
   email: string;
   photoUrl: string | null;
   branch: string | null;
-  region: string | null;
   totalReviews: number;
   averageRating: number;
   npsScore: number;
@@ -37,7 +36,6 @@ export interface UserComparison {
 
 export interface FilterOptions {
   branches: string[];
-  regions: string[];
 }
 
 export interface LeaderboardEntry {
@@ -194,8 +192,7 @@ export async function getTeamMetrics(): Promise<ActionResult<TeamMetrics>> {
 
 // Get user comparison data with optional filtering
 export async function getUserComparison(
-  branch?: string,
-  region?: string
+  branch?: string
 ): Promise<ActionResult<UserComparison[]>> {
   const context = await getManagerContext();
   if (!context) {
@@ -213,7 +210,6 @@ export async function getUserComparison(
       email,
       photo_url,
       branch,
-      region,
       total_reviews,
       average_rating,
       nps_score,
@@ -225,10 +221,6 @@ export async function getUserComparison(
 
   if (branch && branch !== "all") {
     query = query.eq("branch", branch);
-  }
-
-  if (region && region !== "all") {
-    query = query.eq("region", region);
   }
 
   const { data: users, error } = await query;
@@ -297,7 +289,6 @@ export async function getUserComparison(
       email: u.email,
       photoUrl: u.photo_url,
       branch: u.branch,
-      region: u.region,
       totalReviews: reviews,
       averageRating: rating,
       npsScore: nps,
@@ -312,7 +303,7 @@ export async function getUserComparison(
   return { success: true, data: comparison };
 }
 
-// Get filter options (unique branches and regions) — manager only
+// Get filter options (unique branches) — manager only
 export async function getFilterOptions(): Promise<ActionResult<FilterOptions>> {
   const context = await getManagerContext();
   if (!context) {
@@ -337,7 +328,7 @@ async function fetchFilterOptions(organizationId: string): Promise<ActionResult<
 
   const { data: userList, error } = await supabase
     .from("users")
-    .select("branch, region")
+    .select("branch")
     .eq("organization_id", organizationId);
 
   if (error) {
@@ -345,18 +336,15 @@ async function fetchFilterOptions(organizationId: string): Promise<ActionResult<
   }
 
   const branches = new Set<string>();
-  const regions = new Set<string>();
 
   for (const u of userList || []) {
     if (u.branch) branches.add(u.branch);
-    if (u.region) regions.add(u.region);
   }
 
   return {
     success: true,
     data: {
       branches: Array.from(branches).sort(),
-      regions: Array.from(regions).sort(),
     },
   };
 }

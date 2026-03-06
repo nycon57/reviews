@@ -77,7 +77,6 @@ export interface EnhancedLeaderboardEntry {
   fullName: string;
   photoUrl: string | null;
   branch: string | null;
-  region: string | null;
   totalReviews: number;
   averageRating: number;
   npsScore: number;
@@ -89,7 +88,6 @@ export interface EnhancedLeaderboardEntry {
 export interface LeaderboardFilters {
   period: LeaderboardPeriod;
   branch?: string;
-  region?: string;
   limit?: number;
 }
 

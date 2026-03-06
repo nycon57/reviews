@@ -57,13 +57,13 @@ export function CampaignRegistrationForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Campaign Description */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-repwell-teal-500">
+        <div className="flex items-center gap-2 text-sm font-semibold text-heading">
           <ChatCircleText weight="duotone" className="h-4 w-4" />
           Campaign Details
         </div>
 
         <div>
-          <Label htmlFor="campaignDescription" className="text-sm font-medium text-repwell-teal-500">
+          <Label htmlFor="campaignDescription" className="text-sm font-medium text-heading">
             Campaign Description
           </Label>
           <Textarea
@@ -82,7 +82,7 @@ export function CampaignRegistrationForm({
         </div>
 
         <div>
-          <Label htmlFor="messageSample" className="text-sm font-medium text-repwell-teal-500">
+          <Label htmlFor="messageSample" className="text-sm font-medium text-heading">
             Message Sample
           </Label>
           <Textarea
@@ -98,7 +98,7 @@ export function CampaignRegistrationForm({
         </div>
 
         <div>
-          <Label htmlFor="messageFlowDescription" className="text-sm font-medium text-repwell-teal-500">
+          <Label htmlFor="messageFlowDescription" className="text-sm font-medium text-heading">
             Message Flow
           </Label>
           <Textarea
@@ -116,13 +116,13 @@ export function CampaignRegistrationForm({
 
       {/* Opt-in / Opt-out */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-repwell-teal-500">
+        <div className="flex items-center gap-2 text-sm font-semibold text-heading">
           <TextAa weight="duotone" className="h-4 w-4" />
           Consent &amp; Keywords
         </div>
 
         <div>
-          <Label htmlFor="optInDescription" className="text-sm font-medium text-repwell-teal-500">
+          <Label htmlFor="optInDescription" className="text-sm font-medium text-heading">
             Opt-in Description
           </Label>
           <Textarea
@@ -139,7 +139,7 @@ export function CampaignRegistrationForm({
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <Label htmlFor="optInKeywords" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="optInKeywords" className="text-sm font-medium text-heading">
               Opt-in Keywords
             </Label>
             <Input
@@ -153,7 +153,7 @@ export function CampaignRegistrationForm({
           </div>
 
           <div>
-            <Label htmlFor="optOutKeywords" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="optOutKeywords" className="text-sm font-medium text-heading">
               Opt-out Keywords
             </Label>
             <Input
@@ -167,7 +167,7 @@ export function CampaignRegistrationForm({
           </div>
 
           <div>
-            <Label htmlFor="helpKeywords" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="helpKeywords" className="text-sm font-medium text-heading">
               Help Keywords
             </Label>
             <Input
@@ -181,7 +181,7 @@ export function CampaignRegistrationForm({
           </div>
         </div>
 
-        <div className="bg-repwell-sage-100/30 rounded-lg p-3 flex gap-2 text-xs text-repwell-teal-300">
+        <div className="bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 rounded-lg p-3 flex gap-2 text-xs text-repwell-teal-300">
           <Info weight="fill" className="h-4 w-4 flex-shrink-0 mt-0.5" />
           Default keywords are pre-filled based on industry standards. Carriers require STOP/HELP support.
         </div>
@@ -189,7 +189,7 @@ export function CampaignRegistrationForm({
 
       {/* Opt-in Methods */}
       <div className="space-y-4">
-        <Label className="text-sm font-medium text-repwell-teal-500">
+        <Label className="text-sm font-medium text-heading">
           Subscriber Opt-in Methods
         </Label>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -216,7 +216,7 @@ export function CampaignRegistrationForm({
                           }
                         }}
                       />
-                      <span className="text-sm text-repwell-teal-400">{method.label}</span>
+                      <span className="text-sm text-label">{method.label}</span>
                     </label>
                   );
                 })}

@@ -109,7 +109,7 @@ export function ContentTab({ config, widgetType, onConfigChange }: ContentTabPro
       </div>
 
       <div className="border-t border-border pt-4">
-        <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
+        <Label className="text-sm font-semibold text-heading mb-3 block">
           Call to Action
         </Label>
         <SwitchField
@@ -143,12 +143,12 @@ export function ContentTab({ config, widgetType, onConfigChange }: ContentTabPro
 
       {isMortgageRelated && (
         <div className="border-t border-border pt-4">
-          <Label className="text-sm font-semibold text-repwell-teal-500 mb-3 block">
+          <Label className="text-sm font-semibold text-heading mb-3 block">
             Compliance
           </Label>
           {isProWidget ? (
             <div className="flex items-center justify-between py-1">
-              <Label className="text-xs font-medium text-repwell-teal-400">Show NMLS Number</Label>
+              <Label className="text-xs font-medium text-label">Show NMLS Number</Label>
               <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Required</span>
             </div>
           ) : (

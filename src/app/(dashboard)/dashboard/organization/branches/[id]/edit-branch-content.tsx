@@ -77,13 +77,14 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { CoverPhotoUpload } from "@/components/settings/cover-photo-upload";
+import { ImageUpload } from "@/components/shared/image-upload";
 import { EditSlugDialog } from "@/components/shared/edit-slug-dialog";
 import {
   updateBranch,
   updateBranchSlug,
   updateBranchHours,
   uploadBranchPhoto,
+  uploadBranchCoverImage,
   assignUserToBranch,
   getUnassignedMembers,
 } from "@/lib/branches/actions";
@@ -130,7 +131,6 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
   // Details tab state
   const [name, setName] = useState(branch.name);
   const [description, setDescription] = useState(branch.description || "");
-  const [region, setRegion] = useState(branch.region || "");
   const [phone, setPhone] = useState(branch.phone || "");
   const [email, setEmail] = useState(branch.email || "");
   const [websiteUrl, setWebsiteUrl] = useState(branch.websiteUrl || "");
@@ -180,7 +180,6 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
       const result = await updateBranch(branch.id, {
         name,
         description: description || null,
-        region: region || null,
         phone: phone || null,
         email: email || null,
         websiteUrl: websiteUrl || null,
@@ -376,7 +375,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                 <Icon className="h-5 w-5 text-repwell-teal-300" />
               </div>
               <div>
-                <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                <p className="text-2xl font-semibold tracking-tight text-heading-accent">
                   {stat.value}
                 </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -399,7 +398,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                 value={tab.value}
                 className={cn(
                   "relative px-4 py-3 text-sm font-medium",
-                  "text-muted-foreground hover:text-repwell-teal-400",
+                  "text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80",
                   "data-[state=active]:text-repwell-teal-300",
                   "border-b-2 border-transparent",
                   "data-[state=active]:border-repwell-teal-300",
@@ -422,7 +421,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
             <div className="grid gap-6 lg:grid-cols-5">
               {/* Branch Info — 3 cols */}
               <Card className="lg:col-span-3 border border-border shadow-soft">
-                <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+                <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                       <Buildings className="h-5 w-5 text-repwell-teal-300" />
@@ -438,10 +437,6 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Branch Name *</Label>
                       <Input value={name} onChange={(e) => setName(e.target.value)} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Region</Label>
-                      <Input value={region} onChange={(e) => setRegion(e.target.value)} placeholder="e.g. Northeast" />
                     </div>
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
@@ -479,7 +474,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
 
               {/* Address — 2 cols */}
               <Card className="lg:col-span-2 border border-border shadow-soft">
-                <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+                <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                       <MapPin className="h-5 w-5 text-repwell-teal-300" />
@@ -532,7 +527,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
 
             {/* Hours of Operation */}
             <Card className="border border-border shadow-soft">
-              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -570,7 +565,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                           isEnabled
                             ? "bg-card border border-border/50"
                             : "bg-muted/30",
-                          isWeekend && isEnabled && "bg-repwell-sage-100/20 border-repwell-sage-200/30"
+                          isWeekend && isEnabled && "bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10 border-repwell-sage-200/30"
                         )}
                       >
                         <Checkbox
@@ -641,7 +636,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Branch Photo */}
               <Card className="border border-border shadow-soft overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+                <CardHeader>
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                       <ImageIcon className="h-5 w-5 text-repwell-teal-300" />
@@ -658,7 +653,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                     <div className="relative shrink-0">
                       <Avatar className="h-24 w-24 ring-2 ring-repwell-sage-200/50 ring-offset-2">
                         <AvatarImage src={photoUrl || undefined} />
-                        <AvatarFallback className="text-xl bg-repwell-sage-100/50 text-repwell-teal-400">
+                        <AvatarFallback className="text-xl bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-repwell-teal-400 dark:text-repwell-sage-100/80">
                           {branch.name.slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
@@ -670,8 +665,8 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                       className={cn(
                         "flex-1 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 cursor-pointer transition-all",
                         isPhotoDragActive
-                          ? "border-repwell-teal-300 bg-repwell-sage-100/50"
-                          : "border-border hover:border-repwell-teal-300/50 hover:bg-repwell-sage-100/20",
+                          ? "border-repwell-teal-300 bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15"
+                          : "border-border hover:border-repwell-teal-300/50 hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10",
                         isUploadingPhoto && "opacity-50 cursor-not-allowed"
                       )}
                     >
@@ -693,9 +688,14 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
               </Card>
 
               {/* Cover Image */}
-              <CoverPhotoUpload
-                currentBannerUrl={branch.coverImageUrl}
-                targetUserId={undefined}
+              <ImageUpload
+                variant="banner"
+                currentUrl={branch.coverImageUrl}
+                onUpload={async (file) => {
+                  const fd = new FormData();
+                  fd.append("file", file);
+                  return uploadBranchCoverImage(branch.id, fd);
+                }}
               />
             </div>
           </TabsContent>
@@ -704,7 +704,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
           <TabsContent value="settings" className="m-0 space-y-6">
             {/* Quick Settings — consolidated status/visibility/URL into one card */}
             <Card className="border border-border shadow-soft">
-              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                     <GearSix className="h-5 w-5 text-repwell-teal-300" />
@@ -724,8 +724,8 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                       className={cn(
                         "text-xs",
                         isActive
-                          ? "border-green-200 bg-green-50 text-green-700"
-                          : "border-red-200 bg-red-50 text-red-700"
+                          ? "border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-950/30 dark:text-green-400"
+                          : "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-400"
                       )}
                     >
                       {isActive ? "Active" : "Inactive"}
@@ -772,7 +772,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                     <Globe className="h-5 w-5 text-repwell-teal-300" />
                     <div>
                       <p className="text-sm font-medium">Public URL</p>
-                      <p className="text-xs font-mono text-repwell-teal-400">
+                      <p className="text-xs font-mono text-repwell-teal-400 dark:text-repwell-sage-100/80">
                         /branch/{currentSlug || branch.globalSlug}
                       </p>
                     </div>
@@ -799,7 +799,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
 
             {/* Manager */}
             <Card className="border border-border shadow-soft">
-              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <CardHeader>
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                     <UserCircleGear className="h-5 w-5 text-repwell-teal-300" />
@@ -834,7 +834,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
 
             {/* Team Members */}
             <Card className="border border-border shadow-soft">
-              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -871,7 +871,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                             <div className="flex items-center gap-3">
                               <Avatar className="h-9 w-9">
                                 <AvatarImage src={member.photoUrl || undefined} />
-                                <AvatarFallback className="text-xs bg-repwell-sage-100/50 text-repwell-teal-400">
+                                <AvatarFallback className="text-xs bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-repwell-teal-400 dark:text-repwell-sage-100/80">
                                   {member.fullName
                                     .split(" ")
                                     .map((n) => n[0])
@@ -1140,12 +1140,12 @@ function AssignMemberDialog({
             filtered.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between rounded-lg border border-border/50 p-3 hover:bg-repwell-sage-100/20 transition-colors"
+                className="flex items-center justify-between rounded-lg border border-border/50 p-3 hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={member.photoUrl || undefined} />
-                    <AvatarFallback className="text-xs bg-repwell-sage-100/50 text-repwell-teal-400">
+                    <AvatarFallback className="text-xs bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 text-repwell-teal-400 dark:text-repwell-sage-100/80">
                       {member.fullName
                         .split(" ")
                         .map((n) => n[0])

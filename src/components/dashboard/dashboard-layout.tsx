@@ -70,7 +70,7 @@ export function DashboardLayout({
 
   return (
     <PermissionProvider userContext={userContext || null}>
-      <div className="flex h-screen overflow-hidden bg-background">
+      <div className="flex h-dvh overflow-hidden bg-background">
         {/* Desktop Sidebar - hidden on mobile */}
         <div className="hidden md:block">
           <Sidebar
@@ -93,9 +93,9 @@ export function DashboardLayout({
           />
 
           {impersonation?.active && (
-            <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 md:px-6">
+            <div className="border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-2 md:px-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-2 text-amber-900">
+                <div className="flex items-start gap-2 text-amber-900 dark:text-amber-200">
                   <WarningCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <p className="text-sm">
                     Impersonating{" "}
@@ -111,7 +111,7 @@ export function DashboardLayout({
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-8 border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-200"
+                  className="h-8 border-amber-300 bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 hover:bg-amber-200"
                   onClick={handleStopImpersonation}
                   disabled={isStoppingImpersonation}
                 >
@@ -134,7 +134,7 @@ export function DashboardLayout({
           {/* Page content */}
           <main
             className={cn(
-              "flex-1 overflow-y-auto p-6",
+              "min-h-0 flex-1 overflow-y-auto p-6",
               "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border"
             )}
           >

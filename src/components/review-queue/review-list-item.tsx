@@ -56,7 +56,7 @@ function getStatusBadge(status: Review["status"]) {
     case "rejected":
       return <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">Rejected</Badge>;
     case "archived":
-      return <Badge variant="outline" className="border-gray-400 text-gray-500">Archived</Badge>;
+      return <Badge variant="outline" className="border-border text-muted-foreground">Archived</Badge>;
     default:
       return null;
   }
@@ -133,7 +133,7 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
             ? { borderColor: "border-violet-400/50", bgColor: "bg-violet-50/50", iconColor: "text-violet-500", labelColor: "text-violet-600", label: "AI Response", Icon: Sparkles }
             : isTemplateResponse
             ? { borderColor: "border-amber-400/50", bgColor: "bg-amber-50/50", iconColor: "text-amber-500", labelColor: "text-amber-600", label: "Template", Icon: Archive }
-            : { borderColor: "border-repwell-teal-300/50", bgColor: "bg-repwell-teal-100/20", iconColor: "text-repwell-teal-400", labelColor: "text-repwell-teal-500", label: "Response", Icon: MessageSquare };
+            : { borderColor: "border-repwell-teal-300/50", bgColor: "bg-repwell-teal-100/20", iconColor: "text-repwell-teal-400", labelColor: "text-heading", label: "Response", Icon: MessageSquare };
 
           return (
             <div className={cn("mt-4 pl-3 border-l-2 rounded-r-md py-2 pr-2", responseConfig.borderColor, responseConfig.bgColor)}>

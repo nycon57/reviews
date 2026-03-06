@@ -84,3 +84,5 @@ public/embed.min.js.map
 
 # docs
 docs/
+# Added by ggshield
+.cache_ggshield

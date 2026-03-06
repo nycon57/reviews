@@ -32,7 +32,7 @@ export function TierBadgeSSR({ isEnterprise, isPro, size = "sm" }: TierBadgeSSRP
         variant="secondary"
         className={cn(
           cfg.text,
-          "font-semibold bg-repwell-sage-100 text-repwell-teal-400 shrink-0"
+          "font-semibold bg-surface-soft text-label shrink-0"
         )}
       >
         Pro

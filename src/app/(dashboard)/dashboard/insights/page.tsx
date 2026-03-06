@@ -173,7 +173,7 @@ export default async function AIInsightsPage() {
           <Sparkles className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">AI Insights</h1>
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading">AI Insights</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
             AI-powered analysis of your customer feedback and performance trends
           </p>

@@ -16,8 +16,8 @@ export function VideoBulkActionBar() {
   if (!state.canManage || state.selectedIds.size === 0) return null;
 
   return (
-    <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30">
-      <span className="text-sm font-medium text-repwell-teal-500">
+    <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
+      <span className="text-sm font-medium text-heading">
         {state.selectedIds.size} video{state.selectedIds.size !== 1 ? "s" : ""} selected
       </span>
       <Button

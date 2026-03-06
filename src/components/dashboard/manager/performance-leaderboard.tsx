@@ -34,7 +34,7 @@ export function PerformanceLeaderboard({
       case 1:
         return <Trophy className="h-5 w-5 text-yellow-500" />;
       case 2:
-        return <Medal className="h-5 w-5 text-gray-400" />;
+        return <Medal className="h-5 w-5 text-muted-foreground" />;
       case 3:
         return <Certificate className="h-5 w-5 text-amber-600" />;
       default:
@@ -51,7 +51,7 @@ export function PerformanceLeaderboard({
       case 1:
         return "bg-gradient-to-r from-yellow-50 to-yellow-100";
       case 2:
-        return "bg-gradient-to-r from-gray-50 to-gray-100";
+        return "bg-muted";
       case 3:
         return "bg-gradient-to-r from-amber-50 to-amber-100";
       default:

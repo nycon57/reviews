@@ -46,7 +46,7 @@ export function ShopifyGuide() {
   return (
     <IntegrationCard
       id="shopify"
-      icon={<ShoppingBag size={20} className="text-repwell-teal-500" />}
+      icon={<ShoppingBag size={20} className="text-heading" />}
       title="Shopify"
       description="Add review widgets to your Shopify store via theme.liquid or custom sections."
     >

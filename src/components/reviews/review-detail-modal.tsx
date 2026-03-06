@@ -76,7 +76,7 @@ export function ReviewDetailModal({
     pending: { label: "Pending", className: "border-amber-300 text-amber-700 bg-amber-50" },
     approved: { label: "Approved", className: "border-green-300 text-green-700 bg-green-50" },
     rejected: { label: "Rejected", className: "border-red-300 text-red-700 bg-red-50" },
-    archived: { label: "Archived", className: "border-gray-300 text-gray-500 bg-gray-50" },
+    archived: { label: "Archived", className: "border-border text-muted-foreground bg-muted" },
   };
 
   const sourceLabels: Record<string, string> = {
@@ -128,11 +128,11 @@ export function ReviewDetailModal({
             <div className="flex items-start justify-between gap-4 pr-8">
               {/* Customer identity */}
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-repwell-teal-300/10 text-repwell-teal-400 text-sm font-semibold shrink-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-repwell-teal-300/10 text-label text-sm font-semibold shrink-0">
                   {customerInitials}
                 </div>
                 <div>
-                  <DialogTitle className="text-base font-semibold text-repwell-teal-500">
+                  <DialogTitle className="text-base font-semibold text-heading">
                     {review.customerName || "Anonymous"}
                   </DialogTitle>
                   <DialogDescription className="flex items-center gap-3 mt-0.5">
@@ -183,7 +183,7 @@ export function ReviewDetailModal({
           {/* Review text — primary content, no box treatment */}
           <div>
             {review.title && (
-              <h4 className="font-medium text-repwell-teal-500 mb-1.5">{review.title}</h4>
+              <h4 className="font-medium text-heading mb-1.5">{review.title}</h4>
             )}
             {review.text ? (
               <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">
@@ -245,7 +245,7 @@ export function ReviewDetailModal({
                           href={url.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-repwell-teal-400 hover:text-repwell-teal-500 transition-colors inline-flex items-center gap-1"
+                          className="text-label hover:text-repwell-teal-500 dark:hover:text-foreground transition-colors inline-flex items-center gap-1"
                         >
                           View on {sourceLabels[review.source] || review.source}
                           <ExternalLink className="h-3 w-3" />
@@ -274,7 +274,7 @@ export function ReviewDetailModal({
             <div className="rounded-lg border border-border/50 bg-muted/30 p-3.5">
               <div className="flex items-center gap-1.5 mb-2">
                 <MessageSquare className="h-3.5 w-3.5 text-repwell-teal-300" />
-                <span className="text-xs font-medium text-repwell-teal-400 uppercase tracking-wider">Your Response</span>
+                <span className="text-xs font-medium text-label uppercase tracking-wider">Your Response</span>
               </div>
               <p className="text-sm text-foreground/80 whitespace-pre-wrap">{review.responseText}</p>
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -286,7 +286,7 @@ export function ReviewDetailModal({
 
           {/* Response composer — expandable */}
           {!review.responseText && showResponseForm && (
-            <div className="rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/10 p-4">
+            <div className="rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/10 p-4">
               <ResponseComposer
                 review={review}
                 onSuccess={() => {

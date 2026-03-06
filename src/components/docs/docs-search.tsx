@@ -129,7 +129,7 @@ export function DocsSearch({ className }: DocsSearchProps) {
   return (
     <div className={cn("relative", className)}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-repwell-teal-400" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-label" />
         <Input
           ref={inputRef}
           type="search"
@@ -147,12 +147,12 @@ export function DocsSearch({ className }: DocsSearchProps) {
                 setQuery("");
                 setIsOpen(false);
               }}
-              className="p-1 hover:bg-repwell-sage-100 rounded"
+              className="p-1 hover:bg-repwell-sage-100 dark:hover:bg-repwell-teal-300/10 rounded"
             >
-              <X className="h-3.5 w-3.5 text-repwell-teal-400" />
+              <X className="h-3.5 w-3.5 text-label" />
             </button>
           )}
-          <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border bg-background px-1.5 text-caption font-medium text-repwell-teal-400">
+          <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border bg-background px-1.5 text-caption font-medium text-label">
             <span className="text-xs">⌘</span>K
           </kbd>
         </div>
@@ -166,10 +166,10 @@ export function DocsSearch({ className }: DocsSearchProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden rounded-xl border border-border bg-white shadow-elevation-4"
+            className="absolute top-full left-0 right-0 z-50 mt-2 overflow-hidden rounded-xl border border-border bg-background shadow-elevation-4"
           >
             <div className="p-2">
-              <p className="px-2 py-1.5 text-caption text-repwell-teal-400">
+              <p className="px-2 py-1.5 text-caption text-label">
                 {results.length} result{results.length !== 1 ? "s" : ""} found
               </p>
               <div className="space-y-1">
@@ -180,16 +180,16 @@ export function DocsSearch({ className }: DocsSearchProps) {
                     className={cn(
                       "flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
                       index === selectedIndex
-                        ? "bg-repwell-sage-100 text-repwell-teal-500"
-                        : "hover:bg-repwell-sage-100/50 text-repwell-teal-500"
+                        ? "bg-repwell-sage-100 dark:bg-repwell-teal-300/15 text-heading"
+                        : "hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 text-heading"
                     )}
                   >
-                    <FileText className="mt-0.5 h-4 w-4 shrink-0 text-repwell-teal-400" />
+                    <FileText className="mt-0.5 h-4 w-4 shrink-0 text-label" />
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-body-sm truncate">
                         {result.title}
                       </p>
-                      <p className="text-caption text-repwell-teal-400 truncate">
+                      <p className="text-caption text-label truncate">
                         {result.sectionTitle} &middot; {result.description}
                       </p>
                     </div>
@@ -204,7 +204,7 @@ export function DocsSearch({ className }: DocsSearchProps) {
               </div>
             </div>
             <div className="border-t border-border/50 bg-background/50 px-4 py-2">
-              <p className="text-caption text-repwell-teal-400">
+              <p className="text-caption text-label">
                 <kbd className="rounded border border-border bg-white px-1">↑</kbd>{" "}
                 <kbd className="rounded border border-border bg-white px-1">↓</kbd> to
                 navigate,{" "}

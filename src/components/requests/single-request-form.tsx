@@ -318,11 +318,6 @@ export function SingleRequestForm({
             Enter a valid US phone number
           </p>
         )}
-        {phoneValidation?.display && (
-          <p className="text-xs text-repwell-sage-200">
-            {phoneValidation.display}
-          </p>
-        )}
       </div>
 
       {/* Survey Template Selector (text + email) */}

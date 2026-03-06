@@ -47,7 +47,7 @@ export function ConversationList({
       {/* Header */}
       <div className="flex-shrink-0 border-b border-border">
         <div className="px-4 py-3">
-          <h1 className="text-lg font-semibold text-repwell-teal-500">Messages</h1>
+          <h1 className="text-lg font-semibold text-heading">Messages</h1>
         </div>
 
         {/* Search */}
@@ -73,8 +73,8 @@ export function ConversationList({
               className={cn(
                 "px-3 py-1.5 text-xs font-medium rounded-md transition-colors duration-150",
                 statusFilter === tab.value
-                  ? "bg-repwell-sage-100 text-repwell-teal-300"
-                  : "text-repwell-teal-400/70 hover:bg-repwell-sage-100/50 hover:text-repwell-teal-400"
+                  ? "bg-surface-soft text-repwell-teal-300"
+                  : "text-label/70 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-400 dark:hover:text-muted-foreground"
               )}
             >
               {tab.label}
@@ -94,7 +94,7 @@ export function ConversationList({
         ) : conversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
             <Filter className="h-10 w-10 text-repwell-teal-300/30 mb-3" />
-            <p className="text-sm font-medium text-repwell-teal-400">
+            <p className="text-sm font-medium text-label">
               {searchQuery ? "No matching conversations" : "No conversations yet"}
             </p>
             <p className="text-xs text-repwell-teal-300/60 mt-1">
@@ -149,8 +149,8 @@ const ConversationItem = React.memo(function ConversationItem({
         "w-full flex items-start gap-3 p-3 rounded-lg text-left transition-all duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30",
         isSelected
-          ? "bg-repwell-sage-100 shadow-sm"
-          : "hover:bg-repwell-sage-100/40"
+          ? "bg-surface-soft shadow-sm"
+          : "hover:bg-repwell-sage-100/40 dark:hover:bg-repwell-teal-300/10"
       )}
     >
       {/* Avatar */}
@@ -178,8 +178,8 @@ const ConversationItem = React.memo(function ConversationItem({
             className={cn(
               "text-sm truncate",
               conversation.unreadCount > 0
-                ? "font-semibold text-repwell-teal-500"
-                : "font-medium text-repwell-teal-400"
+                ? "font-semibold text-heading"
+                : "font-medium text-label"
             )}
           >
             {conversation.borrowerName ?? conversation.borrowerPhoneDisplay}
@@ -196,7 +196,7 @@ const ConversationItem = React.memo(function ConversationItem({
             className={cn(
               "text-xs mt-0.5 truncate",
               conversation.unreadCount > 0
-                ? "text-repwell-teal-400"
+                ? "text-label"
                 : "text-repwell-teal-300/60"
             )}
           >

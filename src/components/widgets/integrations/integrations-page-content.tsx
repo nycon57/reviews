@@ -46,7 +46,7 @@ export function IntegrationsPageContent() {
           If you need assistance,{" "}
           <a
             href="mailto:support@repwell.com"
-            className="text-repwell-teal-500 underline underline-offset-2 hover:text-repwell-teal-600"
+            className="text-heading underline underline-offset-2 hover:text-repwell-teal-600"
           >
             contact support
           </a>

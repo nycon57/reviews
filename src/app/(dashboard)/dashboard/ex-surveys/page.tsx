@@ -11,7 +11,6 @@ import {
   TrendUp as TrendingUp,
   ClipboardText as ClipboardList,
   ArrowRight,
-  CheckCircle as CheckCircle2,
   ChartBar as BarChart3,
 } from "@phosphor-icons/react/dist/ssr";
 import { getEXSurveys, getEXMetrics, getEXTrends, initializeDefaultEXTemplates } from "@/lib/ex-surveys/actions";
@@ -122,11 +121,11 @@ async function RecentSurveysList() {
   }
 
   const statusColors: Record<string, string> = {
-    draft: "bg-gray-100 text-gray-800",
-    scheduled: "bg-blue-100 text-blue-800",
-    active: "bg-green-100 text-green-800",
-    closed: "bg-yellow-100 text-yellow-800",
-    archived: "bg-gray-100 text-gray-600",
+    draft: "bg-muted text-muted-foreground",
+    scheduled: "bg-blue-100 text-blue-800 dark:bg-blue-950/30 dark:text-blue-400",
+    active: "bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400",
+    closed: "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/30 dark:text-yellow-400",
+    archived: "bg-muted text-muted-foreground",
   };
 
   return (
@@ -191,7 +190,7 @@ export default async function EXSurveysPage() {
             <Users className="h-6 w-6 text-repwell-teal-300" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">Employee Experience</h1>
+            <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading">Employee Experience</h1>
             <p className="text-sm leading-snug text-repwell-teal-300">
               Measure engagement, collect feedback, and drive improvements
             </p>
@@ -260,43 +259,6 @@ export default async function EXSurveysPage() {
         </CardContent>
       </Card>
 
-      {/* Quick tips */}
-      <Card className="bg-muted/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CheckCircle2 className="h-5 w-5 text-primary" />
-            Getting Started with Employee Experience
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">1. Choose a Template</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Start with engagement, pulse, or exit surveys
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">2. Target Your Audience</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Select departments or roles to survey
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">3. Launch & Collect</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Send invitations and track responses
-              </p>
-            </div>
-            <div className="rounded-lg border bg-background p-4">
-              <div className="font-medium">4. Share Insights</div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Review results and share with your team
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

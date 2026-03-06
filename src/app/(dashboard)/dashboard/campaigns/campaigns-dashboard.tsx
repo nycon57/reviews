@@ -55,7 +55,11 @@ import type {
   WorkflowTemplate,
 } from "@/lib/campaigns/types";
 import { useToast } from "@/hooks/use-toast";
-import { NewCampaignModal } from "./new-campaign-modal";
+import dynamic from "next/dynamic";
+
+const NewCampaignModal = dynamic(() => import("./new-campaign-modal").then((m) => m.NewCampaignModal), {
+  ssr: false,
+});
 
 type FilterValue = "all" | CampaignStatus;
 
@@ -280,7 +284,7 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
         <CardContent>
           {filteredCampaigns.length === 0 ? (
             <div className="relative flex flex-col items-center justify-center gap-4 overflow-hidden rounded-lg border border-dashed py-14 text-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-repwell-sage-100/40" aria-hidden="true" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-repwell-sage-100/40 dark:to-repwell-teal-300/10" aria-hidden="true" />
               <div className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                 <Sparkle className="h-6 w-6 text-primary" />
               </div>
@@ -394,11 +398,13 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
         </CardContent>
       </Card>
 
-      <NewCampaignModal
-        templates={templates}
-        open={isCreateModalOpen}
-        onOpenChange={setIsCreateModalOpen}
-      />
+      {isCreateModalOpen && (
+        <NewCampaignModal
+          templates={templates}
+          open={isCreateModalOpen}
+          onOpenChange={setIsCreateModalOpen}
+        />
+      )}
 
       <AlertDialog
         open={pendingDelete !== null}

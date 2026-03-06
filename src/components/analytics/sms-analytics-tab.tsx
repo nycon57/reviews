@@ -239,7 +239,7 @@ const KpiCard = memo(function KpiCard({
         <Icon className="h-5 w-5 text-repwell-teal-300" aria-hidden="true" />
       </div>
       <div>
-        <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">{value}</p>
+        <p className="text-2xl font-semibold tracking-tight text-heading">{value}</p>
         <p className="text-xs text-muted-foreground">{title}</p>
         {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
       </div>
@@ -309,7 +309,7 @@ function DeliveryFunnel({ data }: { data: SmsAnalyticsData }) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Funnel className="h-5 w-5 text-repwell-teal-300" />
@@ -370,7 +370,7 @@ function DailyVolumeChart({ data }: { data: SmsDailyVolume[] }) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <ChartBar className="h-5 w-5 text-repwell-teal-300" />
@@ -451,7 +451,7 @@ function TemplatePerformanceTable({ data }: { data: SmsTemplatePerformanceRow[] 
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <TableIcon className="h-5 w-5 text-repwell-teal-300" />
@@ -511,7 +511,7 @@ function TemplatePerformanceTable({ data }: { data: SmsTemplatePerformanceRow[] 
 function LoLeaderboard({ data }: { data: SmsLoLeaderboardRow[] }) {
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Trophy className="h-5 w-5 text-repwell-teal-300" />
@@ -544,9 +544,9 @@ function LoLeaderboard({ data }: { data: SmsLoLeaderboardRow[] }) {
                     <TableCell>
                       <span className={cn(
                         "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
-                        i === 0 && "bg-amber-100 text-amber-700",
-                        i === 1 && "bg-gray-100 text-gray-700",
-                        i === 2 && "bg-orange-100 text-orange-700",
+                        i === 0 && "bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+                        i === 1 && "bg-muted text-foreground",
+                        i === 2 && "bg-orange-100 text-orange-700 dark:bg-orange-950/30 dark:text-orange-400",
                         i > 2 && "text-muted-foreground"
                       )}>
                         {i + 1}
@@ -558,7 +558,7 @@ function LoLeaderboard({ data }: { data: SmsLoLeaderboardRow[] }) {
                     <TableCell>
                       <span className={cn(
                         "font-medium",
-                        lo.conversionRate >= 0.1 && "text-green-600",
+                        lo.conversionRate >= 0.1 && "text-green-600 dark:text-green-400",
                         lo.conversionRate < 0.05 && "text-muted-foreground"
                       )}>
                         {formatPercent(lo.conversionRate)}
@@ -592,7 +592,7 @@ function OptOutTrendChart({ data }: { data: SmsOptOutTrend[] }) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Warning className="h-5 w-5 text-repwell-teal-300" />
@@ -650,7 +650,7 @@ function CostBreakdownChart({ data }: { data: SmsCostBreakdown[] }) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <CurrencyDollar className="h-5 w-5 text-repwell-teal-300" />
@@ -742,7 +742,7 @@ function TimeHeatmap({ data }: { data: SmsTimeHeatmapCell[] }) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Clock className="h-5 w-5 text-repwell-teal-300" />
@@ -834,7 +834,7 @@ function ChannelComparisonSection({ data }: { data: SmsChannelComparison[] | nul
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <ArrowsLeftRight className="h-5 w-5 text-repwell-teal-300" />
@@ -958,7 +958,7 @@ export function SmsAnalyticsTab({ teamMembers, userRole }: Props) {
     <div className="space-y-6">
       {/* Filters */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Funnel className="h-5 w-5 text-repwell-teal-300" />

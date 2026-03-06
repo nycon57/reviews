@@ -105,7 +105,7 @@ export function AddPhoneNumberDialog({ open, onOpenChange, onSuccess }: AddPhone
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-repwell-teal-500">
+          <DialogTitle className="flex items-center gap-2 text-heading">
             <Phone weight="duotone" className="h-5 w-5" />
             Add Phone Number
           </DialogTitle>
@@ -118,7 +118,7 @@ export function AddPhoneNumberDialog({ open, onOpenChange, onSuccess }: AddPhone
           {/* Search Controls */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="areaCode" className="text-sm font-medium text-repwell-teal-500">
+              <Label htmlFor="areaCode" className="text-sm font-medium text-heading">
                 Area Code
                 <span className="text-muted-foreground font-normal"> (optional)</span>
               </Label>
@@ -132,7 +132,7 @@ export function AddPhoneNumberDialog({ open, onOpenChange, onSuccess }: AddPhone
               />
             </div>
             <div>
-              <Label className="text-sm font-medium text-repwell-teal-500">Number Type</Label>
+              <Label className="text-sm font-medium text-heading">Number Type</Label>
               <Select value={numberType} onValueChange={(v) => setNumberType(v as 'local' | 'toll_free')}>
                 <SelectTrigger className="mt-1.5">
                   <SelectValue />
@@ -181,7 +181,7 @@ export function AddPhoneNumberDialog({ open, onOpenChange, onSuccess }: AddPhone
                       className="flex items-center justify-between p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors"
                     >
                       <div className="space-y-1">
-                        <p className="font-mono text-sm font-medium text-repwell-teal-500">
+                        <p className="font-mono text-sm font-medium text-heading">
                           {formatForDisplay(num.phoneNumber)}
                         </p>
                         <div className="flex items-center gap-2">

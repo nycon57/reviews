@@ -180,7 +180,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-repwell-teal-400/10">
-                  <MessageSquare className="h-5 w-5 text-repwell-teal-400" />
+                  <MessageSquare className="h-5 w-5 text-label" />
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Reviews</p>
@@ -199,7 +199,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Rating Trend */}
         <Card className="rounded-xl border-border/50 shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Star className="h-5 w-5 text-repwell-teal-300" />
@@ -242,7 +242,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
 
         {/* NPS Trend */}
         <Card className="rounded-xl border-border/50 shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
@@ -280,7 +280,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
 
       {/* Review Volume */}
       <Card className="rounded-xl border-border/50 shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+        <CardHeader className="pb-2">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <MessageSquare className="h-5 w-5 text-repwell-teal-300" />

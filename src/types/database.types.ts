@@ -562,6 +562,99 @@ export type Database = {
           },
         ]
       }
+      campaign_workflows: {
+        Row: {
+          activated_at: string | null
+          activated_by: string | null
+          canvas_metadata: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          locked_at: string | null
+          locked_by: string | null
+          name: string
+          organization_id: string
+          sequence_definition: Json
+          status: string
+          trigger_type: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          activated_at?: string | null
+          activated_by?: string | null
+          canvas_metadata?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          name: string
+          organization_id: string
+          sequence_definition?: Json
+          status?: string
+          trigger_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          activated_at?: string | null
+          activated_by?: string | null
+          canvas_metadata?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          name?: string
+          organization_id?: string
+          sequence_definition?: Json
+          status?: string
+          trigger_type?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_workflows_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_workflows_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_workflows_locked_by_fkey"
+            columns: ["locked_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_workflows_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_workflows_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       departments: {
         Row: {
           created_at: string | null
@@ -761,6 +854,9 @@ export type Database = {
           id: string
           opened_at: string | null
           organization_id: string | null
+          provider_event_id: string | null
+          provider_event_type: string | null
+          request_id: string | null
           resend_message_id: string | null
           sent_at: string | null
           status: string | null
@@ -781,6 +877,9 @@ export type Database = {
           id?: string
           opened_at?: string | null
           organization_id?: string | null
+          provider_event_id?: string | null
+          provider_event_type?: string | null
+          request_id?: string | null
           resend_message_id?: string | null
           sent_at?: string | null
           status?: string | null
@@ -801,6 +900,9 @@ export type Database = {
           id?: string
           opened_at?: string | null
           organization_id?: string | null
+          provider_event_id?: string | null
+          provider_event_type?: string | null
+          request_id?: string | null
           resend_message_id?: string | null
           sent_at?: string | null
           status?: string | null
@@ -817,6 +919,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "video_testimonial_requests"
             referencedColumns: ["id"]
           },
           {
@@ -859,6 +968,76 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          metadata: Json | null
+          organization_id: string
+          phone: string | null
+          title: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          organization_id: string
+          phone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          metadata?: Json | null
+          organization_id?: string
+          phone?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1070,6 +1249,8 @@ export type Database = {
           completed_at: string | null
           created_at: string | null
           department_id: string | null
+          employee_email: string | null
+          employee_id: string | null
           id: string
           last_reminder_at: string | null
           opened_at: string | null
@@ -1078,12 +1259,14 @@ export type Database = {
           status: string | null
           survey_id: string
           token: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           completed_at?: string | null
           created_at?: string | null
           department_id?: string | null
+          employee_email?: string | null
+          employee_id?: string | null
           id?: string
           last_reminder_at?: string | null
           opened_at?: string | null
@@ -1092,12 +1275,14 @@ export type Database = {
           status?: string | null
           survey_id: string
           token?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           completed_at?: string | null
           created_at?: string | null
           department_id?: string | null
+          employee_email?: string | null
+          employee_id?: string | null
           id?: string
           last_reminder_at?: string | null
           opened_at?: string | null
@@ -1106,9 +1291,16 @@ export type Database = {
           status?: string | null
           survey_id?: string
           token?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "ex_survey_invitations_contact_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ex_survey_invitations_department_id_fkey"
             columns: ["department_id"]
@@ -2630,6 +2822,63 @@ export type Database = {
           },
         ]
       }
+      organization_audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: unknown
+          new_values: Json | null
+          old_values: Json | null
+          organization_id: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: unknown
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: unknown
+          new_values?: Json | null
+          old_values?: Json | null
+          organization_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           account_type: string | null
@@ -2967,6 +3216,7 @@ export type Database = {
           customer_name: string | null
           id: string
           organization_id: string
+          presenter_user_id: string | null
           published_at: string | null
           quote: string | null
           rating: number | null
@@ -2992,6 +3242,7 @@ export type Database = {
           customer_name?: string | null
           id?: string
           organization_id: string
+          presenter_user_id?: string | null
           published_at?: string | null
           quote?: string | null
           rating?: number | null
@@ -3017,6 +3268,7 @@ export type Database = {
           customer_name?: string | null
           id?: string
           organization_id?: string
+          presenter_user_id?: string | null
           published_at?: string | null
           quote?: string | null
           rating?: number | null
@@ -3051,6 +3303,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_items_presenter_user_id_fkey"
+            columns: ["presenter_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -4736,6 +4995,7 @@ export type Database = {
           created_at: string | null
           expires_at: string
           id: string
+          impersonated_by: string | null
           ip_address: string | null
           token: string
           updated_at: string | null
@@ -4746,6 +5006,7 @@ export type Database = {
           created_at?: string | null
           expires_at: string
           id: string
+          impersonated_by?: string | null
           ip_address?: string | null
           token: string
           updated_at?: string | null
@@ -4756,6 +5017,7 @@ export type Database = {
           created_at?: string | null
           expires_at?: string
           id?: string
+          impersonated_by?: string | null
           ip_address?: string | null
           token?: string
           updated_at?: string | null
@@ -5855,6 +6117,63 @@ export type Database = {
           },
         ]
       }
+      testimonial_consent_events: {
+        Row: {
+          consent_type: string
+          consent_version: string
+          created_at: string
+          granted: boolean
+          id: string
+          ip_address: unknown
+          legal_text_snapshot: string
+          locale: string | null
+          request_id: string
+          response_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          consent_type: string
+          consent_version: string
+          created_at?: string
+          granted: boolean
+          id?: string
+          ip_address?: unknown
+          legal_text_snapshot: string
+          locale?: string | null
+          request_id: string
+          response_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          consent_type?: string
+          consent_version?: string
+          created_at?: string
+          granted?: boolean
+          id?: string
+          ip_address?: unknown
+          legal_text_snapshot?: string
+          locale?: string | null
+          request_id?: string
+          response_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimonial_consent_events_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "video_testimonial_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "testimonial_consent_events_response_id_fkey"
+            columns: ["response_id"]
+            isOneToOne: false
+            referencedRelation: "video_testimonial_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testimonial_graphics: {
         Row: {
           accent_color: string | null
@@ -6206,6 +6525,9 @@ export type Database = {
           auto_request_reviews: boolean | null
           avatar_url: string | null
           average_rating: number | null
+          ban_expires: string | null
+          ban_reason: string | null
+          banned: boolean | null
           banner_url: string | null
           bio: string | null
           branch: string | null
@@ -6262,6 +6584,9 @@ export type Database = {
           auto_request_reviews?: boolean | null
           avatar_url?: string | null
           average_rating?: number | null
+          ban_expires?: string | null
+          ban_reason?: string | null
+          banned?: boolean | null
           banner_url?: string | null
           bio?: string | null
           branch?: string | null
@@ -6318,6 +6643,9 @@ export type Database = {
           auto_request_reviews?: boolean | null
           avatar_url?: string | null
           average_rating?: number | null
+          ban_expires?: string | null
+          ban_reason?: string | null
+          banned?: boolean | null
           banner_url?: string | null
           bio?: string | null
           branch?: string | null
@@ -6512,6 +6840,9 @@ export type Database = {
           expires_at: string | null
           id: string
           last_reminder_at: string | null
+          last_transition_at: string | null
+          last_transition_reason: string | null
+          last_transition_source: string | null
           max_duration_seconds: number | null
           opened_at: string | null
           organization_id: string
@@ -6540,6 +6871,9 @@ export type Database = {
           expires_at?: string | null
           id?: string
           last_reminder_at?: string | null
+          last_transition_at?: string | null
+          last_transition_reason?: string | null
+          last_transition_source?: string | null
           max_duration_seconds?: number | null
           opened_at?: string | null
           organization_id: string
@@ -6568,6 +6902,9 @@ export type Database = {
           expires_at?: string | null
           id?: string
           last_reminder_at?: string | null
+          last_transition_at?: string | null
+          last_transition_reason?: string | null
+          last_transition_source?: string | null
           max_duration_seconds?: number | null
           opened_at?: string | null
           organization_id?: string
@@ -6600,6 +6937,13 @@ export type Database = {
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "video_testimonial_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       video_testimonial_responses: {
@@ -6608,15 +6952,19 @@ export type Database = {
           ai_generation_completed_at: string | null
           ai_generation_error: string | null
           ai_generation_status: string | null
+          ai_text_consent_given: boolean
           approval_status: Database["public"]["Enums"]["video_testimonial_approval_status"]
           approved_at: string | null
           approved_by: string | null
           browser: string | null
           changes_requested_at: string | null
           changes_requested_by: string | null
+          consent_captured_at: string | null
           consent_given: boolean
           consent_ip_address: unknown
+          consent_source: string | null
           consent_timestamp: string | null
+          consent_version: string | null
           created_at: string
           device_type: string | null
           duration_seconds: number | null
@@ -6628,14 +6976,21 @@ export type Database = {
           key_phrases: string[] | null
           manager_notes: string | null
           marketing_consent: boolean | null
+          marketing_consent_given: boolean
+          media_codec: string | null
           mime_type: string
+          nil_consent_given: boolean
           organization_id: string
+          processing_error_code: string | null
+          processing_error_stage: string | null
           published_at: string | null
           published_platforms: string[] | null
           rejection_reason: string | null
           request_id: string
+          retry_count: number
           sentiment_label: string | null
           sentiment_score: number | null
+          submission_idempotency_key: string | null
           submitted_at: string
           thumbnail_url: string | null
           transcription: string | null
@@ -6643,6 +6998,8 @@ export type Database = {
           transcription_error: string | null
           transcription_status: string | null
           updated_at: string
+          upload_session_id: string | null
+          usage_rights_consent_given: boolean
           user_agent: string | null
           user_id: string
           video_generated_at: string | null
@@ -6656,15 +7013,19 @@ export type Database = {
           ai_generation_completed_at?: string | null
           ai_generation_error?: string | null
           ai_generation_status?: string | null
+          ai_text_consent_given?: boolean
           approval_status?: Database["public"]["Enums"]["video_testimonial_approval_status"]
           approved_at?: string | null
           approved_by?: string | null
           browser?: string | null
           changes_requested_at?: string | null
           changes_requested_by?: string | null
+          consent_captured_at?: string | null
           consent_given?: boolean
           consent_ip_address?: unknown
+          consent_source?: string | null
           consent_timestamp?: string | null
+          consent_version?: string | null
           created_at?: string
           device_type?: string | null
           duration_seconds?: number | null
@@ -6676,14 +7037,21 @@ export type Database = {
           key_phrases?: string[] | null
           manager_notes?: string | null
           marketing_consent?: boolean | null
+          marketing_consent_given?: boolean
+          media_codec?: string | null
           mime_type: string
+          nil_consent_given?: boolean
           organization_id: string
+          processing_error_code?: string | null
+          processing_error_stage?: string | null
           published_at?: string | null
           published_platforms?: string[] | null
           rejection_reason?: string | null
           request_id: string
+          retry_count?: number
           sentiment_label?: string | null
           sentiment_score?: number | null
+          submission_idempotency_key?: string | null
           submitted_at?: string
           thumbnail_url?: string | null
           transcription?: string | null
@@ -6691,6 +7059,8 @@ export type Database = {
           transcription_error?: string | null
           transcription_status?: string | null
           updated_at?: string
+          upload_session_id?: string | null
+          usage_rights_consent_given?: boolean
           user_agent?: string | null
           user_id: string
           video_generated_at?: string | null
@@ -6704,15 +7074,19 @@ export type Database = {
           ai_generation_completed_at?: string | null
           ai_generation_error?: string | null
           ai_generation_status?: string | null
+          ai_text_consent_given?: boolean
           approval_status?: Database["public"]["Enums"]["video_testimonial_approval_status"]
           approved_at?: string | null
           approved_by?: string | null
           browser?: string | null
           changes_requested_at?: string | null
           changes_requested_by?: string | null
+          consent_captured_at?: string | null
           consent_given?: boolean
           consent_ip_address?: unknown
+          consent_source?: string | null
           consent_timestamp?: string | null
+          consent_version?: string | null
           created_at?: string
           device_type?: string | null
           duration_seconds?: number | null
@@ -6724,14 +7098,21 @@ export type Database = {
           key_phrases?: string[] | null
           manager_notes?: string | null
           marketing_consent?: boolean | null
+          marketing_consent_given?: boolean
+          media_codec?: string | null
           mime_type?: string
+          nil_consent_given?: boolean
           organization_id?: string
+          processing_error_code?: string | null
+          processing_error_stage?: string | null
           published_at?: string | null
           published_platforms?: string[] | null
           rejection_reason?: string | null
           request_id?: string
+          retry_count?: number
           sentiment_label?: string | null
           sentiment_score?: number | null
+          submission_idempotency_key?: string | null
           submitted_at?: string
           thumbnail_url?: string | null
           transcription?: string | null
@@ -6739,6 +7120,8 @@ export type Database = {
           transcription_error?: string | null
           transcription_status?: string | null
           updated_at?: string
+          upload_session_id?: string | null
+          usage_rights_consent_given?: boolean
           user_agent?: string | null
           user_id?: string
           video_generated_at?: string | null
@@ -6774,6 +7157,13 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "video_testimonial_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -7053,11 +7443,88 @@ export type Database = {
           },
         ]
       }
+      workflow_templates: {
+        Row: {
+          canvas_metadata: Json
+          category: string
+          created_at: string
+          description: string | null
+          icon_name: string
+          id: string
+          is_system: boolean
+          name: string
+          popularity: number
+          sequence_definition: Json
+        }
+        Insert: {
+          canvas_metadata?: Json
+          category: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          is_system?: boolean
+          name: string
+          popularity?: number
+          sequence_definition: Json
+        }
+        Update: {
+          canvas_metadata?: Json
+          category?: string
+          created_at?: string
+          description?: string | null
+          icon_name?: string
+          id?: string
+          is_system?: boolean
+          name?: string
+          popularity?: number
+          sequence_definition?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      proof_link_events_daily: {
+        Row: {
+          event_count: number | null
+          event_date: string | null
+          event_type: string | null
+          organization_id: string | null
+          proof_link_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proof_link_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proof_link_events_proof_link_id_fkey"
+            columns: ["proof_link_id"]
+            isOneToOne: false
+            referencedRelation: "proof_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      acquire_campaign_lock: {
+        Args: {
+          p_campaign_id: string
+          p_lock_ttl_ms?: number
+          p_organization_id: string
+          p_user_id: string
+        }
+        Returns: {
+          acquired: boolean
+          current_locked_at: string
+          current_locked_by: string
+          locked_by_name: string
+        }[]
+      }
       check_api_rate_limit: {
         Args: { p_api_key_id: string; p_rate_limit?: number }
         Returns: {
@@ -7081,6 +7548,10 @@ export type Database = {
       }
       cleanup_expired_auth_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limit_windows: { Args: never; Returns: number }
+      cleanup_video_testimonial_artifacts: {
+        Args: { p_retention_days?: number }
+        Returns: number
+      }
       decrypt_sms_token: {
         Args: { p_encrypted: string; p_key: string }
         Returns: string
@@ -7123,6 +7594,18 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      prune_proof_link_events: {
+        Args: { retention_days?: number }
+        Returns: number
+      }
+      release_campaign_lock: {
+        Args: {
+          p_campaign_id: string
+          p_organization_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       schedule_survey_reminders: {
         Args: {
           p_organization_id: string
@@ -7140,6 +7623,31 @@ export type Database = {
           p_send_7day?: boolean
         }
         Returns: undefined
+      }
+      search_professionals_by_radius: {
+        Args: { radius_miles?: number; search_lat: number; search_lng: number }
+        Returns: {
+          distance_miles: number
+          user_id: string
+        }[]
+      }
+      search_users_by_fuzzy_city: {
+        Args: { search_city: string; similarity_threshold?: number }
+        Returns: {
+          similarity_score: number
+          user_id: string
+        }[]
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      transition_video_testimonial_request: {
+        Args: {
+          p_next_status: Database["public"]["Enums"]["video_testimonial_request_status"]
+          p_reason?: string
+          p_request_id: string
+          p_source?: string
+        }
+        Returns: boolean
       }
       user_has_manager_access: { Args: { user_id: string }; Returns: boolean }
       user_has_role: { Args: { required_roles: string[] }; Returns: boolean }
@@ -7223,6 +7731,8 @@ export type Database = {
         | "submitted"
         | "expired"
         | "cancelled"
+        | "queued"
+        | "completed"
       widget_entity_type: "user" | "branch" | "organization"
       widget_event_type:
         | "impression"
@@ -7446,6 +7956,8 @@ export const Constants = {
         "submitted",
         "expired",
         "cancelled",
+        "queued",
+        "completed",
       ],
       widget_entity_type: ["user", "branch", "organization"],
       widget_event_type: [

@@ -11,11 +11,11 @@ const badgeVariants = cva(
         default:
           "border-transparent bg-repwell-teal-300 text-white hover:bg-repwell-teal-400",
         secondary:
-          "border-transparent bg-repwell-sage-100 text-repwell-teal-500 hover:bg-repwell-sage-200/80",
+          "border-transparent bg-surface-soft text-heading hover:bg-repwell-sage-200/80 dark:hover:bg-repwell-teal-300/20",
         destructive:
           "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline:
-          "border-border bg-transparent text-repwell-teal-500 hover:border-repwell-teal-300 hover:text-repwell-teal-300",
+          "border-border bg-transparent text-heading hover:border-repwell-teal-300 hover:text-repwell-teal-300",
         highlight:
           "border-transparent bg-warning text-warning-foreground font-bold shadow-sm hover:shadow-md hover:scale-105",
         featured:
@@ -23,7 +23,7 @@ const badgeVariants = cva(
         success:
           "border-transparent bg-success text-success-foreground font-bold shadow-sm hover:shadow-md hover:scale-105",
         subtle:
-          "border-transparent bg-repwell-sage-100 text-repwell-teal-300 font-medium",
+          "border-transparent bg-surface-soft text-repwell-teal-300 font-medium",
       },
     },
     defaultVariants: {

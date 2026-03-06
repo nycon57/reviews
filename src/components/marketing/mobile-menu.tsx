@@ -25,6 +25,7 @@ import {
   solutionNavItems,
   industryNavItems,
 } from "@/config/navigation";
+import { useAuth } from "@/hooks/use-auth";
 
 interface MobileMenuProps {
   className?: string;
@@ -99,6 +100,7 @@ function MobileAccordion({
 export function MobileMenu({ className }: MobileMenuProps) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -285,14 +287,26 @@ export function MobileMenu({ className }: MobileMenuProps) {
 
           {/* Auth Links */}
           <div className="flex flex-col gap-2 p-4">
-            <Link href="/login" onClick={handleNavClick}>
-              <Button variant="outline" className="w-full">
-                Sign In
+            {isAuthenticated ? (
+              <Button asChild className="w-full">
+                <Link href="/dashboard" onClick={handleNavClick}>
+                  Dashboard
+                </Link>
               </Button>
-            </Link>
-            <Link href="/signup" onClick={handleNavClick}>
-              <Button className="w-full">Get Started</Button>
-            </Link>
+            ) : (
+              <>
+                <Button asChild variant="outline" className="w-full">
+                  <Link href="/login" onClick={handleNavClick}>
+                    Sign In
+                  </Link>
+                </Button>
+                <Button asChild className="w-full">
+                  <Link href="/signup" onClick={handleNavClick}>
+                    Get Started
+                  </Link>
+                </Button>
+              </>
+            )}
           </div>
         </nav>
       </SheetContent>

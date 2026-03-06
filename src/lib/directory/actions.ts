@@ -16,7 +16,6 @@ export interface DirectoryProfessional {
   phone: string | null;
   branch: string | null;
   branch_id: string | null;
-  region: string | null;
   nmls_id: string | null;
   address: {
     street?: string;
@@ -129,7 +128,6 @@ const PROFESSIONAL_SELECT = `
   phone,
   branch,
   branch_id,
-  region,
   nmls_id,
   address,
   linkedin_url,
@@ -223,7 +221,6 @@ function transformRecord(
     phone: record.phone as string | null,
     branch: record.branch as string | null,
     branch_id: record.branch_id as string | null,
-    region: record.region as string | null,
     nmls_id: record.nmls_id as string | null,
     address: record.address as DirectoryProfessional["address"],
     linkedin_url: record.linkedin_url as string | null,

@@ -105,7 +105,7 @@ function StarRating({ rating }: { rating: number }) {
           weight="fill"
           className={cn(
             "h-4 w-4",
-            star <= rating ? "text-amber-500" : "text-gray-200"
+            star <= rating ? "text-amber-500" : "text-muted-foreground/30"
           )}
         />
       ))}
@@ -237,7 +237,7 @@ export function ReviewItem({
             <span
               className={cn(
                 "text-sm font-medium",
-                isFeatured ? "text-amber-600" : "text-repwell-teal-400"
+                isFeatured ? "text-amber-600" : "text-label"
               )}
             >
               {review.rating}/5
@@ -259,13 +259,13 @@ export function ReviewItem({
       </div>
 
       {review.title && (
-        <h4 className="mt-3 font-medium text-repwell-teal-500">{review.title}</h4>
+        <h4 className="mt-3 font-medium text-heading">{review.title}</h4>
       )}
 
       {review.text && (
         <div className="mt-2 flex items-start gap-2">
           <Quote className="h-4 w-4 shrink-0 text-repwell-sage-200" />
-          <p className="text-sm text-repwell-teal-400 leading-relaxed">
+          <p className="text-sm text-label leading-relaxed">
             {review.text}
           </p>
         </div>
@@ -278,14 +278,14 @@ export function ReviewItem({
             <>
               <Link
                 href={attribution.loanOfficer.href}
-                className="flex items-center gap-2 hover:text-repwell-teal-500 transition-colors"
+                className="flex items-center gap-2 hover:text-repwell-teal-500 dark:hover:text-foreground transition-colors"
               >
                 <Avatar className="h-6 w-6">
                   <AvatarImage
                     src={attribution.loanOfficer.photoUrl || undefined}
                     alt={attribution.loanOfficer.name}
                   />
-                  <AvatarFallback className="text-[10px] bg-repwell-teal-500/10 text-repwell-teal-500">
+                  <AvatarFallback className="text-[10px] bg-repwell-teal-500/10 text-heading">
                     {getInitials(attribution.loanOfficer.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -296,7 +296,7 @@ export function ReviewItem({
                   <span className="text-repwell-sage-200">|</span>
                   <Link
                     href={attribution.branch.href}
-                    className="hover:text-repwell-teal-500 transition-colors"
+                    className="hover:text-repwell-teal-500 dark:hover:text-foreground transition-colors"
                   >
                     {attribution.branch.name}
                   </Link>
@@ -315,7 +315,7 @@ export function ReviewItem({
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 px-2 text-xs text-muted-foreground hover:text-repwell-teal-400"
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-muted-foreground"
                         aria-label="Share review"
                       >
                         <ShareNetwork className="h-3.5 w-3.5 mr-1" />
@@ -397,11 +397,11 @@ export function ReviewItem({
 
       {/* Response box */}
       {review.response_text && (
-        <div className="mt-4 rounded-lg bg-repwell-sage-100/30 p-3">
+        <div className="mt-4 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 p-3">
           <p className="text-xs font-medium text-repwell-teal-300 mb-1">
             Response from {respondentName || "the team"}
           </p>
-          <p className="text-sm text-repwell-teal-400">{review.response_text}</p>
+          <p className="text-sm text-label">{review.response_text}</p>
         </div>
       )}
     </Wrapper>

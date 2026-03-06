@@ -48,7 +48,6 @@ export function EnhancedLeaderboard({
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<LeaderboardPeriod>(initialPeriod);
   const [branch, setBranch] = useState<string>("all");
-  const [region, setRegion] = useState<string>("all");
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
@@ -59,7 +58,6 @@ export function EnhancedLeaderboard({
       const result = await getEnhancedLeaderboard({
         period,
         branch: branch !== "all" ? branch : undefined,
-        region: region !== "all" ? region : undefined,
         limit: 20,
       });
       if (!cancelled) {
@@ -75,7 +73,7 @@ export function EnhancedLeaderboard({
     return () => {
       cancelled = true;
     };
-  }, [period, branch, region, retryCount]);
+  }, [period, branch, retryCount]);
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -97,11 +95,11 @@ export function EnhancedLeaderboard({
   const getRankBackground = (rank: number) => {
     switch (rank) {
       case 1:
-        return "bg-gradient-to-r from-yellow-50/60 to-transparent border-l-4 border-l-yellow-400";
+        return "bg-gradient-to-r from-yellow-50/60 dark:from-yellow-950/20 to-transparent border-l-4 border-l-yellow-400";
       case 2:
-        return "bg-gradient-to-r from-repwell-sage-100/20 to-transparent border-l-4 border-l-repwell-sage-200";
+        return "bg-gradient-to-r from-repwell-sage-100/20 dark:from-repwell-teal-300/5 to-transparent border-l-4 border-l-repwell-sage-200";
       case 3:
-        return "bg-gradient-to-r from-amber-50/40 to-transparent border-l-4 border-l-amber-500";
+        return "bg-gradient-to-r from-amber-50/40 dark:from-amber-950/20 to-transparent border-l-4 border-l-amber-500";
       default:
         return "border-l-4 border-l-transparent";
     }
@@ -110,7 +108,7 @@ export function EnhancedLeaderboard({
   const getRankChangeIcon = (change: number) => {
     if (change > 0) {
       return (
-        <div className="flex items-center gap-0.5 text-green-600">
+        <div className="flex items-center gap-0.5 text-green-600 dark:text-green-400">
           <TrendingUp className="h-3 w-3" />
           <span className="text-xs font-medium">+{change}</span>
         </div>
@@ -118,7 +116,7 @@ export function EnhancedLeaderboard({
     }
     if (change < 0) {
       return (
-        <div className="flex items-center gap-0.5 text-red-600">
+        <div className="flex items-center gap-0.5 text-red-600 dark:text-red-400">
           <TrendingDown className="h-3 w-3" />
           <span className="text-xs font-medium">{change}</span>
         </div>
@@ -216,9 +214,9 @@ export function EnhancedLeaderboard({
           <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
           <div className="relative">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50">
-              <Trophy className="h-7 w-7 text-repwell-teal-400" />
+              <Trophy className="h-7 w-7 text-label" />
             </div>
-            <p className="font-medium text-repwell-teal-500">No leaderboard data available</p>
+            <p className="font-medium text-heading-accent">No leaderboard data available</p>
             <p className="mt-1 text-sm text-repwell-teal-300">
               Team members will appear here once they have reviews
             </p>
@@ -233,7 +231,7 @@ export function EnhancedLeaderboard({
           <Link
             key={entry.id}
             href={`/dashboard/team/${entry.id}`}
-            className={`flex items-center gap-3 rounded-lg p-3 transition-all hover:bg-repwell-sage-100/20 ${getRankBackground(entry.rank)}`}
+            className={`flex items-center gap-3 rounded-lg p-3 transition-all hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 ${getRankBackground(entry.rank)}`}
           >
             {/* Rank */}
             <div className="flex w-10 flex-col items-center justify-center">
@@ -249,14 +247,14 @@ export function EnhancedLeaderboard({
                 src={entry.photoUrl || undefined}
                 alt={entry.fullName}
               />
-              <AvatarFallback className="text-xs font-medium bg-repwell-teal-300/10 text-repwell-teal-400">
+              <AvatarFallback className="text-xs font-medium bg-repwell-teal-300/10 text-label">
                 {getInitials(entry.fullName)}
               </AvatarFallback>
             </Avatar>
 
             {/* Name and stats */}
             <div className="flex-1 min-w-0">
-              <div className="font-medium text-repwell-teal-500 truncate">{entry.fullName}</div>
+              <div className="font-medium text-heading-accent truncate">{entry.fullName}</div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>{entry.totalReviews} reviews</span>
                 <span className="flex items-center gap-0.5">
@@ -274,7 +272,7 @@ export function EnhancedLeaderboard({
 
             {/* Score */}
             <div className="text-right">
-              <div className="font-bold text-lg text-repwell-teal-500">{entry.reputationScore}</div>
+              <div className="font-bold text-lg text-heading-accent">{entry.reputationScore}</div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 points
               </div>
@@ -285,17 +283,17 @@ export function EnhancedLeaderboard({
     );
   };
 
-  const hasFilters = filterOptions.branches.length > 0 || filterOptions.regions.length > 0;
+  const hasFilters = filterOptions.branches.length > 0;
 
   return (
     <Card className="overflow-hidden border border-border/50 shadow-soft rounded-xl">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+      <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Trophy className="h-5 w-5 text-repwell-teal-300" />
             </div>
-            <CardTitle className="text-lg text-repwell-teal-500">Team Leaderboard</CardTitle>
+            <CardTitle className="text-lg text-heading-accent">Team Leaderboard</CardTitle>
           </div>
 
           <div className="flex items-center gap-2">
@@ -318,21 +316,6 @@ export function EnhancedLeaderboard({
                   </Select>
                 )}
 
-                {filterOptions.regions.length > 0 && (
-                  <Select value={region} onValueChange={setRegion}>
-                    <SelectTrigger className="w-[130px] h-8 text-xs">
-                      <SelectValue placeholder="Region" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Regions</SelectItem>
-                      {filterOptions.regions.map((r) => (
-                        <SelectItem key={r} value={r}>
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
               </div>
             )}
 
@@ -362,7 +345,7 @@ export function EnhancedLeaderboard({
                 "border-b-2",
                 period === tab.value
                   ? "text-repwell-teal-300 border-repwell-teal-300"
-                  : "text-muted-foreground hover:text-repwell-teal-400 border-transparent"
+                  : "text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80 border-transparent"
               )}
             >
               {tab.label}
@@ -376,14 +359,13 @@ export function EnhancedLeaderboard({
       </CardContent>
 
       {/* Period indicator */}
-      <div className="px-6 py-3 border-t border-border/50 bg-repwell-sage-100/10 text-xs text-muted-foreground text-center">
+      <div className="px-6 py-3 border-t border-border/50 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/5 text-xs text-muted-foreground text-center">
         Rank changes compared to previous {period === "all_time" ? "snapshot" : period.replace("_", " ")}. Rankings reflect overall reputation.
-        {(branch !== "all" || region !== "all") && (
+        {branch !== "all" && (
           <span>
             {" "}
             &middot; Filtered by{" "}
-            {branch !== "all" && <Badge variant="outline" className="mx-1 border-repwell-teal-300/30 text-repwell-teal-400">{branch}</Badge>}
-            {region !== "all" && <Badge variant="outline" className="mx-1 border-repwell-teal-300/30 text-repwell-teal-400">{region}</Badge>}
+            <Badge variant="outline" className="mx-1 border-repwell-teal-300/30 text-label">{branch}</Badge>
           </span>
         )}
       </div>

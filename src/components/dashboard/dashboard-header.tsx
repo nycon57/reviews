@@ -15,10 +15,10 @@ export function DashboardHeader({ userName }: DashboardHeaderProps) {
         <House className="h-6 w-6 text-repwell-teal-300" />
       </div>
       <div>
-        <h1 className="font-display text-heading-lg font-bold leading-tight tracking-tight text-repwell-teal-500">
+        <h1 className="font-display text-heading-lg font-bold leading-tight tracking-tight text-heading">
           Hello, {firstName}
         </h1>
-        <p className="text-sm leading-snug text-repwell-teal-400">
+        <p className="text-sm leading-snug text-label">
           Here&apos;s an overview of your performance.
         </p>
       </div>

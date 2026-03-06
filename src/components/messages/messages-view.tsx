@@ -155,7 +155,7 @@ export function MessagesView() {
   }, [conversations, selectedId, handleSelect]);
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden bg-white">
+    <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
       {/* Conversation list panel */}
       <div
         className={cn(

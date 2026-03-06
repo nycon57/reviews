@@ -29,7 +29,7 @@ export function RatingQuestionRenderer({
   onChange,
   readonly = false,
 }: RatingQuestionRendererProps) {
-  const { maxRating, labels } = question.config;
+  const { maxRating = 5, labels } = question.config ?? {};
 
   return (
     <div className="space-y-3">
@@ -82,7 +82,7 @@ export function NPSQuestionRenderer({
   onChange,
   readonly = false,
 }: NPSQuestionRendererProps) {
-  const { labels } = question.config;
+  const { labels } = question.config ?? {};
 
   const _getScoreColor = (score: number) => {
     if (score <= 6) return "bg-red-500 hover:bg-red-600";
@@ -144,7 +144,7 @@ export function TextQuestionRenderer({
   onChange,
   readonly = false,
 }: TextQuestionRendererProps) {
-  const { multiline, placeholder, maxLength, minLength } = question.config;
+  const { multiline, placeholder, maxLength, minLength } = question.config ?? {};
 
   const charCount = value?.length || 0;
   const showCharCount = maxLength !== undefined;
@@ -203,7 +203,7 @@ export function MultipleChoiceQuestionRenderer({
   onChange,
   readonly = false,
 }: MultipleChoiceQuestionRendererProps) {
-  const { options, allowMultiple, allowOther } = question.config;
+  const { options = [], allowMultiple, allowOther } = question.config ?? {};
 
   const handleOptionChange = (optionValue: string, checked: boolean) => {
     if (readonly) return;

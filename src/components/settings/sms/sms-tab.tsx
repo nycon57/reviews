@@ -94,7 +94,7 @@ function getPhoneNumberStatusClass(status: string): string {
     case 'pending':
       return 'bg-amber-50 text-amber-600 border border-amber-200';
     default:
-      return 'bg-gray-50 text-gray-500 border border-gray-200';
+      return 'bg-muted text-muted-foreground border border-border';
   }
 }
 
@@ -244,7 +244,7 @@ export function SmsTab() {
         );
       case 'disconnected':
         return (
-          <Badge variant="destructive" className="bg-red-50 text-red-600 border border-red-200">
+          <Badge variant="destructive" className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
             <XCircle weight="fill" className="h-3 w-3 mr-1" />
             Disconnected
           </Badge>
@@ -258,7 +258,7 @@ export function SmsTab() {
         );
       default:
         return (
-          <Badge variant="secondary" className="bg-gray-50 text-gray-500 border border-gray-200">
+          <Badge variant="secondary" className="bg-muted text-muted-foreground border border-border">
             Not configured
           </Badge>
         );
@@ -285,7 +285,7 @@ export function SmsTab() {
       {/* 10DLC Registration Warning */}
       {registrationIncomplete && (
         <motion.div variants={fadeInUp}>
-          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 flex items-start gap-3">
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 p-4 flex items-start gap-3">
             <Warning weight="fill" className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm font-semibold text-amber-800">
@@ -309,7 +309,7 @@ export function SmsTab() {
 
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
           SMS Configuration
         </h2>
         <p className="text-repwell-teal-300 mt-1">
@@ -364,7 +364,7 @@ export function SmsTab() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+                    <CardTitle className="text-lg text-heading flex items-center gap-2">
                       <Plugs weight="duotone" className="h-5 w-5" />
                       Twilio Credentials
                     </CardTitle>
@@ -389,28 +389,28 @@ export function SmsTab() {
                   // Display masked credentials
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-sm font-medium text-repwell-teal-500">Account SID</Label>
+                      <Label className="text-sm font-medium text-heading-accent">Account SID</Label>
                       <div className="mt-1.5 flex items-center gap-2">
-                        <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-repwell-teal-400">
+                        <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-label">
                           {maskValue(settings?.twilio_account_sid || '')}
                         </code>
                       </div>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-repwell-teal-500">Auth Token</Label>
+                      <Label className="text-sm font-medium text-heading-accent">Auth Token</Label>
                       <div className="mt-1.5 flex items-center gap-2">
-                        <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-repwell-teal-400">
+                        <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-label">
                           {'•'.repeat(32)}
                         </code>
                       </div>
                     </div>
                     {settings?.messaging_service_sid && (
                       <div>
-                        <Label className="text-sm font-medium text-repwell-teal-500">
+                        <Label className="text-sm font-medium text-heading-accent">
                           Messaging Service SID
                         </Label>
                         <div className="mt-1.5 flex items-center gap-2">
-                          <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-repwell-teal-400">
+                          <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-label">
                             {maskValue(settings.messaging_service_sid)}
                           </code>
                         </div>
@@ -421,7 +421,7 @@ export function SmsTab() {
                   // Edit / Create form
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="accountSid" className="text-sm font-medium text-repwell-teal-500">
+                      <Label htmlFor="accountSid" className="text-sm font-medium text-heading-accent">
                         Account SID
                       </Label>
                       <Input
@@ -433,7 +433,7 @@ export function SmsTab() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="authToken" className="text-sm font-medium text-repwell-teal-500">
+                      <Label htmlFor="authToken" className="text-sm font-medium text-heading-accent">
                         Auth Token
                       </Label>
                       <div className="relative mt-1.5">
@@ -449,7 +449,7 @@ export function SmsTab() {
                           type="button"
                           onClick={() => setShowAuthToken(!showAuthToken)}
                           aria-label={showAuthToken ? 'Hide auth token' : 'Show auth token'}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-repwell-teal-400 transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-muted-foreground transition-colors"
                         >
                           {showAuthToken ? (
                             <EyeSlash className="h-4 w-4" />
@@ -460,7 +460,7 @@ export function SmsTab() {
                       </div>
                     </div>
                     <div>
-                      <Label htmlFor="messagingServiceSid" className="text-sm font-medium text-repwell-teal-500">
+                      <Label htmlFor="messagingServiceSid" className="text-sm font-medium text-heading-accent">
                         Messaging Service SID{' '}
                         <span className="text-muted-foreground font-normal">(optional)</span>
                       </Label>
@@ -517,7 +517,7 @@ export function SmsTab() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+                    <CardTitle className="text-lg text-heading flex items-center gap-2">
                       <Phone weight="duotone" className="h-5 w-5" />
                       Phone Numbers
                     </CardTitle>
@@ -537,11 +537,11 @@ export function SmsTab() {
               <CardContent>
                 {phoneNumbers.length === 0 ? (
                   <div className="text-center py-12 space-y-3">
-                    <div className="mx-auto w-12 h-12 rounded-full bg-repwell-sage-100/50 flex items-center justify-center">
+                    <div className="mx-auto w-12 h-12 rounded-full bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 flex items-center justify-center">
                       <Phone weight="duotone" className="h-6 w-6 text-repwell-teal-300" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-repwell-teal-500">No phone numbers</p>
+                      <p className="text-sm font-medium text-heading-accent">No phone numbers</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {hasExistingCredentials
                           ? 'Add a phone number to start sending SMS messages.'
@@ -553,7 +553,7 @@ export function SmsTab() {
                   <div className="space-y-4">
                     {/* Default From Number */}
                     <div className="flex items-center gap-3 pb-4 border-b border-border/50">
-                      <Label className="text-sm font-medium text-repwell-teal-500 whitespace-nowrap">
+                      <Label className="text-sm font-medium text-heading whitespace-nowrap">
                         Default From:
                       </Label>
                       <Select
@@ -579,18 +579,18 @@ export function SmsTab() {
                       <Table>
                         <TableHeader>
                           <TableRow className="bg-muted/30">
-                            <TableHead className="text-repwell-teal-500 font-semibold">Number</TableHead>
-                            <TableHead className="text-repwell-teal-500 font-semibold">Type</TableHead>
-                            <TableHead className="text-repwell-teal-500 font-semibold">Status</TableHead>
-                            <TableHead className="text-repwell-teal-500 font-semibold">Capabilities</TableHead>
-                            <TableHead className="text-repwell-teal-500 font-semibold text-right">Cost/mo</TableHead>
+                            <TableHead className="text-heading font-semibold">Number</TableHead>
+                            <TableHead className="text-heading font-semibold">Type</TableHead>
+                            <TableHead className="text-heading font-semibold">Status</TableHead>
+                            <TableHead className="text-heading font-semibold">Capabilities</TableHead>
+                            <TableHead className="text-heading font-semibold text-right">Cost/mo</TableHead>
                             <TableHead className="w-[60px]" />
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {phoneNumbers.map((num) => (
                             <TableRow key={num.id} className="hover:bg-muted/20">
-                              <TableCell className="font-mono text-sm text-repwell-teal-400">
+                              <TableCell className="font-mono text-sm text-label">
                                 {formatForDisplay(num.phone_number)}
                                 {settings?.default_from_number === num.phone_number && (
                                   <Badge variant="secondary" className="ml-2 text-xs">
@@ -621,7 +621,7 @@ export function SmsTab() {
                                   )}
                                 </div>
                               </TableCell>
-                              <TableCell className="text-right text-sm text-repwell-teal-400">
+                              <TableCell className="text-right text-sm text-label">
                                 ${(num.monthly_cost_cents / 100).toFixed(2)}
                               </TableCell>
                               <TableCell>
@@ -651,7 +651,7 @@ export function SmsTab() {
             <motion.div variants={fadeInUp}>
               <Card className="border border-border/50 shadow-sm">
                 <CardHeader>
-                  <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+                  <CardTitle className="text-lg text-heading flex items-center gap-2">
                     <Globe weight="duotone" className="h-5 w-5" />
                     Webhook URLs
                   </CardTitle>
@@ -684,7 +684,7 @@ export function SmsTab() {
         <motion.div variants={fadeInUp}>
           <Card className="h-fit border-border/50 sticky top-6">
             <CardContent className="p-6 space-y-4">
-              <h4 className="font-semibold text-repwell-teal-500">Setup Guide</h4>
+              <h4 className="font-semibold text-heading-accent">Setup Guide</h4>
 
               <div className="space-y-3">
                 <SetupStep
@@ -715,7 +715,7 @@ export function SmsTab() {
 
               {/* Security Info */}
               <div className="pt-4 border-t border-border/50 space-y-3">
-                <p className="text-xs font-medium text-repwell-teal-500">Security</p>
+                <p className="text-xs font-medium text-heading-accent">Security</p>
                 <ul className="space-y-2">
                   {[
                     'Auth tokens are encrypted at rest',
@@ -805,9 +805,9 @@ function WebhookUrlRow({
 }) {
   return (
     <div>
-      <Label className="text-sm font-medium text-repwell-teal-500">{label}</Label>
+      <Label className="text-sm font-medium text-heading-accent">{label}</Label>
       <div className="mt-1.5 flex items-center gap-2">
-        <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-repwell-teal-400 truncate">
+        <code className="flex-1 px-3 py-2 bg-muted rounded-lg text-sm font-mono text-label truncate">
           {url}
         </code>
         <Button
@@ -839,7 +839,7 @@ function SetupStep({
   completed: boolean;
 }) {
   return (
-    <div className="flex items-start gap-3 p-3 rounded-lg bg-repwell-sage-100/30">
+    <div className="flex items-start gap-3 p-3 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
       <div
         className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${
           completed
@@ -850,7 +850,7 @@ function SetupStep({
         {completed ? <CheckCircle weight="fill" className="h-4 w-4" /> : number}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${completed ? 'text-repwell-sage-200' : 'text-repwell-teal-500'}`}>
+        <p className={`text-sm font-medium ${completed ? 'text-repwell-sage-200' : 'text-heading'}`}>
           {title}
         </p>
         <p className="text-xs text-repwell-teal-300 truncate">{description}</p>

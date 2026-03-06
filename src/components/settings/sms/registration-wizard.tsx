@@ -195,11 +195,11 @@ export function RegistrationWizard() {
                   aria-current={active ? 'step' : undefined}
                   className={`flex items-center gap-2.5 px-4 py-3 rounded-lg transition-all w-full text-left ${
                     active
-                      ? 'bg-repwell-teal-300/10 border border-repwell-teal-300/30 text-repwell-teal-500'
+                      ? 'bg-repwell-teal-300/10 border border-repwell-teal-300/30 text-heading'
                       : complete
                         ? 'bg-repwell-sage-200/10 border border-repwell-sage-200/20 text-repwell-sage-200'
                         : 'bg-muted/30 border border-border/50 text-muted-foreground'
-                  } ${accessible && !active ? 'cursor-pointer hover:bg-repwell-sage-100/30' : ''} ${!accessible ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  } ${accessible && !active ? 'cursor-pointer hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10' : ''} ${!accessible ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <div
                     className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -238,7 +238,7 @@ export function RegistrationWizard() {
       <motion.div variants={fadeInUp}>
         <Card className="border border-border/50 shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg text-repwell-teal-500 flex items-center gap-2">
+            <CardTitle className="text-lg text-heading flex items-center gap-2">
               {currentStep === 1 && <Buildings weight="duotone" className="h-5 w-5" />}
               {currentStep === 2 && <ChatCircleText weight="duotone" className="h-5 w-5" />}
               {currentStep === 3 && <ChartBar weight="duotone" className="h-5 w-5" />}

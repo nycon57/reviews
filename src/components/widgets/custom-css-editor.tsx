@@ -45,7 +45,7 @@ export function CustomCSSEditor({ value, onChange }: CustomCSSEditorProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <Label className="text-xs font-medium text-repwell-teal-400">
+        <Label className="text-xs font-medium text-label">
           Custom CSS
         </Label>
         <span
@@ -72,7 +72,7 @@ export function CustomCSSEditor({ value, onChange }: CustomCSSEditorProps) {
           w-full min-h-[200px] p-3 text-xs leading-relaxed
           font-mono bg-gray-950 text-gray-100
           border rounded-md resize-y
-          placeholder:text-gray-600
+          placeholder:text-muted-foreground
           focus:outline-none focus:ring-2 focus:ring-repwell-teal-300/50 focus:border-repwell-teal-300
           ${isOverLimit ? "border-red-500" : "border-border"}
         `}

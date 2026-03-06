@@ -102,7 +102,7 @@ function ElementContent({ element }: { element: CanvasElement }) {
         draggable={false}
       />
     ) : (
-      <div className="flex h-full w-full items-center justify-center bg-gray-100 text-xs text-gray-400">
+      <div className="flex h-full w-full items-center justify-center bg-muted text-xs text-muted-foreground">
         Image
       </div>
     );

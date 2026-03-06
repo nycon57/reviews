@@ -58,7 +58,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
       label: "2nd Place",
       avatarSize: "h-14 w-14",
       ringColor: "ring-repwell-sage-200/60",
-      bgColor: "bg-repwell-sage-100/20",
+      bgColor: "bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10",
       textColor: "text-repwell-sage-200",
       icon: <Medal className="h-5 w-5 text-repwell-sage-200" />,
       iconPosition: "absolute -bottom-1 -right-1",
@@ -121,11 +121,11 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                     </div>
                     <div className={config.iconPosition}>{config.icon}</div>
                   </div>
-                  <p className="font-semibold text-repwell-teal-500 truncate max-w-full">{performer.fullName}</p>
+                  <p className="font-semibold text-heading truncate max-w-full">{performer.fullName}</p>
                   <p className={`text-xs font-medium ${config.textColor}`}>{config.label}</p>
                   <div className="mt-3 flex items-center gap-3 text-sm">
                     <span className="text-muted-foreground">{performer.totalReviews} reviews</span>
-                    <span className={`font-bold ${config.isFirst ? "text-yellow-600" : "text-repwell-teal-400"}`}>
+                    <span className={`font-bold ${config.isFirst ? "text-yellow-600" : "text-label"}`}>
                       {performer.reputationScore} pts
                     </span>
                   </div>
@@ -136,7 +136,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                     <Loader2 className="h-8 w-8 animate-spin text-repwell-teal-300/40" />
                   ) : (
                     <>
-                      <div className={`flex ${config.avatarSize} items-center justify-center rounded-full bg-repwell-sage-100/30`}>
+                      <div className={`flex ${config.avatarSize} items-center justify-center rounded-full bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10`}>
                         {config.icon}
                       </div>
                       <p className="mt-3 text-sm text-muted-foreground">{config.label}</p>
@@ -186,7 +186,7 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
                 <Icon className={`h-5 w-5 ${stat.color}`} />
               </div>
               <div>
-                <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                <p className="text-2xl font-semibold tracking-tight text-heading">
                   {stat.value}
                 </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -203,17 +203,17 @@ export function LeaderboardDashboard({ initialFilters }: LeaderboardDashboardPro
       <CompactProfileCompletionLeaderboard />
 
       {/* Info card */}
-      <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 p-5">
+      <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/10 p-5">
         <div className="flex items-start gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-repwell-teal-300/10 shrink-0">
             <Lightning className="h-[1.125rem] w-[1.125rem] text-repwell-teal-300" />
           </div>
           <div>
-            <h3 className="font-medium text-repwell-teal-500 mb-2">How Rankings Work</h3>
+            <h3 className="font-medium text-heading mb-2">How Rankings Work</h3>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li><strong className="text-repwell-teal-400">Reputation Score</strong> is calculated from reviews, ratings, and NPS feedback</li>
-              <li><strong className="text-repwell-teal-400">Rankings</strong> are updated in real-time as new data comes in</li>
-              <li><strong className="text-repwell-teal-400">Badges</strong> are awarded for achievements like consistent 5-star ratings</li>
+              <li><strong className="text-label">Reputation Score</strong> is calculated from reviews, ratings, and NPS feedback</li>
+              <li><strong className="text-label">Rankings</strong> are updated in real-time as new data comes in</li>
+              <li><strong className="text-label">Badges</strong> are awarded for achievements like consistent 5-star ratings</li>
               <li>Use filters to compare performance across branches and regions</li>
             </ul>
           </div>

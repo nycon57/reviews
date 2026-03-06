@@ -114,6 +114,7 @@ async function logEmail(params: {
   templateName: EmailTemplate;
   organizationId?: string;
   loanOfficerId?: string;
+  requestId?: string;
   surveyId?: string;
   resendMessageId?: string;
   status: string;
@@ -132,6 +133,7 @@ async function logEmail(params: {
       template_name: params.templateName,
       organization_id: params.organizationId,
       user_id: params.loanOfficerId,
+      request_id: params.requestId,
       survey_id: params.surveyId,
       resend_message_id: params.resendMessageId,
       status: params.status,
@@ -471,6 +473,7 @@ export async function sendVideoTestimonialInvitationEmail(
     templateName: "video_testimonial_invitation",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
+    requestId: data.requestId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
@@ -533,6 +536,7 @@ export async function sendVideoTestimonialReminderEmail(
     templateName,
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
+    requestId: data.requestId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,

@@ -124,9 +124,9 @@ export function VersionList({
               const isCompareSelected =
                 compareSelection?.version === version.version;
 
-              let itemStyle = "border-border hover:border-repwell-sage-200 hover:bg-gray-50/50";
+              let itemStyle = "border-border hover:border-repwell-sage-200 hover:bg-muted/50";
               if (isCurrent) {
-                itemStyle = "border-repwell-teal-200 bg-repwell-sage-100/20";
+                itemStyle = "border-repwell-teal-200 bg-repwell-sage-100/20 dark:bg-repwell-teal-300/10";
               } else if (isCompareSelected) {
                 itemStyle = "border-blue-300 bg-blue-50/50";
               }
@@ -139,13 +139,13 @@ export function VersionList({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-repwell-teal-500 tabular-nums">
+                        <span className="text-xs font-semibold text-heading tabular-nums">
                           v{version.version}
                         </span>
                         {isCurrent && (
                           <Badge
                             variant="secondary"
-                            className="h-4 px-1.5 text-[9px] font-medium bg-repwell-teal-300/10 text-repwell-teal-400 border-0"
+                            className="h-4 px-1.5 text-[9px] font-medium bg-repwell-teal-300/10 text-label border-0"
                           >
                             Current
                           </Badge>
@@ -193,7 +193,7 @@ export function VersionList({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-7 w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                          className="h-7 w-7 p-0 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                           onClick={() => setSelectedForRollback(version)}
                           title="Rollback to this version"
                         >

@@ -431,7 +431,6 @@ export async function updateUserByAdmin(
   if (parsed.data.bio !== undefined) updates.bio = parsed.data.bio;
   if (parsed.data.photoUrl !== undefined) updates.photo_url = parsed.data.photoUrl;
   if (parsed.data.branchId !== undefined) updates.branch_id = parsed.data.branchId;
-  if (parsed.data.region !== undefined) updates.region = parsed.data.region;
   if (parsed.data.managerUserId !== undefined)
     updates.manager_user_id = parsed.data.managerUserId;
   if (parsed.data.hireDate !== undefined) updates.hire_date = parsed.data.hireDate;

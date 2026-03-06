@@ -23,6 +23,66 @@ export interface ActionResult<T = void> {
   error?: string;
 }
 
+/**
+ * Normalize a raw question row from the DB into the expected Question shape.
+ * Handles legacy seed data that uses `question` instead of `title`,
+ * `star_rating` instead of `rating`, and lacks `order`/`config`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeQuestion(raw: any, index: number): Question {
+  const title = raw.title || raw.question || raw.text || "";
+  const order = raw.order ?? index;
+  const required = raw.required ?? true;
+  const description = raw.description;
+  const id = raw.id || `q-${index}`;
+
+  // Normalize legacy type names
+  let type: string = raw.type || "text";
+  if (type === "star_rating") type = "rating";
+  if (type === "single_choice") type = "multiple_choice";
+
+  switch (type) {
+    case "rating":
+      return {
+        id, type: "rating", title, description, required, order,
+        config: raw.config ?? {
+          maxRating: raw.scale?.max ?? 5,
+          labels: { low: "Poor", high: "Excellent" },
+        },
+      };
+    case "nps":
+      return {
+        id, type: "nps", title, description, required, order,
+        config: raw.config ?? {
+          labels: { detractor: "Not at all likely", passive: "Neutral", promoter: "Extremely likely" },
+        },
+      };
+    case "multiple_choice":
+      return {
+        id, type: "multiple_choice", title, description, required, order,
+        config: raw.config ?? {
+          options: (raw.options || []).map((opt: string, i: number) => ({
+            id: `opt-${i}`, label: opt, value: opt.toLowerCase().replace(/\s+/g, "_"),
+          })),
+          allowMultiple: type === "multiple_choice" && raw.type === "multiple_choice",
+          allowOther: false,
+        },
+      };
+    default: // text
+      return {
+        id, type: "text", title, description, required, order,
+        config: raw.config ?? { multiline: true, placeholder: "Enter your response..." },
+      };
+  }
+}
+
+/** Normalize an array of raw question rows from the DB. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeQuestions(raw: any): Question[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((q, i) => normalizeQuestion(q, i));
+}
+
 async function requireSurveyAccess(): Promise<ActionResult | null> {
   const ctx = await getAccessContext();
   if (!ctx) return { success: false, error: "Not authenticated" };
@@ -78,7 +138,7 @@ export async function getSurveyTemplates(): Promise<ActionResult<SurveyTemplate[
       id: row.id,
       name: row.name,
       description: row.description || undefined,
-      questions: (row.questions as unknown as Question[]) || [],
+      questions: normalizeQuestions(row.questions),
       branding: row.branding as unknown as SurveyBranding | undefined,
       thankYouConfig: row.thank_you_config as unknown as ThankYouConfig | undefined,
       isActive: row.is_active ?? true,
@@ -126,7 +186,7 @@ export async function getSurveyTemplate(id: string): Promise<ActionResult<Survey
       id: data.id,
       name: data.name,
       description: data.description || undefined,
-      questions: (data.questions as unknown as Question[]) || [],
+      questions: normalizeQuestions(data.questions),
       branding: data.branding as unknown as SurveyBranding | undefined,
       thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
       isActive: data.is_active ?? true,
@@ -193,7 +253,7 @@ export async function createSurveyTemplate(
       id: data.id,
       name: data.name,
       description: data.description || undefined,
-      questions: (data.questions as unknown as Question[]) || [],
+      questions: normalizeQuestions(data.questions),
       branding: data.branding as unknown as SurveyBranding | undefined,
       thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
       isActive: data.is_active ?? true,
@@ -256,7 +316,7 @@ export async function updateSurveyTemplate(
       id: data.id,
       name: data.name,
       description: data.description || undefined,
-      questions: (data.questions as unknown as Question[]) || [],
+      questions: normalizeQuestions(data.questions),
       branding: data.branding as unknown as SurveyBranding | undefined,
       thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
       isActive: data.is_active ?? true,
@@ -371,7 +431,7 @@ export async function duplicateSurveyTemplate(id: string): Promise<ActionResult<
       id: data.id,
       name: data.name,
       description: data.description || undefined,
-      questions: (data.questions as unknown as Question[]) || [],
+      questions: normalizeQuestions(data.questions),
       branding: data.branding as unknown as SurveyBranding | undefined,
       thankYouConfig: data.thank_you_config as unknown as ThankYouConfig | undefined,
       isActive: data.is_active ?? true,

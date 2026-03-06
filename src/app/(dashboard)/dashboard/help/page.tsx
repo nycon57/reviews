@@ -48,7 +48,7 @@ export default function HelpPage() {
           <HelpCircle className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">Help Center</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading">Help Center</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
             Find answers to common questions and get support
           </p>

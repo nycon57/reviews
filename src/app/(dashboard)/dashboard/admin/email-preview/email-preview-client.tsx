@@ -432,7 +432,7 @@ export function EmailPreviewClient() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-repwell-teal-400">Email Preview</h1>
+          <h1 className="text-2xl font-bold text-label">Email Preview</h1>
           <p className="text-sm text-muted-foreground">
             Preview and test email templates
           </p>
@@ -535,7 +535,7 @@ export function EmailPreviewClient() {
             <TabsContent value="preview" className="m-0">
               <div
                 className={cn(
-                  "bg-gray-100 p-6 flex justify-center min-h-[600px] items-start"
+                  "bg-muted p-6 flex justify-center min-h-[600px] items-start"
                 )}
               >
                 {isLoading ? (
@@ -546,7 +546,7 @@ export function EmailPreviewClient() {
                 ) : (
                   <div
                     className={cn(
-                      "bg-white shadow-lg transition-all duration-300",
+                      "bg-white dark:bg-card shadow-lg transition-all duration-300",
                       viewMode === "mobile" ? "w-[375px]" : "w-full max-w-[620px]"
                     )}
                   >

@@ -70,14 +70,14 @@ export function BrandRegistrationForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Company Information */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-repwell-teal-500">
+        <div className="flex items-center gap-2 text-sm font-semibold text-heading">
           <Buildings weight="duotone" className="h-4 w-4" />
           Company Information
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="legalCompanyName" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="legalCompanyName" className="text-sm font-medium text-heading">
               Legal Company Name
             </Label>
             <Input
@@ -92,7 +92,7 @@ export function BrandRegistrationForm({
           </div>
 
           <div>
-            <Label htmlFor="companyType" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="companyType" className="text-sm font-medium text-heading">
               Company Type
             </Label>
             <Select
@@ -114,7 +114,7 @@ export function BrandRegistrationForm({
           </div>
 
           <div>
-            <Label htmlFor="vertical" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="vertical" className="text-sm font-medium text-heading">
               Industry
             </Label>
             <Select value={vertical} onValueChange={(v) => setValue('vertical', v)}>
@@ -138,14 +138,14 @@ export function BrandRegistrationForm({
 
       {/* Tax Information */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-repwell-teal-500">
+        <div className="flex items-center gap-2 text-sm font-semibold text-heading">
           <IdentificationCard weight="duotone" className="h-4 w-4" />
           Tax &amp; Legal
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <Label htmlFor="einTaxId" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="einTaxId" className="text-sm font-medium text-heading">
               EIN / Tax ID
             </Label>
             <Input
@@ -160,7 +160,7 @@ export function BrandRegistrationForm({
           </div>
 
           <div>
-            <Label htmlFor="stockTicker" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="stockTicker" className="text-sm font-medium text-heading">
               Stock Ticker <span className="text-muted-foreground font-normal">(optional)</span>
             </Label>
             <Input
@@ -175,13 +175,13 @@ export function BrandRegistrationForm({
 
       {/* Website */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-repwell-teal-500">
+        <div className="flex items-center gap-2 text-sm font-semibold text-heading">
           <Globe weight="duotone" className="h-4 w-4" />
           Website
         </div>
 
         <div>
-          <Label htmlFor="websiteUrl" className="text-sm font-medium text-repwell-teal-500">
+          <Label htmlFor="websiteUrl" className="text-sm font-medium text-heading">
             Company Website
           </Label>
           <Input
@@ -198,14 +198,14 @@ export function BrandRegistrationForm({
 
       {/* Address */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-repwell-teal-500">
+        <div className="flex items-center gap-2 text-sm font-semibold text-heading">
           <MapPin weight="duotone" className="h-4 w-4" />
           Company Address
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <Label htmlFor="street" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="street" className="text-sm font-medium text-heading">
               Street Address
             </Label>
             <Input
@@ -220,7 +220,7 @@ export function BrandRegistrationForm({
           </div>
 
           <div>
-            <Label htmlFor="city" className="text-sm font-medium text-repwell-teal-500">
+            <Label htmlFor="city" className="text-sm font-medium text-heading">
               City
             </Label>
             <Input id="city" {...register('city')} placeholder="Austin" className="mt-1.5" />
@@ -231,7 +231,7 @@ export function BrandRegistrationForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="state" className="text-sm font-medium text-repwell-teal-500">
+              <Label htmlFor="state" className="text-sm font-medium text-heading">
                 State
               </Label>
               <Select value={state || ''} onValueChange={(v) => setValue('state', v)}>
@@ -252,7 +252,7 @@ export function BrandRegistrationForm({
             </div>
 
             <div>
-              <Label htmlFor="postalCode" className="text-sm font-medium text-repwell-teal-500">
+              <Label htmlFor="postalCode" className="text-sm font-medium text-heading">
                 ZIP Code
               </Label>
               <Input

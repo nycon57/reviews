@@ -80,6 +80,20 @@ export const VALID_RELATIONSHIPS = [
 
 export type RelationshipType = (typeof VALID_RELATIONSHIPS)[number];
 
+// Versioned legal copy for immutable consent audit.
+export const VIDEO_TESTIMONIAL_CONSENT_VERSION = "2026-03-01-v1";
+
+export const VIDEO_TESTIMONIAL_LEGAL_TEXT = {
+  nilConsent:
+    "I consent to the use of my name, image, likeness, voice, and testimonial content in video, audio, and text formats.",
+  usageRightsConsent:
+    "I grant permission for this testimonial to be used in websites, emails, social posts, sales materials, and other marketing channels.",
+  aiTextGenerationConsent:
+    "I consent to AI-assisted transcription and generation of draft written testimonials from my recorded video.",
+  marketingConsent:
+    "I agree to receive occasional marketing communications. I can unsubscribe at any time.",
+} as const;
+
 export interface ActionResult<T = void> {
   success: boolean;
   data?: T;
@@ -116,16 +130,27 @@ export interface CustomerInfoInput {
 }
 
 export interface ConsentInput {
-  videoRecordingConsent: boolean;
+  nilConsent: boolean;
   usageRightsConsent: boolean;
   aiTextGenerationConsent: boolean;
   marketingConsent?: boolean;
+  // Backward-compatible alias used by the existing UI.
+  videoRecordingConsent?: boolean;
+}
+
+export interface ConsentClientInfo {
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  locale?: string | null;
 }
 
 export interface SubmitCustomerInfoInput {
   token: string;
   customerInfo: CustomerInfoInput;
   consents: ConsentInput;
+  consentVersion?: string;
+  legalTextSnapshotHash?: string;
+  clientInfo?: ConsentClientInfo;
 }
 
 // ============================================================================
@@ -144,6 +169,16 @@ export interface SubmitVideoInput {
   storagePath: string;
   durationSeconds: number;
   thumbnailPath?: string;
+  uploadSessionId?: string;
+  idempotencyKey?: string;
+  mediaMetadata?: {
+    mimeType?: string;
+    codec?: string;
+    width?: number;
+    height?: number;
+    fileSizeBytes?: number;
+  };
+  consentEventIds?: string[];
 }
 
 /** Result from creating signed upload URLs for video and thumbnail */
@@ -152,6 +187,9 @@ export interface CreateUploadUrlsResult {
   videoStoragePath: string;
   thumbnailUploadUrl: string;
   thumbnailStoragePath: string;
+  uploadSessionId: string;
+  resumeToken: string;
+  recommendedPartSize: number;
 }
 
 /** Result from video submission with AI processing */

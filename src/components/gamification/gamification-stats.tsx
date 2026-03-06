@@ -49,8 +49,8 @@ export function GamificationStatsCard({
   if (isLoading) {
     return (
       <Card className={cn("shadow-soft", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Trophy className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -77,8 +77,8 @@ export function GamificationStatsCard({
   if (!stats) {
     return (
       <Card className={cn("shadow-soft", className)}>
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <Trophy className="h-4 w-4 text-repwell-teal-300" />
             </div>
@@ -90,8 +90,8 @@ export function GamificationStatsCard({
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/10">
               <Trophy className="h-7 w-7 text-repwell-teal-300" />
             </div>
-            <p className="text-sm font-medium text-repwell-teal-500">Start earning achievements</p>
-            <p className="mt-1 max-w-[260px] text-xs text-repwell-teal-400">
+            <p className="text-sm font-medium text-heading-accent">Start earning achievements</p>
+            <p className="mt-1 max-w-[260px] text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">
               Complete surveys and collect reviews to unlock badges, climb the leaderboard, and boost your reputation score.
             </p>
           </div>
@@ -114,15 +114,15 @@ export function GamificationStatsCard({
   const getRankBadgeColor = (rank: number | null) => {
     if (!rank) return "bg-muted";
     if (rank === 1) return "bg-yellow-500";
-    if (rank <= 3) return "bg-gray-400";
+    if (rank <= 3) return "bg-gray-400 dark:bg-gray-500";
     if (rank <= 10) return "bg-amber-600";
     return "bg-muted";
   };
 
   return (
     <Card className={cn("shadow-soft", className)}>
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-4">
-        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-repwell-teal-500">
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading-accent">
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <Trophy className="h-4 w-4 text-repwell-teal-300" />
           </div>
@@ -138,8 +138,8 @@ export function GamificationStatsCard({
                 {stats.reputationScore}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-repwell-teal-500">Reputation Score</div>
-                <div className="text-xs text-repwell-teal-400 flex items-center gap-1">
+                <div className="text-sm font-semibold text-heading-accent">Reputation Score</div>
+                <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 flex items-center gap-1">
                   {stats.reputationTrend === "up" ? "Trending up" : stats.reputationTrend === "down" ? "Trending down" : "Stable"}
                   {getTrendIcon(stats.reputationTrend)}
                 </div>
@@ -162,8 +162,8 @@ export function GamificationStatsCard({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-repwell-teal-500">Team Rank</div>
-                  <div className="text-xs text-repwell-teal-400 flex items-center gap-1">
+                  <div className="text-sm font-semibold text-heading-accent">Team Rank</div>
+                  <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 flex items-center gap-1">
                     {stats.rankChange !== 0 ? (
                       <Badge
                         variant={stats.rankChange > 0 ? "default" : "destructive"}
@@ -185,10 +185,10 @@ export function GamificationStatsCard({
                 <Award className="h-5 w-5 text-repwell-sage-200" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-repwell-teal-500">
+                <div className="text-sm font-semibold text-heading-accent">
                   {stats.earnedBadges} / {stats.totalBadges}
                 </div>
-                <div className="text-xs text-repwell-teal-400">Badges Earned</div>
+                <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">Badges Earned</div>
               </div>
             </div>
 
@@ -205,9 +205,9 @@ export function GamificationStatsCard({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs text-repwell-teal-400 mb-1.5">
+                    <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 mb-1.5">
                       {stats.nextBadgeProgress.percentComplete}% to{" "}
-                      <span className="font-medium text-repwell-teal-500">
+                      <span className="font-medium text-heading-accent">
                         {stats.nextBadgeProgress.badge.name}
                       </span>
                     </div>
@@ -223,8 +223,8 @@ export function GamificationStatsCard({
                     <Target className="h-5 w-5 text-green-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-repwell-teal-500">All Done</div>
-                    <div className="text-xs text-repwell-teal-400">All badges earned!</div>
+                    <div className="text-sm font-semibold text-heading-accent">All Done</div>
+                    <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">All badges earned!</div>
                   </div>
                 </>
               )}
@@ -239,7 +239,7 @@ export function GamificationStatsCard({
                   {stats.reputationScore}
                 </div>
               </div>
-              <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
+              <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 flex items-center justify-center gap-1">
                 Reputation
                 {getTrendIcon(stats.reputationTrend)}
               </div>
@@ -262,7 +262,7 @@ export function GamificationStatsCard({
                     )}
                   </div>
                 </div>
-                <div className="text-xs text-repwell-teal-400 flex items-center justify-center gap-1">
+                <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 flex items-center justify-center gap-1">
                   Team Rank
                   {stats.rankChange !== 0 && (
                     <Badge
@@ -283,10 +283,10 @@ export function GamificationStatsCard({
                   <Award className="h-6 w-6 text-repwell-sage-200" />
                 </div>
               </div>
-              <div className="text-sm font-semibold text-repwell-teal-500">
+              <div className="text-sm font-semibold text-heading-accent">
                 {stats.earnedBadges} / {stats.totalBadges}
               </div>
-              <div className="text-xs text-repwell-teal-400">Badges Earned</div>
+              <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">Badges Earned</div>
             </div>
 
             {/* Next Badge Progress */}
@@ -301,9 +301,9 @@ export function GamificationStatsCard({
                       showTooltip={false}
                     />
                   </div>
-                  <div className="text-xs text-repwell-teal-400 mb-1">
+                  <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80 mb-1">
                     {stats.nextBadgeProgress.percentComplete}% to{" "}
-                    <span className="font-medium text-repwell-teal-500">
+                    <span className="font-medium text-heading-accent">
                       {stats.nextBadgeProgress.badge.name}
                     </span>
                   </div>
@@ -319,7 +319,7 @@ export function GamificationStatsCard({
                       <Target className="h-6 w-6 text-green-500" />
                     </div>
                   </div>
-                  <div className="text-xs text-repwell-teal-400">All badges earned!</div>
+                  <div className="text-xs text-repwell-teal-400 dark:text-repwell-sage-100/80">All badges earned!</div>
                 </>
               )}
             </div>
@@ -369,7 +369,7 @@ export function GamificationWidget({
         <div className="h-6 w-6 rounded-full bg-gradient-to-br from-repwell-teal-300 to-repwell-teal-500 flex items-center justify-center text-white text-xs font-bold">
           {stats.reputationScore}
         </div>
-        <span className="text-repwell-teal-400">score</span>
+        <span className="text-repwell-teal-400 dark:text-repwell-sage-100/80">score</span>
       </div>
       <div className="flex items-center gap-1.5">
         <Trophy className="h-4 w-4 text-yellow-500" />

@@ -37,7 +37,7 @@ const surveyTypeColors: Record<string, string> = {
   pulse: "bg-green-100 text-green-700",
   exit: "bg-orange-100 text-orange-700",
   onboarding: "bg-purple-100 text-purple-700",
-  custom: "bg-gray-100 text-gray-700",
+  custom: "bg-muted text-foreground",
 };
 
 export function TemplatePreviewModal({
@@ -55,11 +55,11 @@ export function TemplatePreviewModal({
         <DialogHeader className="space-y-4">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1">
-              <DialogTitle className="font-display text-xl font-bold text-repwell-teal-500">
+              <DialogTitle className="font-display text-xl font-bold text-heading">
                 {template.name}
               </DialogTitle>
               {template.description && (
-                <DialogDescription className="font-sans text-repwell-teal-400">
+                <DialogDescription className="font-sans text-label">
                   {template.description}
                 </DialogDescription>
               )}
@@ -103,7 +103,7 @@ export function TemplatePreviewModal({
         </DialogHeader>
 
         {/* Preview indicator */}
-        <div className="mt-2 mb-4 flex items-center justify-center gap-2 rounded-lg bg-repwell-sage-100/30 px-4 py-2 text-sm font-sans text-repwell-teal-400">
+        <div className="mt-2 mb-4 flex items-center justify-center gap-2 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 px-4 py-2 text-sm font-sans text-label">
           <Eye weight="regular" size={16} />
           <span>Interactive preview - step through the survey to see how it will look</span>
         </div>

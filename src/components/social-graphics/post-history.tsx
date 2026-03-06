@@ -80,7 +80,7 @@ export function PostHistory({ graphicId }: PostHistoryProps) {
               {PLATFORM_LABELS[post.platform as SocialPlatform] ?? post.platform}
             </span>
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_STYLES[post.status] ?? "bg-gray-100 text-gray-800"}`}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_STYLES[post.status] ?? "bg-muted text-foreground"}`}
             >
               {post.status}
             </span>

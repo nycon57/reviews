@@ -17,7 +17,7 @@ export function SquarespaceGuide() {
   return (
     <IntegrationCard
       id="squarespace"
-      icon={<LayoutGrid size={20} className="text-repwell-teal-500" />}
+      icon={<LayoutGrid size={20} className="text-heading" />}
       title="Squarespace"
       description="Embed widgets via Code Injection or per-page Code Blocks."
     >

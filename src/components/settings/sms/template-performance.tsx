@@ -75,7 +75,7 @@ function MetricCard({
   trend?: number[];
 }) {
   return (
-    <div className="rounded-xl border border-border bg-white p-4 space-y-2">
+    <div className="rounded-xl border border-border bg-card p-4 space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-background-subtle p-1.5">
@@ -86,7 +86,7 @@ function MetricCard({
         {trend && <Sparkline data={trend} className="text-repwell-teal-300" />}
       </div>
       <div>
-        <p className="text-xl font-semibold text-repwell-teal-500 tabular-nums">{value}</p>
+        <p className="text-xl font-semibold text-heading tabular-nums">{value}</p>
         {subtitle && (
           <p className="text-xs text-muted-foreground">{subtitle}</p>
         )}
@@ -195,7 +195,7 @@ export function TemplatePerformancePanel({
     <motion.div variants={fadeInUp} initial="hidden" animate="show">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4">
-          <CardTitle className="text-base font-semibold text-repwell-teal-500">
+          <CardTitle className="text-base font-semibold text-heading-accent">
             Performance: {template.name}
           </CardTitle>
           <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close performance panel">
@@ -236,7 +236,7 @@ export function TemplatePerformancePanel({
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <ArrowsLeftRight className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-repwell-teal-400">
+                <span className="text-sm font-medium text-label">
                   Compare with:
                 </span>
                 <Select
@@ -275,7 +275,7 @@ export function TemplatePerformancePanel({
                   ].map((m) => (
                     <div
                       key={m.label}
-                      className="rounded-xl border border-border bg-white p-3 text-center space-y-1"
+                      className="rounded-xl border border-border bg-card p-3 text-center space-y-1"
                     >
                       <p className="text-xs text-muted-foreground">{m.label}</p>
                       <div className="flex items-center justify-center gap-3">

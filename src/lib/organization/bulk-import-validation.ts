@@ -46,7 +46,6 @@ export const importRowSchema = z.object({
     }, "Invalid calendar date")
     .optional()
     .or(z.literal("")),
-  region: z.string().max(100).optional().or(z.literal("")),
 });
 
 // Normalization map for auto-detecting CSV headers
@@ -83,9 +82,6 @@ const HEADER_ALIASES: Record<string, CSVFieldKey> = {
   hire_date: "hire_date",
   startdate: "hire_date",
   start_date: "hire_date",
-  region: "region",
-  area: "region",
-  territory: "region",
 };
 
 /**
@@ -223,7 +219,6 @@ export function generateCSVTemplate(): string {
     "Downtown Branch",
     "manager@example.com",
     "2024-01-15",
-    "Northeast",
   ];
   return [headers.join(","), exampleRow.join(",")].join("\n");
 }

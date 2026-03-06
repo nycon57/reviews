@@ -41,7 +41,7 @@ function highlightJson(json: string): ReactNode[] {
   while ((match = regex.exec(json)) !== null) {
     if (match.index > lastIndex) {
       parts.push(
-        <span key={`t${i++}`} className="text-gray-500">
+        <span key={`t${i++}`} className="text-muted-foreground">
           {json.slice(lastIndex, match.index)}
         </span>
       );
@@ -70,7 +70,7 @@ function highlightJson(json: string): ReactNode[] {
 
   if (lastIndex < json.length) {
     parts.push(
-      <span key={`e${i++}`} className="text-gray-500">
+      <span key={`e${i++}`} className="text-muted-foreground">
         {json.slice(lastIndex)}
       </span>
     );
@@ -114,7 +114,7 @@ export function SeoPreview({
         <span className="text-xs font-medium text-gray-300">
           JSON-LD Structured Data
         </span>
-        <span className="text-[10px] text-gray-500 font-mono">
+        <span className="text-[10px] text-muted-foreground font-mono">
           application/ld+json
         </span>
       </div>

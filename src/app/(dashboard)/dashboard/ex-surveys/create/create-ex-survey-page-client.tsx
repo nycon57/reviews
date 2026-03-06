@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, SpinnerGap as Loader2 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { createEXSurvey, getEXSurveyTemplates, launchEXSurvey } from "@/lib/ex-surveys/actions";
-import { getContactDepartments } from "@/lib/contacts/actions";
+import { getEmployeeDepartments } from "@/lib/employees/actions";
 import { EXSurveyTemplate } from "@/types/ex-survey.types";
 import {
   WizardStepIndicator,
@@ -51,7 +51,7 @@ export function CreateEXSurveyPageClient() {
       try {
         const [templatesResult, depsResult] = await Promise.all([
           getEXSurveyTemplates(),
-          getContactDepartments(),
+          getEmployeeDepartments(),
         ]);
 
         if (templatesResult.data) {
@@ -197,7 +197,7 @@ export function CreateEXSurveyPageClient() {
           </Link>
         </Button>
         <div>
-          <h1 className="font-display text-2xl font-bold text-repwell-teal-500">
+          <h1 className="font-display text-2xl font-bold text-heading-accent">
             Create Survey
           </h1>
           <p className="text-muted-foreground">
@@ -211,7 +211,7 @@ export function CreateEXSurveyPageClient() {
 
       {/* Error display */}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-sm text-red-800 dark:text-red-300">
           {error}
         </div>
       )}

@@ -77,7 +77,7 @@ const CATEGORY_COLORS: Record<SmsTemplateCategory, string> = {
   follow_up: 'bg-amber-50 text-amber-700 border-amber-200',
   thank_you: 'bg-green-50 text-green-700 border-green-200',
   video_request: 'bg-purple-50 text-purple-700 border-purple-200',
-  custom: 'bg-gray-50 text-gray-700 border-gray-200',
+  custom: 'bg-muted text-foreground border-border',
 };
 
 function truncate(text: string, max: number): string {
@@ -235,7 +235,7 @@ export function SmsTemplatesTab() {
       {/* Header */}
       <motion.div variants={fadeInUp} className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-repwell-teal-500">SMS Templates</h2>
+          <h2 className="text-xl font-semibold text-heading-accent">SMS Templates</h2>
           <p className="text-sm text-muted-foreground mt-1">
             Manage message templates for surveys, follow-ups, and review requests.
             {total > 0 && ` ${total} template${total === 1 ? '' : 's'} total.`}
@@ -307,7 +307,7 @@ export function SmsTemplatesTab() {
                   <FileText weight="duotone" className="h-7 w-7 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-repwell-teal-400">No templates found</p>
+                  <p className="text-sm font-medium text-label">No templates found</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     {search || categoryFilter !== 'all'
                       ? 'Try adjusting your filters.'
@@ -358,7 +358,7 @@ export function SmsTemplatesTab() {
                             {template.is_locked && (
                               <Lock weight="fill" className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                             )}
-                            <span className="font-medium text-repwell-teal-500 truncate max-w-[160px]">
+                            <span className="font-medium text-heading truncate max-w-[160px]">
                               {template.name}
                             </span>
                             {template.is_default && (
@@ -420,7 +420,7 @@ export function SmsTemplatesTab() {
                                 <>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem
-                                    className="text-red-600 focus:text-red-600"
+                                    className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                                     onClick={(e) => { e.stopPropagation(); setArchiveTarget(template); }}
                                   >
                                     <Archive className="h-4 w-4 mr-2" />

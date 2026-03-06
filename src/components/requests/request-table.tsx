@@ -52,7 +52,7 @@ function StatusBadge({ status }: { status: string }) {
     },
     opened: {
       label: "Opened",
-      className: "text-repwell-teal-400 border-repwell-teal-400/30 bg-repwell-teal-400/5",
+      className: "text-label border-repwell-teal-400/30 bg-repwell-teal-400/5",
       icon: Eye,
     },
     recording: {
@@ -123,7 +123,7 @@ export function RequestTable({
         <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-repwell-teal-300/10">
           <Send className="h-7 w-7 text-repwell-teal-300" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold text-repwell-teal-500">No video testimonial requests</h3>
+        <h3 className="mt-4 text-lg font-semibold text-heading">No video testimonial requests</h3>
         <p className="mt-1.5 text-sm text-muted-foreground text-center max-w-sm">
           Create your first video testimonial request to start collecting customer videos.
         </p>

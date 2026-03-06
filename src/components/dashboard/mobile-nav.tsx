@@ -82,7 +82,7 @@ export function MobileNav({ className }: MobileNavProps) {
             {sections.map((section) => (
               <React.Fragment key={section.label}>
                 <Separator className="my-3" />
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70 px-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70 dark:text-repwell-sage-100/50 px-3">
                   {section.label}
                 </p>
                 {section.items.map((item) => (
@@ -133,10 +133,10 @@ function MobileNavLink({ item, isActive, onClick }: MobileNavLinkProps) {
         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/30",
         isActive && !isProLocked
-          ? "bg-repwell-sage-100 text-repwell-teal-300"
+          ? "bg-surface-soft text-repwell-teal-300"
           : isProLocked
-            ? "text-repwell-teal-400/60 hover:bg-repwell-sage-100/30"
-            : "text-repwell-teal-400 hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500"
+            ? "text-label/60 hover:bg-repwell-sage-100/30 dark:hover:bg-repwell-teal-300/10"
+            : "text-label hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 hover:text-repwell-teal-500 dark:hover:text-foreground"
       )}
       aria-current={isActive && !isProLocked ? "page" : undefined}
     >
@@ -145,8 +145,8 @@ function MobileNavLink({ item, isActive, onClick }: MobileNavLinkProps) {
         isActive && !isProLocked
           ? "text-repwell-teal-300"
           : isProLocked
-            ? "text-repwell-teal-400/60"
-            : "text-repwell-teal-400"
+            ? "text-label/60"
+            : "text-label"
       )}>
         {IconComponent ? <IconComponent className="h-5 w-5" /> : null}
       </span>
@@ -154,7 +154,7 @@ function MobileNavLink({ item, isActive, onClick }: MobileNavLinkProps) {
 
       {/* Pro lock icon */}
       {isProLocked && (
-        <Lock className="h-3.5 w-3.5 text-repwell-teal-400/50" />
+        <Lock className="h-3.5 w-3.5 text-label/50" />
       )}
 
       {/* NEW badge - don't show if Pro locked */}
@@ -173,7 +173,7 @@ function MobileNavLink({ item, isActive, onClick }: MobileNavLinkProps) {
 
       {/* Badge count */}
       {item.badge && !isProLocked && (
-        <span className="rounded-full bg-repwell-sage-100 px-2 py-0.5 text-xs font-semibold text-repwell-teal-300">
+        <span className="rounded-full bg-surface-soft px-2 py-0.5 text-xs font-semibold text-repwell-teal-300">
           {item.badge}
         </span>
       )}

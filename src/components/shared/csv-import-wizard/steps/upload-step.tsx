@@ -12,32 +12,36 @@ import {
   File,
   X,
 } from "@phosphor-icons/react";
-import {
-  generateCSVTemplate,
-} from "@/lib/organization/bulk-import-validation";
-import {
-  MAX_IMPORT_ROWS,
-  type ParsedCSVRow,
-} from "@/lib/organization/bulk-import-types";
+import type { ParsedCSVRow } from "../types";
 
-interface UploadStepProps {
+interface CsvUploadStepProps {
   onUpload: (rows: ParsedCSVRow[], headers: string[]) => void;
+  maxRows: number;
+  templateFilename: string;
+  templateContent: string;
+  entityNamePlural: string;
+  className?: string;
 }
 
-export function UploadStep({ onUpload }: UploadStepProps) {
+export function CsvUploadStep({
+  onUpload,
+  maxRows,
+  templateFilename,
+  templateContent,
+  entityNamePlural,
+}: CsvUploadStepProps) {
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
   const handleDownloadTemplate = useCallback(() => {
-    const csv = generateCSVTemplate();
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob([templateContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "user-import-template.csv";
+    a.download = templateFilename;
     a.click();
     URL.revokeObjectURL(url);
-  }, []);
+  }, [templateContent, templateFilename]);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -45,13 +49,11 @@ export function UploadStep({ onUpload }: UploadStepProps) {
       const file = acceptedFiles[0];
       if (!file) return;
 
-      // Validate file type
       if (!file.name.endsWith(".csv") && file.type !== "text/csv") {
         setError("Please upload a CSV file");
         return;
       }
 
-      // Validate file size (max 1MB)
       if (file.size > 1024 * 1024) {
         setError("File size must be under 1MB");
         return;
@@ -74,9 +76,9 @@ export function UploadStep({ onUpload }: UploadStepProps) {
             return;
           }
 
-          if (rows.length > MAX_IMPORT_ROWS) {
+          if (rows.length > maxRows) {
             setError(
-              `Too many rows. Maximum is ${MAX_IMPORT_ROWS}, found ${rows.length}`
+              `Too many rows. Maximum is ${maxRows}, found ${rows.length}`
             );
             return;
           }
@@ -94,7 +96,7 @@ export function UploadStep({ onUpload }: UploadStepProps) {
         },
       });
     },
-    [onUpload]
+    [onUpload, maxRows]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -141,7 +143,7 @@ export function UploadStep({ onUpload }: UploadStepProps) {
                 : "Drag & drop a CSV file, or click to browse"}
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Max {MAX_IMPORT_ROWS} rows, 1MB limit
+              Max {maxRows} {entityNamePlural.toLowerCase()}, 1MB limit
             </p>
           </>
         )}

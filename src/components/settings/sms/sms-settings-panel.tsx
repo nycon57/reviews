@@ -35,7 +35,7 @@ export function SmsSettingsPanel({ initialSubTab = 'setup' }: SmsSettingsPanelPr
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
           SMS & Messaging
         </h2>
         <p className="text-repwell-teal-300 mt-1">

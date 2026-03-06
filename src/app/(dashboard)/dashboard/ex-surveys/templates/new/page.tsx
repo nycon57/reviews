@@ -56,10 +56,10 @@ export default async function NewTemplatePage() {
           </Link>
         </Button>
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight text-repwell-teal-500">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-heading">
             Create Custom Template
           </h1>
-          <p className="font-sans text-repwell-teal-400">
+          <p className="font-sans text-label">
             Build a custom survey template for your organization
           </p>
         </div>

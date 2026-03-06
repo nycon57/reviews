@@ -44,7 +44,7 @@ export function SharedQuestionEditor({
   isDragging = false,
   dragHandleProps,
 }: SharedQuestionEditorProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
   const updateQuestion = (updates: Partial<Question>) => {

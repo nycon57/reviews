@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -34,7 +33,9 @@ import {
   CaretDown,
   CaretUpDown,
 } from "@phosphor-icons/react";
-import { BulkUserImportWizard } from "./bulk-user-import-wizard";
+import { CsvImportWizard } from "@/components/shared/csv-import-wizard";
+import { StatusBadge } from "@/components/shared/status-badge";
+import { createUserImportConfig } from "@/lib/organization/user-import-config";
 import {
   getOrganizationMembers,
   getPendingInvitations,
@@ -63,6 +64,7 @@ export function OrganizationTeam() {
   const [loading, setLoading] = useState(true);
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const userImportConfig = useMemo(() => createUserImportConfig(), []);
   const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserName, setNewUserName] = useState("");
   const [newUserRole, setNewUserRole] = useState<"admin" | "manager" | "user">("user");
@@ -322,7 +324,7 @@ export function OrganizationTeam() {
     return (
       <div className="space-y-6">
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <Skeleton className="h-6 w-48" />
             <Skeleton className="h-4 w-72" />
           </CardHeader>
@@ -348,7 +350,7 @@ export function OrganizationTeam() {
     <div className="space-y-6">
       {/* Team members */}
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -535,9 +537,7 @@ export function OrganizationTeam() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={ROLE_LABELS[member.role]?.variant || "outline"}>
-                        {ROLE_LABELS[member.role]?.label || member.role}
-                      </Badge>
+                      <StatusBadge status={member.role} config={ROLE_LABELS} />
                     </TableCell>
                     <TableCell>
                       <ProfileCompletionCell value={member.profile_completion} />
@@ -586,7 +586,7 @@ export function OrganizationTeam() {
                             checked={false}
                             onCheckedChange={() => handleReactivate(member.id)}
                             disabled={isPending}
-                            className="data-[state=unchecked]:bg-gray-300"
+                            className="data-[state=unchecked]:bg-muted"
                           />
                           <span className="text-sm font-medium text-muted-foreground">Inactive</span>
                         </div>
@@ -656,7 +656,7 @@ export function OrganizationTeam() {
       {/* Pending invitations */}
       {invitations.length > 0 && (
         <Card className="border border-border shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Clock className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
@@ -691,9 +691,7 @@ export function OrganizationTeam() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={ROLE_LABELS[invite.role]?.variant || "outline"}>
-                        {ROLE_LABELS[invite.role]?.label || invite.role}
-                      </Badge>
+                      <StatusBadge status={invite.role} config={ROLE_LABELS} />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       <div className="flex items-center gap-1">
@@ -756,13 +754,14 @@ export function OrganizationTeam() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <BulkUserImportWizard
+      <CsvImportWizard
         open={bulkImportOpen}
         onOpenChange={setBulkImportOpen}
         onComplete={() => {
           setBulkImportOpen(false);
           refreshData();
         }}
+        config={userImportConfig}
       />
     </div>
   );

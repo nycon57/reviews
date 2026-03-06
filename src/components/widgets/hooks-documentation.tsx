@@ -80,7 +80,7 @@ function CodeBlock({ code, label }: { code: string; label: string }) {
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-7 right-1.5 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-white hover:bg-gray-800"
+        className="absolute top-7 right-1.5 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-white hover:bg-gray-800"
         onClick={handleCopy}
       >
         {copied ? <Check size={12} /> : <Copy size={12} />}
@@ -97,7 +97,7 @@ export function HooksDocumentation({ widgetSlug }: { widgetSlug?: string }) {
   return (
     <div className="space-y-4">
       <div>
-        <h4 className="text-xs font-semibold text-repwell-teal-400 mb-1">
+        <h4 className="text-xs font-semibold text-label mb-1">
           JavaScript Hooks API
         </h4>
         <p className="text-xs text-muted-foreground leading-relaxed">
@@ -123,7 +123,7 @@ export function HooksDocumentation({ widgetSlug }: { widgetSlug?: string }) {
       </div>
 
       <div>
-        <h4 className="text-xs font-semibold text-repwell-teal-400 mb-2">
+        <h4 className="text-xs font-semibold text-label mb-2">
           Available Events
         </h4>
         <div className="border rounded-md divide-y">

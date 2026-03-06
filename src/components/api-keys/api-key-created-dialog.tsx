@@ -88,7 +88,7 @@ export function ApiKeyCreatedDialog({
           </Alert>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-repwell-teal-500">
+            <label className="text-sm font-medium text-heading">
               Your API Key
             </label>
             <div className="flex items-center gap-2">
@@ -150,7 +150,7 @@ export function ApiKeyCreatedDialog({
           </div>
 
           <div className="rounded-lg border border-dashed p-4">
-            <h4 className="text-sm font-medium text-repwell-teal-500 mb-2">
+            <h4 className="text-sm font-medium text-heading mb-2">
               Quick Start
             </h4>
             <code className="block text-xs bg-slate-900 text-slate-100 p-3 rounded-md overflow-x-auto">

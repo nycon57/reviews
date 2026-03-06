@@ -71,14 +71,14 @@ interface BranchAddress {
   zip?: string;
 }
 
-function formatBranchLocation(address: BranchAddress | null, region: string | null): string {
+function formatBranchLocation(address: BranchAddress | null): string {
   if (address) {
     const locationParts = [address.city, address.state].filter(Boolean);
     if (locationParts.length > 0) {
       return locationParts.join(", ");
     }
   }
-  return region || "";
+  return "";
 }
 
 export function OrganizationProfileContent({
@@ -185,8 +185,7 @@ export function OrganizationProfileContent({
         return (
           b.name.toLowerCase().includes(q) ||
           addr?.city?.toLowerCase().includes(q) ||
-          addr?.state?.toLowerCase().includes(q) ||
-          b.region?.toLowerCase().includes(q)
+          addr?.state?.toLowerCase().includes(q)
         );
       });
     }
@@ -479,8 +478,7 @@ export function OrganizationProfileContent({
                                     <p className="mt-0.5 text-sm text-repwell-teal-300 truncate flex items-center gap-1">
                                       <MapPin className="h-3 w-3 shrink-0" />
                                       {formatBranchLocation(
-                                        branch.address as BranchAddress | null,
-                                        branch.region
+                                        branch.address as BranchAddress | null
                                       ) || "Location not specified"}
                                     </p>
                                     {branch.average_rating && branch.total_reviews ? (

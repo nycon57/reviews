@@ -20,7 +20,7 @@ interface BenchmarksCardProps {
 function TrendBadge({ trend }: { trend: "above" | "at" | "below" }) {
   if (trend === "above") {
     return (
-      <Badge className="bg-green-100 text-green-800">
+      <Badge className="bg-green-100 text-green-800 dark:bg-green-950/30 dark:text-green-400">
         <TrendingUp className="mr-1 h-3 w-3" />
         Above Average
       </Badge>
@@ -28,14 +28,14 @@ function TrendBadge({ trend }: { trend: "above" | "at" | "below" }) {
   }
   if (trend === "below") {
     return (
-      <Badge className="bg-red-100 text-red-800">
+      <Badge className="bg-red-100 text-red-800 dark:bg-red-950/30 dark:text-red-400">
         <TrendingDown className="mr-1 h-3 w-3" />
         Below Average
       </Badge>
     );
   }
   return (
-    <Badge className="bg-gray-100 text-gray-800">
+    <Badge className="bg-muted text-foreground">
       <Minus className="mr-1 h-3 w-3" />
       At Average
     </Badge>
@@ -46,7 +46,7 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
   if (data.length === 0) {
     return (
       <Card className="border border-border shadow-soft">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+        <CardHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
               <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
@@ -72,7 +72,7 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
 
   return (
     <Card className="border border-border shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+      <CardHeader>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
             <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
@@ -92,7 +92,7 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
                 <h4 className="text-sm font-medium">{benchmark.metric}</h4>
                 <TrendBadge trend={benchmark.trend} />
               </div>
-              <span className="text-xl font-semibold tabular-nums text-repwell-teal-500">
+              <span className="text-xl font-semibold tabular-nums text-heading">
                 {typeof benchmark.yourValue === 'number' && benchmark.yourValue % 1 !== 0
                   ? benchmark.yourValue.toFixed(1)
                   : benchmark.yourValue}
@@ -119,7 +119,7 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
                     className="absolute flex flex-col items-center"
                     style={{ left: "50%" }}
                   >
-                    <div className="h-8 w-0.5 bg-gray-400/50" />
+                    <div className="h-8 w-0.5 bg-muted-foreground/50" />
                     <Target className="mt-1 h-3 w-3 text-muted-foreground" />
                     <span className="text-xs text-muted-foreground">Avg: {benchmark.industryAverage}</span>
                   </div>
@@ -151,9 +151,9 @@ export function BenchmarksCard({ data }: BenchmarksCardProps) {
                 You&apos;re in the{" "}
                 <span className={cn(
                   "font-semibold",
-                  benchmark.percentile >= 75 && "text-green-600",
-                  benchmark.percentile >= 50 && benchmark.percentile < 75 && "text-amber-600",
-                  benchmark.percentile < 50 && "text-red-600"
+                  benchmark.percentile >= 75 && "text-green-600 dark:text-green-400",
+                  benchmark.percentile >= 50 && benchmark.percentile < 75 && "text-amber-600 dark:text-amber-400",
+                  benchmark.percentile < 50 && "text-red-600 dark:text-red-400"
                 )}>
                   {benchmark.percentile}th percentile
                 </span>

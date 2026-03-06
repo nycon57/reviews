@@ -183,7 +183,6 @@ const BranchSchema = z
     manager_id: z.string().uuid().nullable(),
     manager_name: z.string().nullable(),
     manager_email: z.string().email().nullable(),
-    region: z.string().nullable(),
     is_active: z.boolean(),
     average_rating: z.number().nullable(),
     total_reviews: z.number().int(),
@@ -211,7 +210,6 @@ const CreateBranchSchema = z
     }),
     manager_name: z.string().max(200).optional(),
     manager_email: z.string().email().optional(),
-    region: z.string().max(100).optional().openapi({ example: 'West Coast' }),
   })
   .openapi('CreateBranchInput');
 
@@ -576,7 +574,6 @@ registry.registerPath({
       page: z.coerce.number().int().min(1).default(1).optional(),
       page_size: z.coerce.number().int().min(1).max(100).default(25).optional(),
       is_active: z.enum(['true', 'false']).optional(),
-      region: z.string().max(100).optional(),
       search: z.string().max(200).optional(),
     }),
   },

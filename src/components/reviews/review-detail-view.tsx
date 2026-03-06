@@ -110,10 +110,10 @@ function formatDateTime(dateString: string | null): string {
 
 function StatusBadge({ status }: { status: ReviewDetail["status"] }) {
   const variants = {
-    pending: "border-yellow-500 text-yellow-600 bg-yellow-50",
-    approved: "border-green-500 text-green-600 bg-green-50",
-    rejected: "border-red-500 text-red-600 bg-red-50",
-    archived: "border-gray-400 text-gray-500 bg-gray-50",
+    pending: "border-yellow-500 text-yellow-600 bg-yellow-50 dark:bg-yellow-950/30 dark:text-yellow-400",
+    approved: "border-green-500 text-green-600 bg-green-50 dark:bg-green-950/30 dark:text-green-400",
+    rejected: "border-red-500 text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-400",
+    archived: "border-border text-muted-foreground bg-muted",
   };
   return (
     <Badge variant="outline" className={variants[status]}>
@@ -250,7 +250,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
     <div className="flex-1 space-y-6">
       {/* Back link */}
       <Link href="/dashboard/reviews">
-        <Button variant="ghost" size="sm" className="gap-2 hover:text-repwell-teal-400">
+        <Button variant="ghost" size="sm" className="gap-2 hover:text-repwell-teal-400 dark:hover:text-muted-foreground">
           <ArrowLeft className="h-4 w-4" />
           Back to Reviews
         </Button>
@@ -268,13 +268,13 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                 <div
                   role="img"
                   aria-label={review.customerName || "Customer avatar"}
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-repwell-teal-300/10 text-repwell-teal-400 shrink-0 text-base font-semibold"
+                  className="flex h-12 w-12 items-center justify-center rounded-full bg-repwell-teal-300/10 text-label shrink-0 text-base font-semibold"
                 >
                   {customerInitials}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="font-semibold text-xl text-repwell-teal-500 truncate">
+                    <h2 className="font-semibold text-xl text-heading truncate">
                       {review.customerName || "Anonymous"}
                     </h2>
                     <div className="flex items-center gap-2 shrink-0">
@@ -303,7 +303,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
               <div>
                 <div className="flex items-center justify-between gap-3 mb-1.5">
                   {review.title && (
-                    <h3 className="font-medium text-lg text-repwell-teal-500">{review.title}</h3>
+                    <h3 className="font-medium text-lg text-heading">{review.title}</h3>
                   )}
                   <div className="flex items-center gap-0.5 shrink-0">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -361,7 +361,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                       href={review.sourceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-repwell-teal-400 hover:text-repwell-teal-500 transition-colors inline-flex items-center gap-1"
+                      className="text-label hover:text-repwell-teal-500 dark:hover:text-foreground transition-colors inline-flex items-center gap-1"
                     >
                       View on {review.source.charAt(0).toUpperCase() + review.source.slice(1)}
                       <ExternalLink className="h-3 w-3" />
@@ -386,7 +386,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
             <div className="rounded-lg border border-border/50 bg-muted/30 p-3.5">
               <div className="flex items-center gap-1.5 mb-2">
                 <MessageSquare className="h-3.5 w-3.5 text-repwell-teal-300" weight="duotone" />
-                <span className="text-xs font-medium text-repwell-teal-400 uppercase tracking-wider">Your Response</span>
+                <span className="text-xs font-medium text-label uppercase tracking-wider">Your Response</span>
               </div>
               <p className="text-sm text-foreground/80 whitespace-pre-wrap">{review.responseText}</p>
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -398,10 +398,10 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
 
           {/* Response Form */}
           <AnimatedPresence show={!review.responseText && showResponseForm} mode="slide-up">
-            <div className="rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/10 p-4">
+            <div className="rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/10 p-4">
               <div className="flex items-center gap-1.5 mb-3">
                 <MessageSquare className="h-3.5 w-3.5 text-repwell-teal-300" weight="duotone" />
-                <span className="text-xs font-medium text-repwell-teal-400 uppercase tracking-wider">Compose Response</span>
+                <span className="text-xs font-medium text-label uppercase tracking-wider">Compose Response</span>
               </div>
               <ResponseComposer
                 review={review}
@@ -421,7 +421,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
           {/* Share Studio */}
           <AnimatedSection>
           <Card className="border border-border shadow-soft overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
                   <Share2 className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
@@ -473,7 +473,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
           {canManage && (
             <AnimatedSection delay={0.1}>
             <Card className="border border-border shadow-soft overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
                     <GearSix className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
@@ -530,7 +530,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
           {/* Timeline */}
           <AnimatedSection delay={0.2}>
           <Card className="border border-border shadow-soft overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+            <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
                   <Calendar className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
@@ -542,22 +542,22 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Created</dt>
-                  <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.createdAt)}</dd>
+                  <dd className="font-medium text-heading">{formatDateTime(review.createdAt)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Updated</dt>
-                  <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.updatedAt)}</dd>
+                  <dd className="font-medium text-heading">{formatDateTime(review.updatedAt)}</dd>
                 </div>
                 {review.approvedAt && (
                   <div className="flex justify-between">
                     <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Approved</dt>
-                    <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.approvedAt)}</dd>
+                    <dd className="font-medium text-heading">{formatDateTime(review.approvedAt)}</dd>
                   </div>
                 )}
                 {review.publishedAt && (
                   <div className="flex justify-between">
                     <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Published</dt>
-                    <dd className="font-medium text-repwell-teal-500">{formatDateTime(review.publishedAt)}</dd>
+                    <dd className="font-medium text-heading">{formatDateTime(review.publishedAt)}</dd>
                   </div>
                 )}
               </dl>

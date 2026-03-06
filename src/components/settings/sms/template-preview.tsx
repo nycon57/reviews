@@ -46,8 +46,8 @@ export function TemplatePreview({ body, className }: TemplatePreviewProps) {
         <div className="text-xs font-medium text-muted-foreground mb-2">
           Preview with sample data
         </div>
-        <div className="bg-white rounded-lg p-3 shadow-sm border border-border">
-          <p className="text-sm text-repwell-teal-500 whitespace-pre-wrap break-words leading-relaxed">
+        <div className="bg-card rounded-lg p-3 shadow-sm border border-border">
+          <p className="text-sm text-heading whitespace-pre-wrap break-words leading-relaxed">
             {preview.body}
           </p>
         </div>
@@ -65,7 +65,7 @@ export function TemplatePreview({ body, className }: TemplatePreviewProps) {
           {hasOptOut ? (
             <>
               <CheckCircle weight="fill" className="h-4 w-4 text-repwell-sage-200" />
-              <span className="text-repwell-teal-400">Opt-out language detected</span>
+              <span className="text-label">Opt-out language detected</span>
             </>
           ) : (
             <>
@@ -81,7 +81,7 @@ export function TemplatePreview({ body, className }: TemplatePreviewProps) {
         {respaViolations.length > 0 && (
           <div className="flex items-start gap-2 text-xs">
             <Warning weight="fill" className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
-            <span className="text-red-600">
+            <span className="text-red-600 dark:text-red-400">
               RESPA violation: {respaViolations.map((v) => `"${v}"`).join(', ')}
             </span>
           </div>

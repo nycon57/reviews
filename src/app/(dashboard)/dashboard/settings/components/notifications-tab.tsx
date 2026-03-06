@@ -47,18 +47,18 @@ interface QuickActionButtonProps {
 function QuickActionButton({ icon, title, description, href, onClick }: QuickActionButtonProps) {
   const content = (
     <>
-      <div className="p-2 rounded-lg bg-repwell-sage-100/50 group-hover:bg-repwell-sage-200/50 transition-colors">
+      <div className="p-2 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 group-hover:bg-repwell-sage-200/50 transition-colors">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-repwell-teal-500">{title}</p>
+        <p className="text-sm font-medium text-heading-accent">{title}</p>
         <p className="text-xs text-repwell-teal-300 truncate">{description}</p>
       </div>
       <ArrowRight className="h-4 w-4 text-repwell-teal-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
     </>
   );
 
-  const className = "w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group";
+  const className = "w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/20 transition-colors text-left group";
 
   if (href) {
     return (
@@ -85,7 +85,7 @@ export function NotificationsTab() {
     >
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
           Notification Preferences
         </h2>
         <p className="text-repwell-teal-300 mt-1">
@@ -150,7 +150,7 @@ export function NotificationsTab() {
         <motion.div variants={fadeInUp}>
           <Card className="h-fit border-border/50 sticky top-6">
             <CardContent className="p-6 space-y-4">
-              <h4 className="font-semibold text-repwell-teal-500">Quick Settings</h4>
+              <h4 className="font-semibold text-heading-accent">Quick Settings</h4>
 
               <div className="space-y-3">
                 <QuickActionButton
@@ -176,7 +176,7 @@ export function NotificationsTab() {
 
               {/* Notification Types */}
               <div className="pt-4 border-t border-border/50 space-y-3">
-                <p className="text-xs font-medium text-repwell-teal-500">You&apos;ll Be Notified About</p>
+                <p className="text-xs font-medium text-heading-accent">You&apos;ll Be Notified About</p>
                 <ul className="space-y-2">
                   {[
                     'New reviews received',

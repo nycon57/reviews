@@ -189,17 +189,6 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     linkLabel: "Set Branch",
   },
   {
-    id: "region",
-    label: "Service Region",
-    description: "Geographic area you serve",
-    section: "professional_details",
-    points: 25,
-    isRequired: false,
-    tip: "Specify your service region to appear in relevant searches",
-    linkUrl: "/dashboard/profile",
-    linkLabel: "Set Region",
-  },
-  {
     id: "address",
     label: "Office Address",
     description: "Your primary office location",

@@ -26,7 +26,7 @@ export default async function EmailABTestsPage() {
           <FlaskConical className="h-6 w-6 text-repwell-teal-300" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-repwell-teal-500">Email A/B Tests</h1>
+          <h1 className="text-2xl font-bold tracking-tight font-display leading-tight text-heading">Email A/B Tests</h1>
           <p className="text-sm leading-snug text-repwell-teal-300">
             Create and manage A/B tests to optimize email performance
           </p>

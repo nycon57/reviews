@@ -1,23 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CircleNotch, Check, LinkSimple } from "@phosphor-icons/react";
-import {
-  getSmartLinkSettings,
-  updateSmartLinkSettings,
-} from "@/lib/share-studio/actions";
+import { CircleNotch, LinkSimple, Info } from "@phosphor-icons/react";
+import { getSmartLinkSettings } from "@/lib/share-studio/actions";
 
 export function SmartLinksTab() {
   const [ctaUrl, setCtaUrl] = useState("");
   const [ctaText, setCtaText] = useState("");
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getSmartLinkSettings()
@@ -29,32 +20,11 @@ export function SmartLinksTab() {
       })
       .catch((err) => {
         console.error("Failed to load smart link settings:", err);
-        setError("Failed to load settings. Please refresh the page.");
       })
       .finally(() => {
         setLoading(false);
       });
   }, []);
-
-  async function handleSave() {
-    setSaving(true);
-    setError(null);
-    setSaved(false);
-
-    const result = await updateSmartLinkSettings(
-      ctaUrl.trim() || null,
-      ctaText.trim() || null
-    );
-
-    setSaving(false);
-
-    if (!result.success) {
-      setError(result.error ?? "Failed to save settings");
-    } else {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    }
-  }
 
   if (loading) {
     return (
@@ -72,54 +42,31 @@ export function SmartLinksTab() {
           Smart Link Defaults
         </CardTitle>
         <CardDescription>
-          These settings apply to all new Smart Links you create. They also
-          appear on your professional profile page.
+          These settings appear on your Smart Links and professional profile page.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="cta-url">CTA Destination URL</Label>
-          <Input
-            id="cta-url"
-            type="url"
-            placeholder="https://yourwebsite.com/apply"
-            value={ctaUrl}
-            onChange={(e) => setCtaUrl(e.target.value)}
-          />
-          <p className="text-xs text-muted-foreground">
-            Where the call-to-action button sends visitors on your Smart Link pages.
+          <p className="text-sm font-medium text-muted-foreground">CTA Destination URL</p>
+          <p className="text-sm rounded-md border bg-muted/50 px-3 py-2">
+            {ctaUrl || <span className="text-muted-foreground italic">Not set</span>}
           </p>
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="cta-text">CTA Button Text</Label>
-          <Input
-            id="cta-text"
-            placeholder='e.g. "Get Started" or "Apply Now"'
-            value={ctaText}
-            onChange={(e) => setCtaText(e.target.value)}
-          />
+          <p className="text-sm font-medium text-muted-foreground">CTA Button Text</p>
+          <p className="text-sm rounded-md border bg-muted/50 px-3 py-2">
+            {ctaText || <span className="text-muted-foreground italic">Not set</span>}
+          </p>
         </div>
 
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
-
-        <Button onClick={handleSave} disabled={saving} className="gap-2">
-          {saving ? (
-            <>
-              <CircleNotch className="h-4 w-4 animate-spin" />
-              Saving…
-            </>
-          ) : saved ? (
-            <>
-              <Check className="h-4 w-4" weight="bold" />
-              Saved
-            </>
-          ) : (
-            "Save Settings"
-          )}
-        </Button>
+        <div className="flex items-start gap-2 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 p-3">
+          <Info className="h-4 w-4 text-repwell-teal-300 shrink-0 mt-0.5" />
+          <p className="text-xs text-repwell-teal-300">
+            CTA settings are managed from your Profile tab under Business Settings
+            (individual accounts) or by your organization admin (enterprise accounts).
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

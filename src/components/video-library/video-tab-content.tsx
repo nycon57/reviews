@@ -69,7 +69,7 @@ function VideoStatsCards() {
               <Icon className="h-5 w-5 text-repwell-teal-300" />
             </div>
             <div>
-              <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+              <p className="text-2xl font-semibold tracking-tight text-heading">
                 {stat.value}
               </p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -93,7 +93,7 @@ export function VideoTabContent() {
       <VideoStatsCards />
 
       <Card className="border border-border shadow-soft overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-3">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
@@ -190,9 +190,9 @@ export function VideoTabContent() {
               <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
               <div className="relative">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50">
-                  <AlertCircle className="h-7 w-7 text-repwell-teal-400" />
+                  <AlertCircle className="h-7 w-7 text-label" />
                 </div>
-                <p className="font-medium text-repwell-teal-500">No video reviews found</p>
+                <p className="font-medium text-heading">No video reviews found</p>
                 <p className="mt-1 text-sm text-repwell-teal-300">
                   Video reviews will appear here once customers submit them.
                 </p>

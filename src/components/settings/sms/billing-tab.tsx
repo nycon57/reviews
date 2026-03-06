@@ -80,7 +80,7 @@ export function SmsBillingTab() {
           <Warning weight="duotone" className="h-7 w-7 text-amber-500" />
         </div>
         <div>
-          <p className="text-lg font-semibold text-repwell-teal-500">SMS not configured</p>
+          <p className="text-lg font-semibold text-heading">SMS not configured</p>
           <p className="text-sm text-muted-foreground mt-1">
             Set up your Twilio credentials in the SMS tab before viewing billing.
           </p>
@@ -93,7 +93,7 @@ export function SmsBillingTab() {
     <motion.div initial="hidden" animate="show" variants={staggerContainer} className="space-y-8">
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading tracking-tight">
           SMS Billing
         </h2>
         <p className="text-repwell-teal-300 mt-1">
@@ -119,7 +119,7 @@ export function SmsBillingTab() {
                   Cost per review
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-bold text-repwell-teal-500 tabular-nums">
+                  <p className="text-2xl font-bold text-heading tabular-nums">
                     {formatCents(summary.averageCostPerReviewCents)}
                   </p>
                   <p className="text-xs text-repwell-teal-300">

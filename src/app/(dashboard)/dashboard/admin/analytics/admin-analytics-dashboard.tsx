@@ -83,15 +83,15 @@ function getInitials(name: string): string {
 function getPerformanceColor(status: string): string {
   switch (status) {
     case "excellent":
-      return "bg-green-100 text-green-700";
+      return "bg-green-100 text-green-700 dark:bg-green-950/30 dark:text-green-400";
     case "good":
-      return "bg-blue-100 text-blue-700";
+      return "bg-blue-100 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400";
     case "needs_attention":
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-yellow-100 text-yellow-700 dark:bg-yellow-950/30 dark:text-yellow-400";
     case "at_risk":
-      return "bg-red-100 text-red-700";
+      return "bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-muted text-foreground";
   }
 }
 
@@ -246,7 +246,7 @@ export function AdminAnalyticsDashboard() {
         {/* Review Distribution by Source */}
         <div className="lg:col-span-2">
           <Card className="shadow-soft">
-            <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+            <CardHeader className="pb-2">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                   <BarChart3 className="h-5 w-5 text-repwell-teal-300" />
@@ -294,7 +294,7 @@ export function AdminAnalyticsDashboard() {
 
         {/* Top Performers */}
         <Card className="shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Trophy className="h-5 w-5 text-repwell-teal-300" />
@@ -341,7 +341,7 @@ export function AdminAnalyticsDashboard() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Team Performance Distribution */}
         <Card className="shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <Users className="h-5 w-5 text-repwell-teal-300" />
@@ -405,7 +405,7 @@ export function AdminAnalyticsDashboard() {
 
         {/* Needs Attention */}
         <Card className="shadow-soft">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50 pb-2">
+          <CardHeader className="pb-2">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                 <AlertTriangle className="h-5 w-5 text-repwell-teal-300" />

@@ -367,7 +367,7 @@ export default async function ShareStudioPage() {
             <ShareNetwork className="h-6 w-6 text-repwell-teal-300" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-repwell-teal-500">Share Studio</h1>
+            <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading">Share Studio</h1>
             <p className="text-sm leading-snug text-repwell-teal-300">
               Operations center for queue throughput, Smart Links, templates, and analytics
             </p>

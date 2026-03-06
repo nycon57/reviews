@@ -74,7 +74,7 @@ export default async function LOListingPage() {
               const address = professional.address as { city?: string; state?: string } | null;
               const location = address
                 ? [address.city, address.state].filter(Boolean).join(", ")
-                : [professional.branch, professional.region].filter(Boolean).join(", ");
+                : professional.branch || "";
 
               return (
                 <Link key={professional.id} href={`/pro/${professional.slug}`}>

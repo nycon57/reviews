@@ -168,7 +168,7 @@ export function DistributionDashboard() {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
+          <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
             <Clock className="mr-1 h-3 w-3" />
             Pending
           </Badge>
@@ -242,7 +242,7 @@ export function DistributionDashboard() {
                 <Icon className="h-5 w-5 text-repwell-teal-300" />
               </div>
               <div>
-                <p className="text-2xl font-semibold tracking-tight text-repwell-teal-500">
+                <p className="text-2xl font-semibold tracking-tight text-heading">
                   {stat.value}
                 </p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
@@ -256,7 +256,7 @@ export function DistributionDashboard() {
       {/* Tabs for Queue and Recent Surveys */}
       <Card className="border border-border shadow-soft">
         <Tabs defaultValue="queue" className="w-full">
-          <CardHeader className="bg-gradient-to-r from-repwell-sage-100/30 to-transparent border-b border-border/50">
+          <CardHeader>
             <div className="flex items-center justify-between gap-4">
               <TabsList className="bg-transparent p-0 h-auto gap-1 flex-wrap">
                 <TabsTrigger value="queue" className="flex items-center gap-2 text-xs sm:text-sm">

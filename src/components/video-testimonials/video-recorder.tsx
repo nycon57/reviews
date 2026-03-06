@@ -131,8 +131,9 @@ export function VideoRecorder({
 
   // Handle confirm recording
   function handleConfirm(): void {
-    if (recordedBlob && finalDuration !== null) {
-      onRecordingComplete?.(recordedBlob, finalDuration);
+    if (recordedBlob) {
+      const duration = finalDuration ?? elapsedTime;
+      onRecordingComplete?.(recordedBlob, duration);
     }
   }
 
@@ -178,7 +179,7 @@ export function VideoRecorder({
               <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-repwell-teal-300/20">
                 <Camera className="h-10 w-10 text-repwell-teal-300" />
               </div>
-              <h3 className="mb-2 text-center font-sans text-lg font-semibold text-repwell-teal-500">
+              <h3 className="mb-2 text-center font-sans text-lg font-semibold text-heading">
                 Record Your Video Testimonial
               </h3>
               <p className="mb-6 max-w-sm text-center font-sans text-sm text-muted-foreground">
@@ -200,7 +201,7 @@ export function VideoRecorder({
           {status === "requesting" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-repwell-teal-500/10 p-6">
               <Loader2 className="mb-4 h-12 w-12 animate-spin text-repwell-teal-300" />
-              <p className="font-sans text-lg font-medium text-repwell-teal-500">
+              <p className="font-sans text-lg font-medium text-heading">
                 Requesting camera access...
               </p>
               <p className="mt-2 font-sans text-sm text-muted-foreground">

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -18,6 +18,7 @@ import { GoogleIntegrationCard } from '@/components/google/google-integration-ca
 import { SocialIntegrationCard } from '@/components/social';
 import { SlackIntegrationCard, TeamsIntegrationCard } from '@/components/integrations';
 import { fadeInUp, staggerContainer } from '@/lib/motion/variants';
+import { getOrgIntegrationSettings, type OrgIntegrations } from '@/lib/organization';
 
 function IntegrationCardSkeleton() {
   return (
@@ -44,18 +45,18 @@ interface QuickActionButtonProps {
 function QuickActionButton({ icon, title, description, href, onClick }: QuickActionButtonProps) {
   const content = (
     <>
-      <div className="p-2 rounded-lg bg-repwell-sage-100/50 group-hover:bg-repwell-sage-200/50 transition-colors">
+      <div className="p-2 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 group-hover:bg-repwell-sage-200/50 transition-colors">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-repwell-teal-500">{title}</p>
+        <p className="text-sm font-medium text-heading-accent">{title}</p>
         <p className="text-xs text-repwell-teal-300 truncate">{description}</p>
       </div>
       <ArrowRight className="h-4 w-4 text-repwell-teal-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
     </>
   );
 
-  const className = "w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 hover:bg-repwell-sage-100/50 transition-colors text-left group";
+  const className = "w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10 hover:bg-repwell-sage-100/50 dark:hover:bg-repwell-teal-300/10 transition-colors text-left group";
 
   if (href) {
     return (
@@ -72,7 +73,74 @@ function QuickActionButton({ icon, title, description, href, onClick }: QuickAct
   );
 }
 
+function isEnabled(integrations: OrgIntegrations | null, key: keyof OrgIntegrations): boolean {
+  if (!integrations) return true; // default all enabled until loaded
+  return integrations[key]?.enabled !== false;
+}
+
+function EmptyState() {
+  return (
+    <Card className="border-2 border-dashed border-border/60">
+      <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15 mb-4">
+          <PlugsConnected weight="duotone" className="h-7 w-7 text-repwell-teal-300" />
+        </div>
+        <h3 className="text-lg font-semibold text-heading-accent">
+          No Integrations Available
+        </h3>
+        <p className="mt-2 max-w-sm text-sm text-repwell-teal-300">
+          Your organization administrator has not enabled any integrations. Contact your admin to request access.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function IntegrationsTab() {
+  const [integrations, setIntegrations] = useState<OrgIntegrations | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    getOrgIntegrationSettings().then(({ integrations: data, error }) => {
+      if (!error && data) {
+        setIntegrations(data);
+      }
+      // On error (e.g. individual user with no org) → integrations stays null → all shown
+      setLoaded(true);
+    });
+  }, []);
+
+  const googleEnabled = isEnabled(integrations, 'google');
+  const socialEnabled = isEnabled(integrations, 'social');
+  const slackEnabled = isEnabled(integrations, 'slack');
+  const teamsEnabled = isEnabled(integrations, 'teams');
+
+  const anyEnabled = googleEnabled || socialEnabled || slackEnabled || teamsEnabled;
+
+  // Show empty state only after loading confirms all are disabled
+  if (loaded && !anyEnabled) {
+    return (
+      <motion.div
+        initial="hidden"
+        animate="show"
+        variants={staggerContainer}
+        className="space-y-8"
+      >
+        <motion.div variants={fadeInUp}>
+          <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
+            Connected Services
+          </h2>
+          <p className="text-repwell-teal-300 mt-1">
+            Manage integrations with external platforms to sync reviews, publish testimonials, and more.
+          </p>
+        </motion.div>
+        <motion.div variants={fadeInUp}>
+          <EmptyState />
+        </motion.div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial="hidden"
@@ -82,7 +150,7 @@ export function IntegrationsTab() {
     >
       {/* Header */}
       <motion.div variants={fadeInUp}>
-        <h2 className="font-display text-2xl font-bold text-repwell-teal-500 tracking-tight">
+        <h2 className="font-display text-2xl font-bold text-heading-accent tracking-tight">
           Connected Services
         </h2>
         <p className="text-repwell-teal-300 mt-1">
@@ -112,17 +180,23 @@ export function IntegrationsTab() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className="bg-white/20 text-white border-white/30 border">
-                        <GoogleLogo weight="bold" className="h-3 w-3 mr-1" />
-                        Google
-                      </Badge>
-                      <Badge className="bg-white/20 text-white border-white/30 border">
-                        <SlackLogo weight="bold" className="h-3 w-3 mr-1" />
-                        Slack
-                      </Badge>
-                      <Badge className="bg-white/20 text-white border-white/30 border">
-                        Social
-                      </Badge>
+                      {googleEnabled && (
+                        <Badge className="bg-white/20 text-white border-white/30 border">
+                          <GoogleLogo weight="bold" className="h-3 w-3 mr-1" />
+                          Google
+                        </Badge>
+                      )}
+                      {slackEnabled && (
+                        <Badge className="bg-white/20 text-white border-white/30 border">
+                          <SlackLogo weight="bold" className="h-3 w-3 mr-1" />
+                          Slack
+                        </Badge>
+                      )}
+                      {socialEnabled && (
+                        <Badge className="bg-white/20 text-white border-white/30 border">
+                          Social
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -135,57 +209,69 @@ export function IntegrationsTab() {
           </motion.div>
 
           {/* Integration Cards */}
-          <motion.div variants={fadeInUp}>
-            <Suspense fallback={<IntegrationCardSkeleton />}>
-              <GoogleIntegrationCard />
-            </Suspense>
-          </motion.div>
+          {googleEnabled && (
+            <motion.div variants={fadeInUp}>
+              <Suspense fallback={<IntegrationCardSkeleton />}>
+                <GoogleIntegrationCard />
+              </Suspense>
+            </motion.div>
+          )}
 
-          <motion.div variants={fadeInUp}>
-            <Suspense fallback={<IntegrationCardSkeleton />}>
-              <SocialIntegrationCard />
-            </Suspense>
-          </motion.div>
+          {socialEnabled && (
+            <motion.div variants={fadeInUp}>
+              <Suspense fallback={<IntegrationCardSkeleton />}>
+                <SocialIntegrationCard />
+              </Suspense>
+            </motion.div>
+          )}
 
-          <motion.div variants={fadeInUp}>
-            <Suspense fallback={<IntegrationCardSkeleton />}>
-              <SlackIntegrationCard />
-            </Suspense>
-          </motion.div>
+          {slackEnabled && (
+            <motion.div variants={fadeInUp}>
+              <Suspense fallback={<IntegrationCardSkeleton />}>
+                <SlackIntegrationCard />
+              </Suspense>
+            </motion.div>
+          )}
 
-          <motion.div variants={fadeInUp}>
-            <Suspense fallback={<IntegrationCardSkeleton />}>
-              <TeamsIntegrationCard />
-            </Suspense>
-          </motion.div>
+          {teamsEnabled && (
+            <motion.div variants={fadeInUp}>
+              <Suspense fallback={<IntegrationCardSkeleton />}>
+                <TeamsIntegrationCard />
+              </Suspense>
+            </motion.div>
+          )}
         </div>
 
         {/* Right Column - Quick Actions */}
         <motion.div variants={fadeInUp}>
           <Card className="h-fit border-border/50 sticky top-6">
             <CardContent className="p-6 space-y-4">
-              <h4 className="font-semibold text-repwell-teal-500">Quick Connect</h4>
+              <h4 className="font-semibold text-heading-accent">Quick Connect</h4>
 
               <div className="space-y-3">
-                <QuickActionButton
-                  icon={<GoogleLogo weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
-                  title="Connect Google"
-                  description="Sync Google Business reviews"
-                  onClick={() => {
-                    const element = document.querySelector('[data-integration="google"]');
-                    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                />
+                {googleEnabled && (
+                  <QuickActionButton
+                    icon={<GoogleLogo weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
+                    title="Connect Google"
+                    description="Sync Google Business reviews"
+                    onClick={() => {
+                      const element = document.querySelector('[data-integration="google"]');
+                      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                  />
+                )}
 
-                <QuickActionButton
-                  icon={<SlackLogo weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
-                  title="Connect Slack"
-                  description="Get review notifications"
-                  onClick={() => {
-                    const element = document.querySelector('[data-integration="slack"]');
-                    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                />
+                {slackEnabled && (
+                  <QuickActionButton
+                    icon={<SlackLogo weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
+                    title="Connect Slack"
+                    description="Get review notifications"
+                    onClick={() => {
+                      const element = document.querySelector('[data-integration="slack"]');
+                      element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
+                  />
+                )}
 
                 <QuickActionButton
                   icon={<ExternalLink weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
@@ -197,7 +283,7 @@ export function IntegrationsTab() {
 
               {/* Integration Benefits */}
               <div className="pt-4 border-t border-border/50 space-y-3">
-                <p className="text-xs font-medium text-repwell-teal-500">Why Connect?</p>
+                <p className="text-xs font-medium text-heading-accent">Why Connect?</p>
                 <ul className="space-y-2">
                   {[
                     'Auto-sync reviews from Google',

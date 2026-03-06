@@ -51,7 +51,7 @@ export function IframeGuide() {
   return (
     <IntegrationCard
       id="iframe"
-      icon={<MonitorSmartphone size={20} className="text-repwell-teal-500" />}
+      icon={<MonitorSmartphone size={20} className="text-heading" />}
       title="Iframe Embed"
       description="For platforms that restrict script tags. Works on any site that allows iframes."
     >

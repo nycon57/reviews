@@ -264,7 +264,7 @@ export async function createVideoTestimonialRequest(
       .eq("organization_id", userData.organization_id)
       .eq("user_id", validated.data.loanOfficerId)
       .eq("customer_email", validated.data.customerEmail)
-      .in("status", ["pending", "sent", "opened", "recording"])
+      .in("status", ["pending", "queued", "sent", "opened", "recording"])
       .limit(1)
       .single();
 
@@ -285,6 +285,8 @@ export async function createVideoTestimonialRequest(
     // Calculate expiration (14 days from scheduled send)
     const expiresAt = new Date(scheduledAt);
     expiresAt.setDate(expiresAt.getDate() + 14);
+    const nowIso = new Date().toISOString();
+    const initialStatus = validated.data.sendImmediately ? "pending" : "queued";
 
     // Create the video testimonial request
     const { data: request, error: requestError } = await supabase
@@ -301,9 +303,14 @@ export async function createVideoTestimonialRequest(
         transaction_date: validated.data.transactionDate || null,
         max_duration_seconds: validated.data.maxDurationSeconds,
         prompt_text: validated.data.promptText || null,
-        status: "pending",
+        status: initialStatus,
         expires_at: expiresAt.toISOString(),
         source: "manual",
+        last_transition_at: nowIso,
+        last_transition_source: "dashboard_create",
+        last_transition_reason: validated.data.sendImmediately
+          ? "Request created for immediate send"
+          : "Request created and queued for scheduled send",
         source_metadata: {
           created_by: user.id,
           send_immediately: validated.data.sendImmediately,
@@ -351,6 +358,16 @@ export async function createVideoTestimonialRequest(
           });
         if (!queueError) {
           emailStatus = "queued";
+          await supabase
+            .from("video_testimonial_requests")
+            .update({
+              status: "queued",
+              last_transition_at: new Date().toISOString(),
+              last_transition_source: "queue_fallback",
+              last_transition_reason: "Immediate send failed; request queued",
+            } as Record<string, unknown>)
+            .eq("id", request.id)
+            .eq("status", "pending");
         }
         console.error("[VideoTestimonial] Queue fallback result", { queueError: queueError?.message, emailStatus });
       }
@@ -368,6 +385,15 @@ export async function createVideoTestimonialRequest(
         });
       if (!queueError) {
         emailStatus = "queued";
+        await supabase
+          .from("video_testimonial_requests")
+          .update({
+            status: "queued",
+            last_transition_at: new Date().toISOString(),
+            last_transition_source: "queue_schedule",
+            last_transition_reason: "Request queued for scheduled delivery",
+          } as Record<string, unknown>)
+          .eq("id", request.id);
       }
     }
 
@@ -747,6 +773,7 @@ export async function getVideoTestimonialRequestStats(params?: {
     for (const req of requests ?? []) {
       switch (req.status) {
         case "pending":
+        case "queued":
           stats.pending++;
           break;
         case "sent":
@@ -755,6 +782,7 @@ export async function getVideoTestimonialRequestStats(params?: {
           stats.sent++;
           break;
         case "submitted":
+        case "completed":
           stats.completed++;
           break;
         case "expired":

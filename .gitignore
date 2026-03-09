@@ -81,6 +81,7 @@ public/embed.min.js.map
 # Misc
 *.pem
 .turbo
+.worktrees/
 
 # docs
 docs/

@@ -168,6 +168,19 @@ function isEnterpriseAdmin(record: Record<string, unknown>): boolean {
   return org?.account_type === "enterprise";
 }
 
+export function sanitizePublicAddress(
+  address: DirectoryProfessional["address"]
+): DirectoryProfessional["address"] {
+  if (!address || (!address.city && !address.state)) {
+    return null;
+  }
+
+  return {
+    city: address.city,
+    state: address.state,
+  };
+}
+
 /** Transform a raw DB record into a DirectoryProfessional */
 function transformRecord(
   record: Record<string, unknown>,
@@ -208,13 +221,9 @@ function transformRecord(
       ? { id: indivOrg.id, name: indivOrg.name, slug: indivOrg.slug, logo_url: null, industry: null }
       : null;
 
-  const address = record.address as DirectoryProfessional["address"];
-  const safeAddress = address
-    ? {
-        city: address.city,
-        state: address.state,
-      }
-    : null;
+  const safeAddress = sanitizePublicAddress(
+    record.address as DirectoryProfessional["address"]
+  );
 
   return {
     id: record.id as string,

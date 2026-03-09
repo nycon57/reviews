@@ -41,6 +41,14 @@ async function getBaseUrl(): Promise<string> {
 }
 
 /**
+ * Trusted app URL for security-sensitive links (e.g. password reset emails).
+ * Must never be derived from request headers.
+ */
+function getTrustedAppUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
+}
+
+/**
  * Sign up with email and password using Better Auth
  * Creates user, organization, and sets up membership
  */
@@ -244,13 +252,13 @@ export async function resetPasswordBetterAuth(
 
   try {
     // Call the forget password endpoint directly
-    const baseUrl = await getBaseUrl();
-    const response = await fetch(`${baseUrl}/api/auth/forget-password`, {
+    const appUrl = getTrustedAppUrl();
+    const response = await fetch(`${appUrl}/api/auth/forget-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email,
-        redirectTo: `${baseUrl}/reset-password`,
+        redirectTo: `${appUrl}/reset-password`,
       }),
     });
 

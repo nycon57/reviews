@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/types/database.types";
 import type { IndustryType } from "@/lib/industry/types";
+import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
 
 type User = Tables<"users">;
 type Organization = Tables<"organizations">;
@@ -205,55 +206,52 @@ export async function getPublicLOProfile(
     const lookupField = isUUID(slugOrId) ? "id" : "slug";
 
     // Fetch the user (professional)
-    const { data: user, error: userError } = await supabase
-      .from("users")
-      .select(
+    const { data: user, error: userError } = await applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select(
+          `
+          id,
+          slug,
+          full_name,
+          title,
+          bio,
+          photo_url,
+          avatar_url,
+          email,
+          phone,
+          branch,
+          branch_id,
+          nmls_id,
+          address,
+          linkedin_url,
+          zillow_profile_url,
+          facebook_url,
+          instagram_url,
+          twitter_url,
+          personal_website_url,
+          average_rating,
+          total_reviews,
+          nps_score,
+          is_active,
+          organization_id,
+          individual_organization_id,
+          individual_branch_id,
+          banner_url,
+          cta_button_text,
+          cta_button_url,
+          video_testimonial_url,
+          video_thumbnail_url,
+          accepts_public_reviews,
+          referral_enabled,
+          featured_review_ids,
+          industry,
+          latitude,
+          longitude
         `
-        id,
-        slug,
-        full_name,
-        title,
-        bio,
-        photo_url,
-        avatar_url,
-        email,
-        phone,
-        branch,
-        branch_id,
-        nmls_id,
-        address,
-        linkedin_url,
-        zillow_profile_url,
-        facebook_url,
-        instagram_url,
-        twitter_url,
-        personal_website_url,
-        average_rating,
-        total_reviews,
-        nps_score,
-        is_active,
-        organization_id,
-        individual_organization_id,
-        individual_branch_id,
-        banner_url,
-        cta_button_text,
-        cta_button_url,
-        video_testimonial_url,
-        video_thumbnail_url,
-        accepts_public_reviews,
-        referral_enabled,
-        featured_review_ids,
-        industry,
-        latitude,
-        longitude
-      `
-      )
+        )
+    )
       .eq(lookupField, slugOrId)
-      .eq("is_active", true)
-      .eq("accepts_public_reviews", true)
-      .neq("role", "admin")
-      .neq("role", "manager")
-      .neq("role", "enterprise")
       .single();
 
     if (userError || !user) {
@@ -507,45 +505,41 @@ export async function getPublicLOList(
     }
 
     // Build the query - fetch users with professional roles
-    let query = supabase
-      .from("users")
-      .select(
+    let query = applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select(
+          `
+          id,
+          slug,
+          full_name,
+          title,
+          bio,
+          photo_url,
+          avatar_url,
+          email,
+          phone,
+          branch,
+          nmls_id,
+          address,
+          linkedin_url,
+          zillow_profile_url,
+          facebook_url,
+          instagram_url,
+          twitter_url,
+          personal_website_url,
+          average_rating,
+          total_reviews,
+          nps_score,
+          latitude,
+          longitude,
+          organizations (
+            account_type,
+            subscription_tier
+          )
         `
-        id,
-        slug,
-        full_name,
-        title,
-        bio,
-        photo_url,
-        avatar_url,
-        email,
-        phone,
-        branch,
-        nmls_id,
-        address,
-        linkedin_url,
-        zillow_profile_url,
-        facebook_url,
-        instagram_url,
-        twitter_url,
-        personal_website_url,
-        average_rating,
-        total_reviews,
-        nps_score,
-        latitude,
-        longitude,
-        organizations (
-          account_type,
-          subscription_tier
         )
-      `
-      )
-      .eq("is_active", true)
-      .eq("accepts_public_reviews", true)
-      .neq("role", "admin")
-      .neq("role", "manager")
-      .neq("role", "enterprise")
-      .order("average_rating", { ascending: false, nullsFirst: false });
+    ).order("average_rating", { ascending: false, nullsFirst: false });
 
     if (organizationId) {
       query = query.eq("organization_id", organizationId);
@@ -591,10 +585,11 @@ export async function getAllPublicLOIds(): Promise<string[]> {
   try {
     const supabase = createAdminClient();
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("id")
-      .eq("is_active", true);
+    const { data, error } = await applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select("id")
+    );
 
     if (error || !data) {
       return [];
@@ -614,11 +609,11 @@ export async function getAllPublicUserSlugs(): Promise<string[]> {
   try {
     const supabase = createAdminClient();
 
-    const { data, error } = await supabase
-      .from("users")
-      .select("slug")
-      .eq("is_active", true)
-      .not("slug", "is", null);
+    const { data, error } = await applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select("slug")
+    ).not("slug", "is", null);
 
     if (error || !data) {
       return [];
@@ -720,26 +715,26 @@ export async function getPublicBranchProfile(
     const redirectSlug = (lookupField === "id" && branch.global_slug) ? branch.global_slug : undefined;
 
     // Fetch professionals at this branch (excluding enterprise admins)
-    const { data: branchUsers } = await supabase
-      .from("users")
-      .select(
+    const { data: branchUsers } = await applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select(
+          `
+          id,
+          slug,
+          full_name,
+          title,
+          photo_url,
+          avatar_url,
+          email,
+          phone,
+          nmls_id,
+          average_rating,
+          total_reviews
         `
-        id,
-        slug,
-        full_name,
-        title,
-        photo_url,
-        avatar_url,
-        email,
-        phone,
-        nmls_id,
-        average_rating,
-        total_reviews
-      `
-      )
+        )
+    )
       .eq("branch_id", branch.id)
-      .eq("is_active", true)
-      .neq("role", "admin")
       .order("average_rating", { ascending: false, nullsFirst: false })
       .limit(50);
 

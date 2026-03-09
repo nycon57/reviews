@@ -130,6 +130,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!["admin", "manager"].includes(membership.role)) {
+      return NextResponse.json(
+        { error: "Insufficient permissions - requires manager or admin role" },
+        { status: 403 }
+      );
+    }
+
     // Check organization's video generation quota (if applicable)
     const quotaCheck = await checkRenderQuota(renderRequest.organizationId);
     if (!quotaCheck.allowed) {

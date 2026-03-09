@@ -218,6 +218,7 @@ async function getVideoTestimonialProps(
       )
     `)
     .eq("id", request.videoResponseId)
+    .eq("organization_id", request.organizationId)
     .single();
 
   if (error || !response) {
@@ -299,6 +300,7 @@ async function getTextTestimonialProps(
       )
     `)
     .eq("id", request.testimonialId)
+    .eq("organization_id", request.organizationId)
     .single();
 
   if (error || !testimonial) {
@@ -554,6 +556,7 @@ async function getSocialClipProps(
         )
       `)
       .eq("id", request.sourceId)
+      .eq("organization_id", request.organizationId)
       .single();
 
     if (data) {
@@ -566,6 +569,7 @@ async function getSocialClipProps(
       .from("reviews")
       .select("text, customer_name, rating")
       .eq("id", request.sourceId)
+      .eq("organization_id", request.organizationId)
       .single();
 
     if (data) {
@@ -618,6 +622,7 @@ async function getVideoThumbnailProps(
       )
     `)
     .eq("id", request.videoResponseId)
+    .eq("organization_id", request.organizationId)
     .single();
 
   if (error || !response) {

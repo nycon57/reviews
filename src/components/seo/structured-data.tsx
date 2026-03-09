@@ -1,19 +1,23 @@
 /**
  * Component to render JSON-LD structured data
  *
- * This uses dangerouslySetInnerHTML which is safe here because:
- * 1. The data is serialized via JSON.stringify() which escapes special characters
- * 2. The content type is application/ld+json, not HTML
- * 3. The data is generated from our validated database records, not user input
+ * This uses dangerouslySetInnerHTML with explicit escaping for script-breaking
+ * characters to prevent XSS via payloads like </script><script>...</script>.
  */
+
+function safeJsonLdStringify(data: object | object[]): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
 
 interface StructuredDataProps {
   data: object | object[];
 }
 
 export function StructuredData({ data }: StructuredDataProps) {
-  // JSON.stringify safely escapes any special characters
-  const jsonString = JSON.stringify(data);
+  const jsonString = safeJsonLdStringify(data);
 
   return (
     <script
@@ -35,8 +39,7 @@ export function MultiSchemaStructuredData({ schemas }: MultiSchemaProps) {
   return (
     <>
       {schemas.map((schema, index) => {
-        // JSON.stringify safely escapes any special characters
-        const jsonString = JSON.stringify(schema);
+        const jsonString = safeJsonLdStringify(schema);
 
         return (
           <script

@@ -280,6 +280,10 @@ export async function searchProfessionals(
           .from("users")
           .select(PROFESSIONAL_SELECT)
           .eq("is_active", true)
+          .eq("accepts_public_reviews", true)
+          .neq("role", "admin")
+          .neq("role", "manager")
+          .neq("role", "enterprise")
           .in("id", radiusIds);
 
         if (filters.organizationId) radiusQuery = radiusQuery.eq("organization_id", filters.organizationId);
@@ -346,7 +350,11 @@ export async function searchProfessionals(
     let query = supabase
       .from("users")
       .select(PROFESSIONAL_SELECT, { count: "exact" })
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("accepts_public_reviews", true)
+      .neq("role", "admin")
+      .neq("role", "manager")
+      .neq("role", "enterprise");
 
     if (filters.organizationId) {
       query = query.eq("organization_id", filters.organizationId);

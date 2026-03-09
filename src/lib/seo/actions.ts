@@ -250,6 +250,10 @@ export async function getPublicLOProfile(
       )
       .eq(lookupField, slugOrId)
       .eq("is_active", true)
+      .eq("accepts_public_reviews", true)
+      .neq("role", "admin")
+      .neq("role", "manager")
+      .neq("role", "enterprise")
       .single();
 
     if (userError || !user) {
@@ -537,6 +541,10 @@ export async function getPublicLOList(
       `
       )
       .eq("is_active", true)
+      .eq("accepts_public_reviews", true)
+      .neq("role", "admin")
+      .neq("role", "manager")
+      .neq("role", "enterprise")
       .order("average_rating", { ascending: false, nullsFirst: false });
 
     if (organizationId) {

@@ -31,16 +31,6 @@ function slugify(text: string): string {
 }
 
 /**
- * Get base URL from request headers (handles any port in dev or prod domain)
- */
-async function getBaseUrl(): Promise<string> {
-  const headersList = await headers();
-  const host = headersList.get("host") || "localhost:3000";
-  const protocol = headersList.get("x-forwarded-proto") || "http";
-  return `${protocol}://${host}`;
-}
-
-/**
  * Trusted app URL for security-sensitive links (e.g. password reset emails).
  * Must never be derived from request headers.
  */
@@ -206,9 +196,9 @@ export async function signInWithMagicLinkBetterAuth(
 
   try {
     // Call the magic link endpoint directly
-    const baseUrl = await getBaseUrl();
+    const appUrl = getTrustedAppUrl();
     const response = await fetch(
-      `${baseUrl}/api/auth/sign-in/magic-link`,
+      `${appUrl}/api/auth/sign-in/magic-link`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -383,9 +373,9 @@ export async function resendVerificationEmailBetterAuth(): Promise<AuthResult> {
     }
 
     // Call the send verification email endpoint directly
-    const baseUrl = await getBaseUrl();
+    const appUrl = getTrustedAppUrl();
     const response = await fetch(
-      `${baseUrl}/api/auth/send-verification-email`,
+      `${appUrl}/api/auth/send-verification-email`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

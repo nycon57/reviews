@@ -28,6 +28,68 @@ import type {
   ActionResult,
 } from './types';
 import { ensureSmartLinkForSource } from '@/lib/share-studio/service';
+import { createHmac, timingSafeEqual } from 'crypto';
+
+const OAUTH_STATE_MAX_AGE_MS = 5 * 60 * 1000;
+
+type SignedOAuthStatePayload = {
+  platform: SocialPlatform;
+  organizationId: string;
+  userId: string;
+  timestamp: number;
+};
+
+function getOAuthStateSigningSecret(): string {
+  const secret = process.env.SOCIAL_OAUTH_STATE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) {
+    throw new Error('Missing SOCIAL_OAUTH_STATE_SECRET or SUPABASE_SERVICE_ROLE_KEY');
+  }
+
+  return secret;
+}
+
+function signOAuthState(payload: SignedOAuthStatePayload): string {
+  const payloadEncoded = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = createHmac('sha256', getOAuthStateSigningSecret())
+    .update(payloadEncoded)
+    .digest('base64url');
+
+  return `${payloadEncoded}.${signature}`;
+}
+
+function verifyAndDecodeOAuthState(state: string): SignedOAuthStatePayload | null {
+  const [payloadEncoded, signature] = state.split('.');
+
+  if (!payloadEncoded || !signature) {
+    return null;
+  }
+
+  const expectedSignature = createHmac('sha256', getOAuthStateSigningSecret())
+    .update(payloadEncoded)
+    .digest('base64url');
+
+  const providedBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expectedSignature);
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return null;
+  }
+
+  if (!timingSafeEqual(providedBuffer, expectedBuffer)) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(payloadEncoded, 'base64url').toString()) as SignedOAuthStatePayload;
+
+    if (!parsed.organizationId || !parsed.userId || !parsed.platform || typeof parsed.timestamp !== 'number') {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -158,15 +220,13 @@ export async function initiateSocialOAuth(
     return { success: false, error: 'Unauthorized - Manager role required' };
   }
 
-  // Create state with organization info
-  const state = Buffer.from(
-    JSON.stringify({
-      platform,
-      organizationId: context.organizationId,
-      userId: context.userId,
-      timestamp: Date.now(),
-    })
-  ).toString('base64url');
+  // Create signed state with organization info
+  const state = signOAuthState({
+    platform,
+    organizationId: context.organizationId,
+    userId: context.userId,
+    timestamp: Date.now(),
+  });
 
   const url = getAuthorizationUrl(platform, state);
 
@@ -180,12 +240,20 @@ export async function handleSocialOAuthCallback(
   state: string
 ): Promise<ActionResult<{ connectionId: string; needsPageSelection?: boolean; pages?: Array<{ id: string; name: string }> }>> {
   try {
-    // Decode state
-    const stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
+    // Verify and decode state
+    const stateData = verifyAndDecodeOAuthState(state);
+    if (!stateData) {
+      return { success: false, error: 'Invalid OAuth state' };
+    }
+
+    if (stateData.platform !== platform) {
+      return { success: false, error: 'OAuth state platform mismatch' };
+    }
+
     const { organizationId } = stateData;
 
     // Validate timestamp (5 minute expiry)
-    if (Date.now() - stateData.timestamp > 5 * 60 * 1000) {
+    if (Date.now() - stateData.timestamp > OAUTH_STATE_MAX_AGE_MS) {
       return { success: false, error: 'OAuth session expired' };
     }
 

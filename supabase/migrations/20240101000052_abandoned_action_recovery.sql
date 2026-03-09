@@ -155,7 +155,29 @@ RETURNS UUID AS $$
 DECLARE
   v_action_id UUID;
   v_existing_id UUID;
+  v_user_org_id UUID;
 BEGIN
+  -- Only the action owner (or service role) can track starts
+  IF auth.role() <> 'service_role' AND auth.uid() IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Unauthorized to track action for another user'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- Validate user organization scope
+  SELECT organization_id INTO v_user_org_id
+  FROM users
+  WHERE id = p_user_id;
+
+  IF v_user_org_id IS NULL THEN
+    RAISE EXCEPTION 'User not found'
+      USING ERRCODE = '22023';
+  END IF;
+
+  IF v_user_org_id <> p_organization_id THEN
+    RAISE EXCEPTION 'Organization does not match user organization'
+      USING ERRCODE = '42501';
+  END IF;
+
   -- Check for existing active action of same type
   SELECT id INTO v_existing_id
   FROM abandoned_actions
@@ -198,7 +220,7 @@ BEGIN
 
   RETURN v_action_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Function to mark an action as completed
 CREATE OR REPLACE FUNCTION track_action_completed(
@@ -210,6 +232,12 @@ DECLARE
   v_action_id UUID;
   v_previous_status TEXT;
 BEGIN
+  -- Only the action owner (or service role) can mark completion
+  IF auth.role() <> 'service_role' AND auth.uid() IS DISTINCT FROM p_user_id THEN
+    RAISE EXCEPTION 'Unauthorized to complete action for another user'
+      USING ERRCODE = '42501';
+  END IF;
+
   -- Find the active action
   SELECT id, status INTO v_action_id, v_previous_status
   FROM abandoned_actions
@@ -235,7 +263,7 @@ BEGIN
 
   RETURN TRUE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Function to get actions ready for recovery email 1 (1 hour after start)
 CREATE OR REPLACE FUNCTION get_actions_for_recovery_email_1(
@@ -251,6 +279,12 @@ RETURNS TABLE (
   started_at TIMESTAMPTZ
 ) AS $$
 BEGIN
+  -- Queue processing is service-only
+  IF auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'Unauthorized to access recovery email queue'
+      USING ERRCODE = '42501';
+  END IF;
+
   RETURN QUERY
   SELECT
     aa.id,
@@ -270,7 +304,7 @@ BEGIN
   ORDER BY aa.started_at ASC
   LIMIT p_batch_size;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Function to get actions ready for recovery email 2 (24 hours after start)
 CREATE OR REPLACE FUNCTION get_actions_for_recovery_email_2(
@@ -286,6 +320,12 @@ RETURNS TABLE (
   started_at TIMESTAMPTZ
 ) AS $$
 BEGIN
+  -- Queue processing is service-only
+  IF auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'Unauthorized to access recovery email queue'
+      USING ERRCODE = '42501';
+  END IF;
+
   RETURN QUERY
   SELECT
     aa.id,
@@ -306,7 +346,7 @@ BEGIN
   ORDER BY aa.started_at ASC
   LIMIT p_batch_size;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- Function to expire old abandoned actions (after 7 days without completion)
 CREATE OR REPLACE FUNCTION expire_old_abandoned_actions()
@@ -314,6 +354,12 @@ RETURNS INTEGER AS $$
 DECLARE
   v_count INTEGER;
 BEGIN
+  -- Expiration is service-only
+  IF auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'Unauthorized to expire abandoned actions'
+      USING ERRCODE = '42501';
+  END IF;
+
   UPDATE abandoned_actions
   SET status = 'expired',
       expired_at = NOW(),
@@ -324,7 +370,20 @@ BEGIN
   GET DIAGNOSTICS v_count = ROW_COUNT;
   RETURN v_count;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Restrict function execution privileges explicitly
+REVOKE EXECUTE ON FUNCTION track_action_started(UUID, UUID, TEXT, JSONB, TEXT) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION track_action_completed(UUID, TEXT) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION get_actions_for_recovery_email_1(INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION get_actions_for_recovery_email_2(INTEGER) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION expire_old_abandoned_actions() FROM PUBLIC, anon, authenticated;
+
+GRANT EXECUTE ON FUNCTION track_action_started(UUID, UUID, TEXT, JSONB, TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION track_action_completed(UUID, TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION get_actions_for_recovery_email_1(INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION get_actions_for_recovery_email_2(INTEGER) TO service_role;
+GRANT EXECUTE ON FUNCTION expire_old_abandoned_actions() TO service_role;
 
 -- =============================================================================
 -- 6. Comments for documentation

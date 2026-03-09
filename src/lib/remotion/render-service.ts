@@ -352,6 +352,7 @@ async function getLeaderboardCelebrationProps(
       .from("users")
       .select("id, full_name, photo_url")
       .eq("id", request.userId)
+      .eq("organization_id", request.organizationId)
       .single();
 
     // Fetch their stats
@@ -359,6 +360,7 @@ async function getLeaderboardCelebrationProps(
       .from("leaderboard_snapshots")
       .select("reputation_score, rank, total_reviews, average_rating")
       .eq("user_id", request.userId)
+      .eq("organization_id", request.organizationId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();

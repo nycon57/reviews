@@ -124,8 +124,6 @@ const PROFESSIONAL_SELECT = `
   title,
   bio,
   photo_url,
-  email,
-  phone,
   branch,
   branch_id,
   nmls_id,
@@ -210,6 +208,14 @@ function transformRecord(
       ? { id: indivOrg.id, name: indivOrg.name, slug: indivOrg.slug, logo_url: null, industry: null }
       : null;
 
+  const address = record.address as DirectoryProfessional["address"];
+  const safeAddress = address
+    ? {
+        city: address.city,
+        state: address.state,
+      }
+    : null;
+
   return {
     id: record.id as string,
     slug: record.slug as string | null,
@@ -217,12 +223,12 @@ function transformRecord(
     title: record.title as string | null,
     bio: record.bio as string | null,
     photo_url: record.photo_url as string | null,
-    email: record.email as string | null,
-    phone: record.phone as string | null,
+    email: null,
+    phone: null,
     branch: record.branch as string | null,
     branch_id: record.branch_id as string | null,
     nmls_id: record.nmls_id as string | null,
-    address: record.address as DirectoryProfessional["address"],
+    address: safeAddress,
     linkedin_url: record.linkedin_url as string | null,
     average_rating: record.average_rating as number | null,
     total_reviews: record.total_reviews as number | null,

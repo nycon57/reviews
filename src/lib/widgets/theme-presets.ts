@@ -110,7 +110,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePresetConfig> = {
   },
 
   brand_match: {
-    label: "Brand Match",
+    label: "Your Brand",
     colors: {
       primary: "#52796f",
       secondary: "#354f52",
@@ -133,7 +133,7 @@ export const THEME_PRESETS: Record<ThemePresetKey, ThemePresetConfig> = {
       shadow: "sm",
       cardStyle: "bordered",
     },
-    preview: { bg: "#f8faf8", accent: "#52796f", text: "#2f3e46" },
+    preview: { bg: "#f5f5f5", accent: "#9ca3af", text: "#6b7280" },
   },
 
   mortgage_classic: {
@@ -279,9 +279,9 @@ export function getPreset(key: string): ThemePresetConfig {
 
 /** All preset keys in display order */
 export const PRESET_KEYS: ThemePresetKey[] = [
+  "brand_match",
   "clean_white",
   "dark",
-  "brand_match",
   "mortgage_classic",
   "modern_minimal",
   "trust_badge",

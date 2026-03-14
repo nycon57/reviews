@@ -12,7 +12,7 @@ interface SkeletonProps {
 export function CardSkeleton({ className }: SkeletonProps) {
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="pb-2">
+      <CardHeader variant="plain" className="pb-2">
         <div className="flex items-center justify-between">
           <Skeleton className="h-4 w-24" />
           <Skeleton className="h-4 w-4 rounded-full" />
@@ -83,7 +83,7 @@ export function TableSkeleton({
 }) {
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="pb-4">
+      <CardHeader variant="plain" className="pb-4">
         <div className="flex items-center justify-between">
           <Skeleton className="h-6 w-32" />
           <Skeleton className="h-9 w-24" />
@@ -161,7 +161,7 @@ export function ReviewListSkeleton({
 export function ChartSkeleton({ className }: SkeletonProps) {
   return (
     <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="pb-2">
+      <CardHeader variant="plain" className="pb-2">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-3 w-48" />
       </CardHeader>

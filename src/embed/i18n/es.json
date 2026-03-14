@@ -50,6 +50,7 @@
   "oldest": "Más antiguos",
   "highest": "Mejor calificados",
   "lowest": "Peor calificados",
+  "featured": "Destacados",
   "mostRecent": "Más recientes",
   "highestRated": "Mejor calificados",
   "lowestRated": "Peor calificados",
@@ -80,5 +81,11 @@
   "loanTypeJumbo": "Jumbo",
   "loanTypeUSDA": "USDA",
   "loanTypeConventional": "Convencional",
-  "unableToLoadReviews": "No se pudieron cargar las reseñas. Inténtelo de nuevo más tarde."
+  "unableToLoadReviews": "No se pudieron cargar las reseñas. Inténtelo de nuevo más tarde.",
+  "reviewsFor": "Reseñas de {name}",
+  "verifiedBy": "Verificado por",
+  "pause": "Pausar",
+  "play": "Reproducir",
+  "pauseCarousel": "Pausar carrusel",
+  "playCarousel": "Reproducir carrusel"
 }

@@ -80,6 +80,8 @@ export interface SmsMessage {
   sent_at: string | null;
   delivered_at: string | null;
   follow_up_of: string | null;
+  /** The messaging channel used: sms (default), whatsapp, or rcs */
+  channel?: "sms" | "whatsapp" | "rcs";
   created_at: string;
   updated_at: string;
 }

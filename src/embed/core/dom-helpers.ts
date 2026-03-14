@@ -51,6 +51,24 @@ export function truncateText(str: string, max: number): { text: string; truncate
   return { text: str.slice(0, max).trimEnd() + "\u2026", truncated: true };
 }
 
+export function resolveCardStyle(
+  layoutCardStyle?: WidgetThemeLayout["cardStyle"],
+  contentCardStyle?: "bordered" | "shadow" | "flat" | "glass",
+): "bordered" | "shadow" | "flat" | "glass" {
+  switch (layoutCardStyle) {
+    case "elevated":
+      return "shadow";
+    case "flat":
+      return "flat";
+    case "bordered":
+      return "bordered";
+    case "glass":
+      return "glass";
+    default:
+      return contentCardStyle ?? "bordered";
+  }
+}
+
 export function formatAbsoluteDate(dateStr: string): string {
   return formatAbsoluteDateI18n(dateStr);
 }

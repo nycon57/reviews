@@ -15,12 +15,15 @@ import {
 } from "../templates/merge-engine";
 import {
   sendSmsReviewRequestSchema,
+  sendSmsVideoRequestSchema,
   recordInlineConsentSchema,
   checkSmsSendReadinessSchema,
   type SendSmsReviewRequestInput,
+  type SendSmsVideoRequestInput,
   type RecordInlineConsentInput,
   type CheckSmsSendReadinessInput,
 } from "./schemas";
+import type { z } from "zod";
 import type {
   SmsTemplate,
   SmsConsentStatus,
@@ -40,15 +43,17 @@ async function getAuthContext() {
   };
 }
 
-// ── Send SMS Review Request ──────────────────────────────────────────
+// ── Shared SMS send helper ───────────────────────────────────────────
 
-export async function sendSmsReviewRequest(
-  input: SendSmsReviewRequestInput
+async function sendSmsRequestInternal<T extends { borrowerName: string; borrowerPhone: string; loanOfficerId: string; templateId: string }>(
+  input: T,
+  schema: z.ZodType<T>,
+  errorLabel: string
 ): Promise<ActionResult<SmsSendResult>> {
   const auth = await getAuthContext();
   if (!auth) return { success: false, error: "Not authenticated" };
 
-  const parsed = sendSmsReviewRequestSchema.safeParse(input);
+  const parsed = schema.safeParse(input);
   if (!parsed.success) {
     return { success: false, error: parsed.error.errors[0].message };
   }
@@ -58,7 +63,6 @@ export async function sendSmsReviewRequest(
     return { success: false, error: "Invalid phone number format. Use (XXX) XXX-XXXX or +1XXXXXXXXXX." };
   }
 
-  // Verify LO belongs to same org (admin/manager can pick any LO)
   const supabase = createUntypedAdminClient();
   const { data: targetUser } = await supabase
     .from("users")
@@ -85,7 +89,23 @@ export async function sendSmsReviewRequest(
 
   return result.success
     ? { success: true, data: result }
-    : { success: false, error: result.error ?? "Failed to send SMS" };
+    : { success: false, error: result.error ?? errorLabel };
+}
+
+// ── Send SMS Review Request ──────────────────────────────────────────
+
+export async function sendSmsReviewRequest(
+  input: SendSmsReviewRequestInput
+): Promise<ActionResult<SmsSendResult>> {
+  return sendSmsRequestInternal(input, sendSmsReviewRequestSchema, "Failed to send SMS");
+}
+
+// ── Send SMS Video Testimonial Request ────────────────────────────────
+
+export async function sendSmsVideoRequest(
+  input: SendSmsVideoRequestInput
+): Promise<ActionResult<SmsSendResult>> {
+  return sendSmsRequestInternal(input, sendSmsVideoRequestSchema, "Failed to send video request SMS");
 }
 
 // ── Check Send Readiness ─────────────────────────────────────────────

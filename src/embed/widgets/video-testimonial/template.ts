@@ -74,7 +74,7 @@ function buildVideoItem(
   const contentWrap = isSide ? el("div", "rw-vt__content") : item;
 
   // Video player
-  const player = buildVideoPlayer(testimonial, apiBase, config.widget_id);
+  const player = buildVideoPlayer(testimonial, apiBase, config);
   if (isSide) {
     contentWrap.appendChild(player);
   } else {

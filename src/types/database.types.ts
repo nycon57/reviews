@@ -7747,6 +7747,7 @@ export type Database = {
         | "filter_change"
       widget_status: "active" | "inactive" | "draft"
       widget_type:
+        | "review_profile"
         | "lo_review"
         | "branch_review"
         | "company_review"
@@ -7974,6 +7975,7 @@ export const Constants = {
       ],
       widget_status: ["active", "inactive", "draft"],
       widget_type: [
+        "review_profile",
         "lo_review",
         "branch_review",
         "company_review",

@@ -13,7 +13,7 @@ export default function DeveloperPage() {
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Integrate RepWell widgets with your site using JS hooks, runtime
-          configuration, and custom CSS.
+          configuration, dynamic entity overrides, and custom CSS.
         </p>
       </div>
 
@@ -56,12 +56,12 @@ export default function DeveloperPage() {
               <tr>
                 <td className="px-3 py-2 font-mono">review-clicked</td>
                 <td className="px-3 py-2">User clicks a review card</td>
-                <td className="px-3 py-2">review metadata</td>
+                <td className="px-3 py-2">review_id</td>
               </tr>
               <tr>
                 <td className="px-3 py-2 font-mono">cta-clicked</td>
                 <td className="px-3 py-2">User clicks the CTA button</td>
-                <td className="px-3 py-2">CTA metadata</td>
+                <td className="px-3 py-2">widgetId, event</td>
               </tr>
               <tr>
                 <td className="px-3 py-2 font-mono">error</td>
@@ -115,17 +115,48 @@ RepWell.off('my-widget-slug', 'ready', handler);`}
   },
   content: {
     showHeader: true,
-    headerText: 'What Our Clients Say',
+    ctaText: 'Read More Reviews',
+    ctaUrl: 'https://example.com/reviews',
   },
 });`}
           </pre>
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Allowed fields: theme.colors.*, content.showHeader, content.headerText,
-          content.showCTA, content.ctaText, content.showSource, content.showDate,
-          content.showAvatar, content.showBranding.
+          Allowed fields: theme.colors.*, content.showHeader, content.showCTA,
+          content.ctaText, content.ctaUrl, content.showSource,
+          content.showDate, content.showAvatar, content.showBranding.
         </p>
+
+        <div className="pt-2 space-y-3">
+          <h3 className="text-sm font-semibold text-heading">
+            Dynamic Entity Overrides
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Keep the base widget ID fixed and optionally pass entity context on
+            the host element at runtime. This is useful when one template needs
+            to render different profiles on different pages.
+          </p>
+
+          <div className="bg-gray-950 rounded-lg p-4 overflow-x-auto">
+            <pre className="text-xs text-gray-300 font-mono leading-relaxed">
+{`<script src="https://app.repwell.com/embed.js" async></script>
+<div
+  data-repwell-widget="team-reviews"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="{{ profile.repwellEntityId }}"
+></div>`}
+            </pre>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Supported entity types: <code className="px-1 py-0.5 bg-muted rounded text-[11px]">user</code>,{" "}
+            <code className="px-1 py-0.5 bg-muted rounded text-[11px]">branch</code>, and{" "}
+            <code className="px-1 py-0.5 bg-muted rounded text-[11px]">organization</code>.
+            The <code className="px-1 py-0.5 bg-muted rounded text-[11px]">organization</code> override does not accept{" "}
+            <code className="px-1 py-0.5 bg-muted rounded text-[11px]">data-repwell-entity-id</code>.
+          </p>
+        </div>
       </section>
 
       {/* Custom CSS */}

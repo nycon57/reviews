@@ -3,7 +3,6 @@
 import { useState, useMemo, useTransition } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectContent,
@@ -18,6 +17,13 @@ import { FONT_OPTIONS, getContrastWarnings, buildBrandMatchPreset } from "@/lib/
 import { getOrgBrandColors } from "@/lib/widgets/actions";
 import { ColorField } from "./shared-fields";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
+import type { WidgetType } from "@/lib/widgets/types";
+
+const HEADING_SIZE_OPTIONS = Array.from({ length: 21 }, (_, index) => `${index + 12}px`);
+const BODY_SIZE_OPTIONS = Array.from({ length: 11 }, (_, index) => `${index + 10}px`);
+const MAX_WIDTH_OPTIONS = Array.from({ length: 91 }, (_, index) => `${index * 10 + 300}px`);
+const PADDING_OPTIONS = Array.from({ length: 25 }, (_, index) => `${index * 2}px`);
+const BORDER_RADIUS_OPTIONS = Array.from({ length: 25 }, (_, index) => `${index}px`);
 
 // ── Searchable font dropdown ────────────────────────────────────────────
 
@@ -66,6 +72,31 @@ function FontFamilySelect({
                 </span>
               )}
             </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function FontSizeSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="h-8 text-xs mt-1">
+        <SelectValue>{value}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {option}
           </SelectItem>
         ))}
       </SelectContent>
@@ -132,12 +163,39 @@ function ContrastWarnings({ colors }: { colors: Record<string, string | undefine
 
 // ── Theme Tab ───────────────────────────────────────────────────────────
 
+// ── Per-widget field visibility ──────────────────────────────────────────
+
+/** Badges are small inline elements — they only need colors, font, border radius, and shadow. */
+const BADGE_TYPES: ReadonlySet<WidgetType> = new Set(["star_rating_badge", "nps_score_badge"]);
+
+/** Social proof banners are mid-size — no card style or max width, but padding/radius/shadow apply. */
+const BANNER_TYPES: ReadonlySet<WidgetType> = new Set(["social_proof_banner"]);
+
+function useFieldVisibility(widgetType: WidgetType) {
+  const isBadge = BADGE_TYPES.has(widgetType);
+  const isBanner = BANNER_TYPES.has(widgetType);
+
+  return {
+    // Typography
+    showHeadingSize: !isBadge,
+    showBodySize: !isBadge,
+    // Layout
+    showMaxWidth: !isBadge && !isBanner,
+    showPadding: !isBadge,
+    showCardStyle: !isBadge && !isBanner,
+    // Colors — stars only relevant for widgets that render star ratings
+    showStarColors: widgetType !== "nps_score_badge" && widgetType !== "video_testimonial",
+  };
+}
+
 interface ThemeTabProps {
   config: WidgetConfigJson;
+  widgetType: WidgetType;
   onConfigChange: (config: Partial<WidgetConfigJson>) => void;
 }
 
-export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
+export function ThemeTab({ config, widgetType, onConfigChange }: ThemeTabProps) {
+  const fields = useFieldVisibility(widgetType);
   const preset = config.theme?.preset ?? "clean_white";
   const colors = config.theme?.colors ?? {};
   const typography = config.theme?.typography ?? {};
@@ -275,16 +333,20 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
             value={colors.border ?? "#e5e7eb"}
             onChange={(v) => handleColorChange("border", v)}
           />
-          <ColorField
-            label="Star Filled"
-            value={colors.starFilled ?? "#f59e0b"}
-            onChange={(v) => handleColorChange("starFilled", v)}
-          />
-          <ColorField
-            label="Star Empty"
-            value={colors.starEmpty ?? "#d1d5db"}
-            onChange={(v) => handleColorChange("starEmpty", v)}
-          />
+          {fields.showStarColors && (
+            <>
+              <ColorField
+                label="Star Filled"
+                value={colors.starFilled ?? "#f59e0b"}
+                onChange={(v) => handleColorChange("starFilled", v)}
+              />
+              <ColorField
+                label="Star Empty"
+                value={colors.starEmpty ?? "#d1d5db"}
+                onChange={(v) => handleColorChange("starEmpty", v)}
+              />
+            </>
+          )}
         </div>
         {/* WCAG contrast warnings */}
         <div className="mt-3">
@@ -305,32 +367,30 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
               onChange={(v) => updateTypography("fontFamily", v)}
             />
           </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              Heading Size ({headerSizePx}px)
-            </Label>
-            <Slider
-              value={[headerSizePx]}
-              onValueChange={([v]) => updateTypography("headerSize", `${v}px`)}
-              min={12}
-              max={32}
-              step={1}
-              className="mt-2"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              Body Size ({bodySizePx}px)
-            </Label>
-            <Slider
-              value={[bodySizePx]}
-              onValueChange={([v]) => updateTypography("bodySize", `${v}px`)}
-              min={10}
-              max={20}
-              step={1}
-              className="mt-2"
-            />
-          </div>
+          {fields.showHeadingSize && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                Heading Size ({headerSizePx}px)
+              </Label>
+              <FontSizeSelect
+                value={typography.headerSize ?? `${headerSizePx}px`}
+                options={HEADING_SIZE_OPTIONS}
+                onChange={(value) => updateTypography("headerSize", value)}
+              />
+            </div>
+          )}
+          {fields.showBodySize && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                Body Size ({bodySizePx}px)
+              </Label>
+              <FontSizeSelect
+                value={typography.bodySize ?? `${bodySizePx}px`}
+                options={BODY_SIZE_OPTIONS}
+                onChange={(value) => updateTypography("bodySize", value)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -340,43 +400,38 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
           Layout
         </Label>
         <div className="space-y-4">
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              Max Width ({maxWidthPx}px)
-            </Label>
-            <Slider
-              value={[maxWidthPx]}
-              onValueChange={([v]) => updateLayout("maxWidth", `${v}px`)}
-              min={300}
-              max={1200}
-              step={10}
-              className="mt-2"
-            />
-          </div>
-          <div>
-            <Label className="text-xs text-muted-foreground">
-              Padding ({paddingPx}px)
-            </Label>
-            <Slider
-              value={[paddingPx]}
-              onValueChange={([v]) => updateLayout("padding", `${v}px`)}
-              min={0}
-              max={48}
-              step={2}
-              className="mt-2"
-            />
-          </div>
+          {fields.showMaxWidth && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                Max Width ({maxWidthPx}px)
+              </Label>
+              <FontSizeSelect
+                value={layout.maxWidth ?? `${maxWidthPx}px`}
+                options={MAX_WIDTH_OPTIONS}
+                onChange={(value) => updateLayout("maxWidth", value)}
+              />
+            </div>
+          )}
+          {fields.showPadding && (
+            <div>
+              <Label className="text-xs text-muted-foreground">
+                Padding ({paddingPx}px)
+              </Label>
+              <FontSizeSelect
+                value={layout.padding ?? `${paddingPx}px`}
+                options={PADDING_OPTIONS}
+                onChange={(value) => updateLayout("padding", value)}
+              />
+            </div>
+          )}
           <div>
             <Label className="text-xs text-muted-foreground">
               Border Radius ({borderRadiusPx}px)
             </Label>
-            <Slider
-              value={[borderRadiusPx]}
-              onValueChange={([v]) => updateLayout("borderRadius", `${v}px`)}
-              min={0}
-              max={24}
-              step={1}
-              className="mt-2"
+            <FontSizeSelect
+              value={layout.borderRadius ?? `${borderRadiusPx}px`}
+              options={BORDER_RADIUS_OPTIONS}
+              onChange={(value) => updateLayout("borderRadius", value)}
             />
           </div>
 
@@ -401,36 +456,41 @@ export function ThemeTab({ config, onConfigChange }: ThemeTabProps) {
           </div>
 
           {/* Card style radio buttons */}
-          <div>
-            <Label className="text-xs text-muted-foreground mb-2 block">Card Style</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {(
-                [
-                  { value: "flat", label: "Flat" },
-                  { value: "elevated", label: "Elevated" },
-                  { value: "bordered", label: "Bordered" },
-                  { value: "glass", label: "Glass" },
-                ] as const
-              ).map((style) => {
-                const isActive = (layout.cardStyle ?? "bordered") === style.value;
-                return (
-                  <button
-                    key={style.value}
-                    type="button"
-                    aria-pressed={isActive}
-                    onClick={() => updateLayout("cardStyle", style.value)}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md border transition-all ${
-                      isActive
-                        ? "bg-repwell-teal-300 text-white border-repwell-teal-300 shadow-sm"
-                        : "bg-card text-label border-border hover:border-repwell-sage-200"
-                    }`}
-                  >
-                    {style.label}
-                  </button>
-                );
-              })}
+          {fields.showCardStyle && (
+            <div>
+              <Label className="text-xs text-muted-foreground mb-2 block">Card Style</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {(
+                  [
+                    { value: "flat", label: "Flat", swatch: "bg-muted" },
+                    { value: "elevated", label: "Elevated", swatch: "bg-card shadow-md" },
+                    { value: "bordered", label: "Bordered", swatch: "bg-card border border-border" },
+                    { value: "glass", label: "Glass", swatch: "bg-white/60 backdrop-blur-sm border border-white/30" },
+                  ] as const
+                ).map((style) => {
+                  const isActive = (layout.cardStyle ?? "bordered") === style.value;
+                  return (
+                    <button
+                      key={style.value}
+                      type="button"
+                      aria-pressed={isActive}
+                      onClick={() => updateLayout("cardStyle", style.value)}
+                      className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-md border transition-all ${
+                        isActive
+                          ? "border-repwell-teal-300 ring-1 ring-repwell-teal-300/30 bg-repwell-teal-300/5"
+                          : "border-border bg-card hover:border-repwell-sage-200"
+                      }`}
+                    >
+                      <div className={`w-full h-6 rounded ${style.swatch}`} />
+                      <span className={`text-xs font-medium ${isActive ? "text-repwell-teal-300" : "text-label"}`}>
+                        {style.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

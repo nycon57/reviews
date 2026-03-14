@@ -29,6 +29,11 @@ export interface EmailPreferencesWithToken extends EmailPreferences {
   is_valid: boolean;
 }
 
+export interface CommunicationPreferencesWithToken extends EmailPreferencesWithToken {
+  sms_consent_status: "opted_in" | "opted_out" | "none";
+  sms_phone_number: string | null;
+}
+
 export interface EmailPreferenceToken {
   id: string;
   user_id: string;

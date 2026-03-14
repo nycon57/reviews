@@ -32,8 +32,9 @@ import {
   Megaphone,
   Gift,
   EnvelopeSimple as MailCheck,
+  ChatText,
 } from "@phosphor-icons/react";
-import type { EmailPreferences, EmailPreferencesWithToken } from "@/lib/email-preferences/types";
+import type { EmailPreferences, CommunicationPreferencesWithToken } from "@/lib/email-preferences/types";
 import {
   EMAIL_CATEGORIES,
   COMMON_TIMEZONES,
@@ -41,8 +42,9 @@ import {
   TIME_OPTIONS,
 } from "@/lib/email-preferences/types";
 import {
-  getEmailPreferencesByToken,
+  getCommunicationPreferencesByToken,
   updateEmailPreferencesByToken,
+  updateSmsConsentByToken,
   resubscribeByToken,
 } from "@/lib/email-preferences/actions";
 import Link from "next/link";
@@ -64,7 +66,7 @@ export default function PublicEmailPreferencesPage() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [preferences, setPreferences] = React.useState<EmailPreferencesWithToken | null>(null);
+  const [preferences, setPreferences] = React.useState<CommunicationPreferencesWithToken | null>(null);
   const [saved, setSaved] = React.useState(false);
 
   React.useEffect(() => {
@@ -73,7 +75,7 @@ export default function PublicEmailPreferencesPage() {
     async function loadPreferences() {
       setLoading(true);
       try {
-        const prefs = await getEmailPreferencesByToken(token);
+        const prefs = await getCommunicationPreferencesByToken(token);
         if (cancelled) return;
 
         if (prefs) {
@@ -147,7 +149,7 @@ export default function PublicEmailPreferencesPage() {
       const result = await resubscribeByToken(token);
       if (result.success) {
         // Reload preferences
-        const prefs = await getEmailPreferencesByToken(token);
+        const prefs = await getCommunicationPreferencesByToken(token);
         if (prefs) {
           setPreferences(prefs);
         }
@@ -172,6 +174,43 @@ export default function PublicEmailPreferencesPage() {
       setSaving(false);
     }
   }, [token, toast]);
+
+  const handleSmsConsentChange = React.useCallback(
+    async (optOut: boolean) => {
+      setSaving(true);
+      try {
+        const result = await updateSmsConsentByToken(token, optOut);
+        if (result.success) {
+          setPreferences((prev) =>
+            prev
+              ? { ...prev, sms_consent_status: optOut ? "opted_out" : "opted_in" }
+              : null
+          );
+          toast({
+            title: optOut ? "SMS unsubscribed" : "SMS resubscribed",
+            description: optOut
+              ? "You will no longer receive SMS messages."
+              : "You will now receive SMS messages.",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: result.error,
+            variant: "destructive",
+          });
+        }
+      } catch {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
+      } finally {
+        setSaving(false);
+      }
+    },
+    [token, toast]
+  );
 
   if (loading) {
     return (
@@ -212,9 +251,9 @@ export default function PublicEmailPreferencesPage() {
             height={40}
             className="mx-auto mb-4"
           />
-          <h1 className="text-2xl font-semibold text-repwell-teal-500">Email Preferences</h1>
+          <h1 className="text-2xl font-semibold text-repwell-teal-500">Communication Preferences</h1>
           <p className="mt-2 text-muted-foreground">
-            Manage your email preferences for{" "}
+            Manage your communication preferences for{" "}
             <span className="font-medium text-foreground">{preferences?.email}</span>
           </p>
         </div>
@@ -252,7 +291,7 @@ export default function PublicEmailPreferencesPage() {
           <>
             {/* Master Email Toggle */}
             <Card className="mb-6">
-              <CardHeader>
+              <CardHeader variant="plain">
                 <CardTitle className="flex items-center gap-2">
                   <Mail className="h-5 w-5" />
                   Email Notifications
@@ -281,7 +320,7 @@ export default function PublicEmailPreferencesPage() {
             {/* Email Categories */}
             {preferences?.email_enabled && (
               <Card className="mb-6">
-                <CardHeader>
+                <CardHeader variant="plain">
                   <CardTitle>Email Categories</CardTitle>
                   <CardDescription>
                     Choose which types of emails you want to receive
@@ -351,10 +390,46 @@ export default function PublicEmailPreferencesPage() {
               </Card>
             )}
 
+            {/* SMS Preferences */}
+            {preferences?.sms_phone_number && (
+              <Card className="mb-6">
+                <CardHeader variant="plain">
+                  <CardTitle className="flex items-center gap-2">
+                    <ChatText className="h-5 w-5" />
+                    SMS Notifications
+                  </CardTitle>
+                  <CardDescription>
+                    Manage SMS notifications sent to {preferences.sms_phone_number}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div>
+                      <Label className="text-base font-medium">SMS Messages</Label>
+                      <p className="text-sm text-muted-foreground">
+                        {preferences.sms_consent_status === "opted_in"
+                          ? "You are currently receiving SMS messages"
+                          : "You are not receiving SMS messages"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={preferences.sms_consent_status === "opted_in"}
+                      onCheckedChange={(checked) => handleSmsConsentChange(!checked)}
+                      disabled={saving}
+                    />
+                  </div>
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    You can also text STOP to any message to unsubscribe from SMS, or START to
+                    resubscribe.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Delivery Settings */}
             {preferences?.email_enabled && (
               <Card className="mb-6">
-                <CardHeader>
+                <CardHeader variant="plain">
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="h-5 w-5" />
                     Delivery Settings
@@ -441,7 +516,7 @@ export default function PublicEmailPreferencesPage() {
             {/* Quiet Hours */}
             {preferences?.email_enabled && (
               <Card className="mb-6">
-                <CardHeader>
+                <CardHeader variant="plain">
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="flex items-center gap-2">

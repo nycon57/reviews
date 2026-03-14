@@ -21,7 +21,6 @@ import {
   Users,
   Question as HelpCircle,
   Code,
-  Quotes,
   Sparkle,
   ClipboardText,
   ChatCircle,
@@ -126,14 +125,6 @@ const quickLinks: SearchResult[] = [
     description: "Embeddable review widgets",
     href: "/dashboard/widgets",
     icon: Code,
-    category: "Pages",
-  },
-  {
-    id: "share-studio",
-    title: "Share Studio",
-    description: "Create smart links, graphics, and animations",
-    href: "/dashboard/share-studio",
-    icon: Quotes,
     category: "Pages",
   },
   {

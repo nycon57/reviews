@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ShieldWarning } from "@phosphor-icons/react/dist/ssr";
+import { ShieldWarning, ClipboardText } from "@phosphor-icons/react/dist/ssr";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { getAccessContext, isEnterprise, isAdmin } from "@/lib/access";
 import { SurveyTemplatesList } from "./survey-templates-list";
@@ -39,6 +39,20 @@ export default async function SurveysPage() {
 
   // Both individual users and enterprise admins can manage templates
   return (
+    <div className="flex-1 space-y-6">
+      {/* Page header */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <ClipboardText className="h-6 w-6 text-repwell-teal-300" aria-hidden="true" />
+        </div>
+        <div>
+          <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading-accent">Surveys</h1>
+          <p className="text-sm leading-snug text-repwell-teal-300">
+            Create and manage reusable survey templates
+          </p>
+        </div>
+      </div>
+
     <Suspense
       fallback={
         <Card className="border border-border shadow-soft overflow-hidden">
@@ -68,5 +82,6 @@ export default async function SurveysPage() {
     >
       <SurveyTemplatesList />
     </Suspense>
+    </div>
   );
 }

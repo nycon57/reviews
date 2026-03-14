@@ -14,7 +14,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 
 export const metadata: Metadata = {
   title: "Developer Portal | RepWell API",
-  description: "Build integrations with the RepWell API. Access surveys, reviews, loan officers, and more programmatically.",
+  description: "Build integrations with the RepWell API. Access surveys, reviews, profiles, and more programmatically.",
 };
 
 const features = [

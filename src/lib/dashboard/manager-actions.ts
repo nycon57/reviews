@@ -61,7 +61,7 @@ async function getEnterpriseContext() {
   const supabase = createAdminClient();
   const { data: userData } = await supabase
     .from("users")
-    .select("id, organization_id, role")
+    .select("id, organization_id, branch_id, role")
     .eq("id", user.id)
     .single();
 
@@ -72,8 +72,22 @@ async function getEnterpriseContext() {
   return {
     userId: userData.id,
     organizationId: userData.organization_id,
+    branchId: userData.branch_id as string | null,
     role: userData.role,
   };
+}
+
+/** Get user IDs belonging to the manager's branch */
+async function getBranchUserIds(
+  supabase: ReturnType<typeof createAdminClient>,
+  branchId: string
+): Promise<string[]> {
+  const { data } = await supabase
+    .from("users")
+    .select("id")
+    .eq("branch_id", branchId);
+
+  return (data || []).map((u) => u.id);
 }
 
 // Get user context for manager actions - requires manager or admin role
@@ -439,19 +453,29 @@ export async function getTeamNPSTrend(
   startDate.setDate(1);
   startDate.setMonth(startDate.getMonth() - months);
 
-  // Fetch NPS responses with DB-level org filter
-  const { data: surveyResponses, error } = await supabase
+  // Fetch NPS responses, filtering by branch if manager has one
+  let surveyQuery = supabase
     .from("survey_responses")
     .select(`
       nps_score,
       submitted_at,
       surveys!inner (
-        organization_id
+        organization_id,
+        user_id
       )
     `)
     .eq("surveys.organization_id", context.organizationId)
     .not("nps_score", "is", null)
     .gte("submitted_at", startDate.toISOString());
+
+  if (context.branchId) {
+    const branchUserIds = await getBranchUserIds(supabase, context.branchId);
+    if (branchUserIds.length > 0) {
+      surveyQuery = surveyQuery.in("surveys.user_id", branchUserIds);
+    }
+  }
+
+  const { data: surveyResponses, error } = await surveyQuery;
 
   if (error) {
     return { success: false, error: "Failed to fetch team NPS trend" };
@@ -526,12 +550,22 @@ export async function getTeamRatingTrend(
   startDate.setDate(1);
   startDate.setMonth(startDate.getMonth() - months);
 
-  const { data, error } = await supabase
+  // Filter by branch if manager has one, otherwise fall back to org
+  let query = supabase
     .from("reviews")
     .select("rating, review_date")
     .eq("organization_id", context.organizationId)
     .gte("review_date", startDate.toISOString())
     .order("review_date", { ascending: true });
+
+  if (context.branchId) {
+    const branchUserIds = await getBranchUserIds(supabase, context.branchId);
+    if (branchUserIds.length > 0) {
+      query = query.in("user_id", branchUserIds);
+    }
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return { success: false, error: "Failed to fetch team rating trend" };
@@ -553,8 +587,11 @@ export async function getTeamRatingTrend(
     entry.count += 1;
   }
 
-  // Convert to array and fill in missing months
+  // Build cumulative running average over time
   const trendData: { date: string; value: number }[] = [];
+  let cumulativeSum = 0;
+  let cumulativeCount = 0;
+  let hasStarted = false;
 
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date();
@@ -564,9 +601,77 @@ export async function getTeamRatingTrend(
     const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 
     const entry = monthlyData.get(monthKey);
+    if (entry) {
+      cumulativeSum += entry.sum;
+      cumulativeCount += entry.count;
+      hasStarted = true;
+    }
+
+    // Only include data points from the first month with reviews onward
+    if (hasStarted) {
+      trendData.push({
+        date: monthLabel,
+        value: Number((cumulativeSum / cumulativeCount).toFixed(1)),
+      });
+    }
+  }
+
+  return { success: true, data: trendData };
+}
+
+// Get team review volume trend (filtered by manager's branch)
+export async function getTeamReviewVolumeTrend(
+  months: number = 6
+): Promise<ActionResult<{ date: string; value: number }[]>> {
+  const context = await getManagerContext();
+  if (!context) {
+    return { success: false, error: "Unauthorized - Manager access required" };
+  }
+
+  const supabase = createAdminClient();
+
+  const startDate = new Date();
+  startDate.setDate(1);
+  startDate.setMonth(startDate.getMonth() - months);
+
+  let query = supabase
+    .from("reviews")
+    .select("review_date")
+    .eq("organization_id", context.organizationId)
+    .gte("review_date", startDate.toISOString());
+
+  if (context.branchId) {
+    const branchUserIds = await getBranchUserIds(supabase, context.branchId);
+    if (branchUserIds.length > 0) {
+      query = query.in("user_id", branchUserIds);
+    }
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    return { success: false, error: "Failed to fetch team review volume" };
+  }
+
+  // Group by month
+  const monthCounts: Record<string, number> = {};
+  for (const row of data || []) {
+    if (!row.review_date) continue;
+    const date = new Date(row.review_date);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+  }
+
+  const trendData: { date: string; value: number }[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - i);
+    const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const monthLabel = d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+
     trendData.push({
       date: monthLabel,
-      value: entry ? Number((entry.sum / entry.count).toFixed(1)) : 0,
+      value: monthCounts[monthKey] || 0,
     });
   }
 

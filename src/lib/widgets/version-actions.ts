@@ -45,6 +45,18 @@ interface AuthedContext {
   organizationId: string;
 }
 
+interface SnapshotSource {
+  id: string;
+  version: number | null;
+  config: Json | null;
+  name: string;
+  status: string;
+  allowed_domains: string[] | null;
+  enable_structured_data: boolean | null;
+  structured_data_type: string | null;
+  entity_id: string | null;
+}
+
 async function getAuthedContext(
   supabase: ReturnType<typeof createAdminClient>
 ): Promise<ActionResult<AuthedContext>> {
@@ -55,22 +67,79 @@ async function getAuthedContext(
 
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, role")
+    .select("organization_id, individual_organization_id, role")
     .eq("id", user.id)
     .single();
 
-  if (userError || !userData?.organization_id) {
+  if (userError) {
     return { success: false, error: "Organization not found" };
   }
 
-  if (userData.role !== "admin" && userData.role !== "manager") {
+  const organizationId =
+    userData?.organization_id || userData?.individual_organization_id;
+  if (!organizationId) {
+    return { success: false, error: "Organization not found" };
+  }
+
+  const isIndividual =
+    !userData.organization_id && !!userData.individual_organization_id;
+
+  if (!isIndividual && userData.role !== "admin" && userData.role !== "manager") {
     return { success: false, error: "Insufficient permissions" };
   }
 
   return {
     success: true,
-    data: { userId: user.id, organizationId: userData.organization_id },
+    data: { userId: user.id, organizationId },
   };
+}
+
+async function backfillCurrentSnapshot(
+  supabase: ReturnType<typeof createAdminClient>,
+  widget: SnapshotSource,
+  userId: string
+): Promise<ActionResult<void>> {
+  const version = widget.version ?? 1;
+  const changeNote =
+    version > 1
+      ? "Backfilled current widget state; earlier history unavailable"
+      : "Backfilled initial snapshot";
+  const changeSummary =
+    version > 1
+      ? "Current state imported; earlier history unavailable"
+      : "Initial version";
+
+  const { error } = await versionsTable(supabase).insert({
+    widget_config_id: widget.id,
+    version,
+    config: (widget.config ?? {}) as unknown as Json,
+    name: widget.name,
+    status: widget.status,
+    allowed_domains: widget.allowed_domains ?? [],
+    enable_structured_data: widget.enable_structured_data ?? true,
+    structured_data_type: widget.structured_data_type ?? "LocalBusiness",
+    entity_id: widget.entity_id,
+    changed_by: userId,
+    change_note: changeNote,
+    change_summary: changeSummary,
+  });
+
+  if (error && error.code !== "23505") {
+    return { success: false, error: error.message };
+  }
+
+  return { success: true, data: undefined };
+}
+
+async function fetchVersionsForWidget(
+  supabase: ReturnType<typeof createAdminClient>,
+  widgetConfigId: string
+) {
+  return versionsTable(supabase)
+    .select("*", { count: "exact" })
+    .eq("widget_config_id", widgetConfigId)
+    .order("version", { ascending: false })
+    .limit(MAX_VERSIONS);
 }
 
 // ── Create Version Snapshot ────────────────────────────────────────────
@@ -165,7 +234,9 @@ export async function listWidgetVersions(
     // Verify widget belongs to org
     const { data: widget, error: widgetError } = await supabase
       .from("widget_configs")
-      .select("id")
+      .select(
+        "id, version, config, name, status, allowed_domains, enable_structured_data, structured_data_type, entity_id"
+      )
       .eq("id", widgetConfigId)
       .eq("organization_id", ctx.data.organizationId)
       .single();
@@ -174,11 +245,26 @@ export async function listWidgetVersions(
       return { success: false, error: "Widget not found" };
     }
 
-    const { data: versions, error, count } = await versionsTable(supabase)
-      .select("*", { count: "exact" })
-      .eq("widget_config_id", widgetConfigId)
-      .order("version", { ascending: false })
-      .limit(MAX_VERSIONS);
+    let { data: versions, error, count } = await fetchVersionsForWidget(
+      supabase,
+      widgetConfigId
+    );
+
+    if (!error && (versions?.length ?? 0) === 0) {
+      const backfillResult = await backfillCurrentSnapshot(
+        supabase,
+        widget as SnapshotSource,
+        ctx.data.userId
+      );
+      if (!backfillResult.success) {
+        return backfillResult;
+      }
+
+      ({ data: versions, error, count } = await fetchVersionsForWidget(
+        supabase,
+        widgetConfigId
+      ));
+    }
 
     if (error) {
       return { success: false, error: error.message };

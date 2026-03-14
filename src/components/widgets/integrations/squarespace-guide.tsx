@@ -11,7 +11,18 @@ import {
 
 const SQUARESPACE_HEADER_SCRIPT = `<script src="https://app.repwell.com/embed.js" async></script>`;
 
-const SQUARESPACE_CODE_BLOCK = `<div data-repwell-widget="YOUR_WIDGET_ID"></div>`;
+const SQUARESPACE_CODE_BLOCK = `<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
+
+const SQUARESPACE_FULL = `<script src="https://app.repwell.com/embed.js" async></script>
+<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
 
 export function SquarespaceGuide() {
   return (
@@ -32,7 +43,7 @@ export function SquarespaceGuide() {
                 Go to Settings &rarr; Advanced &rarr; Code Injection.
               </p>
             </Step>
-            <Step number={2} title="Add the script to the header or footer">
+            <Step number={2} title="Add the script to the footer">
               <p>
                 Paste the embed.js script in the Footer section. This loads the
                 script on every page.
@@ -42,7 +53,7 @@ export function SquarespaceGuide() {
             <Step number={3} title="Add a Code Block on the target page">
               <p>
                 Edit the page where you want the widget. Add a Code Block and
-                paste the widget container:
+                paste the widget container with all three data attributes:
               </p>
               <CodeBlock code={SQUARESPACE_CODE_BLOCK} language="html" />
             </Step>
@@ -68,10 +79,7 @@ export function SquarespaceGuide() {
                 Choose Code from the block menu. Paste both the script tag and
                 widget container:
               </p>
-              <CodeBlock
-                code={`<script src="https://app.repwell.com/embed.js" async></script>\n<div data-repwell-widget="YOUR_WIDGET_ID"></div>`}
-                language="html"
-              />
+              <CodeBlock code={SQUARESPACE_FULL} language="html" />
             </Step>
             <Step number={3} title='Enable "Display Source"'>
               <p>
@@ -102,7 +110,7 @@ export function SquarespaceGuide() {
             {
               problem: "Script loads but widget container is missing",
               solution:
-                'Check that the Code Block has "Display Source" toggled off and the div is present in the rendered HTML.',
+                'Check that the Code Block has "Display Source" toggled off and the div with all three data attributes is present in the rendered HTML.',
             },
           ]}
         />

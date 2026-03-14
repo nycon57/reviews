@@ -17,6 +17,7 @@ import {
   truncateText,
   formatRelativeDate,
   formatAbsoluteDate,
+  resolveCardStyle,
 } from "../../core/dom-helpers";
 import { buildNmlsBadge } from "../../components/nmls-badge";
 import { buildComplianceFooter } from "../../components/compliance-footer";
@@ -84,7 +85,10 @@ function buildProfileHeader(profile: EntityProfile, config: PublicWidgetConfig, 
 
 function buildReviewCard(review: PublicReview, config: PublicWidgetConfig, starFilled: string, starEmpty: string, apiBase: string): HTMLElement {
   const content = config.config?.content;
-  const cardStyle = content?.cardStyle ?? "bordered";
+  const cardStyle = resolveCardStyle(
+    config.config?.theme?.layout?.cardStyle,
+    content?.cardStyle,
+  );
   const card = el("div", `rw-lo-review rw-lo-review--${cardStyle}`);
   card.setAttribute("role", "article");
   card.setAttribute("aria-label", t("reviewByAriaLabel", { name: review.reviewer_name ?? t("anonymous") }));
@@ -122,7 +126,7 @@ function buildReviewCard(review: PublicReview, config: PublicWidgetConfig, starF
         textEl.removeAttribute("role");
         textEl.removeAttribute("tabindex");
         textEl.setAttribute("aria-expanded", "true");
-        trackClick(apiBase, config.widget_id, "click_review", { review_id: review.id });
+        trackClick(apiBase, config, "click_review", { review_id: review.id });
       };
       textEl.addEventListener("click", expand);
       textEl.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -207,7 +211,7 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
       cta.target = "_blank";
       cta.rel = "noopener noreferrer";
       if (colors?.primary) cta.style.background = colors.primary;
-      cta.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_cta"); });
+      cta.addEventListener("click", () => { trackClick(apiBase, config, "click_cta"); });
       actions.appendChild(cta);
     }
     if (content?.showWriteReview && content.writeReviewUrl) {
@@ -217,7 +221,7 @@ export function buildLoReviewDOM(config: PublicWidgetConfig, reviews: PublicRevi
       writeBtn.href = content.writeReviewUrl;
       writeBtn.target = "_blank";
       writeBtn.rel = "noopener noreferrer";
-      writeBtn.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_write_review"); });
+      writeBtn.addEventListener("click", () => { trackClick(apiBase, config, "click_write_review"); });
       actions.appendChild(writeBtn);
     }
     container.appendChild(actions);

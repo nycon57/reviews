@@ -1254,7 +1254,7 @@ export async function getSmartActionItems(
       actionType: "respond_review",
       title: `Respond to review from ${name}`,
       description: `This ${review.rating}-star review has been waiting ${daysAgo} day${daysAgo !== 1 ? "s" : ""} for a response. Timely responses boost your reputation.`,
-      actionUrl: `/dashboard/reviews?highlight=${review.id}`,
+      actionUrl: `/dashboard/reviews/${review.id}`,
       dismissible: false,
     });
   }

@@ -168,7 +168,7 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
           {/* Basic Info — 3 cols */}
           <Card className="lg:col-span-3 overflow-hidden">
             <div className="h-1.5 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200" />
-            <CardHeader>
+            <CardHeader variant="plain">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                   <Building2 className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
@@ -293,7 +293,7 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
           {/* Branding — 2 cols */}
           <Card className="lg:col-span-2 overflow-hidden">
             <div className="h-1.5 bg-gradient-to-r from-repwell-sage-100 to-transparent" />
-            <CardHeader>
+            <CardHeader variant="plain">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                   <Palette className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
@@ -358,7 +358,7 @@ export function ProfileSetupClient({ initialData }: ProfileSetupClientProps) {
         <motion.div variants={fadeInUp}>
           <Card className="overflow-hidden">
             <div className="h-1.5 bg-gradient-to-r from-repwell-sage-100 to-transparent" />
-            <CardHeader>
+            <CardHeader variant="plain">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
                   <MapPin className="h-5 w-5 text-repwell-teal-300" weight="duotone" />

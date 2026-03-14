@@ -330,9 +330,11 @@ export async function getRatingTrend(
     entry.count += 1;
   }
 
-  // Convert to array, carrying forward the last known average for quiet months
+  // Build cumulative running average over time
   const trendData: TrendDataPoint[] = [];
-  let lastKnownValue = 0;
+  let cumulativeSum = 0;
+  let cumulativeCount = 0;
+  let hasStarted = false;
 
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date();
@@ -343,12 +345,18 @@ export async function getRatingTrend(
 
     const entry = monthlyData.get(monthKey);
     if (entry) {
-      lastKnownValue = Number((entry.sum / entry.count).toFixed(1));
+      cumulativeSum += entry.sum;
+      cumulativeCount += entry.count;
+      hasStarted = true;
     }
-    trendData.push({
-      date: monthLabel,
-      value: lastKnownValue,
-    });
+
+    // Only include data points from the first month with reviews onward
+    if (hasStarted) {
+      trendData.push({
+        date: monthLabel,
+        value: Number((cumulativeSum / cumulativeCount).toFixed(1)),
+      });
+    }
   }
 
   return { success: true, data: trendData };
@@ -428,9 +436,12 @@ export async function getNPSTrend(
     }
   }
 
-  // Convert to array, carrying forward the last known NPS for quiet months
+  // Build cumulative running NPS over time
   const trendData: TrendDataPoint[] = [];
-  let lastKnownNps = 0;
+  let cumulativePromoters = 0;
+  let cumulativeDetractors = 0;
+  let cumulativeTotal = 0;
+  let hasStarted = false;
 
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date();
@@ -441,16 +452,19 @@ export async function getNPSTrend(
 
     const entry = monthlyData.get(monthKey);
     if (entry) {
-      const total = entry.promoters + entry.passives + entry.detractors;
-      if (total > 0) {
-        lastKnownNps = Math.round(((entry.promoters - entry.detractors) / total) * 100);
-      }
+      cumulativePromoters += entry.promoters;
+      cumulativeDetractors += entry.detractors;
+      cumulativeTotal += entry.promoters + entry.passives + entry.detractors;
+      hasStarted = true;
     }
 
-    trendData.push({
-      date: monthLabel,
-      value: lastKnownNps,
-    });
+    // Only include data points from the first month with responses onward
+    if (hasStarted && cumulativeTotal > 0) {
+      trendData.push({
+        date: monthLabel,
+        value: Math.round(((cumulativePromoters - cumulativeDetractors) / cumulativeTotal) * 100),
+      });
+    }
   }
 
   return { success: true, data: trendData };

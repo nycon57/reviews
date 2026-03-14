@@ -1,6 +1,7 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getAccessContext } from "@/lib/access";
+import { getAccessContext, hasProAccess } from "@/lib/access";
 import {
   getVideoTestimonialFunnelMetrics,
   getVideoTestimonialTrends,
@@ -9,11 +10,24 @@ import {
 import { getUsersForVideoRequests } from "@/lib/video-testimonials/actions";
 import { getResponseAnalytics } from "@/lib/reviews/response-actions";
 import { AnalyticsPageClient } from "@/components/analytics/analytics-page-client";
+import { ChannelEffectivenessCard } from "@/components/insights";
+import { getChannelEffectiveness } from "@/lib/ai";
+import { CardSkeleton } from "@/components/shared";
 
 export const metadata = {
   title: "Analytics | RepWell",
   description: "Track your performance metrics and insights",
 };
+
+async function ChannelEffectivenessSection({ userId }: { userId?: string }) {
+  const result = await getChannelEffectiveness(userId);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <ChannelEffectivenessCard data={result.data} />;
+}
 
 export default async function AnalyticsPage() {
   const ctx = await getAccessContext();
@@ -82,15 +96,28 @@ export default async function AnalyticsPage() {
     npsScore,
   };
 
+  const isPro = hasProAccess(ctx);
+  const channelUserId = userRole === "user" ? ctx.userId : undefined;
+
   return (
-    <AnalyticsPageClient
-      userRole={userRole}
-      initialVideoMetrics={videoMetrics}
-      initialVideoTrends={videoTrends}
-      initialLoStats={userStats}
-      initialReviewSummary={reviewSummary}
-      initialResponseAnalytics={responseAnalytics}
-      teamMembers={users}
-    />
+    <>
+      <AnalyticsPageClient
+        userRole={userRole}
+        userId={ctx.userId}
+        initialVideoMetrics={videoMetrics}
+        initialVideoTrends={videoTrends}
+        initialLoStats={userStats}
+        initialReviewSummary={reviewSummary}
+        initialResponseAnalytics={responseAnalytics}
+        teamMembers={users}
+      />
+      {isPro && (
+        <div className="mt-6">
+          <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
+            <ChannelEffectivenessSection userId={channelUserId} />
+          </Suspense>
+        </div>
+      )}
+    </>
   );
 }

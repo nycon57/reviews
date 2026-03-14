@@ -28,6 +28,7 @@ interface ReviewSummary {
 
 interface AnalyticsPageClientProps {
   userRole: "admin" | "manager" | "user";
+  userId: string;
   initialVideoMetrics: VideoTestimonialFunnelMetrics | null;
   initialVideoTrends: VideoTestimonialTrendDataPoint[];
   initialLoStats: UserVideoStats[];
@@ -49,6 +50,7 @@ function getDefaultScope(role: "admin" | "manager" | "user"): AnalyticsScope {
 
 export function AnalyticsPageClient({
   userRole,
+  userId,
   initialVideoMetrics,
   initialVideoTrends,
   initialLoStats,
@@ -89,6 +91,9 @@ export function AnalyticsPageClient({
       ) : (
         <AnalyticsTabsWrapper teamMembers={teamMembers} userRole={userRole}>
           <UnifiedAnalyticsDashboard
+            key={scope}
+            scope={scope}
+            userId={userId}
             initialVideoMetrics={initialVideoMetrics}
             initialVideoTrends={initialVideoTrends}
             initialLoStats={initialLoStats}

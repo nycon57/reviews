@@ -946,6 +946,7 @@ export const getLoanOfficersForFilter = getUsersForFilter;
 export async function getReviewSummary(opts: {
   startDate?: string;
   endDate?: string;
+  userId?: string;
 }): Promise<
   ActionResult<{
     totalReviews: number;
@@ -968,6 +969,7 @@ export async function getReviewSummary(opts: {
 
   if (opts.startDate) query = query.gte("created_at", opts.startDate);
   if (opts.endDate) query = query.lte("created_at", opts.endDate);
+  if (opts.userId) query = query.eq("user_id", opts.userId);
 
   const { data, count, error } = await query;
 

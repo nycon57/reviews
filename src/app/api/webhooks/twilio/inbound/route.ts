@@ -8,6 +8,11 @@ import {
 import { toE164 } from "@/lib/sms/phone-utils";
 import { KeywordHandler } from "@/lib/sms/keyword-handler";
 import { incrementDailyStat } from "@/lib/sms/daily-stats";
+import {
+  parseNpsScore,
+  checkPendingNpsRequest,
+  processNpsReply,
+} from "@/lib/sms/nps-parser";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +112,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       return twimlResponse(result.response);
+    }
+
+    // NPS detection — check for standalone numeric reply (0-10)
+    const npsResult = parseNpsScore(body);
+    if (
+      npsResult.isNumeric &&
+      npsResult.score !== undefined &&
+      npsResult.category
+    ) {
+      const pending = await checkPendingNpsRequest(organizationId, from);
+      if (pending.hasPending) {
+        const npsResponse = await processNpsReply({
+          organizationId,
+          phone: from,
+          score: npsResult.score,
+          category: npsResult.category,
+          originalMessageId: pending.messageId,
+          loanOfficerId: pending.loanOfficerId,
+        });
+        await incrementDailyStat(
+          supabase,
+          organizationId,
+          null,
+          todayDate(),
+          "replied"
+        );
+        return twimlResponse(npsResponse.response);
+      }
+      // If no pending NPS request, fall through to regular message handling
     }
 
     // Regular inbound message -- update conversation and stats

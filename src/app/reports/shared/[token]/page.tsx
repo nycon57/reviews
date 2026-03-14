@@ -76,7 +76,7 @@ export default async function SharedReportPage({
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
+          <CardHeader variant="plain" className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
               <AlertCircle className="h-6 w-6 text-destructive" />
             </div>
@@ -115,7 +115,7 @@ export default async function SharedReportPage({
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
+          <CardHeader variant="plain" className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-destructive/10 flex items-center justify-center">
               <AlertCircle className="h-6 w-6 text-destructive" />
             </div>

@@ -9,6 +9,7 @@ export interface PublicWidgetConfig {
   widget_type: string;
   entity_type: string;
   entity_id: string | null;
+  override_applied?: boolean;
   name: string;
   config: WidgetConfigJson;
   allowed_domains: string[] | null;
@@ -28,6 +29,7 @@ export interface PublicReview {
   review_date: string;
   source: string;
   avatar_url: string | null;
+  featured: boolean | null;
   loan_type: string | null;
   first_time_homebuyer: boolean | null;
   loan_officer_name: string | null;
@@ -45,6 +47,7 @@ export interface EntityProfile {
   licensing_states: string[] | null;
   /** Organization-specific fields (company_review widget) */
   logo_url?: string | null;
+  primary_color?: string | null;
   organization_name?: string | null;
   rating_distribution?: { 5: number; 4: number; 3: number; 2: number; 1: number } | null;
   source_breakdown?: { source: string; count: number; average: number }[] | null;
@@ -136,7 +139,7 @@ export async function getOrganizationProfile(
   // Fetch org details
   const { data: org, error: orgError } = await supabase
     .from("organizations")
-    .select("name, logo_url")
+    .select("name, logo_url, primary_color")
     .eq("id", organizationId)
     .maybeSingle();
 
@@ -161,6 +164,7 @@ export async function getOrganizationProfile(
       total_reviews: 0,
       licensing_states: null,
       logo_url: org.logo_url,
+      primary_color: org.primary_color,
       organization_name: org.name,
       rating_distribution: null,
       source_breakdown: null,
@@ -203,6 +207,7 @@ export async function getOrganizationProfile(
     total_reviews: totalReviews,
     licensing_states: null,
     logo_url: org.logo_url,
+    primary_color: org.primary_color,
     organization_name: org.name,
     rating_distribution: dist,
     source_breakdown: sourceBreakdown,
@@ -262,13 +267,16 @@ export async function getBranchProfile(
   const nmlsId = teamMembers.find((m) => m.nmls_id)?.nmls_id ?? null;
 
   // Compute rating distribution and source breakdown from branch reviews
-  const { data: reviews } = await supabase
-    .from("reviews")
-    .select("rating, source")
-    .eq("organization_id", branch.organization_id)
-    .in("user_id", teamMembers.map((t) => t.id))
-    .eq("status", "approved")
-    .eq("is_published", true);
+  const teamIds = teamMembers.map((t) => t.id);
+  const { data: reviews } = teamIds.length > 0
+    ? await supabase
+        .from("reviews")
+        .select("rating, source")
+        .eq("organization_id", branch.organization_id)
+        .in("user_id", teamIds)
+        .eq("status", "approved")
+        .eq("is_published", true)
+    : { data: [] as { rating: number; source: string }[] };
 
   let ratingDistribution: { 5: number; 4: number; 3: number; 2: number; 1: number } | null = null;
   let sourceBreakdown: { source: string; count: number; average: number }[] | null = null;
@@ -295,14 +303,20 @@ export async function getBranchProfile(
     }));
   }
 
+  // Compute live aggregates from reviews
+  const totalReviews = reviews?.length ?? 0;
+  const avgRating = totalReviews > 0
+    ? Math.round((reviews!.reduce((sum, r) => sum + (r.rating ?? 0), 0) / totalReviews) * 10) / 10
+    : null;
+
   return {
     full_name: branch.name,
     avatar_url: null,
     photo_url: branch.photo_url,
     nmls_id: nmlsId,
     title: null,
-    average_rating: branch.average_rating ? Number(branch.average_rating) : null,
-    total_reviews: branch.total_reviews,
+    average_rating: avgRating,
+    total_reviews: totalReviews,
     licensing_states: null,
     organization_name: branch.name,
     address,
@@ -312,6 +326,18 @@ export async function getBranchProfile(
     source_breakdown: sourceBreakdown,
     team_members: teamMembers.length > 0 ? teamMembers : null,
   };
+}
+
+export async function getActiveBranchUserIds(branchId: string): Promise<string[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("branch_id", branchId)
+    .eq("is_active", true);
+
+  if (error || !data) return [];
+  return data.map((user) => user.id);
 }
 
 /** NPS data for nps_score_badge widgets. */
@@ -392,8 +418,8 @@ export async function getPublicReviews(
 
   // Include LO name join for branch-level reviews
   const selectFields = entityType === "branch"
-    ? "id, customer_name, rating, text, review_date, source, customer_location, metadata, user:user_id(full_name)"
-    : "id, customer_name, rating, text, review_date, source, customer_location, metadata";
+    ? "id, customer_name, rating, text, review_date, source, customer_location, featured, user:user_id(full_name)"
+    : "id, customer_name, rating, text, review_date, source, customer_location, featured";
 
   let query = supabase
     .from("reviews")
@@ -405,17 +431,10 @@ export async function getPublicReviews(
   if (entityType === "user" && entityId) {
     query = query.eq("user_id", entityId);
   } else if (entityType === "branch" && entityId) {
-    // Fetch user IDs belonging to this branch, then filter reviews to those users
-    const { data: branchUsers } = await supabase
-      .from("users")
-      .select("id")
-      .eq("branch_id", entityId)
-      .eq("is_active", true);
-    const userIds = (branchUsers ?? []).map((u) => u.id);
+    const userIds = await getActiveBranchUserIds(entityId);
     if (userIds.length > 0) {
       query = query.in("user_id", userIds);
     } else {
-      // No users at branch — return empty
       return { reviews: [], nextCursor: null };
     }
   }
@@ -458,19 +477,11 @@ export async function getPublicReviews(
       });
     }
   }
-  if (filters?.loanTypes && filters.loanTypes.length > 0) {
-    const ALLOWED_LOAN_TYPES = [
-      "Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional",
-    ];
-    const safeLoanTypes = filters.loanTypes.filter((lt) =>
-      ALLOWED_LOAN_TYPES.includes(lt)
-    );
-    if (safeLoanTypes.length > 0) {
-      const loanTypeFilter = safeLoanTypes
-        .map((lt) => `metadata->>loan_type.eq.${lt}`)
-        .join(",");
-      query = query.or(loanTypeFilter);
-    }
+  // Note: loanTypes filter removed — reviews table has no metadata/loan_type column
+
+  // Featured first: sort by featured DESC so featured reviews float to top
+  if (filters?.sortOrder === "featured") {
+    query = query.order("featured", { ascending: false, nullsFirst: false });
   }
 
   const sortField = "review_date";
@@ -490,8 +501,14 @@ export async function getPublicReviews(
       const decoded = JSON.parse(
         Buffer.from(cursor, "base64url").toString("utf-8")
       );
-      const { id: cursorId, review_date: cursorDate, rating: cursorRating } = decoded;
-      if (filters?.sortOrder === "highest" || filters?.sortOrder === "lowest") {
+      const { id: cursorId, review_date: cursorDate, rating: cursorRating, featured: cursorFeatured } = decoded;
+      if (filters?.sortOrder === "featured") {
+        // featured DESC, then review_date DESC, then id ASC
+        const featVal = cursorFeatured ? "true" : "false";
+        query = query.or(
+          `featured.lt.${featVal},and(featured.eq.${featVal},or(review_date.lt.${cursorDate},and(review_date.eq.${cursorDate},id.gt.${cursorId})))`
+        );
+      } else if (filters?.sortOrder === "highest" || filters?.sortOrder === "lowest") {
         const ratingAsc = filters.sortOrder === "lowest";
         query = query.or(
           `rating.${ratingAsc ? "gt" : "lt"}.${cursorRating},and(rating.eq.${cursorRating},or(review_date.${ascending ? "gt" : "lt"}.${cursorDate},and(review_date.eq.${cursorDate},id.gt.${cursorId})))`
@@ -517,7 +534,6 @@ export async function getPublicReviews(
   const items = hasMore ? data.slice(0, limit) : data;
 
   const reviews: PublicReview[] = (items as unknown as Record<string, unknown>[]).map((row) => {
-    const meta = row.metadata as Record<string, unknown> | null;
     return {
       id: row.id as string,
       reviewer_name: row.customer_name as string | null,
@@ -526,8 +542,9 @@ export async function getPublicReviews(
       review_date: row.review_date as string,
       source: row.source as string,
       avatar_url: null,
-      loan_type: (meta?.loan_type as string | null) ?? null,
-      first_time_homebuyer: (meta?.first_time_homebuyer as boolean | null) ?? null,
+      featured: (row.featured as boolean) ?? false,
+      loan_type: null,
+      first_time_homebuyer: null,
       loan_officer_name: (row.user as { full_name: string } | null)?.full_name ?? null,
     };
   });
@@ -540,6 +557,7 @@ export async function getPublicReviews(
         id: lastItem.id,
         review_date: lastItem.review_date,
         rating: lastItem.rating,
+        ...(filters?.sortOrder === "featured" ? { featured: lastItem.featured ?? false } : {}),
       }),
       "utf-8"
     ).toString("base64url");
@@ -648,6 +666,12 @@ export async function getVideoTestimonials(
   // Filter by LO if widget is entity-scoped to a user
   if (entityType === "user" && entityId) {
     query = query.eq("user_id", entityId);
+  } else if (entityType === "branch" && entityId) {
+    const userIds = await getActiveBranchUserIds(entityId);
+    if (userIds.length === 0) {
+      return [];
+    }
+    query = query.in("user_id", userIds);
   }
 
   const { data, error } = await query;

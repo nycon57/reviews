@@ -13,10 +13,24 @@ import {
   SOURCE_LABELS,
   SOURCE_ICONS,
   getInitials,
+  getPreviewBodyStyle,
+  getPreviewBodyTextStyle,
+  getPreviewHeadingStyle,
+  getPreviewMetaStyle,
   truncateText,
   formatDate,
-  getLoanTypeColor,
+  previewT,
 } from "./shared";
+import { SourceBadge } from "./shared-components";
+import {
+  applyFeaturedStyle,
+  getPreviewCardClasses,
+  getPreviewCardStyle,
+  getPreviewContainerStyle,
+  resolvePreviewCardStyle,
+  type PreviewCardStyle,
+  type WidgetThemeLayout,
+} from "./layout";
 
 /**
  * Dashboard preview component for the Company Review Widget.
@@ -28,6 +42,7 @@ import {
 interface OrgProfile {
   organization_name: string | null;
   logo_url: string | null;
+  primary_color?: string | null;
   average_rating: number | null;
   total_reviews: number | null;
   rating_distribution: RatingDistribution | null;
@@ -39,19 +54,20 @@ interface CompanyReviewPreviewProps {
   reviews: PreviewReview[];
   content?: WidgetContent;
   colors?: WidgetThemeColors;
-  maxWidth?: string;
-  borderRadius?: string;
+  initialSort?: SortOption;
+  layout?: WidgetThemeLayout;
 }
 
 // ── Stars Component ──────────────────────────────────────────────────
 
-function StarRating({ rating, filledColor, emptyColor }: {
+function StarRating({ rating, filledColor, emptyColor, lang }: {
   rating: number;
   filledColor: string;
   emptyColor: string;
+  lang?: string;
 }) {
   return (
-    <div className="flex gap-0.5" role="img" aria-label={`${rating} out of 5 stars`}>
+    <div className="flex gap-0.5" role="img" aria-label={previewT(lang, "starsAriaLabel", { rating })}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
@@ -65,13 +81,14 @@ function StarRating({ rating, filledColor, emptyColor }: {
   );
 }
 
-function SmallStarRating({ rating, filledColor, emptyColor }: {
+function SmallStarRating({ rating, filledColor, emptyColor, lang }: {
   rating: number;
   filledColor: string;
   emptyColor: string;
+  lang?: string;
 }) {
   return (
-    <div className="flex gap-px" role="img" aria-label={`${rating} out of 5 stars`}>
+    <div className="flex gap-px" role="img" aria-label={previewT(lang, "starsAriaLabel", { rating })}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
@@ -87,10 +104,11 @@ function SmallStarRating({ rating, filledColor, emptyColor }: {
 
 // ── Organization Header ──────────────────────────────────────────────
 
-function OrgHeader({ profile, starFilled, starEmpty }: {
+function OrgHeader({ profile, starFilled, starEmpty, lang }: {
   profile: OrgProfile;
   starFilled: string;
   starEmpty: string;
+  lang?: string;
 }) {
   return (
     <div className="flex items-center gap-4 pb-4 mb-4" style={{ borderBottom: "1px solid var(--rw-border, #e5e7eb)" }}>
@@ -99,12 +117,12 @@ function OrgHeader({ profile, starFilled, starEmpty }: {
           src={profile.logo_url}
           alt={profile.organization_name ?? "Organization"}
           className="w-14 h-14 rounded-lg object-contain flex-shrink-0"
-          style={{ background: "#f9fafb" }}
+          style={{ background: "var(--rw-surface-muted, #f9fafb)" }}
         />
       ) : (
         <div
           className="w-14 h-14 rounded-lg flex items-center justify-center text-white font-semibold text-lg flex-shrink-0"
-          style={{ background: "var(--rw-primary, #52796f)" }}
+          style={{ background: profile.primary_color ?? "var(--rw-primary, #52796f)" }}
         >
           {getInitials(profile.organization_name)}
         </div>
@@ -112,7 +130,7 @@ function OrgHeader({ profile, starFilled, starEmpty }: {
 
       <div className="flex-1 min-w-0">
         {profile.organization_name && (
-          <div className="text-lg font-bold" style={{ color: "var(--rw-text, #1a1a2e)" }}>
+          <div className="text-lg font-bold" style={getPreviewHeadingStyle()}>
             {profile.organization_name}
           </div>
         )}
@@ -125,10 +143,11 @@ function OrgHeader({ profile, starFilled, starEmpty }: {
               rating={Math.round(profile.average_rating)}
               filledColor={starFilled}
               emptyColor={starEmpty}
+              lang={lang}
             />
             {profile.total_reviews != null && (
-              <span className="text-[13px] text-gray-500">
-                {profile.total_reviews} review{profile.total_reviews === 1 ? "" : "s"}
+              <span className="text-[13px] text-gray-500" style={getPreviewMetaStyle()}>
+                {profile.total_reviews} {previewT(lang, profile.total_reviews === 1 ? "review" : "reviews")}
               </span>
             )}
           </div>
@@ -140,17 +159,21 @@ function OrgHeader({ profile, starFilled, starEmpty }: {
 
 // ── Rating Distribution ──────────────────────────────────────────────
 
-function RatingDistributionChart({ distribution, totalReviews, starFilled }: {
+function RatingDistributionChart({ distribution, totalReviews, starFilled, lang }: {
   distribution: RatingDistribution;
   totalReviews: number;
   starFilled: string;
+  lang?: string;
 }) {
   return (
     <div
       className="mb-4 p-4 rounded-lg"
-      style={{ background: "#f9fafb", border: "1px solid var(--rw-border, #e5e7eb)" }}
+      style={{
+        background: "var(--rw-surface-muted, #f9fafb)",
+        border: "1px solid var(--rw-border, #e5e7eb)",
+      }}
       role="figure"
-      aria-label="Rating distribution"
+      aria-label={previewT(lang, "ratingDistribution")}
     >
       {[5, 4, 3, 2, 1].map((star) => {
         const count = distribution[star as keyof RatingDistribution] ?? 0;
@@ -161,13 +184,21 @@ function RatingDistributionChart({ distribution, totalReviews, starFilled }: {
               {star}
               <Star size={12} fill={starFilled} stroke={starFilled} />
             </div>
-            <div className="flex-1 h-2 bg-gray-200 rounded overflow-hidden">
+            <div
+              className="flex-1 h-2 rounded overflow-hidden"
+              style={{ background: "var(--rw-surface-strong, #e5e7eb)" }}
+            >
               <div
                 className="h-full rounded transition-all"
                 style={{ width: `${pct}%`, background: "var(--rw-primary, #52796f)" }}
               />
             </div>
-            <span className="text-xs text-gray-500 min-w-[24px] text-right">{count}</span>
+            <span
+              className="text-xs text-gray-500 min-w-[24px] text-right"
+              style={getPreviewMetaStyle()}
+            >
+              {count}
+            </span>
           </div>
         );
       })}
@@ -177,36 +208,48 @@ function RatingDistributionChart({ distribution, totalReviews, starFilled }: {
 
 // ── Source Breakdown ─────────────────────────────────────────────────
 
-function SourceBreakdownSection({ sources, starFilled, starEmpty }: {
+function SourceBreakdownSection({ sources, starFilled, starEmpty, lang }: {
   sources: SourceBreakdown[];
   starFilled: string;
   starEmpty: string;
+  lang?: string;
 }) {
   return (
     <div className="mb-4 p-4 rounded-lg" style={{ border: "1px solid var(--rw-border, #e5e7eb)" }}>
-      <h4 className="text-sm font-semibold mb-3" style={{ color: "var(--rw-text, #1a1a2e)" }}>
-        Reviews by Source
+      <h4 className="text-sm font-semibold mb-3" style={getPreviewHeadingStyle()}>
+        {previewT(lang, "reviewsBySource")}
       </h4>
       <div className="flex flex-col gap-2.5">
         {sources.map((src) => {
           const iconData = SOURCE_ICONS[src.source] ?? { bg: "#6b7280", letter: src.source[0]?.toUpperCase() ?? "?" };
           return (
             <div key={src.source} className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-md flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                style={{ background: iconData.bg }}
-              >
-                {iconData.letter}
-              </div>
+              {iconData.icon ? (
+                <img
+                  src={iconData.icon}
+                  alt={SOURCE_LABELS[src.source] ?? src.source}
+                  className="w-8 h-8 rounded-md object-contain flex-shrink-0"
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 rounded-md flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                  style={{ background: iconData.bg }}
+                >
+                  {iconData.letter}
+                </div>
+              )}
               <div className="flex-1 min-w-0">
-                <span className="block text-[13px] font-semibold" style={{ color: "var(--rw-text, #1a1a2e)" }}>
+                <span
+                  className="block text-[13px] font-semibold"
+                  style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
+                >
                   {SOURCE_LABELS[src.source] ?? src.source}
                 </span>
-                <span className="text-[11px] text-gray-400">
-                  {src.count} reviews &middot; {src.average.toFixed(1)} avg
+                <span className="text-[11px] text-gray-400" style={getPreviewMetaStyle("#9ca3af", 0.79)}>
+                  {src.count} {previewT(lang, "reviews")} &middot; {src.average.toFixed(1)} {previewT(lang, "avgSuffix")}
                 </span>
               </div>
-              <SmallStarRating rating={src.average} filledColor={starFilled} emptyColor={starEmpty} />
+              <SmallStarRating rating={src.average} filledColor={starFilled} emptyColor={starEmpty} lang={lang} />
             </div>
           );
         })}
@@ -217,25 +260,36 @@ function SourceBreakdownSection({ sources, starFilled, starEmpty }: {
 
 // ── Review Card ──────────────────────────────────────────────────────
 
-function ReviewCard({ review, content, starFilled, starEmpty }: {
+function ReviewCard({ review, content, cardStyle, starFilled, starEmpty, accentColor, layout }: {
   review: PreviewReview;
   content: WidgetContent;
+  cardStyle: PreviewCardStyle;
   starFilled: string;
   starEmpty: string;
+  accentColor: string;
+  layout?: WidgetThemeLayout;
 }) {
-  const cardStyle = content.cardStyle ?? "bordered";
+  const lang = content.language;
   const dateFormat = content.dateFormat ?? "relative";
   const truncLen = content.truncateLength ?? 300;
+  const featured = !!review.featured;
 
-  const cardClasses = [
-    "p-4 rounded-lg transition-shadow",
-    cardStyle === "bordered" && "border border-gray-200 bg-white",
-    cardStyle === "shadow" && "bg-white shadow-sm hover:shadow-md",
-    cardStyle === "flat" && "bg-gray-50",
-  ].filter(Boolean).join(" ");
+  const cardClasses = getPreviewCardClasses(
+    cardStyle,
+    "p-4 transition-shadow",
+  );
+
+  let inlineStyle = getPreviewCardStyle(cardStyle, layout);
+  if (featured) {
+    inlineStyle = applyFeaturedStyle(inlineStyle, accentColor);
+  }
 
   return (
-    <article className={cardClasses} tabIndex={0}>
+    <article
+      className={cardClasses}
+      style={inlineStyle}
+      tabIndex={0}
+    >
       <div className="flex items-center gap-2.5 mb-2">
         {content.showAvatar !== false && (
           review.avatar_url ? (
@@ -243,52 +297,64 @@ function ReviewCard({ review, content, starFilled, starEmpty }: {
               src={review.avatar_url}
               alt={review.reviewer_name ?? "Reviewer"}
               className="w-9 h-9 rounded-full object-cover flex-shrink-0 bg-gray-200"
+              style={{ background: "var(--rw-surface-strong, #e5e7eb)" }}
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-500 flex-shrink-0">
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+              style={{
+                background: "var(--rw-surface-strong, #e5e7eb)",
+                color: "var(--rw-text-muted, #6b7280)",
+              }}
+            >
               {getInitials(review.reviewer_name)}
             </div>
           )
         )}
         <div className="flex-1 min-w-0">
-          {review.reviewer_name && (
-            <span className="block text-sm font-semibold truncate">{review.reviewer_name}</span>
-          )}
+          <div className="flex items-center gap-1.5">
+            {review.reviewer_name && (
+              <span
+                className="text-sm font-semibold truncate"
+                style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
+              >
+                {review.reviewer_name}
+              </span>
+            )}
+            {featured && (
+              <span
+                className="inline-flex items-center gap-0.5 shrink-0 px-1.5 py-px text-[10px] font-semibold rounded"
+                style={{
+                  background: `color-mix(in srgb, ${accentColor} 15%, transparent)`,
+                  color: accentColor,
+                }}
+              >
+                <Star size={9} fill="currentColor" />
+                {previewT(lang, "featured")}
+              </span>
+            )}
+          </div>
           {content.showDate !== false && review.review_date && (
-            <span className="block text-xs text-gray-400">{formatDate(review.review_date, dateFormat)}</span>
+            <span className="block text-xs text-gray-400" style={getPreviewMetaStyle("#9ca3af")}>
+              {formatDate(review.review_date, dateFormat, lang)}
+            </span>
           )}
         </div>
       </div>
 
       <div className="mb-2">
-        <StarRating rating={review.rating} filledColor={starFilled} emptyColor={starEmpty} />
+        <StarRating rating={review.rating} filledColor={starFilled} emptyColor={starEmpty} lang={lang} />
       </div>
 
       {review.text && (
-        <p className="text-sm leading-relaxed text-gray-700">
+        <p className="text-sm leading-relaxed text-gray-700" style={getPreviewBodyTextStyle()}>
           {truncLen > 0 ? truncateText(review.text, truncLen) : review.text}
         </p>
       )}
 
       <div className="flex flex-wrap gap-1.5 mt-2">
         {content.showSource !== false && review.source && (
-          <span className="text-[11px] text-gray-400 capitalize">
-            via {SOURCE_LABELS[review.source] ?? review.source}
-          </span>
-        )}
-        {review.loan_type && (
-          <span
-            className="inline-block px-2 py-0.5 text-[11px] font-medium rounded"
-            style={{ background: getLoanTypeColor(review.loan_type).bg, color: getLoanTypeColor(review.loan_type).text }}
-          >
-            {review.loan_type}
-          </span>
-        )}
-        {review.first_time_homebuyer && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-green-800 bg-green-100 rounded">
-            <Home size={10} />
-            First-Time Buyer
-          </span>
+          <SourceBadge source={review.source} lang={lang} />
         )}
       </div>
     </article>
@@ -297,20 +363,22 @@ function ReviewCard({ review, content, starFilled, starEmpty }: {
 
 // ── Sort Controls ────────────────────────────────────────────────────
 
-type SortOption = "newest" | "highest" | "lowest";
+type SortOption = "featured" | "newest" | "oldest" | "highest" | "lowest";
 
-function SortControls({ activeSort, onSort }: {
+function SortControls({ activeSort, onSort, lang }: {
   activeSort: SortOption;
   onSort: (sort: SortOption) => void;
+  lang?: string;
 }) {
   const options: { value: SortOption; label: string }[] = [
-    { value: "newest", label: "Most Recent" },
-    { value: "highest", label: "Highest Rated" },
-    { value: "lowest", label: "Lowest Rated" },
+    { value: "newest", label: previewT(lang, "mostRecent") },
+    { value: "oldest", label: previewT(lang, "oldest") },
+    { value: "highest", label: previewT(lang, "highestRated") },
+    { value: "lowest", label: previewT(lang, "lowestRated") },
   ];
 
   return (
-    <div className="flex gap-1.5 mb-3 flex-wrap" role="toolbar" aria-label="Sort reviews">
+    <div className="flex gap-1.5 mb-3 flex-wrap" role="toolbar" aria-label={previewT(lang, "sortReviews")}>
       {options.map((opt) => (
         <button
           key={opt.value}
@@ -338,15 +406,17 @@ export function CompanyReviewPreview({
   reviews,
   content = {},
   colors = {},
-  maxWidth,
-  borderRadius,
+  initialSort = "newest",
+  layout,
 }: CompanyReviewPreviewProps) {
+  const lang = content.language;
   const starFilled = colors.starFilled ?? DEFAULT_STAR_FILLED;
   const starEmpty = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
+  const accentColor = colors.accent ?? colors.primary ?? DEFAULT_STAR_FILLED;
   const columns = content.columns ?? 1;
   const perPage = content.reviewsPerPage ?? 10;
 
-  const [activeSort, setActiveSort] = useState<SortOption>("newest");
+  const [activeSort, setActiveSort] = useState<SortOption>(initialSort);
   const [visibleCount, setVisibleCount] = useState(perPage);
 
   const sortedReviews = useCallback(() => {
@@ -354,6 +424,9 @@ export function CompanyReviewPreview({
     switch (activeSort) {
       case "newest":
         sorted.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
+        break;
+      case "oldest":
+        sorted.sort((a, b) => new Date(a.review_date).getTime() - new Date(b.review_date).getTime());
         break;
       case "highest":
         sorted.sort((a, b) => b.rating - a.rating);
@@ -373,27 +446,19 @@ export function CompanyReviewPreview({
   const displayReviews = sortedReviews().slice(0, visibleCount);
   const hasMore = visibleCount < reviews.length;
 
-  const containerStyle: React.CSSProperties = {
-    "--rw-primary": colors.primary ?? "#52796f",
-    "--rw-bg": colors.background ?? "#ffffff",
-    "--rw-text": colors.text ?? "#1a1a2e",
-    "--rw-border": colors.border ?? "#e5e7eb",
-    borderRadius: borderRadius ?? "8px",
-    padding: "16px",
-    background: colors.background ?? "#ffffff",
-    color: colors.text ?? "#1a1a2e",
-  } as React.CSSProperties;
+  const cardStyle = resolvePreviewCardStyle(layout?.cardStyle, content.cardStyle);
+  const containerStyle = getPreviewContainerStyle(colors, layout);
 
   return (
     <div
       className="text-sm leading-normal antialiased"
       style={containerStyle}
       role="region"
-      aria-label={content.headerText ?? `Reviews for ${profile?.organization_name ?? "Organization"}`}
+      aria-label={content.headerText ?? previewT(lang, "reviewsFor", { name: profile?.organization_name ?? "Organization" })}
     >
       {/* Organization Header */}
       {profile && content.showHeader !== false && (
-        <OrgHeader profile={profile} starFilled={starFilled} starEmpty={starEmpty} />
+        <OrgHeader profile={profile} starFilled={starFilled} starEmpty={starEmpty} lang={lang} />
       )}
 
       {/* Rating Distribution */}
@@ -402,6 +467,7 @@ export function CompanyReviewPreview({
           distribution={profile.rating_distribution}
           totalReviews={profile.total_reviews}
           starFilled={starFilled}
+          lang={lang}
         />
       ) : null}
 
@@ -411,17 +477,23 @@ export function CompanyReviewPreview({
           sources={profile.source_breakdown}
           starFilled={starFilled}
           starEmpty={starEmpty}
+          lang={lang}
         />
       )}
 
       {/* Sort Controls */}
       {content.showFilters && reviews.length > 0 && (
-        <SortControls activeSort={activeSort} onSort={handleSort} />
+        <SortControls activeSort={activeSort} onSort={handleSort} lang={lang} />
       )}
 
       {/* Reviews */}
       {reviews.length === 0 ? (
-        <div className="py-8 text-center text-gray-400 text-sm">No reviews yet.</div>
+        <div
+          className="py-8 text-center text-sm"
+          style={{ color: "var(--rw-text-subtle, #9ca3af)" }}
+        >
+          {previewT(lang, "noReviewsYet")}
+        </div>
       ) : (
         <div
           className="grid gap-3"
@@ -432,8 +504,11 @@ export function CompanyReviewPreview({
               key={review.id}
               review={review}
               content={content}
+              cardStyle={cardStyle}
               starFilled={starFilled}
               starEmpty={starEmpty}
+              accentColor={accentColor}
+              layout={layout}
             />
           ))}
         </div>
@@ -458,7 +533,7 @@ export function CompanyReviewPreview({
           }}
           onClick={() => setVisibleCount((c) => Math.min(c + perPage, reviews.length))}
         >
-          Load More Reviews
+          {previewT(lang, "loadMore")}
         </button>
       )}
 
@@ -492,7 +567,7 @@ export function CompanyReviewPreview({
                 e.currentTarget.style.color = colors.primary ?? "#52796f";
               }}
             >
-              Write a Review
+              {previewT(lang, "writeReview")}
             </a>
           )}
         </div>
@@ -500,14 +575,31 @@ export function CompanyReviewPreview({
 
       {/* Disclaimer */}
       {content.showDisclaimer && (
-        <div className="mt-3 p-2.5 bg-gray-50 rounded border border-gray-100">
+        <div
+          className="mt-3 p-2.5 rounded border"
+          style={{
+            background: "var(--rw-surface-muted, #f9fafb)",
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+          }}
+        >
           <div className="flex items-center gap-1.5 mb-1">
-            <Home size={16} className="flex-shrink-0 text-gray-500" />
-            <span className="text-[11px] font-semibold text-gray-600">Equal Housing Lender</span>
+            <Home
+              size={16}
+              className="flex-shrink-0"
+              style={{ color: "var(--rw-text-muted, #6b7280)" }}
+            />
+            <span
+              className="text-[11px] font-semibold"
+              style={{ color: "var(--rw-text, #1a1a2e)" }}
+            >
+              {previewT(lang, "equalHousingLender")}
+            </span>
           </div>
-          <p className="text-[10px] leading-snug text-gray-500 mb-1">
-            {content.disclaimerText ||
-              "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice."}
+          <p
+            className="text-[10px] leading-snug mb-1"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
+          >
+            {content.disclaimerText || previewT(lang, "defaultDisclaimer")}
           </p>
           <a
             href="https://www.nmlsconsumeraccess.org"
@@ -516,20 +608,27 @@ export function CompanyReviewPreview({
             className="text-[10px] no-underline hover:underline"
             style={{ color: "var(--rw-primary, #52796f)" }}
           >
-            NMLS Consumer Access
+            {previewT(lang, "nmlsConsumerAccess")}
           </a>
         </div>
       )}
 
       {/* Branding */}
       {content.showBranding !== false && (
-        <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-400 text-center">
-          Powered by{" "}
+        <div
+          className="mt-4 pt-3 border-t text-[11px] text-center"
+          style={{
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+            color: "var(--rw-text-subtle, #9ca3af)",
+          }}
+        >
+          {previewT(lang, "poweredBy")}{" "}
           <a
             href="https://repwell.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-500 no-underline hover:underline"
+            className="no-underline hover:underline"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
           >
             RepWell
           </a>

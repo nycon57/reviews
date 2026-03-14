@@ -1,7 +1,8 @@
 /**
  * Star Rating Badge Widget template — builds the compact badge DOM.
  * Displays star icons (with partial fill via clip-path), numeric rating,
- * review count, and optional entity name. Supports inline and floating modes.
+ * review count, optional entity name, and "Verified by RepWell" branding.
+ * The entire badge links to the entity's RepWell profile page.
  * All DOM construction uses safe methods (createElement/textContent) — no innerHTML.
  */
 
@@ -83,6 +84,78 @@ function sanitizeUrl(url: string): string | null {
   }
 }
 
+// ── RepWell Icon SVG ────────────────────────────────────────────────
+
+/**
+ * Inline RepWell shield/checkmark icon for the "Verified by" line.
+ * Avoids external image requests from the embed.
+ */
+function repwellIconSVG(): SVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("class", "rw-srb__verified-icon");
+  svg.setAttribute("aria-hidden", "true");
+
+  // Shield path
+  const shield = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  shield.setAttribute("d", "M12 2L4 6v5c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z");
+  shield.setAttribute("fill", "#52796f");
+  shield.setAttribute("opacity", "0.15");
+  svg.appendChild(shield);
+
+  // Checkmark path
+  const check = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  check.setAttribute("d", "M9 12l2 2 4-4");
+  check.setAttribute("stroke", "#52796f");
+  check.setAttribute("stroke-width", "2");
+  check.setAttribute("stroke-linecap", "round");
+  check.setAttribute("stroke-linejoin", "round");
+  svg.appendChild(check);
+
+  return svg;
+}
+
+// ── Profile URL Builder ─────────────────────────────────────────────
+
+function buildProfileUrl(config: PublicWidgetConfig, apiBase: string): string | null {
+  const profile = config.entity_profile;
+  const entityType = config.entity_type;
+
+  // Use the profile's url field if available
+  if (profile?.url) {
+    return sanitizeUrl(profile.url);
+  }
+
+  // Otherwise build from the API base domain
+  try {
+    const base = new URL(apiBase);
+    const origin = base.origin;
+
+    if (entityType === "user" && config.entity_id) {
+      // LO profile pages are at /pro/<slug>
+      const slug = profile?.full_name
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      if (slug) return `${origin}/pro/${slug}`;
+    } else if (entityType === "branch" && config.entity_id) {
+      return `${origin}/branch/${config.entity_id}`;
+    } else if (entityType === "organization") {
+      const orgName = profile?.organization_name;
+      const slug = orgName
+        ?.toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      if (slug) return `${origin}/org/${slug}`;
+    }
+  } catch {
+    // Invalid apiBase URL — skip
+  }
+
+  return null;
+}
+
 // ── Floating Mode Setup ─────────────────────────────────────────────
 
 function applyFloatingMode(
@@ -152,18 +225,22 @@ export function buildStarRatingBadgeDOM(
     applyFloatingMode(shadowRoot.host as HTMLElement, badge!);
   }
 
-  // Build the badge as a link or div
-  const safeUrl = badge?.clickUrl ? sanitizeUrl(badge.clickUrl) : null;
+  // Build the profile URL — badge always links to the RepWell profile
+  const profileUrl = badge?.clickUrl
+    ? sanitizeUrl(badge.clickUrl)
+    : buildProfileUrl(config, apiBase);
+
+  // Build the badge as a link (always clickable to profile) or div
   let container: HTMLElement;
 
-  if (safeUrl) {
+  if (profileUrl) {
     const link = document.createElement("a");
     link.className = "rw-srb";
-    link.href = safeUrl;
+    link.href = profileUrl;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.addEventListener("click", () => {
-      trackClick(apiBase, config.widget_id, "click_cta");
+      trackClick(apiBase, config, "click_cta");
     });
     container = link;
   } else {
@@ -179,15 +256,17 @@ export function buildStarRatingBadgeDOM(
 
   // Apply badge dimensions
   if (badge?.width) container.style.width = badge.width;
-  if (badge?.height) container.style.height = badge.height;
+
+  // Top section: rating + stars + info
+  const topRow = el("div", "rw-srb__top");
 
   // Numeric rating
-  container.appendChild(
+  topRow.appendChild(
     text("span", averageRating.toFixed(1), "rw-srb__rating")
   );
 
   // Stars with partial fill
-  container.appendChild(
+  topRow.appendChild(
     buildStarsRow(averageRating, starFilled, starEmpty)
   );
 
@@ -207,8 +286,24 @@ export function buildStarRatingBadgeDOM(
         )
       );
     }
-    container.appendChild(info);
+    topRow.appendChild(info);
   }
+
+  container.appendChild(topRow);
+
+  // Divider
+  container.appendChild(el("div", "rw-srb__divider"));
+
+  // Verified by RepWell branding
+  const verifiedRow = el("div", "rw-srb__verified");
+  verifiedRow.appendChild(repwellIconSVG());
+  const verifiedText = el("span", "rw-srb__verified-text");
+  verifiedText.textContent = t("verifiedBy") || "Verified by";
+  verifiedRow.appendChild(verifiedText);
+  const brandName = el("span", "rw-srb__verified-brand");
+  brandName.textContent = " RepWell";
+  verifiedRow.appendChild(brandName);
+  container.appendChild(verifiedRow);
 
   // Auto-refresh via setTimeout
   const interval = badge?.refreshInterval ?? "never";

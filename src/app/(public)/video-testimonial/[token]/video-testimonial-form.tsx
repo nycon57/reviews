@@ -722,7 +722,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     return (
       <FormContainer statusMessage={statusMessage}>
         <Card className="mx-auto max-w-lg shadow-lg">
-          <CardHeader>
+          <CardHeader variant="plain">
             <CardTitle className="font-sans text-xl text-repwell-teal-500">
               You Have a New Video Review Request
             </CardTitle>
@@ -782,7 +782,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     return (
       <FormContainer statusMessage={statusMessage}>
         <Card className="mx-auto max-w-lg shadow-lg">
-          <CardHeader>
+          <CardHeader variant="plain">
             <CardTitle className="font-sans text-xl text-repwell-teal-500">
               Quick Device Check
             </CardTitle>
@@ -1108,7 +1108,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   return (
     <FormContainer statusMessage={statusMessage}>
       <Card className="mx-auto max-w-lg shadow-lg">
-        <CardHeader className="space-y-4 pb-4">
+        <CardHeader variant="plain" className="space-y-4 pb-4">
           {organization.logoUrl && (
             <div className="flex justify-center">
               <img

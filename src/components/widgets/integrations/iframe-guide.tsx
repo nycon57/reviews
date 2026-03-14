@@ -10,7 +10,7 @@ import {
 } from "./integration-card";
 
 const IFRAME_BASIC = `<iframe
-  src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed"
+  src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
   width="100%"
   height="600"
   style="border: none; overflow: hidden;"
@@ -21,7 +21,7 @@ const IFRAME_BASIC = `<iframe
 
 const IFRAME_RESPONSIVE = `<div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;">
   <iframe
-    src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed"
+    src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
     title="RepWell Reviews Widget"
     loading="lazy"
@@ -31,7 +31,7 @@ const IFRAME_RESPONSIVE = `<div style="position: relative; width: 100%; padding-
 
 const IFRAME_AUTO_RESIZE = `<iframe
   id="repwell-widget"
-  src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed"
+  src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
   width="100%"
   style="border: none;"
   title="RepWell Reviews Widget"
@@ -56,8 +56,8 @@ export function IframeGuide() {
       description="For platforms that restrict script tags. Works on any site that allows iframes."
     >
       <div className="space-y-6">
-        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-xs text-amber-800">
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-lg">
+          <p className="text-xs text-amber-800 dark:text-amber-200">
             Use the script tag method when possible — it loads faster and
             resizes automatically. Use iframe only on platforms with strict
             Content Security Policies that block third-party scripts.
@@ -71,9 +71,13 @@ export function IframeGuide() {
           <StepList>
             <Step number={1} title="Copy the iframe code">
               <p>
-                Replace{" "}
-                <code className="text-xs bg-muted px-1 rounded">YOUR_WIDGET_ID</code>{" "}
-                with your Widget ID.
+                Replace <code className="text-xs bg-muted px-1 rounded">YOUR_WIDGET_ID</code> and{" "}
+                <code className="text-xs bg-muted px-1 rounded">YOUR_ENTITY_ID</code> with
+                values from your RepWell dashboard. Set{" "}
+                <code className="text-xs bg-muted px-1 rounded">entityType</code> to{" "}
+                <code className="text-xs bg-muted px-1 rounded">user</code>,{" "}
+                <code className="text-xs bg-muted px-1 rounded">branch</code>, or{" "}
+                <code className="text-xs bg-muted px-1 rounded">organization</code>.
               </p>
               <CodeBlock code={IFRAME_BASIC} language="html" />
             </Step>
@@ -120,7 +124,7 @@ export function IframeGuide() {
             {
               problem: "Iframe shows a blank white page",
               solution:
-                "Verify the Widget ID is correct and the widget is published (not draft). Check your browser console for CORS or CSP errors.",
+                "Verify the Widget ID and entity ID are correct and the widget is published (not draft). Check your browser console for CORS or CSP errors.",
             },
             {
               problem: "Widget is cut off at the bottom",

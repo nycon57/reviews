@@ -10,6 +10,14 @@
     "cssVariables": true,
     "prefix": ""
   },
+  "registries": {
+    "@shadcnblocks": {
+      "url": "https://shadcnblocks.com/r/{name}",
+      "headers": {
+        "Authorization": "Bearer ${SHADCNBLOCKS_API_KEY}"
+      }
+    }
+  },
   "aliases": {
     "components": "@/components",
     "utils": "@/lib/utils",

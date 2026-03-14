@@ -18,7 +18,6 @@
 | `commit` | After completing ANY task |
 | `commit-commands:commit-push-pr` | Feature complete and ready for review |
 | `code-review:code-review` | Before merging, after completing features |
-| `coderabbit:code-review` | AI code review for bugs, security, quality |
 | `web-design-guidelines` | After UI work, accessibility/UX checks |
 | `agent-browser` / `dev-browser` | Browser testing, screenshots, form filling, visual verification |
 | `react-email` / `send-email` | Transactional email work |

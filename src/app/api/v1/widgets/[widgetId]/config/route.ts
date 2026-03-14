@@ -15,6 +15,10 @@ import {
   withCorsAndCache,
   checkForbiddenRateLimit,
 } from "@/lib/widgets/cors";
+import {
+  resolveWidgetEntityContext,
+  WidgetEntityOverrideError,
+} from "@/lib/widgets/public-entity-resolution";
 
 const CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=60";
 
@@ -25,7 +29,14 @@ const ORG_PROFILE_WIDGET_TYPES = new Set(["company_review"]);
 /** Widget types that require a branch-level profile (with team members). */
 const BRANCH_PROFILE_WIDGET_TYPES = new Set(["branch_review"]);
 /** Widget types that resolve profile based on entity_type (org or LO). */
-const ENTITY_AWARE_WIDGET_TYPES = new Set(["star_rating_badge", "review_carousel", "video_testimonial"]);
+const ENTITY_AWARE_WIDGET_TYPES = new Set([
+  "review_profile",
+  "star_rating_badge",
+  "review_carousel",
+  "review_wall",
+  "video_testimonial",
+  "social_proof_banner",
+]);
 
 function isLocalhostOrigin(origin: string | null): boolean {
   if (!origin) return false;
@@ -60,54 +71,74 @@ export async function GET(
     return widgetError("Origin not allowed", "FORBIDDEN", 403, origin ?? "*");
   }
 
+  let resolvedEntity;
+  try {
+    resolvedEntity = await resolveWidgetEntityContext(widget, request.nextUrl.searchParams);
+  } catch (error) {
+    if (error instanceof WidgetEntityOverrideError) {
+      return widgetError(error.message, error.code, error.status, allowedOrigin);
+    }
+    throw error;
+  }
+
+  const effectiveWidget = {
+    ...widget,
+    entity_type: resolvedEntity.entityType,
+    entity_id: resolvedEntity.entityId,
+    override_applied: resolvedEntity.overrideApplied,
+  };
+
   // Enrich with entity profile based on widget type and entity_type
   let entityProfile = null;
-  if (LO_PROFILE_WIDGET_TYPES.has(widget.widget_type) && widget.entity_id) {
-    entityProfile = await getEntityProfile(widget.entity_id);
-  } else if (ORG_PROFILE_WIDGET_TYPES.has(widget.widget_type)) {
-    entityProfile = await getOrganizationProfile(widget.organization_id);
-  } else if (BRANCH_PROFILE_WIDGET_TYPES.has(widget.widget_type) && widget.entity_id) {
-    entityProfile = await getBranchProfile(widget.entity_id);
-  } else if (ENTITY_AWARE_WIDGET_TYPES.has(widget.widget_type)) {
-    if (widget.entity_type === "user" && widget.entity_id) {
-      entityProfile = await getEntityProfile(widget.entity_id);
-    } else if (widget.entity_type === "branch" && widget.entity_id) {
-      entityProfile = await getBranchProfile(widget.entity_id);
+  if (LO_PROFILE_WIDGET_TYPES.has(effectiveWidget.widget_type) && effectiveWidget.entity_id) {
+    entityProfile = await getEntityProfile(effectiveWidget.entity_id);
+  } else if (ORG_PROFILE_WIDGET_TYPES.has(effectiveWidget.widget_type)) {
+    entityProfile = await getOrganizationProfile(effectiveWidget.organization_id);
+  } else if (
+    BRANCH_PROFILE_WIDGET_TYPES.has(effectiveWidget.widget_type) &&
+    effectiveWidget.entity_id
+  ) {
+    entityProfile = await getBranchProfile(effectiveWidget.entity_id);
+  } else if (ENTITY_AWARE_WIDGET_TYPES.has(effectiveWidget.widget_type)) {
+    if (effectiveWidget.entity_type === "user" && effectiveWidget.entity_id) {
+      entityProfile = await getEntityProfile(effectiveWidget.entity_id);
+    } else if (effectiveWidget.entity_type === "branch" && effectiveWidget.entity_id) {
+      entityProfile = await getBranchProfile(effectiveWidget.entity_id);
     } else {
-      entityProfile = await getOrganizationProfile(widget.organization_id);
+      entityProfile = await getOrganizationProfile(effectiveWidget.organization_id);
     }
   }
 
   // For branch entity type without a profile yet, fetch branch data
-  if (!entityProfile && widget.entity_type === "branch" && widget.entity_id) {
-    entityProfile = await getBranchProfile(widget.entity_id);
+  if (!entityProfile && effectiveWidget.entity_type === "branch" && effectiveWidget.entity_id) {
+    entityProfile = await getBranchProfile(effectiveWidget.entity_id);
   }
 
   // Fetch video testimonials for video_testimonial widgets
   let videoTestimonials = null;
-  if (widget.widget_type === "video_testimonial") {
+  if (effectiveWidget.widget_type === "video_testimonial") {
     videoTestimonials = await getVideoTestimonials(
-      widget.organization_id,
-      widget.entity_id,
-      widget.entity_type,
+      effectiveWidget.organization_id,
+      effectiveWidget.entity_id,
+      effectiveWidget.entity_type,
     );
   }
 
   // Fetch NPS data for nps_score_badge widgets
   let npsData = null;
-  if (widget.widget_type === "nps_score_badge") {
-    npsData = await getNpsData(widget.organization_id);
+  if (effectiveWidget.widget_type === "nps_score_badge") {
+    npsData = await getNpsData(effectiveWidget.organization_id);
   }
 
   // Resolve A/B test config if widget has an active test
   let abTest = null;
-  if (widget.ab_test_config) {
-    const abCfg = widget.ab_test_config as {
+  if (effectiveWidget.ab_test_config) {
+    const abCfg = effectiveWidget.ab_test_config as {
       enabled?: boolean;
       status?: string;
     };
     if (abCfg.enabled && abCfg.status === "running") {
-      abTest = await getPublicAbTestConfig(widget.id);
+      abTest = await getPublicAbTestConfig(effectiveWidget.id);
     }
   }
 
@@ -118,7 +149,7 @@ export async function GET(
     id: _id,
     ab_test_config: _abc,
     ...publicWidget
-  } = widget;
+  } = effectiveWidget;
   const body = {
     ...publicWidget,
     entity_profile: entityProfile,

@@ -45,32 +45,32 @@ const defaultSteps: TimelineStep[] = [
   {
     stepNumber: "01",
     title: "Send Survey",
-    summary: "Automated delivery when loans close",
+    summary: "Automated delivery after each transaction",
     description:
-      "Send perfectly-timed surveys when loans close. Smart sequences with reminders maximize response rates without annoying your clients. Multi-channel delivery ensures you reach everyone.",
+      "Send perfectly-timed surveys after every transaction closes. Smart sequences with reminders maximize response rates without annoying your clients. Multi-channel delivery ensures you reach everyone.",
     features: [
-      "Triggered automatically after loan closing",
+      "Triggered automatically after transactions",
       "Email, SMS, and in-app delivery options",
       "Smart reminder sequences",
       "Fully customizable branding",
     ],
-    image: "https://images.unsplash.com/photo-1596526131083-e8c633c948d2?w=600&h=400&fit=crop&q=80",
-    imageAlt: "Email notification on laptop",
+    image: "/images/how-it-works/step-01-send-survey.png",
+    imageAlt: "Automated survey email being sent from a laptop",
   },
   {
     stepNumber: "02",
     title: "Collect Feedback",
     summary: "NPS + satisfaction scores captured",
     description:
-      "Capture Net Promoter Scores and detailed satisfaction feedback. Our survey engine is optimized for mortgage-specific questions that give you actionable insights about your service quality.",
+      "Capture Net Promoter Scores and detailed satisfaction feedback. Our survey engine is optimized for industry-specific questions that give you actionable insights about your service quality.",
     features: [
       "Industry-standard NPS methodology",
       "Custom question templates",
       "Mobile-optimized surveys",
       "Real-time response tracking",
     ],
-    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=400&fit=crop&q=80",
-    imageAlt: "Business analytics on tablet",
+    image: "/images/how-it-works/step-02-collect-feedback.png",
+    imageAlt: "Mobile phone showing star ratings and satisfaction scores",
   },
   {
     stepNumber: "03",
@@ -84,23 +84,23 @@ const defaultSteps: TimelineStep[] = [
       "Theme and trend detection",
       "AI-generated response suggestions",
     ],
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&q=80",
-    imageAlt: "Data analytics dashboard",
+    image: "/images/how-it-works/step-03-ai-analysis.png",
+    imageAlt: "Neural network analyzing sentiment data and generating insights",
   },
   {
     stepNumber: "04",
     title: "Amplify Reviews",
-    summary: "Route to Google, Zillow & social",
+    summary: "Route to Google, social & beyond",
     description:
-      "Turn happy clients into public advocates. Route positive reviews to Google and Zillow, capture video testimonials, and publish to social media with one click.",
+      "Turn happy clients into public advocates. Route positive reviews to Google and top industry sites, capture video testimonials, and publish to social media with one click.",
     features: [
       "Google Business Profile integration",
-      "Zillow review syndication",
+      "Industry review site syndication",
       "Video testimonial requests",
       "Social media auto-publishing",
     ],
-    image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&h=400&fit=crop&q=80",
-    imageAlt: "Social media engagement",
+    image: "/images/how-it-works/step-04-amplify-reviews.png",
+    imageAlt: "Five-star review radiating out to multiple platforms",
   },
 ];
 

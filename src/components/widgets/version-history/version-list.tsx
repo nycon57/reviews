@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { History, RotateCcw, GitCompare, Loader2 } from "lucide-react";
+import { History, RotateCcw, GitCompare, Loader2, TriangleAlert } from "lucide-react";
 import type { WidgetVersion } from "@/lib/widgets/version-actions";
 import { listWidgetVersions } from "@/lib/widgets/version-actions";
 import { RollbackDialog } from "./rollback-dialog";
@@ -41,6 +41,7 @@ export function VersionList({
   onRollbackComplete,
 }: VersionListProps) {
   const [versions, setVersions] = useState<WidgetVersion[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, startTransition] = useTransition();
   const [selectedForRollback, setSelectedForRollback] =
     useState<WidgetVersion | null>(null);
@@ -54,8 +55,12 @@ export function VersionList({
     startTransition(async () => {
       const result = await listWidgetVersions(widgetConfigId);
       if (result.success) {
+        setError(null);
         setVersions(result.data.versions);
+        return;
       }
+
+      setError(result.error);
     });
   }, [widgetConfigId]);
 
@@ -85,6 +90,24 @@ export function VersionList({
     );
   }
 
+  if (error && versions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <TriangleAlert className="mb-3 h-8 w-8 text-amber-500" />
+        <p className="text-sm font-medium text-heading">Unable to load version history</p>
+        <p className="mt-1 text-xs text-muted-foreground">{error}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-4"
+          onClick={fetchVersions}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   if (versions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -100,6 +123,20 @@ export function VersionList({
   return (
     <>
       <div className="space-y-1">
+        {error && (
+          <div className="mb-2 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-amber-800">
+            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <span className="text-xs">{error}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-6 px-2 text-xs text-amber-800"
+              onClick={fetchVersions}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
         {compareSelection && (
           <div className="flex items-center gap-2 px-3 py-2 mb-2 rounded-md bg-blue-50 border border-blue-200">
             <GitCompare className="h-3.5 w-3.5 text-blue-600" />

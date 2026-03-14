@@ -4,11 +4,15 @@ import { useState, useEffect, useCallback } from "react";
 import { Star, X } from "lucide-react";
 import {
   type WidgetThemeColors,
+  type WidgetContent,
   getInitials,
   truncateText,
+  previewT,
   DEFAULT_STAR_FILLED,
   DEFAULT_STAR_EMPTY,
 } from "./shared";
+import type { WidgetThemeLayout } from "./layout";
+import { SHADOW_VALUES } from "@/lib/widgets/theme-utils";
 
 /**
  * Dashboard preview for the Social Proof Banner Widget.
@@ -49,7 +53,9 @@ interface PreviewProfile {
 interface SocialProofBannerPreviewProps {
   profile?: PreviewProfile | null;
   socialProofBanner?: SocialProofBannerConfig;
+  content?: WidgetContent;
   colors?: WidgetThemeColors;
+  layout?: WidgetThemeLayout;
 }
 
 // ── Sample Data ───────────────────────────────────────────────────────
@@ -65,7 +71,7 @@ const SAMPLE_REVIEWS: PreviewReview[] = [
   {
     reviewer_name: "Michael T.",
     rating: 5,
-    text: "Best mortgage experience I've ever had. Highly recommend to anyone looking for a smooth closing.",
+    text: "The team made the entire process easy to understand and easy to trust. I would recommend them without hesitation.",
     professional_name: "Lisa Chen",
     review_date: "2026-01-25",
   },
@@ -118,11 +124,17 @@ function NotificationPreview({
   colors,
   dismissable,
   interval,
+  truncateLength,
+  layout,
+  lang,
 }: {
   reviews: PreviewReview[];
   colors: WidgetThemeColors;
   dismissable: boolean;
   interval: number;
+  truncateLength: number;
+  layout?: WidgetThemeLayout;
+  lang?: string;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [animating, setAnimating] = useState(false);
@@ -145,16 +157,19 @@ function NotificationPreview({
   const review = reviews[currentIndex];
   const filledColor = colors.starFilled ?? DEFAULT_STAR_FILLED;
   const emptyColor = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
+  const shadow = layout?.shadow
+    ? (SHADOW_VALUES[layout.shadow] ?? "none")
+    : "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)";
 
   return (
     <div
       className="relative"
       style={{
-        background: colors.background ?? "#fff",
-        border: `1px solid ${colors.border ?? "#e5e7eb"}`,
-        borderRadius: 12,
-        boxShadow: "0 8px 24px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)",
-        padding: "14px 16px",
+        background: "var(--rw-surface, var(--rw-bg, #fff))",
+        border: "1px solid var(--rw-border, #e5e7eb)",
+        borderRadius: layout?.borderRadius ?? 12,
+        boxShadow: shadow,
+        padding: layout?.padding ?? "14px 16px",
         width: 340,
         maxWidth: "100%",
         display: "flex",
@@ -169,7 +184,7 @@ function NotificationPreview({
           width: 40,
           height: 40,
           borderRadius: "50%",
-          background: colors.accent ?? "#4f46e5",
+          background: "var(--rw-accent, var(--rw-primary, #4f46e5))",
           color: "#fff",
           display: "flex",
           alignItems: "center",
@@ -186,13 +201,16 @@ function NotificationPreview({
         <div className="flex items-center gap-1.5 mb-1">
           <span
             className="text-[13px] font-semibold truncate"
-            style={{ color: colors.text ?? "#1a1a2e" }}
+            style={{ color: "var(--rw-text, #1a1a2e)" }}
           >
             {review.reviewer_name}
           </span>
           {review.professional_name && (
-            <span className="text-[11px] text-gray-500 truncate">
-              for {review.professional_name}
+            <span
+              className="text-[11px] truncate"
+              style={{ color: "var(--rw-text-muted, #6b7280)" }}
+            >
+              {previewT(lang, "for")} {review.professional_name}
             </span>
           )}
         </div>
@@ -206,8 +224,11 @@ function NotificationPreview({
         </div>
 
         {review.text && (
-          <p className="text-[12px] text-gray-500 line-clamp-2">
-            &ldquo;{truncateText(review.text, 120)}&rdquo;
+          <p
+            className="text-[12px] line-clamp-2"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
+          >
+            &ldquo;{truncateText(review.text, truncateLength)}&rdquo;
           </p>
         )}
       </div>
@@ -215,7 +236,7 @@ function NotificationPreview({
       {dismissable && (
         <button
           className="absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full hover:bg-black/5 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Dismiss"
+          aria-label={previewT(lang, "dismissBanner")}
         >
           <X size={14} />
         </button>
@@ -231,22 +252,30 @@ function CounterBarPreview({
   colors,
   dismissable,
   ctaText,
+  layout,
+  lang,
 }: {
   profile: PreviewProfile;
   colors: WidgetThemeColors;
   dismissable: boolean;
   ctaText: string;
+  layout?: WidgetThemeLayout;
+  lang?: string;
 }) {
   const filledColor = colors.starFilled ?? DEFAULT_STAR_FILLED;
+  const shadow = layout?.shadow
+    ? (SHADOW_VALUES[layout.shadow] ?? "none")
+    : "0 2px 12px rgba(0,0,0,0.08)";
 
   return (
     <div
       style={{
-        background: colors.background ?? "#fff",
-        borderTop: `1px solid ${colors.border ?? "#e5e7eb"}`,
-        borderBottom: `1px solid ${colors.border ?? "#e5e7eb"}`,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-        padding: "10px 24px",
+        background: "var(--rw-surface, var(--rw-bg, #fff))",
+        borderTop: "1px solid var(--rw-border, #e5e7eb)",
+        borderBottom: "1px solid var(--rw-border, #e5e7eb)",
+        borderRadius: layout?.borderRadius ?? 0,
+        boxShadow: shadow,
+        padding: layout?.padding ?? "10px 24px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -257,18 +286,21 @@ function CounterBarPreview({
     >
       <div className="flex items-center gap-1.5 font-semibold">
         <Star size={18} fill={filledColor} stroke={filledColor} />
-        <span style={{ color: colors.text ?? "#1a1a2e" }}>
+        <span style={{ color: "var(--rw-text, #1a1a2e)" }}>
           {(profile.average_rating ?? 4.8).toFixed(1)}
         </span>
       </div>
 
-      <span className="text-[13px] text-gray-500">
-        average from {(profile.total_reviews ?? 0).toLocaleString()} reviews
+      <span
+        className="text-[13px]"
+        style={{ color: "var(--rw-text-muted, #6b7280)" }}
+      >
+        {previewT(lang, "averageFrom", { count: (profile.total_reviews ?? 0).toLocaleString() })}
       </span>
 
       <span
         className="inline-flex items-center px-4 py-1.5 rounded-md text-[13px] font-medium text-white"
-        style={{ background: colors.accent ?? "#4f46e5" }}
+        style={{ background: "var(--rw-accent, var(--rw-primary, #4f46e5))" }}
       >
         {ctaText}
       </span>
@@ -276,7 +308,7 @@ function CounterBarPreview({
       {dismissable && (
         <button
           className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-black/5 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-          aria-label="Dismiss"
+          aria-label={previewT(lang, "dismissBanner")}
         >
           <X size={14} />
         </button>
@@ -291,26 +323,35 @@ function FloatingBadgePreview({
   review,
   colors,
   dismissable,
+  truncateLength,
+  layout,
+  lang,
 }: {
   review: PreviewReview;
   colors: WidgetThemeColors;
   dismissable: boolean;
+  truncateLength: number;
+  layout?: WidgetThemeLayout;
+  lang?: string;
 }) {
   const [hovered, setHovered] = useState(false);
   const filledColor = colors.starFilled ?? DEFAULT_STAR_FILLED;
   const emptyColor = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
+  const shadow = layout?.shadow
+    ? (SHADOW_VALUES[layout.shadow] ?? "none")
+    : hovered
+      ? "0 8px 24px rgba(0,0,0,0.14)"
+      : "0 4px 16px rgba(0,0,0,0.1)";
 
   return (
     <div
       className="relative cursor-pointer transition-all duration-200"
       style={{
-        background: colors.background ?? "#fff",
-        border: `1px solid ${colors.border ?? "#e5e7eb"}`,
-        borderRadius: 12,
-        boxShadow: hovered
-          ? "0 8px 24px rgba(0,0,0,0.14)"
-          : "0 4px 16px rgba(0,0,0,0.1)",
-        padding: "10px 14px",
+        background: "var(--rw-surface, var(--rw-bg, #fff))",
+        border: "1px solid var(--rw-border, #e5e7eb)",
+        borderRadius: layout?.borderRadius ?? 12,
+        boxShadow: shadow,
+        padding: layout?.padding ?? "10px 14px",
         width: hovered ? 280 : 220,
         maxWidth: "100%",
         transition: "width 0.25s ease, box-shadow 0.2s ease",
@@ -325,7 +366,7 @@ function FloatingBadgePreview({
             width: 32,
             height: 32,
             borderRadius: "50%",
-            background: colors.accent ?? "#4f46e5",
+            background: "var(--rw-accent, var(--rw-primary, #4f46e5))",
             color: "#fff",
             display: "flex",
             alignItems: "center",
@@ -340,7 +381,7 @@ function FloatingBadgePreview({
         <div className="min-w-0">
           <div
             className="text-[12px] font-semibold truncate"
-            style={{ color: colors.text ?? "#1a1a2e" }}
+            style={{ color: "var(--rw-text, #1a1a2e)" }}
           >
             {review.reviewer_name}
           </div>
@@ -362,8 +403,11 @@ function FloatingBadgePreview({
         }}
       >
         {review.text && (
-          <p className="text-[12px] text-gray-500 line-clamp-3">
-            &ldquo;{truncateText(review.text, 150)}&rdquo;
+          <p
+            className="text-[12px] line-clamp-3"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
+          >
+            &ldquo;{truncateText(review.text, truncateLength)}&rdquo;
           </p>
         )}
       </div>
@@ -371,7 +415,7 @@ function FloatingBadgePreview({
       {dismissable && (
         <button
           className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-black/5 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Dismiss"
+          aria-label={previewT(lang, "dismissBanner")}
         >
           <X size={12} />
         </button>
@@ -390,7 +434,10 @@ function TriggerLabel({ trigger, value }: { trigger: string; value?: number }) {
     exit_intent: "Shows on exit intent",
   };
   return (
-    <span className="text-[11px] text-gray-400 italic">
+    <span
+      className="text-[11px] italic"
+      style={{ color: "var(--rw-text-subtle, #9ca3af)" }}
+    >
       Trigger: {labels[trigger] ?? trigger}
     </span>
   );
@@ -401,14 +448,18 @@ function TriggerLabel({ trigger, value }: { trigger: string; value?: number }) {
 export function SocialProofBannerPreview({
   profile,
   socialProofBanner = {},
+  content,
   colors = {},
+  layout,
 }: SocialProofBannerPreviewProps) {
   const mode = socialProofBanner.displayMode ?? "notification";
   const placement = socialProofBanner.placement ?? "bottom-right";
   const dismissable = socialProofBanner.dismissable !== false;
   const interval = socialProofBanner.interval ?? 5000;
-  const ctaText = socialProofBanner.ctaText ?? "Read Reviews";
+  const lang = content?.language;
+  const ctaText = socialProofBanner.ctaText ?? previewT(lang, "readReviews");
   const effectiveProfile = profile ?? SAMPLE_PROFILE;
+  const truncateLength = content?.truncateLength ?? 120;
 
   // Position styles for the simulated viewport
   const positionStyle: React.CSSProperties = { position: "absolute" };
@@ -451,6 +502,9 @@ export function SocialProofBannerPreview({
               colors={colors}
               dismissable={dismissable}
               interval={interval}
+              truncateLength={truncateLength}
+              layout={layout}
+              lang={lang}
             />
           )}
           {mode === "counter_bar" && (
@@ -459,6 +513,8 @@ export function SocialProofBannerPreview({
               colors={colors}
               dismissable={dismissable}
               ctaText={ctaText}
+              layout={layout}
+              lang={lang}
             />
           )}
           {mode === "floating_badge" && (
@@ -466,6 +522,9 @@ export function SocialProofBannerPreview({
               review={SAMPLE_REVIEWS[0]}
               colors={colors}
               dismissable={dismissable}
+              truncateLength={truncateLength}
+              layout={layout}
+              lang={lang}
             />
           )}
         </div>

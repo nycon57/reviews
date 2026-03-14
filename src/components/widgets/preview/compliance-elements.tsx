@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, Home } from "lucide-react";
+import { previewT } from "./shared";
 
 /**
  * Shared compliance-related React components for widget dashboard previews.
@@ -22,8 +23,8 @@ const LOAN_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
 function getLoanTypeColor(loanType: string): { bg: string; text: string } {
   return (
     LOAN_TYPE_COLORS[loanType.toLowerCase().trim()] ?? {
-      bg: "#f3f4f6",
-      text: "#6b7280",
+      bg: "var(--rw-surface-muted, #f3f4f6)",
+      text: "var(--rw-text-muted, #6b7280)",
     }
   );
 }
@@ -52,7 +53,8 @@ export function NmlsBadge({ nmlsId, entityType, className }: NmlsBadgeProps) {
       href={`${base}${encodeURIComponent(nmlsId)}`}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[var(--rw-primary,#52796f)] transition-colors no-underline hover:underline ${className ?? ""}`}
+      className={`inline-flex items-center gap-1 text-xs transition-colors no-underline hover:underline ${className ?? ""}`}
+      style={{ color: "var(--rw-text-muted, #6b7280)" }}
       aria-label={`NMLS ID ${nmlsId} - view on NMLS Consumer Access`}
     >
       NMLS# {nmlsId}
@@ -66,14 +68,18 @@ export function NmlsBadge({ nmlsId, entityType, className }: NmlsBadgeProps) {
 interface LicensingStatesProps {
   states: string[] | null | undefined;
   className?: string;
+  language?: string;
 }
 
-export function LicensingStates({ states, className }: LicensingStatesProps) {
+export function LicensingStates({ states, className, language }: LicensingStatesProps) {
   if (!states || states.length === 0) return null;
 
   return (
-    <div className={`text-xs text-gray-500 mt-1 ${className ?? ""}`}>
-      Licensed in {states.join(", ")}
+    <div
+      className={`text-xs mt-1 ${className ?? ""}`}
+      style={{ color: "var(--rw-text-muted, #6b7280)" }}
+    >
+      {previewT(language, "licensedIn")} {states.join(", ")}
     </div>
   );
 }
@@ -101,15 +107,16 @@ export function LoanTypeTag({ loanType, className }: LoanTypeTagProps) {
 
 interface FirstTimeBuyerBadgeProps {
   className?: string;
+  language?: string;
 }
 
-export function FirstTimeBuyerBadge({ className }: FirstTimeBuyerBadgeProps) {
+export function FirstTimeBuyerBadge({ className, language }: FirstTimeBuyerBadgeProps) {
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-green-800 bg-green-100 rounded-full ${className ?? ""}`}
     >
       <Home size={10} />
-      First-Time Buyer
+      {previewT(language, "firstTimeBuyer")}
     </span>
   );
 }
@@ -124,7 +131,8 @@ function EqualHousingLenderIcon({ size = 16 }: { size?: number }) {
       aria-hidden="true"
       width={size}
       height={size}
-      className="flex-shrink-0 text-gray-500"
+      className="flex-shrink-0"
+      style={{ color: "var(--rw-text-muted, #6b7280)" }}
     >
       <path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3zm0 2.84L19 12.5V19h-4v-6H9v6H5v-6.5L12 5.84z" />
       <rect x="9" y="10" width="6" height="1.2" rx="0.3" />
@@ -135,32 +143,41 @@ function EqualHousingLenderIcon({ size = 16 }: { size?: number }) {
 
 // ── Compliance Footer ───────────────────────────────────────────────
 
-const DEFAULT_DISCLAIMER =
-  "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice.";
-
 interface ComplianceFooterProps {
   disclaimerText?: string;
   primaryColor?: string;
   className?: string;
+  language?: string;
 }
 
 export function ComplianceFooter({
   disclaimerText,
   primaryColor,
   className,
+  language,
 }: ComplianceFooterProps) {
   return (
     <div
-      className={`mt-3 p-2.5 bg-gray-50 rounded border border-gray-100 ${className ?? ""}`}
+      className={`mt-3 p-2.5 rounded border ${className ?? ""}`}
+      style={{
+        background: "var(--rw-surface-muted, #f9fafb)",
+        borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+      }}
     >
       <div className="flex items-center gap-1.5 mb-1">
         <EqualHousingLenderIcon size={16} />
-        <span className="text-[11px] font-semibold text-gray-600">
-          Equal Housing Lender
+        <span
+          className="text-[11px] font-semibold"
+          style={{ color: "var(--rw-text, #1a1a2e)" }}
+        >
+          {previewT(language, "equalHousingLender")}
         </span>
       </div>
-      <p className="text-[10px] leading-snug text-gray-500 mb-1">
-        {disclaimerText || DEFAULT_DISCLAIMER}
+      <p
+        className="text-[10px] leading-snug mb-1"
+        style={{ color: "var(--rw-text-muted, #6b7280)" }}
+      >
+        {disclaimerText || previewT(language, "defaultDisclaimer")}
       </p>
       <a
         href="https://www.nmlsconsumeraccess.org"
@@ -169,7 +186,7 @@ export function ComplianceFooter({
         className="text-[10px] no-underline hover:underline"
         style={{ color: primaryColor ?? "var(--rw-primary, #52796f)" }}
       >
-        NMLS Consumer Access
+        {previewT(language, "nmlsConsumerAccess")}
       </a>
     </div>
   );

@@ -44,4 +44,15 @@ export const DEFAULT_SMS_TEMPLATES: DefaultTemplate[] = [
       "company_name",
     ],
   },
+  {
+    name: "Video Testimonial Request",
+    category: "video_request",
+    body: "Hi {{first_name}}, {{lo_name}} at {{company_name}} would love a quick video testimonial from you! It only takes 60 seconds: {{video_link}} Reply STOP to opt out.",
+    merge_fields: [
+      "first_name",
+      "lo_name",
+      "company_name",
+      "video_link",
+    ],
+  },
 ];

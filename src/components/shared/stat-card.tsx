@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUpRight, ArrowDownRight } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { IconContainer } from "./icon-container";
 
 export interface StatCardProps {
   title: string;
@@ -47,9 +48,9 @@ export function StatCard({
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           {icon && (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+            <IconContainer size="md" bg="subtle" className="rounded-lg">
               {icon}
-            </div>
+            </IconContainer>
           )}
           <div className="min-w-0">
             <p className="text-xs text-muted-foreground">{title}</p>
@@ -94,7 +95,7 @@ export function StatCard({
   );
 }
 
-const GRID_COLS: Record<number, string> = {
+export const GRID_COLS: Record<number, string> = {
   2: "grid-cols-1 sm:grid-cols-2",
   3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
   4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",

@@ -32,15 +32,29 @@ export function applyTheme(
   typography?: WidgetThemeTypography,
 ): void {
   const host = root.host as HTMLElement;
+  const primary = colors?.primary ?? "#52796f";
+  const background = colors?.background ?? "#ffffff";
+  const text = colors?.text ?? "#1a1a2e";
+  const accent = colors?.accent ?? primary;
+  const border = colors?.border ?? "#e5e7eb";
 
   // ── Colors ──
-  if (colors?.primary) host.style.setProperty("--rw-primary", colors.primary);
-  if (colors?.background) host.style.setProperty("--rw-bg", colors.background);
-  if (colors?.text) host.style.setProperty("--rw-text", colors.text);
-  if (colors?.accent) host.style.setProperty("--rw-accent", colors.accent);
+  host.style.setProperty("--rw-primary", primary);
+  host.style.setProperty("--rw-bg", background);
+  host.style.setProperty("--rw-text", text);
+  host.style.setProperty("--rw-accent", accent);
   if (colors?.starFilled) host.style.setProperty("--rw-star-fill", colors.starFilled);
   if (colors?.starEmpty) host.style.setProperty("--rw-star-empty", colors.starEmpty);
-  if (colors?.border) host.style.setProperty("--rw-border", colors.border);
+  host.style.setProperty("--rw-border", border);
+  host.style.setProperty("--rw-surface", background);
+  host.style.setProperty("--rw-text-muted", `color-mix(in srgb, ${text} 72%, ${background} 28%)`);
+  host.style.setProperty("--rw-text-subtle", `color-mix(in srgb, ${text} 52%, ${background} 48%)`);
+  host.style.setProperty("--rw-text-secondary", "var(--rw-text-muted)");
+  host.style.setProperty("--rw-surface-muted", `color-mix(in srgb, ${background} 90%, ${primary} 10%)`);
+  host.style.setProperty("--rw-surface-strong", `color-mix(in srgb, ${background} 78%, ${text} 22%)`);
+  host.style.setProperty("--rw-border-soft", `color-mix(in srgb, ${border} 72%, ${background} 28%)`);
+  host.style.setProperty("--rw-featured-start", `color-mix(in srgb, ${accent} 8%, ${background} 92%)`);
+  host.style.setProperty("--rw-featured-end", `color-mix(in srgb, ${accent} 14%, ${background} 86%)`);
 
   // ── Typography ──
   if (typography?.fontFamily) host.style.setProperty("--rw-font", typography.fontFamily);

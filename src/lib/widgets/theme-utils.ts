@@ -86,6 +86,26 @@ export interface ThemeLayout {
   cardStyle?: "flat" | "elevated" | "bordered" | "glass";
 }
 
+function buildSemanticThemeVars(colors?: ThemeColors): Record<string, string> {
+  const primary = colors?.primary ?? "#52796f";
+  const background = colors?.background ?? "#ffffff";
+  const text = colors?.text ?? "#1a1a2e";
+  const accent = colors?.accent ?? primary;
+  const border = colors?.border ?? "#e5e7eb";
+
+  return {
+    "--rw-surface": background,
+    "--rw-text-muted": `color-mix(in srgb, ${text} 72%, ${background} 28%)`,
+    "--rw-text-subtle": `color-mix(in srgb, ${text} 52%, ${background} 48%)`,
+    "--rw-text-secondary": `color-mix(in srgb, ${text} 72%, ${background} 28%)`,
+    "--rw-surface-muted": `color-mix(in srgb, ${background} 90%, ${primary} 10%)`,
+    "--rw-surface-strong": `color-mix(in srgb, ${background} 78%, ${text} 22%)`,
+    "--rw-border-soft": `color-mix(in srgb, ${border} 72%, ${background} 28%)`,
+    "--rw-featured-start": `color-mix(in srgb, ${accent} 8%, ${background} 92%)`,
+    "--rw-featured-end": `color-mix(in srgb, ${accent} 14%, ${background} 86%)`,
+  };
+}
+
 /** Generate CSS custom properties string for Shadow DOM :host injection */
 export function generateThemeCSSProperties(
   colors?: ThemeColors,
@@ -110,6 +130,10 @@ export function generateThemeCSSProperties(
   if (layout?.shadow) props.push(`--rw-shadow: ${SHADOW_VALUES[layout.shadow] ?? "none"}`);
   if (layout?.padding) props.push(`--rw-padding: ${layout.padding}`);
   if (layout?.maxWidth) props.push(`--rw-max-width: ${layout.maxWidth}`);
+
+  for (const [key, value] of Object.entries(buildSemanticThemeVars(colors))) {
+    props.push(`${key}: ${value}`);
+  }
 
   return props.join("; ");
 }
@@ -138,6 +162,8 @@ export function generateThemeStyleObject(
   if (layout?.shadow) style["--rw-shadow"] = SHADOW_VALUES[layout.shadow] ?? "none";
   if (layout?.padding) style["--rw-padding"] = layout.padding;
   if (layout?.maxWidth) style["--rw-max-width"] = layout.maxWidth;
+
+  Object.assign(style, buildSemanticThemeVars(colors));
 
   return style;
 }

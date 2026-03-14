@@ -195,6 +195,7 @@ export interface PublicWidgetConfig {
   widget_type: string;
   entity_type: string;
   entity_id: string | null;
+  override_applied?: boolean;
   name: string;
   config: WidgetConfigJson;
   enable_structured_data: boolean | null;
@@ -323,9 +324,15 @@ export interface ActiveFilters {
   dateRange?: string;
 }
 
+export interface WidgetEntityOverride {
+  entityType: "user" | "branch" | "organization";
+  entityId: string | null;
+}
+
 export interface WidgetInstance {
   id: string;
   widgetId: string;
+  entityOverride: WidgetEntityOverride | null;
   element: HTMLElement;
   shadowRoot: ShadowRoot;
   state: WidgetState;
@@ -356,6 +363,7 @@ export interface HookEventData {
   review?: PublicReview | null;
   config?: WidgetConfigJson | null;
   error?: string | null;
+  code?: string | null;
 }
 
 export type HookCallback = (data: HookEventData) => void;

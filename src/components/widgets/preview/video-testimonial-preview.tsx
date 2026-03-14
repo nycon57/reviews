@@ -2,6 +2,18 @@
 
 import { Star, Play, Pause, Volume2, Maximize, Home, ExternalLink, AlertCircle, RotateCcw } from "lucide-react";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import {
+  getPreviewCardStyle,
+  getPreviewContainerStyle,
+  resolvePreviewCardStyle,
+  type WidgetThemeLayout,
+} from "./layout";
+import {
+  getPreviewBodyStyle,
+  getPreviewHeadingStyle,
+  getPreviewMetaStyle,
+  previewT,
+} from "./shared";
 
 /**
  * Dashboard preview component for the Video Testimonial Widget.
@@ -38,7 +50,8 @@ interface WidgetContent {
   writeReviewUrl?: string;
   columns?: number;
   dateFormat?: "relative" | "absolute";
-  cardStyle?: "bordered" | "shadow" | "flat";
+  cardStyle?: "bordered" | "shadow" | "flat" | "glass";
+  language?: string;
 }
 
 interface WidgetVideo {
@@ -73,8 +86,7 @@ interface VideoTestimonialPreviewProps {
   content?: WidgetContent;
   video?: WidgetVideo;
   colors?: WidgetThemeColors;
-  maxWidth?: string;
-  borderRadius?: string;
+  layout?: WidgetThemeLayout;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -100,14 +112,16 @@ function StarRating({
   filledColor,
   emptyColor,
   size = 16,
+  lang,
 }: {
   rating: number;
   filledColor: string;
   emptyColor: string;
   size?: number;
+  lang?: string;
 }) {
   return (
-    <div className="flex gap-0.5" role="img" aria-label={`${rating} out of 5 stars`}>
+    <div className="flex gap-0.5" role="img" aria-label={previewT(lang, "starsAriaLabel", { rating })}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
@@ -130,6 +144,9 @@ function VideoPlayerCard({
   transcriptPosition,
   starFilled,
   starEmpty,
+  cardStyle,
+  layout,
+  lang,
 }: {
   testimonial: VideoTestimonialData;
   profile: EntityProfile | null;
@@ -137,6 +154,9 @@ function VideoPlayerCard({
   transcriptPosition: "below" | "side" | "hidden";
   starFilled: string;
   starEmpty: string;
+  cardStyle: NonNullable<WidgetContent["cardStyle"]>;
+  layout?: WidgetThemeLayout;
+  lang?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -226,8 +246,11 @@ function VideoPlayerCard({
 
   return (
     <div
-      className={`border rounded-lg overflow-hidden bg-white transition-shadow hover:shadow-md ${isSide ? "flex flex-col sm:flex-row" : ""}`}
-      style={{ borderColor: "var(--rw-border, #e5e7eb)", borderRadius: "var(--rw-radius, 8px)" }}
+      className={`rounded-lg overflow-hidden transition-shadow hover:shadow-md ${isSide ? "flex flex-col sm:flex-row" : ""}`}
+      style={{
+        ...getPreviewCardStyle(cardStyle, layout),
+        borderRadius: "var(--rw-radius, 8px)",
+      }}
     >
       {/* Video player */}
       <div className={`relative bg-black aspect-video ${isSide ? "sm:w-[60%] flex-shrink-0" : ""}`}>
@@ -268,7 +291,13 @@ function VideoPlayerCard({
 
         {/* Poster placeholder */}
         {!testimonial.poster_url && showPlayOverlay && !hasError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#1a1a2e] text-gray-400 text-sm">
+          <div
+            className="absolute inset-0 flex items-center justify-center text-sm"
+            style={{
+              background: "var(--rw-text, #1a1a2e)",
+              color: "var(--rw-text-subtle, #9ca3af)",
+            }}
+          >
             Video Testimonial
           </div>
         )}
@@ -288,9 +317,20 @@ function VideoPlayerCard({
 
         {/* Error state */}
         {hasError && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a2e] gap-3 z-20">
-            <AlertCircle size={24} className="text-gray-400" />
-            <div className="text-sm text-gray-400">Failed to load video</div>
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-20"
+            style={{ background: "var(--rw-text, #1a1a2e)" }}
+          >
+            <AlertCircle
+              size={24}
+              style={{ color: "var(--rw-text-subtle, #9ca3af)" }}
+            />
+            <div
+              className="text-sm"
+              style={{ color: "var(--rw-text-subtle, #9ca3af)" }}
+            >
+              Failed to load video
+            </div>
             <button
               className="px-5 py-2 text-sm font-medium text-white rounded-md transition-opacity hover:opacity-90"
               style={{ background: "var(--rw-primary, #52796f)" }}
@@ -383,17 +423,22 @@ function VideoPlayerCard({
               </div>
               <div className="flex-1 min-w-0">
                 {testimonial.reviewer_name && (
-                  <div className="text-sm font-semibold" style={{ color: "var(--rw-text, #1a1a2e)" }}>
+                  <div
+                    className="text-sm font-semibold"
+                    style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
+                  >
                     {testimonial.reviewer_name}
                   </div>
                 )}
                 {testimonial.reviewer_title && (
-                  <div className="text-xs text-gray-500">{testimonial.reviewer_title}</div>
+                  <div className="text-xs text-gray-500" style={getPreviewMetaStyle()}>
+                    {testimonial.reviewer_title}
+                  </div>
                 )}
               </div>
             </div>
             {testimonial.rating > 0 && (
-              <StarRating rating={testimonial.rating} filledColor={starFilled} emptyColor={starEmpty} />
+              <StarRating rating={testimonial.rating} filledColor={starFilled} emptyColor={starEmpty} lang={lang} />
             )}
           </div>
 
@@ -401,10 +446,13 @@ function VideoPlayerCard({
           {testimonial.transcript && (
             <div
               ref={transcriptRef}
-              className="flex-1 max-h-[200px] overflow-y-auto border-t px-3 py-2 bg-gray-50"
-              style={{ borderColor: "var(--rw-border, #e5e7eb)" }}
+              className="flex-1 max-h-[200px] overflow-y-auto border-t px-3 py-2"
+              style={{
+                borderColor: "var(--rw-border, #e5e7eb)",
+                background: "var(--rw-surface-muted, #f9fafb)",
+              }}
             >
-              <div className="text-xs font-semibold mb-2" style={{ color: "var(--rw-text, #1a1a2e)" }}>
+              <div className="text-xs font-semibold mb-2" style={getPreviewHeadingStyle()}>
                 Transcript
               </div>
               {testimonial.transcript.map((seg, i) => (
@@ -414,9 +462,13 @@ function VideoPlayerCard({
                   className={`text-[13px] leading-relaxed px-1 rounded cursor-pointer transition-colors ${
                     i === activeTranscriptIndex
                       ? "bg-[var(--rw-primary,#52796f)]/10 font-medium"
-                      : "text-gray-500 hover:bg-gray-100"
+                      : "hover:bg-gray-100"
                   }`}
-                  style={i === activeTranscriptIndex ? { color: "var(--rw-text, #1a1a2e)" } : undefined}
+                  style={
+                    i === activeTranscriptIndex
+                      ? { color: "var(--rw-text, #1a1a2e)" }
+                      : { color: "var(--rw-text-muted, #6b7280)" }
+                  }
                   onClick={() => {
                     if (videoRef.current) {
                       videoRef.current.currentTime = seg.start;
@@ -443,25 +495,33 @@ function VideoPlayerCard({
               </div>
               <div className="flex-1 min-w-0">
                 {testimonial.reviewer_name && (
-                  <div className="text-sm font-semibold" style={{ color: "var(--rw-text, #1a1a2e)" }}>
+                  <div
+                    className="text-sm font-semibold"
+                    style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
+                  >
                     {testimonial.reviewer_name}
                   </div>
                 )}
                 {testimonial.reviewer_title && (
-                  <div className="text-xs text-gray-500">{testimonial.reviewer_title}</div>
+                  <div className="text-xs text-gray-500" style={getPreviewMetaStyle()}>
+                    {testimonial.reviewer_title}
+                  </div>
                 )}
               </div>
             </div>
             {testimonial.rating > 0 && (
-              <StarRating rating={testimonial.rating} filledColor={starFilled} emptyColor={starEmpty} />
+              <StarRating rating={testimonial.rating} filledColor={starFilled} emptyColor={starEmpty} lang={lang} />
             )}
           </div>
 
           {/* Pro info */}
           {profile && content.showHeader !== false && (
             <div
-              className="flex items-center gap-2.5 px-4 py-2.5 border-t bg-gray-50"
-              style={{ borderColor: "var(--rw-border, #e5e7eb)" }}
+              className="flex items-center gap-2.5 px-4 py-2.5 border-t"
+              style={{
+                borderColor: "var(--rw-border, #e5e7eb)",
+                background: "var(--rw-surface-muted, #f9fafb)",
+              }}
             >
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0"
@@ -471,7 +531,10 @@ function VideoPlayerCard({
               </div>
               <div className="flex-1 min-w-0">
                 {profile.full_name && (
-                  <div className="text-[13px] font-semibold" style={{ color: "var(--rw-text, #1a1a2e)" }}>
+                  <div
+                    className="text-[13px] font-semibold"
+                    style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
+                  >
                     {profile.full_name}
                   </div>
                 )}
@@ -481,6 +544,7 @@ function VideoPlayerCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-0.5 text-[11px] text-gray-500 hover:text-[var(--rw-primary,#52796f)] no-underline hover:underline"
+                    style={getPreviewMetaStyle()}
                   >
                     NMLS# {profile.nmls_id}
                     <ExternalLink size={9} />
@@ -490,7 +554,7 @@ function VideoPlayerCard({
               {profile.average_rating != null && (
                 <div className="flex items-center gap-1 text-xs font-semibold" style={{ color: "var(--rw-text, #1a1a2e)" }}>
                   {profile.average_rating.toFixed(1)}
-                  <StarRating rating={Math.round(profile.average_rating)} filledColor={starFilled} emptyColor={starEmpty} size={12} />
+                  <StarRating rating={Math.round(profile.average_rating)} filledColor={starFilled} emptyColor={starEmpty} size={12} lang={lang} />
                 </div>
               )}
             </div>
@@ -500,10 +564,13 @@ function VideoPlayerCard({
           {testimonial.transcript && transcriptPosition === "below" && (
             <div
               ref={transcriptRef}
-              className="max-h-[200px] overflow-y-auto border-t px-4 py-3 bg-gray-50"
-              style={{ borderColor: "var(--rw-border, #e5e7eb)" }}
+              className="max-h-[200px] overflow-y-auto border-t px-4 py-3"
+              style={{
+                borderColor: "var(--rw-border, #e5e7eb)",
+                background: "var(--rw-surface-muted, #f9fafb)",
+              }}
             >
-              <div className="text-xs font-semibold mb-2" style={{ color: "var(--rw-text, #1a1a2e)" }}>
+              <div className="text-xs font-semibold mb-2" style={getPreviewHeadingStyle()}>
                 Transcript
               </div>
               {testimonial.transcript.map((seg, i) => (
@@ -513,9 +580,13 @@ function VideoPlayerCard({
                   className={`text-[13px] leading-relaxed px-1 rounded cursor-pointer transition-colors ${
                     i === activeTranscriptIndex
                       ? "bg-[var(--rw-primary,#52796f)]/10 font-medium"
-                      : "text-gray-500 hover:bg-gray-100"
+                      : "hover:bg-gray-100"
                   }`}
-                  style={i === activeTranscriptIndex ? { color: "var(--rw-text, #1a1a2e)" } : undefined}
+                  style={
+                    i === activeTranscriptIndex
+                      ? { color: "var(--rw-text, #1a1a2e)" }
+                      : { color: "var(--rw-text-muted, #6b7280)" }
+                  }
                   onClick={() => {
                     if (videoRef.current) {
                       videoRef.current.currentTime = seg.start;
@@ -542,24 +613,17 @@ export function VideoTestimonialPreview({
   content = {},
   video = {},
   colors = {},
-  maxWidth,
-  borderRadius,
+  layout,
 }: VideoTestimonialPreviewProps) {
   const starFilled = colors.starFilled ?? "#f59e0b";
   const starEmpty = colors.starEmpty ?? "#d1d5db";
   const transcriptPosition = video.transcriptPosition ?? "below";
-  const layout = video.layout ?? "list";
+  const videoLayout = video.layout ?? "list";
+  const cardStyle = resolvePreviewCardStyle(layout?.cardStyle, content.cardStyle);
 
   const containerStyle: React.CSSProperties = {
-    "--rw-primary": colors.primary ?? "#52796f",
-    "--rw-bg": colors.background ?? "#ffffff",
-    "--rw-text": colors.text ?? "#1a1a2e",
-    "--rw-border": colors.border ?? "#e5e7eb",
-    "--rw-radius": borderRadius ?? "8px",
-    borderRadius: borderRadius ?? "8px",
-    padding: "16px",
-    background: colors.background ?? "#ffffff",
-    color: colors.text ?? "#1a1a2e",
+    ...getPreviewContainerStyle(colors, layout),
+    "--rw-radius": layout?.borderRadius ?? "8px",
   } as React.CSSProperties;
 
   return (
@@ -567,15 +631,18 @@ export function VideoTestimonialPreview({
       className="text-sm leading-normal antialiased"
       style={containerStyle}
       role="region"
-      aria-label={content.headerText ?? "Video Testimonials"}
+      aria-label={content.headerText ?? previewT(content.language, "videoTestimonials")}
     >
       {testimonials.length === 0 ? (
-        <div className="py-8 text-center text-gray-400 text-sm">
-          No video testimonials available.
+        <div
+          className="py-8 text-center text-sm"
+          style={{ color: "var(--rw-text-subtle, #9ca3af)" }}
+        >
+          {previewT(content.language, "noVideoTestimonials")}
         </div>
       ) : (
         <div
-          className={layout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "flex flex-col gap-4"}
+          className={videoLayout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 gap-4" : "flex flex-col gap-4"}
         >
           {testimonials.map((t) => (
             <VideoPlayerCard
@@ -586,6 +653,9 @@ export function VideoTestimonialPreview({
               transcriptPosition={transcriptPosition}
               starFilled={starFilled}
               starEmpty={starEmpty}
+              cardStyle={cardStyle}
+              layout={layout}
+              lang={content.language}
             />
           ))}
         </div>
@@ -593,14 +663,31 @@ export function VideoTestimonialPreview({
 
       {/* Disclaimer */}
       {content.showDisclaimer && (
-        <div className="mt-3 p-2.5 bg-gray-50 rounded border border-gray-100">
+        <div
+          className="mt-3 p-2.5 rounded border"
+          style={{
+            background: "var(--rw-surface-muted, #f9fafb)",
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+          }}
+        >
           <div className="flex items-center gap-1.5 mb-1">
-            <Home size={16} className="flex-shrink-0 text-gray-500" />
-            <span className="text-[11px] font-semibold text-gray-600">Equal Housing Lender</span>
+            <Home
+              size={16}
+              className="flex-shrink-0"
+              style={{ color: "var(--rw-text-muted, #6b7280)" }}
+            />
+            <span
+              className="text-[11px] font-semibold"
+              style={{ color: "var(--rw-text, #1a1a2e)" }}
+            >
+              {previewT(content.language, "equalHousingLender")}
+            </span>
           </div>
-          <p className="text-[10px] leading-snug text-gray-500 mb-1">
-            {content.disclaimerText ||
-              "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice."}
+          <p
+            className="text-[10px] leading-snug mb-1"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
+          >
+            {content.disclaimerText || previewT(content.language, "defaultDisclaimer")}
           </p>
           <a
             href="https://www.nmlsconsumeraccess.org"
@@ -609,20 +696,27 @@ export function VideoTestimonialPreview({
             className="text-[10px] no-underline hover:underline"
             style={{ color: "var(--rw-primary, #52796f)" }}
           >
-            NMLS Consumer Access
+            {previewT(content.language, "nmlsConsumerAccess")}
           </a>
         </div>
       )}
 
       {/* Branding */}
       {content.showBranding !== false && (
-        <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-400 text-center">
-          Powered by{" "}
+        <div
+          className="mt-4 pt-3 border-t text-[11px] text-center"
+          style={{
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+            color: "var(--rw-text-subtle, #9ca3af)",
+          }}
+        >
+          {previewT(content.language, "poweredBy")}{" "}
           <a
             href="https://repwell.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-500 no-underline hover:underline"
+            className="no-underline hover:underline"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
           >
             RepWell
           </a>

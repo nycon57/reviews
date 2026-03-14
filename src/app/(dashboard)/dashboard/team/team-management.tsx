@@ -322,8 +322,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
               key={stat.label}
               className="flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-teal-300/10">
-                <Icon className="h-5 w-5 text-repwell-teal-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-repwell-sage-100/40 dark:bg-repwell-teal-300/15">
+                <Icon className="h-5 w-5 text-repwell-teal-300 dark:text-repwell-sage-200" />
               </div>
               <div>
                 <p className="text-2xl font-semibold tracking-tight text-heading-accent">
@@ -341,8 +341,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <Users className="h-5 w-5 text-repwell-teal-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-sage-100/40 dark:bg-repwell-teal-300/15">
+                <Users className="h-5 w-5 text-repwell-teal-300 dark:text-repwell-sage-200" />
               </div>
               <div>
                 <CardTitle className="text-lg">Team Members</CardTitle>
@@ -580,8 +580,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         <Card className="border border-border shadow-soft">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <EnvelopeSimple className="h-5 w-5 text-repwell-teal-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-sage-100/40 dark:bg-repwell-teal-300/15">
+                <EnvelopeSimple className="h-5 w-5 text-repwell-teal-300 dark:text-repwell-sage-200" />
               </div>
               <div>
                 <CardTitle className="text-lg">Pending Invitations</CardTitle>
@@ -647,8 +647,8 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         <Card className="border border-border shadow-soft">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <UserCircleMinus className="h-5 w-5 text-repwell-teal-300" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-sage-100/40 dark:bg-repwell-teal-300/15">
+                <UserCircleMinus className="h-5 w-5 text-repwell-teal-300 dark:text-repwell-sage-200" />
               </div>
               <div>
                 <CardTitle className="text-lg">Inactive Members</CardTitle>

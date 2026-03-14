@@ -28,12 +28,13 @@ import {
   FloppyDisk as Save,
   Eye,
   ArrowLeft,
+  ClipboardText,
   Star,
   Hash,
   Chats as MessageSquare,
   List,
-  SpinnerGap as Loader2,
 } from "@phosphor-icons/react";
+import { PageLoading } from "@/components/shared/skeletons";
 import { QuestionEditor } from "./question-editor";
 import { SurveyPreview } from "./survey-preview";
 import {
@@ -291,22 +292,16 @@ export function SurveyBuilder({ mode, templateId }: SurveyBuilderProps) {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <PageLoading />;
   }
 
   if (showPreview) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => setShowPreview(false)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Editor
-          </Button>
-        </div>
+      <div className="space-y-6">
+        <Button variant="ghost" size="sm" onClick={() => setShowPreview(false)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Editor
+        </Button>
         <SurveyPreview survey={getCurrentSurvey()} />
       </div>
     );
@@ -315,34 +310,35 @@ export function SurveyBuilder({ mode, templateId }: SurveyBuilderProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/dashboard/surveys")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">
-              {mode === "create" ? "Create Survey Template" : "Edit Survey Template"}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Design your survey with questions, branding, and thank you messages
-            </p>
+      <div className="space-y-4">
+        <Button variant="ghost" size="sm" onClick={() => router.push("/dashboard/surveys")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Surveys
+        </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+              <ClipboardText className="h-6 w-6 text-repwell-teal-300" aria-hidden="true" />
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-bold leading-tight tracking-tight text-heading-accent">
+                {mode === "create" ? "Create Survey Template" : "Edit Survey Template"}
+              </h1>
+              <p className="text-sm leading-snug text-repwell-teal-300">
+                Design your survey with questions, branding, and thank you messages
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setShowPreview(true)}>
-            <Eye className="mr-2 h-4 w-4" />
-            Preview
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setShowPreview(true)}>
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving}>
               <Save className="mr-2 h-4 w-4" />
-            )}
-            {mode === "create" ? "Create Template" : "Save Changes"}
-          </Button>
+              {mode === "create" ? "Create Template" : "Save Changes"}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -403,7 +399,7 @@ export function SurveyBuilder({ mode, templateId }: SurveyBuilderProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {questions.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-8 text-center">
+                <div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 p-8 text-center dark:bg-repwell-teal-300/5">
                   <p className="text-muted-foreground">
                     No questions yet. Click &quot;Add Question&quot; to get started.
                   </p>
@@ -465,66 +461,6 @@ export function SurveyBuilder({ mode, templateId }: SurveyBuilderProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid gap-2">
-                <Label htmlFor="logo">Logo URL</Label>
-                <Input
-                  id="logo"
-                  value={branding.logo || ""}
-                  onChange={(e) =>
-                    setBranding({ ...branding, logo: e.target.value || undefined })
-                  }
-                  placeholder="https://example.com/logo.png"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter a URL to your company logo
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="primaryColor">Primary Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="primaryColor"
-                      type="color"
-                      value={branding.primaryColor || "#000000"}
-                      onChange={(e) =>
-                        setBranding({ ...branding, primaryColor: e.target.value })
-                      }
-                      className="h-10 w-14 cursor-pointer p-1"
-                    />
-                    <Input
-                      value={branding.primaryColor || ""}
-                      onChange={(e) =>
-                        setBranding({ ...branding, primaryColor: e.target.value })
-                      }
-                      placeholder="#000000"
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="backgroundColor">Background Color</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="backgroundColor"
-                      type="color"
-                      value={branding.backgroundColor || "#ffffff"}
-                      onChange={(e) =>
-                        setBranding({ ...branding, backgroundColor: e.target.value })
-                      }
-                      className="h-10 w-14 cursor-pointer p-1"
-                    />
-                    <Input
-                      value={branding.backgroundColor || ""}
-                      onChange={(e) =>
-                        setBranding({ ...branding, backgroundColor: e.target.value })
-                      }
-                      placeholder="#ffffff"
-                    />
-                  </div>
-                </div>
-              </div>
-
               <div className="flex items-center justify-between rounded-lg border p-4">
                 <div>
                   <Label>Show Progress Bar</Label>

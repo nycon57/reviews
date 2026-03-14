@@ -11,69 +11,17 @@ import {
   RecommendationsCard,
   SentimentDistribution,
   ExportInsightsButton,
-  SmartActionsCard,
-  PerformanceScorecard,
-  TeamActivityMonitorCard,
-  ChannelEffectivenessCard,
 } from "@/components/insights";
 import {
   getAIInsightsData,
-  getSmartActionItems,
-  getLOPerformanceScorecard,
-  getTeamActivityMonitor,
-  getChannelEffectiveness,
   type AIInsightsData,
 } from "@/lib/ai";
-import { requireProTier, isManagerOrAbove } from "@/lib/access";
+import { requireProTier } from "@/lib/access";
 
 export const metadata = {
   title: "AI Insights | RepWell",
   description: "AI-powered insights and analytics for your reviews",
 };
-
-// Server component for smart action items
-async function SmartActionsSection({ userId }: { userId?: string }) {
-  const result = await getSmartActionItems(userId);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <SmartActionsCard data={result.data} />;
-}
-
-// Server component for performance scorecard
-async function PerformanceScorecardSection({ userId }: { userId: string }) {
-  const result = await getLOPerformanceScorecard(userId);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <PerformanceScorecard data={result.data} />;
-}
-
-// Server component for team activity monitor (managers/admins only)
-async function TeamActivitySection() {
-  const result = await getTeamActivityMonitor();
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <TeamActivityMonitorCard data={result.data} />;
-}
-
-// Server component for channel effectiveness
-async function ChannelEffectivenessSection({ userId }: { userId?: string }) {
-  const result = await getChannelEffectiveness(userId);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <ChannelEffectivenessCard data={result.data} />;
-}
 
 // ---- Synchronous section components that receive pre-fetched data ----
 
@@ -161,9 +109,7 @@ export default async function AIInsightsPage() {
   // Check access - requires Pro tier (pro or enterprise subscription)
   const ctx = await requireProTier();
   // Regular users see their own data; managers/admins see org-wide data for insights
-  // but still get a scorecard for their own profile
   const userId = ctx.role === "user" ? ctx.userId : undefined;
-  const isManager = isManagerOrAbove(ctx);
 
   return (
     <div className="flex-1 space-y-6">
@@ -179,28 +125,6 @@ export default async function AIInsightsPage() {
           </p>
         </div>
       </div>
-
-      {/* Smart action items (most actionable = most visible) */}
-      <Suspense fallback={<CardSkeleton className="h-[200px]" />}>
-        <SmartActionsSection userId={userId} />
-      </Suspense>
-
-      {/* Performance scorecard — shown for all authenticated users (managers see their own) */}
-      <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
-        <PerformanceScorecardSection userId={ctx.userId} />
-      </Suspense>
-
-      {/* Team activity monitor (managers/admins only) */}
-      {isManager && (
-        <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-          <TeamActivitySection />
-        </Suspense>
-      )}
-
-      {/* Channel effectiveness */}
-      <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-        <ChannelEffectivenessSection userId={userId} />
-      </Suspense>
 
       {/* All sections that share getAIInsightsData — fetched once */}
       <Suspense

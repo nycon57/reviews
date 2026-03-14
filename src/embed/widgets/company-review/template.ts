@@ -25,6 +25,7 @@ import {
   truncateText,
   formatRelativeDate,
   formatAbsoluteDate,
+  resolveCardStyle,
 } from "../../core/dom-helpers";
 import { buildNmlsBadge } from "../../components/nmls-badge";
 import { buildComplianceFooter } from "../../components/compliance-footer";
@@ -182,7 +183,7 @@ export function buildSortControls(
   activeSort: SortOption,
   onSort: (sort: SortOption) => void,
   apiBase: string,
-  widgetId: string
+  config: PublicWidgetConfig
 ): HTMLElement {
   const section = el("div", "rw-co-filters");
   section.setAttribute("role", "toolbar");
@@ -202,7 +203,7 @@ export function buildSortControls(
     btn.setAttribute("aria-pressed", String(opt.value === activeSort));
     btn.addEventListener("click", () => {
       onSort(opt.value);
-      trackClick(apiBase, widgetId, "filter_change", { sort: opt.value });
+      trackClick(apiBase, config, "filter_change", { sort: opt.value });
     });
     section.appendChild(btn);
   }
@@ -220,7 +221,10 @@ export function buildReviewCard(
   apiBase: string
 ): HTMLElement {
   const content = config.config?.content;
-  const cardStyle = content?.cardStyle ?? "bordered";
+  const cardStyle = resolveCardStyle(
+    config.config?.theme?.layout?.cardStyle,
+    content?.cardStyle,
+  );
   const card = el("div", `rw-co-review rw-co-review--${safeClassName(cardStyle)}`);
   card.setAttribute("role", "article");
   card.setAttribute("aria-label", t("reviewByAriaLabel", { name: review.reviewer_name ?? t("anonymous") }));
@@ -258,7 +262,7 @@ export function buildReviewCard(
         textEl.removeAttribute("role");
         textEl.removeAttribute("tabindex");
         textEl.setAttribute("aria-expanded", "true");
-        trackClick(apiBase, config.widget_id, "click_review", { review_id: review.id });
+        trackClick(apiBase, config, "click_review", { review_id: review.id });
       };
       textEl.addEventListener("click", expand);
       textEl.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -360,7 +364,7 @@ export function appendWidgetFooter(
       cta.target = "_blank";
       cta.rel = "noopener noreferrer";
       if (colors?.primary) cta.style.background = colors.primary;
-      cta.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_cta"); });
+      cta.addEventListener("click", () => { trackClick(apiBase, config, "click_cta"); });
       actions.appendChild(cta);
     }
     if (content?.showWriteReview && content.writeReviewUrl) {
@@ -370,7 +374,7 @@ export function appendWidgetFooter(
       w.href = content.writeReviewUrl;
       w.target = "_blank";
       w.rel = "noopener noreferrer";
-      w.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_write_review"); });
+      w.addEventListener("click", () => { trackClick(apiBase, config, "click_write_review"); });
       actions.appendChild(w);
     }
     container.appendChild(actions);
@@ -466,7 +470,7 @@ export function buildReviewListSection(
       });
       updateLoadMore();
     };
-    fw.appendChild(buildSortControls(currentSort, sortFn, apiBase, config.widget_id));
+    fw.appendChild(buildSortControls(currentSort, sortFn, apiBase, config));
     container.appendChild(fw);
   }
 

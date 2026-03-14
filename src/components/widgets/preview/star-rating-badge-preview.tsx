@@ -1,6 +1,15 @@
 "use client";
 
 import { Star } from "lucide-react";
+import Image from "next/image";
+import { type WidgetThemeLayout } from "./layout";
+import {
+  getPreviewBodyStyle,
+  getPreviewHeadingStyle,
+  getPreviewMetaStyle,
+  previewT,
+  previewTp,
+} from "./shared";
 
 /**
  * Dashboard preview component for the Star Rating Badge Widget.
@@ -42,6 +51,9 @@ interface StarRatingBadgePreviewProps {
   badge?: BadgeConfig;
   colors?: WidgetThemeColors;
   borderRadius?: string;
+  layout?: WidgetThemeLayout;
+  language?: string;
+  profileUrl?: string;
 }
 
 // ── Partial Star Component ──────────────────────────────────────────
@@ -141,11 +153,17 @@ function Badge({
   badge,
   colors,
   borderRadius,
+  layout,
+  lang,
+  profileUrl,
 }: {
   profile: BadgeProfile;
   badge: BadgeConfig;
   colors: WidgetThemeColors;
   borderRadius?: string;
+  layout?: WidgetThemeLayout;
+  lang?: string;
+  profileUrl?: string;
 }) {
   const starFilled = colors.starFilled ?? "#f59e0b";
   const starEmpty = colors.starEmpty ?? "#d1d5db";
@@ -156,89 +174,143 @@ function Badge({
   const showName = badge.showName !== false;
 
   const isFloating = badge.placement === "floating";
+  const isClickable = !!profileUrl || !!badge.clickUrl;
 
   const badgeStyle: React.CSSProperties = {
     display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "8px 14px",
-    background: colors.background ?? "#fff",
-    border: `1px solid ${colors.border ?? "#e5e7eb"}`,
-    borderRadius: borderRadius ?? "8px",
-    cursor: badge.clickUrl ? "pointer" : "default",
+    flexDirection: "column",
+    gap: 0,
+    padding: layout?.padding ?? "12px 16px",
+    background: "var(--rw-surface, var(--rw-bg, #fff))",
+    border: "1px solid var(--rw-border, #e5e7eb)",
+    borderRadius: borderRadius ?? "10px",
+    cursor: isClickable ? "pointer" : "default",
     textDecoration: "none",
     color: "inherit",
     lineHeight: 1,
     boxShadow: isFloating
       ? "0 4px 16px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08)"
-      : undefined,
+      : "0 1px 3px rgba(0,0,0,0.06)",
     minWidth: badge.width ?? "200px",
-    height: badge.height ?? "48px",
     maxWidth: "100%",
     boxSizing: "border-box",
+    transition: "box-shadow 0.2s ease, transform 0.15s ease",
   };
 
-  const ariaLabel = `Rated ${rating.toFixed(1)} out of 5 based on ${totalReviews} review${totalReviews === 1 ? "" : "s"}`;
+  const ariaLabel = previewTp(lang, "ratedAriaLabel", totalReviews, { rating: rating.toFixed(1), count: totalReviews });
+
+  const Wrapper = isClickable ? "a" : "div";
+  const wrapperProps = isClickable
+    ? {
+        href: profileUrl ?? badge.clickUrl ?? "#",
+        target: "_blank" as const,
+        rel: "noopener noreferrer",
+      }
+    : {};
 
   return (
-    <div style={badgeStyle} role="img" aria-label={ariaLabel}>
-      <span
-        style={{
-          fontSize: 18,
-          fontWeight: 700,
-          color: colors.text ?? "#1a1a2e",
-          lineHeight: 1,
-          flexShrink: 0,
-        }}
-      >
-        {rating.toFixed(1)}
-      </span>
-
-      <StarsRow
-        rating={rating}
-        filledColor={starFilled}
-        emptyColor={starEmpty}
-      />
-
-      {(totalReviews > 0 || (showName && entityName)) && (
-        <div
+    <Wrapper
+      style={badgeStyle}
+      {...(isClickable ? { "aria-label": ariaLabel } : { role: "img", "aria-label": ariaLabel })}
+      {...wrapperProps}
+    >
+      {/* Top section: rating + stars + info */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            minWidth: 0,
+            fontWeight: 700,
+            lineHeight: 1,
+            flexShrink: 0,
+            ...getPreviewHeadingStyle(colors.text ?? "#1a1a2e"),
           }}
         >
-          {showName && entityName && (
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: colors.text ?? "#1a1a2e",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                lineHeight: 1.2,
-              }}
-            >
-              {entityName}
-            </span>
-          )}
-          {totalReviews > 0 && (
-            <span
-              style={{
-                fontSize: 11,
-                color: "#6b7280",
-                whiteSpace: "nowrap",
-                lineHeight: 1.2,
-              }}
-            >
-              {totalReviews} review{totalReviews === 1 ? "" : "s"}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
+          {rating.toFixed(1)}
+        </span>
+
+        <StarsRow
+          rating={rating}
+          filledColor={starFilled}
+          emptyColor={starEmpty}
+        />
+
+        {(totalReviews > 0 || (showName && entityName)) && (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              minWidth: 0,
+            }}
+          >
+            {showName && entityName && (
+              <span
+                style={{
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  lineHeight: 1.2,
+                  ...getPreviewBodyStyle(colors.text ?? "#1a1a2e"),
+                }}
+              >
+                {entityName}
+              </span>
+            )}
+            {totalReviews > 0 && (
+              <span
+                style={{
+                  whiteSpace: "nowrap",
+                  lineHeight: 1.2,
+                  ...getPreviewMetaStyle(),
+                }}
+              >
+                {totalReviews} {previewT(lang, totalReviews === 1 ? "review" : "reviews")}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div
+        style={{
+          height: 1,
+          background: "var(--rw-border, #e5e7eb)",
+          margin: "8px 0 6px",
+          opacity: 0.5,
+        }}
+      />
+
+      {/* Verified by RepWell branding */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+        }}
+      >
+        <Image
+          src="/branding/RepWell-Icon-Full-Color.png"
+          alt=""
+          width={14}
+          height={14}
+          style={{ flexShrink: 0, borderRadius: 2 }}
+          unoptimized
+        />
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 500,
+            color: "#6b7280",
+            letterSpacing: "0.01em",
+            lineHeight: 1,
+          }}
+        >
+          {previewT(lang, "verifiedBy") || "Verified by"}{" "}
+          <span style={{ fontWeight: 600, color: "#52796f" }}>RepWell</span>
+        </span>
+      </div>
+    </Wrapper>
   );
 }
 
@@ -249,6 +321,9 @@ export function StarRatingBadgePreview({
   badge = {},
   colors = {},
   borderRadius,
+  layout,
+  language,
+  profileUrl,
 }: StarRatingBadgePreviewProps) {
   const effectiveProfile: BadgeProfile = profile ?? {
     average_rating: 4.8,
@@ -286,6 +361,9 @@ export function StarRatingBadgePreview({
             badge={badge}
             colors={colors}
             borderRadius={borderRadius}
+            layout={layout}
+            lang={language}
+            profileUrl={profileUrl}
           />
         </div>
       </div>
@@ -299,6 +377,9 @@ export function StarRatingBadgePreview({
       badge={badge}
       colors={colors}
       borderRadius={borderRadius}
+      layout={layout}
+      lang={language}
+      profileUrl={profileUrl}
     />
   );
 }

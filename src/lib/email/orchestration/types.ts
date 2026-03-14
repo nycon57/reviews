@@ -2,7 +2,7 @@ import type { EmailTemplate } from "../types";
 
 // Channel Types
 
-export type ChannelType = "email" | "sms";
+export type ChannelType = "email" | "sms" | "whatsapp" | "rcs";
 
 export interface SmsTemplateConfig {
   templateId: string;

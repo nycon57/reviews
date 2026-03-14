@@ -10,9 +10,17 @@ import {
   type UpdateWidgetInput,
   type ListWidgetsInput,
   type GetWidgetInput,
+  type WidgetConfigJson,
+  widgetConfigJsonSchema,
 } from "./schemas";
 import type { Json } from "@/types/database.types";
 import { sanitizeCustomCSS } from "@/embed/core/css-sanitizer";
+import { getBaseUrl } from "@/lib/seo";
+import {
+  getActiveBranchUserIds,
+  getOrganizationProfile,
+  getPublicReviews,
+} from "./public-queries";
 import type {
   ActionResult,
   PaginatedResult,
@@ -154,10 +162,16 @@ export async function updateWidget(
       validated.data.config.advanced.customCSS = sanitized;
     }
 
-    // Merge config JSONB: deep-merge new config onto existing
+    // Merge config JSONB: deep-merge new config onto existing.
+    // If the merged result fails schema validation (e.g. legacy flat config),
+    // fall back to using the input config directly.
     const existingConfig = (existing.config ?? {}) as Record<string, unknown>;
     const inputConfig = (validated.data.config ?? {}) as Record<string, unknown>;
-    const mergedConfig = deepMerge(existingConfig, inputConfig);
+    let mergedConfig = deepMerge(existingConfig, inputConfig);
+    const mergeCheck = widgetConfigJsonSchema.safeParse(mergedConfig);
+    if (!mergeCheck.success) {
+      mergedConfig = inputConfig;
+    }
 
     // Capture pre-update config for diff
     const preUpdateConfig = existingConfig;
@@ -176,6 +190,7 @@ export async function updateWidget(
     if (validated.data.structured_data_type !== undefined)
       updatePayload.structured_data_type = validated.data.structured_data_type;
     if (validated.data.entity_id !== undefined) updatePayload.entity_id = validated.data.entity_id;
+    if (validated.data.entity_type !== undefined) updatePayload.entity_type = validated.data.entity_type;
 
     const { data, error } = await supabase
       .from("widget_configs")
@@ -323,6 +338,9 @@ export interface PreviewProfile {
   licensing_states?: string[] | null;
   organization_name?: string | null;
   logo_url?: string | null;
+  primary_color?: string | null;
+  rating_distribution?: { 5: number; 4: number; 3: number; 2: number; 1: number } | null;
+  source_breakdown?: { source: string; count: number; average: number }[] | null;
 }
 
 export interface PreviewReview {
@@ -333,6 +351,7 @@ export interface PreviewReview {
   review_date: string;
   source: string;
   avatar_url: string | null;
+  featured: boolean | null;
   loan_type: string | null;
   first_time_homebuyer?: boolean | null;
 }
@@ -340,11 +359,99 @@ export interface PreviewReview {
 export interface PreviewData {
   profile: PreviewProfile;
   reviews: PreviewReview[];
+  profileUrl?: string | null;
+}
+
+export async function getEntityCtaDefaults(
+  entityType: "user" | "branch" | "organization",
+  entityId: string | null
+): Promise<ActionResult<{ text: string; url: string }>> {
+  try {
+    const supabase = createAdminClient();
+    const ctx = await getAuthedUserContext(supabase);
+    if (!ctx.success) return ctx;
+
+    const baseUrl = getBaseUrl();
+
+    if (entityType === "user") {
+      if (!entityId) {
+        return { success: false, error: "A user must be selected" };
+      }
+
+      const { data: user, error } = await supabase
+        .from("users")
+        .select("slug")
+        .eq("id", entityId)
+        .eq("organization_id", ctx.data.organizationId)
+        .single();
+
+      if (error || !user) {
+        return { success: false, error: "User not found" };
+      }
+
+      return {
+        success: true,
+        data: {
+          text: "View Profile",
+          url: `${baseUrl}/pro/${user.slug || entityId}`,
+        },
+      };
+    }
+
+    if (entityType === "branch") {
+      if (!entityId) {
+        return { success: false, error: "A branch must be selected" };
+      }
+
+      const { data: branch, error } = await supabase
+        .from("branches")
+        .select("global_slug")
+        .eq("id", entityId)
+        .eq("organization_id", ctx.data.organizationId)
+        .single();
+
+      if (error || !branch) {
+        return { success: false, error: "Branch not found" };
+      }
+
+      return {
+        success: true,
+        data: {
+          text: "View Profile",
+          url: `${baseUrl}/branch/${branch.global_slug || entityId}`,
+        },
+      };
+    }
+
+    const organizationId = entityId ?? ctx.data.organizationId;
+    const { data: organization, error } = await supabase
+      .from("organizations")
+      .select("slug")
+      .eq("id", organizationId)
+      .single();
+
+    if (error || !organization?.slug) {
+      return { success: false, error: "Organization profile URL is unavailable" };
+    }
+
+    return {
+      success: true,
+      data: {
+        text: "View Profile",
+        url: `${baseUrl}/org/${organization.slug}`,
+      },
+    };
+  } catch (err) {
+    console.error("getEntityCtaDefaults error:", err);
+    return { success: false, error: "An unexpected error occurred" };
+  }
 }
 
 export async function getPreviewData(
   entityType: "user" | "branch" | "organization",
-  entityId: string
+  entityId: string | null,
+  filters?: WidgetConfigJson["filters"],
+  language?: string,
 ): Promise<ActionResult<PreviewData>> {
   try {
     const supabase = createAdminClient();
@@ -355,6 +462,10 @@ export async function getPreviewData(
     const reviews: PreviewReview[] = [];
 
     if (entityType === "user") {
+      if (!entityId) {
+        return { success: false, error: "A user must be selected" };
+      }
+
       const { data: user } = await supabase
         .from("users")
         .select("id, full_name, title, avatar_url, photo_url, nmls_id, average_rating, total_reviews")
@@ -373,70 +484,117 @@ export async function getPreviewData(
         };
       }
     } else if (entityType === "branch") {
+      if (!entityId) {
+        return { success: false, error: "A branch must be selected" };
+      }
+
       const { data: branch } = await supabase
         .from("branches")
-        .select("id, name, photo_url, average_rating, total_reviews")
+        .select("id, name, photo_url")
         .eq("id", entityId)
         .eq("organization_id", ctx.data.organizationId)
         .single();
 
       if (branch) {
+        // Compute live aggregates from reviews via branch users
+        const userIds = await getActiveBranchUserIds(entityId);
+        let total = 0;
+        let avg = 0;
+
+        if (userIds.length > 0) {
+          const { data: branchReviews } = await supabase
+            .from("reviews")
+            .select("rating")
+            .eq("organization_id", ctx.data.organizationId)
+            .in("user_id", userIds)
+            .eq("status", "approved")
+            .eq("is_published", true);
+
+          total = branchReviews?.length ?? 0;
+          avg = total > 0
+            ? branchReviews!.reduce((sum, r) => sum + (r.rating ?? 0), 0) / total
+            : 0;
+        }
+
         profile = {
           organization_name: branch.name,
           logo_url: branch.photo_url,
-          average_rating: branch.average_rating ?? 0,
-          total_reviews: branch.total_reviews ?? 0,
+          average_rating: Math.round(avg * 10) / 10,
+          total_reviews: total,
         };
       }
     } else {
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("id, name, logo_url")
-        .eq("id", entityId)
-        .single();
+      const organizationId = entityId ?? ctx.data.organizationId;
+      const orgProfile = await getOrganizationProfile(organizationId);
 
-      if (org) {
+      if (orgProfile) {
         profile = {
-          organization_name: org.name,
-          logo_url: org.logo_url,
-          average_rating: 0,
-          total_reviews: 0,
+          organization_name: orgProfile.organization_name ?? orgProfile.full_name ?? null,
+          logo_url: orgProfile.logo_url ?? null,
+          primary_color: orgProfile.primary_color ?? null,
+          average_rating: orgProfile.average_rating ?? 0,
+          total_reviews: orgProfile.total_reviews ?? 0,
+          rating_distribution: orgProfile.rating_distribution ?? null,
+          source_breakdown: orgProfile.source_breakdown ?? null,
         };
       }
     }
 
-    // Fetch reviews for the entity
-    const reviewColumn = entityType === "user" ? "user_id" : "organization_id";
-    const reviewId = entityType === "organization" ? ctx.data.organizationId : entityId;
+    const { reviews: reviewData } = await getPublicReviews({
+      organizationId: ctx.data.organizationId,
+      entityType,
+      entityId,
+      filters,
+      limit: filters?.maxReviews ?? 10,
+    });
 
-    const { data: reviewData } = await supabase
-      .from("reviews")
-      .select("id, customer_name, rating, text, review_date, source")
-      .eq(reviewColumn, reviewId)
-      .order("review_date", { ascending: false })
-      .limit(10);
+    for (const review of reviewData) {
+      reviews.push({
+        id: review.id,
+        reviewer_name: review.reviewer_name ?? "Anonymous",
+        rating: review.rating ?? 5,
+        text: review.text ?? "",
+        review_date: review.review_date ?? new Date().toISOString(),
+        source: review.source ?? "internal",
+        avatar_url: review.avatar_url ?? null,
+        featured: review.featured ?? false,
+        loan_type: review.loan_type ?? null,
+        first_time_homebuyer: review.first_time_homebuyer ?? false,
+      });
+    }
 
-    if (reviewData) {
-      for (const r of reviewData) {
-        reviews.push({
-          id: r.id,
-          reviewer_name: r.customer_name ?? "Anonymous",
-          rating: r.rating ?? 5,
-          text: r.text ?? "",
-          review_date: r.review_date ?? new Date().toISOString(),
-          source: r.source ?? "internal",
-          avatar_url: null,
-          loan_type: null,
-        });
+    // Translate review text if non-English language requested
+    if (language && language !== "en" && reviews.length > 0) {
+      try {
+        const { translateTexts } = await import("@/lib/ai/translation");
+        const texts = reviews.map((r) => r.text).filter((t): t is string => !!t);
+        if (texts.length > 0) {
+          const translations = await translateTexts(texts, language);
+          for (const review of reviews) {
+            if (review.text && translations[review.text]) {
+              review.text = translations[review.text];
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Preview translation failed:", err);
+        // Non-fatal: return untranslated reviews
       }
     }
 
-    return { success: true, data: { profile, reviews } };
+    // Resolve profile URL for badge link
+    const ctaResult = await getEntityCtaDefaults(entityType, entityId);
+    const profileUrl = ctaResult.success ? ctaResult.data.url : null;
+
+    return { success: true, data: { profile, reviews, profileUrl } };
   } catch (err) {
     console.error("getPreviewData error:", err);
     return { success: false, error: "An unexpected error occurred" };
   }
 }
+
+
+
 
 // ── Search Entities (for widget entity selector) ─────────────────────────
 

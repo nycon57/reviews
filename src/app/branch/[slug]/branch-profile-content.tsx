@@ -367,7 +367,7 @@ export function BranchProfileContent({
             {/* Hours Card */}
             {formattedHours.length > 0 && (
               <Card className="border-t-4 border-t-repwell-sage-200">
-                <CardHeader>
+                <CardHeader variant="plain">
                   <CardTitle className="text-lg font-display text-repwell-teal-500 flex items-center gap-2">
                     <Clock className="h-5 w-5 text-repwell-teal-300" />
                     Hours of Operation
@@ -393,7 +393,7 @@ export function BranchProfileContent({
           <div className="space-y-8 lg:col-span-2">
             {/* Loan Officers Section */}
             <Card className="border-t-4 border-t-repwell-sage-200">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader variant="plain" className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl font-display text-repwell-teal-500 flex items-center gap-2">
                   <Users className="h-5 w-5 text-repwell-teal-300" />
                   Our Team
@@ -476,7 +476,7 @@ export function BranchProfileContent({
 
             {/* Reviews Section */}
             <Card className="border-t-4 border-t-repwell-sage-200">
-              <CardHeader>
+              <CardHeader variant="plain">
                 <CardTitle className="text-xl font-display text-repwell-teal-500">Recent Reviews</CardTitle>
               </CardHeader>
               <CardContent>

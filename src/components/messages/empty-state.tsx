@@ -1,23 +1,24 @@
 "use client";
 
 import { ChatCircle, CursorClick } from "@phosphor-icons/react";
+import { IconContainer } from "@/components/shared";
 
-interface EmptyStateProps {
+interface MessagesEmptyStateProps {
   type: "no-conversations" | "no-selection" | "no-search-results";
 }
 
-export function EmptyState({ type }: EmptyStateProps) {
+export function MessagesEmptyState({ type }: MessagesEmptyStateProps) {
   if (type === "no-conversations") {
     return (
       <div className="text-center px-8 max-w-sm">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-repwell-sage-100/60 dark:bg-repwell-teal-300/15 mb-4">
-          <ChatCircle className="h-7 w-7 text-repwell-teal-300" />
-        </div>
+        <IconContainer size="xl" bg="soft" className="mx-auto mb-4 bg-repwell-sage-100/60 dark:bg-repwell-teal-300/15">
+          <ChatCircle className="h-7 w-7 text-repwell-teal-300 dark:text-repwell-sage-200" />
+        </IconContainer>
         <h3 className="text-sm font-semibold text-heading mb-1">
           No conversations yet
         </h3>
         <p className="text-xs text-repwell-teal-300/60 leading-relaxed">
-          Conversations will appear here when borrowers reply to your SMS
+          Conversations will appear here when customers reply to your SMS
           messages. Send a review request via SMS to get started.
         </p>
       </div>
@@ -40,9 +41,9 @@ export function EmptyState({ type }: EmptyStateProps) {
   // no-selection
   return (
     <div className="text-center px-8 max-w-sm">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-repwell-sage-100/60 dark:bg-repwell-teal-300/15 mb-4">
-        <CursorClick className="h-7 w-7 text-repwell-teal-300" />
-      </div>
+      <IconContainer size="xl" bg="soft" className="mx-auto mb-4 bg-repwell-sage-100/60 dark:bg-repwell-teal-300/15">
+        <CursorClick className="h-7 w-7 text-repwell-teal-300 dark:text-repwell-sage-200" />
+      </IconContainer>
       <h3 className="text-sm font-semibold text-heading mb-1">
         Select a conversation
       </h3>

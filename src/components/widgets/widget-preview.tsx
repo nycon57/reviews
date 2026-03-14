@@ -10,6 +10,8 @@ import { ReviewCarouselPreview } from "./preview/review-carousel-preview";
 import { VideoTestimonialPreview } from "./preview/video-testimonial-preview";
 import { ReviewWallPreview } from "./preview/review-wall-preview";
 import { NpsScoreBadgePreview } from "./preview/nps-score-badge-preview";
+import { SocialProofBannerPreview } from "./preview/social-proof-banner-preview";
+import { type WidgetThemeLayout } from "./preview/layout";
 import { Loader2 } from "lucide-react";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 import type { WidgetType, WidgetEntityType } from "@/lib/widgets/types";
@@ -44,6 +46,7 @@ const SAMPLE_PRO_PROFILE = {
 const SAMPLE_ORG_PROFILE = {
   organization_name: "Horizon Mortgage Group",
   logo_url: null,
+  primary_color: null as string | null,
   average_rating: 4.6,
   total_reviews: 342,
   rating_distribution: { 5: 210, 4: 80, 3: 30, 2: 15, 1: 7 } as { 5: number; 4: number; 3: number; 2: number; 1: number },
@@ -89,11 +92,11 @@ const SAMPLE_VIDEO_TESTIMONIALS = [
     video_url: "",
     poster_url: null,
     reviewer_name: "Amanda Torres",
-    reviewer_title: "First-Time Homebuyer",
+    reviewer_title: "New Customer",
     rating: 5,
     duration: 92,
     transcript: [
-      { start: 0, end: 5, text: "I was so nervous about buying my first home." },
+      { start: 0, end: 5, text: "I was nervous about getting started." },
       { start: 5, end: 12, text: "Sarah made the whole process feel manageable and stress-free." },
       { start: 12, end: 20, text: "She explained every step clearly and was always available to answer questions." },
       { start: 20, end: 28, text: "I honestly could not have done it without her guidance." },
@@ -104,18 +107,18 @@ const SAMPLE_VIDEO_TESTIMONIALS = [
     video_url: "",
     poster_url: null,
     reviewer_name: "David Kim",
-    reviewer_title: "Refinance Client",
+    reviewer_title: "Repeat Customer",
     rating: 5,
     duration: 68,
     transcript: [
-      { start: 0, end: 6, text: "We refinanced our home and saved over $400 a month." },
+      { start: 0, end: 6, text: "We came back for a second project because the first experience was excellent." },
       { start: 6, end: 14, text: "The team was incredibly responsive and professional throughout." },
-      { start: 14, end: 22, text: "I would absolutely recommend them to anyone looking for a mortgage." },
+      { start: 14, end: 22, text: "I would absolutely recommend them to anyone looking for a reliable partner." },
     ],
   },
 ];
 
-const SAMPLE_REVIEWS: { id: string; reviewer_name: string; rating: number; text: string; review_date: string; source: string; avatar_url: string | null; loan_type: string; first_time_homebuyer: boolean }[] = [
+const SAMPLE_REVIEWS_EN: { id: string; reviewer_name: string; rating: number; text: string; review_date: string; source: string; avatar_url: string | null; featured: boolean; loan_type: string; first_time_homebuyer: boolean }[] = [
   {
     id: "1",
     reviewer_name: "Michael Chen",
@@ -124,6 +127,7 @@ const SAMPLE_REVIEWS: { id: string; reviewer_name: string; rating: number; text:
     review_date: new Date(Date.now() - 2 * 86_400_000).toISOString(),
     source: "google",
     avatar_url: null,
+    featured: true,
     loan_type: "purchase",
     first_time_homebuyer: true,
   },
@@ -131,10 +135,11 @@ const SAMPLE_REVIEWS: { id: string; reviewer_name: string; rating: number; text:
     id: "2",
     reviewer_name: "Jennifer Williams",
     rating: 5,
-    text: "Great communication throughout. Always answered my questions promptly and made sure I understood every step of the loan process.",
+    text: "Great communication throughout. Always answered my questions promptly and made sure I understood every step.",
     review_date: new Date(Date.now() - 7 * 86_400_000).toISOString(),
     source: "zillow",
     avatar_url: null,
+    featured: false,
     loan_type: "refinance",
     first_time_homebuyer: false,
   },
@@ -146,6 +151,46 @@ const SAMPLE_REVIEWS: { id: string; reviewer_name: string; rating: number; text:
     review_date: new Date(Date.now() - 14 * 86_400_000).toISOString(),
     source: "internal",
     avatar_url: null,
+    featured: false,
+    loan_type: "va",
+    first_time_homebuyer: false,
+  },
+];
+
+const SAMPLE_REVIEWS_ES: typeof SAMPLE_REVIEWS_EN = [
+  {
+    id: "1",
+    reviewer_name: "Miguel Torres",
+    rating: 5,
+    text: "Experiencia excepcional de principio a fin. Todo el equipo fue profesional, receptivo e hizo que el proceso fuera impecable. \u00a1Muy recomendable!",
+    review_date: new Date(Date.now() - 2 * 86_400_000).toISOString(),
+    source: "google",
+    avatar_url: null,
+    featured: true,
+    loan_type: "purchase",
+    first_time_homebuyer: true,
+  },
+  {
+    id: "2",
+    reviewer_name: "Ana Garc\u00eda",
+    rating: 5,
+    text: "Excelente comunicaci\u00f3n en todo momento. Siempre respondieron mis preguntas r\u00e1pidamente y se aseguraron de que entendiera cada paso del proceso.",
+    review_date: new Date(Date.now() - 7 * 86_400_000).toISOString(),
+    source: "zillow",
+    avatar_url: null,
+    featured: false,
+    loan_type: "refinance",
+    first_time_homebuyer: false,
+  },
+  {
+    id: "3",
+    reviewer_name: "Carlos Rodr\u00edguez",
+    rating: 4,
+    text: "Muy conocedores y serviciales. El proceso de cierre tard\u00f3 un poco m\u00e1s de lo esperado, pero la tasa que obtuvimos fue excelente.",
+    review_date: new Date(Date.now() - 14 * 86_400_000).toISOString(),
+    source: "internal",
+    avatar_url: null,
+    featured: false,
     loan_type: "va",
     first_time_homebuyer: false,
   },
@@ -161,26 +206,42 @@ interface WidgetPreviewProps {
 function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPreviewProps) {
   const colors = config.theme?.colors;
   const content = config.content;
-  const maxWidth = config.theme?.layout?.maxWidth;
   const borderRadius = config.theme?.layout?.borderRadius;
+  const layout = config.theme?.layout as WidgetThemeLayout | undefined;
+  const lang = content?.language ?? "en";
 
   // Fetch real data when entity is selected
   const [liveData, setLiveData] = useState<PreviewData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const fetchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fetchIdRef = useRef(0);
 
   const fetchData = useCallback(async () => {
-    if (!entityId || !entityType) {
+    if (!entityType) {
       setLiveData(null);
+      setFetchError(null);
       return;
     }
+
+    if (entityType !== "organization" && !entityId) {
+      setLiveData(null);
+      setFetchError(null);
+      return;
+    }
+    const id = ++fetchIdRef.current;
     setIsLoading(true);
-    const result = await getPreviewData(entityType, entityId);
+    setFetchError(null);
+    const result = await getPreviewData(entityType, entityId ?? null, config.filters, lang);
+    if (id !== fetchIdRef.current) return; // stale response
     if (result.success) {
       setLiveData(result.data);
+    } else {
+      setLiveData(null);
+      setFetchError(result.error ?? "Failed to load preview data");
     }
     setIsLoading(false);
-  }, [entityType, entityId]);
+  }, [config.filters, entityType, entityId, lang]);
 
   useEffect(() => {
     if (fetchRef.current) clearTimeout(fetchRef.current);
@@ -211,6 +272,7 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
         ...SAMPLE_ORG_PROFILE,
         organization_name: profileData.organization_name ?? profileData.full_name ?? SAMPLE_ORG_PROFILE.organization_name,
         logo_url: profileData.logo_url ?? null,
+        primary_color: profileData.primary_color ?? null,
         average_rating: profileData.average_rating ?? SAMPLE_ORG_PROFILE.average_rating,
         total_reviews: profileData.total_reviews ?? SAMPLE_ORG_PROFILE.total_reviews,
       }
@@ -236,7 +298,12 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
       }
     : SAMPLE_BADGE_PROFILE;
 
-  const reviews: Array<{
+  const sampleReviews = lang === "es" ? SAMPLE_REVIEWS_ES : SAMPLE_REVIEWS_EN;
+
+  // Determine if we expect real data (entity is selected or org type which auto-resolves)
+  const expectsRealData = entityType === "organization" || !!entityId;
+
+  type ReviewItem = {
     id: string;
     reviewer_name: string;
     rating: number;
@@ -244,9 +311,13 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
     review_date: string;
     source: string;
     avatar_url: string | null;
+    featured: boolean;
     loan_type: string;
     first_time_homebuyer: boolean;
-  }> = liveData?.reviews?.length
+  };
+
+  // Reviews come pre-translated from getPreviewData when language !== "en"
+  const reviews: ReviewItem[] = liveData?.reviews?.length
     ? liveData.reviews.map((r: PreviewReview) => ({
         id: r.id,
         reviewer_name: r.reviewer_name ?? "Anonymous",
@@ -255,10 +326,17 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
         review_date: r.review_date,
         source: r.source,
         avatar_url: r.avatar_url ?? null,
+        featured: r.featured ?? false,
         loan_type: r.loan_type ?? "purchase",
         first_time_homebuyer: r.first_time_homebuyer ?? false,
       }))
-    : SAMPLE_REVIEWS;
+    : expectsRealData
+      ? [] // Don't fall back to sample data when real data is expected
+      : sampleReviews;
+
+  const reviewPreviewKey = `${lang}:${
+    config.filters?.sortOrder ?? "newest"
+  }:${reviews.map((review) => review.id).join(",")}`;
 
   if (isLoading) {
     return (
@@ -269,29 +347,64 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
     );
   }
 
+  // Show "selecting entity" message when auto-select is in progress
+  if ((entityType === "user" || entityType === "branch") && !entityId) {
+    const entityLabel = entityType === "user" ? "professional" : "branch";
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <Loader2 size={20} className="animate-spin text-muted-foreground mb-2" />
+        <span className="text-xs text-muted-foreground">Selecting {entityLabel}...</span>
+      </div>
+    );
+  }
+
+  // Show error state when fetch failed
+  if (fetchError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+        <p className="text-sm font-medium text-destructive mb-1">Preview unavailable</p>
+        <p className="text-xs text-muted-foreground">{fetchError}</p>
+      </div>
+    );
+  }
+
+  // Show empty state when real data loaded but no reviews found
+  if (expectsRealData && liveData && reviews.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+        <p className="text-sm font-medium text-muted-foreground mb-1">No reviews found</p>
+        <p className="text-xs text-muted-foreground">
+          No published reviews match the current filters for this {entityType === "organization" ? "organization" : entityType === "branch" ? "branch" : "professional"}.
+        </p>
+      </div>
+    );
+  }
+
   // For entity-specific review templates, adapt preview to selected entity type
   const reviewPreviewByEntity = () => {
     if (entityType === "branch") {
       return (
         <BranchReviewPreview
+          key={reviewPreviewKey}
           profile={branchProfile}
           reviews={reviews}
           content={content}
           colors={colors}
-          maxWidth={maxWidth}
-          borderRadius={borderRadius}
+          initialSort={config.filters?.sortOrder}
+          layout={layout}
         />
       );
     }
     if (entityType === "organization") {
       return (
         <CompanyReviewPreview
+          key={reviewPreviewKey}
           profile={orgProfile}
           reviews={reviews}
           content={content}
           colors={colors}
-          maxWidth={maxWidth}
-          borderRadius={borderRadius}
+          initialSort={config.filters?.sortOrder}
+          layout={layout}
         />
       );
     }
@@ -301,13 +414,13 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
         reviews={reviews}
         content={content}
         colors={colors}
-        maxWidth={maxWidth}
-        borderRadius={borderRadius}
+        layout={layout}
       />
     );
   };
 
   switch (widgetType) {
+    case "review_profile":
     case "lo_review":
     case "branch_review":
     case "company_review":
@@ -319,6 +432,9 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
           profile={badgeProfile}
           colors={colors}
           borderRadius={borderRadius}
+          layout={layout}
+          language={lang}
+          profileUrl={liveData?.profileUrl ?? undefined}
         />
       );
 
@@ -328,71 +444,69 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
           nps={config.nps}
           colors={colors}
           borderRadius={borderRadius}
+          layout={layout}
+          language={lang}
         />
       );
 
     case "review_carousel":
       return (
         <ReviewCarouselPreview
+          key={reviewPreviewKey}
           reviews={reviews}
           content={content}
           colors={colors}
           carousel={config.carousel}
-          maxWidth={maxWidth}
-          borderRadius={borderRadius}
+          layout={layout}
         />
       );
 
     case "review_wall":
       return (
         <ReviewWallPreview
+          key={reviewPreviewKey}
           reviews={reviews}
           content={content}
           colors={colors}
           wall={config.wall}
           filters={config.filters}
-          maxWidth={maxWidth}
-          borderRadius={borderRadius}
+          layout={layout}
         />
       );
 
     case "video_testimonial":
       return (
         <VideoTestimonialPreview
+          key={lang}
           profile={proProfile}
           testimonials={SAMPLE_VIDEO_TESTIMONIALS}
           content={content}
           video={config.video}
           colors={colors}
-          maxWidth={maxWidth}
-          borderRadius={borderRadius}
+          layout={layout}
         />
       );
 
     case "social_proof_banner":
       return (
-        <div
-          className="rounded-lg p-4 flex items-center gap-3"
-          style={{
-            background: colors?.primary ?? "#52796f",
-            maxWidth: maxWidth ?? "100%",
-            borderRadius: borderRadius ?? "8px",
+        <SocialProofBannerPreview
+          key={lang}
+          profile={{
+            average_rating: badgeProfile.average_rating,
+            total_reviews: badgeProfile.total_reviews,
+            organization_name:
+              badgeProfile.organization_name ??
+              badgeProfile.full_name ??
+              "Preview",
           }}
-        >
-          <div className="flex -space-x-2">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center text-white text-xs font-bold"
-              >
-                {String.fromCharCode(64 + i)}
-              </div>
-            ))}
-          </div>
-          <div className="text-white text-sm">
-            <span className="font-semibold">127 people</span> reviewed us this month
-          </div>
-        </div>
+          socialProofBanner={{
+            ctaText: content?.ctaText,
+            ctaUrl: content?.ctaUrl,
+          }}
+          content={content}
+          colors={colors}
+          layout={layout}
+        />
       );
 
     default:
@@ -406,7 +520,7 @@ function PreviewContent({ config, widgetType, entityType, entityId }: WidgetPrev
 
 /** Hook to load Google Fonts dynamically when a non-system font is selected */
 function useGoogleFont(fontFamily: string | undefined) {
-  const linkRef = useRef<HTMLLinkElement | null>(null);
+  const linkRef = useRef<Element | null>(null);
 
   useEffect(() => {
     // Clean up previous link
@@ -485,8 +599,22 @@ export function WidgetPreview({ config, widgetType, entityType, entityId }: Widg
             maxWidth: "100%",
           }}
         >
+          <style>{`
+            .rw-preview-scope .bg-white { background: var(--rw-surface, var(--rw-bg, #ffffff)) !important; }
+            .rw-preview-scope .bg-gray-50,
+            .rw-preview-scope .bg-gray-100 { background: var(--rw-surface-muted, #f9fafb) !important; }
+            .rw-preview-scope .bg-gray-200 { background: var(--rw-surface-strong, #e5e7eb) !important; }
+            .rw-preview-scope .border-gray-100,
+            .rw-preview-scope .border-gray-200,
+            .rw-preview-scope .border-gray-300 { border-color: var(--rw-border, #e5e7eb) !important; }
+            .rw-preview-scope .text-gray-700,
+            .rw-preview-scope .text-gray-600 { color: var(--rw-text, #1a1a2e) !important; }
+            .rw-preview-scope .text-gray-500 { color: var(--rw-text-muted, #6b7280) !important; }
+            .rw-preview-scope .text-gray-400,
+            .rw-preview-scope .text-gray-300 { color: var(--rw-text-subtle, #9ca3af) !important; }
+          `}</style>
           <div
-            className="rounded-lg border overflow-hidden"
+            className="rw-preview-scope rounded-lg border overflow-hidden"
             style={{
               ...themeStyle,
               background: config.theme?.colors?.background ?? "#ffffff",

@@ -53,7 +53,7 @@ export function OfficeLocationMap({
 
   return (
     <Card className={cn("border-t-4 border-t-repwell-sage-200 overflow-hidden", className)}>
-      <CardHeader className="pb-2">
+      <CardHeader variant="plain" className="pb-2">
         <CardTitle className="text-lg font-display text-repwell-teal-500 flex items-center gap-2">
           <MapPin className="h-5 w-5" />
           Office Location

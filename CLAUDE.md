@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-RepWell - customer experience & review management platform for mortgage/financial services (replaces Experience.com/Birdeye).
+RepWell - customer experience & review management platform for sales-based industries (replaces Experience.com/Birdeye).
 
 ## Commands
 
@@ -86,11 +86,11 @@ Follow the full 6-phase lifecycle in `.claude/dev-pipeline.md`:
 ### Mandatory Code Review (No Exceptions)
 
 **Tier 1 — Always (every task):**
-- Run `/react-doctor` at the end of EVERY task. Fix errors before presenting work. Non-negotiable.
+- Run `/simplify` at the end of EVERY task. Runs before any other end-of-task checks. Non-negotiable.
+- Run `/react-doctor` after `/simplify`. Fix errors before presenting work. Non-negotiable.
 - `npm run lint` + `npm run build` must pass (existing quality gates).
 
 **Tier 2 — Auto-escalate (no need to be asked):**
-- Auth/payment/DB schema/API route changes → also run `coderabbit review --prompt-only`
 - Error handling changes → also run `silent-failure-hunter` subagent — scans modified files for suppressed/swallowed errors (empty catch blocks, `.catch(() => {})`, missing error logging); input: list of changed files; output: list of findings with file, line, severity, and suggested fix
 - New types/interfaces → also run `type-design-analyzer` subagent — inspects new/modified types for naming consistency, compatibility issues, unsafe `any`/`never` casts, missing readonly/optional modifiers; input: list of changed type definitions; output: list of suggestions with file, line, issue category, and recommended change
 
@@ -107,8 +107,7 @@ Follow the full 6-phase lifecycle in `.claude/dev-pipeline.md`:
 | ANY auth work | `better-auth-best-practices` |
 | Before library use | Context7 `query-docs` |
 | After UI changes | `agent-browser` for visual verification |
-| End of EVERY task | `/react-doctor` — no exceptions |
-| Auth/payment/DB/API changes | `coderabbit review --prompt-only` — auto-triggered |
+| End of EVERY task | `/simplify` → `/react-doctor` — no exceptions, in this order |
 | Error handling changes | `silent-failure-hunter` subagent on changed files |
 | New types/interfaces | `type-design-analyzer` subagent on changed type defs |
 | Before commit | `code-simplifier` subagent on changed files |
@@ -130,3 +129,28 @@ Follow the full 6-phase lifecycle in `.claude/dev-pipeline.md`:
 
 - Make the plan extremely concise. Sacrifice grammar for the sake of concision.
 - At the end of each plan, give me a list of unresolved questions to answer, if any.
+
+## Design Context
+
+### Users
+Both individual professionals and enterprise teams across any sales-based industry. Individuals want to build credibility and grow their business through reputation. Enterprise managers need oversight and control at scale. The platform must balance empowerment for individuals with operational control for teams.
+
+### Brand Personality
+**Voice:** Professional, confident, approachable — never corporate-stiff or sterile.
+**3 words:** Trustworthy. Intelligent. Warm.
+**Emotional goals:** Confidence, clarity, empowerment. Users should feel in control of their reputation.
+
+### Aesthetic Direction
+- **Visual tone:** Clean, calm, credible, modern — premium SaaS (Calendly/Linear/Notion-inspired)
+- **Palette:** Earthy teals (#2f3e46–#52796f) + sages (#84a98c–#cad2c5). Trust-building, not trendy.
+- **Typography:** Erstoria serif for editorial headlines (trust/establishment), Source Sans 3 for UI (clean/readable)
+- **Imagery:** Diverse, professional, approachable people. Slightly desaturated, warm tones.
+- **Theme:** Light mode default, dark mode supported. Both use teal-tinted surfaces.
+- **Anti-references:** Avoid cluttered dashboards, aggressive CTAs, sterile corporate SaaS, overly playful/startup aesthetics.
+
+### Design Principles
+1. **Generous whitespace over density** — Let content breathe. Uncluttered layouts build trust.
+2. **Purposeful motion only** — Animations serve UX (guide attention, confirm actions), never decoration.
+3. **Accessible by default** — WCAG 2.1 AA, `prefers-reduced-motion` respected, keyboard navigable.
+4. **Industry-agnostic language** — No mortgage-specific terminology in UI. Serve all sales-based industries.
+5. **Progressive disclosure** — Show what's needed, reveal complexity on demand. Simple first impression.

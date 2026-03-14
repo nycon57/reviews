@@ -15,7 +15,7 @@ import {
   Users,
 } from "@phosphor-icons/react";
 import type { TrendDataPoint } from "@/lib/dashboard";
-import { ChartSkeleton } from "@/components/shared/skeletons";
+import { ChartSkeleton, IconContainer } from "@/components/shared";
 
 interface TrendChartProps {
   data: TrendDataPoint[];
@@ -58,9 +58,9 @@ export function UserTrendChart({
       <Card className="shadow-soft">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-              <Icon className="h-4 w-4 text-repwell-teal-300" />
-            </div>
+            <IconContainer size="sm" bg="subtle">
+              <Icon className="h-4 w-4 text-repwell-teal-300 dark:text-repwell-sage-200" />
+            </IconContainer>
             {title}
           </CardTitle>
         </CardHeader>
@@ -76,18 +76,26 @@ export function UserTrendChart({
     );
   }
 
+  // For ratings, floor the Y-axis to 1 below the min value (but never below 0)
+  // so the line doesn't look like it's dropping to nothing
+  const minValue = Math.min(...data.map((d) => d.value));
+  const ratingFloor = type === "rating" ? Math.max(0, Math.floor(minValue) - 1) : -100;
   const yAxisDomain =
-    type === "rating" ? [0, 5] : [-100, 100];
+    type === "rating" ? [ratingFloor, 5] : [-100, 100];
+  const ratingTicks = Array.from(
+    { length: 5 - ratingFloor + 1 },
+    (_, i) => ratingFloor + i
+  );
   const yAxisTicks =
-    type === "rating" ? [1, 2, 3, 4, 5] : [-100, -50, 0, 50, 100];
+    type === "rating" ? ratingTicks : [-100, -50, 0, 50, 100];
 
   return (
     <Card className="shadow-soft">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center gap-2.5 text-lg font-semibold text-heading">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-            <Icon className="h-4 w-4 text-repwell-teal-300" />
-          </div>
+          <IconContainer size="sm" bg="subtle">
+            <Icon className="h-4 w-4 text-repwell-teal-300 dark:text-repwell-sage-200" />
+          </IconContainer>
           {title}
         </CardTitle>
       </CardHeader>

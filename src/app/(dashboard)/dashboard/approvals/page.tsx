@@ -186,7 +186,7 @@ async function approvalAction(formData: FormData) {
   });
 
   revalidatePath("/dashboard/approvals");
-  revalidatePath("/dashboard/share-studio");
+  revalidatePath("/dashboard");
 }
 
 export default async function ApprovalsPage() {
@@ -236,9 +236,9 @@ export default async function ApprovalsPage() {
           </div>
         </div>
         <Button asChild variant="outline">
-          <Link href="/dashboard/share-studio" className="inline-flex items-center gap-2">
+          <Link href="/dashboard" className="inline-flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Share Studio
+            Back to Dashboard
           </Link>
         </Button>
       </div>
@@ -293,7 +293,7 @@ export default async function ApprovalsPage() {
                 All pending edits are resolved. New material edits will appear here.
               </p>
               <Button asChild variant="outline" className="mt-4">
-                <Link href="/dashboard/share-studio">Return to Share Studio</Link>
+                <Link href="/dashboard">Return to Dashboard</Link>
               </Button>
             </div>
           ) : (

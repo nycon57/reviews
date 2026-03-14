@@ -44,7 +44,7 @@ export function SmartActionsCard({ data }: SmartActionsCardProps) {
   if (data.length === 0) {
     return (
       <Card className="border border-green-200/60 bg-green-50/30 shadow-soft dark:border-green-800/40 dark:bg-green-950/20">
-        <CardHeader className="bg-gradient-to-r from-green-50/50 to-transparent border-b border-green-200/30 dark:from-green-950/30 dark:border-green-800/30">
+        <CardHeader variant="accent-green">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100/50 dark:bg-green-950/30">
               <Lightning className="h-5 w-5 text-green-600" />

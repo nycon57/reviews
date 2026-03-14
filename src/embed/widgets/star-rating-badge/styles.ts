@@ -1,6 +1,7 @@
 /**
  * Star Rating Badge Widget styles — injected into Shadow DOM alongside BASE_STYLES.
  * Compact trust indicator badge with inline and floating placement modes.
+ * Includes "Verified by RepWell" branding row.
  */
 
 export const STAR_RATING_BADGE_STYLES = /* css */ `
@@ -8,14 +9,13 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
 
   .rw-srb {
     display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
+    flex-direction: column;
+    gap: 0;
+    padding: 12px 16px;
     min-width: 200px;
-    height: 48px;
     background: var(--rw-bg, #fff);
     border: 1px solid var(--rw-border, #e5e7eb);
-    border-radius: var(--rw-radius, 8px);
+    border-radius: var(--rw-radius, 10px);
     cursor: default;
     text-decoration: none;
     color: inherit;
@@ -23,6 +23,7 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
     max-width: 100%;
     box-sizing: border-box;
     line-height: 1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
   a.rw-srb {
@@ -30,8 +31,13 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
   }
 
   a.rw-srb:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
+  }
+
+  a.rw-srb:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
   .rw-srb:focus-visible {
@@ -39,10 +45,18 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
     outline-offset: 2px;
   }
 
+  /* ── Top Row (rating + stars + info) ───────────────────────────────── */
+
+  .rw-srb__top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   /* ── Rating Value ─────────────────────────────────────────────────── */
 
   .rw-srb__rating {
-    font-size: 18px;
+    font-size: var(--rw-heading-size, 18px);
     font-weight: 700;
     color: var(--rw-text, #1a1a2e);
     line-height: 1;
@@ -97,7 +111,7 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
   }
 
   .rw-srb__name {
-    font-size: 11px;
+    font-size: var(--rw-caption-size, 11px);
     font-weight: 600;
     color: var(--rw-text, #1a1a2e);
     white-space: nowrap;
@@ -107,10 +121,48 @@ export const STAR_RATING_BADGE_STYLES = /* css */ `
   }
 
   .rw-srb__count {
-    font-size: 11px;
+    font-size: var(--rw-caption-size, 11px);
     color: var(--rw-text-muted, #6b7280);
     white-space: nowrap;
     line-height: 1.2;
+  }
+
+  /* ── Divider ───────────────────────────────────────────────────────── */
+
+  .rw-srb__divider {
+    height: 1px;
+    background: var(--rw-border, #e5e7eb);
+    margin: 8px 0 6px;
+    opacity: 0.5;
+  }
+
+  /* ── Verified by RepWell ───────────────────────────────────────────── */
+
+  .rw-srb__verified {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .rw-srb__verified-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .rw-srb__verified-text {
+    font-size: 10px;
+    font-weight: 500;
+    color: #6b7280;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+
+  .rw-srb__verified-brand {
+    font-size: 10px;
+    font-weight: 600;
+    color: #52796f;
+    line-height: 1;
   }
 
   /* ── Floating Mode ────────────────────────────────────────────────── */

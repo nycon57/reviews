@@ -303,48 +303,56 @@ function UnifiedRequestTable({
                 <Badge variant="outline">{request.reminderCount}</Badge>
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {request.type === "video" && request.requestUrl && (
-                      <DropdownMenuItem
-                        onClick={() => {
-                          navigator.clipboard.writeText(request.requestUrl!);
-                          toast({ title: "Copied", description: "Link copied to clipboard" });
-                        }}
-                      >
-                        Copy Link
-                      </DropdownMenuItem>
-                    )}
-                    {canManage &&
-                      !["completed", "cancelled", "expired"].includes(request.status) && (
-                        <>
-                          <DropdownMenuSeparator />
+                {(() => {
+                  const hasVideoLink = request.type === "video" && request.requestUrl;
+                  const hasManageActions = canManage && !["completed", "cancelled", "expired"].includes(request.status);
+                  if (!hasVideoLink && !hasManageActions) return null;
+                  return (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Actions</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {hasVideoLink && (
                           <DropdownMenuItem
-                            onClick={() => onResend(request)}
-                            disabled={isActioning}
+                            onClick={() => {
+                              navigator.clipboard.writeText(request.requestUrl!).then(
+                                () => toast({ title: "Copied", description: "Link copied to clipboard" }),
+                                (err) => toast({ title: "Copy failed", description: err?.message || "Could not copy link", variant: "destructive" }),
+                              );
+                            }}
                           >
-                            <Send className="mr-2 h-4 w-4" />
-                            {request.type === "video" ? "Resend Invitation" : "Resend Survey"}
+                            Copy Link
                           </DropdownMenuItem>
-                          {request.type === "video" && (
+                        )}
+                        {hasManageActions && (
+                          <>
+                            {hasVideoLink && <DropdownMenuSeparator />}
                             <DropdownMenuItem
-                              onClick={() => onCancelRequest(request.id)}
-                              className="text-destructive"
+                              onClick={() => onResend(request)}
+                              disabled={isActioning}
                             >
-                              <X className="mr-2 h-4 w-4" />
-                              Cancel Request
+                              <Send className="mr-2 h-4 w-4" />
+                              {request.type === "video" ? "Resend Invitation" : "Resend Survey"}
                             </DropdownMenuItem>
-                          )}
-                        </>
-                      )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                            {request.type === "video" && (
+                              <DropdownMenuItem
+                                onClick={() => onCancelRequest(request.id)}
+                                className="text-destructive"
+                              >
+                                <X className="mr-2 h-4 w-4" />
+                                Cancel Request
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                })()}
               </TableCell>
             </TableRow>
           ))}

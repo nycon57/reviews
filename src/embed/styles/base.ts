@@ -7,6 +7,21 @@
 export const BASE_STYLES = /* css */ `
   :host {
     display: block;
+    --rw-surface: var(--rw-bg, #ffffff);
+    --rw-text-muted: color-mix(in srgb, var(--rw-text, #1a1a2e) 72%, var(--rw-bg, #ffffff) 28%);
+    --rw-text-subtle: color-mix(in srgb, var(--rw-text, #1a1a2e) 52%, var(--rw-bg, #ffffff) 48%);
+    --rw-text-secondary: var(--rw-text-muted);
+    --rw-surface-muted: color-mix(in srgb, var(--rw-bg, #ffffff) 90%, var(--rw-primary, #52796f) 10%);
+    --rw-surface-strong: color-mix(in srgb, var(--rw-bg, #ffffff) 78%, var(--rw-text, #1a1a2e) 22%);
+    --rw-border-soft: color-mix(in srgb, var(--rw-border, #e5e7eb) 72%, var(--rw-bg, #ffffff) 28%);
+    --rw-glass-bg: rgba(255, 255, 255, 0.6);
+    --rw-glass-border: rgba(255, 255, 255, 0.3);
+    --rw-featured-start: color-mix(in srgb, var(--rw-accent, var(--rw-primary, #52796f)) 8%, var(--rw-bg, #ffffff) 92%);
+    --rw-featured-end: color-mix(in srgb, var(--rw-accent, var(--rw-primary, #52796f)) 14%, var(--rw-bg, #ffffff) 86%);
+    --rw-body-size-sm: max(12px, calc(var(--rw-body-size, 14px) - 1px));
+    --rw-meta-size: max(11px, calc(var(--rw-body-size, 14px) - 2px));
+    --rw-caption-size: max(10px, calc(var(--rw-body-size, 14px) - 4px));
+    --rw-display-size: calc(var(--rw-heading-size, 18px) + 6px);
     font-family: var(--rw-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif);
     font-size: var(--rw-body-size, 14px);
     line-height: 1.5;
@@ -77,8 +92,8 @@ export const BASE_STYLES = /* css */ `
   }
 
   .rw-widget__subtitle {
-    font-size: 13px;
-    color: var(--rw-text, #6b7280);
+    font-size: var(--rw-body-size-sm, 13px);
+    color: var(--rw-text-muted, #6b7280);
     opacity: 0.7;
   }
 
@@ -114,13 +129,13 @@ export const BASE_STYLES = /* css */ `
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--rw-border, #e5e7eb);
+    background: var(--rw-surface-strong, #e5e7eb);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 14px;
-    color: var(--rw-text, #6b7280);
+    font-size: var(--rw-body-size, 14px);
+    color: var(--rw-text-muted, #6b7280);
     opacity: 0.7;
     flex-shrink: 0;
   }
@@ -140,8 +155,8 @@ export const BASE_STYLES = /* css */ `
   }
 
   .rw-review__date {
-    font-size: 12px;
-    color: var(--rw-text, #9ca3af);
+    font-size: var(--rw-meta-size, 12px);
+    color: var(--rw-text-subtle, #9ca3af);
     opacity: 0.6;
   }
 
@@ -172,8 +187,8 @@ export const BASE_STYLES = /* css */ `
 
   .rw-review__source {
     margin-top: 8px;
-    font-size: 11px;
-    color: var(--rw-text, #9ca3af);
+    font-size: var(--rw-caption-size, 11px);
+    color: var(--rw-text-subtle, #9ca3af);
     opacity: 0.5;
     text-transform: capitalize;
   }
@@ -204,15 +219,15 @@ export const BASE_STYLES = /* css */ `
   .rw-branding {
     margin-top: 16px;
     padding-top: 12px;
-    border-top: 1px solid var(--rw-border, #f3f4f6);
-    font-size: 11px;
-    color: var(--rw-text, #9ca3af);
+    border-top: 1px solid var(--rw-border-soft, var(--rw-border, #f3f4f6));
+    font-size: var(--rw-caption-size, 11px);
+    color: var(--rw-text-subtle, #9ca3af);
     opacity: 0.5;
     text-align: center;
   }
 
   .rw-branding a {
-    color: var(--rw-text, #6b7280);
+    color: var(--rw-text-muted, #6b7280);
     opacity: 0.7;
     text-decoration: none;
   }
@@ -228,9 +243,9 @@ export const BASE_STYLES = /* css */ `
     padding: 8px 12px;
     font-size: var(--rw-disclaimer-size, 11px);
     line-height: 1.4;
-    color: var(--rw-text, #6b7280);
+    color: var(--rw-text-muted, #6b7280);
     opacity: 0.7;
-    background: var(--rw-bg, #f9fafb);
+    background: var(--rw-surface-muted, #f9fafb);
     border-radius: var(--rw-radius, 4px);
   }
 
@@ -244,9 +259,9 @@ export const BASE_STYLES = /* css */ `
   .rw-error {
     padding: 24px var(--rw-padding, 16px);
     text-align: center;
-    color: var(--rw-text, #6b7280);
+    color: var(--rw-text-muted, #6b7280);
     opacity: 0.7;
-    font-size: 13px;
+    font-size: var(--rw-body-size-sm, 13px);
   }
 
   /* ── Empty state ────────────────────────────────────────────────────── */
@@ -254,7 +269,7 @@ export const BASE_STYLES = /* css */ `
   .rw-empty {
     padding: 32px var(--rw-padding, 16px);
     text-align: center;
-    color: var(--rw-text, #9ca3af);
+    color: var(--rw-text-subtle, #9ca3af);
     opacity: 0.6;
     font-size: var(--rw-body-size, 14px);
   }

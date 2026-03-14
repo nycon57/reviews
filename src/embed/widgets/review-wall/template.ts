@@ -18,7 +18,7 @@ const DEPTH_THRESHOLDS = [25, 50, 75, 100];
 function setupScrollDepthTracking(
   wrapper: HTMLElement,
   apiBase: string,
-  widgetId: string,
+  config: PublicWidgetConfig,
 ): IntersectionObserver {
   const tracked = new Set<number>();
 
@@ -38,7 +38,7 @@ function setupScrollDepthTracking(
         );
         if (depth && !tracked.has(depth)) {
           tracked.add(depth);
-          trackClick(apiBase, widgetId, "scroll_depth", {
+          trackClick(apiBase, config, "scroll_depth", {
             depth_percent: depth,
           });
           observer.unobserve(entry.target);
@@ -207,7 +207,7 @@ export function buildReviewWallDOM(
 
       // Track click on card (analytics-only, not primary interaction)
       cardWrapper.addEventListener("click", () => {
-        trackClick(apiBase, config.widget_id, "click_review", {
+        trackClick(apiBase, config, "click_review", {
           review_id: review.id,
         });
       });
@@ -225,7 +225,7 @@ export function buildReviewWallDOM(
   wrapper.appendChild(grid);
 
   // Scroll depth tracking (store observer for cleanup)
-  const depthObserver = setupScrollDepthTracking(wrapper, apiBase, config.widget_id);
+  const depthObserver = setupScrollDepthTracking(wrapper, apiBase, config);
 
   container.appendChild(wrapper);
 
@@ -285,7 +285,7 @@ export function buildReviewWallDOM(
     cta.rel = "noopener noreferrer";
     if (colors?.primary) cta.style.background = colors.primary;
     cta.addEventListener("click", () => {
-      trackClick(apiBase, config.widget_id, "click_cta");
+      trackClick(apiBase, config, "click_cta");
     });
     ctaWrapper.appendChild(cta);
     container.appendChild(ctaWrapper);

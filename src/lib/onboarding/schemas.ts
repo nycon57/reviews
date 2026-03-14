@@ -6,6 +6,7 @@ export type OnboardingStatus =
   | "plan_selected"
   | "payment_complete"
   | "profile_complete"
+  | "sms_setup_complete"
   | "completed";
 
 // Schema for plan selection

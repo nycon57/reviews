@@ -15,12 +15,12 @@ import type {
   RuntimeOverrides,
 } from "./types";
 import { WidgetState } from "./types";
-import { discoverWidgets } from "./core/discovery";
+import { discoverWidgets, readEntityOverride } from "./core/discovery";
 import { attachShadow, loadGoogleFontInShadow } from "./core/shadow-dom";
 import { observe, unobserve } from "./core/lazy-loader";
 import { renderSkeleton, removeSkeleton } from "./core/skeleton";
 import { renderWidget, renderError } from "./core/renderer";
-import { fetchConfig, fetchReviews } from "./core/api-client";
+import { fetchConfig, fetchReviews, WidgetApiError } from "./core/api-client";
 import { trackImpression } from "./core/event-tracker";
 import { attachScrollDepthTracking } from "./core/scroll-tracker";
 import { setupConversionTracking } from "./core/conversion-tracker";
@@ -38,6 +38,7 @@ import {
 } from "./core/hooks";
 
 // Widget type registrations (self-register on import)
+import "./widgets/review-profile";
 import "./widgets/lo-review";
 import "./widgets/company-review";
 import "./widgets/branch-review";
@@ -84,6 +85,10 @@ function generateInstanceId(): string {
 
 async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<void> {
   instance.state = WidgetState.Loading;
+  instance._scrollCleanup?.();
+  instance._scrollCleanup = null;
+  instance._conversionCleanup?.();
+  instance._conversionCleanup = null;
 
   const controller = new AbortController();
   instance.abortController = controller;
@@ -91,7 +96,7 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
   try {
     // Fetch config (wraps 403 → DomainNotAllowedError for clear feedback)
     const config = await fetchWithDomainCheck(instance.widgetId, () =>
-      fetchConfig(apiBase, instance.widgetId, controller.signal)
+      fetchConfig(apiBase, instance.widgetId, controller.signal, instance.entityOverride)
     );
     if (controller.signal.aborted) return;
 
@@ -102,7 +107,7 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     if (resolvedWidgetId !== instance.widgetId) {
       // Visitor assigned to variant B — fetch variant config
       finalConfig = await fetchWithDomainCheck(resolvedWidgetId, () =>
-        fetchConfig(apiBase, resolvedWidgetId, controller.signal)
+        fetchConfig(apiBase, resolvedWidgetId, controller.signal, instance.entityOverride)
       );
       if (controller.signal.aborted) return;
     }
@@ -112,7 +117,15 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     // Fetch reviews for the resolved widget
     const limit = finalConfig.config?.filters?.maxReviews ?? 10;
     const data = await fetchWithDomainCheck(resolvedWidgetId, () =>
-      fetchReviews(apiBase, resolvedWidgetId, controller.signal, limit, undefined, instance.activeFilters)
+      fetchReviews(
+        apiBase,
+        resolvedWidgetId,
+        controller.signal,
+        limit,
+        undefined,
+        instance.activeFilters,
+        instance.entityOverride,
+      )
     );
     if (controller.signal.aborted) return;
     instance.reviews = data.reviews;
@@ -157,14 +170,14 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
     // Inject JSON-LD structured data into host page <head>
     injectStructuredData(finalConfig, data.reviews, finalConfig.entity_profile);
 
-    // Track impression for the resolved widget (so A and B are tracked separately)
-    trackImpression(apiBase, resolvedWidgetId);
+    // Track impression for the resolved widget config so analytics include entity metadata.
+    trackImpression(apiBase, finalConfig);
 
     // Attach scroll depth tracking for long widgets (Review Wall, etc.)
     const scrollCleanup = attachScrollDepthTracking(
       instance.shadowRoot.host as HTMLElement,
       apiBase,
-      resolvedWidgetId,
+      finalConfig,
     );
     instance._scrollCleanup = scrollCleanup;
 
@@ -188,6 +201,10 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
       renderError(instance.shadowRoot, "This widget is not authorized for this domain.");
       console.warn(`[RepWell] ${err.message}`);
       emitHookEvent(instance.widgetId, "error", { error: err.message });
+    } else if (err instanceof WidgetApiError) {
+      renderError(instance.shadowRoot, err.message);
+      console.warn(`[RepWell] Failed to load widget "${instance.widgetId}":`, err);
+      emitHookEvent(instance.widgetId, "error", { error: err.message, code: err.code });
     } else {
       renderError(instance.shadowRoot);
       const errorMsg = err instanceof Error ? err.message : "Unknown error";
@@ -199,7 +216,12 @@ async function loadWidget(instance: WidgetInstance, apiBase: string): Promise<vo
   }
 }
 
-function initializeWidget(element: HTMLElement, widgetId: string, apiBase: string): void {
+function initializeWidget(
+  element: HTMLElement,
+  widgetId: string,
+  apiBase: string,
+  entityOverride: WidgetInstance["entityOverride"],
+): void {
   // Skip if already initialized
   if (element.hasAttribute("data-repwell-initialized")) return;
 
@@ -216,6 +238,7 @@ function initializeWidget(element: HTMLElement, widgetId: string, apiBase: strin
   const instance: WidgetInstance = {
     id,
     widgetId,
+    entityOverride,
     element,
     shadowRoot,
     state: WidgetState.ShadowAttached,
@@ -256,6 +279,9 @@ function destroyInstance(instance: WidgetInstance): void {
 
   // Remove JSON-LD structured data from <head>
   removeStructuredData(instance.widgetId);
+  if (instance.config?.widget_id && instance.config.widget_id !== instance.widgetId) {
+    removeStructuredData(instance.config.widget_id);
+  }
 
   // Clear shadow DOM contents
   while (instance.shadowRoot.firstChild) {
@@ -280,8 +306,8 @@ function init(): void {
     return;
   }
 
-  for (const { element, widgetId } of widgets) {
-    initializeWidget(element, widgetId, apiBase);
+  for (const { element, widgetId, entityOverride } of widgets) {
+    initializeWidget(element, widgetId, apiBase, entityOverride);
   }
 }
 
@@ -295,6 +321,13 @@ function refresh(widgetId: string): void {
 
       // Remove stale JSON-LD so it gets re-injected with fresh data
       removeStructuredData(instance.widgetId);
+      if (instance.config?.widget_id && instance.config.widget_id !== instance.widgetId) {
+        removeStructuredData(instance.config.widget_id);
+      }
+      instance._scrollCleanup?.();
+      instance._scrollCleanup = null;
+      instance._conversionCleanup?.();
+      instance._conversionCleanup = null;
 
       // Clear current content
       const style = instance.shadowRoot.querySelector("style");
@@ -307,6 +340,7 @@ function refresh(widgetId: string): void {
       instance.state = WidgetState.ShadowAttached;
       instance.config = null;
       instance.reviews = [];
+      instance.entityOverride = readEntityOverride(instance.element);
 
       renderSkeleton(instance.shadowRoot);
       loadWidget(instance, apiBase);

@@ -28,6 +28,7 @@ import {
   getReviewVolumeTrend,
   getTeamRatingTrend,
   getTeamNPSTrend,
+  getTeamReviewVolumeTrend,
   type TrendDataPoint,
 } from "@/lib/dashboard";
 import { calculateTrendStats } from "@/components/analytics/trend-utils";
@@ -64,7 +65,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
     const [ratingResult, npsResult, volumeResult] = await Promise.all([
       isTeamScope ? getTeamRatingTrend(months) : getRatingTrend(undefined, months),
       isTeamScope ? getTeamNPSTrend(months) : getNPSTrend(undefined, months),
-      getReviewVolumeTrend(undefined, months),
+      isTeamScope ? getTeamReviewVolumeTrend(months) : getReviewVolumeTrend(undefined, months),
     ]);
 
     if (ratingResult.success && ratingResult.data) {
@@ -205,7 +206,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
                 <Star className="h-5 w-5 text-repwell-teal-300" />
               </div>
               <CardTitle className="text-lg font-semibold">
-                {isTeamScope ? "Team Rating Trend" : "Rating Trend"}
+                {isTeamScope ? "Team Avg Rating Over Time" : "Avg Rating Over Time"}
               </CardTitle>
             </div>
           </CardHeader>
@@ -230,7 +231,7 @@ export function TrendsDashboard({ scope, timeRange }: TrendsDashboardProps) {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-                    <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
+                    <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dx={-10} />
                     <Tooltip contentStyle={{ backgroundColor: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: "8px" }} formatter={(value: number) => [`${value.toFixed(1)} stars`, isTeamScope ? "Team Avg" : "Avg Rating"]} />
                     <Area type="monotone" dataKey="value" stroke="hsl(var(--chart-1))" strokeWidth={2} fill="url(#user-ratingGradient)" />
                   </AreaChart>

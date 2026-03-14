@@ -27,6 +27,7 @@ export {
   getLowPerformers,
   getTeamNPSTrend,
   getTeamRatingTrend,
+  getTeamReviewVolumeTrend,
 } from "./manager-actions";
 
 export type {

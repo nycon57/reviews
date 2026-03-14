@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { DashboardEntrance } from "@/components/dashboard/dashboard-entrance";
-import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, EmptyState, EmptyStateCard } from "@/components/shared";
+import { StatsRowSkeleton, ReviewListSkeleton, ChartSkeleton, CardSkeleton, EmptyState, EmptyStateCard, IconContainer } from "@/components/shared";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import {
   UserStatsCards,
@@ -22,7 +22,11 @@ import {
   getNPSTrend,
 } from "@/lib/dashboard";
 import { getCurrentUser } from "@/lib/users/actions";
-import { TrendUp } from "@phosphor-icons/react/dist/ssr";
+import { getAccessContext, hasProAccess } from "@/lib/access";
+import { getSmartActionItems, getLOPerformanceScorecard } from "@/lib/ai";
+import { SmartActionsCard, PerformanceScorecard } from "@/components/insights";
+import { ShareStudioCards } from "@/components/dashboard/share-studio-cards";
+import { TrendUp, ShareNetwork } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata = {
   title: "Dashboard | RepWell",
@@ -120,25 +124,65 @@ async function RecentReviewsList() {
   return <UserRecentReviews initialReviews={result.success ? (result.data || []) : []} />;
 }
 
+// Server component for smart action items (Pro tier only)
+async function SmartActionsSection({ userId }: { userId?: string }) {
+  const result = await getSmartActionItems(userId);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <SmartActionsCard data={result.data} />;
+}
+
+// Server component for performance scorecard (Pro tier only)
+async function PerformanceScorecardSection({ userId }: { userId: string }) {
+  const result = await getLOPerformanceScorecard(userId);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <PerformanceScorecard data={result.data} />;
+}
+
 function FullProfileCompletionCard() {
   return <ProfileCompletionCard showMilestones showTips />;
 }
 
 
 export default async function DashboardPage() {
-  const userResult = await getCurrentUser();
+  const [userResult, ctx] = await Promise.all([
+    getCurrentUser(),
+    getAccessContext(),
+  ]);
   const user = userResult.success ? userResult.data : null;
   const userName = user?.fullName ?? null;
+  const isPro = ctx ? hasProAccess(ctx) : false;
 
   return (
     <DashboardEntrance className="flex-1 space-y-8">
       {/* Page header */}
       <DashboardHeader userName={userName} />
 
+      {/* Action items (Pro tier) */}
+      {isPro && ctx && (
+        <Suspense fallback={<CardSkeleton className="h-[200px]" />}>
+          <SmartActionsSection userId={ctx.role === "user" ? ctx.userId : undefined} />
+        </Suspense>
+      )}
+
       {/* Stats cards */}
       <Suspense fallback={<StatsRowSkeleton />}>
         <DashboardStats />
       </Suspense>
+
+      {/* Performance scorecard (Pro tier) */}
+      {isPro && ctx && (
+        <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
+          <PerformanceScorecardSection userId={ctx.userId} />
+        </Suspense>
+      )}
 
       {/* Quick Actions */}
       <UserQuickActions profileSlug={user?.slug ?? null} userName={userName} />
@@ -146,9 +190,9 @@ export default async function DashboardPage() {
       {/* Charts grid */}
       <section>
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+          <IconContainer size="sm" bg="subtle">
             <TrendUp className="h-4 w-4 text-repwell-teal-300" />
-          </div>
+          </IconContainer>
           <h2 className="text-heading-sm font-semibold text-heading-accent">
             Performance Trends
           </h2>
@@ -163,6 +207,23 @@ export default async function DashboardPage() {
         </div>
       </section>
 
+      {/* Share Studio: Render Queue + Link Analytics */}
+      {ctx && (
+        <section>
+          <div className="flex items-center gap-2.5 mb-4">
+            <IconContainer size="sm" bg="subtle">
+              <ShareNetwork className="h-4 w-4 text-repwell-teal-300" />
+            </IconContainer>
+            <h2 className="text-heading-sm font-semibold text-heading-accent">
+              Share Studio
+            </h2>
+          </div>
+          <Suspense fallback={<CardSkeleton className="h-[200px]" />}>
+            <ShareStudioCards organizationId={ctx.organizationId} />
+          </Suspense>
+        </section>
+      )}
+
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main column - takes 2 columns */}
@@ -171,29 +232,30 @@ export default async function DashboardPage() {
             <RecentReviewsList />
           </Suspense>
 
-          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+          <Suspense fallback={<CardSkeleton />}>
             <ReputationBreakdownCard />
           </Suspense>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
-              <ImprovementTipsCard />
-            </Suspense>
-            <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
-              <BadgeShowcase />
-            </Suspense>
-          </div>
         </div>
 
         {/* Sidebar - progress and profile completion */}
         <div className="space-y-6">
-          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+          <Suspense fallback={<CardSkeleton />}>
             <GamificationStatsCard layout="vertical" />
           </Suspense>
-          <Suspense fallback={<div className="h-24 animate-pulse rounded-lg bg-muted" />}>
+          <Suspense fallback={<CardSkeleton />}>
             <FullProfileCompletionCard />
           </Suspense>
         </div>
+      </div>
+
+      {/* Tips & badges — full width across all columns */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Suspense fallback={<CardSkeleton />}>
+          <ImprovementTipsCard />
+        </Suspense>
+        <Suspense fallback={<CardSkeleton />}>
+          <BadgeShowcase />
+        </Suspense>
       </div>
     </DashboardEntrance>
   );

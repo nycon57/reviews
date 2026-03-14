@@ -23,6 +23,15 @@
 14. [Responsive Design](#responsive-design)
 15. [Accessibility](#accessibility)
 16. [Do's and Don'ts](#dos-and-donts)
+17. [Shared Component Library](#shared-component-library)
+18. [SectionWrapper](#sectionwrapper)
+19. [Icon Container Pattern](#icon-container-pattern)
+20. [Gradient Presets](#gradient-presets)
+21. [Dashboard Patterns](#dashboard-patterns)
+22. [Loading & Empty States](#loading--empty-states)
+23. [Icon Registry](#icon-registry)
+24. [Motion Library Reference](#motion-library-reference)
+25. [Uppercase Label Pattern](#uppercase-label-pattern)
 
 ---
 
@@ -31,7 +40,7 @@
 ### Brand Essence
 **"Reputation done well."**
 
-Repwell is an AI-powered reputation management platform for mortgage professionals. The brand conveys:
+Repwell is an AI-powered reputation management platform for sales-based industries. The brand conveys:
 - **Trust**: Established, reliable, secure
 - **Intelligence**: AI-powered, data-driven, smart automation
 - **Growth**: Upward trajectory, improvement, building over time
@@ -207,7 +216,7 @@ module.exports = {
 ### Type Scale
 
 ```css
-/* Headings - Use font-display (Libre Baskerville) */
+/* Headings - Use font-display (Erstoria) */
 h1: text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight
 h2: text-3xl md:text-4xl lg:text-5xl font-display font-bold tracking-tight
 h3: text-xl md:text-2xl font-sans font-semibold  /* Switch to sans at H3 */
@@ -246,7 +255,7 @@ stat-number: text-4xl md:text-5xl lg:text-6xl font-display font-bold
 
 // Body paragraph
 <p className="font-sans text-base md:text-lg text-repwell-teal-400 leading-relaxed">
-  Transform how mortgage professionals manage their online reputation...
+  Transform how sales professionals manage their online reputation...
 </p>
 
 // Eyebrow/label
@@ -561,7 +570,7 @@ Use Tailwind's default spacing scale consistently:
     />
     <div>
       <div className="font-sans font-semibold text-repwell-teal-500">Sarah Johnson</div>
-      <div className="font-sans text-sm text-repwell-teal-300">Branch Manager, ABC Mortgage</div>
+      <div className="font-sans text-sm text-repwell-teal-300">Regional Director, ABC Financial</div>
     </div>
   </footer>
 </blockquote>
@@ -1101,7 +1110,7 @@ When referencing icons, note these name differences:
 ## Photography & Imagery
 
 ### Photo Style
-- **People**: Diverse, professional, approachable mortgage/finance professionals
+- **People**: Diverse, professional, approachable sales professionals
 - **Expressions**: Confident, friendly, engaged (not stiff corporate poses)
 - **Environments**: Modern offices, home offices, client meetings
 - **Treatment**: Slightly desaturated, warm tones to match brand palette
@@ -1371,7 +1380,7 @@ module.exports = {
       },
       
       fontFamily: {
-        display: ['"Libre Baskerville"', ...defaultTheme.fontFamily.serif],
+        display: ['"Erstoria"', ...defaultTheme.fontFamily.serif],
         sans: ['"Source Sans 3"', ...defaultTheme.fontFamily.sans],
       },
       
@@ -1467,11 +1476,26 @@ module.exports = {
     --radius: 0.5rem;
   }
   
-  /* Optional: Dark mode (future consideration) */
+  /* Dark mode — fully implemented */
   .dark {
-    --background: 195 21% 23%;
-    --foreground: 100 10% 83%;
-    /* ... etc */
+    --background: 195 21% 11%;
+    --foreground: 97 14% 80%;
+    --card: 195 21% 14%;
+    --card-foreground: 97 14% 80%;
+    --primary: 165 22% 48%;       /* Lifted for visibility on dark */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 195 21% 18%;
+    --secondary-foreground: 97 14% 80%;
+    --muted: 195 21% 18%;
+    --muted-foreground: 97 14% 60%;
+    --accent: 195 21% 18%;
+    --accent-foreground: 97 14% 80%;
+    --border: 195 21% 22%;
+    --input: 195 21% 22%;
+    --ring: 165 22% 48%;
+    --heading: 97 14% 90%;
+    --surface-soft: 195 21% 14%;
+    --surface-subtle: 195 21% 16%;
   }
 }
 
@@ -1641,7 +1665,7 @@ const badgeVariants = cva(
         variants={fadeInUp}
         className="font-sans text-lg md:text-xl text-repwell-teal-400 leading-relaxed mb-10 max-w-2xl mx-auto"
       >
-        AI-powered reputation management for mortgage professionals. 
+        AI-powered reputation management for sales professionals. 
         Build trust, automate reviews, and grow your business.
       </motion.p>
       
@@ -1669,7 +1693,7 @@ const badgeVariants = cva(
 <section className="py-12 md:py-16 bg-background-subtle">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <p className="text-center font-sans text-sm text-repwell-teal-300 mb-8">
-      Trusted by <span className="font-semibold">500+</span> mortgage professionals nationwide
+      Trusted by <span className="font-semibold">500+</span> sales professionals nationwide
     </p>
     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 items-center justify-items-center opacity-60 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-500">
       {logos.map((logo) => (
@@ -1694,7 +1718,7 @@ const badgeVariants = cva(
         Everything you need to manage your reputation
       </h2>
       <p className="font-sans text-lg text-repwell-teal-400">
-        Powerful tools designed specifically for mortgage professionals.
+        Powerful tools designed specifically for sales professionals.
       </p>
     </div>
     
@@ -1809,7 +1833,7 @@ const badgeVariants = cva(
           Ready to build your reputation?
         </h2>
         <p className="font-sans text-lg text-repwell-sage-100/80 mb-10">
-          Join hundreds of mortgage professionals already using Repwell to grow their business.
+          Join hundreds of sales professionals already using Repwell to grow their business.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button variant="secondary" size="lg" className="bg-white text-repwell-teal-500 hover:bg-repwell-sage-100">
@@ -1836,7 +1860,7 @@ const badgeVariants = cva(
       <div className="lg:col-span-2">
         <img src="/repwell-logo-white.svg" alt="Repwell" className="h-8 w-auto mb-4" />
         <p className="font-sans text-repwell-sage-100/70 max-w-sm mb-6">
-          AI-powered reputation management for mortgage professionals. Build trust at scale.
+          AI-powered reputation management for sales professionals. Build trust at scale.
         </p>
         <div className="flex gap-4">
           {socialLinks.map((social) => (
@@ -2013,7 +2037,7 @@ Respect user preferences:
 
 - **Use the brand colors consistently** — stick to the defined palette
 - **Maintain generous whitespace** — let content breathe
-- **Use serif (Libre Baskerville) for headlines** — it builds trust and warmth
+- **Use serif (Erstoria) for headlines** — it builds trust and warmth
 - **Apply subtle animations** — enhance without distracting
 - **Keep CTAs clear and prominent** — one primary action per section
 - **Use real photography when possible** — avoid generic stock
@@ -2026,7 +2050,7 @@ Respect user preferences:
 - **Don't introduce new colors** — stay within the brand palette
 - **Don't use pure black (#000)** — use deep teal (#2f3e46) instead
 - **Don't use flashy animations** — keep motion subtle and purposeful
-- **Don't mix multiple serif fonts** — stick to Libre Baskerville
+- **Don't mix multiple serif fonts** — stick to Erstoria
 - **Don't clutter layouts** — embrace minimalism
 - **Don't use thin font weights** — maintain readability
 - **Don't skip focus states** — accessibility is mandatory
@@ -2072,11 +2096,458 @@ Element margin: mb-4 md:mb-6
 
 ---
 
+## Shared Component Library
+
+### Component Inventory
+
+These reusable components live in `src/components/shared/` and follow the [Component Architecture](./COMPONENT_ARCHITECTURE.md) rules.
+
+| Component | File | Purpose | Key Props |
+|-----------|------|---------|-----------|
+| **Breadcrumbs** | `breadcrumbs.tsx` | Auto-generated breadcrumbs from pathname | `className?`, `items?` (override) |
+| **DirectoryBreadcrumbs** | `directory-breadcrumbs.tsx` | Public directory page navigation | `items`, `className?` |
+| **EditSlugDialog** | `edit-slug-dialog.tsx` | URL slug editor with validation | `currentSlug`, `entityType`, `onSave` |
+| **EmptyState** | `empty-state.tsx` | Animated empty state with actions | `iconName`, `title`, `description`, `actions?`, `compact?`, `animated?` |
+| **EmptyStateCard** | `empty-state.tsx` | Compact variant for smaller spaces | Same as EmptyState |
+| **WelcomeBanner** | `empty-state.tsx` | Onboarding welcome with step tracker | `steps`, `completedSteps` |
+| **ImageUpload** | `image-upload.tsx` | Dropzone + crop + upload | `variant` (logo/avatar/banner/profile-photo), `onUpload`, `currentUrl?` |
+| **StatCard** | `stat-card.tsx` | Metric card with trend indicator | `title`, `value`, `icon?`, `change?`, `isLoading?` |
+| **StatCardGrid** | `stat-card.tsx` | Responsive grid wrapper for StatCards | `children`, `columns` (2-6) |
+| **StatusBadge** | `status-badge.tsx` | Config-driven status display | `status`, `config` |
+| **TierBadge** | `tier-badge.tsx` | Gamification tier (Enterprise/Pro) | `isEnterprise`, `isPro`, `size?` |
+| **TierBadgeSSR** | `tier-badge-ssr.tsx` | SSR-safe variant (no tooltips) | Same as TierBadge |
+| **ReviewItem** | `review-item.tsx` | Review card with rating, share, flag | `review`, `shareConfig?`, `onFlag?`, `animate?` |
+| **Skeletons** | `skeletons.tsx` | Loading placeholders (10 types) | Varies per skeleton type |
+| **CsvImportWizard** | `csv-import-wizard/` | 4-step CSV import flow | Complex multi-step props |
+
+### Shared Component API Rules
+
+All shared components **must**:
+1. Accept `className?: string` for composition
+2. Never import server actions (use callback props)
+3. Export props interface as `{ComponentName}Props`
+4. Use `"use client"` only when genuinely needed
+5. Avoid hardcoded copy (use props with defaults)
+
+### Grid Utility
+
+The responsive grid utility in `stat-card.tsx` provides standard column layouts:
+
+```typescript
+// Available via StatCardGrid, but the pattern should be used consistently
+const GRID_COLS: Record<number, string> = {
+  2: "grid-cols-1 sm:grid-cols-2",
+  3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+  4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
+  5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
+  6: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-6",
+};
+```
+
+---
+
+## SectionWrapper
+
+The `SectionWrapper` component (`src/components/competitor-pages/section-wrapper.tsx`) is the standard container for marketing and competitor page sections.
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `id` | `string` | — | Unique ID for scroll anchoring |
+| `background` | `SectionBackground` | `"white"` | Background variant |
+| `wide` | `boolean` | `false` | Use 1400px max-width instead of 7xl |
+| `flush` | `boolean` | `false` | Remove vertical padding |
+| `lazyRender` | `boolean` | `false` | Enable `content-visibility: auto` for below-fold optimization |
+| `estimatedHeight` | `string` | — | Intrinsic height hint for CLS prevention |
+| `className` | `string` | — | Additional classes |
+
+### Background Variants
+
+```
+white    → "bg-white"
+subtle   → "bg-background-subtle"
+muted    → "bg-background-muted"
+dark     → "bg-repwell-teal-500 text-white"
+gradient → "bg-gradient-to-b from-repwell-teal-500 to-repwell-teal-400 text-white"
+```
+
+### Usage
+
+```tsx
+<SectionWrapper id="features" background="subtle">
+  <SectionHeader badge="Features" heading="Everything you need" />
+  <FeatureGrid features={features} />
+</SectionWrapper>
+```
+
+---
+
+## Icon Container Pattern
+
+A recurring pattern (66+ occurrences) for icons with background containers. Use consistently:
+
+### Standard Sizes
+
+```tsx
+// Small (32px) — inline, tight spaces
+<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-repwell-teal-300/10">
+  <Icon size={16} className="text-repwell-teal-300" />
+</div>
+
+// Medium (40px) — default, dashboard cards, list items
+<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+  <Icon size={20} className="text-repwell-teal-300" />
+</div>
+
+// Large (48px) — feature cards, section icons
+<div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-sage-100/50">
+  <Icon weight="duotone" size={24} className="text-repwell-teal-300" />
+</div>
+
+// Extra Large (56-64px) — hero icons, empty states
+<div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/10">
+  <Icon weight="duotone" size={28} className="text-repwell-teal-300" />
+</div>
+```
+
+### Background Variants
+
+| Variant | Classes | Use Case |
+|---------|---------|----------|
+| Subtle | `bg-repwell-teal-300/10` | Default, dashboard |
+| Soft | `bg-repwell-sage-100/50` | Feature cards, marketing |
+| Gradient | `bg-gradient-to-br from-repwell-sage-100 to-repwell-teal-300/10` | Hero, empty states |
+| Dark | `bg-repwell-teal-300 text-white` | Dark sections, emphasis |
+
+---
+
+## Gradient Presets
+
+### Common Gradient Combinations
+
+Use these consistently instead of ad-hoc gradient values:
+
+```css
+/* Section backgrounds */
+.gradient-sage-subtle     → from-repwell-sage-100/20 via-transparent to-repwell-teal-300/10
+.gradient-teal-dark       → from-repwell-teal-500 to-repwell-teal-400
+.gradient-teal-deep       → from-repwell-teal-300 to-repwell-teal-500
+
+/* Card/container accents */
+.gradient-sage-soft       → from-repwell-sage-100 to-repwell-teal-300/10
+.gradient-sage-warm       → from-repwell-sage-100/50 to-repwell-teal-300/10
+
+/* Icon/badge backgrounds */
+.gradient-icon            → from-repwell-sage-100 to-repwell-sage-200/50
+
+/* CTA overlays */
+.gradient-cta-overlay     → from-repwell-teal-400/50 to-transparent (used as side gradient)
+```
+
+### Gradient Direction Rules
+
+| Direction | Usage |
+|-----------|-------|
+| `bg-gradient-to-br` | Cards, icon backgrounds, decorative (most common — 39 uses) |
+| `bg-gradient-to-r` | Accent bars, progress indicators, horizontal elements (24 uses) |
+| `bg-gradient-to-b` | Section backgrounds, hero overlays (10 uses) |
+| `bg-gradient-to-t` | Bottom-up fades, footer transitions (6 uses) |
+
+---
+
+## Dashboard Patterns
+
+### Page Header
+
+Every dashboard page uses this consistent header pattern:
+
+```tsx
+<div className="mb-6">
+  <div className="flex items-center gap-3 mb-2">
+    <PageIcon weight="duotone" size={24} className="text-repwell-teal-300" />
+    <h1 className="text-heading-lg font-semibold text-heading">Page Title</h1>
+  </div>
+  <p className="text-body-sm text-muted-foreground">
+    Brief description of what this page does.
+  </p>
+</div>
+```
+
+### Dashboard Layout Structure
+
+```
+DashboardLayout
+├── Sidebar (hidden md:block) — collapsible navigation
+├── Header — user menu, notifications, search
+├── ImpersonationBanner (admin only) — warning stripe
+└── Main content area (p-6)
+    ├── Page header (icon + title + description)
+    ├── Stats grid (StatCardGrid)
+    ├── Content grid (charts, lists, tables)
+    └── Empty states (when no data)
+```
+
+### DashboardEntrance
+
+Fade-in animation wrapper for all dashboard pages:
+
+```tsx
+<DashboardEntrance>
+  {/* Page content animates in on mount */}
+</DashboardEntrance>
+```
+
+### Two-Column Content Layout
+
+Common pattern for dashboard content with sidebar info:
+
+```tsx
+<div className="grid gap-6 lg:grid-cols-3">
+  <div className="lg:col-span-2">
+    {/* Primary content — charts, tables, lists */}
+  </div>
+  <div>
+    {/* Sidebar — stats, quick actions, info cards */}
+  </div>
+</div>
+```
+
+### Card Header Variants
+
+`CardHeader` supports a `variant` prop for consistent visual separation across contexts:
+
+| Variant | Styles | When to use |
+|---------|--------|-------------|
+| `"default"` | Sage gradient bg + border-bottom + rounded-t-xl | Dashboard cards (most cards) — **this is the default** |
+| `"plain"` | No bg, no border (original behavior) | Auth, onboarding, public, marketing pages |
+| `"accent-amber"` | Amber gradient + amber border-bottom | Warning/destructive contexts (e.g. account deactivation) |
+| `"accent-green"` | Green gradient + green border-bottom | Success/action contexts (e.g. smart actions) |
+
+```tsx
+// Dashboard card — default variant, no prop needed
+<CardHeader>
+  <CardTitle>Dashboard Card</CardTitle>
+</CardHeader>
+
+// Auth/public page — plain variant
+<CardHeader variant="plain">
+  <CardTitle>Login</CardTitle>
+</CardHeader>
+
+// Warning context
+<CardHeader variant="accent-amber">
+  <CardTitle>Deactivate Account</CardTitle>
+</CardHeader>
+```
+
+**Rule:** All dashboard cards use the default variant (no prop needed). Non-dashboard contexts (auth, onboarding, public profiles, marketing) must use `variant="plain"`.
+
+---
+
+## Loading & Empty States
+
+### Skeleton Components
+
+Available in `src/components/shared/skeletons.tsx`:
+
+| Skeleton | Usage | Key Props |
+|----------|-------|-----------|
+| `CardSkeleton` | Generic card placeholder | — |
+| `StatsRowSkeleton` | Row of stat cards | `count?` |
+| `TableRowSkeleton` | Single table row | `columns?` |
+| `TableSkeleton` | Full table | `rows?`, `columns?` |
+| `ReviewCardSkeleton` | Review card | — |
+| `ReviewListSkeleton` | List of reviews | `count?` |
+| `ChartSkeleton` | Chart area (h-64) | — |
+| `SidebarSkeleton` | Navigation sidebar | — |
+| `DashboardSkeleton` | Full dashboard page | — |
+| `LoadingSpinner` | Inline spinner | — |
+| `PageLoading` | Full-page centered loader | — |
+
+### Suspense Pattern
+
+Every async section uses its own Suspense boundary:
+
+```tsx
+<Suspense fallback={<StatsRowSkeleton count={4} />}>
+  <UserStatsCards userId={userId} />
+</Suspense>
+
+<Suspense fallback={<ChartSkeleton />}>
+  <TrendChart data={data} />
+</Suspense>
+```
+
+### Empty State Variants
+
+```tsx
+// Standard — centered with icon, title, description, action buttons
+<EmptyState
+  iconName="ChartBar"
+  title="No analytics yet"
+  description="Your data will appear here once you start collecting reviews."
+  actions={[{ label: "Send your first survey", href: "/dashboard/surveys" }]}
+/>
+
+// Compact — for smaller spaces (cards, sidebars)
+<EmptyStateCard
+  iconName="PaperPlaneRight"
+  title="No messages"
+  description="Messages from customers will appear here."
+/>
+
+// Welcome — onboarding with step tracker
+<WelcomeBanner
+  steps={onboardingSteps}
+  completedSteps={completed}
+/>
+```
+
+### Dashed Container Pattern
+
+Used for empty/placeholder states and upload zones:
+
+```tsx
+<div className="rounded-xl border border-dashed border-border/50 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/5 p-8 text-center">
+  {/* Empty state content */}
+</div>
+```
+
+---
+
+## Icon Registry
+
+### Centralized Lookup (`src/lib/icons/registry.ts`)
+
+40+ Phosphor Icons registered with smart normalization for config-driven UI:
+
+```typescript
+import { getIcon, getIconOrDefault } from "@/lib/icons/registry";
+
+// Dynamic lookup — resolves PascalCase, kebab-case, snake_case
+const Icon = getIconOrDefault("chart-bar"); // → ChartBar component
+const Icon2 = getIconOrDefault("TrendUp");  // → TrendUp component
+
+// With fallback
+const Icon3 = getIconOrDefault("unknown", Star); // → Star (fallback)
+```
+
+### Key Aliases
+
+| Config Name | Phosphor Component |
+|-------------|-------------------|
+| `bar-chart` | `ChartBar` |
+| `trending-up` | `TrendUp` |
+| `trending-down` | `TrendDown` |
+| `shield-check` | `ShieldCheck` |
+| `paper-plane` | `PaperPlaneRight` |
+| `settings` | `Gear` |
+| `external-link` | `ArrowSquareOut` |
+| `refresh` | `ArrowsClockwise` |
+| `loader` | `SpinnerGap` |
+
+### Normalization Rules
+
+Keys are normalized by: lowercase → strip hyphens, underscores, and spaces. This means `"ShieldCheck"`, `"shield-check"`, and `"shield_check"` all resolve to the same icon.
+
+---
+
+## Motion Library Reference
+
+### Import Path
+
+```typescript
+import { fadeInUp, staggerContainer, viewportOnce, cardHover } from "@/lib/motion";
+```
+
+### Available Presets (`src/lib/motion.ts`)
+
+#### Transitions
+| Name | Description |
+|------|-------------|
+| `defaultTransition` | 0.3s with smooth easeOut `[0.25, 0.1, 0.25, 1]` |
+| `fastTransition` | 0.15s |
+| `slowTransition` | 0.5s |
+| `springTransition` | Spring with stiffness 300, damping 30 |
+| `bounceTransition` | Spring with stiffness 400, damping 10 |
+| `morphSpring` | Smooth spring for morphing shapes |
+
+#### Entrance Variants
+| Name | Description |
+|------|-------------|
+| `fadeIn` | Opacity 0→1 |
+| `fadeInUp` | Opacity + translateY(20→0) |
+| `fadeInDown` | Opacity + translateY(-20→0) |
+| `slideInLeft` | Opacity + translateX(-30→0) |
+| `slideInRight` | Opacity + translateX(30→0) |
+| `scaleIn` | Opacity + scale(0.95→1) |
+| `zoomIn` | Opacity + scale(0.8→1) |
+| `rotateIn` | Opacity + rotate(-5→0) + scale(0.95→1) |
+
+#### Container Variants
+| Name | Description |
+|------|-------------|
+| `staggerContainer` | Children stagger 0.1s, delay 0.1s |
+| `staggerContainerFast` | Children stagger 0.05s |
+| `staggerContainerDelayed` | Children stagger 0.1s, delay 0.3s |
+
+#### Interaction Variants
+| Name | Description |
+|------|-------------|
+| `scaleOnHover` | Scale 1.05 on hover |
+| `liftOnHover` | translateY(-4) on hover |
+| `buttonHover` | Scale 1.02 on hover, 0.98 on tap |
+| `iconHover` | Scale 1.1, rotate 5° on hover |
+| `cardHover` | translateY(-4), shadow elevation on hover |
+
+#### Special Animations
+| Name | Description |
+|------|-------------|
+| `pulseAnimation` | Scale 1→1.05→1 (2s infinite) |
+| `shakeAnimation` | Horizontal shake (0.5s) |
+| `bounceAnimation` | Vertical bounce |
+| `spinAnimation` | 360° rotation (1s infinite) |
+| `blobFloat` | Floating movement (8s infinite) |
+| `blobFloatRotate` | Float + subtle rotation |
+
+#### Viewport Config
+```typescript
+viewportOnce = { once: true, margin: "-100px" }
+```
+
+#### Factory Functions
+```typescript
+createFadeVariant(distance, direction)  // Custom fade animations
+createStaggerContainer(stagger, delay)  // Custom stagger timing
+```
+
+---
+
+## Uppercase Label Pattern
+
+Used for eyebrows, section labels, and category tags (11+ occurrences):
+
+```tsx
+// Standard uppercase label
+<span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+  Category Label
+</span>
+
+// Branded variant (marketing pages)
+<span className="font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-300 mb-4 block">
+  Features
+</span>
+```
+
+---
+
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0 | January 2026 | Initial design system release |
+| 1.1.0 | March 2026 | Added: Shared Component Library, SectionWrapper, Icon Container Pattern, Gradient Presets, Dashboard Patterns, Loading & Empty States, Icon Registry, Motion Library Reference, Uppercase Label Pattern. Fixed: Industry-agnostic language, Erstoria font references, dark mode documentation. |
 
 ---
 

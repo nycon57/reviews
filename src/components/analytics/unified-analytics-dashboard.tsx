@@ -39,6 +39,7 @@ import type {
   UserVideoStats,
 } from "@/lib/video-testimonials/analytics-actions";
 import type { ResponseAnalytics } from "@/lib/reviews/response-actions";
+import type { AnalyticsScope } from "./scope-selector";
 import {
   AnalyticsProvider,
   useAnalytics,
@@ -69,6 +70,8 @@ interface ReviewSummary {
 }
 
 interface Props {
+  scope: AnalyticsScope;
+  userId: string;
   initialVideoMetrics: VideoTestimonialFunnelMetrics | null;
   initialVideoTrends: VideoTestimonialTrendDataPoint[];
   initialLoStats: UserVideoStats[];
@@ -162,7 +165,7 @@ function DashboardContent() {
                 </Select>
               </div>
 
-              {state.canViewTeamStats && state.teamMembers.length > 0 && (
+              {state.scope === "team" && state.canViewTeamStats && state.teamMembers.length > 0 && (
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Select value={state.selectedMember} onValueChange={actions.setSelectedMember}>
@@ -309,6 +312,8 @@ function DashboardContent() {
 export function UnifiedAnalyticsDashboard(props: Props) {
   return (
     <AnalyticsProvider
+      scope={props.scope}
+      userId={props.userId}
       initialVideoMetrics={props.initialVideoMetrics}
       initialVideoTrends={props.initialVideoTrends}
       initialLoStats={props.initialLoStats}

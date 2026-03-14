@@ -211,9 +211,9 @@ export function EnhancedLeaderboard({
     if (data.length === 0) {
       return (
         <div className="relative flex flex-col items-center justify-center py-16 text-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-repwell-sage-100/40 via-repwell-sage-200/20 to-repwell-teal-300/10 dark:from-repwell-teal-300/10 dark:via-repwell-teal-300/5 dark:to-transparent" />
           <div className="relative">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-repwell-sage-100 to-repwell-sage-200/50 dark:from-repwell-teal-300/15 dark:to-repwell-teal-300/5">
               <Trophy className="h-7 w-7 text-label" />
             </div>
             <p className="font-medium text-heading-accent">No leaderboard data available</p>
@@ -290,8 +290,8 @@ export function EnhancedLeaderboard({
       <CardHeader className="pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-              <Trophy className="h-5 w-5 text-repwell-teal-300" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-sage-100/40 dark:bg-repwell-teal-300/15">
+              <Trophy className="h-5 w-5 text-repwell-teal-300 dark:text-repwell-sage-200" />
             </div>
             <CardTitle className="text-lg text-heading-accent">Team Leaderboard</CardTitle>
           </div>

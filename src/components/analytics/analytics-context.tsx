@@ -49,6 +49,8 @@ interface ReviewSummary {
 export type DateRange = "7d" | "30d" | "90d" | "this_month" | "last_month" | "all";
 export type TrendPeriod = "daily" | "weekly" | "monthly";
 
+type AnalyticsScope = "personal" | "team" | "organization";
+
 interface AnalyticsState {
   videoMetrics: VideoTestimonialFunnelMetrics | null;
   videoTrends: VideoTestimonialTrendDataPoint[];
@@ -61,6 +63,7 @@ interface AnalyticsState {
   selectedMember: string;
   canViewTeamStats: boolean;
   teamMembers: TeamMember[];
+  scope: AnalyticsScope;
 }
 
 interface AnalyticsActions {
@@ -95,6 +98,8 @@ export function useAnalytics(): AnalyticsContextValue {
 
 interface AnalyticsProviderProps {
   children: ReactNode;
+  scope: AnalyticsScope;
+  userId: string;
   initialVideoMetrics: VideoTestimonialFunnelMetrics | null;
   initialVideoTrends: VideoTestimonialTrendDataPoint[];
   initialLoStats: UserVideoStats[];
@@ -106,6 +111,8 @@ interface AnalyticsProviderProps {
 
 export function AnalyticsProvider({
   children,
+  scope,
+  userId,
   initialVideoMetrics,
   initialVideoTrends,
   initialLoStats,
@@ -123,9 +130,13 @@ export function AnalyticsProvider({
 
   const [dateRange, setDateRange] = useState<DateRange>("30d");
   const [trendPeriod, setTrendPeriod] = useState<TrendPeriod>("daily");
-  const [selectedMember, setSelectedMember] = useState<string>("all");
+  // "personal" scope locks to the current user; "team" scope allows selection
+  const [selectedMember, setSelectedMember] = useState<string>(
+    scope === "personal" ? userId : "all"
+  );
 
-  const canViewTeamStats = userRole === "admin" || userRole === "manager";
+  // Team stats only visible in "team" scope (not "personal")
+  const canViewTeamStats = scope === "team" && (userRole === "admin" || userRole === "manager");
 
   const debouncedDateRange = useDebounce(dateRange, 300);
   const debouncedTrendPeriod = useDebounce(trendPeriod, 300);
@@ -159,7 +170,10 @@ export function AnalyticsProvider({
     setIsLoading(true);
     try {
       const { startDate, endDate } = getDateRangeValues(debouncedDateRange);
-      const loFilter = debouncedSelectedMember !== "all" ? debouncedSelectedMember : undefined;
+      // "personal" scope always filters to the current user
+      const loFilter = scope === "personal"
+        ? userId
+        : debouncedSelectedMember !== "all" ? debouncedSelectedMember : undefined;
 
       const [videoMetricsResult, videoTrendsResult, loStatsResult, responseAnalyticsResult, reviewSummaryResult] = await Promise.all([
         getVideoTestimonialFunnelMetrics({ startDate, endDate, userId: loFilter }),
@@ -168,7 +182,7 @@ export function AnalyticsProvider({
           ? getVideoTestimonialStatsByUser({ startDate, endDate })
           : Promise.resolve({ success: true, data: [] }),
         getResponseAnalytics({ startDate, endDate, userId: loFilter }),
-        getReviewSummary({ startDate, endDate }),
+        getReviewSummary({ startDate, endDate, userId: loFilter }),
       ]);
 
       if (videoMetricsResult.success && videoMetricsResult.data) setVideoMetrics(videoMetricsResult.data);
@@ -182,27 +196,32 @@ export function AnalyticsProvider({
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedDateRange, debouncedTrendPeriod, debouncedSelectedMember, canViewTeamStats, getDateRangeValues]);
+  }, [debouncedDateRange, debouncedTrendPeriod, debouncedSelectedMember, canViewTeamStats, getDateRangeValues, scope, userId]);
 
   const isInitialRender = useRef(true);
   useEffect(() => {
     if (isInitialRender.current) {
       isInitialRender.current = false;
+      // When scope is "personal", the initial server data is org-wide,
+      // so we need to fetch filtered data immediately on mount
+      if (scope === "personal") {
+        fetchData();
+      }
       return;
     }
     fetchData();
-  }, [fetchData]);
+  }, [fetchData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const value = useMemo<AnalyticsContextValue>(
     () => ({
       state: {
         videoMetrics, videoTrends, loStats, reviewSummary, responseAnalytics,
-        isLoading, dateRange, trendPeriod, selectedMember, canViewTeamStats, teamMembers,
+        isLoading, dateRange, trendPeriod, selectedMember, canViewTeamStats, teamMembers, scope,
       },
       actions: { setDateRange, setTrendPeriod, setSelectedMember, fetchData },
     }),
     [videoMetrics, videoTrends, loStats, reviewSummary, responseAnalytics,
-     isLoading, dateRange, trendPeriod, selectedMember, canViewTeamStats, teamMembers, fetchData]
+     isLoading, dateRange, trendPeriod, selectedMember, canViewTeamStats, teamMembers, scope, fetchData]
   );
 
   return (

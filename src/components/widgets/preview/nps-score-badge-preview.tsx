@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { type WidgetThemeLayout } from "./layout";
+import { previewT, previewTp } from "./shared";
 
 /**
  * Dashboard preview component for the NPS Score Badge Widget.
@@ -30,6 +32,8 @@ interface NpsScoreBadgePreviewProps {
   nps?: NpsConfig;
   colors?: WidgetThemeColors;
   borderRadius?: string;
+  layout?: WidgetThemeLayout;
+  language?: string;
 }
 
 // ── NPS Zone Helpers ────────────────────────────────────────────────
@@ -135,13 +139,20 @@ function GaugeDisplay({ score }: { score: number }) {
             <polygon
               points={`${tipX},${tipY} ${b1x},${b1y} ${b2x},${b2y}`}
               fill="currentColor"
-              style={{ color: "#1a1a2e" }}
+              style={{ color: "var(--rw-text, #1a1a2e)" }}
             />
           );
         })()}
 
         {/* Center dot */}
-        <circle cx={cx} cy={cy} r={6} fill="white" stroke="#e5e7eb" strokeWidth={2} />
+        <circle
+          cx={cx}
+          cy={cy}
+          r={6}
+          fill="var(--rw-surface, var(--rw-bg, #ffffff))"
+          stroke="var(--rw-border, #e5e7eb)"
+          strokeWidth={2}
+        />
 
         {/* Score text */}
         <text
@@ -149,7 +160,11 @@ function GaugeDisplay({ score }: { score: number }) {
           y={cy - 20}
           textAnchor="middle"
           dominantBaseline="middle"
-          style={{ fontSize: 28, fontWeight: 700, fill: "#1a1a2e" }}
+          style={{
+            fontSize: 28,
+            fontWeight: 700,
+            fill: "var(--rw-text, #1a1a2e)",
+          }}
         >
           {formatNpsScore(score)}
         </text>
@@ -181,21 +196,40 @@ function NumericDisplay({ score }: { score: number }) {
 
 // ── Breakdown Bar ───────────────────────────────────────────────────
 
-function BreakdownBar({ promoterPct, passivePct, detractorPct }: { promoterPct: number; passivePct: number; detractorPct: number }) {
+function BreakdownBar({ promoterPct, passivePct, detractorPct, lang }: { promoterPct: number; passivePct: number; detractorPct: number; lang?: string }) {
   return (
     <div style={{ width: "100%", maxWidth: 240, display: "flex", flexDirection: "column", gap: 6 }}>
-      <div style={{ display: "flex", width: "100%", height: 8, borderRadius: 4, overflow: "hidden", background: "#e5e7eb" }}>
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          height: 8,
+          borderRadius: 4,
+          overflow: "hidden",
+          background: "var(--rw-surface-strong, #e5e7eb)",
+        }}
+      >
         <div style={{ height: "100%", width: `${promoterPct}%`, background: "#22c55e" }} />
         <div style={{ height: "100%", width: `${passivePct}%`, background: "#eab308" }} />
         <div style={{ height: "100%", width: `${detractorPct}%`, background: "#ef4444" }} />
       </div>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
         {[
-          { label: "Promoters", pct: promoterPct, color: "#22c55e" },
-          { label: "Passives", pct: passivePct, color: "#eab308" },
-          { label: "Detractors", pct: detractorPct, color: "#ef4444" },
+          { label: previewT(lang, "promoters"), pct: promoterPct, color: "#22c55e" },
+          { label: previewT(lang, "passives"), pct: passivePct, color: "#eab308" },
+          { label: previewT(lang, "detractors"), pct: detractorPct, color: "#ef4444" },
         ].map((item) => (
-          <span key={item.label} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "#6b7280", whiteSpace: "nowrap" }}>
+          <span
+            key={item.label}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 4,
+              fontSize: 10,
+              color: "var(--rw-text-muted, #6b7280)",
+              whiteSpace: "nowrap",
+            }}
+          >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: item.color, flexShrink: 0 }} />
             {item.label} {Math.round(item.pct)}%
           </span>
@@ -209,24 +243,34 @@ function BreakdownBar({ promoterPct, passivePct, detractorPct }: { promoterPct: 
 
 export function NpsScoreBadgePreview({
   nps = {},
-  colors = {},
+  colors: _colors = {},
   borderRadius,
+  layout,
+  language,
 }: NpsScoreBadgePreviewProps) {
   const [displayMode, setDisplayMode] = useState<"gauge" | "numeric">(nps.displayMode ?? "gauge");
   const showBreakdown = nps.showBreakdown !== false;
   const showCount = nps.showCount !== false;
   const showPeriod = nps.showPeriod !== false;
-  const labelText = nps.labelText ?? "Net Promoter Score";
-  const periodText = nps.periodText ?? "Last 12 months";
+  const labelText = nps.labelText ?? previewT(language, "netPromoterScore");
+  const periodText = nps.periodText ?? previewT(language, "last12Months");
 
   const data = SAMPLE_NPS;
 
-  const ariaLabel = `Net Promoter Score is ${formatNpsScore(data.score)} based on ${data.totalResponses} responses`;
+  const ariaLabel = previewTp(language, "npsAriaLabel", data.totalResponses, { score: formatNpsScore(data.score), count: data.totalResponses });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16, alignItems: "center", padding: 16 }}>
       {/* Mode Toggle */}
-      <div style={{ display: "flex", gap: 4, background: "#f3f4f6", borderRadius: 6, padding: 2 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 4,
+          background: "var(--rw-surface-muted, #f3f4f6)",
+          borderRadius: 6,
+          padding: 2,
+        }}
+      >
         {(["gauge", "numeric"] as const).map((mode) => (
           <button
             key={mode}
@@ -238,8 +282,14 @@ export function NpsScoreBadgePreview({
               borderRadius: 4,
               border: "none",
               cursor: "pointer",
-              background: displayMode === mode ? "#fff" : "transparent",
-              color: displayMode === mode ? "#1a1a2e" : "#6b7280",
+              background:
+                displayMode === mode
+                  ? "var(--rw-surface, var(--rw-bg, #fff))"
+                  : "transparent",
+              color:
+                displayMode === mode
+                  ? "var(--rw-text, #1a1a2e)"
+                  : "var(--rw-text-muted, #6b7280)",
               boxShadow: displayMode === mode ? "0 1px 2px rgba(0,0,0,0.05)" : "none",
               transition: "all 0.15s ease",
             }}
@@ -258,9 +308,9 @@ export function NpsScoreBadgePreview({
           flexDirection: "column",
           alignItems: "center",
           gap: 12,
-          padding: 24,
-          background: colors.background ?? "#fff",
-          border: `1px solid ${colors.border ?? "#e5e7eb"}`,
+          padding: layout?.padding ?? 24,
+          background: "var(--rw-surface, var(--rw-bg, #fff))",
+          border: "1px solid var(--rw-border, #e5e7eb)",
           borderRadius: borderRadius ?? "12px",
           lineHeight: 1,
           maxWidth: "100%",
@@ -278,7 +328,7 @@ export function NpsScoreBadgePreview({
           style={{
             fontSize: 13,
             fontWeight: 600,
-            color: colors.text ?? "#1a1a2e",
+            color: "var(--rw-text, #1a1a2e)",
             textTransform: "uppercase",
             letterSpacing: "0.05em",
             textAlign: "center",
@@ -289,14 +339,26 @@ export function NpsScoreBadgePreview({
 
         {/* Response count */}
         {showCount && data.totalResponses > 0 && (
-          <div style={{ fontSize: 12, color: "#6b7280", textAlign: "center" }}>
-            Based on {data.totalResponses} responses
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--rw-text-muted, #6b7280)",
+              textAlign: "center",
+            }}
+          >
+            {previewTp(language, "basedOnResponses", data.totalResponses, { count: data.totalResponses })}
           </div>
         )}
 
         {/* Period */}
         {showPeriod && periodText && (
-          <div style={{ fontSize: 11, color: "#6b7280", textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 11,
+              color: "var(--rw-text-muted, #6b7280)",
+              textAlign: "center",
+            }}
+          >
             {periodText}
           </div>
         )}
@@ -307,6 +369,7 @@ export function NpsScoreBadgePreview({
             promoterPct={data.promoterPct}
             passivePct={data.passivePct}
             detractorPct={data.detractorPct}
+            lang={language}
           />
         )}
       </div>

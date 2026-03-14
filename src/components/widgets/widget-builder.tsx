@@ -19,10 +19,9 @@ interface BuilderState {
   widgetType: WidgetType;
   entityType: WidgetEntityType;
   entityId: string | null;
+  organizationId: string;
   config: WidgetConfigJson;
   allowedDomains: string[];
-  enableStructuredData: boolean;
-  structuredDataType: string;
   widgetId: string | null;
   dbId: string | null;
   currentVersion: number;
@@ -34,8 +33,6 @@ type BuilderAction =
   | { type: "SET_DOMAINS"; payload: string[] }
   | { type: "SET_ENTITY_TYPE"; payload: WidgetEntityType }
   | { type: "SET_ENTITY_ID"; payload: string | null }
-  | { type: "SET_STRUCTURED_DATA"; payload: boolean }
-  | { type: "SET_STRUCTURED_DATA_TYPE"; payload: string }
   | { type: "SAVED"; payload: { widgetId: string; dbId: string; version: number } };
 
 function builderReducer(state: BuilderState, action: BuilderAction): BuilderState {
@@ -65,12 +62,6 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
     case "SET_ENTITY_ID":
       return { ...state, entityId: action.payload, isDirty: true };
 
-    case "SET_STRUCTURED_DATA":
-      return { ...state, enableStructuredData: action.payload, isDirty: true };
-
-    case "SET_STRUCTURED_DATA_TYPE":
-      return { ...state, structuredDataType: action.payload, isDirty: true };
-
     case "SAVED":
       return {
         ...state,
@@ -85,38 +76,59 @@ function builderReducer(state: BuilderState, action: BuilderAction): BuilderStat
   }
 }
 
+const DEFAULT_CONFIG: WidgetConfigJson = {
+  theme: {
+    preset: "clean_white",
+    colors: { ...THEME_PRESETS.clean_white.colors },
+    typography: { ...THEME_PRESETS.clean_white.typography },
+    layout: { ...THEME_PRESETS.clean_white.layout },
+  },
+  content: {
+    showHeader: true,
+    showAvatar: true,
+    showDate: true,
+    showSource: true,
+    showBranding: true,
+    truncateLength: 300,
+  },
+  filters: {
+    minRating: 1,
+    maxReviews: 50,
+    sortOrder: "newest",
+  },
+};
+
+function isValidBuilderConfig(config: unknown): config is WidgetConfigJson {
+  return (
+    typeof config === "object" &&
+    config !== null &&
+    (typeof (config as Record<string, unknown>).theme === "object" ||
+      (config as Record<string, unknown>).theme === undefined)
+  );
+}
+
+/** Legacy review types consolidated into review_profile. */
+const LEGACY_REVIEW_TYPES = new Set(["lo_review", "branch_review", "company_review"]);
+
 function getInitialState(widget: WidgetConfig): BuilderState {
-  const config = (widget.config ?? {}) as WidgetConfigJson;
+  const raw = (widget.config ?? {}) as Record<string, unknown>;
+  // Use DB config only if it has the expected nested structure; otherwise fall back to defaults
+  const config: WidgetConfigJson =
+    Object.keys(raw).length > 0 && isValidBuilderConfig(raw)
+      ? (raw as WidgetConfigJson)
+      : DEFAULT_CONFIG;
+
+  const widgetType = LEGACY_REVIEW_TYPES.has(widget.widget_type)
+    ? "review_profile" as WidgetType
+    : widget.widget_type as WidgetType;
+
   return {
-    widgetType: widget.widget_type as WidgetType,
+    widgetType,
     entityType: widget.entity_type as WidgetEntityType,
     entityId: widget.entity_id,
-    config: Object.keys(config).length > 0
-      ? config
-      : {
-          theme: {
-            preset: "clean_white",
-            colors: { ...THEME_PRESETS.clean_white.colors },
-            typography: { ...THEME_PRESETS.clean_white.typography },
-            layout: { ...THEME_PRESETS.clean_white.layout },
-          },
-          content: {
-            showHeader: true,
-            showAvatar: true,
-            showDate: true,
-            showSource: true,
-            showBranding: true,
-            truncateLength: 300,
-          },
-          filters: {
-            minRating: 1,
-            maxReviews: 50,
-            sortOrder: "newest",
-          },
-        },
+    organizationId: widget.organization_id,
+    config,
     allowedDomains: widget.allowed_domains ?? [],
-    enableStructuredData: widget.enable_structured_data ?? true,
-    structuredDataType: widget.structured_data_type ?? "LocalBusiness",
     widgetId: widget.widget_id,
     dbId: widget.id,
     currentVersion: widget.version ?? 1,
@@ -231,9 +243,8 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
         id: state.dbId!,
         config: state.config,
         allowed_domains: state.allowedDomains,
-        enable_structured_data: state.enableStructuredData,
-        structured_data_type: state.structuredDataType,
         entity_id: state.entityId ?? undefined,
+        entity_type: state.entityType,
       });
 
       if (result.success) {
@@ -254,8 +265,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     widgetType: state.widgetType,
     entityType: state.entityType,
     entityId: state.entityId,
-    enableStructuredData: state.enableStructuredData,
-    structuredDataType: state.structuredDataType,
+    organizationId: state.organizationId,
     allowedDomains: state.allowedDomains,
     widgetConfigId: state.dbId ?? undefined,
     currentVersion: state.currentVersion,
@@ -265,8 +275,6 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
     onDomainsChange: (domains: string[]) => dispatch({ type: "SET_DOMAINS", payload: domains }),
     onEntityTypeChange: (entityType: WidgetEntityType) => dispatch({ type: "SET_ENTITY_TYPE", payload: entityType }),
     onEntityIdChange: (entityId: string | null) => dispatch({ type: "SET_ENTITY_ID", payload: entityId }),
-    onStructuredDataChange: (enabled: boolean) => dispatch({ type: "SET_STRUCTURED_DATA", payload: enabled }),
-    onStructuredDataTypeChange: (type: string) => dispatch({ type: "SET_STRUCTURED_DATA_TYPE", payload: type }),
     onRollbackComplete: handleRollbackComplete,
   };
 
@@ -297,7 +305,7 @@ export function WidgetBuilder({ widget }: WidgetBuilderProps) {
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={isPending}
+            disabled={isPending || !state.isDirty}
             className="gap-1.5 bg-repwell-teal-300 hover:bg-repwell-teal-400"
           >
             {isPending ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}

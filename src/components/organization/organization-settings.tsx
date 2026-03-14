@@ -34,6 +34,8 @@ import {
 import { getBranches } from "@/lib/branches";
 import type { Branch } from "@/lib/branches/types";
 
+const DEFAULT_DATE_FORMAT = "MM/DD/YYYY";
+
 const TIMEZONES = [
   { value: "America/New_York", label: "Eastern Time (ET)" },
   { value: "America/Chicago", label: "Central Time (CT)" },
@@ -43,12 +45,6 @@ const TIMEZONES = [
   { value: "America/Anchorage", label: "Alaska Time" },
   { value: "Pacific/Honolulu", label: "Hawaii Time" },
   { value: "UTC", label: "UTC" },
-];
-
-const DATE_FORMATS = [
-  { value: "MM/DD/YYYY", label: "MM/DD/YYYY" },
-  { value: "DD/MM/YYYY", label: "DD/MM/YYYY" },
-  { value: "YYYY-MM-DD", label: "YYYY-MM-DD" },
 ];
 
 export function OrganizationSettings() {
@@ -65,7 +61,7 @@ export function OrganizationSettings() {
       company_email: "",
       company_phone: "",
       timezone: "America/New_York",
-      date_format: "MM/DD/YYYY",
+      date_format: DEFAULT_DATE_FORMAT,
       company_address: {
         street: "",
         street2: "",
@@ -101,7 +97,7 @@ export function OrganizationSettings() {
           company_email: org.company_email || "",
           company_phone: org.company_phone || "",
           timezone: org.timezone || "America/New_York",
-          date_format: org.date_format || "MM/DD/YYYY",
+          date_format: DEFAULT_DATE_FORMAT,
           company_address: {
             street: org.company_address?.street || "",
             street2: org.company_address?.street2 || "",
@@ -128,7 +124,10 @@ export function OrganizationSettings() {
 
   function onSubmit(data: UpdateOrganizationSettings) {
     startTransition(async () => {
-      const result = await updateOrganizationSettings(data);
+      const result = await updateOrganizationSettings({
+        ...data,
+        date_format: DEFAULT_DATE_FORMAT,
+      });
 
       if (result.error) {
         toast({
@@ -233,57 +232,30 @@ export function OrganizationSettings() {
                 )}
               />
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="timezone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timezone</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select timezone" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {TIMEZONES.map((tz) => (
-                            <SelectItem key={tz.value} value={tz.value}>
-                              {tz.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="date_format"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Date Format</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select format" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {DATE_FORMATS.map((fmt) => (
-                            <SelectItem key={fmt.value} value={fmt.value}>
-                              {fmt.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="timezone"
+                render={({ field }) => (
+                  <FormItem className="max-w-sm">
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Timezone</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TIMEZONES.map((tz) => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 

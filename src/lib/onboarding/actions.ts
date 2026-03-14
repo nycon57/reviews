@@ -132,7 +132,15 @@ export async function getOnboardingRedirect(): Promise<{ success: boolean; redir
       return { success: true, redirectTo: "/onboarding/payment" };
     case "payment_complete":
       return { success: true, redirectTo: "/onboarding/profile" };
-    case "profile_complete":
+    case "profile_complete": {
+      const plan = statusResult.selectedPlan;
+      const smsTiers = ["professional", "pro", "enterprise"];
+      if (plan && smsTiers.includes(plan)) {
+        return { success: true, redirectTo: "/onboarding/sms-setup" };
+      }
+      return { success: true, redirectTo: "/onboarding/complete" };
+    }
+    case "sms_setup_complete":
       return { success: true, redirectTo: "/onboarding/complete" };
     case "completed":
       return { success: true, redirectTo: "/dashboard" };
@@ -546,6 +554,130 @@ export async function setupProfile(input: SetupProfileInput): Promise<ActionResu
       completed_at: new Date().toISOString(),
       data: validated.data,
     }, { onConflict: "organization_id,step_name" });
+
+  revalidatePath("/onboarding");
+
+  // Determine redirect based on plan (enterprise orgs only)
+  if (!isIndividual) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: orgPlan } = await (adminClient as any)
+      .from("organizations")
+      .select("selected_plan")
+      .eq("id", orgId)
+      .single();
+    const plan = orgPlan?.selected_plan;
+    const smsTiers = ["professional", "pro", "enterprise"];
+    if (plan && smsTiers.includes(plan)) {
+      return { success: true, redirectTo: "/onboarding/sms-setup" };
+    }
+  }
+
+  return { success: true, redirectTo: "/onboarding/complete" };
+}
+
+/**
+ * Complete SMS setup step during onboarding
+ */
+export async function completeSmsSetup(input: {
+  tcpaAccepted: boolean;
+  tosAccepted: boolean;
+}): Promise<ActionResult> {
+  if (!input.tcpaAccepted || !input.tosAccepted) {
+    return { success: false, error: "You must accept both TCPA compliance and SMS Terms of Service" };
+  }
+
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userError || !userData?.organization_id) {
+    return { success: false, error: "Organization not found" };
+  }
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can configure SMS" };
+  }
+
+  const adminClient = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any).from("sms_settings").upsert({
+    organization_id: userData.organization_id,
+    quiet_hours_enabled: true,
+    quiet_hours_start: "21:00",
+    quiet_hours_end: "08:00",
+    quiet_hours_timezone: "America/New_York",
+    use_recipient_timezone: true,
+    double_opt_in_enabled: false,
+    registration_status: "pending",
+    consent_language_text: "By providing your phone number, you agree to receive SMS messages. Reply STOP to unsubscribe.",
+    auto_follow_up_enabled: false,
+    auto_follow_up_delay_hours: 72,
+    crm_trigger_enabled: false,
+    crm_trigger_delay_hours: 24,
+    crm_field_mapping: {},
+  }, { onConflict: "organization_id" });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any).from("onboarding_steps").upsert({
+    organization_id: userData.organization_id,
+    step_name: "sms_setup",
+    completed_at: new Date().toISOString(),
+    data: { tcpaAccepted: true, tosAccepted: true },
+  }, { onConflict: "organization_id,step_name" });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from("organizations")
+    .update({ onboarding_status: "sms_setup_complete" })
+    .eq("id", userData.organization_id);
+
+  revalidatePath("/onboarding");
+  return { success: true, redirectTo: "/onboarding/complete" };
+}
+
+/**
+ * Skip SMS setup step during onboarding
+ */
+export async function skipSmsSetup(): Promise<ActionResult> {
+  const user = await unifiedGetUser();
+  const supabase = createAdminClient();
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  const { data: userData, error: userError } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (userError || !userData?.organization_id) {
+    return { success: false, error: "Organization not found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can configure SMS" };
+  }
+
+  const adminClient = createAdminClient();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any).from("onboarding_steps").upsert({
+    organization_id: userData.organization_id,
+    step_name: "sms_setup",
+    completed_at: new Date().toISOString(),
+    data: { skipped: true },
+  }, { onConflict: "organization_id,step_name" });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (adminClient as any)
+    .from("organizations")
+    .update({ onboarding_status: "sms_setup_complete" })
+    .eq("id", userData.organization_id);
 
   revalidatePath("/onboarding");
   return { success: true, redirectTo: "/onboarding/complete" };

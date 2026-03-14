@@ -82,8 +82,10 @@ public/embed.min.js.map
 *.pem
 .turbo
 .worktrees/
+.mcp.json
 
 # docs
 docs/
 # Added by ggshield
 .cache_ggshield
+.firecrawl

@@ -156,6 +156,45 @@ export class TwilioService {
   }
 
   /**
+   * Send a message using Twilio ContentSid (for WhatsApp templates).
+   * Uses ContentSid + ContentVariables instead of Body.
+   */
+  async sendWithContent(options: {
+    to: string;
+    from?: string;
+    contentSid: string;
+    contentVariables?: string;
+  }): Promise<SendSmsResult> {
+    const { to, from, contentSid, contentVariables } = options;
+
+    let fromOrService: { from: string } | { messagingServiceSid: string };
+
+    if (from) {
+      fromOrService = { from };
+    } else if (this.credentials.messagingServiceSid) {
+      fromOrService = { messagingServiceSid: this.credentials.messagingServiceSid };
+    } else {
+      throw new Error("A from number or messaging service SID is required");
+    }
+
+    const message = await this.withRetry(() =>
+      this.client.messages.create({
+        to,
+        contentSid,
+        ...(contentVariables ? { contentVariables } : {}),
+        ...fromOrService,
+      })
+    );
+
+    return {
+      sid: message.sid,
+      status: message.status,
+      segments: message.numSegments ? Number(message.numSegments) : 1,
+      dateCreated: message.dateCreated?.toISOString() ?? new Date().toISOString(),
+    };
+  }
+
+  /**
    * Fetch the current status of a message by its Twilio SID.
    */
   async getMessageStatus(twilioSid: string): Promise<MessageInstance> {

@@ -12,7 +12,10 @@ export const metadata = {
   description: "Customize and embed review widgets on your website",
 };
 
-/** Keep one widget per type (oldest, i.e. first-seeded). */
+/** Legacy review types consolidated into review_profile. */
+const LEGACY_REVIEW_TYPES = new Set(["lo_review", "branch_review", "company_review"]);
+
+/** Keep one widget per type (oldest, i.e. first-seeded). Collapses legacy review types into review_profile. */
 function deduplicateByType(widgets: WidgetConfig[]): WidgetConfig[] {
   const seen = new Map<string, WidgetConfig>();
   // Items arrive newest-first from query; reverse so oldest wins per type
@@ -20,8 +23,12 @@ function deduplicateByType(widgets: WidgetConfig[]): WidgetConfig[] {
     (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
   for (const w of sorted) {
-    if (!seen.has(w.widget_type)) {
-      seen.set(w.widget_type, w);
+    // Treat legacy review types as review_profile for dedup/display
+    const displayType = LEGACY_REVIEW_TYPES.has(w.widget_type)
+      ? "review_profile"
+      : w.widget_type;
+    if (!seen.has(displayType)) {
+      seen.set(displayType, { ...w, widget_type: displayType } as WidgetConfig);
     }
   }
   return Array.from(seen.values());
@@ -31,7 +38,7 @@ async function WidgetListLoader() {
   const ctx = await getAccessContext();
   if (!ctx) redirect("/login");
 
-  // Lazy backfill: ensure all 9 default widget types exist for the org
+  // Lazy backfill: ensure default widget types exist for the org
   try {
     await ensureDefaultWidgets(ctx.organizationId, ctx.userId);
   } catch (err) {
@@ -63,8 +70,8 @@ function WidgetListSkeleton() {
         </div>
         <Skeleton className="h-10 w-44" />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {Array.from({ length: 9 }).map((_, i) => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+        {Array.from({ length: 7 }).map((_, i) => (
           <Skeleton key={i} className="h-36 rounded-xl" />
         ))}
       </div>

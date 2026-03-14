@@ -27,9 +27,11 @@ import {
 } from "@/lib/email/subscription-service";
 import type Stripe from "stripe";
 import type { DunningPaymentMethodInfo } from "@/lib/email/types";
+import { SUBSCRIPTION_TIERS, type SubscriptionTier } from "@/lib/organization/types";
 
 // Extended Stripe types for webhook event objects
 type StripeSubscriptionExtended = Stripe.Subscription & {
+  current_period_start?: number;
   current_period_end?: number;
   cancel_at_period_end?: boolean;
   schedule?: string | null;
@@ -178,9 +180,43 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
 
     // Subscription created
     case "customer.subscription.created": {
-      const subscription = event.data.object as Stripe.Subscription;
+      const subscription = event.data.object as StripeSubscriptionExtended;
       await syncSubscription(subscription);
       await syncSubscriptionItems(subscription);
+
+      // Allocate SMS credits for new subscription
+      try {
+        const { allocateCreditsForSubscription } = await import(
+          "@/lib/sms/credits/billing-actions"
+        );
+        const subOrgId = subscription.metadata?.organization_id;
+        if (subOrgId) {
+          const tier = subscription.metadata?.tier;
+          if (!tier || !(SUBSCRIPTION_TIERS as readonly string[]).includes(tier)) {
+            console.warn(
+              `[Stripe Webhook] Missing or invalid tier "${tier}" in subscription ${subscription.id} for org ${subOrgId} — skipping SMS credit allocation`
+            );
+          } else if (
+            typeof subscription.current_period_start !== "number" ||
+            typeof subscription.current_period_end !== "number"
+          ) {
+            console.warn(
+              `[Stripe Webhook] Missing period timestamps on subscription ${subscription.id} for org ${subOrgId} — skipping SMS credit allocation`
+            );
+          } else {
+            const periodStart = new Date(subscription.current_period_start * 1000);
+            const periodEnd = new Date(subscription.current_period_end * 1000);
+            await allocateCreditsForSubscription(
+              subOrgId,
+              tier as SubscriptionTier,
+              periodStart,
+              periodEnd
+            );
+          }
+        }
+      } catch (e) {
+        console.error("Failed to allocate SMS credits:", e);
+      }
       break;
     }
 
@@ -329,6 +365,32 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
                 nextBillingAmount: currAmount,
               });
             }
+
+            // Adjust SMS credits for plan change
+            try {
+              const { adjustCreditsForPlanChange } = await import(
+                "@/lib/sms/credits/billing-actions"
+              );
+              if (
+                typeof subscription.current_period_start !== "number" ||
+                typeof subscription.current_period_end !== "number"
+              ) {
+                console.warn(
+                  `[Stripe Webhook] Missing period timestamps on subscription ${subscription.id} — skipping SMS credit adjustment`
+                );
+              } else {
+                const periodStart = new Date(subscription.current_period_start * 1000);
+                const periodEnd = new Date(subscription.current_period_end * 1000);
+                await adjustCreditsForPlanChange(
+                  org.id,
+                  currTier as SubscriptionTier,
+                  periodStart,
+                  periodEnd
+                );
+              }
+            } catch (e) {
+              console.error("Failed to adjust SMS credits:", e);
+            }
           }
         }
       }
@@ -365,6 +427,16 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
             planName: org.subscription_tier || "professional",
             effectiveEndDate,
           });
+
+          // Disable SMS credits
+          try {
+            const { disableCreditsOnCancellation } = await import(
+              "@/lib/sms/credits/billing-actions"
+            );
+            await disableCreditsOnCancellation(org.id);
+          } catch (e) {
+            console.error("Failed to disable SMS credits:", e);
+          }
         }
       }
       break;
@@ -414,20 +486,20 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
           ].includes(invoice.billing_reason);
 
           if (isSubscriptionRenewal && invoice.subscription) {
-            try {
-              // Get subscription details for next billing info
-              const subscriptionId =
-                typeof invoice.subscription === "string"
-                  ? invoice.subscription
-                  : invoice.subscription.id;
+            // Retrieve subscription once for both email and SMS credit logic
+            const renewalSubId =
+              typeof invoice.subscription === "string"
+                ? invoice.subscription
+                : invoice.subscription.id;
+            const renewalSub = await stripe.subscriptions.retrieve(renewalSubId) as StripeSubscriptionExtended;
 
-              const subscription = await stripe.subscriptions.retrieve(subscriptionId) as StripeSubscriptionExtended;
+            try {
               const invoiceDetails = mapStripeInvoice(invoice);
 
               if (invoiceDetails) {
                 // Get payment method
                 let paymentMethod = undefined;
-                const paymentMethodId = subscription.default_payment_method;
+                const paymentMethodId = renewalSub.default_payment_method;
                 if (paymentMethodId && typeof paymentMethodId === "string") {
                   try {
                     const pm = await stripe.paymentMethods.retrieve(paymentMethodId);
@@ -438,13 +510,13 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
                 }
 
                 // Calculate next billing
-                const nextBillingAmount = subscription.items.data[0]?.price?.unit_amount || 0;
-                const nextBillingDate = subscription.current_period_end
-                  ? new Date(subscription.current_period_end * 1000).toISOString()
+                const nextBillingAmount = renewalSub.items.data[0]?.price?.unit_amount || 0;
+                const nextBillingDate = renewalSub.current_period_end
+                  ? new Date(renewalSub.current_period_end * 1000).toISOString()
                   : new Date().toISOString();
 
                 // Get billing cycle from subscription price
-                const subPrice = subscription.items.data[0]?.price;
+                const subPrice = renewalSub.items.data[0]?.price;
                 const billingCycle = subPrice?.recurring?.interval === "year" ? "yearly" as const : "monthly" as const;
 
                 await sendSubscriptionRenewedEmail({
@@ -462,6 +534,53 @@ async function handleStripeEvent(event: Stripe.Event): Promise<void> {
               }
             } catch (e) {
               console.error("Failed to send renewal email:", e);
+            }
+
+            // Reset SMS credits for new billing period
+            try {
+              const { resetCreditsForRenewal, billOverageCharges } =
+                await import("@/lib/sms/credits/billing-actions");
+
+              // Bill overage from previous period first
+              if (invoice.period_start && invoice.period_end) {
+                const prevPeriodStart = new Date(
+                  (invoice.period_start as number) * 1000
+                )
+                  .toISOString()
+                  .slice(0, 10);
+                const prevPeriodEnd = new Date(
+                  (invoice.period_end as number) * 1000
+                )
+                  .toISOString()
+                  .slice(0, 10);
+                await billOverageCharges(
+                  org.id,
+                  prevPeriodStart,
+                  prevPeriodEnd
+                );
+              }
+
+              // Allocate fresh credits for new period
+              if (
+                typeof renewalSub.current_period_start !== "number" ||
+                typeof renewalSub.current_period_end !== "number"
+              ) {
+                console.warn(
+                  `[Stripe Webhook] Missing period timestamps on renewal subscription ${renewalSub.id} — skipping SMS credit reset`
+                );
+              } else {
+                const newPeriodStart = new Date(renewalSub.current_period_start * 1000);
+                const newPeriodEnd = new Date(renewalSub.current_period_end * 1000);
+                const tier = org.subscription_tier || "professional";
+                await resetCreditsForRenewal(
+                  org.id,
+                  tier as SubscriptionTier,
+                  newPeriodStart,
+                  newPeriodEnd
+                );
+              }
+            } catch (e) {
+              console.error("Failed to reset SMS credits on renewal:", e);
             }
           }
         }

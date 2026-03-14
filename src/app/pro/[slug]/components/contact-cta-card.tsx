@@ -144,7 +144,7 @@ export function ContactCTACard({
 
   return (
     <Card className={cn("border-t-4 border-t-repwell-sage-200", className)}>
-      <CardHeader className="pb-0">
+      <CardHeader variant="plain" className="pb-0">
         <CardTitle className="text-lg font-display text-repwell-teal-500">
           {contactLabel || `Contact ${professionalName?.split(" ")[0] || "Information"}`}
         </CardTitle>

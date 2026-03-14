@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import { cardHover, cardTap, staggerContainer, fadeInUp } from "@/lib/motion";
 import { cn } from "@/lib/utils";
+import { IconContainer } from "@/components/shared";
 import type { DashboardMetrics } from "@/lib/dashboard";
 
 interface StatsCardsProps {
@@ -77,9 +78,9 @@ export function UserStatsCards({ metrics }: StatsCardsProps) {
                     <span className="text-body-sm font-medium text-label">
                       {stat.title}
                     </span>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-soft">
-                      <Icon className="h-5 w-5 text-repwell-teal-300" />
-                    </div>
+                    <IconContainer size="md" bg="soft">
+                      <Icon className="h-5 w-5 text-repwell-teal-300 dark:text-repwell-sage-200" />
+                    </IconContainer>
                   </div>
 
                   {/* Value */}

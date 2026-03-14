@@ -18,7 +18,7 @@ export const REVIEW_WALL_STYLES = /* css */ `
   }
 
   .rw-wall__title {
-    font-size: 18px;
+    font-size: var(--rw-heading-size, 18px);
     font-weight: 700;
     color: var(--rw-text, #1a1a2e);
     line-height: 1.3;
@@ -48,8 +48,8 @@ export const REVIEW_WALL_STYLES = /* css */ `
   .rw-wall__card--featured .rw-co-review {
     background: linear-gradient(
       135deg,
-      rgba(82, 121, 111, 0.03) 0%,
-      rgba(132, 169, 140, 0.05) 100%
+      var(--rw-featured-start, color-mix(in srgb, var(--rw-accent, var(--rw-primary, #52796f)) 8%, var(--rw-surface, var(--rw-bg, #ffffff)) 92%)) 0%,
+      var(--rw-featured-end, color-mix(in srgb, var(--rw-accent, var(--rw-primary, #52796f)) 14%, var(--rw-surface, var(--rw-bg, #ffffff)) 86%)) 100%
     );
   }
 
@@ -60,7 +60,7 @@ export const REVIEW_WALL_STYLES = /* css */ `
     width: 100%;
     margin-top: 16px;
     padding: 10px 24px;
-    font-size: 14px;
+    font-size: var(--rw-body-size, 14px);
     font-weight: 500;
     color: var(--rw-primary, #52796f);
     background: transparent;
@@ -109,14 +109,14 @@ export const REVIEW_WALL_STYLES = /* css */ `
   .rw-wall__branding {
     margin-top: 12px;
     padding-top: 8px;
-    border-top: 1px solid #f3f4f6;
-    font-size: 11px;
-    color: #9ca3af;
+    border-top: 1px solid var(--rw-border-soft, var(--rw-border, #f3f4f6));
+    font-size: var(--rw-caption-size, 11px);
+    color: var(--rw-text-subtle, #9ca3af);
     text-align: center;
   }
 
   .rw-wall__branding a {
-    color: #6b7280;
+    color: var(--rw-text-muted, #6b7280);
     text-decoration: none;
   }
 

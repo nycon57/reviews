@@ -45,12 +45,6 @@ export const NAV_CONFIG: NavConfig = {
       permission: PERMISSIONS.VIEW_REVIEWS,
     },
     {
-      title: "Share Studio",
-      href: "/dashboard/share-studio",
-      icon: "Lightning",
-      permission: PERMISSIONS.VIEW_TESTIMONIALS,
-    },
-    {
       title: "Messages",
       href: "/dashboard/messages",
       icon: "ChatCircle",

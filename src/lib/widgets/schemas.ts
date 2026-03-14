@@ -3,6 +3,7 @@ import { z } from "zod";
 // ── Enum values (mirrored from database enums) ──────────────────────────
 
 export const WIDGET_TYPES = [
+  "review_profile",
   "lo_review",
   "branch_review",
   "company_review",
@@ -139,7 +140,7 @@ export const filtersSchema = z
       .optional(),
     sources: z.array(z.string()).optional(),
     maxReviews: z.number().int().min(1).max(100).optional(),
-    sortOrder: z.enum(["newest", "oldest", "highest", "lowest"]).optional(),
+    sortOrder: z.enum(["featured", "newest", "oldest", "highest", "lowest"]).optional(),
     featuredOnly: z.boolean().optional(),
     keywords: z.array(z.string()).optional(),
     loanTypes: z.array(z.string()).optional(),
@@ -238,6 +239,7 @@ export const updateWidgetInputSchema = z.object({
   enable_structured_data: z.boolean().optional(),
   structured_data_type: z.string().optional(),
   entity_id: z.string().uuid().optional(),
+  entity_type: z.enum(WIDGET_ENTITY_TYPES).optional(),
 });
 
 export type UpdateWidgetInput = z.infer<typeof updateWidgetInputSchema>;

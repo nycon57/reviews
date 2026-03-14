@@ -397,7 +397,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
           )}
 
           {/* Response Form */}
-          <AnimatedPresence show={!review.responseText && showResponseForm} mode="slide-up">
+          <AnimatedPresence show={review.status === "approved" && !review.responseText && showResponseForm} mode="slide-up">
             <div className="rounded-lg border border-repwell-teal-300/20 bg-repwell-sage-100/10 dark:bg-repwell-teal-300/10 p-4">
               <div className="flex items-center gap-1.5 mb-3">
                 <MessageSquare className="h-3.5 w-3.5 text-repwell-teal-300" weight="duotone" />
@@ -418,56 +418,60 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
 
         {/* Sidebar - 1 column */}
         <div className="space-y-6">
-          {/* Share Studio */}
-          <AnimatedSection>
-          <Card className="border border-border shadow-soft overflow-hidden">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
-                  <Share2 className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
-                </div>
-                Share Studio
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-4">
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={handleCopySmartLink}
-                disabled={shareBusy.has("link")}
-                aria-label="Copy smart link to clipboard"
-              >
-                <Copy className="h-4 w-4" weight="duotone" />
-                Copy Smart Link
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={handleOpenSmartLink}
-                disabled={shareBusy.has("link")}
-                aria-label="Open smart link in new tab"
-              >
-                <LinkSimple className="h-4 w-4" weight="duotone" />
-                Open Smart Link
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => setAssetCreatorOpen(true)}
-                aria-label="Create a shareable asset"
-              >
-                <Palette className="h-4 w-4" weight="duotone" />
-                Create Asset
-              </Button>
-            </CardContent>
-          </Card>
-          </AnimatedSection>
+          {/* Share Studio — approved only */}
+          {review.status === "approved" && (
+            <>
+            <AnimatedSection>
+            <Card className="border border-border shadow-soft overflow-hidden">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <div className="rounded-xl bg-repwell-teal-300/10 p-1.5">
+                    <Share2 className="h-4 w-4 text-repwell-teal-300" weight="duotone" />
+                  </div>
+                  Share Studio
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-4">
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={handleCopySmartLink}
+                  disabled={shareBusy.has("link")}
+                  aria-label="Copy smart link to clipboard"
+                >
+                  <Copy className="h-4 w-4" weight="duotone" />
+                  Copy Smart Link
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={handleOpenSmartLink}
+                  disabled={shareBusy.has("link")}
+                  aria-label="Open smart link in new tab"
+                >
+                  <LinkSimple className="h-4 w-4" weight="duotone" />
+                  Open Smart Link
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => setAssetCreatorOpen(true)}
+                  aria-label="Create a shareable asset"
+                >
+                  <Palette className="h-4 w-4" weight="duotone" />
+                  Create Asset
+                </Button>
+              </CardContent>
+            </Card>
+            </AnimatedSection>
 
-          <ReviewShareAssets
-            sourceType="review"
-            sourceId={review.id}
-            refreshToken={assetsRefreshToken}
-          />
+            <ReviewShareAssets
+              sourceType="review"
+              sourceId={review.id}
+              refreshToken={assetsRefreshToken}
+            />
+            </>
+          )}
 
           {/* Actions */}
           {canManage && (
@@ -482,16 +486,18 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 pt-4">
-                <Button
-                  variant={review.featured ? "default" : "outline"}
-                  className="w-full gap-2"
-                  onClick={handleToggleFeatured}
-                  disabled={isPending}
-                >
-                  <Flag className="h-4 w-4" weight="duotone" />
-                  {review.featured ? "Featured" : "Feature"}
-                </Button>
-                {!review.responseText && (
+                {review.status === "approved" && (
+                  <Button
+                    variant={review.featured ? "default" : "outline"}
+                    className="w-full gap-2"
+                    onClick={handleToggleFeatured}
+                    disabled={isPending}
+                  >
+                    <Flag className="h-4 w-4" weight="duotone" />
+                    {review.featured ? "Featured" : "Feature"}
+                  </Button>
+                )}
+                {review.status === "approved" && !review.responseText && (
                   <Button
                     variant="outline"
                     className="w-full gap-2"
@@ -511,7 +517,7 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
                     Share to Social
                   </Button>
                 )}
-                {review.status !== "archived" && (
+                {(review.status === "approved" || review.status === "rejected") && (
                   <Button
                     variant="outline"
                     className="w-full gap-2 text-muted-foreground"
@@ -578,19 +584,21 @@ export function ReviewDetailView({ review, userRole, hasAiAccess = true }: Props
         onSuccess={() => router.refresh()}
       />
 
-      {/* Asset Creator Modal */}
-      <AssetCreatorModal
-        open={assetCreatorOpen}
-        onOpenChange={setAssetCreatorOpen}
-        sourceType="review"
-        sourceId={review.id}
-        reviewData={{
-          text: review.text,
-          customerName: review.customerName,
-          rating: review.rating,
-        }}
-        onQueued={() => setAssetsRefreshToken((v) => v + 1)}
-      />
+      {/* Asset Creator Modal — approved only */}
+      {review.status === "approved" && (
+        <AssetCreatorModal
+          open={assetCreatorOpen}
+          onOpenChange={setAssetCreatorOpen}
+          sourceType="review"
+          sourceId={review.id}
+          reviewData={{
+            text: review.text,
+            customerName: review.customerName,
+            rating: review.rating,
+          }}
+          onQueued={() => setAssetsRefreshToken((v) => v + 1)}
+        />
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
   Link as LinkIcon,
   Check,
 } from "@phosphor-icons/react";
+import { IconContainer } from "@/components/shared";
 import { SendReviewRequestDialog } from "@/components/requests/send-review-request-dialog";
 import {
   DropdownMenu,
@@ -94,7 +95,7 @@ export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProp
   const encodedUrl = profileUrl ? encodeURIComponent(profileUrl) : "";
 
   const cardClassName =
-    "group flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4 shadow-soft transition-all hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 hover:border-repwell-teal-300/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    "group flex items-center gap-3 rounded-xl border border-border/50 bg-card p-4 shadow-soft transition-all hover:border-repwell-teal-300/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   return (
     <>
@@ -102,9 +103,9 @@ export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProp
         {actions.map((action) => {
           const content = (
             <>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-repwell-teal-300/10 text-repwell-teal-300 transition-colors group-hover:bg-repwell-teal-300/20">
+              <IconContainer size="md" bg="subtle" className="text-repwell-teal-300 transition-colors group-hover:bg-repwell-teal-300/20">
                 {action.icon}
-              </div>
+              </IconContainer>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-heading">
                   {action.title}

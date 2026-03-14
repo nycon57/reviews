@@ -62,7 +62,7 @@ export function buildReviewCarouselDOM(
   }
 
   const transitionMode: TransitionMode = carousel?.transition ?? "slide";
-  const configuredVisible = carousel?.visibleCards ?? carousel?.slidesPerView ?? 1;
+  const configuredVisible = carousel?.visibleCards ?? carousel?.slidesPerView ?? 3;
   const visibleCards = getResponsiveVisibleCards(configuredVisible);
   const interval = carousel?.interval ?? 5000;
   const autoplay = carousel?.autoplay !== false;
@@ -100,7 +100,7 @@ export function buildReviewCarouselDOM(
       applyTransition(transitionMode, track, cardElements, index, visibleCards);
       updateDots(index);
       updateAriaLabels(index);
-      trackClick(apiBase, config.widget_id, "carousel_navigate", {
+      trackClick(apiBase, config, "carousel_navigate", {
         direction,
         index,
         transition: transitionMode,
@@ -110,6 +110,9 @@ export function buildReviewCarouselDOM(
 
   applyTransition(transitionMode, track, cardElements, 0, visibleCards);
 
+  // Nav row: [prev] [viewport] [next] — arrows sit outside the carousel
+  const navRow = el("div", "rw-carousel__nav");
+
   if (showArrows && reviews.length > visibleCards) {
     const prevBtn = document.createElement("button");
     prevBtn.className = "rw-carousel__arrow rw-carousel__arrow--prev";
@@ -117,19 +120,22 @@ export function buildReviewCarouselDOM(
     prevBtn.setAttribute("aria-label", t("previousReviews"));
     prevBtn.appendChild(createArrowSVG("left"));
     prevBtn.addEventListener("click", () => engine.prev());
+    navRow.appendChild(prevBtn);
+  }
 
+  navRow.appendChild(viewport);
+
+  if (showArrows && reviews.length > visibleCards) {
     const nextBtn = document.createElement("button");
     nextBtn.className = "rw-carousel__arrow rw-carousel__arrow--next";
     nextBtn.type = "button";
     nextBtn.setAttribute("aria-label", t("nextReviews"));
     nextBtn.appendChild(createArrowSVG("right"));
     nextBtn.addEventListener("click", () => engine.next());
-
-    viewport.appendChild(prevBtn);
-    viewport.appendChild(nextBtn);
+    navRow.appendChild(nextBtn);
   }
 
-  container.appendChild(viewport);
+  container.appendChild(navRow);
 
   // Dots
   const dotElements: HTMLButtonElement[] = [];
@@ -220,7 +226,7 @@ export function buildReviewCarouselDOM(
     cta.target = "_blank";
     cta.rel = "noopener noreferrer";
     if (colors?.primary) cta.style.background = colors.primary;
-    cta.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_cta"); });
+    cta.addEventListener("click", () => { trackClick(apiBase, config, "click_cta"); });
     ctaWrapper.appendChild(cta);
     container.appendChild(ctaWrapper);
   }

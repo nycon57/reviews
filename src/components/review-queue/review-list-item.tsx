@@ -188,16 +188,22 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
                     <Button size="sm" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => actions.handleToggleFeatured(review.id, !isFeatured)}>
-                      <Flag className="mr-2 h-4 w-4" />{isFeatured ? "Unfeature" : "Feature"}
-                    </DropdownMenuItem>
+                    {review.status === "approved" && (
+                      <DropdownMenuItem onClick={() => actions.handleToggleFeatured(review.id, !isFeatured)}>
+                        <Flag className="mr-2 h-4 w-4" />{isFeatured ? "Unfeature" : "Feature"}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem onClick={() => actions.handleRevertToPending(review.id)}>
                       <RefreshCcw className="mr-2 h-4 w-4" />Revert to Pending
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => actions.handleArchive(review.id)} className="text-red-600">
-                      <Archive className="mr-2 h-4 w-4" />Archive
-                    </DropdownMenuItem>
+                    {(review.status === "approved" || review.status === "rejected") && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => actions.handleArchive(review.id)} className="text-red-600">
+                          <Archive className="mr-2 h-4 w-4" />Archive
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     {review.status === "rejected" && review.rejectionReason && (
                       <>
                         <DropdownMenuSeparator />

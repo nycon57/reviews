@@ -65,7 +65,7 @@ export function FeatureCard({
           className
         )}
       >
-        <CardHeader className={cn(isLarge ? "pb-6" : "pb-4")}>
+        <CardHeader variant="plain" className={cn(isLarge ? "pb-6" : "pb-4")}>
           <motion.div
             whileHover={featureIconHover}
             className={cn(

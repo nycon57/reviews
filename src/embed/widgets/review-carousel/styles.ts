@@ -10,7 +10,7 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
   .rw-carousel {
     position: relative;
     overflow: hidden;
-    padding: 16px;
+    padding: var(--rw-padding, 16px);
   }
 
   .rw-carousel__header {
@@ -18,7 +18,7 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
   }
 
   .rw-carousel__title {
-    font-size: 18px;
+    font-size: var(--rw-heading-size, 18px);
     font-weight: 700;
     color: var(--rw-text, #1a1a2e);
     line-height: 1.3;
@@ -26,9 +26,17 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
 
   /* ── Track (slide mode) ─────────────────────────────────────────── */
 
+  .rw-carousel__nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   .rw-carousel__viewport {
     position: relative;
     overflow: hidden;
+    flex: 1;
+    min-width: 0;
   }
 
   .rw-carousel__track {
@@ -64,19 +72,16 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
   /* ── Navigation Arrows ──────────────────────────────────────────── */
 
   .rw-carousel__arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+    flex-shrink: 0;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.95);
+    background: var(--rw-surface, var(--rw-bg, #ffffff));
     border: 1px solid var(--rw-border, #e5e7eb);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2;
     transition: background 0.15s ease, box-shadow 0.15s ease;
     color: var(--rw-text, #1a1a2e);
     padding: 0;
@@ -84,7 +89,7 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
   }
 
   .rw-carousel__arrow:hover {
-    background: #fff;
+    background: var(--rw-surface, #fff);
     box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   }
 
@@ -92,9 +97,6 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
     outline: 2px solid var(--rw-primary, #52796f);
     outline-offset: 2px;
   }
-
-  .rw-carousel__arrow--prev { left: 4px; }
-  .rw-carousel__arrow--next { right: 4px; }
 
   .rw-carousel__arrow svg {
     width: 16px;
@@ -112,27 +114,27 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
     display: flex;
     justify-content: center;
     gap: 6px;
-    padding-top: 12px;
+    padding-top: 16px;
   }
 
   .rw-carousel__dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #d1d5db;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: var(--rw-surface-strong, #d1d5db);
     border: none;
     cursor: pointer;
     padding: 0;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, width 0.2s ease;
   }
 
   .rw-carousel__dot:hover {
-    background: #9ca3af;
+    background: var(--rw-text-subtle, #9ca3af);
   }
 
   .rw-carousel__dot--active {
     background: var(--rw-primary, #52796f);
-    transform: scale(1.2);
+    width: 20px;
   }
 
   .rw-carousel__dot:focus-visible {
@@ -153,14 +155,14 @@ export const REVIEW_CAROUSEL_STYLES = /* css */ `
   .rw-carousel__branding {
     margin-top: 12px;
     padding-top: 8px;
-    border-top: 1px solid #f3f4f6;
-    font-size: 11px;
-    color: #9ca3af;
+    border-top: 1px solid var(--rw-border-soft, var(--rw-border, #f3f4f6));
+    font-size: var(--rw-caption-size, 11px);
+    color: var(--rw-text-subtle, #9ca3af);
     text-align: center;
   }
 
   .rw-carousel__branding a {
-    color: #6b7280;
+    color: var(--rw-text-muted, #6b7280);
     text-decoration: none;
   }
 

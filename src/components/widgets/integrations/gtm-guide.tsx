@@ -9,10 +9,18 @@ import {
   TroubleshootingSection,
 } from "./integration-card";
 
-const GTM_HTML_TAG = `<div data-repwell-widget="YOUR_WIDGET_ID"></div>`;
-
 const GTM_SCRIPT_TAG = `<script src="https://app.repwell.com/embed.js" async></script>
-<div data-repwell-widget="YOUR_WIDGET_ID"></div>`;
+<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="YOUR_ENTITY_TYPE"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
+
+const GTM_HTML_TAG = `<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="YOUR_ENTITY_TYPE"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
 
 export function GtmGuide() {
   return (
@@ -36,8 +44,11 @@ export function GtmGuide() {
             </Step>
             <Step number={3} title="Paste the embed code">
               <p>
-                Replace <code className="text-xs bg-muted px-1 rounded">YOUR_WIDGET_ID</code> with
-                your actual Widget ID from the RepWell dashboard.
+                Replace the placeholder values with your Widget ID, entity type
+                (<code className="text-xs bg-muted px-1 rounded">user</code>,{" "}
+                <code className="text-xs bg-muted px-1 rounded">branch</code>, or{" "}
+                <code className="text-xs bg-muted px-1 rounded">organization</code>),
+                and entity ID from the RepWell dashboard.
               </p>
               <CodeBlock code={GTM_SCRIPT_TAG} language="html" />
             </Step>
@@ -87,7 +98,7 @@ export function GtmGuide() {
             <Step number={3} title="Create a tag from the template">
               <p>
                 Go to Tags &rarr; New, select the RepWell Review Widget
-                template, and enter your Widget ID.
+                template, and enter your Widget ID, entity type, and entity ID.
               </p>
             </Step>
             <Step number={4} title="Add the widget container">
@@ -105,7 +116,7 @@ export function GtmGuide() {
             {
               problem: "Widget does not appear after publishing",
               solution:
-                "Verify the tag is firing in GTM Preview mode. Check that the widget container div is present on the page and the Widget ID matches.",
+                "Verify the tag is firing in GTM Preview mode. Check that the widget container div is present on the page, the Widget ID matches, and all three data attributes are set.",
             },
             {
               problem: "Content Security Policy (CSP) blocks the script",
@@ -115,7 +126,7 @@ export function GtmGuide() {
             {
               problem: "Widget loads but shows no reviews",
               solution:
-                "Ensure the widget is published (not draft) in the RepWell dashboard and the current domain is in the allowed domains list.",
+                "Ensure the widget is published (not draft) in the RepWell dashboard, the entity ID is correct, and the current domain is in the allowed domains list.",
             },
             {
               problem: "Tag fires multiple times",

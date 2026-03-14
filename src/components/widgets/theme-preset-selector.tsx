@@ -21,13 +21,23 @@ function PresetThumbnail({
 }) {
   const { preview, colors, layout } = preset;
   const isCustom = presetKey === "custom";
+  const isBrand = presetKey === "brand_match";
 
   return (
     <div
       className="w-full aspect-[4/3] rounded-md overflow-hidden border border-border"
       style={{ background: preview.bg }}
     >
-      {isCustom ? (
+      {isBrand ? (
+        <div className="w-full h-full flex flex-col items-center justify-center gap-1.5">
+          <div className="w-5 h-5 rounded-full border-2 border-repwell-teal-300 flex items-center justify-center">
+            <div className="w-2 h-2 rounded-sm bg-repwell-teal-300" />
+          </div>
+          <div className="text-[7px] font-semibold text-muted-foreground tracking-wide uppercase">
+            Your colors
+          </div>
+        </div>
+      ) : isCustom ? (
         <div className="w-full h-full flex items-center justify-center">
           <div className="grid grid-cols-2 gap-1 p-2">
             {["#ef4444", "#3b82f6", "#22c55e", "#f59e0b"].map((color) => (

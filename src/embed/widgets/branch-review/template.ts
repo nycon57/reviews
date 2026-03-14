@@ -193,7 +193,7 @@ export function buildBranchReviewDOM(
       cta.href = content.writeReviewUrl;
       cta.target = "_blank";
       cta.rel = "noopener noreferrer";
-      cta.addEventListener("click", () => { trackClick(apiBase, config.widget_id, "click_write_review"); });
+      cta.addEventListener("click", () => { trackClick(apiBase, config, "click_write_review"); });
       empty.appendChild(cta);
     }
     return empty;

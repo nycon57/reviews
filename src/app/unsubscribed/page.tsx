@@ -19,7 +19,7 @@ function UnsubscribedContent() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+        <CardHeader variant="plain" className="text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             {isResubscribed ? (
               <CheckCircle className="h-8 w-8 text-green-600" />

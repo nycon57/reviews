@@ -72,7 +72,7 @@ export const NPS_SCORE_BADGE_STYLES = /* css */ `
   }
 
   .rw-nps__gauge-score {
-    font-size: 28px;
+    font-size: calc(var(--rw-heading-size, 18px) + 10px);
     font-weight: 700;
     fill: var(--rw-text, #1a1a2e);
     text-anchor: middle;
@@ -104,7 +104,7 @@ export const NPS_SCORE_BADGE_STYLES = /* css */ `
   }
 
   .rw-nps__score {
-    font-size: 48px;
+    font-size: calc(var(--rw-heading-size, 18px) + 30px);
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.02em;
@@ -113,7 +113,7 @@ export const NPS_SCORE_BADGE_STYLES = /* css */ `
   /* ── Labels ────────────────────────────────────────────────────────── */
 
   .rw-nps__label {
-    font-size: var(--rw-body-size, 13px);
+    font-size: var(--rw-body-size-sm, 13px);
     font-weight: 600;
     color: var(--rw-text, #1a1a2e);
     text-transform: uppercase;
@@ -122,13 +122,13 @@ export const NPS_SCORE_BADGE_STYLES = /* css */ `
   }
 
   .rw-nps__count {
-    font-size: var(--rw-body-size, 12px);
+    font-size: var(--rw-meta-size, 12px);
     color: var(--rw-text-muted, #6b7280);
     text-align: center;
   }
 
   .rw-nps__period {
-    font-size: 11px;
+    font-size: var(--rw-caption-size, 11px);
     color: var(--rw-text-muted, #6b7280);
     text-align: center;
   }
@@ -179,7 +179,7 @@ export const NPS_SCORE_BADGE_STYLES = /* css */ `
     display: flex;
     align-items: center;
     gap: 4px;
-    font-size: 10px;
+    font-size: var(--rw-caption-size, 11px);
     color: var(--rw-text-muted, #6b7280);
     white-space: nowrap;
   }

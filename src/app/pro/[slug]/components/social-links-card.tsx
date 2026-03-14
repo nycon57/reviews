@@ -59,7 +59,7 @@ export function SocialLinksCard({
 
   return (
     <Card className="border-t-4 border-t-repwell-sage-200">
-      <CardHeader className="pb-2">
+      <CardHeader variant="plain" className="pb-2">
         <CardTitle className="text-lg font-display text-repwell-teal-500">
           Social &amp; Links
         </CardTitle>

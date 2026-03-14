@@ -11,6 +11,10 @@ import {
   checkForbiddenRateLimit,
 } from "@/lib/widgets/cors";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
+import {
+  resolveWidgetEntityContext,
+  WidgetEntityOverrideError,
+} from "@/lib/widgets/public-entity-resolution";
 
 const CACHE_CONTROL = "public, max-age=60, stale-while-revalidate=30";
 const DEFAULT_LIMIT = 10;
@@ -49,6 +53,16 @@ export async function GET(
     return widgetError("Origin not allowed", "FORBIDDEN", 403);
   }
 
+  let resolvedEntity;
+  try {
+    resolvedEntity = await resolveWidgetEntityContext(widget, request.nextUrl.searchParams);
+  } catch (error) {
+    if (error instanceof WidgetEntityOverrideError) {
+      return widgetError(error.message, error.code, error.status, allowedOrigin);
+    }
+    throw error;
+  }
+
   const orgId = widget.organization_id;
 
   const searchParams = request.nextUrl.searchParams;
@@ -67,7 +81,7 @@ export async function GET(
   const qKeywords = searchParams.get("keywords");
   const qDateRange = searchParams.get("dateRange");
 
-  const VALID_SORT_ORDERS = ["newest", "oldest", "highest", "lowest"];
+  const VALID_SORT_ORDERS = ["featured", "newest", "oldest", "highest", "lowest"];
   const VALID_LOAN_TYPES = ["Purchase", "Refinance", "VA", "FHA", "Jumbo", "USDA", "Conventional"];
   const VALID_SOURCES = ["google", "zillow", "internal", "facebook", "yelp"];
 
@@ -79,6 +93,7 @@ export async function GET(
     ...(qSortOrder && VALID_SORT_ORDERS.includes(qSortOrder)
       ? {
           sortOrder: qSortOrder as
+            | "featured"
             | "newest"
             | "oldest"
             | "highest"
@@ -122,12 +137,33 @@ export async function GET(
 
   const { reviews, nextCursor } = await getPublicReviews({
     organizationId: orgId,
-    entityType: widget.entity_type,
-    entityId: widget.entity_id,
+    entityType: resolvedEntity.entityType,
+    entityId: resolvedEntity.entityId,
     filters,
     cursor,
     limit: effectiveLimit,
   });
+
+  // Translate review text when widget language is non-English
+  const widgetConfig = widget.config as WidgetConfigJson;
+  const widgetLang = widgetConfig?.content?.language;
+  if (widgetLang && widgetLang !== "en" && reviews.length > 0) {
+    try {
+      const { translateTexts } = await import("@/lib/ai/translation");
+      const texts = reviews.map((r) => r.text).filter(Boolean) as string[];
+      if (texts.length > 0) {
+        const translations = await translateTexts(texts, widgetLang);
+        for (const review of reviews) {
+          if (review.text && translations[review.text]) {
+            review.text = translations[review.text];
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Embed translation failed:", err);
+      // Non-fatal: serve untranslated reviews
+    }
+  }
 
   const body = {
     reviews,

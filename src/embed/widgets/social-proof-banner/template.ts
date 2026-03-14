@@ -85,7 +85,7 @@ function buildCloseButton(
       ctx.config.widget_id,
       ctx.spb.frequency ?? "every_visit"
     );
-    trackClick(ctx.apiBase, ctx.config.widget_id, "banner_dismiss");
+    trackClick(ctx.apiBase, ctx.config, "banner_dismiss");
   });
   return btn;
 }
@@ -94,7 +94,8 @@ function buildCloseButton(
 
 function buildNotificationCard(
   review: PublicReview,
-  filledColor: string
+  filledColor: string,
+  truncateLength: number
 ): HTMLElement {
   const card = el("div", "rw-spb-notification rw-spb-notification--enter");
 
@@ -123,7 +124,10 @@ function buildNotificationCard(
 
   // Snippet
   if (review.text) {
-    const { text: snippet } = truncateText(review.text, 120);
+    const { text: snippet } =
+      truncateLength > 0
+        ? truncateText(review.text, truncateLength)
+        : { text: review.text };
     const snippetEl = text("p", `"${snippet}"`, "rw-spb-notification__snippet");
     body.appendChild(snippetEl);
   }
@@ -146,15 +150,16 @@ function buildNotification(ctx: BannerContext): NotificationResult {
 
   const filledColor =
     ctx.config.config?.theme?.colors?.starFilled ?? "#f59e0b";
+  const truncateLength = ctx.config.config?.content?.truncateLength ?? 120;
 
   let currentIndex = 0;
-  let currentCard = buildNotificationCard(reviews[0], filledColor);
+  let currentCard = buildNotificationCard(reviews[0], filledColor, truncateLength);
   wrapper.appendChild(currentCard);
 
   // Click tracking for notification cards
   wrapper.addEventListener("click", (e) => {
     if ((e.target as HTMLElement)?.closest(".rw-spb-close")) return;
-    trackClick(ctx.apiBase, ctx.config.widget_id, "banner_click", {
+    trackClick(ctx.apiBase, ctx.config, "banner_click", {
       mode: "notification",
     });
   });
@@ -164,10 +169,10 @@ function buildNotification(ctx: BannerContext): NotificationResult {
   if (reviews.length > 1) {
     const interval = ctx.spb.interval ?? 5000;
     const rotate = () => {
-      currentCard.className = "rw-spb-notification rw-spb-notification--exit";
+        currentCard.className = "rw-spb-notification rw-spb-notification--exit";
       setTimeout(() => {
         currentIndex = (currentIndex + 1) % reviews.length;
-        const newCard = buildNotificationCard(reviews[currentIndex], filledColor);
+        const newCard = buildNotificationCard(reviews[currentIndex], filledColor, truncateLength);
         wrapper.replaceChild(newCard, currentCard);
         currentCard = newCard;
       }, 250);
@@ -222,7 +227,7 @@ function buildCounterBar(ctx: BannerContext): HTMLElement {
     cta.target = "_blank";
     cta.rel = "noopener noreferrer";
     cta.addEventListener("click", () => {
-      trackClick(ctx.apiBase, ctx.config.widget_id, "banner_click", {
+      trackClick(ctx.apiBase, ctx.config, "banner_click", {
         mode: "counter_bar",
       });
     });
@@ -263,7 +268,11 @@ function buildFloatingBadge(ctx: BannerContext): HTMLElement {
   // Expanded view (shown on hover)
   const expanded = el("div", "rw-spb-badge__expanded");
   if (review.text) {
-    const { text: snippet } = truncateText(review.text, 150);
+    const badgeTruncateLength = ctx.config.config?.content?.truncateLength ?? 120;
+    const { text: snippet } =
+      badgeTruncateLength > 0
+        ? truncateText(review.text, badgeTruncateLength)
+        : { text: review.text };
     expanded.appendChild(
       text("p", `"${snippet}"`, "rw-spb-badge__snippet")
     );
@@ -282,7 +291,7 @@ function buildFloatingBadge(ctx: BannerContext): HTMLElement {
 
   badge.addEventListener("click", (e) => {
     if ((e.target as HTMLElement)?.closest(".rw-spb-close")) return;
-    trackClick(ctx.apiBase, ctx.config.widget_id, "banner_click", {
+    trackClick(ctx.apiBase, ctx.config, "banner_click", {
       mode: "floating_badge",
     });
   });
@@ -351,7 +360,7 @@ export function buildSocialProofBannerDOM(
     () => {
       container.classList.add("rw-spb--visible");
       recordShown(widgetId, frequency);
-      trackClick(apiBase, widgetId, "impression", { mode });
+      trackClick(apiBase, ctx.config, "impression", { mode });
     }
   );
 

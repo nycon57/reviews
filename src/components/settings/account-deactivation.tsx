@@ -71,7 +71,7 @@ export function AccountDeactivation() {
 
   return (
     <Card className="border-amber-300/50 shadow-soft">
-      <CardHeader className="bg-gradient-to-r from-amber-50/60 to-transparent dark:from-amber-950/30 dark:to-transparent border-b border-amber-200/30 dark:border-amber-800/30">
+      <CardHeader variant="accent-amber">
         <div className="flex items-center gap-2">
           <Info className="h-5 w-5 text-amber-600" />
           <CardTitle className="text-amber-800 dark:text-amber-200">Deactivate Account</CardTitle>

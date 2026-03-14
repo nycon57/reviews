@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import {
   Play,
   FileText,
@@ -33,6 +33,7 @@ export const VideoCard = memo(function VideoCard({
 }) {
   const { state, actions } = useVideoLibrary();
   const isSelected = state.selectedIds.has(video.id);
+  const [thumbnailError, setThumbnailError] = useState(false);
 
   const onClick = () => actions.handleVideoClick(video);
 
@@ -51,15 +52,20 @@ export const VideoCard = memo(function VideoCard({
         onKeyDown={(e) => e.key === "Enter" && onClick()}
         aria-label={`View details for ${video.customerName}'s testimonial`}
       >
-        {video.thumbnailUrl ? (
+        {video.thumbnailUrl && !thumbnailError ? (
           <img
             src={video.thumbnailUrl}
             alt={`Thumbnail for ${video.customerName}'s testimonial`}
             className="h-full w-full object-cover"
+            onError={() => setThumbnailError(true)}
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-repwell-sage-100/50 to-repwell-teal-300/20">
-            <Film className="h-12 w-12 text-muted-foreground/50" />
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-repwell-teal-300 to-repwell-sage-300">
+            <img
+              src="/branding/RepWell-Icon-Full-Color.png"
+              alt="RepWell"
+              className="h-10 w-auto brightness-0 invert opacity-60"
+            />
           </div>
         )}
 

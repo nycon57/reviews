@@ -2,15 +2,22 @@
 
 import { Label } from "@/components/ui/label";
 import { CustomCSSEditor } from "../custom-css-editor";
-import { HooksDocumentation } from "../hooks-documentation";
+import { DomainTab } from "./domain-tab";
 import type { WidgetConfigJson } from "@/lib/widgets/schemas";
 
 interface AdvancedTabProps {
+  allowedDomains: string[];
   config: WidgetConfigJson;
   onConfigChange: (config: Partial<WidgetConfigJson>) => void;
+  onDomainsChange: (domains: string[]) => void;
 }
 
-export function AdvancedTab({ config, onConfigChange }: AdvancedTabProps) {
+export function AdvancedTab({
+  allowedDomains,
+  config,
+  onConfigChange,
+  onDomainsChange,
+}: AdvancedTabProps) {
   const customCSS = config.advanced?.customCSS ?? "";
 
   return (
@@ -32,8 +39,12 @@ export function AdvancedTab({ config, onConfigChange }: AdvancedTabProps) {
       </div>
 
       <div className="border-t pt-4">
-        <HooksDocumentation />
+        <DomainTab
+          allowedDomains={allowedDomains}
+          onDomainsChange={onDomainsChange}
+        />
       </div>
+
     </div>
   );
 }

@@ -4,7 +4,7 @@
  * All DOM construction uses safe methods (createElement/textContent) — no innerHTML.
  */
 
-import type { VideoTestimonial } from "../../types";
+import type { PublicWidgetConfig, VideoTestimonial } from "../../types";
 import { el } from "../../core/dom-helpers";
 import { trackClick } from "../../core/event-tracker";
 
@@ -50,7 +50,7 @@ interface PlayerCallbacks {
 export function buildVideoPlayer(
   testimonial: VideoTestimonial,
   apiBase: string,
-  widgetId: string,
+  config: Pick<PublicWidgetConfig, "widget_id" | "entity_type" | "entity_id" | "override_applied">,
   callbacks?: PlayerCallbacks,
 ): HTMLElement {
   const wrap = el("div", "rw-vt__player-wrap");
@@ -211,7 +211,7 @@ export function buildVideoPlayer(
           for (const m of milestones) {
             if (progress >= m / 100 && !milestonesSent.has(m)) {
               milestonesSent.add(m);
-              trackClick(apiBase, widgetId, "video_progress", {
+              trackClick(apiBase, config, "video_progress", {
                 video_id: testimonial.id,
                 milestone: m,
                 current_time: Math.round(video.currentTime),
@@ -227,7 +227,7 @@ export function buildVideoPlayer(
         updatePlayPauseIcon(false);
         playBtn.classList.remove("rw-vt__play-btn--hidden");
         controls.classList.remove("rw-vt__controls--visible");
-        trackClick(apiBase, widgetId, "video_complete", {
+        trackClick(apiBase, config, "video_complete", {
           video_id: testimonial.id,
           duration: Math.round(video!.duration),
         });
@@ -261,7 +261,7 @@ export function buildVideoPlayer(
       controls.classList.add("rw-vt__controls--visible");
 
       video.play().then(() => {
-        trackClick(apiBase, widgetId, "video_play", { video_id: testimonial.id });
+        trackClick(apiBase, config, "video_play", { video_id: testimonial.id });
         callbacks?.onPlay?.(testimonial.id);
       }).catch(() => {
         // Autoplay may be blocked; show play button again
@@ -295,7 +295,7 @@ export function buildVideoPlayer(
       video.play();
     } else {
       video.pause();
-      trackClick(apiBase, widgetId, "video_pause", {
+      trackClick(apiBase, config, "video_pause", {
         video_id: testimonial.id,
         current_time: Math.round(video.currentTime),
         duration: Math.round(video.duration),

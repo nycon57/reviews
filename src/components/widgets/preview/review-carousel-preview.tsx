@@ -1,24 +1,38 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Star, ChevronLeft, ChevronRight, Play, Pause, Home } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   type WidgetThemeColors,
   type WidgetContent,
   type PreviewReview,
   DEFAULT_STAR_FILLED,
   DEFAULT_STAR_EMPTY,
-  SOURCE_LABELS,
   getInitials,
+  getPreviewBodyStyle,
+  getPreviewBodyTextStyle,
+  getPreviewHeadingStyle,
+  getPreviewMetaStyle,
   truncateText,
   formatDate,
-  getLoanTypeColor,
+  previewT,
 } from "./shared";
+import { SourceBadge } from "./shared-components";
+import {
+  applyFeaturedStyle,
+  getPreviewCardClasses,
+  getPreviewCardStyle,
+  getPreviewContainerStyle,
+  resolvePreviewCardStyle,
+  type PreviewCardStyle,
+  type WidgetThemeLayout,
+} from "./layout";
 
 /**
  * Dashboard preview component for the Review Carousel Widget.
  * Mirrors the embed.js renderer output using React for WYSIWYG editing.
- * Includes play/pause control and transition preview.
+ * Autoplay pauses on hover; arrow controls sit outside the carousel viewport.
  */
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -38,20 +52,20 @@ interface ReviewCarouselPreviewProps {
   content?: WidgetContent;
   colors?: WidgetThemeColors;
   carousel?: WidgetCarousel;
-  maxWidth?: string;
-  borderRadius?: string;
+  layout?: WidgetThemeLayout;
 }
 
 // ── Stars ────────────────────────────────────────────────────────────
 
-function StarRating({ rating, filledColor, emptyColor, size = 16 }: {
+function StarRating({ rating, filledColor, emptyColor, size = 16, lang }: {
   rating: number;
   filledColor: string;
   emptyColor: string;
   size?: number;
+  lang?: string;
 }) {
   return (
-    <div className="flex gap-0.5" role="img" aria-label={`${rating} out of 5 stars`}>
+    <div className="flex gap-0.5" role="img" aria-label={previewT(lang, "starsAriaLabel", { rating })}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
@@ -67,66 +81,88 @@ function StarRating({ rating, filledColor, emptyColor, size = 16 }: {
 
 // ── Review Card ──────────────────────────────────────────────────────
 
-function CarouselReviewCard({ review, content, starFilled, starEmpty }: {
+function CarouselReviewCard({ review, content, cardStyle, starFilled, starEmpty, accentColor, layout }: {
   review: PreviewReview;
   content: WidgetContent;
+  cardStyle: PreviewCardStyle;
   starFilled: string;
   starEmpty: string;
+  accentColor: string;
+  layout?: WidgetThemeLayout;
 }) {
-  const cardStyle = content.cardStyle ?? "bordered";
+  const lang = content.language;
   const dateFormat = content.dateFormat ?? "relative";
   const truncLen = content.truncateLength ?? 200;
+  const featured = !!review.featured;
 
-  const cardClasses = [
-    "p-4 rounded-lg transition-shadow h-full",
-    cardStyle === "bordered" && "border border-gray-200 bg-white",
-    cardStyle === "shadow" && "bg-white shadow-sm hover:shadow-md",
-    cardStyle === "flat" && "bg-gray-50",
-  ].filter(Boolean).join(" ");
+  const cardClasses = getPreviewCardClasses(
+    cardStyle,
+    "p-4 transition-shadow h-full",
+  );
+
+  let inlineStyle = getPreviewCardStyle(cardStyle, layout);
+  if (featured) {
+    inlineStyle = applyFeaturedStyle(inlineStyle, accentColor);
+  }
 
   return (
-    <article className={cardClasses}>
+    <article className={cardClasses} style={inlineStyle}>
       <div className="flex items-center gap-2.5 mb-2">
         {content.showAvatar !== false && (
-          <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-500 flex-shrink-0">
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+            style={{
+              background: "var(--rw-surface-strong, #e5e7eb)",
+              color: "var(--rw-text-muted, #6b7280)",
+            }}
+          >
             {getInitials(review.reviewer_name)}
           </div>
         )}
         <div className="flex-1 min-w-0">
-          {review.reviewer_name && <span className="block text-sm font-semibold truncate">{review.reviewer_name}</span>}
+          <div className="flex items-center gap-1.5">
+            {review.reviewer_name && (
+              <span
+                className="text-sm font-semibold truncate"
+                style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
+              >
+                {review.reviewer_name}
+              </span>
+            )}
+            {featured && (
+              <span
+                className="inline-flex items-center gap-0.5 shrink-0 px-1.5 py-px text-[10px] font-semibold rounded"
+                style={{
+                  background: `color-mix(in srgb, ${accentColor} 15%, transparent)`,
+                  color: accentColor,
+                }}
+              >
+                <Star size={9} fill="currentColor" />
+                {previewT(lang, "featured")}
+              </span>
+            )}
+          </div>
           {content.showDate !== false && review.review_date && (
-            <span className="block text-xs text-gray-400">{formatDate(review.review_date, dateFormat)}</span>
+            <span className="block text-xs text-gray-400" style={getPreviewMetaStyle("#9ca3af")}>
+              {formatDate(review.review_date, dateFormat, lang)}
+            </span>
           )}
         </div>
       </div>
 
       <div className="mb-2">
-        <StarRating rating={review.rating} filledColor={starFilled} emptyColor={starEmpty} />
+        <StarRating rating={review.rating} filledColor={starFilled} emptyColor={starEmpty} lang={lang} />
       </div>
 
       {review.text && (
-        <p className="text-sm leading-relaxed text-gray-700">
+        <p className="text-sm leading-relaxed text-gray-700" style={getPreviewBodyTextStyle()}>
           {truncLen > 0 ? truncateText(review.text, truncLen) : review.text}
         </p>
       )}
 
       <div className="flex flex-wrap gap-1.5 mt-2">
         {content.showSource !== false && review.source && (
-          <span className="text-[11px] text-gray-400 capitalize">via {SOURCE_LABELS[review.source] ?? review.source}</span>
-        )}
-        {review.loan_type && (
-          <span
-            className="inline-block px-2 py-0.5 text-[11px] font-medium rounded"
-            style={{ background: getLoanTypeColor(review.loan_type).bg, color: getLoanTypeColor(review.loan_type).text }}
-          >
-            {review.loan_type}
-          </span>
-        )}
-        {review.first_time_homebuyer && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-green-800 bg-green-100 rounded">
-            <Home size={10} />
-            First-Time Buyer
-          </span>
+          <SourceBadge source={review.source} lang={lang} />
         )}
       </div>
     </article>
@@ -140,22 +176,24 @@ export function ReviewCarouselPreview({
   content = {},
   colors = {},
   carousel = {},
-  maxWidth,
-  borderRadius,
+  layout,
 }: ReviewCarouselPreviewProps) {
+  const lang = content.language;
   const starFilled = colors.starFilled ?? DEFAULT_STAR_FILLED;
   const starEmpty = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
+  const accentColor = colors.accent ?? colors.primary ?? DEFAULT_STAR_FILLED;
 
   const transition = carousel.transition ?? "slide";
-  const visibleCards = carousel.visibleCards ?? carousel.slidesPerView ?? 1;
+  const visibleCards = carousel.visibleCards ?? carousel.slidesPerView ?? 3;
   const interval = carousel.interval ?? 5000;
   const autoplay = carousel.autoplay !== false;
   const showArrows = carousel.showArrows !== false;
   const showDots = carousel.showDots !== false;
 
+  const hasOverflow = reviews.length > visibleCards;
   const maxIndex = Math.max(0, reviews.length - visibleCards);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(autoplay);
+  const [isHovered, setIsHovered] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const goTo = useCallback((index: number) => {
@@ -170,36 +208,28 @@ export function ReviewCarouselPreview({
     setCurrentIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
   }, [maxIndex]);
 
-  // Auto-play
+  // Auto-play — pauses on hover
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    if (isPlaying && reviews.length > visibleCards) {
+    if (autoplay && !isHovered && hasOverflow) {
       timerRef.current = setInterval(next, interval);
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPlaying, interval, next, reviews.length, visibleCards]);
+  }, [autoplay, isHovered, interval, next, hasOverflow]);
 
   const dotCount = maxIndex + 1;
 
-  const containerStyle: React.CSSProperties = {
-    "--rw-primary": colors.primary ?? "#52796f",
-    "--rw-bg": colors.background ?? "#ffffff",
-    "--rw-text": colors.text ?? "#1a1a2e",
-    "--rw-border": colors.border ?? "#e5e7eb",
-    borderRadius: borderRadius ?? "8px",
-    padding: "16px",
-    background: colors.background ?? "#ffffff",
-    color: colors.text ?? "#1a1a2e",
-  } as React.CSSProperties;
+  const cardStyle = resolvePreviewCardStyle(layout?.cardStyle, content.cardStyle);
+  const containerStyle = getPreviewContainerStyle(colors, layout);
 
   // Compute slide transform
   const getSlideTransform = (): React.CSSProperties => {
     if (transition === "slide") {
       return {
         transform: `translateX(-${currentIndex * (100 / visibleCards)}%)`,
-        transition: "transform 300ms ease",
+        transition: "transform 300ms cubic-bezier(0.25, 0.1, 0.25, 1)",
       };
     }
     return {};
@@ -241,39 +271,38 @@ export function ReviewCarouselPreview({
       className="text-sm leading-normal antialiased"
       style={containerStyle}
       role="region"
-      aria-label={content.headerText ?? "Customer Reviews"}
+      aria-label={content.headerText ?? previewT(lang, "customerReviews")}
       aria-roledescription="carousel"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header with play/pause */}
-      <div className="flex items-center justify-between mb-3">
-        {content.showHeader !== false && content.headerText && (
-          <h3 className="text-lg font-bold" style={{ color: "var(--rw-text, #1a1a2e)" }}>
-            {content.headerText}
-          </h3>
-        )}
-        {reviews.length > visibleCards && (
-          <button
-            type="button"
-            onClick={() => setIsPlaying((p) => !p)}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border transition-colors"
-            style={{
-              color: "var(--rw-primary, #52796f)",
-              borderColor: "var(--rw-border, #e5e7eb)",
-            }}
-            aria-label={isPlaying ? "Pause carousel" : "Play carousel"}
-          >
-            {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-            {isPlaying ? "Pause" : "Play"}
-          </button>
-        )}
-      </div>
+      {/* Header */}
+      {content.showHeader !== false && content.headerText && (
+        <h3 className="text-lg font-bold mb-4" style={getPreviewHeadingStyle()}>
+          {content.headerText}
+        </h3>
+      )}
 
       {reviews.length === 0 ? (
-        <div className="py-8 text-center text-gray-400 text-sm">No reviews yet.</div>
+        <div className="py-8 text-center text-gray-400 text-sm">{previewT(lang, "noReviewsYet")}</div>
       ) : (
-        <div className="relative">
+        <div className="flex items-center gap-2">
+          {/* Prev arrow — outside viewport */}
+          {showArrows && hasOverflow && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={prev}
+              className="h-8 w-8 shrink-0 rounded-full"
+              style={{ color: "var(--rw-text, #1a1a2e)" }}
+              aria-label={previewT(lang, "previousReviews")}
+            >
+              <ChevronLeft size={16} />
+            </Button>
+          )}
+
           {/* Viewport */}
-          <div className="overflow-hidden">
+          <div className="overflow-hidden flex-1 min-w-0">
             <div
               className={isGridLayout ? "grid" : "flex"}
               style={{
@@ -297,53 +326,46 @@ export function ReviewCarouselPreview({
                   <CarouselReviewCard
                     review={review}
                     content={content}
+                    cardStyle={cardStyle}
                     starFilled={starFilled}
                     starEmpty={starEmpty}
+                    accentColor={accentColor}
+                    layout={layout}
                   />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Arrows */}
-          {showArrows && reviews.length > visibleCards && (
-            <>
-              <button
-                type="button"
-                onClick={prev}
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/95 border border-gray-200 flex items-center justify-center z-10 transition-shadow hover:shadow-md"
-                style={{ color: "var(--rw-text, #1a1a2e)" }}
-                aria-label="Previous reviews"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={next}
-                className="absolute right-0 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/95 border border-gray-200 flex items-center justify-center z-10 transition-shadow hover:shadow-md"
-                style={{ color: "var(--rw-text, #1a1a2e)" }}
-                aria-label="Next reviews"
-              >
-                <ChevronRight size={16} />
-              </button>
-            </>
+          {/* Next arrow — outside viewport */}
+          {showArrows && hasOverflow && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={next}
+              className="h-8 w-8 shrink-0 rounded-full"
+              style={{ color: "var(--rw-text, #1a1a2e)" }}
+              aria-label={previewT(lang, "nextReviews")}
+            >
+              <ChevronRight size={16} />
+            </Button>
           )}
         </div>
       )}
 
       {/* Dots */}
       {showDots && dotCount > 1 && (
-        <div className="flex justify-center gap-1.5 pt-3" role="tablist" aria-label="Review slides">
+        <div className="flex justify-center gap-1.5 pt-4" role="tablist" aria-label={previewT(lang, "reviewSlides")}>
           {Array.from({ length: dotCount }, (_, i) => (
             <button
               key={i}
               type="button"
-              className={`w-2 h-2 rounded-full border-none transition-all ${
-                i === currentIndex ? "scale-125" : "bg-gray-300 hover:bg-gray-400"
+              className={`h-1.5 rounded-full border-none transition-all duration-200 ${
+                i === currentIndex ? "w-5" : "w-1.5 bg-gray-300 hover:bg-gray-400"
               }`}
               style={i === currentIndex ? { background: "var(--rw-primary, #52796f)" } : undefined}
               role="tab"
-              aria-label={`Go to slide ${i + 1}`}
+              aria-label={previewT(lang, "goToSlide", { n: i + 1 })}
               aria-selected={i === currentIndex}
               onClick={() => goTo(i)}
             />
@@ -371,13 +393,13 @@ export function ReviewCarouselPreview({
         <div className="mt-3 p-2.5 bg-gray-50 rounded border border-gray-100">
           <div className="flex items-center gap-1.5 mb-1">
             <Home size={16} className="flex-shrink-0 text-gray-500" />
-            <span className="text-[11px] font-semibold text-gray-600">Equal Housing Lender</span>
+            <span className="text-[11px] font-semibold text-gray-600">{previewT(lang, "equalHousingLender")}</span>
           </div>
           <p className="text-[10px] leading-snug text-gray-500 mb-1">
-            {content.disclaimerText || "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice."}
+            {content.disclaimerText || previewT(lang, "defaultDisclaimer")}
           </p>
           <a href="https://www.nmlsconsumeraccess.org" target="_blank" rel="noopener noreferrer" className="text-[10px] no-underline hover:underline" style={{ color: "var(--rw-primary, #52796f)" }}>
-            NMLS Consumer Access
+            {previewT(lang, "nmlsConsumerAccess")}
           </a>
         </div>
       )}
@@ -385,7 +407,7 @@ export function ReviewCarouselPreview({
       {/* Branding */}
       {content.showBranding !== false && (
         <div className="mt-3 pt-2 border-t border-gray-100 text-[11px] text-gray-400 text-center">
-          Powered by{" "}
+          {previewT(lang, "poweredBy")}{" "}
           <a href="https://repwell.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 no-underline hover:underline">
             RepWell
           </a>

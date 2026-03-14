@@ -76,7 +76,7 @@ export function PricingCard({
             : "hover:border-repwell-teal-300/30"
         )}
       >
-        <CardHeader className="text-center pb-2">
+        <CardHeader variant="plain" className="text-center pb-2">
           <CardTitle className="text-heading-md text-repwell-teal-500">{tier}</CardTitle>
           {description && (
             <CardDescription className="text-body-sm">{description}</CardDescription>

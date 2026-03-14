@@ -45,7 +45,7 @@ export function CheckoutSuccessClient() {
   return (
     <div className="container mx-auto max-w-lg py-16">
       <Card className="text-center">
-        <CardHeader className="pb-2">
+        <CardHeader variant="plain" className="pb-2">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>

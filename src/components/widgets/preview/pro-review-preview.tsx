@@ -8,11 +8,24 @@ import {
   getInitials,
   truncateText,
   formatDate,
-  getLoanTypeColor,
-  SOURCE_LABELS,
+  getPreviewBodyStyle,
+  getPreviewBodyTextStyle,
+  getPreviewHeadingStyle,
+  getPreviewMetaStyle,
+  previewT,
   DEFAULT_STAR_FILLED,
   DEFAULT_STAR_EMPTY,
 } from "./shared";
+import { SourceBadge } from "./shared-components";
+import {
+  applyFeaturedStyle,
+  getPreviewCardClasses,
+  getPreviewCardStyle,
+  getPreviewContainerStyle,
+  resolvePreviewCardStyle,
+  type PreviewCardStyle,
+  type WidgetThemeLayout,
+} from "./layout";
 
 /**
  * Dashboard preview component for the Pro Review Widget.
@@ -37,8 +50,7 @@ interface ProReviewPreviewProps {
   reviews: PreviewReview[];
   content?: WidgetContent;
   colors?: WidgetThemeColors;
-  maxWidth?: string;
-  borderRadius?: string;
+  layout?: WidgetThemeLayout;
 }
 
 // ── Stars Component ──────────────────────────────────────────────────
@@ -47,16 +59,18 @@ function StarRating({
   rating,
   filledColor,
   emptyColor,
+  lang,
 }: {
   rating: number;
   filledColor: string;
   emptyColor: string;
+  lang?: string;
 }) {
   return (
     <div
       className="flex gap-0.5"
       role="img"
-      aria-label={`${rating} out of 5 stars`}
+      aria-label={previewT(lang, "starsAriaLabel", { rating })}
     >
       {Array.from({ length: 5 }, (_, i) => (
         <Star
@@ -84,6 +98,7 @@ function ProfileHeader({
   starFilled: string;
   starEmpty: string;
 }) {
+  const lang = content.language;
   return (
     <div
       className="flex items-center gap-4 pb-4 mb-4"
@@ -95,7 +110,7 @@ function ProfileHeader({
           src={profile.photo_url ?? profile.avatar_url!}
           alt={profile.full_name ?? "Professional"}
           className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-          style={{ background: "#e5e7eb" }}
+          style={{ background: "var(--rw-surface-strong, #e5e7eb)" }}
         />
       ) : (
         <div
@@ -110,14 +125,16 @@ function ProfileHeader({
         {profile.full_name && (
           <div
             className="text-lg font-bold"
-            style={{ color: "var(--rw-text, #1a1a2e)" }}
+            style={getPreviewHeadingStyle()}
           >
             {profile.full_name}
           </div>
         )}
 
         {profile.title && (
-          <div className="text-[13px] text-gray-500 mb-1">{profile.title}</div>
+          <div className="text-[13px] text-gray-500 mb-1" style={getPreviewMetaStyle()}>
+            {profile.title}
+          </div>
         )}
 
         {/* NMLS is mandatory for Pro widgets per SAFE Act */}
@@ -127,6 +144,7 @@ function ProfileHeader({
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-[var(--rw-primary,#52796f)] transition-colors no-underline hover:underline"
+            style={getPreviewMetaStyle()}
           >
             NMLS# {profile.nmls_id}
             <ExternalLink size={10} />
@@ -134,8 +152,8 @@ function ProfileHeader({
         )}
 
         {profile.licensing_states && profile.licensing_states.length > 0 && (
-          <div className="text-xs text-gray-500 mt-1">
-            Licensed in {profile.licensing_states.join(", ")}
+          <div className="text-xs text-gray-500 mt-1" style={getPreviewMetaStyle()}>
+            {previewT(lang, "licensedIn")} {profile.licensing_states.join(", ")}
           </div>
         )}
 
@@ -143,7 +161,7 @@ function ProfileHeader({
           <div className="flex items-center gap-1.5 mt-1.5">
             <span
               className="text-base font-bold"
-              style={{ color: "var(--rw-text, #1a1a2e)" }}
+              style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
             >
               {profile.average_rating.toFixed(1)}
             </span>
@@ -151,10 +169,11 @@ function ProfileHeader({
               rating={Math.round(profile.average_rating)}
               filledColor={starFilled}
               emptyColor={starEmpty}
+              lang={lang}
             />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400" style={getPreviewMetaStyle("#9ca3af")}>
               ({profile.total_reviews}{" "}
-              {profile.total_reviews === 1 ? "review" : "reviews"})
+              {previewT(lang, profile.total_reviews === 1 ? "review" : "reviews")})
             </span>
           </div>
         )}
@@ -168,29 +187,40 @@ function ProfileHeader({
 function ReviewCard({
   review,
   content,
+  cardStyle,
   starFilled,
   starEmpty,
+  accentColor,
+  layout,
 }: {
   review: PreviewReview;
   content: WidgetContent;
+  cardStyle: PreviewCardStyle;
   starFilled: string;
   starEmpty: string;
+  accentColor: string;
+  layout?: WidgetThemeLayout;
 }) {
-  const cardStyle = content.cardStyle ?? "bordered";
+  const lang = content.language;
   const dateFormat = content.dateFormat ?? "relative";
   const truncLen = content.truncateLength ?? 300;
+  const featured = !!review.featured;
+  const cardClasses = getPreviewCardClasses(
+    cardStyle,
+    "p-4 transition-shadow",
+  );
 
-  const cardClasses = [
-    "p-4 rounded-lg transition-shadow",
-    cardStyle === "bordered" && "border border-gray-200 bg-white",
-    cardStyle === "shadow" && "bg-white shadow-sm hover:shadow-md",
-    cardStyle === "flat" && "bg-gray-50",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  let inlineStyle = getPreviewCardStyle(cardStyle, layout);
+  if (featured) {
+    inlineStyle = applyFeaturedStyle(inlineStyle, accentColor);
+  }
 
   return (
-    <article className={cardClasses} tabIndex={0}>
+    <article
+      className={cardClasses}
+      style={inlineStyle}
+      tabIndex={0}
+    >
       {/* Top: avatar + name + date */}
       <div className="flex items-center gap-2.5 mb-2">
         {content.showAvatar !== false && (
@@ -200,9 +230,16 @@ function ReviewCard({
                 src={review.avatar_url}
                 alt={review.reviewer_name ?? "Reviewer"}
                 className="w-9 h-9 rounded-full object-cover flex-shrink-0 bg-gray-200"
+                style={{ background: "var(--rw-surface-strong, #e5e7eb)" }}
               />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-500 flex-shrink-0">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0"
+                style={{
+                  background: "var(--rw-surface-strong, #e5e7eb)",
+                  color: "var(--rw-text-muted, #6b7280)",
+                }}
+              >
                 {getInitials(review.reviewer_name)}
               </div>
             )}
@@ -210,14 +247,31 @@ function ReviewCard({
         )}
 
         <div className="flex-1 min-w-0">
-          {review.reviewer_name && (
-            <span className="block text-sm font-semibold truncate">
-              {review.reviewer_name}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5">
+            {review.reviewer_name && (
+              <span
+                className="text-sm font-semibold truncate"
+                style={getPreviewBodyStyle("var(--rw-text, #1a1a2e)")}
+              >
+                {review.reviewer_name}
+              </span>
+            )}
+            {featured && (
+              <span
+                className="inline-flex items-center gap-0.5 shrink-0 px-1.5 py-px text-[10px] font-semibold rounded"
+                style={{
+                  background: `color-mix(in srgb, ${accentColor} 15%, transparent)`,
+                  color: accentColor,
+                }}
+              >
+                <Star size={9} fill="currentColor" />
+                {previewT(lang, "featured")}
+              </span>
+            )}
+          </div>
           {content.showDate !== false && review.review_date && (
-            <span className="block text-xs text-gray-400">
-              {formatDate(review.review_date, dateFormat)}
+            <span className="block text-xs text-gray-400" style={getPreviewMetaStyle("#9ca3af")}>
+              {formatDate(review.review_date, dateFormat, lang)}
             </span>
           )}
         </div>
@@ -229,12 +283,13 @@ function ReviewCard({
           rating={review.rating}
           filledColor={starFilled}
           emptyColor={starEmpty}
+          lang={lang}
         />
       </div>
 
       {/* Text */}
       {review.text && (
-        <p className="text-sm leading-relaxed text-gray-700">
+        <p className="text-sm leading-relaxed text-gray-700" style={getPreviewBodyTextStyle()}>
           {truncLen > 0 ? truncateText(review.text, truncLen) : review.text}
         </p>
       )}
@@ -242,29 +297,9 @@ function ReviewCard({
       {/* Tags: source, loan type, FTHB */}
       <div className="flex flex-wrap gap-1.5 mt-2">
         {content.showSource !== false && review.source && (
-          <span className="text-[11px] text-gray-400 capitalize">
-            via {SOURCE_LABELS[review.source] ?? review.source}
-          </span>
+          <SourceBadge source={review.source} lang={lang} />
         )}
 
-        {review.loan_type && (
-          <span
-            className="inline-block px-2 py-0.5 text-[11px] font-medium rounded"
-            style={{
-              background: getLoanTypeColor(review.loan_type).bg,
-              color: getLoanTypeColor(review.loan_type).text,
-            }}
-          >
-            {review.loan_type}
-          </span>
-        )}
-
-        {review.first_time_homebuyer && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-green-800 bg-green-100 rounded">
-            <Home size={10} />
-            First-Time Buyer
-          </span>
-        )}
       </div>
     </article>
   );
@@ -277,23 +312,15 @@ export function ProReviewPreview({
   reviews,
   content = {},
   colors = {},
-  maxWidth,
-  borderRadius,
+  layout,
 }: ProReviewPreviewProps) {
+  const lang = content.language;
   const starFilled = colors.starFilled ?? DEFAULT_STAR_FILLED;
   const starEmpty = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
+  const accentColor = colors.accent ?? colors.primary ?? DEFAULT_STAR_FILLED;
   const columns = content.columns ?? 1;
-
-  const containerStyle: React.CSSProperties = {
-    "--rw-primary": colors.primary ?? "#52796f",
-    "--rw-bg": colors.background ?? "#ffffff",
-    "--rw-text": colors.text ?? "#1a1a2e",
-    "--rw-border": colors.border ?? "#e5e7eb",
-    borderRadius: borderRadius ?? "8px",
-    padding: "16px",
-    background: colors.background ?? "#ffffff",
-    color: colors.text ?? "#1a1a2e",
-  } as React.CSSProperties;
+  const cardStyle = resolvePreviewCardStyle(layout?.cardStyle, content.cardStyle);
+  const containerStyle = getPreviewContainerStyle(colors, layout);
 
   return (
     <div
@@ -302,7 +329,7 @@ export function ProReviewPreview({
       role="region"
       aria-label={
         content.headerText ??
-        `Reviews for ${profile?.full_name ?? "Professional"}`
+        previewT(lang, "reviewsFor", { name: profile?.full_name ?? "Professional" })
       }
     >
       {/* Pro Profile */}
@@ -317,8 +344,11 @@ export function ProReviewPreview({
 
       {/* Reviews */}
       {reviews.length === 0 ? (
-        <div className="py-8 text-center text-gray-400 text-sm">
-          No reviews yet.
+        <div
+          className="py-8 text-center text-sm"
+          style={{ color: "var(--rw-text-subtle, #9ca3af)" }}
+        >
+          {previewT(lang, "noReviewsYet")}
         </div>
       ) : (
         <div
@@ -333,8 +363,11 @@ export function ProReviewPreview({
               key={review.id}
               review={review}
               content={content}
+              cardStyle={cardStyle}
               starFilled={starFilled}
               starEmpty={starEmpty}
+              accentColor={accentColor}
+              layout={layout}
             />
           ))}
         </div>
@@ -378,7 +411,7 @@ export function ProReviewPreview({
                 el.style.color = colors.primary ?? "#52796f";
               }}
             >
-              Write a Review
+              {previewT(lang, "writeReview")}
             </a>
           )}
         </div>
@@ -386,14 +419,32 @@ export function ProReviewPreview({
 
       {/* Equal Housing Lender disclaimer */}
       {content.showDisclaimer && (
-        <div className="mt-3 p-2.5 bg-gray-50 rounded border border-gray-100">
+        <div
+          className="mt-3 p-2.5 rounded border"
+          style={{
+            background: "var(--rw-surface-muted, #f9fafb)",
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+          }}
+        >
           <div className="flex items-center gap-1.5 mb-1">
-            <Home size={16} className="flex-shrink-0 text-gray-500" />
-            <span className="text-[11px] font-semibold text-gray-600">Equal Housing Lender</span>
+            <Home
+              size={16}
+              className="flex-shrink-0"
+              style={{ color: "var(--rw-text-muted, #6b7280)" }}
+            />
+            <span
+              className="text-[11px] font-semibold"
+              style={{ color: "var(--rw-text, #1a1a2e)" }}
+            >
+              {previewT(lang, "equalHousingLender")}
+            </span>
           </div>
-          <p className="text-[10px] leading-snug text-gray-500 mb-1">
+          <p
+            className="text-[10px] leading-snug mb-1"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
+          >
             {content.disclaimerText ||
-              "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice."}
+              previewT(lang, "defaultDisclaimer")}
           </p>
           <a
             href="https://www.nmlsconsumeraccess.org"
@@ -402,20 +453,27 @@ export function ProReviewPreview({
             className="text-[10px] no-underline hover:underline"
             style={{ color: "var(--rw-primary, #52796f)" }}
           >
-            NMLS Consumer Access
+            {previewT(lang, "nmlsConsumerAccess")}
           </a>
         </div>
       )}
 
       {/* Branding */}
       {content.showBranding !== false && (
-        <div className="mt-4 pt-3 border-t border-gray-100 text-[11px] text-gray-400 text-center">
-          Powered by{" "}
+        <div
+          className="mt-4 pt-3 border-t text-[11px] text-center"
+          style={{
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+            color: "var(--rw-text-subtle, #9ca3af)",
+          }}
+        >
+          {previewT(lang, "poweredBy")}{" "}
           <a
             href="https://repwell.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-500 no-underline hover:underline"
+            className="no-underline hover:underline"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
           >
             RepWell
           </a>

@@ -9,7 +9,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-xl border border-border bg-card text-card-foreground shadow-card dark:shadow-none transition-all duration-200 ease-out hover:shadow-card-hover dark:hover:shadow-none",
+      "rounded-xl border border-border/60 bg-card text-card-foreground shadow-elevation-1 dark:border-border dark:shadow-none",
       className
     )}
     {...props}
@@ -17,13 +17,29 @@ const Card = React.forwardRef<
 ))
 Card.displayName = "Card"
 
+const headerVariants = {
+  default:
+    "bg-gradient-to-r from-repwell-sage-100/40 to-transparent dark:from-repwell-teal-300/15 dark:to-transparent border-b border-border/50 rounded-t-xl",
+  plain: "",
+  "accent-amber":
+    "bg-gradient-to-r from-amber-50/60 to-transparent dark:from-amber-950/30 dark:to-transparent border-b border-amber-200/30 dark:border-amber-800/30 rounded-t-xl",
+  "accent-green":
+    "bg-gradient-to-r from-green-50/50 to-transparent dark:from-green-950/30 dark:to-transparent border-b border-green-200/30 dark:border-green-800/30 rounded-t-xl",
+};
+
+type CardHeaderVariant = keyof typeof headerVariants;
+
 const CardHeader = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+  React.HTMLAttributes<HTMLDivElement> & { variant?: CardHeaderVariant }
+>(({ className, variant = "default", ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    className={cn(
+      "flex flex-col space-y-1 px-6 py-4",
+      headerVariants[variant],
+      className
+    )}
     {...props}
   />
 ))
@@ -36,7 +52,7 @@ const CardTitle = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "text-heading-md text-heading-accent leading-none tracking-tight",
+      "text-lg font-semibold text-heading-accent leading-none tracking-tight",
       className
     )}
     {...props}
@@ -50,7 +66,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-body-sm text-label", className)}
+    className={cn("text-body-sm text-muted-foreground", className)}
     {...props}
   />
 ))

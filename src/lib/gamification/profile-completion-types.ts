@@ -266,8 +266,8 @@ export const PROFILE_COMPLETION_FIELDS: ProfileCompletionField[] = [
     points: 50,
     isRequired: false,
     tip: "Convert your best reviews into testimonials for marketing materials",
-    linkUrl: "/dashboard/share-studio",
-    linkLabel: "View Share Studio",
+    linkUrl: "/dashboard/reviews",
+    linkLabel: "View Reviews",
   },
   {
     id: "has_published_posts",

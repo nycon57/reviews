@@ -8,6 +8,7 @@ import {
   ManagerDashboardClient,
 } from "@/components/dashboard";
 import { EnhancedLeaderboard } from "@/components/gamification";
+import { TeamActivityMonitorCard } from "@/components/insights";
 import {
   getTeamMetrics,
   getUserComparison,
@@ -16,6 +17,7 @@ import {
   getLowPerformers,
   getTeamRatingTrend,
 } from "@/lib/dashboard";
+import { getTeamActivityMonitor } from "@/lib/ai";
 
 async function TeamStats() {
   const result = await getTeamMetrics();
@@ -68,6 +70,16 @@ async function AlertsSection() {
   return <PerformanceAlerts data={result.data} />;
 }
 
+async function TeamActivitySection() {
+  const result = await getTeamActivityMonitor();
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <TeamActivityMonitorCard data={result.data} />;
+}
+
 async function getInitialData() {
   const [comparisonResult, filterResult] = await Promise.all([
     getUserComparison(),
@@ -107,6 +119,11 @@ export async function TeamOverviewContent() {
       {/* Alerts */}
       <Suspense fallback={<CardSkeleton className="h-[200px]" />}>
         <AlertsSection />
+      </Suspense>
+
+      {/* Team activity monitor */}
+      <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
+        <TeamActivitySection />
       </Suspense>
 
       {/* Enhanced Leaderboard */}

@@ -13,7 +13,7 @@ import {
 } from "@/lib/sms/messages/actions";
 import { ConversationList } from "./conversation-list";
 import { ConversationDetail } from "./conversation-detail";
-import { EmptyState } from "./empty-state";
+import { MessagesEmptyState } from "./empty-state";
 
 export function MessagesView() {
   const [conversations, setConversations] = React.useState<ConversationListItem[]>([]);
@@ -208,7 +208,7 @@ export function MessagesView() {
               animate={{ opacity: 1 }}
               className="flex-1 flex items-center justify-center"
             >
-              <EmptyState
+              <MessagesEmptyState
                 type={conversations.length === 0 ? "no-conversations" : "no-selection"}
               />
             </motion.div>

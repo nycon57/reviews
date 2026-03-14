@@ -33,7 +33,7 @@ export function BlogCard({ post, featured = false }: BlogCardProps) {
             featured ? "border-primary/30 bg-primary/5" : ""
           }`}
         >
-          <CardHeader className="pb-3">
+          <CardHeader variant="plain" className="pb-3">
             <div className="flex items-center gap-2 mb-2">
               <Badge variant="secondary" className="text-xs">
                 {post.category}

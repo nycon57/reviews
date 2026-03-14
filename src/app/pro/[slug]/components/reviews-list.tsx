@@ -137,7 +137,7 @@ export function ReviewsList({
 
   return (
     <Card className={cn("border-t-4 border-t-repwell-sage-200", className)}>
-      <CardHeader className="flex flex-row items-center justify-between gap-4">
+      <CardHeader variant="plain" className="flex flex-row items-center justify-between gap-4">
         <CardTitle className="text-xl font-display text-repwell-teal-500">
           Customer Reviews
         </CardTitle>

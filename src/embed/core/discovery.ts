@@ -3,11 +3,29 @@
  * Looks for elements with [data-repwell-widget] attribute.
  */
 
+import type { WidgetEntityOverride } from "../types";
+
 const WIDGET_SELECTOR = "[data-repwell-widget]";
 
 export interface DiscoveredWidget {
   element: HTMLElement;
   widgetId: string;
+  entityOverride: WidgetEntityOverride | null;
+}
+
+function isEntityType(value: string | null): value is WidgetEntityOverride["entityType"] {
+  return value === "user" || value === "branch" || value === "organization";
+}
+
+export function readEntityOverride(element: HTMLElement): WidgetEntityOverride | null {
+  const entityType = element.getAttribute("data-repwell-entity-type");
+  if (!isEntityType(entityType)) return null;
+
+  const rawEntityId = element.getAttribute("data-repwell-entity-id");
+  return {
+    entityType,
+    entityId: rawEntityId,
+  };
 }
 
 export function discoverWidgets(): DiscoveredWidget[] {
@@ -24,7 +42,7 @@ export function discoverWidgets(): DiscoveredWidget[] {
       continue;
     }
 
-    widgets.push({ element, widgetId });
+    widgets.push({ element, widgetId, entityOverride: readEntityOverride(element) });
   }
 
   return widgets;

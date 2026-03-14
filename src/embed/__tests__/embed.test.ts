@@ -47,6 +47,23 @@ describe("discoverWidgets", () => {
     const widgets = discoverWidgets();
     expect(widgets).toHaveLength(0);
   });
+
+  it("captures optional entity override attributes", async () => {
+    const { discoverWidgets } = await import("../core/discovery");
+
+    const div = document.createElement("div");
+    div.setAttribute("data-repwell-widget", "widget-abc");
+    div.setAttribute("data-repwell-entity-type", "user");
+    div.setAttribute("data-repwell-entity-id", "123e4567-e89b-12d3-a456-426614174000");
+    document.body.appendChild(div);
+
+    const widgets = discoverWidgets();
+    expect(widgets).toHaveLength(1);
+    expect(widgets[0].entityOverride).toEqual({
+      entityType: "user",
+      entityId: "123e4567-e89b-12d3-a456-426614174000",
+    });
+  });
 });
 
 // ── Skeleton tests ──────────────────────────────────────────────────
@@ -385,6 +402,31 @@ describe("api-client", () => {
     );
   });
 
+  it("fetchConfig includes entity override query params", async () => {
+    const { fetchConfig } = await import("../core/api-client");
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ widget_id: "test" }),
+    });
+    globalThis.fetch = mockFetch;
+
+    const controller = new AbortController();
+    await fetchConfig(
+      "https://app.repwell.com",
+      "my-widget",
+      controller.signal,
+      {
+        entityType: "branch",
+        entityId: "123e4567-e89b-12d3-a456-426614174111",
+      }
+    );
+
+    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    expect(calledUrl).toContain("entityType=branch");
+    expect(calledUrl).toContain("entityId=123e4567-e89b-12d3-a456-426614174111");
+  });
+
   it("fetchReviews includes cursor and limit params", async () => {
     const { fetchReviews } = await import("../core/api-client");
 
@@ -402,19 +444,58 @@ describe("api-client", () => {
     expect(calledUrl).toContain("cursor=cursor-abc");
   });
 
+  it("fetchReviews includes entity override query params", async () => {
+    const { fetchReviews } = await import("../core/api-client");
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ reviews: [], pagination: {} }),
+    });
+    globalThis.fetch = mockFetch;
+
+    const controller = new AbortController();
+    await fetchReviews(
+      "https://app.repwell.com",
+      "my-widget",
+      controller.signal,
+      10,
+      undefined,
+      undefined,
+      {
+        entityType: "organization",
+        entityId: null,
+      }
+    );
+
+    const calledUrl = mockFetch.mock.calls[0][0] as string;
+    expect(calledUrl).toContain("entityType=organization");
+    expect(calledUrl).not.toContain("entityId=");
+  });
+
   it("throws on non-OK response", async () => {
     const { fetchConfig } = await import("../core/api-client");
 
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
-      status: 404,
-      json: () => Promise.resolve({}),
+      status: 400,
+      json: () => Promise.resolve({
+        error: "Entity overrides are not supported for this widget type",
+        code: "UNSUPPORTED_ENTITY_OVERRIDE",
+      }),
     });
 
     const controller = new AbortController();
     await expect(
       fetchConfig("https://app.repwell.com", "missing", controller.signal)
-    ).rejects.toThrow("HTTP 404");
+    ).rejects.toMatchObject<{
+      message: string;
+      status: number;
+      code: string;
+    }>({
+      message: "Entity overrides are not supported for this widget type",
+      status: 400,
+      code: "UNSUPPORTED_ENTITY_OVERRIDE",
+    });
   });
 });
 
@@ -667,6 +748,64 @@ describe("LO Review Widget", () => {
     renderWidget(shadow, loConfig, loReviews, "https://app.repwell.com");
 
     expect(shadow.querySelector(".rw-lo-profile")).not.toBeNull();
+  });
+
+  it("applies saved typography settings to embedded widget styles", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+
+    const themedConfig: PublicWidgetConfig = {
+      ...loConfig,
+      config: {
+        ...loConfig.config,
+        theme: {
+          typography: {
+            headerSize: "24px",
+            bodySize: "16px",
+          },
+        },
+      },
+    };
+
+    renderLoReviewWidget(shadow, themedConfig, loReviews, "");
+
+    const styleText = shadow.querySelector("style")?.textContent ?? "";
+
+    expect(host.style.getPropertyValue("--rw-heading-size")).toBe("24px");
+    expect(host.style.getPropertyValue("--rw-body-size")).toBe("16px");
+    expect(styleText).toMatch(
+      /\.rw-lo-profile__name\s*\{[^}]*font-size:\s*var\(--rw-heading-size,\s*18px\)/,
+    );
+    expect(styleText).toMatch(
+      /\.rw-lo-review__text\s*\{[^}]*font-size:\s*var\(--rw-body-size,\s*14px\)/,
+    );
+  });
+
+  it("applies saved layout settings to embedded widget styles", async () => {
+    const { renderLoReviewWidget } = await import("../widgets/lo-review");
+    const host = document.createElement("div");
+    const shadow = host.attachShadow({ mode: "open" });
+
+    const themedConfig: PublicWidgetConfig = {
+      ...loConfig,
+      config: {
+        ...loConfig.config,
+        theme: {
+          layout: {
+            maxWidth: "720px",
+            padding: "24px",
+            borderRadius: "16px",
+          },
+        },
+      },
+    };
+
+    renderLoReviewWidget(shadow, themedConfig, loReviews, "");
+
+    expect(host.style.getPropertyValue("--rw-max-width")).toBe("720px");
+    expect(host.style.getPropertyValue("--rw-padding")).toBe("24px");
+    expect(host.style.getPropertyValue("--rw-radius")).toBe("16px");
   });
 
   it("supports multi-column grid layout", async () => {

@@ -2,6 +2,7 @@ import type { WidgetType, WidgetEntityType } from "./types";
 
 /** Human-readable labels for widget types (DB enum → display string). */
 export const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
+  review_profile: "Review Profile",
   lo_review: "Individual Reviews",
   branch_review: "Branch Reviews",
   company_review: "Company Reviews",
@@ -15,6 +16,7 @@ export const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
 
 /** Short descriptions for the widget type selector grid. */
 export const WIDGET_TYPE_DESCRIPTIONS: Record<WidgetType, string> = {
+  review_profile: "Display reviews for a professional, branch, or organization with profile header",
   lo_review: "Display reviews for an individual professional with profile header",
   branch_review: "Aggregate reviews for a branch location",
   company_review: "Organization-level reviews with rating distribution",
@@ -33,23 +35,3 @@ export const ENTITY_TYPE_LABELS: Record<WidgetEntityType, string> = {
   organization: "Organization",
 };
 
-/**
- * Industry-specific field configuration.
- * Controls which mortgage-specific fields are visible and what defaults to use.
- */
-export const INDUSTRY_FIELDS = {
-  mortgage: {
-    showNMLS: true,
-    showLoanTypes: true,
-    showFirstTimeHomebuyer: true,
-    defaultJobTitle: "Loan Officer",
-  },
-  generic: {
-    showNMLS: false,
-    showLoanTypes: false,
-    showFirstTimeHomebuyer: false,
-    defaultJobTitle: "Professional",
-  },
-} as const;
-
-export type IndustryType = keyof typeof INDUSTRY_FIELDS;

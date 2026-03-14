@@ -96,9 +96,9 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
   .rw-spb-notification {
     background: var(--rw-bg, #ffffff);
     border: 1px solid var(--rw-border, #e5e7eb);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
-    padding: 14px 16px;
+    border-radius: var(--rw-radius, 12px);
+    box-shadow: var(--rw-shadow, 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06));
+    padding: var(--rw-padding, 14px 16px);
     width: 340px;
     max-width: calc(100vw - 32px);
     display: flex;
@@ -116,7 +116,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: var(--rw-body-size, 14px);
     font-weight: 600;
     flex-shrink: 0;
   }
@@ -134,7 +134,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
   }
 
   .rw-spb-notification__name {
-    font-size: 13px;
+    font-size: var(--rw-body-size-sm, 13px);
     font-weight: 600;
     color: var(--rw-text, #1a1a2e);
     white-space: nowrap;
@@ -143,7 +143,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
   }
 
   .rw-spb-notification__lo {
-    font-size: 11px;
+    font-size: var(--rw-caption-size, 11px);
     color: var(--rw-text-secondary, #6b7280);
     white-space: nowrap;
     overflow: hidden;
@@ -162,7 +162,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
   }
 
   .rw-spb-notification__snippet {
-    font-size: 12px;
+    font-size: var(--rw-meta-size, 12px);
     color: var(--rw-text-secondary, #6b7280);
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -191,13 +191,13 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
     background: var(--rw-bg, #ffffff);
     border-top: 1px solid var(--rw-border, #e5e7eb);
     border-bottom: 1px solid var(--rw-border, #e5e7eb);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    padding: 10px 24px;
+    box-shadow: var(--rw-shadow, 0 2px 12px rgba(0, 0, 0, 0.08));
+    padding: var(--rw-padding, 10px 24px);
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    font-size: 14px;
+    font-size: var(--rw-body-size, 14px);
     min-height: 48px;
   }
 
@@ -218,7 +218,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
 
   .rw-spb-counter__text {
     color: var(--rw-text-secondary, #6b7280);
-    font-size: 13px;
+    font-size: var(--rw-body-size-sm, 13px);
   }
 
   .rw-spb-counter__cta {
@@ -230,7 +230,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
     border-radius: 6px;
     background: var(--rw-accent, #4f46e5);
     color: #fff;
-    font-size: 13px;
+    font-size: var(--rw-body-size-sm, 13px);
     font-weight: 500;
     cursor: pointer;
     text-decoration: none;
@@ -246,9 +246,9 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
   .rw-spb-badge {
     background: var(--rw-bg, #ffffff);
     border: 1px solid var(--rw-border, #e5e7eb);
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    padding: 10px 14px;
+    border-radius: var(--rw-radius, 12px);
+    box-shadow: var(--rw-shadow, 0 4px 16px rgba(0, 0, 0, 0.1));
+    padding: var(--rw-padding, 10px 14px);
     width: 220px;
     max-width: calc(100vw - 32px);
     cursor: pointer;
@@ -271,7 +271,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: var(--rw-meta-size, 12px);
     font-weight: 600;
     flex-shrink: 0;
   }
@@ -282,7 +282,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
   }
 
   .rw-spb-badge__name {
-    font-size: 12px;
+    font-size: var(--rw-meta-size, 12px);
     font-weight: 600;
     color: var(--rw-text, #1a1a2e);
     white-space: nowrap;
@@ -317,11 +317,11 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
 
   .rw-spb-badge--hover {
     width: 280px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+    box-shadow: var(--rw-shadow, 0 8px 24px rgba(0, 0, 0, 0.14));
   }
 
   .rw-spb-badge__snippet {
-    font-size: 12px;
+    font-size: var(--rw-meta-size, 12px);
     color: var(--rw-text-secondary, #6b7280);
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -405,7 +405,7 @@ export const SOCIAL_PROOF_BANNER_STYLES = /* css */ `
       padding: 8px 12px;
       gap: 8px;
       flex-wrap: wrap;
-      font-size: 13px;
+      font-size: var(--rw-body-size-sm, 13px);
     }
   }
 

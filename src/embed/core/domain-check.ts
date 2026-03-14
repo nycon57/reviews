@@ -1,3 +1,5 @@
+import { WidgetApiError } from "./api-client";
+
 /**
  * Client-side domain validation for the embed script.
  *
@@ -28,7 +30,7 @@ export async function fetchWithDomainCheck<T>(
   try {
     return await fetchFn();
   } catch (err) {
-    if (err instanceof Error && err.message === "HTTP 403") {
+    if (err instanceof WidgetApiError && err.status === 403) {
       throw new DomainNotAllowedError(widgetId);
     }
     throw err;

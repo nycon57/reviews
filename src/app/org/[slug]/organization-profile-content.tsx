@@ -614,7 +614,7 @@ export function OrganizationProfileContent({
             {/* Testimonials Section */}
             {testimonials.length > 0 && (
               <Card className="border-t-4 border-t-repwell-sage-200">
-                <CardHeader>
+                <CardHeader variant="plain">
                   <CardTitle className="text-xl font-display text-repwell-teal-500 flex items-center gap-2">
                     <Quote className="h-5 w-5 text-repwell-teal-300" />
                     Customer Testimonials

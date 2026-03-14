@@ -16,9 +16,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { WidgetConfig, WidgetType } from "@/lib/widgets/types";
-import { WIDGET_TYPE_LABELS } from "@/lib/widgets/constants";
+import { WIDGET_TYPE_DESCRIPTIONS, WIDGET_TYPE_LABELS } from "@/lib/widgets/constants";
 
 const TYPE_ICONS: Record<WidgetType, React.ComponentType<{ size?: number; className?: string }>> = {
+  review_profile: Star,
   lo_review: User,
   branch_review: Building2,
   company_review: Building2,
@@ -40,6 +41,9 @@ export function WidgetCard({ widget }: WidgetCardProps) {
 
   const Icon = TYPE_ICONS[widget.widget_type as WidgetType] ?? BadgeIcon;
   const typeLabel = WIDGET_TYPE_LABELS[widget.widget_type as WidgetType] ?? widget.widget_type;
+  const typeDescription =
+    WIDGET_TYPE_DESCRIPTIONS[widget.widget_type as WidgetType] ??
+    "Customizable review widget for your website";
 
   const handleCustomize = () => {
     router.push(`/dashboard/widgets/${widget.id}`);
@@ -58,7 +62,7 @@ export function WidgetCard({ widget }: WidgetCardProps) {
 
   return (
     <div
-      className="group relative bg-card border border-border rounded-xl p-5 shadow-sm
+      className="group relative flex h-full flex-col rounded-xl border border-border bg-card p-5 shadow-sm
         hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
     >
       {/* Top row: icon */}
@@ -73,8 +77,12 @@ export function WidgetCard({ widget }: WidgetCardProps) {
         {typeLabel}
       </h3>
 
+      <p className="text-sm leading-5 text-muted-foreground">
+        {typeDescription}
+      </p>
+
       {/* Actions */}
-      <div className="flex items-center gap-2 mt-4">
+      <div className="mt-auto flex items-center gap-2 pt-4">
         <Button
           size="sm"
           onClick={handleCustomize}

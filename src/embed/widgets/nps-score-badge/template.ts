@@ -274,7 +274,7 @@ export function buildNpsScoreBadgeDOM(
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.addEventListener("click", () => {
-      trackClick(apiBase, config.widget_id, "click_cta");
+      trackClick(apiBase, config, "click_cta");
     });
     container = link;
   } else {

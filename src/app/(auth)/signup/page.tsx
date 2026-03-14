@@ -137,7 +137,7 @@ export default function SignUpPage() {
 
   return (
     <Card>
-      <CardHeader className="text-center">
+      <CardHeader variant="plain" className="text-center">
         <CardTitle className="text-2xl">Create an account</CardTitle>
         <CardDescription>
           Get started with RepWell for your organization

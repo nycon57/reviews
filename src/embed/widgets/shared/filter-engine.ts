@@ -36,7 +36,7 @@ export async function applyFilterChange(
 
   // Track filter_change event (skip internal reset marker)
   if (filterType !== "_reset") {
-    trackClick(apiBase, instance.widgetId, "filter_change", {
+    trackClick(apiBase, instance, "filter_change", {
       filter_type: filterType,
       filter_value: value,
     });
@@ -59,7 +59,8 @@ export async function applyFilterChange(
       controller.signal,
       limit,
       undefined,
-      instance.activeFilters
+      instance.activeFilters,
+      instance.entityOverride,
     );
 
     if (controller.signal.aborted) return;

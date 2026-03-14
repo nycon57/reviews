@@ -229,7 +229,7 @@ export function PublicSurveyForm({ survey }: PublicSurveyFormProps) {
   return (
     <SurveyContainer backgroundColor={backgroundColor}>
       <Card className="mx-auto max-w-xl shadow-lg">
-        <CardHeader className="space-y-4 pb-4">
+        <CardHeader variant="plain" className="space-y-4 pb-4">
           {/* Logo */}
           {logoUrl && (
             <div className="flex justify-center">

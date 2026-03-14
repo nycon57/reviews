@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Star, Home } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
@@ -9,12 +9,25 @@ import {
   type PreviewReview,
   DEFAULT_STAR_FILLED,
   DEFAULT_STAR_EMPTY,
-  SOURCE_LABELS,
   getInitials,
+  getPreviewBodyStyle,
+  getPreviewBodyTextStyle,
+  getPreviewHeadingStyle,
+  getPreviewMetaStyle,
   truncateText,
   formatDate,
-  getLoanTypeColor,
+  previewT,
 } from "./shared";
+import { SourceBadge } from "./shared-components";
+import {
+  getPreviewCardClasses,
+  applyFeaturedStyle,
+  getPreviewCardStyle,
+  getPreviewContainerStyle,
+  resolvePreviewCardStyle,
+  type PreviewCardStyle,
+  type WidgetThemeLayout,
+} from "./layout";
 
 /**
  * Dashboard preview component for the Review Wall Widget.
@@ -36,6 +49,7 @@ interface WidgetWall {
 
 interface WidgetFilters {
   featuredOnly?: boolean;
+  sortOrder?: string;
 }
 
 interface ReviewWallPreviewProps {
@@ -44,8 +58,7 @@ interface ReviewWallPreviewProps {
   colors?: WidgetThemeColors;
   wall?: WidgetWall;
   filters?: WidgetFilters;
-  maxWidth?: string;
-  borderRadius?: string;
+  layout?: WidgetThemeLayout;
   onColumnsChange?: (columns: number) => void;
 }
 
@@ -56,17 +69,19 @@ function StarRating({
   filledColor,
   emptyColor,
   size = 14,
+  lang,
 }: {
   rating: number;
   filledColor: string;
   emptyColor: string;
   size?: number;
+  lang?: string;
 }) {
   return (
     <div
       className="flex gap-0.5"
       role="img"
-      aria-label={`${rating} out of 5 stars`}
+      aria-label={previewT(lang, "starsAriaLabel", { rating })}
     >
       {Array.from({ length: 5 }, (_, i) => (
         <Star
@@ -86,54 +101,76 @@ function StarRating({
 function WallReviewCard({
   review,
   content,
+  cardStyle,
   starFilled,
   starEmpty,
   featured,
   accentColor,
+  layout,
 }: {
   review: PreviewReview;
   content: WidgetContent;
+  cardStyle: PreviewCardStyle;
   starFilled: string;
   starEmpty: string;
   featured?: boolean;
   accentColor: string;
+  layout?: WidgetThemeLayout;
 }) {
-  const cardStyle = content.cardStyle ?? "bordered";
+  const lang = content.language;
   const dateFormat = content.dateFormat ?? "relative";
 
-  const cardClasses = [
-    "p-4 rounded-lg transition-shadow break-inside-avoid",
-    cardStyle === "bordered" && "border border-gray-200 bg-white",
-    cardStyle === "shadow" && "bg-white shadow-sm hover:shadow-md",
-    cardStyle === "flat" && "bg-gray-50",
-    featured && "border-l-[3px]",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const cardClasses = getPreviewCardClasses(
+    cardStyle,
+    "p-4 transition-shadow break-inside-avoid",
+  );
 
-  const inlineStyle: React.CSSProperties = {};
+  let inlineStyle: React.CSSProperties = getPreviewCardStyle(cardStyle, layout);
   if (featured) {
-    inlineStyle.borderLeftColor = accentColor;
-    inlineStyle.background = `linear-gradient(135deg, ${accentColor}08 0%, ${accentColor}0d 100%)`;
+    inlineStyle = applyFeaturedStyle(inlineStyle, accentColor);
   }
 
   return (
     <article className={cardClasses} style={inlineStyle}>
       <div className="flex items-center gap-2.5 mb-2">
-        {content.showAvatar !== false && (
-          <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-semibold text-gray-500 flex-shrink-0">
+      {content.showAvatar !== false && (
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+            style={{
+              background: "var(--rw-surface-strong, #e5e7eb)",
+              color: "var(--rw-text-muted, #6b7280)",
+              ...getPreviewMetaStyle("var(--rw-text-muted, #6b7280)"),
+            }}
+          >
             {getInitials(review.reviewer_name)}
           </div>
         )}
         <div className="flex-1 min-w-0">
-          {review.reviewer_name && (
-            <span className="block text-sm font-semibold truncate">
-              {review.reviewer_name}
-            </span>
-          )}
+          <div className="flex items-center gap-1.5">
+            {review.reviewer_name && (
+              <span
+                className="font-semibold truncate"
+                style={getPreviewHeadingStyle("var(--rw-text, #1a1a2e)", 0.8)}
+              >
+                {review.reviewer_name}
+              </span>
+            )}
+            {featured && (
+              <span
+                className="inline-flex items-center gap-0.5 shrink-0 px-1.5 py-px text-[10px] font-semibold rounded"
+                style={{
+                  background: `color-mix(in srgb, ${accentColor} 15%, transparent)`,
+                  color: accentColor,
+                }}
+              >
+                <Star size={9} fill="currentColor" />
+                {previewT(lang, "featured")}
+              </span>
+            )}
+          </div>
           {content.showDate !== false && review.review_date && (
-            <span className="block text-xs text-gray-400">
-              {formatDate(review.review_date, dateFormat)}
+            <span className="block text-xs text-gray-400" style={getPreviewMetaStyle("#9ca3af")}>
+              {formatDate(review.review_date, dateFormat, lang)}
             </span>
           )}
         </div>
@@ -144,11 +181,12 @@ function WallReviewCard({
           rating={review.rating}
           filledColor={starFilled}
           emptyColor={starEmpty}
+          lang={lang}
         />
       </div>
 
       {review.text && (
-        <p className="text-sm leading-relaxed text-gray-700">
+        <p className="text-sm leading-relaxed text-gray-700" style={getPreviewBodyTextStyle()}>
           {content.truncateLength && content.truncateLength > 0
             ? truncateText(review.text, content.truncateLength)
             : review.text}
@@ -157,26 +195,7 @@ function WallReviewCard({
 
       <div className="flex flex-wrap gap-1.5 mt-2">
         {content.showSource !== false && review.source && (
-          <span className="text-[11px] text-gray-400 capitalize">
-            via {SOURCE_LABELS[review.source] ?? review.source}
-          </span>
-        )}
-        {review.loan_type && (
-          <span
-            className="inline-block px-2 py-0.5 text-[11px] font-medium rounded"
-            style={{
-              background: getLoanTypeColor(review.loan_type).bg,
-              color: getLoanTypeColor(review.loan_type).text,
-            }}
-          >
-            {review.loan_type}
-          </span>
-        )}
-        {review.first_time_homebuyer && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium text-green-800 bg-green-100 rounded">
-            <Home size={10} />
-            First-Time Buyer
-          </span>
+          <SourceBadge source={review.source} lang={lang} />
         )}
       </div>
     </article>
@@ -188,9 +207,11 @@ function WallReviewCard({
 function LoadMoreButton({
   onClick,
   primaryColor,
+  lang,
 }: {
   onClick: () => void;
   primaryColor: string;
+  lang?: string;
 }) {
   const [hovered, setHovered] = useState(false);
 
@@ -207,7 +228,7 @@ function LoadMoreButton({
         background: hovered ? primaryColor : "transparent",
       }}
     >
-      Load More Reviews
+      {previewT(lang, "loadMore")}
     </button>
   );
 }
@@ -241,6 +262,8 @@ function InfiniteScrollSentinel({
   return <div ref={ref} className="h-px w-full" />;
 }
 
+type SortOption = "featured" | "newest" | "oldest" | "highest" | "lowest";
+
 // ── Main Preview Component ──────────────────────────────────────────
 
 export function ReviewWallPreview({
@@ -249,10 +272,10 @@ export function ReviewWallPreview({
   colors = {},
   wall = {},
   filters = {},
-  maxWidth,
-  borderRadius,
+  layout,
   onColumnsChange,
 }: ReviewWallPreviewProps) {
+  const lang = content.language;
   const starFilled = colors.starFilled ?? DEFAULT_STAR_FILLED;
   const starEmpty = colors.starEmpty ?? DEFAULT_STAR_EMPTY;
   const accentColor = colors.accent ?? colors.primary ?? "#52796f";
@@ -261,67 +284,109 @@ export function ReviewWallPreview({
   const gap = wall.gap ?? 16;
   const perPage = content.reviewsPerPage ?? 12;
   const loadMoreMode = wall.loadMore ?? "button";
-  const featuredOnly = filters.featuredOnly ?? false;
+  // Resolve truncation: wall.truncateReviews or content.truncateLength > 0 both enable it
+  const truncateLen = wall.truncateReviews === true
+    ? (wall.truncateLength || content.truncateLength || 300)
+    : (content.truncateLength ?? 0);
+  const effectiveContent: WidgetContent = { ...content, truncateLength: truncateLen };
 
-  // Resolve truncation: mirror embed logic where wall.truncateReviews gates it
-  const shouldTruncate = wall.truncateReviews === true;
-  const effectiveContent: WidgetContent = shouldTruncate
-    ? { ...content, truncateLength: wall.truncateLength || content.truncateLength || 200 }
-    : { ...content, truncateLength: 0 };
-
-  const [visibleCount, setVisibleCount] = useState(
-    Math.min(perPage, reviews.length),
-  );
-  const [previewColumns, setPreviewColumns] = useState(columns);
-
-  // Sync state when props change
-  useEffect(() => {
-    setVisibleCount(Math.min(perPage, reviews.length));
-  }, [reviews.length, perPage]);
-
-  useEffect(() => {
-    setPreviewColumns(columns);
-  }, [columns]);
+  const [visibleCountState, setVisibleCountState] = useState(() => ({
+    perPage,
+    reviewsLength: reviews.length,
+    value: Math.min(perPage, reviews.length),
+  }));
+  const [previewColumnsState, setPreviewColumnsState] = useState(() => ({
+    sourceColumns: columns,
+    value: columns,
+  }));
+  const visibleCount =
+    visibleCountState.perPage === perPage &&
+    visibleCountState.reviewsLength === reviews.length
+      ? visibleCountState.value
+      : Math.min(perPage, reviews.length);
+  const previewColumns =
+    previewColumnsState.sourceColumns === columns
+      ? previewColumnsState.value
+      : columns;
 
   const handleColumnsChange = useCallback(
     (value: number[]) => {
       const newCols = value[0];
-      setPreviewColumns(newCols);
+      setPreviewColumnsState({ sourceColumns: columns, value: newCols });
       onColumnsChange?.(newCols);
     },
-    [onColumnsChange],
+    [columns, onColumnsChange],
   );
 
   const handleLoadMore = useCallback(() => {
-    setVisibleCount((prev) =>
-      Math.min(prev + perPage, reviews.length),
-    );
-  }, [perPage, reviews.length]);
+    setVisibleCountState({
+      perPage,
+      reviewsLength: reviews.length,
+      value: Math.min(visibleCount + perPage, reviews.length),
+    });
+  }, [perPage, reviews.length, visibleCount]);
 
-  const containerStyle: React.CSSProperties = {
-    borderRadius: borderRadius ?? "8px",
-    padding: "16px",
-    background: colors.background ?? "#ffffff",
-    color: colors.text ?? "#1a1a2e",
-  };
+  const SORT_OPTIONS: SortOption[] = ["featured", "newest", "oldest", "highest", "lowest"];
+  const activeSort: SortOption = SORT_OPTIONS.includes(filters.sortOrder as SortOption)
+    ? (filters.sortOrder as SortOption)
+    : "newest";
 
-  const visibleReviews = reviews.slice(0, visibleCount);
+  const sortedReviews = useMemo(() => {
+    const sorted = [...reviews];
+    switch (activeSort) {
+      case "featured":
+        sorted.sort((a, b) => {
+          const aFeat = a.featured ? 1 : 0;
+          const bFeat = b.featured ? 1 : 0;
+          if (bFeat !== aFeat) return bFeat - aFeat;
+          return new Date(b.review_date).getTime() - new Date(a.review_date).getTime();
+        });
+        break;
+      case "newest":
+        sorted.sort((a, b) => new Date(b.review_date).getTime() - new Date(a.review_date).getTime());
+        break;
+      case "oldest":
+        sorted.sort((a, b) => new Date(a.review_date).getTime() - new Date(b.review_date).getTime());
+        break;
+      case "highest":
+        sorted.sort((a, b) => b.rating - a.rating);
+        break;
+      case "lowest":
+        sorted.sort((a, b) => a.rating - b.rating);
+        break;
+    }
+    return sorted;
+  }, [reviews, activeSort]);
+
+  const cardStyle = resolvePreviewCardStyle(layout?.cardStyle, content.cardStyle);
+  const containerStyle = getPreviewContainerStyle(colors, layout);
+
+  const visibleReviews = sortedReviews.slice(0, visibleCount);
   const primaryColor = colors.primary ?? "#52796f";
 
   return (
-    <div className="text-sm leading-normal antialiased" style={containerStyle}>
+    <div
+      className="leading-normal antialiased"
+      style={{
+        ...containerStyle,
+        ...getPreviewBodyStyle(),
+      }}
+    >
       {/* Header + Column Slider */}
       <div className="flex items-center justify-between mb-4">
         {content.showHeader !== false && content.headerText && (
           <h3
             className="text-lg font-bold"
-            style={{ color: colors.text ?? "#1a1a2e" }}
+            style={getPreviewHeadingStyle(colors.text ?? "#1a1a2e")}
           >
             {content.headerText}
           </h3>
         )}
         <div className="flex items-center gap-3 ml-auto">
-          <span className="text-xs text-gray-500 whitespace-nowrap">
+          <span
+            className="text-xs text-gray-500 whitespace-nowrap"
+            style={getPreviewMetaStyle()}
+          >
             {previewColumns} columns
           </span>
           <Slider
@@ -336,46 +401,35 @@ export function ReviewWallPreview({
       </div>
 
       {reviews.length === 0 ? (
-        <div className="py-8 text-center text-gray-400 text-sm">
-          No reviews yet.
+        <div
+          className="py-8 text-center text-sm"
+          style={getPreviewMetaStyle("var(--rw-text-subtle, #9ca3af)", 1)}
+        >
+          {previewT(lang, "noReviewsYet")}
         </div>
       ) : (
         <>
-          {/* Masonry Grid */}
           <div
             style={{
-              columnCount: previewColumns,
-              columnGap: `${gap}px`,
-              columnFill: "balance",
+              display: "grid",
+              gridTemplateColumns: `repeat(${previewColumns}, 1fr)`,
+              gap: `${gap}px`,
+              alignItems: "start",
             }}
           >
-            {visibleReviews.map((review) => {
-              const isFeatured =
-                featuredOnly ||
-                (review.rating === 5 &&
-                  !!review.text &&
-                  review.text.length > 100);
-              return (
-                <div
-                  key={review.id}
-                  style={{
-                    breakInside: "avoid",
-                    marginBottom: `${gap}px`,
-                    display: "inline-block",
-                    width: "100%",
-                  }}
-                >
-                  <WallReviewCard
-                    review={review}
-                    content={effectiveContent}
-                    starFilled={starFilled}
-                    starEmpty={starEmpty}
-                    featured={isFeatured}
-                    accentColor={accentColor}
-                  />
-                </div>
-              );
-            })}
+            {visibleReviews.map((review) => (
+              <WallReviewCard
+                key={review.id}
+                review={review}
+                content={effectiveContent}
+                cardStyle={cardStyle}
+                starFilled={starFilled}
+                starEmpty={starEmpty}
+                featured={!!review.featured}
+                accentColor={accentColor}
+                layout={layout}
+              />
+            ))}
           </div>
 
           {/* Load More Button */}
@@ -384,6 +438,7 @@ export function ReviewWallPreview({
               <LoadMoreButton
                 onClick={handleLoadMore}
                 primaryColor={primaryColor}
+                lang={lang}
               />
             )}
 
@@ -412,16 +467,31 @@ export function ReviewWallPreview({
 
       {/* Disclaimer */}
       {content.showDisclaimer && (
-        <div className="mt-3 p-2.5 bg-gray-50 rounded border border-gray-100">
+        <div
+          className="mt-3 p-2.5 rounded border"
+          style={{
+            background: "var(--rw-surface-muted, #f9fafb)",
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+          }}
+        >
           <div className="flex items-center gap-1.5 mb-1">
-            <Home size={16} className="flex-shrink-0 text-gray-500" />
-            <span className="text-[11px] font-semibold text-gray-600">
-              Equal Housing Lender
+            <Home
+              size={16}
+              className="flex-shrink-0"
+              style={{ color: "var(--rw-text-muted, #6b7280)" }}
+            />
+            <span
+              className="text-[11px] font-semibold"
+              style={{ color: "var(--rw-text-muted, #6b7280)" }}
+            >
+              {previewT(lang, "equalHousingLender")}
             </span>
           </div>
-          <p className="text-[10px] leading-snug text-gray-500 mb-1">
-            {content.disclaimerText ||
-              "This is not a commitment to lend. Programs, rates, terms, and conditions are subject to change without notice."}
+          <p
+            className="text-[10px] leading-snug mb-1"
+            style={{ color: "var(--rw-text-muted, #6b7280)" }}
+          >
+            {content.disclaimerText || previewT(lang, "defaultDisclaimer")}
           </p>
           <a
             href="https://www.nmlsconsumeraccess.org"
@@ -430,22 +500,36 @@ export function ReviewWallPreview({
             className="text-[10px] no-underline hover:underline"
             style={{ color: primaryColor }}
           >
-            NMLS Consumer Access
+            {previewT(lang, "nmlsConsumerAccess")}
           </a>
         </div>
       )}
 
       {/* Branding */}
       {content.showBranding !== false && (
-        <div className="mt-3 pt-2 border-t border-gray-100 text-[11px] text-gray-400 text-center">
-          Powered by{" "}
+        <div
+          className="mt-3 pt-2 border-t text-[11px] text-center"
+          style={{
+            borderColor: "var(--rw-border-soft, var(--rw-border, #e5e7eb))",
+            color: "var(--rw-text-subtle, #9ca3af)",
+          }}
+        >
           <a
             href="https://repwell.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-gray-500 no-underline hover:underline"
+            className="inline-flex items-center gap-1 no-underline hover:opacity-80 transition-opacity"
           >
-            RepWell
+            <span style={{ color: "var(--rw-text-subtle, #9ca3af)" }}>
+              {previewT(lang, "poweredBy")}
+            </span>
+            <img
+              src="/branding/RepWell-Logo-Full-Color.png"
+              alt="RepWell"
+              width={56}
+              height={14}
+              className="inline-block"
+            />
           </a>
         </div>
       )}

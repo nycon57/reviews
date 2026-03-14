@@ -5,6 +5,7 @@
  */
 
 import { trackClick } from "./event-tracker";
+import type { PublicWidgetConfig } from "../types";
 
 const THRESHOLDS = [25, 50, 75, 100] as const;
 
@@ -18,7 +19,7 @@ const THRESHOLDS = [25, 50, 75, 100] as const;
 export function attachScrollDepthTracking(
   container: HTMLElement,
   apiBase: string,
-  widgetId: string,
+  config: Pick<PublicWidgetConfig, "widget_id" | "entity_type" | "entity_id" | "override_applied">,
 ): () => void {
   const fired = new Set<number>();
   const sentinels: HTMLElement[] = [];
@@ -38,7 +39,7 @@ export function attachScrollDepthTracking(
           );
           if (threshold && !fired.has(threshold)) {
             fired.add(threshold);
-            trackClick(apiBase, widgetId, "scroll_depth", {
+            trackClick(apiBase, config, "scroll_depth", {
               threshold,
             });
             // Stop observing this sentinel

@@ -12,7 +12,18 @@ import {
 const THEME_LIQUID_SCRIPT = `<!-- Add before </body> in theme.liquid -->
 <script src="https://app.repwell.com/embed.js" async></script>`;
 
-const SECTION_CODE = `<div data-repwell-widget="YOUR_WIDGET_ID"></div>`;
+const SECTION_CODE = `<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
+
+const SHOPIFY_CUSTOM_LIQUID = `<script src="https://app.repwell.com/embed.js" async></script>
+<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
 
 const SHOPIFY_SECTION_TEMPLATE = `{% comment %}
   RepWell Review Widget Section
@@ -20,7 +31,11 @@ const SHOPIFY_SECTION_TEMPLATE = `{% comment %}
 
 <div class="repwell-section" {{ block.shopify_attributes }}>
   <script src="https://app.repwell.com/embed.js" async></script>
-  <div data-repwell-widget="{{ section.settings.widget_id }}"></div>
+  <div
+    data-repwell-widget="{{ section.settings.widget_id }}"
+    data-repwell-entity-type="{{ section.settings.entity_type }}"
+    data-repwell-entity-id="{{ section.settings.entity_id }}"
+  ></div>
 </div>
 
 {% schema %}
@@ -32,6 +47,23 @@ const SHOPIFY_SECTION_TEMPLATE = `{% comment %}
       "id": "widget_id",
       "label": "Widget ID",
       "info": "Find this in your RepWell dashboard under Widgets → Embed Code."
+    },
+    {
+      "type": "select",
+      "id": "entity_type",
+      "label": "Entity Type",
+      "options": [
+        { "value": "user", "label": "User" },
+        { "value": "branch", "label": "Branch" },
+        { "value": "organization", "label": "Organization" }
+      ],
+      "default": "user"
+    },
+    {
+      "type": "text",
+      "id": "entity_id",
+      "label": "Entity ID",
+      "info": "The UUID of the user, branch, or organization to show reviews for."
     }
   ],
   "presets": [
@@ -64,12 +96,10 @@ export function ShopifyGuide() {
             </Step>
             <Step number={2} title="Add a Custom Liquid section">
               <p>
-                Click Add section &rarr; Custom Liquid. Paste the embed code:
+                Click Add section &rarr; Custom Liquid. Paste the embed code
+                with your Widget ID, entity type, and entity ID:
               </p>
-              <CodeBlock
-                code={`<script src="https://app.repwell.com/embed.js" async></script>\n<div data-repwell-widget="YOUR_WIDGET_ID"></div>`}
-                language="html"
-              />
+              <CodeBlock code={SHOPIFY_CUSTOM_LIQUID} language="html" />
             </Step>
             <Step number={3} title="Position and save">
               <p>
@@ -100,7 +130,8 @@ export function ShopifyGuide() {
             </Step>
             <Step number={3} title="Place the widget container">
               <p>
-                In the template or section file where you want the widget, add:
+                In the template or section file where you want the widget, add
+                the div with all three data attributes:
               </p>
               <CodeBlock code={SECTION_CODE} language="html" />
             </Step>
@@ -112,8 +143,9 @@ export function ShopifyGuide() {
             Method 3: Custom Section Template
           </h4>
           <p className="text-sm text-muted-foreground mb-3">
-            Create a reusable section with a configurable Widget ID field
-            that non-technical users can manage from the theme editor.
+            Create a reusable section with configurable Widget ID, entity type,
+            and entity ID fields that non-technical users can manage from the
+            theme editor.
           </p>
           <CodeBlock code={SHOPIFY_SECTION_TEMPLATE} language="liquid" />
         </div>

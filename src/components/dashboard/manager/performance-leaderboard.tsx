@@ -49,11 +49,11 @@ export function PerformanceLeaderboard({
   const getRankBackground = (rank: number) => {
     switch (rank) {
       case 1:
-        return "bg-gradient-to-r from-yellow-50 to-yellow-100";
+        return "bg-gradient-to-r from-yellow-50 to-yellow-100 dark:from-yellow-950/20 dark:to-transparent";
       case 2:
         return "bg-muted";
       case 3:
-        return "bg-gradient-to-r from-amber-50 to-amber-100";
+        return "bg-gradient-to-r from-amber-50 to-amber-100 dark:from-amber-950/20 dark:to-transparent";
       default:
         return "";
     }

@@ -60,15 +60,15 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="border-green-200 bg-green-50/50">
+      <Card className="border-green-200 dark:border-green-900/50 bg-green-50/50 dark:bg-green-950/20">
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-green-700">
+          <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
             <TrendingDown className="h-5 w-5" />
             Performance Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-2 text-green-600">
+          <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
             <span>All team members are performing well</span>
           </div>
         </CardContent>
@@ -77,12 +77,12 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
   }
 
   return (
-    <Card className="border-amber-200">
+    <Card className="border-amber-200 dark:border-amber-900/50">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-amber-700">
+        <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
           <AlertTriangle className="h-5 w-5" />
           Performance Alerts
-          <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-xs font-normal text-amber-700">
+          <span className="ml-auto rounded-full bg-amber-100 dark:bg-amber-950/40 px-2 py-0.5 text-xs font-normal text-amber-700 dark:text-amber-400">
             {data.length} member{data.length !== 1 ? "s" : ""}
           </span>
         </CardTitle>
@@ -93,8 +93,8 @@ export function PerformanceAlerts({ data }: PerformanceAlertsProps) {
             key={user.id}
             className={`rounded-lg border p-3 ${
               user.performanceStatus === "at_risk"
-                ? "border-red-200 bg-red-50/50"
-                : "border-amber-200 bg-amber-50/50"
+                ? "border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20"
+                : "border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20"
             }`}
           >
             <div className="flex items-start gap-3">

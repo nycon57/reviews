@@ -10,12 +10,25 @@ import {
 } from "./integration-card";
 
 const WEBFLOW_EMBED_CODE = `<script src="https://app.repwell.com/embed.js" async></script>
-<div data-repwell-widget="YOUR_WIDGET_ID"></div>`;
+<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
 
-const WEBFLOW_COLLECTION_CODE = `<script src="https://app.repwell.com/embed.js" async></script>
-<div data-repwell-widget="YOUR_WIDGET_ID"
-     data-repwell-lo="{{wf {&quot;path&quot;:&quot;slug&quot;,&quot;type&quot;:&quot;PlainText&quot;} }}">
-</div>`;
+const WEBFLOW_SITE_WIDE_SCRIPT = `<script src="https://app.repwell.com/embed.js" async></script>`;
+
+const WEBFLOW_SITE_WIDE_DIV = `<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="YOUR_ENTITY_ID"
+></div>`;
+
+const WEBFLOW_COLLECTION_CODE = `<div
+  data-repwell-widget="YOUR_WIDGET_ID"
+  data-repwell-entity-type="user"
+  data-repwell-entity-id="{{wf {&quot;path&quot;:&quot;repwell-entity-id&quot;,&quot;type&quot;:&quot;PlainText&quot;} }}"
+></div>`;
 
 export function WebflowGuide() {
   return (
@@ -42,9 +55,11 @@ export function WebflowGuide() {
             </Step>
             <Step number={3} title="Paste the embed code">
               <p>
-                Replace{" "}
-                <code className="text-xs bg-muted px-1 rounded">YOUR_WIDGET_ID</code>{" "}
-                with your Widget ID.
+                Replace the placeholder values with your Widget ID, entity type
+                (<code className="text-xs bg-muted px-1 rounded">user</code>,{" "}
+                <code className="text-xs bg-muted px-1 rounded">branch</code>, or{" "}
+                <code className="text-xs bg-muted px-1 rounded">organization</code>),
+                and entity ID from the RepWell dashboard.
               </p>
               <CodeBlock code={WEBFLOW_EMBED_CODE} language="html" />
             </Step>
@@ -65,24 +80,19 @@ export function WebflowGuide() {
             <Step number={1} title="Go to Project Settings">
               <p>Open your Webflow project settings &rarr; Custom Code tab.</p>
             </Step>
-            <Step number={2} title="Add the script to the head or footer">
+            <Step number={2} title="Add the script to the footer">
               <p>
-                Paste the embed.js script tag in the Footer Code section. Then
-                place the widget div on each page using an Embed element.
+                Paste the embed.js script tag in the Footer Code section. This
+                loads the script once, site-wide.
               </p>
-              <CodeBlock
-                code={`<script src="https://app.repwell.com/embed.js" async></script>`}
-                language="html"
-              />
+              <CodeBlock code={WEBFLOW_SITE_WIDE_SCRIPT} language="html" />
             </Step>
             <Step number={3} title="Add widget containers per page">
               <p>
-                On each page, add an Embed element with just the widget div:
+                On each page, add an Embed element with the widget div and all
+                three data attributes:
               </p>
-              <CodeBlock
-                code={`<div data-repwell-widget="YOUR_WIDGET_ID"></div>`}
-                language="html"
-              />
+              <CodeBlock code={WEBFLOW_SITE_WIDE_DIV} language="html" />
             </Step>
           </StepList>
         </div>
@@ -92,10 +102,17 @@ export function WebflowGuide() {
             Method 3: Collection-Level Embedding
           </h4>
           <p className="text-sm text-muted-foreground mb-3">
-            Display professional-specific widgets on CMS collection pages by
-            passing dynamic data attributes.
+            Reuse one widget across CMS collection pages by binding the entity
+            ID from a CMS field. Add the script tag site-wide (Method 2, Step
+            2), then use this div in your collection template:
           </p>
           <CodeBlock code={WEBFLOW_COLLECTION_CODE} language="html" />
+          <p className="text-xs text-muted-foreground mt-2">
+            Set <code className="text-[11px] bg-muted px-1 rounded">data-repwell-entity-type</code>{" "}
+            to match the entity stored in each CMS item. Bind{" "}
+            <code className="text-[11px] bg-muted px-1 rounded">data-repwell-entity-id</code>{" "}
+            to the CMS field containing the UUID.
+          </p>
         </div>
 
         <TroubleshootingSection
@@ -118,7 +135,7 @@ export function WebflowGuide() {
             {
               problem: "Collection fields not populating",
               solution:
-                "Verify the dynamic field binding syntax matches your CMS collection field name. Check that the collection item has the field populated.",
+                "Verify the dynamic field binding syntax matches your CMS field name and that each collection item includes a valid RepWell entity UUID.",
             },
           ]}
         />

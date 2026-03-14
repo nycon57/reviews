@@ -58,7 +58,6 @@ Full 6-phase lifecycle for every feature. Chain skills in order.
 | Step | Skill/Tool | Action |
 |---|---|---|
 | React Doctor scan | `/react-doctor` | Every task — fix errors before done |
-| Deep AI review | `coderabbit review --prompt-only` | Auto for auth, payments, DB schema, API routes |
 | Error handling audit | `silent-failure-hunter` subagent | When catch blocks or error handling modified |
 | Code simplification | `code-simplifier` subagent | Pre-commit polish on modified files |
 | Design review | `frontend-design` + `web-design-guidelines` | UI compliance + accessibility (UI tasks) |

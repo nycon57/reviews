@@ -143,7 +143,7 @@ export function renderWidget(
     nmlsLink.target = "_blank";
     nmlsLink.rel = "noopener noreferrer";
     nmlsLink.textContent = "NMLS Consumer Access";
-    nmlsLink.style.fontSize = "10px";
+    nmlsLink.style.fontSize = "var(--rw-caption-size, 10px)";
     nmlsLink.style.color = colors?.primary ?? "#52796f";
     nmlsLink.style.textDecoration = "none";
     disclaimer.appendChild(nmlsLink);

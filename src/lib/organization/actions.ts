@@ -33,6 +33,7 @@ import { validateOrgSlug, generateUserSlug, generateUniqueUserSlug } from "@/lib
 import crypto from "crypto";
 
 const IMPERSONATION_SOURCE = "organization_team";
+const DEFAULT_DATE_FORMAT = "MM/DD/YYYY";
 
 type ImpersonationAuditAction =
   | "impersonation_started"
@@ -102,7 +103,7 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
     company_phone: (settings?.company_phone as string) ?? null,
     company_address: (settings?.company_address as Organization["company_address"]) ?? null,
     timezone: (settings?.timezone as string) ?? "America/New_York",
-    date_format: (settings?.date_format as string) ?? "MM/DD/YYYY",
+    date_format: DEFAULT_DATE_FORMAT,
     billing_email: (settings?.billing_email as string) ?? null,
     billing_address: (settings?.billing_address as Organization["billing_address"]) ?? null,
     subscription_tier: (row.subscription_tier as SubscriptionTier) ?? "free",
@@ -198,7 +199,10 @@ export async function updateOrganizationSettings(
   }
 
   // Clean empty strings to null for optional URL/email/uuid fields
-  const cleanedData = { ...validated.data };
+  const cleanedData = {
+    ...validated.data,
+    date_format: validated.data.date_format ?? DEFAULT_DATE_FORMAT,
+  };
   const nullableFields = [
     "website_url", "email", "linkedin_url", "facebook_url",
     "instagram_url", "twitter_url", "headquarters_branch_id",

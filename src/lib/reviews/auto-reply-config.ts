@@ -3,7 +3,7 @@ import {
   type AutoReplySettings,
 } from "./types";
 
-const AUTO_REPLY_FEATURE_TIERS = new Set(["professional", "enterprise"]);
+const AUTO_REPLY_FEATURE_TIERS = new Set(["pro", "enterprise"]);
 const AUTO_REPLY_TONES: ReadonlyArray<AutoReplySettings["auto_reply_tone"]> = [
   "professional",
   "friendly",

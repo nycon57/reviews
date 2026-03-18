@@ -9,7 +9,6 @@ import {
   LayoutGrid,
   Video,
   Columns3,
-  TrendingUp,
   Megaphone,
   Badge as BadgeIcon,
 } from "lucide-react";
@@ -27,8 +26,8 @@ const TYPE_ICONS: Record<WidgetType, React.ComponentType<{ size?: number; classN
   star_rating_badge: Star,
   video_testimonial: Video,
   review_wall: LayoutGrid,
-  nps_score_badge: TrendingUp,
   social_proof_banner: Megaphone,
+  nps_score_badge: Star,
 };
 
 interface WidgetCardProps {

@@ -208,14 +208,13 @@ export function ProProfileContent({
                     {/* Organization Logo */}
                     {organization?.logoUrl && (
                       <div className="hidden sm:block shrink-0">
-                        <div className="relative h-16 w-16 md:h-20 md:w-20 overflow-hidden">
-                          <Image
-                            src={organization.logoUrl}
-                            alt={organization.name || "Organization logo"}
-                            fill
-                            className="object-contain"
-                          />
-                        </div>
+                        <Image
+                          src={organization.logoUrl}
+                          alt={organization.name || "Organization logo"}
+                          width={80}
+                          height={80}
+                          className="h-16 w-auto max-w-[5rem] md:h-20 md:max-w-[6rem] object-contain"
+                        />
                       </div>
                     )}
                   </div>

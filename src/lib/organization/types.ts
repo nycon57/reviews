@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Subscription tiers
-export const SUBSCRIPTION_TIERS = ["free", "starter", "professional", "enterprise"] as const;
+export const SUBSCRIPTION_TIERS = ["basic", "pro", "enterprise"] as const;
 export type SubscriptionTier = (typeof SUBSCRIPTION_TIERS)[number];
 
 // Subscription statuses
@@ -77,7 +77,7 @@ export const organizationSchema = z.object({
   date_format: z.string().default("MM/DD/YYYY"),
   billing_email: z.string().email().nullable().optional(),
   billing_address: addressSchema.nullable().optional(),
-  subscription_tier: z.enum(SUBSCRIPTION_TIERS).default("free"),
+  subscription_tier: z.enum(SUBSCRIPTION_TIERS).default("basic"),
   subscription_status: z.enum(SUBSCRIPTION_STATUSES).default("active"),
   subscription_started_at: z.string().nullable().optional(),
   subscription_ends_at: z.string().nullable().optional(),
@@ -234,18 +234,8 @@ export type AuditLog = z.infer<typeof auditLogSchema>;
 
 // Subscription tier features mapping
 export const TIER_FEATURES: Record<SubscriptionTier, OrganizationFeatures> = {
-  free: {
+  basic: {
     ai_insights: false,
-    google_integration: false,
-    custom_branding: false,
-    api_access: false,
-    sso: false,
-    webhooks: false,
-    white_label: false,
-    advanced_analytics: false,
-  },
-  starter: {
-    ai_insights: true,
     google_integration: true,
     custom_branding: false,
     api_access: false,
@@ -254,7 +244,7 @@ export const TIER_FEATURES: Record<SubscriptionTier, OrganizationFeatures> = {
     white_label: false,
     advanced_analytics: false,
   },
-  professional: {
+  pro: {
     ai_insights: true,
     google_integration: true,
     custom_branding: true,
@@ -276,25 +266,73 @@ export const TIER_FEATURES: Record<SubscriptionTier, OrganizationFeatures> = {
   },
 };
 
+// Email branding config (stored in organizations.settings.email_branding)
+export const emailBrandingConfigSchema = z.object({
+  header: z
+    .object({
+      logoSrc: z.string().default(""),
+      logoAlt: z.string().default("Logo"),
+      logoHeight: z.number().min(20).max(120).default(42),
+      variant: z.enum(["centered", "inline", "social"]).default("centered"),
+      navLinks: z
+        .array(z.object({ label: z.string(), href: z.string() }))
+        .default([]),
+      socialLinks: z
+        .object({
+          twitter: z.string().optional(),
+          instagram: z.string().optional(),
+          facebook: z.string().optional(),
+          linkedin: z.string().optional(),
+        })
+        .default({}),
+      backgroundColor: z.string().optional(),
+      linkColor: z.string().default("rgb(75,85,99)"),
+    })
+    .default({}),
+  footer: z
+    .object({
+      logoSrc: z.string().default(""),
+      logoAlt: z.string().default("Logo"),
+      companyName: z.string().default(""),
+      tagline: z.string().default(""),
+      address: z.string().default(""),
+      contactInfo: z.string().default(""),
+      variant: z.enum(["centered", "split"]).default("centered"),
+      socialLinks: z
+        .object({
+          facebook: z.string().optional(),
+          twitter: z.string().optional(),
+          instagram: z.string().optional(),
+          linkedin: z.string().optional(),
+        })
+        .default({}),
+      backgroundColor: z.string().optional(),
+    })
+    .default({}),
+  compliance: z
+    .object({
+      physicalAddress: z.string().default(""),
+      unsubscribeText: z.string().default(""),
+      copyrightHolder: z.string().default(""),
+    })
+    .default({}),
+  enabled: z.boolean().default(false),
+});
+export type EmailBrandingConfig = z.infer<typeof emailBrandingConfigSchema>;
+
 // Subscription tier limits mapping
 export const TIER_LIMITS: Record<SubscriptionTier, OrganizationLimits> = {
-  free: {
-    max_users: 3,
-    max_professionals: 5,
-    max_surveys_per_month: 100,
+  basic: {
+    max_users: 1,
+    max_professionals: 1,
+    max_surveys_per_month: 200,
     max_api_calls_per_day: 100,
   },
-  starter: {
-    max_users: 10,
-    max_professionals: 25,
-    max_surveys_per_month: 500,
+  pro: {
+    max_users: 1,
+    max_professionals: 1,
+    max_surveys_per_month: 1000,
     max_api_calls_per_day: 1000,
-  },
-  professional: {
-    max_users: 50,
-    max_professionals: 100,
-    max_surveys_per_month: 2500,
-    max_api_calls_per_day: 10000,
   },
   enterprise: {
     max_users: -1, // unlimited

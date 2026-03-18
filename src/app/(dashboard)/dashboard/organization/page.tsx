@@ -54,7 +54,7 @@ export default async function OrganizationPage() {
   await requireEnterpriseAdmin();
 
   return (
-    <div className="flex-1 space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       {/* Page header */}
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-teal-300/10">

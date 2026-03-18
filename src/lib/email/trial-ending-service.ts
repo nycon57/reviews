@@ -402,7 +402,6 @@ async function hasUserUpgraded(organizationId: string): Promise<boolean> {
 
   return (
     org?.subscription_status === "active" &&
-    org?.subscription_tier !== "free" &&
     org?.subscription_tier !== "trial"
   );
 }

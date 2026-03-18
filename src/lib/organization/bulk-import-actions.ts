@@ -69,7 +69,7 @@ export async function validateImportData(
       .eq("organization_id", orgId),
   ]);
 
-  const tier = (org?.subscription_tier as SubscriptionTier) ?? "free";
+  const tier = (org?.subscription_tier as SubscriptionTier) ?? "basic";
   const maxUsers = TIER_LIMITS[tier].max_users;
   const currentCount = currentUserCount ?? 0;
   const remainingSeats = maxUsers === -1 ? Infinity : maxUsers - currentCount;
@@ -252,7 +252,7 @@ export async function bulkImportUsers(
       .eq("organization_id", orgId),
   ]);
 
-  const tier = (org?.subscription_tier as SubscriptionTier) ?? "free";
+  const tier = (org?.subscription_tier as SubscriptionTier) ?? "basic";
   const maxUsers = TIER_LIMITS[tier].max_users;
   const currentCount = currentUserCount ?? 0;
 

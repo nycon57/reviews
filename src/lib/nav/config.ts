@@ -45,11 +45,10 @@ export const NAV_CONFIG: NavConfig = {
       permission: PERMISSIONS.VIEW_REVIEWS,
     },
     {
-      title: "Messages",
-      href: "/dashboard/messages",
-      icon: "ChatCircle",
-      permission: PERMISSIONS.VIEW_MESSAGES,
-      isNew: true,
+      title: "Emails",
+      href: "/dashboard/emails",
+      icon: "Envelope",
+      permission: PERMISSIONS.VIEW_CAMPAIGNS,
     },
     // Enterprise-only: Recognition (after Messages in core nav)
     {
@@ -148,6 +147,12 @@ export const NAV_CONFIG: NavConfig = {
           href: "/dashboard/ex-surveys",
           icon: "ClipboardText",
           permission: PERMISSIONS.VIEW_EX_SURVEYS,
+        },
+        {
+          title: "Media",
+          href: "/dashboard/media",
+          icon: "Images",
+          permission: PERMISSIONS.VIEW_ORGANIZATION,
         },
       ],
     },

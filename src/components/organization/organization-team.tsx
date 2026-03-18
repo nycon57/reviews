@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,6 +57,56 @@ const ROLE_LABELS: Record<string, { label: string; variant: "default" | "seconda
   manager: { label: "Manager", variant: "secondary" },
   user: { label: "User", variant: "outline" },
 };
+
+function DeactivateSwitch({
+  memberId,
+  memberName,
+  isPending,
+  onDeactivate,
+}: {
+  memberId: string;
+  memberName: string;
+  isPending: boolean;
+  onDeactivate: (id: string) => void;
+}) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  return (
+    <>
+      <div className="flex items-center gap-2">
+        <Switch
+          checked
+          disabled={isPending}
+          onCheckedChange={() => setDialogOpen(true)}
+          className="data-[state=checked]:bg-repwell-teal-300"
+        />
+        <span className="text-sm font-medium text-repwell-teal-300">Active</span>
+      </div>
+      <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will immediately revoke {memberName}&apos;s access to RepWell. They will be signed out on their next page load.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                onDeactivate(memberId);
+                setDialogOpen(false);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
 
 export function OrganizationTeam() {
   const [members, setMembers] = useState<OrganizationMember[]>([]);
@@ -546,39 +596,16 @@ export function OrganizationTeam() {
                       {member.is_active ? (
                         isEnterpriseOwnerSelf ? (
                           <div className="flex items-center gap-2">
-                            <Switch checked disabled className="data-[state=checked]:bg-green-500 opacity-50" />
-                            <span className="text-sm font-medium text-green-600">Active</span>
+                            <Switch checked disabled className="data-[state=checked]:bg-repwell-teal-300 opacity-50" />
+                            <span className="text-sm font-medium text-repwell-teal-300">Active</span>
                           </div>
                         ) : (
-                          <AlertDialog>
-                            <div className="flex items-center gap-2">
-                              <AlertDialogTrigger asChild>
-                                <Switch
-                                  checked
-                                  disabled={isPending}
-                                  className="data-[state=checked]:bg-green-500"
-                                />
-                              </AlertDialogTrigger>
-                              <span className="text-sm font-medium text-green-600">Active</span>
-                            </div>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Deactivate member?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This will immediately revoke {member.full_name || member.email}&apos;s access to RepWell. They will be signed out on their next page load.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeactivate(member.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  Deactivate
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <DeactivateSwitch
+                            memberId={member.id}
+                            memberName={member.full_name || member.email}
+                            isPending={isPending}
+                            onDeactivate={handleDeactivate}
+                          />
                         )
                       ) : (
                         <div className="flex items-center gap-2">
@@ -586,7 +613,6 @@ export function OrganizationTeam() {
                             checked={false}
                             onCheckedChange={() => handleReactivate(member.id)}
                             disabled={isPending}
-                            className="data-[state=unchecked]:bg-muted"
                           />
                           <span className="text-sm font-medium text-muted-foreground">Inactive</span>
                         </div>

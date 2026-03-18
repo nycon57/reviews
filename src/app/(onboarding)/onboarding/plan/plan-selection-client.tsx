@@ -44,33 +44,38 @@ const plans: PlanOption[] = [
     name: "Basic",
     monthlyPrice: 49,
     yearlyPrice: 39,
-    description: "Perfect for individuals",
+    description: "Build Your Reputation",
     icon: User,
     features: [
-      "1 user account",
-      "Unlimited surveys",
-      "Review monitoring",
-      "Basic analytics",
+      "1 user profile",
+      "200 surveys/month",
+      "Email distribution",
+      "Review monitoring & management",
+      "Basic analytics (rating trends, NPS)",
+      "Testimonial collection (text + video)",
       "Google Business integration",
       "Email support",
-      "7-day free trial",
+      "14-day free trial",
     ],
   },
   {
     id: "pro",
     name: "Pro",
-    monthlyPrice: 149,
-    yearlyPrice: 119,
-    description: "For individuals who need AI insights",
+    monthlyPrice: 99,
+    yearlyPrice: 79,
+    description: "AI-Powered Reputation Intelligence",
     icon: Sparkles,
     features: [
       "Everything in Basic",
-      "AI-powered insights",
-      "AI visibility reports",
-      "Advanced analytics",
-      "API access",
+      "AI sentiment analysis",
+      "AI response suggestions",
+      "AI visibility / GEO reports",
+      "1,000 surveys/month",
+      "Advanced analytics & reporting",
+      "API access (1,000 calls/day)",
+      "Custom branding",
       "Priority support",
-      "7-day free trial",
+      "14-day free trial",
     ],
     highlighted: true,
     badge: "Most Popular",
@@ -80,17 +85,16 @@ const plans: PlanOption[] = [
     name: "Enterprise",
     monthlyPrice: -1,
     yearlyPrice: -1,
-    description: "For teams and organizations",
+    description: "Reputation at Scale",
     icon: Buildings,
     features: [
       "Everything in Pro",
-      "Unlimited team members",
-      "Team management",
+      "Unlimited team members & surveys",
+      "Team management & leaderboards",
       "Manager dashboard",
-      "Leaderboards & gamification",
-      "Employee surveys",
+      "Employee experience surveys",
+      "SSO/SAML & white-label",
       "Dedicated success manager",
-      "SSO/SAML support",
     ],
   },
 ];
@@ -160,7 +164,7 @@ export function PlanSelectionClient() {
           Choose your plan
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Start with a 7-day free trial on Basic or Pro. Enterprise accounts are
+          Start with a 14-day free trial on Basic or Pro. Enterprise accounts are
           billed via invoice. Cancel anytime.
         </p>
       </motion.div>
@@ -272,7 +276,7 @@ export function PlanSelectionClient() {
                   ) : plan.id === "enterprise" ? (
                     "Contact Sales"
                   ) : (
-                    "Start 7-Day Trial"
+                    "Start 14-Day Trial"
                   )}
                 </Button>
               </CardFooter>
@@ -283,7 +287,7 @@ export function PlanSelectionClient() {
 
       {/* Trial note */}
       <motion.p variants={fadeInUp} className="text-center text-sm text-muted-foreground">
-        Basic and Pro plans include a 7-day free trial. Credit card required for trial activation.
+        Basic and Pro plans include a 14-day free trial. Credit card required for trial activation.
         Cancel anytime before the trial ends and you won&apos;t be charged.
       </motion.p>
     </motion.div>

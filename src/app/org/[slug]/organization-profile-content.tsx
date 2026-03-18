@@ -285,15 +285,15 @@ export function OrganizationProfileContent({
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
             <div className="flex flex-col items-center gap-6 text-center">
-              {/* Logo */}
+              {/* Profile Photo */}
               <div className="h-28 w-28 overflow-hidden rounded-2xl border-4 border-white shadow-lg -mt-16">
-                {organization.logo_url ? (
+                {(organization.avatar_url || organization.logo_url) ? (
                   <div className="relative h-full w-full bg-white">
                     <Image
-                      src={organization.logo_url}
+                      src={(organization.avatar_url || organization.logo_url)!}
                       alt={organization.name}
                       fill
-                      className="object-contain p-2"
+                      className={organization.avatar_url ? "object-cover" : "object-contain p-2"}
                     />
                   </div>
                 ) : (

@@ -10,6 +10,7 @@ import type {
   SurveyInvitationEmailData,
   SurveyReminderEmailData,
 } from "@/lib/email/types";
+import { TIER_LIMITS, type SubscriptionTier } from "@/lib/organization/types";
 
 export interface QueueItem {
   id: string;
@@ -31,6 +32,7 @@ export interface SurveyWithDetails {
   completed_at: string | null;
   expires_at: string | null;
   transaction_type: string | null;
+  source_metadata: Record<string, unknown> | null;
   loan_officer: {
     id: string;
     full_name: string;
@@ -47,8 +49,44 @@ export interface SurveyWithDetails {
 // Check if organization is within rate limits
 export async function checkRateLimit(
   organizationId: string
-): Promise<{ allowed: boolean; reason?: string }> {
+): Promise<{ allowed: boolean; reason?: string; upgradeRequired?: boolean }> {
   const supabase = createAdminClient();
+
+  // Check monthly survey limit based on subscription tier
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("subscription_tier")
+    .eq("id", organizationId)
+    .single();
+
+  const tier = (org?.subscription_tier || "basic") as SubscriptionTier;
+  const monthlyLimit = TIER_LIMITS[tier]?.max_surveys_per_month ?? 200;
+
+  // Unlimited for enterprise (-1)
+  if (monthlyLimit !== -1) {
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    const { count: monthlyCount, error: monthlyError } = await supabase
+      .from("surveys")
+      .select("*", { count: "exact", head: true })
+      .eq("organization_id", organizationId)
+      .gte("created_at", monthStart.toISOString());
+
+    if (monthlyError) {
+      console.error("Error checking monthly survey limit:", monthlyError);
+      return { allowed: false, reason: "Failed to check survey limits" };
+    }
+
+    if ((monthlyCount ?? 0) >= monthlyLimit) {
+      return {
+        allowed: false,
+        reason: `Monthly survey limit reached (${monthlyCount}/${monthlyLimit}). Upgrade your plan for more surveys.`,
+        upgradeRequired: true,
+      };
+    }
+  }
 
   // Count emails sent in last hour
   const { count: hourlyCount, error: hourlyError } = await supabase
@@ -128,6 +166,7 @@ export async function getSurveyForSending(
       completed_at,
       expires_at,
       transaction_type,
+      source_metadata,
       users!user_id (
         id,
         full_name,
@@ -174,6 +213,7 @@ export async function getSurveyForSending(
     completed_at: survey.completed_at,
     expires_at: survey.expires_at,
     transaction_type: survey.transaction_type,
+    source_metadata: (survey.source_metadata as Record<string, unknown>) ?? null,
     loan_officer: {
       id: loanOfficer.id,
       full_name: loanOfficer.full_name,
@@ -272,6 +312,8 @@ export async function processQueueItem(
   let result: { success: boolean; error?: string };
 
   if (item.type === "initial") {
+    const customTemplateId = survey.source_metadata?.custom_template_id as string | undefined;
+
     const emailData: SurveyInvitationEmailData = {
       toEmail: survey.customer_email,
       customerName: survey.customer_name,
@@ -284,6 +326,7 @@ export async function processQueueItem(
       organizationId: survey.organization.id,
       loanOfficerId: survey.loan_officer.id,
       surveyId: survey.id,
+      customTemplateId,
     };
 
     result = await sendSurveyInvitationEmail(emailData);

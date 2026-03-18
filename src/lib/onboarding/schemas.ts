@@ -6,13 +6,11 @@ export type OnboardingStatus =
   | "plan_selected"
   | "payment_complete"
   | "profile_complete"
-  | "sms_setup_complete"
   | "completed";
 
 // Schema for plan selection
-// Supports both old names (starter/professional) and new names (basic/pro) for backwards compatibility
 export const selectPlanSchema = z.object({
-  plan: z.enum(["basic", "pro", "starter", "professional", "enterprise"]),
+  plan: z.enum(["basic", "pro", "enterprise"]),
   billingCycle: z.enum(["month", "year"]).default("month"),
 });
 

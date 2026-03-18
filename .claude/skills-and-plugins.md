@@ -19,7 +19,7 @@
 | `commit-commands:commit-push-pr` | Feature complete and ready for review |
 | `code-review:code-review` | Before merging, after completing features |
 | `web-design-guidelines` | After UI work, accessibility/UX checks |
-| `agent-browser` / `dev-browser` | Browser testing, screenshots, form filling, visual verification |
+| `agent-browser` | Post-feature visual verification: screenshots, diffs, interactive element audits, console checks |
 | `react-email` / `send-email` | Transactional email work |
 | `prd` | New features, requirements, planning |
 | `cartographer:cartographer` | Exploring unfamiliar code, codebase structure |
@@ -44,5 +44,14 @@
 - `resolve-library-id` → `query-docs` - Look up library docs before using any external API
 - Always check: Next.js, Supabase, TanStack Query, Zod, Radix UI, Tailwind, Framer Motion
 
-### Browser Automation (`mcp__claude-in-chrome__*`)
-- Testing app in browser, screenshots, form filling, visual verification of UI changes
+### Chrome DevTools (`chrome-devtools-mcp`)
+- Live browser session debugging with DevTools protocol
+- DOM inspection, network monitoring, console access
+- Auto-connects to running Chrome Beta session
+- Config: `.mcp.json` with `--autoConnect` flag
+
+### Browser Verification (`agent-browser`)
+- Project config: `agent-browser.json` (session name, executable path, screenshot dir)
+- Verification scripts: `tests/browser-verification/verify-page.sh`, `verify-dashboard.sh`
+- Screenshots saved to `tests/screenshots/`
+- Workflow: baseline screenshot → build feature → diff screenshot → interactive audit

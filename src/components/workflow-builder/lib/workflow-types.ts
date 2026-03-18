@@ -74,6 +74,7 @@ export type WorkflowNodeType =
   | "action-email"
   | "action-sms"
   | "action-smart"
+  | "action-survey"
   | "condition-ifelse"
   | "condition-absplit"
   | "delay-wait"
@@ -99,6 +100,8 @@ export interface WorkflowNodeData {
   label?: string;
   summary?: string;
   templateName?: string;
+  emailTemplateId?: string;
+  surveyTemplateId?: string;
   smsTemplateName?: string;
   subjectOverride?: string;
   event?: TriggerEvent;
@@ -184,6 +187,7 @@ export const NODE_FAMILY_BY_TYPE: Record<WorkflowNodeType, NodeFamily> = {
   "action-email": "action",
   "action-sms": "action",
   "action-smart": "action",
+  "action-survey": "action",
   "condition-ifelse": "condition",
   "condition-absplit": "condition",
   "delay-wait": "delay",

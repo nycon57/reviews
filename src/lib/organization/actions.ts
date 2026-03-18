@@ -26,6 +26,8 @@ import {
   INTEGRATION_KEYS,
   orgIntegrationsSchema,
   type OrgIntegrations,
+  emailBrandingConfigSchema,
+  type EmailBrandingConfig,
 } from "./types";
 import { adminProfileSchema, type AdminProfileInput } from "@/lib/auth/profile-schemas";
 import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
@@ -106,7 +108,7 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
     date_format: DEFAULT_DATE_FORMAT,
     billing_email: (settings?.billing_email as string) ?? null,
     billing_address: (settings?.billing_address as Organization["billing_address"]) ?? null,
-    subscription_tier: (row.subscription_tier as SubscriptionTier) ?? "free",
+    subscription_tier: (row.subscription_tier as SubscriptionTier) ?? "basic",
     subscription_status: (row.subscription_status as SubscriptionStatus) ?? "active",
     subscription_started_at: (settings?.subscription_started_at as string) ?? null,
     subscription_ends_at: (settings?.subscription_ends_at as string) ?? null,
@@ -375,6 +377,18 @@ export async function uploadOrganizationLogo(
     return { success: false, error: "Failed to update organization. Please try again." };
   }
 
+  // Track in media library
+  const { trackMediaAsset } = await import("@/lib/media/track");
+  await trackMediaAsset({
+    organizationId: userData.organization_id,
+    uploadedBy: user.id,
+    filename: file.name,
+    url: publicUrl,
+    contentType: file.type,
+    sizeBytes: file.size,
+    category: "brand",
+  });
+
   // Clean up old logo file
   if (oldLogoUrl && oldLogoUrl.includes("/logos/")) {
     const oldPath = oldLogoUrl.split("/logos/").pop();
@@ -522,6 +536,18 @@ export async function uploadOrganizationAvatar(
     return { success: false, error: "Failed to update organization. Please try again." };
   }
 
+  // Track in media library
+  const { trackMediaAsset: trackAvatar } = await import("@/lib/media/track");
+  await trackAvatar({
+    organizationId: userData.organization_id,
+    uploadedBy: user.id,
+    filename: file.name,
+    url: publicUrl,
+    contentType: file.type,
+    sizeBytes: file.size,
+    category: "brand",
+  });
+
   // Clean up old avatar
   if (oldAvatarUrl && oldAvatarUrl.includes("/logos/")) {
     const oldPath = oldAvatarUrl.split("/logos/").pop();
@@ -664,6 +690,18 @@ export async function uploadOrganizationBanner(
     await supabase.storage.from("logos").remove([fileName]);
     return { success: false, error: "Failed to update organization. Please try again." };
   }
+
+  // Track in media library
+  const { trackMediaAsset: trackBanner } = await import("@/lib/media/track");
+  await trackBanner({
+    organizationId: userData.organization_id,
+    uploadedBy: user.id,
+    filename: file.name,
+    url: publicUrl,
+    contentType: file.type,
+    sizeBytes: file.size,
+    category: "brand",
+  });
 
   if (oldBannerUrl && oldBannerUrl.includes("/logos/")) {
     const oldPath = oldBannerUrl.split("/logos/").pop();
@@ -2047,6 +2085,107 @@ export async function updateOrgIntegrationSettings(
 
   revalidatePath("/dashboard/organization");
   revalidatePath("/dashboard/settings");
+
+  return { success: true, error: null };
+}
+
+// ---------------------------------------------------------------------------
+// Email Branding Config (settings.email_branding)
+// ---------------------------------------------------------------------------
+
+export async function getEmailBrandingConfig(): Promise<{
+  branding: EmailBrandingConfig | null;
+  orgLogoUrl: string | null;
+  error: string | null;
+}> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { branding: null, orgLogoUrl: null, error: "Not authenticated" };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { branding: null, orgLogoUrl: null, error: "No organization found" };
+  }
+
+  const { data: org, error } = await supabase
+    .from("organizations")
+    .select("settings, logo_url")
+    .eq("id", userData.organization_id)
+    .single();
+
+  if (error) {
+    return { branding: null, orgLogoUrl: null, error: error.message };
+  }
+
+  const settings = org?.settings as Record<string, unknown> | null;
+  const raw = settings?.email_branding;
+  const parsed = emailBrandingConfigSchema.safeParse(raw ?? {});
+  const orgLogoUrl = (org?.logo_url as string) ?? null;
+
+  return {
+    branding: parsed.success ? parsed.data : emailBrandingConfigSchema.parse({}),
+    orgLogoUrl,
+    error: null,
+  };
+}
+
+export async function updateEmailBrandingConfig(
+  data: EmailBrandingConfig
+): Promise<{ success: boolean; error: string | null }> {
+  const user = await unifiedGetUser();
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const validated = emailBrandingConfigSchema.safeParse(data);
+  if (!validated.success) {
+    return { success: false, error: validated.error.errors[0].message };
+  }
+
+  const supabase = createAdminClient();
+
+  const { data: userData } = await supabase
+    .from("users")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!userData?.organization_id) {
+    return { success: false, error: "No organization found" };
+  }
+
+  if (userData.role !== "admin") {
+    return { success: false, error: "Only admins can update email branding settings" };
+  }
+
+  const { data: org } = await supabase
+    .from("organizations")
+    .select("settings")
+    .eq("id", userData.organization_id)
+    .single();
+
+  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
+  const updatedSettings = { ...currentSettings, email_branding: validated.data };
+
+  const { error } = await supabase
+    .from("organizations")
+    .update({ settings: updatedSettings, updated_at: new Date().toISOString() })
+    .eq("id", userData.organization_id);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/emails");
 
   return { success: true, error: null };
 }

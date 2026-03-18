@@ -175,6 +175,8 @@ export interface SurveyInvitationEmailData extends BaseEmailData {
   organizationLogoUrl?: string;
   surveyUrl: string;
   transactionType?: string;
+  /** Custom email template ID (from email builder) */
+  customTemplateId?: string;
 }
 
 // Survey reminder email data
@@ -435,6 +437,8 @@ export interface VideoTestimonialInvitationEmailData extends BaseEmailData {
   maxDurationSeconds?: number;
   promptText?: string;
   requestId?: string;
+  /** Custom email template ID (from email builder) */
+  customTemplateId?: string;
 }
 
 // Video testimonial reminder email data (3-day and 7-day)
@@ -1890,9 +1894,8 @@ export type AnnouncementAudience =
   | "admins_only"
   | "managers_only"
   | "users_only"
-  | "free_tier"
-  | "starter_tier"
-  | "professional_tier"
+  | "basic_tier"
+  | "pro_tier"
   | "enterprise_tier"
   | "trial_users"
   | "custom";

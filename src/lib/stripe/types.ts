@@ -58,23 +58,26 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "basic",
     name: "Basic",
-    description: "For individual professionals",
-    monthlyPrice: 29,
-    yearlyPrice: 290,
+    description: "Build Your Reputation",
+    monthlyPrice: 49,
+    yearlyPrice: 468,
     stripePriceIdMonthly: process.env.STRIPE_BASIC_PRICE_MONTHLY || "",
     stripePriceIdYearly: process.env.STRIPE_BASIC_PRICE_YEARLY || "",
     features: [
       "1 user profile",
-      "100 surveys/month",
-      "Basic analytics",
-      "Review management",
-      "Testimonial collection",
+      "200 surveys/month",
+      "Email distribution",
+      "Review monitoring & management",
+      "Basic analytics (rating trends, NPS)",
+      "Testimonial collection (text + video)",
+      "Embeddable widgets",
+      "Google Business integration",
       "Email support",
     ],
     limits: {
       maxUsers: 1,
       maxProfessionals: 1,
-      maxSurveysPerMonth: 100,
+      maxSurveysPerMonth: 200,
       maxApiCallsPerDay: 100,
     },
     cta: "Get Started",
@@ -82,23 +85,27 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "pro",
     name: "Pro",
-    description: "For power users",
-    monthlyPrice: 79,
-    yearlyPrice: 790,
+    description: "AI-Powered Reputation Intelligence",
+    monthlyPrice: 99,
+    yearlyPrice: 948,
     stripePriceIdMonthly: process.env.STRIPE_PRO_PRICE_MONTHLY || "",
     stripePriceIdYearly: process.env.STRIPE_PRO_PRICE_YEARLY || "",
     features: [
       "Everything in Basic",
-      "AI-powered insights",
-      "Geo visibility tracking",
-      "500 surveys/month",
-      "API access",
+      "AI sentiment analysis",
+      "AI response suggestions",
+      "AI visibility / GEO reports",
+      "AI performance scorecards",
+      "1,000 surveys/month",
+      "Advanced analytics & reporting",
+      "API access (1,000 calls/day)",
+      "Custom branding",
       "Priority support",
     ],
     limits: {
       maxUsers: 1,
       maxProfessionals: 1,
-      maxSurveysPerMonth: 500,
+      maxSurveysPerMonth: 1000,
       maxApiCallsPerDay: 1000,
     },
     popular: true,
@@ -107,7 +114,7 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "enterprise",
     name: "Enterprise",
-    description: "For teams and organizations",
+    description: "Reputation at Scale",
     monthlyPrice: -1, // Custom pricing
     yearlyPrice: -1,
     stripePriceIdMonthly: null,
@@ -115,12 +122,12 @@ export const PRICING_TIERS: PricingTier[] = [
     features: [
       "Everything in Pro",
       "Unlimited team members",
-      "Unlimited surveys",
-      "Manager dashboard",
-      "Team leaderboards",
-      "Recognition system",
-      "EX surveys",
-      "SSO/SAML support",
+      "Unlimited surveys & API",
+      "Team management & leaderboards",
+      "Manager dashboard with org-wide analytics",
+      "Employee experience surveys",
+      "SSO/SAML & white-label",
+      "Webhooks & CSV bulk import",
       "Dedicated success manager",
     ],
     limits: {
@@ -252,13 +259,34 @@ export function isSubscriptionActive(status: SubscriptionStatus): boolean {
   return status === "active" || status === "trialing";
 }
 
-// Check if subscription allows access (includes grace period)
+// Check if subscription allows access (includes grace period for past_due)
 export function hasSubscriptionAccess(status: SubscriptionStatus): boolean {
   return (
     status === "active" ||
     status === "trialing" ||
     status === "past_due" // Grace period for past due
   );
+}
+
+// Check if organization is in grace period (cancelled but within 30-day window)
+// During grace period: read-only access (can view data, but can't send surveys/use features)
+export function isInGracePeriod(
+  status: string | null | undefined,
+  gracePeriodEndsAt: string | null | undefined
+): boolean {
+  if (status !== "cancelled" && status !== "canceled") return false;
+  if (!gracePeriodEndsAt) return false;
+  return new Date(gracePeriodEndsAt) > new Date();
+}
+
+// Check if grace period has expired (should block all access)
+export function isGracePeriodExpired(
+  status: string | null | undefined,
+  gracePeriodEndsAt: string | null | undefined
+): boolean {
+  if (status !== "cancelled" && status !== "canceled") return false;
+  if (!gracePeriodEndsAt) return true; // No grace period set, treat as expired
+  return new Date(gracePeriodEndsAt) <= new Date();
 }
 
 // Format price for display

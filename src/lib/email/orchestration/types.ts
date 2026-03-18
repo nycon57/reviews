@@ -193,6 +193,8 @@ export interface TemplateConfig {
   subjectOverride?: string;
   subjectVariants?: Record<string, string>;
   dataFields?: string[];
+  /** Custom email builder template ID (overrides name-based template) */
+  customTemplateId?: string;
 }
 
 export interface SequenceStep {

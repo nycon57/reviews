@@ -48,6 +48,27 @@ export function DashboardLayout({
   const router = useRouter();
   const { toast } = useToast();
 
+  React.useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousHtmlOverscrollBehavior = html.style.overscrollBehavior;
+    const previousBodyOverflow = body.style.overflow;
+    const previousBodyOverscrollBehavior = body.style.overscrollBehavior;
+
+    html.style.overflow = "hidden";
+    html.style.overscrollBehavior = "none";
+    body.style.overflow = "hidden";
+    body.style.overscrollBehavior = "none";
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      html.style.overscrollBehavior = previousHtmlOverscrollBehavior;
+      body.style.overflow = previousBodyOverflow;
+      body.style.overscrollBehavior = previousBodyOverscrollBehavior;
+    };
+  }, []);
+
   const handleStopImpersonation = React.useCallback(() => {
     startStopTransition(async () => {
       const result = await stopUserImpersonation();
@@ -134,7 +155,7 @@ export function DashboardLayout({
           {/* Page content */}
           <main
             className={cn(
-              "min-h-0 flex-1 overflow-y-auto p-6",
+              "min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-6",
               "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border"
             )}
           >

@@ -6,24 +6,13 @@ export const REQUEST_EMAIL_CSV_FIELDS = [
   { key: "email", label: "Customer Email", required: true },
 ] as const;
 
-export const REQUEST_SMS_CSV_FIELDS = [
-  { key: "name", label: "Customer Name", required: true },
-  { key: "phone", label: "Customer Phone", required: true },
-] as const;
-
 export type RequestEmailFieldKey =
   (typeof REQUEST_EMAIL_CSV_FIELDS)[number]["key"];
-export type RequestSmsFieldKey =
-  (typeof REQUEST_SMS_CSV_FIELDS)[number]["key"];
-export type RequestCSVFieldKey = RequestEmailFieldKey | RequestSmsFieldKey;
+export type RequestCSVFieldKey = RequestEmailFieldKey;
 
 export const REQUEST_EMAIL_REQUIRED_FIELDS: RequestEmailFieldKey[] = [
   "name",
   "email",
-];
-export const REQUEST_SMS_REQUIRED_FIELDS: RequestSmsFieldKey[] = [
-  "name",
-  "phone",
 ];
 
 export const MAX_REQUEST_IMPORT_ROWS = 100;
@@ -59,7 +48,7 @@ export interface RequestRowValidationResult {
 
 // Request type + send method combo
 export type RequestType = "text" | "video";
-export type SendMethod = "email" | "sms";
+export type SendMethod = "email";
 
 // Bulk send result
 export interface BulkSendResult {
@@ -75,7 +64,3 @@ export interface SurveyTemplateSummary {
   description: string | null;
 }
 
-// SMS placeholder email for video+SMS flow
-export function smsPlaceholderEmail(phoneE164: string): string {
-  return `sms-${phoneE164}@placeholder.repwell.com`;
-}

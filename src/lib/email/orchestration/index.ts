@@ -1,8 +1,8 @@
 /**
  * Campaign Sequence Orchestration Engine
  *
- * Multi-channel (email + SMS) campaign sequencer with event/time-based triggers,
- * conditional branching, smart channel selection, and queue management.
+ * Email campaign sequencer with event/time-based triggers,
+ * conditional branching, and queue management.
  */
 
 // Types
@@ -17,9 +17,6 @@ export type {
   ExitReason,
   ChannelType,
   ChannelConfig,
-  SmsTemplateConfig,
-  SmartChannelConfig,
-  SmsOrchestratedContext,
   ChannelSendResult,
   DelayConfig,
   Condition,
@@ -146,23 +143,5 @@ export {
 // Channel Router
 
 export {
-  checkSmsEligibility,
-  selectChannel,
-  sendSequenceSms,
   routeStepToChannel,
 } from "./channel-router";
-
-// SMS Triggers
-
-export {
-  handleInboundSmsTrigger,
-  handleSmsOptInTrigger,
-  handleSmsOptOutTrigger,
-  handleSmsDeliveryEvent,
-} from "./sms-triggers";
-
-export type {
-  InboundSmsEvent,
-  SmsConsentEvent,
-  SmsDeliveryEvent,
-} from "./sms-triggers";

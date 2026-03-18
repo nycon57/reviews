@@ -5,14 +5,12 @@ import {
 } from "../auto-reply-config";
 
 describe("hasAutoReplyFeature", () => {
-  it("returns true for professional and enterprise tiers", () => {
-    expect(hasAutoReplyFeature("professional")).toBe(true);
+  it("returns true for pro and enterprise tiers", () => {
+    expect(hasAutoReplyFeature("pro")).toBe(true);
     expect(hasAutoReplyFeature("enterprise")).toBe(true);
   });
 
   it("returns false for non-pro tiers", () => {
-    expect(hasAutoReplyFeature("free")).toBe(false);
-    expect(hasAutoReplyFeature("starter")).toBe(false);
     expect(hasAutoReplyFeature("basic")).toBe(false);
     expect(hasAutoReplyFeature(null)).toBe(false);
     expect(hasAutoReplyFeature(undefined)).toBe(false);

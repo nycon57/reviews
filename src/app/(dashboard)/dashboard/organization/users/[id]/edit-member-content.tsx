@@ -69,7 +69,6 @@ export function EditMemberContent({ member, isEditingSelf = false }: EditMemberC
   const [ctaButtonText, setCtaButtonText] = useState(member.cta_button_text || "");
   const [ctaButtonUrl, setCtaButtonUrl] = useState(member.cta_button_url || "");
   const [hireDate, setHireDate] = useState(member.hire_date || "");
-  const [industry, setIndustry] = useState(member.industry || "");
   const [adminFieldsDirty, setAdminFieldsDirty] = useState(false);
 
   const memberProfile = useMemo(() => toUserProfileData(member), [member]);
@@ -172,7 +171,6 @@ export function EditMemberContent({ member, isEditingSelf = false }: EditMemberC
         ctaButtonText,
         ctaButtonUrl,
         hireDate,
-        industry,
       });
       if (result.error) {
         toast({ title: "Error", description: result.error, variant: "destructive" });
@@ -447,15 +445,6 @@ export function EditMemberContent({ member, isEditingSelf = false }: EditMemberC
                       type="date"
                       value={hireDate}
                       onChange={(e) => { setHireDate(e.target.value); setAdminFieldsDirty(true); }}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="industry">Industry</Label>
-                    <Input
-                      id="industry"
-                      value={industry}
-                      onChange={(e) => { setIndustry(e.target.value); setAdminFieldsDirty(true); }}
-                      placeholder="e.g., Mortgage, Real Estate"
                     />
                   </div>
                 </div>

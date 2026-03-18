@@ -9,7 +9,6 @@ const DEFAULT_WIDGETS: { type: WidgetType; name: string }[] = [
   { type: "star_rating_badge", name: WIDGET_TYPE_LABELS.star_rating_badge },
   { type: "video_testimonial", name: WIDGET_TYPE_LABELS.video_testimonial },
   { type: "review_wall", name: WIDGET_TYPE_LABELS.review_wall },
-  { type: "nps_score_badge", name: WIDGET_TYPE_LABELS.nps_score_badge },
   { type: "social_proof_banner", name: WIDGET_TYPE_LABELS.social_proof_banner },
 ];
 

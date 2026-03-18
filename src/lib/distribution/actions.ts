@@ -18,7 +18,7 @@ import type { Json } from "@/types/database.types";
 // Input validation schemas
 const createSurveyInputSchema = z.object({
   loanOfficerId: z.string().uuid(),
-  templateId: z.string().uuid(),
+  templateId: z.string().uuid().optional(),
   customerName: z.string().min(1, "Customer name is required"),
   customerEmail: z.string().email("Invalid email address"),
   customerPhone: z.string().optional(),
@@ -27,6 +27,7 @@ const createSurveyInputSchema = z.object({
   transactionDate: z.string().optional(),
   sendImmediately: z.boolean().default(false),
   scheduledAt: z.string().optional(),
+  customTemplateId: z.string().uuid().optional(),
 });
 
 export type CreateSurveyInput = z.infer<typeof createSurveyInputSchema>;
@@ -89,6 +90,20 @@ export async function createSurveyAndQueue(
       return { success: false, error: "Organization not found" };
     }
 
+    // Check if subscription is cancelled (grace period = read-only)
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("subscription_status")
+      .eq("id", userData.organization_id)
+      .single();
+
+    if (orgData?.subscription_status === "cancelled" || orgData?.subscription_status === "canceled") {
+      return {
+        success: false,
+        error: "Your subscription has been cancelled. Reactivate your plan to send surveys.",
+      };
+    }
+
     // Verify target user belongs to same organization
     const { data: targetUser, error: targetUserError } = await supabase
       .from("users")
@@ -104,23 +119,31 @@ export async function createSurveyAndQueue(
       return { success: false, error: "User not in your organization" };
     }
 
-    // Verify template belongs to same organization
-    const { data: template, error: templateError } = await supabase
-      .from("survey_templates")
-      .select("id, organization_id, is_active")
-      .eq("id", validated.data.templateId)
-      .single();
-
-    if (templateError || !template) {
-      return { success: false, error: "Survey template not found" };
+    // Check monthly survey limit before creating
+    const limitCheck = await checkRateLimit(userData.organization_id);
+    if (!limitCheck.allowed) {
+      return { success: false, error: limitCheck.reason };
     }
 
-    if (template.organization_id !== userData.organization_id) {
-      return { success: false, error: "Template not in your organization" };
-    }
+    // Verify survey template belongs to same organization (if provided)
+    if (validated.data.templateId) {
+      const { data: template, error: templateError } = await supabase
+        .from("survey_templates")
+        .select("id, organization_id, is_active")
+        .eq("id", validated.data.templateId)
+        .single();
 
-    if (!template.is_active) {
-      return { success: false, error: "Survey template is not active" };
+      if (templateError || !template) {
+        return { success: false, error: "Survey template not found" };
+      }
+
+      if (template.organization_id !== userData.organization_id) {
+        return { success: false, error: "Template not in your organization" };
+      }
+
+      if (!template.is_active) {
+        return { success: false, error: "Survey template is not active" };
+      }
     }
 
     // Check for existing survey
@@ -153,12 +176,30 @@ export async function createSurveyAndQueue(
     const expiresAt = new Date(scheduledAt);
     expiresAt.setDate(expiresAt.getDate() + 14);
 
+    // Get a default survey template if none specified
+    let surveyTemplateId = validated.data.templateId;
+    if (!surveyTemplateId) {
+      const { data: defaultTemplate } = await supabase
+        .from("survey_templates")
+        .select("id")
+        .eq("organization_id", userData.organization_id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .single();
+      surveyTemplateId = defaultTemplate?.id;
+    }
+
+    if (!surveyTemplateId) {
+      return { success: false, error: "No active survey template found" };
+    }
+
     // Create the survey
     const { data: survey, error: surveyError } = await supabase
       .from("surveys")
       .insert({
         organization_id: userData.organization_id,
-        template_id: validated.data.templateId,
+        template_id: surveyTemplateId,
         user_id: validated.data.loanOfficerId,
         customer_name: validated.data.customerName,
         customer_email: validated.data.customerEmail,
@@ -172,6 +213,9 @@ export async function createSurveyAndQueue(
         source_metadata: {
           created_by: user.id,
           send_immediately: validated.data.sendImmediately,
+          ...(validated.data.customTemplateId && {
+            custom_template_id: validated.data.customTemplateId,
+          }),
         },
       })
       .select("id, token")

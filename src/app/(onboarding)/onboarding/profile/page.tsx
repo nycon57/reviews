@@ -49,7 +49,7 @@ export default async function ProfileSetupPage() {
   }
 
   // If already completed profile, go to complete page
-  if (status.status === "profile_complete" || status.status === "sms_setup_complete" || status.status === "completed") {
+  if (status.status === "profile_complete" || status.status === "completed") {
     redirect("/onboarding/complete");
   }
 

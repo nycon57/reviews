@@ -5,6 +5,7 @@ import {
   getVideoTestimonialRequests,
   getVideoTestimonialRequestStats,
 } from "@/lib/video-testimonials/actions";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // ============================================================================
 // Types
@@ -26,6 +27,8 @@ export interface UnifiedRequest {
   source: string;
   createdAt: string;
   requestUrl: string | null;
+  /** Review ID for completed requests (linked via survey_responses or video_testimonials) */
+  reviewId: string | null;
 }
 
 export interface UnifiedRequestStats {
@@ -136,6 +139,7 @@ export async function getUnifiedRequests(
           source: s.source,
           createdAt: s.createdAt,
           requestUrl: null,
+          reviewId: null,
         }))
       : [];
 
@@ -156,6 +160,7 @@ export async function getUnifiedRequests(
           source: v.source,
           createdAt: v.createdAt,
           requestUrl: v.requestUrl,
+          reviewId: null,
         }))
       : [];
 
@@ -176,6 +181,49 @@ export async function getUnifiedRequests(
   merged.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+
+  // Batch-resolve review IDs for completed survey requests.
+  // Chain: survey → survey_responses (via survey_id) → reviews (via survey_response_id)
+  const completedSurveyIds = merged
+    .filter((r) => r.status === "completed" && r.type === "survey")
+    .map((r) => r.id);
+
+  if (completedSurveyIds.length > 0) {
+    const supabase = createAdminClient();
+    // Get survey_response IDs for these surveys
+    const { data: responseRows } = await supabase
+      .from("survey_responses")
+      .select("id, survey_id")
+      .in("survey_id", completedSurveyIds);
+
+    if (responseRows && responseRows.length > 0) {
+      const responseIdToSurveyId = new Map(
+        responseRows.map((r) => [r.id, r.survey_id])
+      );
+      const responseIds = responseRows.map((r) => r.id);
+
+      // Find reviews linked to these survey responses
+      const { data: reviewRows } = await supabase
+        .from("reviews")
+        .select("id, survey_response_id")
+        .in("survey_response_id", responseIds);
+
+      if (reviewRows && reviewRows.length > 0) {
+        const reviewBySurvey = new Map<string, string>();
+        for (const review of reviewRows) {
+          const surveyId = responseIdToSurveyId.get(review.survey_response_id!);
+          if (surveyId) {
+            reviewBySurvey.set(surveyId, review.id);
+          }
+        }
+        for (const req of merged) {
+          if (req.type === "survey" && reviewBySurvey.has(req.id)) {
+            req.reviewId = reviewBySurvey.get(req.id)!;
+          }
+        }
+      }
+    }
+  }
 
   const total = merged.length;
 

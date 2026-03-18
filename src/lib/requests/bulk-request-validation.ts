@@ -9,13 +9,10 @@ import type {
 } from "./bulk-request-types";
 import {
   REQUEST_EMAIL_CSV_FIELDS,
-  REQUEST_SMS_CSV_FIELDS,
   REQUEST_EMAIL_REQUIRED_FIELDS,
-  REQUEST_SMS_REQUIRED_FIELDS,
 } from "./bulk-request-types";
-import { toE164 } from "@/lib/sms/phone-utils";
 
-// Zod schemas per send method
+// Zod schema for email rows
 const emailRowSchema = z.object({
   name: z
     .string()
@@ -26,18 +23,6 @@ const emailRowSchema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Invalid email format"),
-});
-
-const smsRowSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Customer name is required")
-    .max(200, "Name must be 200 characters or less")
-    .transform((v) => v.trim()),
-  phone: z
-    .string()
-    .min(1, "Phone number is required")
-    .refine((val) => toE164(val) !== null, "Invalid US phone number"),
 });
 
 // Normalization map for auto-detecting CSV headers
@@ -60,17 +45,6 @@ const REQUEST_HEADER_ALIASES: Record<string, RequestCSVFieldKey> = {
   borrower_email: "email",
   emailaddress: "email",
   email_address: "email",
-  phone: "phone",
-  phonenumber: "phone",
-  phone_number: "phone",
-  customerphone: "phone",
-  customer_phone: "phone",
-  borrowerphone: "phone",
-  borrower_phone: "phone",
-  mobile: "phone",
-  cell: "phone",
-  cellphone: "phone",
-  cell_phone: "phone",
 };
 
 /**
@@ -94,12 +68,9 @@ export function autoDetectRequestMappings(
 ): RequestFieldMapping[] {
   const usedFields = new Set<RequestCSVFieldKey>();
   const relevantKeys = new Set<RequestCSVFieldKey>(
-    sendMethod === "email"
-      ? REQUEST_EMAIL_CSV_FIELDS.map((f) => f.key)
-      : REQUEST_SMS_CSV_FIELDS.map((f) => f.key)
+    REQUEST_EMAIL_CSV_FIELDS.map((f) => f.key)
   );
 
-  // Also include "name" for both
   relevantKeys.add("name");
 
   return csvHeaders.map((header) => {
@@ -120,14 +91,10 @@ export function autoDetectRequestMappings(
  */
 export function getMissingRequiredFields(
   mappings: RequestFieldMapping[],
-  sendMethod: SendMethod
+  _sendMethod: SendMethod
 ): RequestCSVFieldKey[] {
-  const required =
-    sendMethod === "email"
-      ? REQUEST_EMAIL_REQUIRED_FIELDS
-      : REQUEST_SMS_REQUIRED_FIELDS;
   const mappedKeys = new Set(mappings.map((m) => m.fieldKey).filter(Boolean));
-  return required.filter((f) => !mappedKeys.has(f));
+  return REQUEST_EMAIL_REQUIRED_FIELDS.filter((f) => !mappedKeys.has(f));
 }
 
 /**
@@ -155,9 +122,9 @@ export function applyRequestMappings(
  */
 export function validateRequestRowsClient(
   rows: Partial<ParsedRequestRow>[],
-  sendMethod: SendMethod
+  _sendMethod: SendMethod
 ): RequestRowValidationResult[] {
-  const schema = sendMethod === "email" ? emailRowSchema : smsRowSchema;
+  const schema = emailRowSchema;
   const seenKeys = new Set<string>();
 
   return rows.map((data, rowIndex) => {
@@ -173,15 +140,10 @@ export function validateRequestRowsClient(
     }
 
     // Check for duplicates within import
-    const dedupeKey =
-      sendMethod === "email"
-        ? data.email?.trim().toLowerCase()
-        : data.phone?.trim();
+    const dedupeKey = data.email?.trim().toLowerCase();
     if (dedupeKey) {
       if (seenKeys.has(dedupeKey)) {
-        warnings.push(
-          `Duplicate ${sendMethod === "email" ? "email" : "phone"} within import`
-        );
+        warnings.push("Duplicate email within import");
       }
       seenKeys.add(dedupeKey);
     }
@@ -204,13 +166,8 @@ export function validateRequestRowsClient(
 /**
  * Generate CSV template content for the given send method
  */
-export function generateRequestCSVTemplate(sendMethod: SendMethod): string {
-  if (sendMethod === "email") {
-    const headers = REQUEST_EMAIL_CSV_FIELDS.map((f) => f.label);
-    const example = ["John Smith", "john@example.com"];
-    return [headers.join(","), example.join(",")].join("\n");
-  }
-  const headers = REQUEST_SMS_CSV_FIELDS.map((f) => f.label);
-  const example = ["John Smith", "(555) 123-4567"];
+export function generateRequestCSVTemplate(_sendMethod: SendMethod): string {
+  const headers = REQUEST_EMAIL_CSV_FIELDS.map((f) => f.label);
+  const example = ["John Smith", "john@example.com"];
   return [headers.join(","), example.join(",")].join("\n");
 }

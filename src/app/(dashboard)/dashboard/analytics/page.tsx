@@ -10,14 +10,24 @@ import {
 import { getUsersForVideoRequests } from "@/lib/video-testimonials/actions";
 import { getResponseAnalytics } from "@/lib/reviews/response-actions";
 import { AnalyticsPageClient } from "@/components/analytics/analytics-page-client";
-import { ChannelEffectivenessCard } from "@/components/insights";
-import { getChannelEffectiveness } from "@/lib/ai";
+import { ChannelEffectivenessCard, PerformanceScorecard } from "@/components/insights";
+import { getChannelEffectiveness, getLOPerformanceScorecard } from "@/lib/ai";
 import { CardSkeleton } from "@/components/shared";
 
 export const metadata = {
   title: "Analytics | RepWell",
   description: "Track your performance metrics and insights",
 };
+
+async function PerformanceScorecardSection({ userId }: { userId: string }) {
+  const result = await getLOPerformanceScorecard(userId);
+
+  if (!result.success || !result.data) {
+    return null;
+  }
+
+  return <PerformanceScorecard data={result.data} />;
+}
 
 async function ChannelEffectivenessSection({ userId }: { userId?: string }) {
   const result = await getChannelEffectiveness(userId);
@@ -111,6 +121,13 @@ export default async function AnalyticsPage() {
         initialResponseAnalytics={responseAnalytics}
         teamMembers={users}
       />
+      {isPro && (
+        <div className="mt-6">
+          <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
+            <PerformanceScorecardSection userId={ctx.userId} />
+          </Suspense>
+        </div>
+      )}
       {isPro && (
         <div className="mt-6">
           <Suspense fallback={<CardSkeleton className="h-[400px]" />}>

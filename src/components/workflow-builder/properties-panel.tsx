@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   Minus,
   Plus,
@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { EmailTemplatePicker } from "@/components/email-builder/email-template-picker";
+import { getActiveTemplatesForSend } from "@/lib/distribution/actions";
 import {
   CONDITION_OPERATORS,
   EXIT_REASONS,
@@ -541,6 +543,32 @@ export function PropertiesPanel({
             );
           }
 
+          if (field.type === "email-template-selector") {
+            const templateId = String(selectedNode.data[field.key] ?? "");
+            return (
+              <EmailTemplatePicker
+                key={field.key}
+                label={field.label}
+                disabled={readOnly}
+                value={templateId ? { id: templateId, name: "Custom template" } : null}
+                onChange={(val) => updateData({ [field.key]: val?.id ?? "" })}
+              />
+            );
+          }
+
+          if (field.type === "survey-template-selector") {
+            return (
+              <SurveyTemplateField
+                key={field.key}
+                fieldKey={field.key}
+                label={field.label}
+                value={String(selectedNode.data[field.key] ?? "")}
+                readOnly={readOnly}
+                onUpdate={updateData}
+              />
+            );
+          }
+
           if (field.type === "exit-config") {
             return (
               <div key={field.key} className="space-y-2 rounded-lg border p-3">
@@ -633,5 +661,71 @@ export function PropertiesPanel({
         </AlertDialogContent>
       </AlertDialog>
     </aside>
+  );
+}
+
+// ── Survey template selector field ───────────────────────────────────
+
+function SurveyTemplateField({
+  fieldKey,
+  label,
+  value,
+  readOnly,
+  onUpdate,
+}: {
+  fieldKey: string;
+  label: string;
+  value: string;
+  readOnly: boolean;
+  onUpdate: (patch: Record<string, unknown>) => void;
+}) {
+  const [templates, setTemplates] = useState<
+    Array<{ id: string; name: string; description: string | null }>
+  >([]);
+  const [loaded, setLoaded] = useState(false);
+  const fetchingRef = useRef(false);
+
+  const handleOpen = useCallback(async (open: boolean) => {
+    if (!open || fetchingRef.current) return;
+    fetchingRef.current = true;
+    try {
+      const result = await getActiveTemplatesForSend();
+      if (result.success && result.data) {
+        setTemplates(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch survey templates:", error);
+    } finally {
+      fetchingRef.current = false;
+      setLoaded(true);
+    }
+  }, []);
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Select
+        value={value}
+        onValueChange={(v) => onUpdate({ [fieldKey]: v })}
+        disabled={readOnly}
+        onOpenChange={handleOpen}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select survey template" />
+        </SelectTrigger>
+        <SelectContent>
+          {templates.map((t) => (
+            <SelectItem key={t.id} value={t.id}>
+              {t.name}
+            </SelectItem>
+          ))}
+          {templates.length === 0 && loaded && (
+            <div className="px-2 py-3 text-center text-xs text-muted-foreground">
+              No active survey templates
+            </div>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

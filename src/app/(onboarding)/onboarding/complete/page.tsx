@@ -28,8 +28,8 @@ export default async function CompletionPage() {
     redirect("/login");
   }
 
-  // If not at profile_complete, sms_setup_complete, or completed status, redirect back
-  if (status.status !== "profile_complete" && status.status !== "sms_setup_complete" && status.status !== "completed") {
+  // If not at profile_complete or completed status, redirect back
+  if (status.status !== "profile_complete" && status.status !== "completed") {
     redirect("/onboarding");
   }
 

@@ -16,6 +16,7 @@ import {
   Link as LinkIcon,
   PencilSimple,
 } from "@phosphor-icons/react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   getCurrentOrganization,
   getOrganizationStats,
@@ -113,11 +114,10 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
     );
   }
 
-  const tier = organization.subscription_tier || "free";
+  const tier = organization.subscription_tier || "basic";
   const tierColors: Record<string, string> = {
-    free: "bg-muted text-foreground",
-    starter: "bg-blue-100 text-blue-800",
-    professional: "bg-purple-100 text-purple-800",
+    basic: "bg-blue-100 text-blue-800",
+    pro: "bg-purple-100 text-purple-800",
     enterprise: "bg-amber-100 text-amber-800",
   };
 
@@ -128,20 +128,15 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              {organization.logo_url ? (
-                <img
-                  src={organization.logo_url}
-                  alt={organization.name}
-                  className="h-16 w-16 rounded-lg object-cover"
-                />
-              ) : (
-                <div
-                  className="h-16 w-16 rounded-lg flex items-center justify-center"
+              <Avatar className="h-16 w-16 rounded-lg">
+                <AvatarImage src={organization.logo_url || undefined} alt={organization.name} />
+                <AvatarFallback
+                  className="rounded-lg"
                   style={{ backgroundColor: organization.primary_color || "#3B82F6" }}
                 >
                   <Building2 className="h-8 w-8 text-white" />
-                </div>
-              )}
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <CardTitle className="text-xl">{organization.name}</CardTitle>
                 <CardDescription className="mt-1">

@@ -319,9 +319,9 @@ export function OrganizationBranches() {
                         checked={branch.isActive}
                         onCheckedChange={() => handleToggleActive(branch)}
                         disabled={isPending}
-                        className={branch.isActive ? "data-[state=checked]:bg-green-500" : "data-[state=unchecked]:bg-muted"}
+                        className={branch.isActive ? "data-[state=checked]:bg-repwell-teal-300" : ""}
                       />
-                      <span className={`text-sm font-medium ${branch.isActive ? "text-green-600" : "text-muted-foreground"}`}>
+                      <span className={`text-sm font-medium ${branch.isActive ? "text-repwell-teal-300" : "text-muted-foreground"}`}>
                         {branch.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>

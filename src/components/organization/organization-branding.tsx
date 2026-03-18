@@ -114,8 +114,8 @@ export function OrganizationBranding() {
   }
 
   function applyPresetColors(preset: typeof PRESET_COLORS[0]) {
-    form.setValue("primary_color", preset.primary);
-    form.setValue("secondary_color", preset.secondary);
+    form.setValue("primary_color", preset.primary, { shouldDirty: true });
+    form.setValue("secondary_color", preset.secondary, { shouldDirty: true });
   }
 
   if (loading) {
@@ -167,7 +167,7 @@ export function OrganizationBranding() {
                   primaryColor={watchPrimaryColor}
                   onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationLogo(fd); }}
                   onRemove={removeOrganizationLogo}
-                  onChange={(url) => form.setValue("logo_url", url || "")}
+                  onChange={(url) => form.setValue("logo_url", url || "", { shouldDirty: true })}
                 />
               </div>
               <div className="space-y-2">
@@ -181,7 +181,7 @@ export function OrganizationBranding() {
                   primaryColor={watchPrimaryColor}
                   onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationAvatar(fd); }}
                   onRemove={removeOrganizationAvatar}
-                  onChange={(url) => form.setValue("avatar_url", url || "")}
+                  onChange={(url) => form.setValue("avatar_url", url || "", { shouldDirty: true })}
                 />
               </div>
             </div>
@@ -196,230 +196,233 @@ export function OrganizationBranding() {
                 primaryColor={watchPrimaryColor}
                 onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationBanner(fd); }}
                 onRemove={removeOrganizationBanner}
-                onChange={(url) => form.setValue("banner_url", url || "")}
+                onChange={(url) => form.setValue("banner_url", url || "", { shouldDirty: true })}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Colors */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <Palette className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
-              </div>
-              <div>
-                <CardTitle className="text-lg">Brand Colors</CardTitle>
-                <CardDescription>
-                  Customize your organization&apos;s color scheme
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Custom colors — primary experience */}
-            <div className="grid gap-6 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="primary_color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Primary Color</FormLabel>
-                    <div className="flex gap-2">
-                      <label className="relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-md border transition-shadow hover:shadow-md">
-                        <div
-                          className="absolute inset-0"
-                          style={{ backgroundColor: field.value || "#3B82F6" }}
-                        />
-                        <input
-                          type="color"
-                          value={field.value || "#3B82F6"}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                          className="absolute inset-0 cursor-pointer opacity-0"
-                        />
-                      </label>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="#3B82F6"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                          className="font-mono"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormDescription>
-                      Used for buttons and accents
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="secondary_color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Secondary Color</FormLabel>
-                    <div className="flex gap-2">
-                      <label className="relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-md border transition-shadow hover:shadow-md">
-                        <div
-                          className="absolute inset-0"
-                          style={{ backgroundColor: field.value || "#1E40AF" }}
-                        />
-                        <input
-                          type="color"
-                          value={field.value || "#1E40AF"}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                          className="absolute inset-0 cursor-pointer opacity-0"
-                        />
-                      </label>
-                      <FormControl>
-                        <Input
-                          type="text"
-                          placeholder="#1E40AF"
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
-                          className="font-mono"
-                        />
-                      </FormControl>
-                    </div>
-                    <FormDescription>
-                      Used for hover states and emphasis
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Preview */}
-            <div className="rounded-lg border p-4">
-              <p className="mb-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Preview</p>
-              <div className="flex flex-wrap items-center gap-4">
-                <button
-                  type="button"
-                  className="rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
-                  style={{
-                    backgroundColor: watchPrimaryColor,
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = watchSecondaryColor || "")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = watchPrimaryColor || "")}
-                >
-                  Primary Button
-                </button>
-                <button
-                  type="button"
-                  className="rounded-md border px-4 py-2 text-sm font-medium transition-colors"
-                  style={{
-                    borderColor: watchPrimaryColor,
-                    color: watchPrimaryColor,
-                  }}
-                >
-                  Secondary Button
-                </button>
-                <div
-                  className="rounded-full px-3 py-1 text-xs font-medium text-white"
-                  style={{ backgroundColor: watchPrimaryColor }}
-                >
-                  Badge
+        {/* Colors & Typography — side by side */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Colors */}
+          <Card className="border border-border shadow-soft">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <Palette className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Brand Colors</CardTitle>
+                  <CardDescription>
+                    Customize your color scheme
+                  </CardDescription>
                 </div>
               </div>
-            </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Custom colors */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="primary_color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Primary Color</FormLabel>
+                      <div className="flex gap-2">
+                        <label className="relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-md border transition-shadow hover:shadow-md">
+                          <div
+                            className="absolute inset-0"
+                            style={{ backgroundColor: field.value || "#3B82F6" }}
+                          />
+                          <input
+                            type="color"
+                            value={field.value || "#3B82F6"}
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                            className="absolute inset-0 cursor-pointer opacity-0"
+                          />
+                        </label>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="#3B82F6"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                            className="font-mono"
+                          />
+                        </FormControl>
+                      </div>
+                      <FormDescription>
+                        Used for buttons and accents
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Presets — quick start shortcuts */}
-            <div>
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quick Start Presets</Label>
-              <p className="mt-0.5 mb-2 text-xs text-muted-foreground">Pick a preset to get started, then customize above</p>
-              <div className="flex flex-wrap gap-2">
-                {PRESET_COLORS.map((preset) => (
+                <FormField
+                  control={form.control}
+                  name="secondary_color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Secondary Color</FormLabel>
+                      <div className="flex gap-2">
+                        <label className="relative h-10 w-10 shrink-0 cursor-pointer overflow-hidden rounded-md border transition-shadow hover:shadow-md">
+                          <div
+                            className="absolute inset-0"
+                            style={{ backgroundColor: field.value || "#1E40AF" }}
+                          />
+                          <input
+                            type="color"
+                            value={field.value || "#1E40AF"}
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                            className="absolute inset-0 cursor-pointer opacity-0"
+                          />
+                        </label>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            placeholder="#1E40AF"
+                            {...field}
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                            className="font-mono"
+                          />
+                        </FormControl>
+                      </div>
+                      <FormDescription>
+                        Used for hover states and emphasis
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Preview */}
+              <div className="rounded-lg border p-4">
+                <p className="mb-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">Preview</p>
+                <div className="flex flex-wrap items-center gap-4">
                   <button
-                    key={preset.name}
                     type="button"
-                    onClick={() => applyPresetColors(preset)}
-                    className={cn(
-                      "flex h-10 items-center gap-2 rounded-md border px-3 transition-colors hover:bg-muted",
-                      watchPrimaryColor === preset.primary && watchSecondaryColor === preset.secondary
-                        ? "border-primary bg-primary/5"
-                        : "border-border"
-                    )}
+                    className="rounded-md px-4 py-2 text-sm font-medium text-white transition-colors"
+                    style={{
+                      backgroundColor: watchPrimaryColor,
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = watchSecondaryColor || "")}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = watchPrimaryColor || "")}
                   >
-                    <div className="flex gap-1">
-                      <div
-                        className="h-4 w-4 rounded-full"
-                        style={{ backgroundColor: preset.primary }}
-                      />
-                      <div
-                        className="h-4 w-4 rounded-full"
-                        style={{ backgroundColor: preset.secondary }}
-                      />
-                    </div>
-                    <span className="text-sm">{preset.name}</span>
+                    Primary Button
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    className="rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+                    style={{
+                      borderColor: watchPrimaryColor,
+                      color: watchPrimaryColor,
+                    }}
+                  >
+                    Secondary Button
+                  </button>
+                  <div
+                    className="rounded-full px-3 py-1 text-xs font-medium text-white"
+                    style={{ backgroundColor: watchPrimaryColor }}
+                  >
+                    Badge
+                  </div>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Typography */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <TextAa className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
-              </div>
+              {/* Presets */}
               <div>
-                <CardTitle className="text-lg">Typography</CardTitle>
-                <CardDescription>
-                  Choose your organization&apos;s font family
-                </CardDescription>
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quick Start Presets</Label>
+                <p className="mt-0.5 mb-2 text-xs text-muted-foreground">Pick a preset to get started, then customize above</p>
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_COLORS.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => applyPresetColors(preset)}
+                      className={cn(
+                        "flex h-10 items-center gap-2 rounded-md border px-3 transition-colors hover:bg-muted",
+                        watchPrimaryColor === preset.primary && watchSecondaryColor === preset.secondary
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      )}
+                    >
+                      <div className="flex gap-1">
+                        <div
+                          className="h-4 w-4 rounded-full"
+                          style={{ backgroundColor: preset.primary }}
+                        />
+                        <div
+                          className="h-4 w-4 rounded-full"
+                          style={{ backgroundColor: preset.secondary }}
+                        />
+                      </div>
+                      <span className="text-sm">{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="font_family"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Font Family</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full sm:w-[300px]">
-                        <SelectValue placeholder="Select font" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {FONT_FAMILIES.map((font) => (
-                        <SelectItem key={font.value} value={font.value}>
-                          <span style={{ fontFamily: font.value }}>{font.label}</span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    This font will be used in surveys and public-facing pages
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            </CardContent>
+          </Card>
 
-            {/* Typography preview */}
-            <div className="rounded-lg border p-4" style={{ fontFamily: watchFontFamily }}>
-              <p className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">Font Preview</p>
-              <h3 className="text-2xl font-bold" style={{ fontFamily: watchFontFamily }}>
-                The quick brown fox jumps over the lazy dog
-              </h3>
-              <p className="mt-2 text-base" style={{ fontFamily: watchFontFamily }}>
-                The quick brown fox jumps over the lazy dog. 0123456789
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Typography */}
+          <Card className="border border-border shadow-soft">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <TextAa className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Typography</CardTitle>
+                  <CardDescription>
+                    Choose your font family
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <FormField
+                control={form.control}
+                name="font_family"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Font Family</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select font" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {FONT_FAMILIES.map((font) => (
+                          <SelectItem key={font.value} value={font.value}>
+                            <span style={{ fontFamily: font.value }}>{font.label}</span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      This font will be used in surveys and public-facing pages
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Typography preview */}
+              <div className="rounded-lg border p-4" style={{ fontFamily: watchFontFamily }}>
+                <p className="mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">Font Preview</p>
+                <h3 className="text-2xl font-bold" style={{ fontFamily: watchFontFamily }}>
+                  The quick brown fox jumps over the lazy dog
+                </h3>
+                <p className="mt-2 text-base" style={{ fontFamily: watchFontFamily }}>
+                  The quick brown fox jumps over the lazy dog. 0123456789
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isPending}>

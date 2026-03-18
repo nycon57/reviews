@@ -2,15 +2,7 @@
 
 import { useState, useCallback, useTransition, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -42,39 +34,28 @@ import {
 } from "@/lib/requests/bulk-request-validation";
 import {
   bulkSendTextReviewsViaEmail,
-  bulkSendTextReviewsViaSms,
   bulkSendVideoRequestsViaEmail,
-  bulkSendVideoRequestsViaSms,
 } from "@/lib/requests/bulk-request-actions";
-import { SmsTemplateSelector } from "@/components/distribution/sms-template-selector";
+import { EmailTemplatePicker } from "@/components/email-builder/email-template-picker";
 import type {
   ParsedCSVRow,
   ParsedRequestRow,
   RequestRowValidationResult,
   RequestType,
-  SendMethod,
   BulkSendResult,
-  SurveyTemplateSummary,
 } from "@/lib/requests/bulk-request-types";
 import { MAX_REQUEST_IMPORT_ROWS } from "@/lib/requests/bulk-request-types";
-import type { SmsTemplate, SmsTemplateCategory } from "@/lib/sms/types";
 
 type BulkStep = "upload" | "validate" | "complete";
 
 interface BulkRequestFlowProps {
   requestType: RequestType;
-  sendMethod: SendMethod;
-  surveyTemplates: SurveyTemplateSummary[];
-  smsTemplates: SmsTemplate[];
   onSuccess: () => void;
   onClose: () => void;
 }
 
 export function BulkRequestFlow({
   requestType,
-  sendMethod,
-  surveyTemplates,
-  smsTemplates,
   onSuccess,
   onClose,
 }: BulkRequestFlowProps) {
@@ -88,21 +69,10 @@ export function BulkRequestFlow({
   >([]);
   const [sendResult, setSendResult] = useState<BulkSendResult | null>(null);
 
-  // Template selection
-  const [templateId, setTemplateId] = useState("");
-  const [smsCategoryOverride, setSmsCategoryOverride] = useState<SmsTemplateCategory | null>(null);
-  const defaultSmsCategory: SmsTemplateCategory = useMemo(
-    () => requestType === "text" ? "review_request" : "video_request",
-    [requestType]
-  );
-  const smsCategory = smsCategoryOverride ?? defaultSmsCategory;
+  // Email template selection
+  const [emailTemplate, setEmailTemplate] = useState<{ id: string; name: string } | null>(null);
 
-  const isEmail = sendMethod === "email";
   const isText = requestType === "text";
-  const showSurveyTemplateSelector = isText && isEmail;
-  const showSmsTemplateSelector = sendMethod === "sms";
-  // Video+email uses built-in email template, no selector needed
-  const needsTemplate = showSurveyTemplateSelector || showSmsTemplateSelector;
 
   const { validCount, errorCount } = useMemo(() => {
     let valid = 0;
@@ -144,9 +114,9 @@ export function BulkRequestFlow({
           }
 
           const headers = Object.keys(results.data[0]);
-          const mappings = autoDetectRequestMappings(headers, sendMethod);
+          const mappings = autoDetectRequestMappings(headers, "email");
           const mapped = applyRequestMappings(results.data, mappings);
-          const validated = validateRequestRowsClient(mapped, sendMethod);
+          const validated = validateRequestRowsClient(mapped, "email");
 
           setValidationResults(validated);
           setStep("validate");
@@ -160,7 +130,7 @@ export function BulkRequestFlow({
         },
       });
     },
-    [sendMethod, toast]
+    [toast]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -173,12 +143,12 @@ export function BulkRequestFlow({
   });
 
   function downloadTemplate() {
-    const content = generateRequestCSVTemplate(sendMethod);
+    const content = generateRequestCSVTemplate("email");
     const blob = new Blob([content], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `review-request-template-${sendMethod}.csv`;
+    a.download = "review-request-template-email.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -186,15 +156,6 @@ export function BulkRequestFlow({
   // ── Send ─────────────────────────────────────────────────────────────
 
   function handleSend() {
-    if (needsTemplate && !templateId) {
-      toast({
-        title: "Missing template",
-        description: "Please select a template before sending.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const validRows = validationResults
       .filter((r) => r.status !== "error")
       .map((r) => r.data as ParsedRequestRow);
@@ -211,14 +172,10 @@ export function BulkRequestFlow({
     startTransition(async () => {
       let result: { success: boolean; data?: BulkSendResult; error?: string };
 
-      if (isText && isEmail) {
-        result = await bulkSendTextReviewsViaEmail(validRows, templateId);
-      } else if (isText && !isEmail) {
-        result = await bulkSendTextReviewsViaSms(validRows, templateId);
-      } else if (!isText && isEmail) {
-        result = await bulkSendVideoRequestsViaEmail(validRows);
+      if (isText) {
+        result = await bulkSendTextReviewsViaEmail(validRows, emailTemplate?.id);
       } else {
-        result = await bulkSendVideoRequestsViaSms(validRows, templateId);
+        result = await bulkSendVideoRequestsViaEmail(validRows);
       }
 
       if (result.success && result.data) {
@@ -243,8 +200,7 @@ export function BulkRequestFlow({
         {/* Download template */}
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Upload a CSV with{" "}
-            {isEmail ? "Name and Email" : "Name and Phone"} columns.
+            Upload a CSV with Name and Email columns.
           </p>
           <Button variant="outline" size="sm" onClick={downloadTemplate}>
             <DownloadSimple weight="duotone" className="mr-2 h-3.5 w-3.5" />
@@ -312,33 +268,11 @@ export function BulkRequestFlow({
           </div>
         </div>
 
-        {/* Template selector */}
-        {showSurveyTemplateSelector && (
-          <div className="space-y-2">
-            <Label>Survey Template *</Label>
-            <Select value={templateId} onValueChange={setTemplateId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select template" />
-              </SelectTrigger>
-              <SelectContent>
-                {surveyTemplates.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {showSmsTemplateSelector && (
-          <SmsTemplateSelector
-            templates={smsTemplates}
-            selectedTemplateId={templateId}
-            onSelectTemplate={setTemplateId}
-            isLoading={false}
-            category={smsCategory}
-            onCategoryChange={setSmsCategoryOverride}
+        {/* Email template picker */}
+        {isText && (
+          <EmailTemplatePicker
+            value={emailTemplate}
+            onChange={setEmailTemplate}
           />
         )}
 
@@ -349,9 +283,7 @@ export function BulkRequestFlow({
               <TableRow className="bg-muted/30">
                 <TableHead className="w-[50px] text-xs">#</TableHead>
                 <TableHead className="text-xs">Name</TableHead>
-                <TableHead className="text-xs">
-                  {isEmail ? "Email" : "Phone"}
-                </TableHead>
+                <TableHead className="text-xs">Email</TableHead>
                 <TableHead className="w-[90px] text-xs">Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -365,9 +297,7 @@ export function BulkRequestFlow({
                     {row.data.name || "-"}
                   </TableCell>
                   <TableCell className="text-sm">
-                    {isEmail
-                      ? row.data.email || "-"
-                      : row.data.phone || "-"}
+                    {row.data.email || "-"}
                   </TableCell>
                   <TableCell>
                     {row.status === "valid" && (

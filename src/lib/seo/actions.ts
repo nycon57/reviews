@@ -923,6 +923,8 @@ export interface PublicOrganization {
   slug: string;
   domain: string | null;
   logo_url: string | null;
+  avatar_url: string | null;
+  banner_url: string | null;
   primary_color: string | null;
   description: string | null;
   mission_statement: string | null;
@@ -1021,6 +1023,8 @@ export async function getPublicOrganizationProfile(
         slug,
         domain,
         logo_url,
+        avatar_url,
+        banner_url,
         primary_color,
         description,
         settings,
@@ -1057,6 +1061,8 @@ export async function getPublicOrganizationProfile(
       slug: string;
       domain: string | null;
       logo_url: string | null;
+      avatar_url: string | null;
+      banner_url: string | null;
       primary_color: string | null;
       description: string | null;
       settings: unknown;
@@ -1256,6 +1262,8 @@ export async function getPublicOrganizationProfile(
           slug: organization.slug,
           domain: organization.domain,
           logo_url: organization.logo_url,
+          avatar_url: organization.avatar_url,
+          banner_url: organization.banner_url,
           primary_color: organization.primary_color,
           description: organization.description || settings?.description || null,
           mission_statement: settings?.mission_statement || null,

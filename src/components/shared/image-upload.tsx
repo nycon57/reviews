@@ -3,10 +3,10 @@
 /* eslint-disable no-undef */
 // FileReader and Image are browser globals available in client components
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import Cropper from "react-easy-crop";
-import type { Area, Point } from "react-easy-crop";
+import type { Area, Point, MediaSize } from "react-easy-crop";
 import NextImage from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import {
   UploadSimple as Upload,
   Trash,
   MagnifyingGlassPlus as ZoomIn,
+  MagnifyingGlassMinus as ZoomOut,
+  ArrowsIn,
   SpinnerGap as Loader2,
   X,
   User,
@@ -44,6 +46,8 @@ interface VariantConfig {
   maxSizeMB: number;
   allowSvg: boolean;
   cropShape: "round" | "rect";
+  /** Minimum zoom level — values < 1 let users shrink images to fit the crop area */
+  minZoom: number;
   cropDialogTitle: string;
   cropDialogDescription: string;
   saveLabel: string;
@@ -58,23 +62,24 @@ interface VariantConfig {
 
 const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
   logo: {
-    aspect: 1,
-    outputWidth: 512,
-    outputHeight: 512,
+    aspect: 2,
+    outputWidth: 600,
+    outputHeight: 300,
     maxSizeMB: 5,
     allowSvg: true,
     cropShape: "rect",
+    minZoom: 0.3,
     cropDialogTitle: "Crop your logo",
     cropDialogDescription:
-      "Drag to reposition and use the slider to zoom. The image will be cropped to a square.",
+      "Drag to reposition and use the slider to zoom. Use zoom out to fit portrait logos into the frame.",
     saveLabel: "Save logo",
     successMessage: "Logo has been saved.",
     removeMessage: "Logo has been removed.",
     dropHint: "JPG, PNG, WebP or SVG (max 5MB)",
-    sizeHint: "Recommended: 512 x 512px",
-    previewClass: "h-32 w-32 rounded-lg",
+    sizeHint: "Recommended: 600 x 300px",
+    previewClass: "h-24 w-48 rounded-lg",
     dropzoneClass: "h-32",
-    dialogWidth: "sm:max-w-md",
+    dialogWidth: "sm:max-w-2xl",
   },
   avatar: {
     aspect: 1,
@@ -83,9 +88,10 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     maxSizeMB: 5,
     allowSvg: false,
     cropShape: "round",
+    minZoom: 0.5,
     cropDialogTitle: "Crop your photo",
     cropDialogDescription:
-      "Drag to reposition and use the slider to zoom. The image will be cropped to a circle.",
+      "Drag to reposition and use the slider to zoom.",
     saveLabel: "Save photo",
     successMessage: "Photo has been saved.",
     removeMessage: "Photo has been removed.",
@@ -93,7 +99,7 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     sizeHint: "Recommended: 256 x 256px",
     previewClass: "h-24 w-24 rounded-full",
     dropzoneClass: "h-32",
-    dialogWidth: "sm:max-w-md",
+    dialogWidth: "sm:max-w-lg",
   },
   "profile-photo": {
     aspect: 1,
@@ -102,9 +108,10 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     maxSizeMB: 5,
     allowSvg: false,
     cropShape: "round",
+    minZoom: 0.5,
     cropDialogTitle: "Crop your profile photo",
     cropDialogDescription:
-      "Drag to reposition and use the slider to zoom. The image will be cropped to a circle.",
+      "Drag to reposition and use the slider to zoom.",
     saveLabel: "Save photo",
     successMessage: "Profile photo has been saved.",
     removeMessage: "Profile photo has been removed.",
@@ -112,7 +119,7 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     sizeHint: "Recommended: 256 x 256px",
     previewClass: "h-24 w-24 rounded-full",
     dropzoneClass: "h-32",
-    dialogWidth: "sm:max-w-md",
+    dialogWidth: "sm:max-w-lg",
   },
   banner: {
     aspect: 3,
@@ -121,6 +128,7 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     maxSizeMB: 10,
     allowSvg: false,
     cropShape: "rect",
+    minZoom: 0.3,
     cropDialogTitle: "Crop your cover photo",
     cropDialogDescription:
       "Drag to reposition and use the slider to zoom. The image will be cropped to a 3:1 banner ratio.",
@@ -131,7 +139,7 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     sizeHint: "Recommended: 1200 x 400px",
     previewClass: "w-full aspect-[3/1] rounded-lg",
     dropzoneClass: "aspect-[3/1]",
-    dialogWidth: "sm:max-w-2xl",
+    dialogWidth: "sm:max-w-3xl",
   },
 };
 
@@ -194,7 +202,31 @@ export function ImageUpload({
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const fitZoomRef = useRef(1);
   const { toast } = useToast();
+
+  /** Called when the image loads inside the cropper — auto-fit zoom */
+  const onMediaLoaded = useCallback(
+    (mediaSize: MediaSize) => {
+      if (config.minZoom >= 1) return;
+      // Calculate zoom so the full image fits inside the crop area
+      const imgAspect = mediaSize.naturalWidth / mediaSize.naturalHeight;
+      const fitZoom = imgAspect > config.aspect
+        ? 1 // image is wider than frame, default contain already fits
+        : imgAspect / config.aspect; // image is taller, need to shrink
+      const clamped = Math.max(config.minZoom, Math.min(fitZoom, 1));
+      fitZoomRef.current = clamped;
+      setZoom(clamped);
+      setCrop({ x: 0, y: 0 });
+    },
+    [config.aspect, config.minZoom]
+  );
+
+  /** Reset to the auto-fit zoom */
+  const handleFitToFrame = useCallback(() => {
+    setZoom(fitZoomRef.current);
+    setCrop({ x: 0, y: 0 });
+  }, []);
 
   // Sync with external prop
   useEffect(() => {
@@ -318,17 +350,31 @@ export function ImageUpload({
 
     canvas.width = config.outputWidth;
     canvas.height = config.outputHeight;
-    ctx.drawImage(
-      image,
-      croppedAreaPixels.x,
-      croppedAreaPixels.y,
-      croppedAreaPixels.width,
-      croppedAreaPixels.height,
-      0,
-      0,
-      config.outputWidth,
-      config.outputHeight
-    );
+
+    // Banner: white fill (JPEG). Logo/avatar: transparent (PNG).
+    if (variant === "banner") {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // When zoomed out (restrictPosition=false), croppedAreaPixels may extend
+    // beyond the image bounds. Clamp source coords and offset destination.
+    const sx = Math.max(0, croppedAreaPixels.x);
+    const sy = Math.max(0, croppedAreaPixels.y);
+    const sRight = Math.min(image.width, croppedAreaPixels.x + croppedAreaPixels.width);
+    const sBottom = Math.min(image.height, croppedAreaPixels.y + croppedAreaPixels.height);
+    const sw = Math.max(0, sRight - sx);
+    const sh = Math.max(0, sBottom - sy);
+
+    if (sw > 0 && sh > 0) {
+      const scaleX = config.outputWidth / croppedAreaPixels.width;
+      const scaleY = config.outputHeight / croppedAreaPixels.height;
+      const dx = (sx - croppedAreaPixels.x) * scaleX;
+      const dy = (sy - croppedAreaPixels.y) * scaleY;
+      const dw = sw * scaleX;
+      const dh = sh * scaleY;
+      ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+    }
 
     const ext = variant === "banner" ? "jpeg" : "png";
     const mimeType = variant === "banner" ? "image/jpeg" : "image/png";
@@ -425,34 +471,12 @@ export function ImageUpload({
           <div className="space-y-4">
             {/* Preview */}
             {isAvatarLike ? (
-              <div className="relative w-24 h-24">
-                <Avatar className="h-24 w-24 border-2 border-border">
-                  <AvatarImage src={imageUrl} alt={label || "Photo"} />
-                  <AvatarFallback className="text-xl bg-surface-soft text-repwell-teal-300 font-semibold">
-                    {fallbackInitials}
-                  </AvatarFallback>
-                </Avatar>
-                {!disabled && onRemove && (
-                  <button
-                    type="button"
-                    onClick={handleRemove}
-                    className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 transition-colors"
-                    aria-label="Remove photo"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-            ) : variant === "banner" ? (
-              <div className="relative w-full aspect-[3/1] rounded-lg overflow-hidden border border-border bg-muted">
-                <NextImage
-                  src={imageUrl}
-                  alt="Cover photo"
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent" />
-              </div>
+              <Avatar className="h-24 w-24 border-2 border-border">
+                <AvatarImage src={imageUrl} alt={label || "Photo"} />
+                <AvatarFallback className="text-xl bg-surface-soft text-repwell-teal-300 font-semibold">
+                  {fallbackInitials}
+                </AvatarFallback>
+              </Avatar>
             ) : (
               <div
                 className={cn(
@@ -473,8 +497,8 @@ export function ImageUpload({
               </div>
             )}
 
-            {/* Replace / Remove buttons (non-avatar variants) */}
-            {!isAvatarLike && (
+            {/* Replace / Remove buttons */}
+            {!disabled && (
               <div className="flex items-center gap-3">
                 <div {...getRootProps()}>
                   <input {...getInputProps()} />
@@ -568,39 +592,62 @@ export function ImageUpload({
           </DialogHeader>
 
           <div
-            className={cn(
-              "relative w-full bg-black rounded-lg overflow-hidden",
-              variant === "banner" ? "aspect-[3/1]" : "h-64"
-            )}
+            className="relative w-full h-80 rounded-lg overflow-hidden bg-[length:16px_16px] bg-[position:0_0,8px_8px]"
+            style={{
+              backgroundImage:
+                "linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%, transparent 75%, hsl(var(--muted)) 75%), linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%, transparent 75%, hsl(var(--muted)) 75%)",
+            }}
           >
             {imageSrc && (
               <Cropper
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
+                minZoom={config.minZoom}
                 aspect={config.aspect}
                 onCropChange={setCrop}
                 onCropComplete={onCropComplete}
                 onZoomChange={setZoom}
+                onMediaLoaded={onMediaLoaded}
                 cropShape={config.cropShape}
                 showGrid={config.cropShape !== "round"}
+                objectFit="contain"
+                restrictPosition={false}
+                style={{
+                  cropAreaStyle: {
+                    border: "2px solid hsl(var(--repwell-teal-300))",
+                  },
+                }}
               />
             )}
           </div>
 
-          <div className="flex items-center gap-4 px-2">
-            <ZoomIn className="h-4 w-4 text-label flex-shrink-0" />
+          <div className="flex items-center gap-3 px-2">
+            <ZoomOut className="h-4 w-4 text-label flex-shrink-0" />
             <Slider
               value={[zoom]}
               onValueChange={([value]) => setZoom(value)}
-              min={1}
+              min={config.minZoom}
               max={3}
-              step={0.1}
+              step={0.05}
               className="flex-1"
             />
-            <span className="text-sm text-label w-12 text-right">
+            <ZoomIn className="h-4 w-4 text-label flex-shrink-0" />
+            <span className="text-xs text-label w-10 text-right tabular-nums">
               {zoom.toFixed(1)}x
             </span>
+            {config.minZoom < 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={handleFitToFrame}
+              >
+                <ArrowsIn className="h-3.5 w-3.5 mr-1" />
+                Fit
+              </Button>
+            )}
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0">

@@ -78,6 +78,15 @@ public/embed.js.map
 public/embed.min.js
 public/embed.min.js.map
 
+# Auth storage states (Playwright)
+.auth/
+
+# Browser verification screenshots
+tests/screenshots/
+
+# Browser automation config (local overrides)
+agent-browser.json
+
 # Misc
 *.pem
 .turbo

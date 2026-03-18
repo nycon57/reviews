@@ -23,7 +23,6 @@ import {
   Code,
   Sparkle,
   ClipboardText,
-  ChatCircle,
   Buildings,
   Trophy,
 } from "@phosphor-icons/react";
@@ -141,14 +140,6 @@ const quickLinks: SearchResult[] = [
     description: "Review and approve Share Studio edits",
     href: "/dashboard/approvals",
     icon: ClipboardText,
-    category: "Pages",
-  },
-  {
-    id: "messages",
-    title: "Messages",
-    description: "Two-way SMS conversations",
-    href: "/dashboard/messages",
-    icon: ChatCircle,
     category: "Pages",
   },
   {

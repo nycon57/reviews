@@ -50,9 +50,8 @@ type AnnouncementAudience =
   | "admins_only"
   | "managers_only"
   | "users_only"
-  | "free_tier"
-  | "starter_tier"
-  | "professional_tier"
+  | "basic_tier"
+  | "pro_tier"
   | "enterprise_tier"
   | "trial_users";
 
@@ -106,9 +105,8 @@ const AUDIENCE_OPTIONS: { value: AnnouncementAudience; label: string }[] = [
   { value: "admins_only", label: "Admins Only" },
   { value: "managers_only", label: "Managers Only" },
   { value: "users_only", label: "Users Only" },
-  { value: "free_tier", label: "Free Tier Users" },
-  { value: "starter_tier", label: "Starter Plan Users" },
-  { value: "professional_tier", label: "Professional Plan Users" },
+  { value: "basic_tier", label: "Basic Plan Users" },
+  { value: "pro_tier", label: "Pro Plan Users" },
   { value: "enterprise_tier", label: "Enterprise Plan Users" },
   { value: "trial_users", label: "Trial Users" },
 ];

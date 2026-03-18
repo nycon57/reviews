@@ -18,6 +18,7 @@ export type {
   IntegrationKey,
   IntegrationConfig,
   OrgIntegrations,
+  EmailBrandingConfig,
 } from "./types";
 
 export {
@@ -39,6 +40,7 @@ export {
   INTEGRATION_KEYS,
   integrationConfigSchema,
   orgIntegrationsSchema,
+  emailBrandingConfigSchema,
 } from "./types";
 
 // Actions
@@ -68,6 +70,8 @@ export {
   stopUserImpersonation,
   getOrgIntegrationSettings,
   updateOrgIntegrationSettings,
+  getEmailBrandingConfig,
+  updateEmailBrandingConfig,
   uploadOrganizationLogo,
   removeOrganizationLogo,
   uploadOrganizationAvatar,

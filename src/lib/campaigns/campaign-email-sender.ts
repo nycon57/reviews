@@ -1,16 +1,24 @@
 import "server-only";
 
 import type { EmailContext } from "@/lib/email/orchestration/types";
+import { resolveTemplateById } from "@/lib/email-builder/actions";
 
 /**
  * Generic email sender for campaign sequences.
  * Resolves template from step config and generates email content.
+ * Supports custom email builder templates via customTemplateId.
  *
  * Register via: registerEmailSender("custom", campaignEmailSender)
  */
 export async function campaignEmailSender(
   ctx: EmailContext
 ): Promise<{ subject: string; html: string }> {
+  // Check for custom email builder template
+  const customTemplateId = ctx.step.template?.customTemplateId;
+  if (customTemplateId) {
+    return resolveCustomCampaignTemplate(customTemplateId, ctx);
+  }
+
   const templateName = ctx.step.template?.name ?? "campaign_generic";
   const subjectOverride = ctx.step.template?.subjectOverride;
   const userName = ctx.user.full_name || "there";
@@ -31,6 +39,26 @@ export async function campaignEmailSender(
   });
 
   return { subject, html };
+}
+
+async function resolveCustomCampaignTemplate(
+  templateId: string,
+  ctx: EmailContext
+): Promise<{ subject: string; html: string }> {
+  const userName = ctx.user.full_name || "there";
+  const mergeValues: Record<string, string> = {
+    customer_name: userName,
+    customer_first_name: userName.split(" ")[0],
+    customer_email: ctx.user.email,
+    company_name: String(ctx.metadata.organization_name ?? ""),
+    company_logo_url: String(ctx.metadata.organization_logo_url ?? ""),
+    professional_name: userName,
+    professional_first_name: userName.split(" ")[0],
+    survey_link: String(ctx.metadata.survey_url ?? ctx.metadata.review_url ?? ""),
+    review_link: String(ctx.metadata.review_url ?? ctx.metadata.survey_url ?? ""),
+    unsubscribe_link: String(ctx.metadata.unsubscribe_url ?? ""),
+  };
+  return resolveTemplateById(templateId, mergeValues);
 }
 
 function buildSubjectFromTemplate(

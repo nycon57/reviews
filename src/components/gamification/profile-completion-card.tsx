@@ -77,6 +77,7 @@ export function ProfileCompletionCard({
   const [data, setData] = useState<ProfileCompletionScore | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -156,6 +157,45 @@ export function ProfileCompletionCard({
   const searchRank = getSearchRankLabel(data.searchRankScore);
   const earnedMilestones = data.milestones.filter((m) => m.achieved);
   const nextMilestone = data.milestones.find((m) => !m.achieved);
+  const isHighCompletion = data.percentage >= 80;
+
+  // Auto-collapsed compact view for high completion
+  if (isHighCompletion && !isExpanded) {
+    return (
+      <Card className={cn("shadow-soft", className)}>
+        <CardContent className="py-4">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            aria-expanded={isExpanded}
+            aria-label="Expand profile completion details"
+            className="flex w-full items-center gap-3"
+          >
+            <div
+              className={cn(
+                "h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold",
+                "bg-green-500 text-white"
+              )}
+            >
+              {data.percentage}%
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-heading-accent">Profile Score</span>
+                <ChevronRight className="h-4 w-4 text-repwell-teal-300" />
+              </div>
+              <Progress
+                value={data.percentage}
+                className="h-1.5"
+                indicatorClassName="!bg-[var(--progress-fill)]"
+                indicatorStyle={{ "--progress-fill": `hsl(${getProgressHue(data.percentage)} 65% 45%)` } as CSSProperties}
+              />
+            </div>
+          </button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("shadow-soft", className)}>
@@ -167,11 +207,24 @@ export function ProfileCompletionCard({
             </div>
             Profile Score
           </div>
-          {data.rank && (
-            <Badge variant="outline" className="font-normal">
-              Rank #{data.rank}
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {data.rank && (
+              <Badge variant="outline" className="font-normal">
+                Rank #{data.rank}
+              </Badge>
+            )}
+            {isHighCompletion && (
+              <button
+                type="button"
+                onClick={() => setIsExpanded(false)}
+                aria-expanded={isExpanded}
+                aria-label="Collapse profile completion details"
+                className="text-repwell-teal-300 hover:text-repwell-teal-400 transition-colors"
+              >
+                <ChevronDown className="h-4 w-4 rotate-180" />
+              </button>
+            )}
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 pt-4">

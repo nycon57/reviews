@@ -38,57 +38,60 @@ import { cn } from "@/lib/utils";
 const pricingPlans = {
   monthly: [
     {
-      tier: "Starter",
+      tier: "Basic",
       price: 49,
       period: "month",
-      description: "Perfect for individual professionals",
+      description: "Build Your Reputation",
       icon: Users,
       features: [
-        "Up to 100 survey sends/month",
-        "Email & SMS distribution",
-        "Basic analytics dashboard",
-        "NPS & CSAT tracking",
-        "5 survey templates",
+        "1 user profile",
+        "200 surveys/month",
+        "Email distribution",
+        "Review monitoring & management",
+        "Basic analytics (rating trends, NPS)",
+        "Testimonial collection (text + video)",
+        "Google Business integration",
         "Email support",
       ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=starter" },
+      cta: { label: "Start Free Trial", href: "/signup?plan=basic" },
       highlighted: false,
     },
     {
-      tier: "Professional",
-      price: 149,
+      tier: "Pro",
+      price: 99,
       period: "month",
-      description: "For teams and growing businesses",
+      description: "AI-Powered Reputation Intelligence",
       icon: Sparkles,
       features: [
-        "Up to 500 survey sends/month",
-        "Everything in Starter, plus:",
-        "Google Business integration",
+        "Everything in Basic, plus:",
         "AI sentiment analysis",
         "AI response suggestions",
-        "Team leaderboards",
+        "AI visibility / GEO reports",
+        "AI performance scorecards",
+        "1,000 surveys/month",
+        "Advanced analytics & reporting",
+        "API access (1,000 calls/day)",
         "Custom branding",
         "Priority support",
       ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=professional" },
+      cta: { label: "Start Free Trial", href: "/signup?plan=pro" },
       highlighted: true,
       badge: "Most Popular",
     },
     {
       tier: "Enterprise",
       price: "Custom",
-      description: "For large organizations",
+      description: "Reputation at Scale",
       icon: Building2,
       features: [
-        "Unlimited survey sends",
-        "Everything in Professional, plus:",
-        "Multi-branch management",
-        "Advanced reporting & exports",
-        "API access",
-        "Zapier integration",
-        "Dedicated account manager",
-        "Custom integrations",
-        "SSO authentication",
+        "Everything in Pro, plus:",
+        "Unlimited team members & surveys",
+        "Team management & leaderboards",
+        "Manager dashboard with org-wide analytics",
+        "Employee experience surveys",
+        "SSO/SAML & white-label",
+        "Webhooks & CSV bulk import",
+        "Dedicated success manager",
       ],
       cta: { label: "Contact Sales", href: "/contact?plan=enterprise" },
       highlighted: false,
@@ -96,57 +99,60 @@ const pricingPlans = {
   ],
   yearly: [
     {
-      tier: "Starter",
+      tier: "Basic",
       price: 39,
       period: "month",
-      description: "Perfect for individual professionals",
+      description: "Build Your Reputation",
       icon: Users,
       features: [
-        "Up to 100 survey sends/month",
-        "Email & SMS distribution",
-        "Basic analytics dashboard",
-        "NPS & CSAT tracking",
-        "5 survey templates",
+        "1 user profile",
+        "200 surveys/month",
+        "Email distribution",
+        "Review monitoring & management",
+        "Basic analytics (rating trends, NPS)",
+        "Testimonial collection (text + video)",
+        "Google Business integration",
         "Email support",
       ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=starter&billing=yearly" },
+      cta: { label: "Start Free Trial", href: "/signup?plan=basic&billing=yearly" },
       highlighted: false,
     },
     {
-      tier: "Professional",
-      price: 119,
+      tier: "Pro",
+      price: 79,
       period: "month",
-      description: "For teams and growing businesses",
+      description: "AI-Powered Reputation Intelligence",
       icon: Sparkles,
       features: [
-        "Up to 500 survey sends/month",
-        "Everything in Starter, plus:",
-        "Google Business integration",
+        "Everything in Basic, plus:",
         "AI sentiment analysis",
         "AI response suggestions",
-        "Team leaderboards",
+        "AI visibility / GEO reports",
+        "AI performance scorecards",
+        "1,000 surveys/month",
+        "Advanced analytics & reporting",
+        "API access (1,000 calls/day)",
         "Custom branding",
         "Priority support",
       ],
-      cta: { label: "Start Free Trial", href: "/signup?plan=professional&billing=yearly" },
+      cta: { label: "Start Free Trial", href: "/signup?plan=pro&billing=yearly" },
       highlighted: true,
       badge: "Most Popular",
     },
     {
       tier: "Enterprise",
       price: "Custom",
-      description: "For large organizations",
+      description: "Reputation at Scale",
       icon: Building2,
       features: [
-        "Unlimited survey sends",
-        "Everything in Professional, plus:",
-        "Multi-branch management",
-        "Advanced reporting & exports",
-        "API access",
-        "Zapier integration",
-        "Dedicated account manager",
-        "Custom integrations",
-        "SSO authentication",
+        "Everything in Pro, plus:",
+        "Unlimited team members & surveys",
+        "Team management & leaderboards",
+        "Manager dashboard with org-wide analytics",
+        "Employee experience surveys",
+        "SSO/SAML & white-label",
+        "Webhooks & CSV bulk import",
+        "Dedicated success manager",
       ],
       cta: { label: "Contact Sales", href: "/contact?plan=enterprise" },
       highlighted: false,
@@ -158,7 +164,7 @@ const faqs = [
   {
     question: "How does the free trial work?",
     answer:
-      "Start your 14-day free trial with no credit card required. You'll get full access to all features in your selected plan. At the end of the trial, you can choose to subscribe or let your account convert to a limited free tier.",
+      "Start your 14-day free trial with full access to all features in your selected plan. A credit card is required to activate the trial, but you won't be charged until the trial ends. Cancel anytime before then.",
   },
   {
     question: "Can I change plans later?",
@@ -479,11 +485,6 @@ export function PricingPageClient() {
   }, [searchParams]);
 
   const handleSelectPlan = async (tier: string) => {
-    if (tier.toLowerCase() === "starter" && plans[0].price === 0) {
-      router.push("/signup");
-      return;
-    }
-
     if (tier.toLowerCase() === "enterprise") {
       router.push("/contact?plan=enterprise");
       return;
@@ -585,7 +586,7 @@ export function PricingPageClient() {
               className="text-lg md:text-xl text-repwell-teal-400 mb-10"
             >
               Choose the plan that fits your needs. All plans include a 14-day
-              free trial with no credit card required.
+              free trial. Cancel anytime.
             </motion.p>
 
             {/* Billing Toggle */}
@@ -667,12 +668,12 @@ export function PricingPageClient() {
                 {
                   name: "Birdeye",
                   href: "/compare/birdeye-alternative",
-                  tagline: "Mortgage-native, not generic",
+                  tagline: "Better value, no setup fees",
                 },
                 {
                   name: "Trustpilot",
                   href: "/compare/trustpilot-alternative",
-                  tagline: "Built for mortgage professionals",
+                  tagline: "Built for sales professionals",
                 },
               ].map((competitor) => (
                 <Link

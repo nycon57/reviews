@@ -319,14 +319,11 @@ async function getRecipients(
     case "users_only":
       query = query.eq("role", "user");
       break;
-    case "free_tier":
-      query = query.eq("organizations.subscription_tier", "free");
+    case "basic_tier":
+      query = query.eq("organizations.subscription_tier", "basic");
       break;
-    case "starter_tier":
-      query = query.eq("organizations.subscription_tier", "starter");
-      break;
-    case "professional_tier":
-      query = query.eq("organizations.subscription_tier", "professional");
+    case "pro_tier":
+      query = query.eq("organizations.subscription_tier", "pro");
       break;
     case "enterprise_tier":
       query = query.eq("organizations.subscription_tier", "enterprise");

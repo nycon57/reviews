@@ -47,7 +47,7 @@ export default async function PaymentPage() {
   return (
     <Suspense fallback={<PaymentSkeleton />}>
       <PaymentClient
-        selectedPlan={status.selectedPlan || "starter"}
+        selectedPlan={status.selectedPlan || "basic"}
         billingCycle={status.selectedBillingCycle || "month"}
       />
     </Suspense>

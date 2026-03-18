@@ -91,6 +91,7 @@ import {
   getTrialEnding5WinbackEmail,
 } from "./trial-ending-templates";
 import { renderProfileReferralIntroductionEmail } from "./templates/index";
+import { resolveTemplateById } from "@/lib/email-builder/actions";
 
 // Check if email is unsubscribed
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
@@ -162,7 +163,30 @@ export async function sendSurveyInvitationEmail(
   }
 
   const fromAddress = getFromAddress(data.organizationName);
-  const { subject, html } = getSurveyInvitationEmail(data);
+
+  // Use custom template if specified, otherwise fall back to default
+  let subject: string;
+  let html: string;
+  if (data.customTemplateId) {
+    const resolved = await resolveTemplateById(data.customTemplateId, {
+      customer_name: data.customerName,
+      customer_first_name: data.customerName.split(" ")[0],
+      professional_name: data.loanOfficerName,
+      professional_first_name: data.loanOfficerName.split(" ")[0],
+      company_name: data.organizationName,
+      company_logo_url: data.organizationLogoUrl ?? "",
+      survey_link: data.surveyUrl,
+      review_link: data.surveyUrl,
+      unsubscribe_link: "#",
+    });
+    subject = resolved.subject;
+    html = resolved.html;
+  } else {
+    const defaultEmail = getSurveyInvitationEmail(data);
+    subject = defaultEmail.subject;
+    html = defaultEmail.html;
+  }
+
   const idempotencyKey = getSurveyInvitationIdempotencyKey(
     data.surveyId || `survey-${Date.now()}`,
     data.toEmail

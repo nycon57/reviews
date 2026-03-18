@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import Link from "next/link";
 import {
   Plus,
   CaretLeft as ChevronLeft,
@@ -12,6 +13,7 @@ import {
   ListDashes,
   XCircle,
   Eye,
+  ArrowSquareOut,
   DotsThree as MoreHorizontal,
   X,
   WarningCircle as AlertCircle,
@@ -194,7 +196,7 @@ function TypeBadge({ type }: { type: RequestType }) {
     return (
       <Badge variant="outline" className="gap-1 text-repwell-teal-300 border-repwell-teal-300/30 bg-repwell-teal-300/5">
         <Envelope className="h-3 w-3" />
-        Survey
+        Text Review
       </Badge>
     );
   }
@@ -306,7 +308,8 @@ function UnifiedRequestTable({
                 {(() => {
                   const hasVideoLink = request.type === "video" && request.requestUrl;
                   const hasManageActions = canManage && !["completed", "cancelled", "expired"].includes(request.status);
-                  if (!hasVideoLink && !hasManageActions) return null;
+                  const hasReviewLink = request.status === "completed" && request.reviewId;
+                  if (!hasVideoLink && !hasManageActions && !hasReviewLink) return null;
                   return (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -316,21 +319,32 @@ function UnifiedRequestTable({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {hasVideoLink && (
-                          <DropdownMenuItem
-                            onClick={() => {
-                              navigator.clipboard.writeText(request.requestUrl!).then(
-                                () => toast({ title: "Copied", description: "Link copied to clipboard" }),
-                                (err) => toast({ title: "Copy failed", description: err?.message || "Could not copy link", variant: "destructive" }),
-                              );
-                            }}
-                          >
-                            Copy Link
+                        {hasReviewLink && (
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/reviews/${request.reviewId}`}>
+                              <ArrowSquareOut className="mr-2 h-4 w-4" />
+                              View Review
+                            </Link>
                           </DropdownMenuItem>
+                        )}
+                        {hasVideoLink && (
+                          <>
+                            {hasReviewLink && <DropdownMenuSeparator />}
+                            <DropdownMenuItem
+                              onClick={() => {
+                                navigator.clipboard.writeText(request.requestUrl!).then(
+                                  () => toast({ title: "Copied", description: "Link copied to clipboard" }),
+                                  (err) => toast({ title: "Copy failed", description: err?.message || "Could not copy link", variant: "destructive" }),
+                                );
+                              }}
+                            >
+                              Copy Link
+                            </DropdownMenuItem>
+                          </>
                         )}
                         {hasManageActions && (
                           <>
-                            {hasVideoLink && <DropdownMenuSeparator />}
+                            {(hasVideoLink || hasReviewLink) && <DropdownMenuSeparator />}
                             <DropdownMenuItem
                               onClick={() => onResend(request)}
                               disabled={isActioning}
@@ -532,7 +546,7 @@ export function UnifiedRequestsTab({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="survey">Survey</SelectItem>
+                <SelectItem value="survey">Text Review</SelectItem>
                 <SelectItem value="video">Video</SelectItem>
               </SelectContent>
             </Select>

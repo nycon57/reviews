@@ -6,6 +6,7 @@ import {
   FilmStrip as Film,
   Chats as MessageSquare,
   PaperPlaneRight,
+  ShareNetwork,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -62,9 +63,11 @@ interface UnifiedContentHubProps {
   initialRequestsTotal?: number;
   initialRequestStats?: UnifiedRequestStats;
   canSendRequests?: boolean;
+  // Share Studio tab (optional — hidden when not provided)
+  shareStudioContent?: React.ReactNode;
 }
 
-type ContentTab = "reviews" | "videos" | "requests";
+type ContentTab = "reviews" | "videos" | "requests" | "share-studio";
 
 // ============================================================================
 // Main Unified Content Hub Component
@@ -86,6 +89,7 @@ export function UnifiedContentHub({
   initialRequestsTotal,
   initialRequestStats,
   canSendRequests,
+  shareStudioContent,
 }: UnifiedContentHubProps) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -94,7 +98,9 @@ export function UnifiedContentHub({
       ? "videos"
       : tabParam === "requests" && canSendRequests
         ? "requests"
-        : "reviews";
+        : tabParam === "share-studio" && shareStudioContent
+          ? "share-studio"
+          : "reviews";
   const [activeTab, setActiveTab] = useState<ContentTab>(defaultTab);
 
   const showRequestsTab = canSendRequests && initialRequestStats;
@@ -104,6 +110,9 @@ export function UnifiedContentHub({
     { value: "videos", label: "Video Reviews", icon: Film, count: videoStats.total },
     ...(showRequestsTab
       ? [{ value: "requests" as const, label: "Requests", icon: PaperPlaneRight, count: initialRequestStats.total }]
+      : []),
+    ...(shareStudioContent
+      ? [{ value: "share-studio" as const, label: "Share Studio", icon: ShareNetwork, count: 0 }]
       : []),
   ];
 
@@ -134,9 +143,11 @@ export function UnifiedContentHub({
               >
                 <Icon className="h-4 w-4" />
                 {tab.label}
-                <Badge variant="secondary" className="ml-1 text-xs">
-                  {tab.count}
-                </Badge>
+                {tab.count > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {tab.count}
+                  </Badge>
+                )}
               </TabsTrigger>
             );
           })}
@@ -175,6 +186,12 @@ export function UnifiedContentHub({
               teamMembers={teamMembers}
               userRole={userRole}
             />
+          </TabsContent>
+        )}
+
+        {shareStudioContent && (
+          <TabsContent value="share-studio" className="mt-6">
+            {shareStudioContent}
           </TabsContent>
         )}
       </Tabs>

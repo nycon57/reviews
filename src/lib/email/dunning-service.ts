@@ -293,9 +293,8 @@ async function getAccountSummary(
     ]);
 
   const tierNames: Record<string, string> = {
-    free: "Free",
-    starter: "Starter",
-    professional: "Professional",
+    basic: "Basic",
+    pro: "Pro",
     enterprise: "Enterprise",
   };
 
@@ -303,7 +302,7 @@ async function getAccountSummary(
     totalReviews: reviewsResult.count || 0,
     totalSurveys: surveysResult.count || 0,
     teamMembersCount: usersResult.count || 0,
-    currentPlan: tierNames[orgResult.data?.subscription_tier || "free"] || "Unknown",
+    currentPlan: tierNames[orgResult.data?.subscription_tier || "basic"] || "Unknown",
     monthlyPrice: 0, // Would be fetched from subscription data
   };
 }

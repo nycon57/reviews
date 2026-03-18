@@ -41,7 +41,6 @@ export const adminProfileSchema = profileFieldsSchema.partial().extend({
   ctaButtonText: optionalString(50, "CTA button text"),
   ctaButtonUrl: optionalUrl("CTA button"),
   hireDate: z.string().optional().or(z.literal("")),
-  industry: optionalString(100, "Industry"),
 });
 
 // -- Org-managed fields (individual users can self-edit these) --
@@ -50,7 +49,6 @@ export const orgFieldsSchema = z.object({
   ctaButtonText: optionalString(50, "CTA button text"),
   ctaButtonUrl: optionalUrl("CTA button"),
   hireDate: z.string().optional().or(z.literal("")),
-  industry: optionalString(100, "Industry"),
 });
 
 export type OrgFieldsInput = z.infer<typeof orgFieldsSchema>;

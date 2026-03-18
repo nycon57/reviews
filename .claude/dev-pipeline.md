@@ -42,13 +42,34 @@ Full 6-phase lifecycle for every feature. Chain skills in order.
 
 ## Phase 4: Testing
 
-| Step | Skill/Tool | Action |
+### Automated Tests (deterministic, every PR)
+
+| Step | Command | Action |
 |---|---|---|
-| Browser testing | `agent-browser` or `dev-browser` | Test UI, fill forms, take screenshots |
-| Visual verification | `agent-browser` | Screenshot comparison, responsive checks |
-| Run tests | `npm run test` / `npm run test:e2e` | Unit + E2E tests |
+| Unit tests | `npm run test` | Vitest — server actions, utilities, permissions |
+| Smoke tests | `npm run test:smoke` | Playwright — all pages load, no JS errors |
+| Dashboard tests | `npm run test:e2e:dashboard` | Playwright — auth + dashboard + access control |
+| Full E2E | `npm run test:e2e:full` | Playwright — everything including widgets |
 | Quality gates | `npm run lint` && `npm run build` | Must pass before proceeding |
-| Check logs | Supabase MCP `get_logs` | Debug any runtime errors |
+
+### agent-browser Verification (post-feature, manual trigger)
+
+| Step | Command | Action |
+|---|---|---|
+| Baseline screenshot | `agent-browser screenshot --annotate` | Before building feature |
+| Post-feature screenshot | `agent-browser screenshot --annotate` | After building feature |
+| Visual diff | `agent-browser diff screenshot` | Compare before/after |
+| Interactive audit | `agent-browser snapshot -i` | Verify all interactive elements exist |
+| Console check | `agent-browser console` | Check for runtime errors |
+| API verification | `agent-browser network requests --filter api` | Verify API calls |
+| Dashboard sweep | `./tests/browser-verification/verify-dashboard.sh` | Screenshot all dashboard pages |
+
+### Live Debugging
+
+| Step | Tool | Action |
+|---|---|---|
+| DevTools inspection | `chrome-devtools-mcp` (MCP) | Live DOM, network, console via DevTools protocol |
+| Check logs | Supabase MCP `get_logs` | Debug runtime errors |
 | Supabase advisors | Supabase MCP `get_advisors` | After any DDL changes |
 
 ---

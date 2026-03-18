@@ -44,25 +44,12 @@ export function EmailLayout({
       <Head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta httpEquiv="Content-Type" content="text/html; charset=UTF-8" />
-        <meta name="color-scheme" content="light dark" />
-        <meta name="supported-color-schemes" content="light dark" />
+        <meta name="color-scheme" content="light only" />
+        <meta name="supported-color-schemes" content="light only" />
         <style>
           {`
-            /* Dark mode support */
-            @media (prefers-color-scheme: dark) {
-              .email-body {
-                background-color: ${colors.repwell.teal[500]} !important;
-              }
-              .email-container {
-                background-color: ${colors.repwell.teal[400]} !important;
-              }
-              .dark-mode-text {
-                color: ${colors.text.inverse} !important;
-              }
-              .dark-mode-muted {
-                color: ${colors.text.inverseMuted} !important;
-              }
-            }
+            /* Prevent Apple Mail dark mode color inversion */
+            :root { color-scheme: light only; }
 
             /* Responsive adjustments */
             @media only screen and (max-width: 620px) {

@@ -348,12 +348,11 @@ export async function resubscribeByToken(
 }
 
 // ============================================================================
-// Combined Communication Preferences (Email + SMS)
+// Combined Communication Preferences (Email-only)
 // ============================================================================
 
 /**
- * Get combined email + SMS preferences via token (public access).
- * Extends email preferences with SMS consent status.
+ * Get communication preferences via token (public access).
  */
 export async function getCommunicationPreferencesByToken(
   token: string
@@ -361,112 +360,24 @@ export async function getCommunicationPreferencesByToken(
   const emailPrefs = await getEmailPreferencesByToken(token);
   if (!emailPrefs) return null;
 
-  const supabase = createUntypedAdminClient();
-
-  // Get user's phone and org
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .select("phone, organization_id")
-    .eq("id", emailPrefs.user_id)
-    .single();
-
-  if (userError && userError.code !== "PGRST116") {
-    console.error("Error fetching user data for communication preferences:", userError);
-    return null;
-  }
-
-  let smsConsentStatus: "opted_in" | "opted_out" | "none" = "none";
-  let smsPhoneNumber: string | null = null;
-
-  if (userData?.phone && userData?.organization_id) {
-    const { data: consent } = await supabase
-      .from("sms_consent")
-      .select("status")
-      .eq("organization_id", userData.organization_id)
-      .eq("phone_number", userData.phone)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    smsConsentStatus = (consent?.status as "opted_in" | "opted_out") ?? "none";
-
-    // Mask phone for display using existing utility
-    const { maskPhone } = await import("@/lib/sms/phone-utils");
-    smsPhoneNumber = maskPhone(userData.phone as string);
-  }
-
   return {
     ...emailPrefs,
-    sms_consent_status: smsConsentStatus,
-    sms_phone_number: smsPhoneNumber,
+    sms_consent_status: "none",
+    sms_phone_number: null,
   };
 }
 
 /**
  * Update SMS consent via email preference token (public access).
- * Validates the token, then records or revokes SMS consent.
+ * SMS has been removed — this is a no-op stub for backwards compatibility.
  */
 export async function updateSmsConsentByToken(
-  token: string,
-  optOut: boolean
+  _token: string,
+  _optOut: boolean
 ): Promise<{ success: boolean; error?: string }> {
-  const tokenResult = tokenSchema.safeParse(token);
-  if (!tokenResult.success) {
-    return { success: false, error: "Invalid token format" };
-  }
-
-  // Validate token and get user
-  const prefs = await getEmailPreferencesByToken(token);
-  if (!prefs || !prefs.is_valid) {
-    return { success: false, error: "Invalid or expired token" };
-  }
-
-  const supabase = createUntypedAdminClient();
-
-  // Get user's phone and org
-  const { data: userData, error: userError } = await supabase
-    .from("users")
-    .select("phone, organization_id")
-    .eq("id", prefs.user_id)
-    .single();
-
-  if (userError && userError.code !== "PGRST116") {
-    console.error(`Error fetching user data for SMS consent update (user ${prefs.user_id}):`, userError);
-    return { success: false, error: "Failed to fetch user data" };
-  }
-
-  if (!userData?.phone || !userData?.organization_id) {
-    return { success: false, error: "No phone number associated with this account" };
-  }
-
-  const { ConsentService } = await import("@/lib/sms/consent-service");
-  const consentService = new ConsentService();
-
-  try {
-    if (optOut) {
-      await consentService.revokeConsent({
-        orgId: userData.organization_id,
-        phone: userData.phone as string,
-        reason: "Opted out via communication preferences page",
-      });
-    } else {
-      await consentService.recordConsent({
-        orgId: userData.organization_id,
-        phone: userData.phone as string,
-        method: "web_form",
-        source: "communication_preferences_page",
-      });
-    }
-  } catch (err) {
-    console.error("Error updating SMS consent:", err);
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Failed to update SMS consent",
-    };
-  }
-
   return { success: true };
 }
+
 
 // ============================================================================
 // Admin/System Actions

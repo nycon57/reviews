@@ -1,6 +1,7 @@
 import {
   ArrowBendDownRight,
   ChatText,
+  ClipboardText,
   Clock,
   Envelope,
   GitBranch,
@@ -46,7 +47,9 @@ export interface FieldDefinition {
     | "schedule"
     | "ab-variants"
     | "exit-config"
-    | "sms-requirements";
+    | "sms-requirements"
+    | "email-template-selector"
+    | "survey-template-selector";
   placeholder?: string;
   description?: string;
   min?: number;
@@ -224,17 +227,16 @@ export const NODE_REGISTRY: Record<WorkflowNodeType, NodeTypeConfig> = {
       sources: [{ id: "source", position: Position.Bottom }],
     },
     defaultData: {
-      templateName: "",
+      emailTemplateId: "",
       subjectOverride: "",
       enableAbTest: false,
       abVariants: DEFAULT_VARIANTS,
     },
     configFields: [
       {
-        key: "templateName",
+        key: "emailTemplateId",
         label: "Email Template",
-        type: "text",
-        placeholder: "welcome_1_access",
+        type: "email-template-selector",
       },
       {
         key: "subjectOverride",
@@ -285,6 +287,55 @@ export const NODE_REGISTRY: Record<WorkflowNodeType, NodeTypeConfig> = {
       },
     ],
   },
+  "action-survey": {
+    type: "action-survey",
+    label: "Send Survey",
+    description: "Sends a survey invitation email to the recipient.",
+    category: "actions",
+    family: "action",
+    icon: ClipboardText,
+    iconName: "ClipboardText",
+    accentClassName: "bg-emerald-500",
+    handles: {
+      targets: [{ id: "target", position: Position.Top }],
+      sources: [{ id: "source", position: Position.Bottom }],
+    },
+    defaultData: {
+      emailTemplateId: "",
+      surveyTemplateId: "",
+      subjectOverride: "",
+      enableAbTest: false,
+      abVariants: DEFAULT_VARIANTS,
+    },
+    configFields: [
+      {
+        key: "emailTemplateId",
+        label: "Email Template",
+        type: "email-template-selector",
+      },
+      {
+        key: "surveyTemplateId",
+        label: "Survey Template",
+        type: "survey-template-selector",
+      },
+      {
+        key: "subjectOverride",
+        label: "Subject Override",
+        type: "text",
+        placeholder: "Optional subject",
+      },
+      {
+        key: "enableAbTest",
+        label: "Enable A/B Test",
+        type: "switch",
+      },
+      {
+        key: "abVariants",
+        label: "A/B Variants",
+        type: "ab-variants",
+      },
+    ],
+  },
   "action-smart": {
     type: "action-smart",
     label: "Smart Send",
@@ -305,6 +356,7 @@ export const NODE_REGISTRY: Record<WorkflowNodeType, NodeTypeConfig> = {
         requirePhoneNumber: true,
         respectQuietHours: true,
       },
+      emailTemplateId: "",
       templateName: "",
       smsTemplateName: "",
     },
@@ -325,9 +377,9 @@ export const NODE_REGISTRY: Record<WorkflowNodeType, NodeTypeConfig> = {
         type: "sms-requirements",
       },
       {
-        key: "templateName",
+        key: "emailTemplateId",
         label: "Email Template",
-        type: "text",
+        type: "email-template-selector",
       },
       {
         key: "smsTemplateName",
@@ -542,7 +594,11 @@ export function getNodeSummary(type: string, data: WorkflowNodeData): string {
     case "trigger-manual":
       return data.customEvent ? `Manual: ${String(data.customEvent)}` : "Manual/API start";
     case "action-email":
-      return data.templateName ? `Template: ${String(data.templateName)}` : "Select template...";
+      return data.emailTemplateId ? "Custom email template" : "Select email template...";
+    case "action-survey":
+      return data.emailTemplateId || data.surveyTemplateId
+        ? "Survey invitation configured"
+        : "Select templates...";
     case "action-sms":
       return data.smsTemplateName ? `Template: ${String(data.smsTemplateName)}` : "Select template...";
     case "action-smart":

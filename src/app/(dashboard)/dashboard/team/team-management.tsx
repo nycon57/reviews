@@ -49,9 +49,6 @@ import {
 } from "@/lib/organization";
 import { GiveRecognitionDialog } from "@/components/recognition/give-recognition-dialog";
 import { usePermissions } from "@/lib/permissions/context";
-import { Phone } from "@phosphor-icons/react";
-import { formatForDisplay } from "@/lib/sms/phone-utils";
-import { getLoPhoneAssignments } from "@/lib/sms/enterprise/per-lo-numbers";
 
 const ROLE_LABELS: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
   admin: { label: "Admin", variant: "default" },
@@ -66,7 +63,6 @@ interface TeamManagementProps {
 export function TeamManagement({ userRole }: TeamManagementProps) {
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [loPhoneMap, setLoPhoneMap] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,10 +92,9 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     let mounted = true;
 
     async function loadData() {
-      const [membersResult, invitationsResult, phoneResult] = await Promise.all([
+      const [membersResult, invitationsResult] = await Promise.all([
         getOrganizationMembers(),
         getPendingInvitations(),
-        getLoPhoneAssignments(),
       ]);
 
       if (mounted) {
@@ -108,15 +103,6 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
         }
         if (invitationsResult.invitations) {
           setInvitations(invitationsResult.invitations);
-        }
-        if (phoneResult.success && phoneResult.data) {
-          const map = new Map<string, string>();
-          for (const a of phoneResult.data) {
-            if (a.loanOfficerId) {
-              map.set(a.loanOfficerId, a.phoneNumber);
-            }
-          }
-          setLoPhoneMap(map);
         }
         setLoading(false);
       }
@@ -130,10 +116,9 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
   }, []);
 
   async function refreshData() {
-    const [membersResult, invitationsResult, phoneResult] = await Promise.all([
+    const [membersResult, invitationsResult] = await Promise.all([
       getOrganizationMembers(),
       getPendingInvitations(),
-      getLoPhoneAssignments(),
     ]);
 
     if (membersResult.members) {
@@ -141,15 +126,6 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
     }
     if (invitationsResult.invitations) {
       setInvitations(invitationsResult.invitations);
-    }
-    if (phoneResult.success && phoneResult.data) {
-      const map = new Map<string, string>();
-      for (const a of phoneResult.data) {
-        if (a.loanOfficerId) {
-          map.set(a.loanOfficerId, a.phoneNumber);
-        }
-      }
-      setLoPhoneMap(map);
     }
   }
 
@@ -500,16 +476,6 @@ export function TeamManagement({ userRole }: TeamManagementProps) {
                       <Badge variant={ROLE_LABELS[member.role]?.variant || "outline"}>
                         {ROLE_LABELS[member.role]?.label || member.role}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {loPhoneMap.has(member.id) ? (
-                        <span className="flex items-center gap-1.5 text-sm font-mono">
-                          <Phone className="h-3.5 w-3.5 text-repwell-teal-300" />
-                          {formatForDisplay(loPhoneMap.get(member.id)!)}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
                     </TableCell>
                     <TableCell>
                       <Badge

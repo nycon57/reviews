@@ -37,6 +37,7 @@ import {
   Heart,
   Fire,
   ThumbsUp,
+  Images,
 } from "@phosphor-icons/react";
 import type { Icon } from "@phosphor-icons/react";
 
@@ -75,6 +76,7 @@ const ICON_REGISTRY: Record<string, Icon> = {
   Heart,
   Fire,
   ThumbsUp,
+  Images,
 };
 
 // ---------------------------------------------------------------------------

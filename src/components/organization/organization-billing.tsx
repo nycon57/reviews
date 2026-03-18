@@ -53,10 +53,9 @@ import {
 } from "@/components/ui/table";
 
 const TIER_PRICING: Record<string, { monthly: number; annual: number; name: string }> = {
-  free: { monthly: 0, annual: 0, name: "Free" },
-  starter: { monthly: 49, annual: 470, name: "Starter" },
-  professional: { monthly: 149, annual: 1430, name: "Professional" },
-  enterprise: { monthly: 499, annual: 4790, name: "Enterprise" },
+  basic: { monthly: 49, annual: 468, name: "Basic" },
+  pro: { monthly: 99, annual: 948, name: "Pro" },
+  enterprise: { monthly: -1, annual: -1, name: "Enterprise" },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline"; icon: React.ReactNode }> = {
@@ -113,11 +112,11 @@ export function OrganizationBilling() {
     };
   }, []);
 
-  const currentTier = organization?.subscription_tier || "free";
+  const currentTier = organization?.subscription_tier || "basic";
   const currentStatus = billingData?.subscription?.status || organization?.subscription_status || "active";
-  const pricing = TIER_PRICING[currentTier] || TIER_PRICING.free;
+  const pricing = TIER_PRICING[currentTier] || TIER_PRICING.basic;
   const status = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.active;
-  const limits = TIER_LIMITS[currentTier] || TIER_LIMITS.free;
+  const limits = TIER_LIMITS[currentTier] || TIER_LIMITS.basic;
 
   const subscriptionEndsAt = billingData?.subscription?.currentPeriodEnd
     ? billingData.subscription.currentPeriodEnd
@@ -267,6 +266,8 @@ export function OrganizationBilling() {
               <p className="text-muted-foreground">
                 {pricing.monthly === 0 ? (
                   "Free forever"
+                ) : pricing.monthly < 0 ? (
+                  "Custom pricing"
                 ) : (
                   <>
                     ${pricing.monthly}/month or ${pricing.annual}/year
@@ -292,7 +293,7 @@ export function OrganizationBilling() {
                 <Button
                   variant="outline"
                   onClick={handleManagePlan}
-                  disabled={actionLoading || !stripeAvailable || currentTier === "free"}
+                  disabled={actionLoading || !stripeAvailable || !billingData?.subscription}
                 >
                   {actionLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -418,7 +419,7 @@ export function OrganizationBilling() {
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
               {Object.entries(TIER_PRICING)
-                .filter(([tier]) => tier !== "free" && tier !== currentTier)
+                .filter(([tier]) => tier !== currentTier)
                 .map(([tier, info]) => {
                   const tierKey = tier as keyof typeof TIER_LIMITS;
                   const tierLimits = TIER_LIMITS[tierKey];
@@ -430,8 +431,14 @@ export function OrganizationBilling() {
                     >
                       <h4 className="font-semibold">{info.name}</h4>
                       <p className="text-2xl font-bold mt-1 text-heading-accent tracking-tight">
-                        ${info.monthly}
-                        <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                        {info.monthly < 0 ? (
+                          "Contact us"
+                        ) : (
+                          <>
+                            ${info.monthly}
+                            <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                          </>
+                        )}
                       </p>
                       <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                         <li>
@@ -480,7 +487,7 @@ export function OrganizationBilling() {
                 </CardDescription>
               </div>
             </div>
-            {currentTier !== "free" && stripeAvailable && (
+            {!!billingData?.subscription && stripeAvailable && (
               <Button
                 variant="outline"
                 size="sm"
@@ -527,7 +534,7 @@ export function OrganizationBilling() {
                 <p className="mt-2 text-muted-foreground">
                   No payment methods on file
                 </p>
-                {currentTier === "free" && (
+                {!billingData?.subscription && (
                   <p className="text-sm text-muted-foreground">
                     Add a payment method when you upgrade
                   </p>
@@ -645,7 +652,7 @@ export function OrganizationBilling() {
       </Card>
 
       {/* Danger Zone - Cancel Subscription */}
-      {currentTier !== "free" && !billingData?.subscription?.cancelAtPeriodEnd && (
+      {!!billingData?.subscription && !billingData?.subscription?.cancelAtPeriodEnd && (
         <Card className="border-destructive/50 shadow-soft">
           <CardHeader>
             <CardTitle className="text-destructive">Danger Zone</CardTitle>

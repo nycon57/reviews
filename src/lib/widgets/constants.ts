@@ -10,8 +10,8 @@ export const WIDGET_TYPE_LABELS: Record<WidgetType, string> = {
   star_rating_badge: "Star Rating Badge",
   video_testimonial: "Video Testimonial",
   review_wall: "Review Wall",
-  nps_score_badge: "NPS Score Badge",
   social_proof_banner: "Social Proof Banner",
+  nps_score_badge: "NPS Score Badge",
 };
 
 /** Short descriptions for the widget type selector grid. */
@@ -24,8 +24,8 @@ export const WIDGET_TYPE_DESCRIPTIONS: Record<WidgetType, string> = {
   star_rating_badge: "Compact inline or floating rating badge",
   video_testimonial: "Video testimonial player with transcript",
   review_wall: "Grid layout showcasing multiple reviews",
-  nps_score_badge: "Display Net Promoter Score with visual gauge",
   social_proof_banner: "Dismissible banner with social proof messaging",
+  nps_score_badge: "Compact badge displaying your NPS score",
 };
 
 /** Human-readable labels for entity types. */

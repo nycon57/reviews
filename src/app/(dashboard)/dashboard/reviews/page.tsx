@@ -23,6 +23,7 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import { getUnifiedRequests, getUnifiedRequestStats } from "@/lib/requests/unified-requests";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { getAccessContext } from "@/lib/access";
+import { ShareStudioCards } from "@/components/dashboard/share-studio-cards";
 
 // Dynamic import for heavy UnifiedContentHub component
 const UnifiedContentHub = dynamic(
@@ -187,7 +188,7 @@ export default async function ReviewsPage({
   const teamMembers = Array.from(userMap.values());
 
   // Determine AI access based on subscription tier
-  const subscriptionTier = orgResult.organization?.subscription_tier ?? "free";
+  const subscriptionTier = orgResult.organization?.subscription_tier ?? "basic";
   const hasAiAccess = TIER_FEATURES[subscriptionTier]?.ai_insights ?? false;
 
   // Process requests data
@@ -245,6 +246,13 @@ export default async function ReviewsPage({
           initialRequestsTotal={initialRequestsTotal}
           initialRequestStats={initialRequestStats}
           canSendRequests={canSendRequests}
+          shareStudioContent={
+            accessCtx ? (
+              <Suspense fallback={<Skeleton className="h-[200px]" />}>
+                <ShareStudioCards organizationId={accessCtx.organizationId} />
+              </Suspense>
+            ) : undefined
+          }
         />
       </Suspense>
     </div>

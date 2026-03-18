@@ -19,6 +19,7 @@
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
+import { isInGracePeriod, isGracePeriodExpired } from "@/lib/stripe/types";
 import type { UserRole } from "@/types";
 
 export type AccountType = "individual" | "enterprise";
@@ -31,6 +32,8 @@ export interface AccessContext {
   subscriptionTier: SubscriptionTier;
   organizationId: string;
   isOwner: boolean;
+  /** True when the subscription is cancelled but within the 30-day grace period */
+  isGracePeriod: boolean;
 }
 
 export interface PageAccessConfig {
@@ -79,7 +82,9 @@ export async function getAccessContext(): Promise<AccessContext | null> {
       individual_organization_id,
       organizations (
         account_type,
-        subscription_tier
+        subscription_tier,
+        subscription_status,
+        grace_period_ends_at
       )
     `
     )
@@ -91,7 +96,19 @@ export async function getAccessContext(): Promise<AccessContext | null> {
     const org = userData.organizations as {
       account_type?: string;
       subscription_tier?: string;
+      subscription_status?: string;
+      grace_period_ends_at?: string;
     } | null;
+
+    const gracePeriod = isInGracePeriod(
+      org?.subscription_status,
+      org?.grace_period_ends_at
+    );
+
+    // If grace period has expired, redirect to reactivation
+    if (isGracePeriodExpired(org?.subscription_status, org?.grace_period_ends_at)) {
+      redirect("/reactivate");
+    }
 
     return {
       userId: authUser.id,
@@ -100,6 +117,7 @@ export async function getAccessContext(): Promise<AccessContext | null> {
       subscriptionTier: (org?.subscription_tier || "basic") as SubscriptionTier,
       organizationId: userData.organization_id,
       isOwner: userData.is_owner || false,
+      isGracePeriod: gracePeriod,
     };
   }
 
@@ -109,10 +127,10 @@ export async function getAccessContext(): Promise<AccessContext | null> {
       userId: authUser.id,
       role: (userData.role || "admin") as UserRole,
       accountType: "individual" as AccountType,
-      // TODO: read subscription_tier from individual_organizations once column exists
       subscriptionTier: "basic" as SubscriptionTier,
       organizationId: userData.individual_organization_id,
       isOwner: true,
+      isGracePeriod: false,
     };
   }
 
@@ -274,4 +292,13 @@ export function isManagerOrAbove(ctx: AccessContext): boolean {
  */
 export function isAdmin(ctx: AccessContext): boolean {
   return ctx.accountType === "enterprise" && ctx.role === "admin";
+}
+
+/**
+ * Check if user has full access (not in grace period).
+ * During grace period, users can view data but can't perform actions
+ * like sending surveys, managing reviews, etc.
+ */
+export function hasFullAccess(ctx: AccessContext): boolean {
+  return !ctx.isGracePeriod;
 }

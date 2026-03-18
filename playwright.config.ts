@@ -1,10 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Playwright configuration for widget E2E tests and performance benchmarks.
+ * Playwright configuration for RepWell E2E tests.
  *
- * E2E tests mock API responses to avoid needing a live database.
- * Performance tests use CDP integration for Lighthouse, Performance API, and heap snapshots.
+ * Projects:
+ * - auth-setup: Logs in as each seed user, saves storageState
+ * - smoke-public: Marketing + public pages (no auth)
+ * - smoke-dashboard-individual: Dashboard as individual-basic
+ * - smoke-dashboard-enterprise: Dashboard as enterprise-admin
+ * - access-control: Role-based redirect verification
+ * - widgets: Existing widget embed tests (mocked APIs)
+ * - interactions: Per-feature interaction tests
  */
 export default defineConfig({
   testDir: "./tests",
@@ -22,8 +28,61 @@ export default defineConfig({
   },
 
   projects: [
+    // ── Auth Setup ──────────────────────────────────────────
     {
-      name: "chromium",
+      name: "auth-setup",
+      testMatch: /auth\.setup\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+
+    // ── Smoke Tests (no auth) ──────────────────────────────
+    {
+      name: "smoke-public",
+      testMatch: /smoke\/(marketing|public)\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+
+    // ── Smoke Tests (authenticated) ────────────────────────
+    {
+      name: "smoke-dashboard-individual",
+      testMatch: /smoke\/dashboard-individual\.spec\.ts/,
+      dependencies: ["auth-setup"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      name: "smoke-dashboard-enterprise",
+      testMatch: /smoke\/dashboard-enterprise\.spec\.ts/,
+      dependencies: ["auth-setup"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+
+    // ── Access Control ─────────────────────────────────────
+    {
+      name: "access-control",
+      testMatch: /smoke\/access-control\.spec\.ts/,
+      dependencies: ["auth-setup"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+
+    // ── Interaction Tests ──────────────────────────────────
+    {
+      name: "interactions",
+      testMatch: /interactions\/.*\.spec\.ts/,
+      dependencies: ["auth-setup"],
+      use: { ...devices["Desktop Chrome"] },
+    },
+
+    // ── Widget Tests (existing, mocked APIs) ───────────────
+    {
+      name: "widgets",
+      testMatch: /widgets\/.*\.spec\.ts/,
+      use: { ...devices["Desktop Chrome"] },
+    },
+
+    // ── Performance Tests ──────────────────────────────────
+    {
+      name: "performance",
+      testMatch: /performance\/.*\.test\.ts/,
       use: { ...devices["Desktop Chrome"] },
     },
   ],

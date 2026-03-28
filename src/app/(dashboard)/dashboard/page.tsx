@@ -17,9 +17,6 @@ import {
   getUserRecentReviews,
 } from "@/lib/dashboard";
 import { getCurrentUser } from "@/lib/users/actions";
-import { getAccessContext, hasProAccess } from "@/lib/access";
-import { getSmartActionItems } from "@/lib/ai";
-import { SmartActionsCard } from "@/components/insights";
 
 export const metadata = {
   title: "Dashboard | RepWell",
@@ -61,30 +58,15 @@ async function RecentReviewsList() {
   return <UserRecentReviews initialReviews={result.success ? (result.data || []) : []} />;
 }
 
-// Server component for smart action items (Pro tier only)
-async function SmartActionsSection({ userId }: { userId?: string }) {
-  const result = await getSmartActionItems(userId);
-
-  if (!result.success || !result.data) {
-    return null;
-  }
-
-  return <SmartActionsCard data={result.data} />;
-}
-
 function FullProfileCompletionCard() {
   return <ProfileCompletionCard showMilestones showTips />;
 }
 
 
 export default async function DashboardPage() {
-  const [userResult, ctx] = await Promise.all([
-    getCurrentUser(),
-    getAccessContext(),
-  ]);
+  const userResult = await getCurrentUser();
   const user = userResult.success ? userResult.data : null;
   const userName = user?.fullName ?? null;
-  const isPro = ctx ? hasProAccess(ctx) : false;
 
   return (
     <DashboardEntrance className="flex-1 space-y-8">
@@ -98,13 +80,6 @@ export default async function DashboardPage() {
 
       {/* Quick Actions */}
       <UserQuickActions profileSlug={user?.slug ?? null} userName={userName} />
-
-      {/* Smart Actions (Pro tier) — promoted to top */}
-      {isPro && ctx && (
-        <Suspense fallback={<CardSkeleton className="h-[200px]" />}>
-          <SmartActionsSection userId={ctx.role === "user" ? ctx.userId : undefined} />
-        </Suspense>
-      )}
 
       {/* Main content grid */}
       <div className="grid gap-6 lg:grid-cols-3">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { getBranchPublicPath, getBranchPublicSlug } from "@/lib/branches/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -158,7 +159,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
   const [isPublic, setIsPublic] = useState(branch.isPublic);
   const [managerId, setManagerId] = useState(branch.managerId || "");
   const [slugDialogOpen, setSlugDialogOpen] = useState(false);
-  const [currentSlug, setCurrentSlug] = useState(branch.globalSlug || "");
+  const [currentSlug, setCurrentSlug] = useState(branch.globalSlug || getBranchPublicSlug(branch));
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState(branch.teamMembers);
 
@@ -773,7 +774,7 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                     <div>
                       <p className="text-sm font-medium">Public URL</p>
                       <p className="text-xs font-mono text-repwell-teal-400 dark:text-repwell-sage-100/80">
-                        /branch/{currentSlug || branch.globalSlug}
+                        /branch/{currentSlug || getBranchPublicSlug(branch)}
                       </p>
                     </div>
                   </div>
@@ -783,7 +784,14 @@ export function EditBranchContent({ branch }: EditBranchContentProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => window.open(`/branch/${currentSlug || branch.globalSlug}`, "_blank")}
+                        onClick={() =>
+                          window.open(
+                            currentSlug
+                              ? `/branch/${currentSlug}`
+                              : getBranchPublicPath(branch),
+                            "_blank"
+                          )
+                        }
                       >
                         <ArrowSquareOut className="h-4 w-4" />
                       </Button>

@@ -1,4 +1,5 @@
 import type { IndustryType } from "@/lib/industry/types";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 
 export interface DirectoryBreadcrumbItem {
   label: string;
@@ -105,7 +106,7 @@ export function buildCompanyBreadcrumbs(organization: {
  * Helper to build breadcrumb items for a branch profile
  */
 export function buildBranchBreadcrumbs(
-  branch: { name: string; global_slug: string | null; id: string },
+  branch: { name: string; slug?: string | null; global_slug: string | null; id: string },
   organization?: {
     slug: string;
     name: string;
@@ -125,7 +126,7 @@ export function buildBranchBreadcrumbs(
   // Add branch (current page)
   items.push({
     label: branch.name,
-    href: `/branch/${branch.global_slug || branch.id}`,
+    href: getBranchPublicPath(branch),
     type: "company",
   });
 

@@ -3,6 +3,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/types/database.types";
 import type { IndustryType } from "@/lib/industry/types";
+import { ensureUniqueBranchSlug } from "@/lib/users/slug-utils";
+import { generatePublicBranchSlug, getBranchPublicSlug } from "@/lib/branches/utils";
 
 type User = Tables<"users">;
 type Organization = Tables<"organizations">;
@@ -72,7 +74,7 @@ export interface PublicBranchReview {
 
 export interface PublicBranchProfileData {
   branch: PublicBranch;
-  organization: (Pick<Organization, "id" | "name" | "logo_url" | "domain"> & { slug: string }) | null;
+  organization: (Pick<Organization, "id" | "name" | "logo_url" | "avatar_url" | "banner_url" | "domain"> & { slug: string }) | null;
   professionals: PublicBranchProfessional[];
   reviews: PublicBranchReview[];
   is_enterprise: boolean;
@@ -375,13 +377,13 @@ export async function getPublicLOProfile(
     if (user.branch_id) {
       const { data: branch } = await supabase
         .from("branches")
-        .select("name, global_slug, hours_of_operation, latitude, longitude, address, google_maps_url")
+        .select("name, slug, global_slug, hours_of_operation, latitude, longitude, address, google_maps_url")
         .eq("id", user.branch_id)
         .single();
 
       if (branch) {
         branchName = branch.name;
-        branchSlug = branch.global_slug;
+        branchSlug = getBranchPublicSlug(branch);
         if (branch.hours_of_operation) {
           businessHours = branch.hours_of_operation as BusinessHours;
         }
@@ -656,14 +658,7 @@ export async function getPublicBranchProfile(
   try {
     const supabase = createAdminClient();
 
-    // Determine if we're looking up by ID or global_slug
-    const lookupField = isUUID(slugOrId) ? "id" : "global_slug";
-
-    // Fetch the branch
-    const { data: branch, error: branchError } = await supabase
-      .from("branches")
-      .select(
-        `
+    const branchSelect = `
         id,
         name,
         slug,
@@ -690,26 +685,74 @@ export async function getPublicBranchProfile(
         is_active,
         is_public,
         organization_id
-      `
-      )
-      .eq(lookupField, slugOrId)
-      .eq("is_active", true)
-      .eq("is_public", true)
-      .single();
+      `;
 
-    if (branchError || !branch) {
+    const isSlugUuid = isUUID(slugOrId);
+    let branch: (PublicBranch & { organization_id: string }) | null = null;
+
+    if (isSlugUuid) {
+      const { data } = await supabase
+        .from("branches")
+        .select(branchSelect)
+        .eq("id", slugOrId)
+        .eq("is_active", true)
+        .eq("is_public", true)
+        .single();
+
+      branch = data as (PublicBranch & { organization_id: string }) | null;
+    } else {
+      const { data: branchByGlobalSlug } = await supabase
+        .from("branches")
+        .select(branchSelect)
+        .eq("global_slug", slugOrId)
+        .eq("is_active", true)
+        .eq("is_public", true)
+        .maybeSingle();
+
+      if (branchByGlobalSlug) {
+        branch = branchByGlobalSlug as PublicBranch & { organization_id: string };
+      } else {
+        const { data: slugMatches } = await supabase
+          .from("branches")
+          .select(branchSelect)
+          .eq("slug", slugOrId)
+          .eq("is_active", true)
+          .eq("is_public", true)
+          .limit(2);
+
+        if ((slugMatches?.length ?? 0) === 1) {
+          branch = slugMatches?.[0] as PublicBranch & { organization_id: string };
+        }
+      }
+    }
+
+    if (!branch) {
       return { success: false, error: "Branch not found" };
     }
 
     // Fetch the organization
     const { data: organization } = await supabase
       .from("organizations")
-      .select("id, name, logo_url, domain, slug, account_type, subscription_tier")
+      .select("id, name, logo_url, avatar_url, banner_url, domain, slug, account_type, subscription_tier")
       .eq("id", branch.organization_id)
       .single();
 
-    // If UUID lookup resolved and branch has a global_slug, signal redirect
-    const redirectSlug = (lookupField === "id" && branch.global_slug) ? branch.global_slug : undefined;
+    const canonicalBaseSlug = branch.slug || generatePublicBranchSlug(branch.name);
+    const canonicalSlug = await ensureUniqueBranchSlug(canonicalBaseSlug, branch.id);
+
+    if (branch.global_slug !== canonicalSlug) {
+      const { error: updateError } = await supabase
+        .from("branches")
+        .update({ global_slug: canonicalSlug })
+        .eq("id", branch.id);
+
+      if (!updateError) {
+        branch.global_slug = canonicalSlug;
+      }
+    }
+
+    const resolvedSlug = getBranchPublicSlug(branch);
+    const redirectSlug = slugOrId !== resolvedSlug ? resolvedSlug : undefined;
 
     // Fetch professionals at this branch (excluding enterprise admins)
     const { data: branchUsers } = await supabase
@@ -1036,6 +1079,8 @@ export async function getPublicOrganizationProfile(
         instagram_url,
         twitter_url,
         headquarters_branch_id,
+        mission_statement,
+        headquarters_address,
         account_type,
         subscription_tier
       `
@@ -1065,7 +1110,8 @@ export async function getPublicOrganizationProfile(
       banner_url: string | null;
       primary_color: string | null;
       description: string | null;
-      settings: unknown;
+      mission_statement: string | null;
+      headquarters_address: { street?: string; city?: string; state?: string; zip?: string } | null;
       phone: string | null;
       email: string | null;
       website_url: string | null;
@@ -1075,19 +1121,6 @@ export async function getPublicOrganizationProfile(
       twitter_url: string | null;
       headquarters_branch_id: string | null;
     };
-
-    // Parse organization settings for additional fields
-    const settings = organization.settings as {
-      description?: string;
-      mission_statement?: string;
-      website_url?: string;
-      headquarters_address?: {
-        street?: string;
-        city?: string;
-        state?: string;
-        zip?: string;
-      };
-    } | null;
 
     // Fetch HQ branch if set
     let hqBranch: PublicOrgHQBranch | null = null;
@@ -1265,16 +1298,16 @@ export async function getPublicOrganizationProfile(
           avatar_url: organization.avatar_url,
           banner_url: organization.banner_url,
           primary_color: organization.primary_color,
-          description: organization.description || settings?.description || null,
-          mission_statement: settings?.mission_statement || null,
-          website_url: organization.website_url || settings?.website_url || null,
+          description: organization.description || null,
+          mission_statement: organization.mission_statement || null,
+          website_url: organization.website_url || null,
           phone: organization.phone,
           email: organization.email,
           linkedin_url: organization.linkedin_url,
           facebook_url: organization.facebook_url,
           instagram_url: organization.instagram_url,
           twitter_url: organization.twitter_url,
-          headquarters_address: settings?.headquarters_address || null,
+          headquarters_address: organization.headquarters_address || null,
           headquarters_branch: hqBranch,
           aggregate_rating: aggregateRating,
           total_reviews: totalReviews,

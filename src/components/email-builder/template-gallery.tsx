@@ -15,6 +15,7 @@ import {
   Copy,
   Trash,
   PencilSimple,
+  Eye,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TemplateCard } from "./template-card";
+import { TemplatePreviewSheet } from "./template-preview-sheet";
 import { STARTER_TEMPLATES } from "@/lib/email-builder/starter-templates";
 import type { CustomEmailTemplate } from "@/lib/email-builder/types";
 import {
@@ -104,6 +106,7 @@ export function TemplateGallery({
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [showStarters, setShowStarters] = useState(true);
+  const [previewTemplate, setPreviewTemplate] = useState<CustomEmailTemplate | null>(null);
 
   // Collect unique categories from both user templates and starters
   const allCategories = useMemo(() => {
@@ -384,6 +387,7 @@ export function TemplateGallery({
                     onEdit={() => router.push(`/dashboard/emails/${template.id}`)}
                     onDelete={() => handleDelete(template.id)}
                     onDuplicate={() => handleDuplicate(template.id)}
+                    onPreview={() => setPreviewTemplate(template)}
                   />
                 </motion.div>
               ))}
@@ -403,6 +407,7 @@ export function TemplateGallery({
                     onEdit={() => router.push(`/dashboard/emails/${template.id}`)}
                     onDelete={() => handleDelete(template.id)}
                     onDuplicate={() => handleDuplicate(template.id)}
+                    onPreview={() => setPreviewTemplate(template)}
                   />
                 </motion.div>
               ))}
@@ -484,6 +489,14 @@ export function TemplateGallery({
             </div>
           </div>
         </section>
+
+        {/* Preview sheet */}
+        <TemplatePreviewSheet
+          key={previewTemplate?.id ?? "closed"}
+          template={previewTemplate}
+          open={previewTemplate !== null}
+          onClose={() => setPreviewTemplate(null)}
+        />
       </div>
   );
 }
@@ -497,11 +510,13 @@ function TemplateListRow({
   onEdit,
   onDelete,
   onDuplicate,
+  onPreview,
 }: {
   template: CustomEmailTemplate;
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onPreview?: () => void;
 }) {
   return (
     <div className="group flex items-center gap-4 rounded-lg border border-border bg-card px-4 py-3 transition-colors hover:border-repwell-teal-300/40">
@@ -543,6 +558,12 @@ function TemplateListRow({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {onPreview && (
+            <DropdownMenuItem onClick={onPreview}>
+              <Eye size={14} className="mr-2" />
+              Preview
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={onEdit}>
             <PencilSimple size={14} className="mr-2" />
             Edit

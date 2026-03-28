@@ -92,7 +92,10 @@ export const organizationSchema = z.object({
   facebook_url: z.string().url().nullable().optional(),
   instagram_url: z.string().url().nullable().optional(),
   twitter_url: z.string().url().nullable().optional(),
+  mission_statement: z.string().nullable().optional(),
+  headquarters_address: addressSchema.nullable().optional(),
   headquarters_branch_id: z.string().uuid().nullable().optional(),
+  industry: z.string().nullable().optional(),
   settings: z.record(z.unknown()).optional(),
   metadata: z.record(z.unknown()).optional(),
   created_at: z.string(),
@@ -266,7 +269,7 @@ export const TIER_FEATURES: Record<SubscriptionTier, OrganizationFeatures> = {
   },
 };
 
-// Email branding config (stored in organizations.settings.email_branding)
+// Email branding config shape used by the email builder and renderer
 export const emailBrandingConfigSchema = z.object({
   header: z
     .object({

@@ -21,8 +21,21 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useReviewQueue } from "./review-queue-context";
 
+const SOURCE_LABELS: Record<string, string> = {
+  internal: "Survey",
+  google: "Google",
+  zillow: "Zillow",
+  facebook: "Facebook",
+  yelp: "Yelp",
+};
+
 export function ReviewFiltersPanel() {
   const { state, actions } = useReviewQueue();
+
+  // Derive available sources from the user's actual review data
+  const availableSources = state.aggregatedStats?.bySource
+    ? Object.keys(state.aggregatedStats.bySource).filter((s) => state.aggregatedStats!.bySource[s] > 0)
+    : [];
 
   return (
     <div className="space-y-4">
@@ -81,11 +94,11 @@ export function ReviewFiltersPanel() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Sources</SelectItem>
-            <SelectItem value="internal">Survey</SelectItem>
-            <SelectItem value="google">Google</SelectItem>
-            <SelectItem value="zillow">Zillow</SelectItem>
-            <SelectItem value="facebook">Facebook</SelectItem>
-            <SelectItem value="yelp">Yelp</SelectItem>
+            {availableSources.map((source) => (
+              <SelectItem key={source} value={source}>
+                {SOURCE_LABELS[source] || source.charAt(0).toUpperCase() + source.slice(1)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

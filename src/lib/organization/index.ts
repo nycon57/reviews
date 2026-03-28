@@ -71,7 +71,6 @@ export {
   getOrgIntegrationSettings,
   updateOrgIntegrationSettings,
   getEmailBrandingConfig,
-  updateEmailBrandingConfig,
   uploadOrganizationLogo,
   removeOrganizationLogo,
   uploadOrganizationAvatar,

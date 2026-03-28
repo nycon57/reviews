@@ -1,6 +1,6 @@
 "use client";
 
-import { Envelope, DotsThree, Copy, Trash, PencilSimple } from "@phosphor-icons/react";
+import { Envelope, DotsThree, Copy, Trash, PencilSimple, Eye } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,11 +16,13 @@ export function TemplateCard({
   onEdit,
   onDelete,
   onDuplicate,
+  onPreview,
 }: {
   template: CustomEmailTemplate;
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onPreview?: () => void;
 }) {
   return (
     <div className="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-repwell-teal-300/50">
@@ -61,6 +63,12 @@ export function TemplateCard({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            {onPreview && (
+              <DropdownMenuItem onClick={onPreview}>
+                <Eye size={14} className="mr-2" />
+                Preview
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={onEdit}>
               <PencilSimple size={14} className="mr-2" />
               Edit

@@ -107,19 +107,23 @@ export default async function ProfileSetupPage() {
       logo_url: string | null;
       primary_color: string | null;
       domain: string | null;
+      industry: string | null;
+      company_address: Record<string, string> | null;
+      phone: string | null;
+      company_email: string | null;
       settings: Record<string, unknown> | null;
     } | null;
 
     initialData = {
       organizationName: org?.name || "",
-      industry: (org?.settings?.industry as string) || "",
+      industry: org?.industry || "",
       companySize: (org?.settings?.companySize as string) || "",
-      address: (org?.settings?.address as Record<string, string>) || {},
+      address: org?.company_address || {},
       logoUrl: org?.logo_url || "",
       primaryColor: org?.primary_color || "#52796f",
       website: org?.domain || "",
-      phone: (org?.settings?.phone as string) || "",
-      companyEmail: (org?.settings?.companyEmail as string) || "",
+      phone: org?.phone || "",
+      companyEmail: org?.company_email || "",
     };
   }
 

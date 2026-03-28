@@ -27,6 +27,8 @@ export function EmailLayoutEditor(props: EmailLayoutEditorProps) {
   const { branding } = useEmailBranding();
   const hasUserHeader = useHasBlockType('Header');
   const hasUserFooter = useHasBlockType('Footer');
+  const complianceAddress = branding?.compliance?.physicalAddress || "Address will be pulled from organization settings";
+  const copyrightHolder = branding?.compliance?.copyrightHolder || "Your organization";
 
   const showInheritedHeader = branding?.enabled && !hasUserHeader;
   const showInheritedFooter = branding?.enabled && !hasUserFooter;
@@ -103,7 +105,7 @@ export function EmailLayoutEditor(props: EmailLayoutEditorProps) {
                 CAN-SPAM compliance (auto-included in sent emails)
               </p>
               <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#6b7280', lineHeight: '16px' }}>
-                Unsubscribe &middot; 123 Main Street, Suite 100 &middot; &copy; {new Date().getFullYear()} Company
+                Unsubscribe &middot; {complianceAddress} &middot; &copy; {new Date().getFullYear()} {copyrightHolder}
               </p>
             </td>
           </tr>

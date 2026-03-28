@@ -13,7 +13,7 @@ import type {
 import { MAX_BRANCH_IMPORT_ROWS } from "./bulk-import-types";
 import { branchImportRowSchema } from "./bulk-import-validation";
 import { requireAccess } from "./actions";
-import { generateSlug, geocodeBranchAddress } from "./utils";
+import { generatePublicBranchSlug, generateSlug, geocodeBranchAddress } from "./utils";
 import type { Json } from "@/types/database.types";
 
 /**
@@ -172,13 +172,6 @@ export async function bulkImportBranches(
     }
   }
 
-  // Get org slug for global_slug generation
-  const { data: orgData } = await supabase
-    .from("organizations")
-    .select("slug")
-    .eq("id", orgId)
-    .single();
-
   // Phase 1: Prepare all rows (validate, generate slugs, geocode)
   const preparedRows: {
     insertData: {
@@ -244,11 +237,7 @@ export async function bulkImportBranches(
       usedSlugs.add(slug);
 
       // Generate global_slug
-      let globalSlug: string | null = null;
-      if (orgData?.slug) {
-        const baseGlobalSlug = `${slug}-${orgData.slug}`;
-        globalSlug = await ensureUniqueBranchSlug(baseGlobalSlug);
-      }
+      const globalSlug = await ensureUniqueBranchSlug(generatePublicBranchSlug(name));
 
       // Resolve manager
       let managerId: string | null = null;
@@ -350,11 +339,9 @@ export async function bulkImportBranches(
             row.insertData.slug = retrySlug;
 
             // Regenerate global_slug
-            if (orgData?.slug) {
-              row.insertData.global_slug = await ensureUniqueBranchSlug(
-                `${retrySlug}-${orgData.slug}`
-              );
-            }
+            row.insertData.global_slug = await ensureUniqueBranchSlug(
+              generatePublicBranchSlug(row.name)
+            );
           } catch (err) {
             retryFailedIndices.push(ri);
             preparationFailures.push({

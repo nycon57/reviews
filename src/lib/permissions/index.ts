@@ -51,6 +51,7 @@ export const PERMISSIONS = {
   VIEW_AI_INSIGHTS: "view:ai_insights",
   VIEW_GEO_VISIBILITY: "view:geo_visibility",
   // Basic features (all users)
+  VIEW_TASKS: "view:tasks",
   VIEW_DASHBOARD: "view:dashboard",
   VIEW_REVIEWS: "view:reviews",
   VIEW_SURVEYS: "view:surveys",
@@ -92,8 +93,11 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
       // Only enterprise managers/admins can access these
       return isEnterprise && isManagerOrAbove;
 
-    // === Enterprise admin only ===
+    // === Organization view: individual users + enterprise admins ===
     case PERMISSIONS.VIEW_ORGANIZATION:
+      return _isIndividual || (isEnterprise && isAdmin);
+
+    // === Enterprise admin only ===
     case PERMISSIONS.MANAGE_ORGANIZATION:
     case PERMISSIONS.MANAGE_BILLING:
     case PERMISSIONS.INVITE_USERS:
@@ -117,6 +121,7 @@ export function hasPermission(ctx: UserContext | null, permission: Permission): 
       return isPro;
 
     // === Basic features (all authenticated users) ===
+    case PERMISSIONS.VIEW_TASKS:
     case PERMISSIONS.VIEW_DASHBOARD:
     case PERMISSIONS.VIEW_REVIEWS:
     case PERMISSIONS.VIEW_SURVEYS:

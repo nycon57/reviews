@@ -26,12 +26,12 @@ import {
   INTEGRATION_KEYS,
   orgIntegrationsSchema,
   type OrgIntegrations,
-  emailBrandingConfigSchema,
   type EmailBrandingConfig,
 } from "./types";
 import { adminProfileSchema, type AdminProfileInput } from "@/lib/auth/profile-schemas";
 import { writeProfileUpdate, writeAvatarUpload, writeBannerUpload } from "@/lib/users/profile-mutations";
 import { validateOrgSlug, generateUserSlug, generateUniqueUserSlug } from "@/lib/users/slug-utils";
+import { deriveEmailBrandingConfig } from "./email-branding";
 import crypto from "crypto";
 
 const IMPERSONATION_SOURCE = "organization_team";
@@ -96,34 +96,37 @@ function transformDbOrganization(row: Tables<"organizations">): Organization {
     slug: row.slug,
     domain: row.domain ?? null,
     logo_url: row.logo_url ?? null,
-    avatar_url: (row as Record<string, unknown>).avatar_url as string ?? null,
-    banner_url: (row as Record<string, unknown>).banner_url as string ?? null,
-    primary_color: (settings?.primary_color as string) ?? row.primary_color ?? "#3B82F6",
-    secondary_color: (settings?.secondary_color as string) ?? "#1E40AF",
-    font_family: (settings?.font_family as string) ?? "Inter",
-    company_email: (settings?.company_email as string) ?? null,
-    company_phone: (settings?.company_phone as string) ?? null,
-    company_address: (settings?.company_address as Organization["company_address"]) ?? null,
-    timezone: (settings?.timezone as string) ?? "America/New_York",
-    date_format: DEFAULT_DATE_FORMAT,
-    billing_email: (settings?.billing_email as string) ?? null,
-    billing_address: (settings?.billing_address as Organization["billing_address"]) ?? null,
+    avatar_url: row.avatar_url ?? null,
+    banner_url: row.banner_url ?? null,
+    primary_color: row.primary_color ?? "#3B82F6",
+    secondary_color: row.secondary_color ?? "#1E40AF",
+    font_family: row.font_family ?? "Inter",
+    company_email: row.company_email ?? null,
+    company_phone: row.company_phone ?? null,
+    company_address: row.company_address as Organization["company_address"] ?? null,
+    timezone: row.timezone ?? "America/New_York",
+    date_format: row.date_format ?? DEFAULT_DATE_FORMAT,
+    billing_email: row.billing_email ?? null,
+    billing_address: row.billing_address as Organization["billing_address"] ?? null,
+    mission_statement: row.mission_statement ?? null,
+    headquarters_address: row.headquarters_address as Organization["headquarters_address"] ?? null,
+    industry: row.industry ?? null,
     subscription_tier: (row.subscription_tier as SubscriptionTier) ?? "basic",
     subscription_status: (row.subscription_status as SubscriptionStatus) ?? "active",
-    subscription_started_at: (settings?.subscription_started_at as string) ?? null,
-    subscription_ends_at: (settings?.subscription_ends_at as string) ?? null,
-    subscription_cancelled_at: (settings?.subscription_cancelled_at as string) ?? null,
+    subscription_started_at: row.subscription_started_at ?? null,
+    subscription_ends_at: row.subscription_ends_at ?? null,
+    subscription_cancelled_at: row.subscription_cancelled_at ?? null,
     trial_ends_at: row.trial_ends_at ?? null,
     features: settings?.features as Organization["features"],
     limits: settings?.limits as Organization["limits"],
-    website_url: (row as Record<string, unknown>).website_url as string ?? null,
-    phone: (row as Record<string, unknown>).phone as string ?? null,
-    email: (row as Record<string, unknown>).email as string ?? null,
-    linkedin_url: (row as Record<string, unknown>).linkedin_url as string ?? null,
-    facebook_url: (row as Record<string, unknown>).facebook_url as string ?? null,
-    instagram_url: (row as Record<string, unknown>).instagram_url as string ?? null,
-    twitter_url: (row as Record<string, unknown>).twitter_url as string ?? null,
-    headquarters_branch_id: (row as Record<string, unknown>).headquarters_branch_id as string ?? null,
+    website_url: row.website_url ?? null,
+    phone: row.phone ?? null,
+    email: row.email ?? null,
+    linkedin_url: row.linkedin_url ?? null,
+    facebook_url: row.facebook_url ?? null,
+    instagram_url: row.instagram_url ?? null,
+    twitter_url: row.twitter_url ?? null,
+    headquarters_branch_id: row.headquarters_branch_id ?? null,
     settings: settings ?? undefined,
     metadata: (settings?.metadata as Record<string, unknown>) ?? undefined,
     created_at: row.created_at ?? new Date().toISOString(),
@@ -201,13 +204,11 @@ export async function updateOrganizationSettings(
   }
 
   // Clean empty strings to null for optional URL/email/uuid fields
-  const cleanedData = {
-    ...validated.data,
-    date_format: validated.data.date_format ?? DEFAULT_DATE_FORMAT,
-  };
+  const cleanedData = { ...validated.data };
   const nullableFields = [
     "website_url", "email", "linkedin_url", "facebook_url",
     "instagram_url", "twitter_url", "headquarters_branch_id",
+    "company_email",
   ] as const;
   for (const key of nullableFields) {
     if (key in cleanedData && (cleanedData as Record<string, unknown>)[key] === "") {
@@ -217,12 +218,16 @@ export async function updateOrganizationSettings(
   if ("phone" in cleanedData && cleanedData.phone === "") {
     cleanedData.phone = null;
   }
+  if ("company_phone" in cleanedData && cleanedData.company_phone === "") {
+    cleanedData.company_phone = null;
+  }
 
-  // Update organization
+  // Update organization — all fields are now real columns
   const { error } = await supabase
     .from("organizations")
     .update({
       ...cleanedData,
+      date_format: cleanedData.date_format ?? DEFAULT_DATE_FORMAT,
       updated_at: new Date().toISOString(),
     })
     .eq("id", userData.organization_id);
@@ -277,7 +282,7 @@ export async function updateOrganizationBranding(
     return { success: false, error: "Only admins can update organization branding" };
   }
 
-  // Update organization
+  // Update organization — all fields are now real columns
   const { error } = await supabase
     .from("organizations")
     .update({
@@ -802,7 +807,7 @@ export async function updateOrganizationBilling(
     return { success: false, error: "Only admins can update billing information" };
   }
 
-  // Update organization
+  // Update organization — all fields are now real columns
   const { error } = await supabase
     .from("organizations")
     .update({
@@ -2090,7 +2095,7 @@ export async function updateOrgIntegrationSettings(
 }
 
 // ---------------------------------------------------------------------------
-// Email Branding Config (settings.email_branding)
+// Email Branding Config (derived from organization settings and branding)
 // ---------------------------------------------------------------------------
 
 export async function getEmailBrandingConfig(): Promise<{
@@ -2098,94 +2103,14 @@ export async function getEmailBrandingConfig(): Promise<{
   orgLogoUrl: string | null;
   error: string | null;
 }> {
-  const user = await unifiedGetUser();
-  if (!user) {
-    return { branding: null, orgLogoUrl: null, error: "Not authenticated" };
+  const { organization, error } = await getCurrentOrganization();
+  if (!organization) {
+    return { branding: null, orgLogoUrl: null, error: error ?? "No organization found" };
   }
-
-  const supabase = createAdminClient();
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("organization_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    return { branding: null, orgLogoUrl: null, error: "No organization found" };
-  }
-
-  const { data: org, error } = await supabase
-    .from("organizations")
-    .select("settings, logo_url")
-    .eq("id", userData.organization_id)
-    .single();
-
-  if (error) {
-    return { branding: null, orgLogoUrl: null, error: error.message };
-  }
-
-  const settings = org?.settings as Record<string, unknown> | null;
-  const raw = settings?.email_branding;
-  const parsed = emailBrandingConfigSchema.safeParse(raw ?? {});
-  const orgLogoUrl = (org?.logo_url as string) ?? null;
 
   return {
-    branding: parsed.success ? parsed.data : emailBrandingConfigSchema.parse({}),
-    orgLogoUrl,
+    branding: deriveEmailBrandingConfig(organization),
+    orgLogoUrl: organization.logo_url ?? null,
     error: null,
   };
-}
-
-export async function updateEmailBrandingConfig(
-  data: EmailBrandingConfig
-): Promise<{ success: boolean; error: string | null }> {
-  const user = await unifiedGetUser();
-  if (!user) {
-    return { success: false, error: "Not authenticated" };
-  }
-
-  const validated = emailBrandingConfigSchema.safeParse(data);
-  if (!validated.success) {
-    return { success: false, error: validated.error.errors[0].message };
-  }
-
-  const supabase = createAdminClient();
-
-  const { data: userData } = await supabase
-    .from("users")
-    .select("organization_id, role")
-    .eq("id", user.id)
-    .single();
-
-  if (!userData?.organization_id) {
-    return { success: false, error: "No organization found" };
-  }
-
-  if (userData.role !== "admin") {
-    return { success: false, error: "Only admins can update email branding settings" };
-  }
-
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", userData.organization_id)
-    .single();
-
-  const currentSettings = (org?.settings as Record<string, unknown>) ?? {};
-  const updatedSettings = { ...currentSettings, email_branding: validated.data };
-
-  const { error } = await supabase
-    .from("organizations")
-    .update({ settings: updatedSettings, updated_at: new Date().toISOString() })
-    .eq("id", userData.organization_id);
-
-  if (error) {
-    return { success: false, error: error.message };
-  }
-
-  revalidatePath("/dashboard/settings");
-  revalidatePath("/dashboard/emails");
-
-  return { success: true, error: null };
 }

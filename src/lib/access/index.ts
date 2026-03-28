@@ -257,6 +257,24 @@ export async function requireEnterpriseAdmin(): Promise<AccessContext> {
 }
 
 /**
+ * Require individual license OR enterprise admin role.
+ * Used for features that are org-level but available to individual users
+ * (who are effectively their own org admin).
+ */
+export async function requireIndividualOrEnterpriseAdmin(): Promise<AccessContext> {
+  const ctx = await getAccessContext();
+  if (!ctx) redirect("/login");
+
+  // Individual users always have access (they're their own admin)
+  if (ctx.accountType === "individual") return ctx;
+
+  // Enterprise users need admin role
+  if (ctx.accountType === "enterprise" && ctx.role === "admin") return ctx;
+
+  redirect("/dashboard?error=insufficient_role");
+}
+
+/**
  * Require Pro tier (pro or enterprise subscription)
  * Redirects basic users to billing page
  */

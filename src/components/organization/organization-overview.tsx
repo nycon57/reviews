@@ -129,7 +129,7 @@ export function OrganizationOverview({ isAdmin = false }: OrganizationOverviewPr
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="h-16 w-16 rounded-lg">
-                <AvatarImage src={organization.logo_url || undefined} alt={organization.name} />
+                <AvatarImage src={organization.avatar_url || organization.logo_url || undefined} alt={organization.name} />
                 <AvatarFallback
                   className="rounded-lg"
                   style={{ backgroundColor: organization.primary_color || "#3B82F6" }}

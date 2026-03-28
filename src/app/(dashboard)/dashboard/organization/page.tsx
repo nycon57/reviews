@@ -21,7 +21,7 @@ import { OrganizationOverview } from "@/components/organization/organization-ove
 import { OrganizationBranches } from "@/components/organization/organization-branches";
 import { ResponseTemplatesTab } from "@/components/organization/response-templates-tab";
 import { OrganizationIntegrations } from "@/components/organization/organization-integrations";
-import { requireEnterpriseAdmin } from "@/lib/access";
+import { requireIndividualOrEnterpriseAdmin } from "@/lib/access";
 
 export const metadata = {
   title: "Organization Settings | RepWell",
@@ -50,8 +50,9 @@ function TabSkeleton() {
 const triggerClassName = "relative px-4 py-3 text-sm font-medium text-muted-foreground hover:text-repwell-teal-400 dark:hover:text-repwell-sage-100/80 data-[state=active]:text-repwell-teal-300 border-b-2 border-transparent data-[state=active]:border-repwell-teal-300 rounded-none bg-transparent shadow-none transition-colors duration-200 flex items-center gap-2 whitespace-nowrap";
 
 export default async function OrganizationPage() {
-  // Check access - requires enterprise account + admin role
-  await requireEnterpriseAdmin();
+  // Allow individual license users and enterprise org admins
+  const ctx = await requireIndividualOrEnterpriseAdmin();
+  const isEnterpriseAccount = ctx.accountType === "enterprise";
 
   return (
     <div className="space-y-6 overflow-x-hidden">
@@ -83,14 +84,18 @@ export default async function OrganizationPage() {
             <Palette className="h-4 w-4" />
             Branding
           </TabsTrigger>
-          <TabsTrigger value="team" className={triggerClassName}>
-            <Users className="h-4 w-4" />
-            Users
-          </TabsTrigger>
-          <TabsTrigger value="branches" className={triggerClassName}>
-            <Buildings className="h-4 w-4" />
-            Branches
-          </TabsTrigger>
+          {isEnterpriseAccount && (
+            <TabsTrigger value="team" className={triggerClassName}>
+              <Users className="h-4 w-4" />
+              Users
+            </TabsTrigger>
+          )}
+          {isEnterpriseAccount && (
+            <TabsTrigger value="branches" className={triggerClassName}>
+              <Buildings className="h-4 w-4" />
+              Branches
+            </TabsTrigger>
+          )}
           <TabsTrigger value="templates" className={triggerClassName}>
             <FileText className="h-4 w-4" />
             Templates
@@ -123,17 +128,21 @@ export default async function OrganizationPage() {
           </Suspense>
         </TabsContent>
 
-        <TabsContent value="team" className="space-y-6">
-          <Suspense fallback={<TabSkeleton />}>
-            <OrganizationTeam />
-          </Suspense>
-        </TabsContent>
+        {isEnterpriseAccount && (
+          <TabsContent value="team" className="space-y-6">
+            <Suspense fallback={<TabSkeleton />}>
+              <OrganizationTeam />
+            </Suspense>
+          </TabsContent>
+        )}
 
-        <TabsContent value="branches" className="space-y-6">
-          <Suspense fallback={<TabSkeleton />}>
-            <OrganizationBranches />
-          </Suspense>
-        </TabsContent>
+        {isEnterpriseAccount && (
+          <TabsContent value="branches" className="space-y-6">
+            <Suspense fallback={<TabSkeleton />}>
+              <OrganizationBranches />
+            </Suspense>
+          </TabsContent>
+        )}
 
         <TabsContent value="templates" className="space-y-6">
           <Suspense fallback={<TabSkeleton />}>

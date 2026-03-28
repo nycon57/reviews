@@ -77,7 +77,7 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     removeMessage: "Logo has been removed.",
     dropHint: "JPG, PNG, WebP or SVG (max 5MB)",
     sizeHint: "Recommended: 600 x 300px",
-    previewClass: "h-24 w-48 rounded-lg",
+    previewClass: "h-32 w-64 rounded-lg",
     dropzoneClass: "h-32",
     dialogWidth: "sm:max-w-2xl",
   },
@@ -122,23 +122,23 @@ const VARIANT_CONFIG: Record<ImageUploadVariant, VariantConfig> = {
     dialogWidth: "sm:max-w-lg",
   },
   banner: {
-    aspect: 3,
-    outputWidth: 1200,
+    aspect: 4,
+    outputWidth: 1600,
     outputHeight: 400,
     maxSizeMB: 10,
     allowSvg: false,
     cropShape: "rect",
-    minZoom: 0.3,
+    minZoom: 1,
     cropDialogTitle: "Crop your cover photo",
     cropDialogDescription:
-      "Drag to reposition and use the slider to zoom. The image will be cropped to a 3:1 banner ratio.",
+      "Drag to reposition and use the slider to zoom. The image will be cropped to a 4:1 banner ratio.",
     saveLabel: "Save cover photo",
     successMessage: "Cover photo has been saved.",
     removeMessage: "Cover photo has been removed.",
     dropHint: "JPG, PNG or WebP (max 10MB)",
-    sizeHint: "Recommended: 1200 x 400px",
-    previewClass: "w-full aspect-[3/1] rounded-lg",
-    dropzoneClass: "aspect-[3/1]",
+    sizeHint: "Recommended: 1600 x 400px",
+    previewClass: "w-full aspect-[4/1] rounded-lg",
+    dropzoneClass: "aspect-[4/1]",
     dialogWidth: "sm:max-w-3xl",
   },
 };
@@ -492,7 +492,10 @@ export function ImageUpload({
                 <img
                   src={imageUrl}
                   alt={label || `${variant} preview`}
-                  className="h-full w-full object-contain p-2"
+                  className={cn(
+                    "h-full w-full",
+                    variant === "banner" ? "object-cover" : "object-contain p-2"
+                  )}
                 />
               </div>
             )}
@@ -592,8 +595,9 @@ export function ImageUpload({
           </DialogHeader>
 
           <div
-            className="relative w-full h-80 rounded-lg overflow-hidden bg-[length:16px_16px] bg-[position:0_0,8px_8px]"
+            className="relative w-full rounded-lg overflow-hidden bg-[length:16px_16px] bg-[position:0_0,8px_8px]"
             style={{
+              height: config.aspect >= 4 ? "14rem" : config.aspect >= 2 ? "16rem" : "20rem",
               backgroundImage:
                 "linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%, transparent 75%, hsl(var(--muted)) 75%), linear-gradient(45deg, hsl(var(--muted)) 25%, transparent 25%, transparent 75%, hsl(var(--muted)) 75%)",
             }}
@@ -611,8 +615,8 @@ export function ImageUpload({
                 onMediaLoaded={onMediaLoaded}
                 cropShape={config.cropShape}
                 showGrid={config.cropShape !== "round"}
-                objectFit="contain"
-                restrictPosition={false}
+                objectFit={config.aspect >= 2 ? "horizontal-cover" : "contain"}
+                restrictPosition={variant === "banner"}
                 style={{
                   cropAreaStyle: {
                     border: "2px solid hsl(var(--repwell-teal-300))",

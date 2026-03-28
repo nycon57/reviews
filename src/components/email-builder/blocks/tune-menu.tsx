@@ -200,7 +200,7 @@ export function TuneMenu() {
 
   return (
     <TooltipProvider delayDuration={200}>
-      <div className="absolute top-0 -left-14 rounded-full bg-card px-2 py-3 shadow-md z-50 flex flex-col gap-1">
+      <div className="absolute top-1 right-1 z-50 flex flex-row gap-0.5 rounded-lg bg-card/90 backdrop-blur-sm px-1.5 py-1 shadow-md">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

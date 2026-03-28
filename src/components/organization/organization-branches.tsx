@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -348,17 +349,15 @@ export function OrganizationBranches() {
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        {branch.globalSlug && (
-                          <DropdownMenuItem
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(`/branch/${branch.globalSlug}`, "_blank");
-                            }}
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Public Profile
-                          </DropdownMenuItem>
-                        )}
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(getBranchPublicPath(branch), "_blank");
+                          }}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          View Public Profile
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className={branch.isActive ? "text-destructive" : ""}

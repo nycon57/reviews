@@ -16,6 +16,7 @@ import {
   Palette,
   Image as ImageIcon,
   TextAa,
+  Eyedropper,
 } from "@phosphor-icons/react";
 import { ImageUpload } from "@/components/shared/image-upload";
 import {
@@ -31,6 +32,7 @@ import {
   type UpdateOrganizationBranding,
 } from "@/lib/organization";
 import { cn } from "@/lib/utils";
+import { extractBrandColors } from "@/lib/utils/color";
 
 const FONT_FAMILIES = [
   { value: "Inter", label: "Inter" },
@@ -139,23 +141,23 @@ export function OrganizationBranding() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Logo & Profile Photo */}
-        <Card className="border border-border shadow-soft">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
-                <ImageIcon className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Column 1: Images */}
+          <Card className="border border-border shadow-soft">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-repwell-teal-300/10">
+                  <ImageIcon className="h-5 w-5 text-repwell-teal-300" weight="duotone" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Images</CardTitle>
+                  <CardDescription>
+                    Logo, profile photo, and cover image
+                  </CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="text-lg">Images</CardTitle>
-                <CardDescription>
-                  Upload your organization&apos;s logo, profile photo, and cover image
-                </CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-8 sm:grid-cols-2">
+            </CardHeader>
+            <CardContent className="space-y-8">
               <div className="space-y-2">
                 <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Logo</Label>
                 <p className="text-xs text-muted-foreground mb-3">
@@ -167,7 +169,19 @@ export function OrganizationBranding() {
                   primaryColor={watchPrimaryColor}
                   onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationLogo(fd); }}
                   onRemove={removeOrganizationLogo}
-                  onChange={(url) => form.setValue("logo_url", url || "", { shouldDirty: true })}
+                  onChange={(url) => {
+                    form.setValue("logo_url", url || "", { shouldDirty: true });
+                    if (url) {
+                      extractBrandColors(url).then(({ primary, secondary }) => {
+                        form.setValue("primary_color", primary, { shouldDirty: true });
+                        form.setValue("secondary_color", secondary, { shouldDirty: true });
+                        toast({
+                          title: "Colors detected",
+                          description: "Brand colors extracted from your logo. You can adjust them below.",
+                        });
+                      });
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
@@ -184,26 +198,25 @@ export function OrganizationBranding() {
                   onChange={(url) => form.setValue("avatar_url", url || "", { shouldDirty: true })}
                 />
               </div>
-            </div>
-            <div className="mt-8 space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cover Photo</Label>
-              <p className="text-xs text-muted-foreground mb-3">
-                Banner displayed on your organization&apos;s public page
-              </p>
-              <ImageUpload
-                variant="banner"
-                currentUrl={form.watch("banner_url")}
-                primaryColor={watchPrimaryColor}
-                onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationBanner(fd); }}
-                onRemove={removeOrganizationBanner}
-                onChange={(url) => form.setValue("banner_url", url || "", { shouldDirty: true })}
-              />
-            </div>
-          </CardContent>
-        </Card>
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Cover Photo</Label>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Banner displayed on your organization&apos;s public page
+                </p>
+                <ImageUpload
+                  variant="banner"
+                  currentUrl={form.watch("banner_url")}
+                  primaryColor={watchPrimaryColor}
+                  onUpload={async (file) => { const fd = new FormData(); fd.append("file", file); return uploadOrganizationBanner(fd); }}
+                  onRemove={removeOrganizationBanner}
+                  onChange={(url) => form.setValue("banner_url", url || "", { shouldDirty: true })}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Colors & Typography — side by side */}
-        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Column 2: Colors & Typography stacked */}
+          <div className="space-y-6">
           {/* Colors */}
           <Card className="border border-border shadow-soft">
             <CardHeader>
@@ -361,6 +374,27 @@ export function OrganizationBranding() {
                       <span className="text-sm">{preset.name}</span>
                     </button>
                   ))}
+                  {/* Custom indicator — shown when colors don't match any preset */}
+                  {!PRESET_COLORS.some(
+                    (p) => watchPrimaryColor === p.primary && watchSecondaryColor === p.secondary
+                  ) && (
+                    <div
+                      className="flex h-10 items-center gap-2 rounded-md border border-primary bg-primary/5 px-3"
+                    >
+                      <div className="flex gap-1">
+                        <div
+                          className="h-4 w-4 rounded-full"
+                          style={{ backgroundColor: watchPrimaryColor }}
+                        />
+                        <div
+                          className="h-4 w-4 rounded-full"
+                          style={{ backgroundColor: watchSecondaryColor }}
+                        />
+                      </div>
+                      <Eyedropper className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm">Custom</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -422,7 +456,8 @@ export function OrganizationBranding() {
               </div>
             </CardContent>
           </Card>
-        </div>
+          </div>{/* end column 2 */}
+        </div>{/* end 2-col grid */}
 
         <div className="flex justify-end">
           <Button type="submit" disabled={isPending}>

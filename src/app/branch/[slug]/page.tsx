@@ -55,7 +55,7 @@ export default async function BranchProfilePage({ params }: PageProps) {
 
   // Build breadcrumbs
   const breadcrumbs = buildBranchBreadcrumbs(
-    { name: branch.name, global_slug: branch.global_slug, id: branch.id },
+    { name: branch.name, slug: branch.slug, global_slug: branch.global_slug, id: branch.id },
     organization ? { slug: organization.slug, name: organization.name } : null
   );
 

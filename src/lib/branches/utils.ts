@@ -10,6 +10,37 @@ export function generateSlug(name: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
+interface BranchPublicSlugInput {
+  name: string;
+  slug?: string | null;
+  global_slug?: string | null;
+  globalSlug?: string | null;
+}
+
+/**
+ * Generate the canonical public slug for a branch.
+ * This mirrors org/pro URLs by using the branch name directly.
+ */
+export function generatePublicBranchSlug(name: string): string {
+  return generateSlug(name);
+}
+
+/**
+ * Resolve the public-facing slug for a branch without falling back to its UUID.
+ */
+export function getBranchPublicSlug(branch: BranchPublicSlugInput): string {
+  return (
+    branch.global_slug ||
+    branch.globalSlug ||
+    branch.slug ||
+    generatePublicBranchSlug(branch.name)
+  );
+}
+
+export function getBranchPublicPath(branch: BranchPublicSlugInput): string {
+  return `/branch/${getBranchPublicSlug(branch)}`;
+}
+
 /**
  * Geocode a branch address and return coordinates
  */

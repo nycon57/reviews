@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Lock,
 } from "@phosphor-icons/react";
+import { TaskBadge } from "@/components/dashboard/task-badge";
 import { usePermissions } from "@/lib/permissions/context";
 import {
   useFilteredNav,
@@ -96,6 +97,7 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
               item={item}
               isActive={isActive(item.href)}
               collapsed={collapsed}
+              dynamicBadge={item.href === "/dashboard/tasks" ? <TaskBadge /> : undefined}
             />
           ))}
 
@@ -191,9 +193,10 @@ interface NavLinkProps {
   item: FilteredNavItem;
   isActive: boolean;
   collapsed: boolean;
+  dynamicBadge?: React.ReactNode;
 }
 
-const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLinkProps) {
+const NavLink = React.memo(function NavLink({ item, isActive, collapsed, dynamicBadge }: NavLinkProps) {
   const { isProLocked } = item;
   // If Pro locked, link to billing instead of the actual route
   const href = isProLocked ? "/dashboard/settings?tab=billing" : item.href;
@@ -274,6 +277,9 @@ const NavLink = React.memo(function NavLink({ item, isActive, collapsed }: NavLi
           {item.badge}
         </span>
       )}
+
+      {/* Dynamic badge (e.g. task count) */}
+      {!collapsed && !isProLocked && dynamicBadge}
     </Link>
   );
 });

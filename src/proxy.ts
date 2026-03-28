@@ -138,7 +138,7 @@ async function getSupabaseUser(request: NextRequest, response: NextResponse) {
   return { user, supabase };
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -274,7 +274,7 @@ export async function middleware(request: NextRequest) {
         cachedOrgData = {
           subscription_tier: "basic",
           account_type: "individual",
-          onboarding_status: indivOnboardingStatus || (hasAddress ? "completed" : "payment_complete"),
+          onboarding_status: (indivOnboardingStatus !== null && indivOnboardingStatus !== '') ? indivOnboardingStatus : (hasAddress ? "completed" : "payment_complete"),
         };
       }
     }

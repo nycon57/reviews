@@ -23,6 +23,7 @@ import {
   SealCheck,
 } from "@phosphor-icons/react";
 import { getInitials } from "@/lib/utils";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 import { ReviewItem } from "@/components/shared/review-item";
 import { TierBadge } from "@/components/shared/tier-badge";
 import type {
@@ -261,6 +262,7 @@ export function OrganizationProfileContent({
       {/* Hero Banner */}
       <div className="relative">
         <ProfileHeroBanner
+          bannerUrl={organization.banner_url}
           orgLogo={organization.logo_url}
           orgName={organization.name}
         />
@@ -286,7 +288,7 @@ export function OrganizationProfileContent({
           <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
             <div className="flex flex-col items-center gap-6 text-center">
               {/* Profile Photo */}
-              <div className="h-28 w-28 overflow-hidden rounded-2xl border-4 border-white shadow-lg -mt-16">
+              <div className="h-28 w-28 md:h-32 md:w-32 overflow-hidden rounded-2xl border-4 border-white shadow-lg -mt-16 sm:-mt-20">
                 {(organization.avatar_url || organization.logo_url) ? (
                   <div className="relative h-full w-full bg-white">
                     <Image
@@ -366,6 +368,7 @@ export function OrganizationProfileContent({
               phone={contactPhone}
               address={hqAddress}
               professionalName={organization.name}
+              logoUrl={organization.logo_url}
               contactLabel={`Contact ${organization.name}`}
               personalWebsiteUrl={organization.website_url}
               directionsUrl={hqDirectionsUrl}
@@ -454,7 +457,7 @@ export function OrganizationProfileContent({
                             {displayedBranches.map((branch) => (
                               <Link
                                 key={branch.id}
-                                href={`/branch/${branch.global_slug || branch.id}`}
+                                href={getBranchPublicPath(branch)}
                                 className="group block"
                               >
                                 <div className="flex items-start gap-4 rounded-lg border p-4 transition-colors hover:bg-repwell-sage-100/50">
@@ -656,7 +659,7 @@ export function OrganizationProfileContent({
                             },
                             branch: testimonial.branch ? {
                               name: testimonial.branch.name,
-                              href: testimonial.branch.global_slug ? `/branch/${testimonial.branch.global_slug}` : "#",
+                              href: getBranchPublicPath(testimonial.branch),
                             } : undefined,
                           }}
                           shareConfig={{ profileUrl, subjectName: organization.name }}

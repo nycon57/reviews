@@ -19,12 +19,9 @@ import {
   X,
   PencilSimple as Edit2,
   DotsThree as MoreHorizontal,
-  ArrowCounterClockwise as RefreshCcw,
   Archive,
   Flag,
-  ArrowSquareOut as ExternalLink,
   Chats as MessageSquare,
-  Eye,
   Sparkle as Sparkles,
   ShareNetwork,
 } from "@phosphor-icons/react";
@@ -70,8 +67,6 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
   const aggregatedReview = review as AggregatedReview;
   const isFeatured = "featured" in review && aggregatedReview.featured;
   const hasResponse = "responseText" in review && aggregatedReview.responseText;
-  const sourceUrl = "sourceUrl" in review ? aggregatedReview.sourceUrl : undefined;
-
   return (
     <motion.div
       layout
@@ -146,97 +141,65 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
           );
         })()}
         <div className="flex items-center justify-end pt-2" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center gap-2">
-            {/* Pending mode actions */}
-            {review.status === "pending" && state.isPendingMode && (
-              <>
-                <Button size="sm" variant="outline" onClick={() => actions.openEditDialog(review)}>
-                  <Edit2 className="mr-1 h-3 w-3" />Edit
-                </Button>
-                <Button size="sm" onClick={() => actions.handleApprove(review)} disabled={state.isPending}>
-                  <Check className="mr-1 h-3 w-3" />Approve
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => actions.setRejectingReview(review)} disabled={state.isPending}>
-                  <X className="mr-1 h-3 w-3" />Reject
-                </Button>
-              </>
-            )}
+          {/* Pending mode: inline Approve/Reject for quick triage */}
+          {review.status === "pending" && state.isPendingMode && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => actions.handleApprove(review)} disabled={state.isPending}>
+                <Check className="mr-1 h-3 w-3" />Approve
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => actions.setRejectingReview(review)} disabled={state.isPending}>
+                <X className="mr-1 h-3 w-3" />Reject
+              </Button>
+            </div>
+          )}
 
-            {/* Non-pending mode actions */}
-            {!state.isPendingMode && review.status !== "pending" && (
-              <>
-                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/reviews/${review.id}`); }}>
-                  <Eye className="mr-1 h-3 w-3" />View
-                </Button>
-                {review.status === "approved" && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={(e) => { e.stopPropagation(); setShareModalOpen(true); }}
-                    title="Create Smart Link"
-                  >
-                    <ShareNetwork className="h-3 w-3" />
-                  </Button>
-                )}
-                {sourceUrl && (
-                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); window.open(sourceUrl, "_blank"); }}>
-                    <ExternalLink className="h-3 w-3" />
-                  </Button>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {review.status === "approved" && (
-                      <DropdownMenuItem onClick={() => actions.handleToggleFeatured(review.id, !isFeatured)}>
-                        <Flag className="mr-2 h-4 w-4" />{isFeatured ? "Unfeature" : "Feature"}
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem onClick={() => actions.handleRevertToPending(review.id)}>
-                      <RefreshCcw className="mr-2 h-4 w-4" />Revert to Pending
-                    </DropdownMenuItem>
-                    {(review.status === "approved" || review.status === "rejected") && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => actions.handleArchive(review.id)} className="text-red-600">
-                          <Archive className="mr-2 h-4 w-4" />Archive
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {review.status === "rejected" && review.rejectionReason && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                          <span className="font-medium">Reason:</span> {review.rejectionReason}
-                        </div>
-                      </>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            )}
+          {/* Ellipsis menu — state-based actions */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => actions.openEditDialog(review)}>
+                <Edit2 className="mr-2 h-4 w-4" />Edit
+              </DropdownMenuItem>
 
-            {/* Pending reviews in non-pending mode */}
-            {review.status === "pending" && !state.isPendingMode && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => actions.openEditDialog(review)}>
-                    <Edit2 className="mr-2 h-4 w-4" />Edit & Approve
+              {review.status === "approved" && (
+                <>
+                  <DropdownMenuItem onClick={() => actions.handleToggleFeatured(review.id, !isFeatured)}>
+                    <Flag className="mr-2 h-4 w-4" />{isFeatured ? "Unfeature" : "Feature"}
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShareModalOpen(true)}>
+                    <ShareNetwork className="mr-2 h-4 w-4" />Share
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              {review.status === "pending" && !state.isPendingMode && (
+                <>
                   <DropdownMenuItem onClick={() => actions.handleApprove(review)}>
                     <Check className="mr-2 h-4 w-4" />Approve
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => actions.setRejectingReview(review)} className="text-red-600">
                     <X className="mr-2 h-4 w-4" />Reject
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
+                </>
+              )}
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => actions.handleArchive(review.id)} className="text-red-600">
+                <Archive className="mr-2 h-4 w-4" />Archive
+              </DropdownMenuItem>
+
+              {review.status === "rejected" && review.rejectionReason && (
+                <>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                    <span className="font-medium">Reason:</span> {review.rejectionReason}
+                  </div>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <CreateSmartLinkModal

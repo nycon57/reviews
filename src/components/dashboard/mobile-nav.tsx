@@ -21,6 +21,7 @@ import {
   ICON_MAP,
   type FilteredNavItem,
 } from "@/lib/nav";
+import { TaskBadge } from "@/components/dashboard/task-badge";
 
 interface MobileNavProps {
   className?: string;
@@ -75,6 +76,7 @@ export function MobileNav({ className }: MobileNavProps) {
                 item={item}
                 isActive={isActive(item.href)}
                 onClick={handleNavClick}
+                dynamicBadge={item.href === "/dashboard/tasks" ? <TaskBadge /> : undefined}
               />
             ))}
 
@@ -118,9 +120,10 @@ interface MobileNavLinkProps {
   item: FilteredNavItem;
   isActive: boolean;
   onClick: () => void;
+  dynamicBadge?: React.ReactNode;
 }
 
-function MobileNavLink({ item, isActive, onClick }: MobileNavLinkProps) {
+function MobileNavLink({ item, isActive, onClick, dynamicBadge }: MobileNavLinkProps) {
   const { isProLocked } = item;
   const href = isProLocked ? "/dashboard/settings?tab=billing" : item.href;
   const IconComponent = ICON_MAP[item.icon];
@@ -177,6 +180,9 @@ function MobileNavLink({ item, isActive, onClick }: MobileNavLinkProps) {
           {item.badge}
         </span>
       )}
+
+      {/* Dynamic badge (e.g. task count) */}
+      {!isProLocked && dynamicBadge}
     </Link>
   );
 }

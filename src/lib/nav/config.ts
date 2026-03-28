@@ -45,6 +45,12 @@ export const NAV_CONFIG: NavConfig = {
       permission: PERMISSIONS.VIEW_REVIEWS,
     },
     {
+      title: "Tasks",
+      href: "/dashboard/tasks",
+      icon: "ClipboardText",
+      permission: PERMISSIONS.VIEW_TASKS,
+    },
+    {
       title: "Emails",
       href: "/dashboard/emails",
       icon: "Envelope",

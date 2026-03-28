@@ -4,6 +4,7 @@
  */
 
 import type { Json } from "@/types/database.types";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 import type {
   PersonWithRatingSchema,
   ReviewSchema,
@@ -407,7 +408,7 @@ export function generateLocalBusinessSchema(
   professionals: SchemaBranchProfessional[],
   baseUrl: string
 ): LocalBusinessSchema {
-  const profileUrl = `${baseUrl}/branch/${branch.global_slug || branch.id}`;
+  const profileUrl = `${baseUrl}${getBranchPublicPath(branch)}`;
 
   // Parse address if available
   const address = branch.address as BranchAddress | null;
@@ -531,7 +532,7 @@ export function generateBranchReviewSchema(
     itemReviewed: {
       "@type": "LocalBusiness",
       name: branch.name,
-      url: `${baseUrl}/branch/${branch.global_slug || branch.id}`,
+      url: `${baseUrl}${getBranchPublicPath(branch)}`,
     },
     author: {
       "@type": "Person",
@@ -585,7 +586,7 @@ export function generateBranchProfilePageSchema(
     generateBreadcrumbSchema([
       { name: "Home", url: baseUrl },
       { name: "Branches", url: `${baseUrl}/branch` },
-      { name: branch.name, url: `${baseUrl}/branch/${branch.global_slug || branch.id}` },
+      { name: branch.name, url: `${baseUrl}${getBranchPublicPath(branch)}` },
     ])
   );
 
@@ -765,7 +766,7 @@ export function generateOrganizationWithRatingSchema(
       } = {
         "@type": "LocalBusiness",
         name: branch.name,
-        url: `${baseUrl}/branch/${branch.global_slug || branch.id}`,
+        url: `${baseUrl}${getBranchPublicPath(branch)}`,
       };
 
       if (branchAddress && (branchAddress.city || branchAddress.state)) {

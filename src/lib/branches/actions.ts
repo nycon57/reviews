@@ -20,7 +20,7 @@ import type {
 } from './types';
 import type { Json } from '@/types/database.types';
 import { ensureUniqueBranchSlug } from '@/lib/users/slug-utils';
-import { generateSlug, geocodeBranchAddress } from './utils';
+import { generatePublicBranchSlug, generateSlug, geocodeBranchAddress } from './utils';
 
 // Zod schemas for validation
 const addressSchema = z.object({
@@ -368,17 +368,9 @@ export async function createBranch(
     }
 
     // Generate global_slug for SEO-friendly URLs
-    let globalSlug: string | null = null;
-    const { data: orgData } = await adminSupabase
-      .from('organizations')
-      .select('slug')
-      .eq('id', auth.organizationId)
-      .single();
-
-    if (orgData?.slug) {
-      const baseGlobalSlug = `${slug}-${orgData.slug}`;
-      globalSlug = await ensureUniqueBranchSlug(baseGlobalSlug);
-    }
+    const globalSlug = await ensureUniqueBranchSlug(
+      generatePublicBranchSlug(validated.data.name)
+    );
 
     // Validate manager_id if provided
     if (validated.data.managerId) {
@@ -480,16 +472,10 @@ export async function updateBranch(
       const newSlug = generateSlug(validated.data.name);
       updateData.slug = newSlug;
 
-      const { data: orgData } = await supabase
-        .from('organizations')
-        .select('slug')
-        .eq('id', auth.organizationId)
-        .single();
-
-      if (orgData?.slug) {
-        const baseGlobalSlug = `${newSlug}-${orgData.slug}`;
-        updateData.global_slug = await ensureUniqueBranchSlug(baseGlobalSlug, id);
-      }
+      updateData.global_slug = await ensureUniqueBranchSlug(
+        generatePublicBranchSlug(validated.data.name),
+        id
+      );
     }
     if (validated.data.address !== undefined) {
       updateData.address = validated.data.address as Json;
@@ -1064,4 +1050,3 @@ export async function getUnassignedMembers(): Promise<
     return { success: false, error: 'Failed to fetch members' };
   }
 }
-

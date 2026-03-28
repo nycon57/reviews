@@ -937,6 +937,81 @@ export type Database = {
           },
         ]
       }
+      email_templates_custom: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          document: Json
+          html_cache: string | null
+          id: string
+          is_default: boolean | null
+          is_starter: boolean | null
+          merge_fields: string[] | null
+          name: string
+          organization_id: string | null
+          preview_text: string | null
+          subject: string
+          thumbnail_url: string | null
+          updated_at: string | null
+          version: number | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document: Json
+          html_cache?: string | null
+          id?: string
+          is_default?: boolean | null
+          is_starter?: boolean | null
+          merge_fields?: string[] | null
+          name: string
+          organization_id?: string | null
+          preview_text?: string | null
+          subject: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          document?: Json
+          html_cache?: string | null
+          id?: string
+          is_default?: boolean | null
+          is_starter?: boolean | null
+          merge_fields?: string[] | null
+          name?: string
+          organization_id?: string | null
+          preview_text?: string | null
+          subject?: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_templates_custom_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_templates_custom_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_unsubscribes: {
         Row: {
           email: string
@@ -2388,6 +2463,57 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          category: string
+          content_type: string
+          created_at: string
+          filename: string
+          id: string
+          organization_id: string
+          size_bytes: number
+          uploaded_by: string | null
+          url: string
+        }
+        Insert: {
+          category?: string
+          content_type: string
+          created_at?: string
+          filename: string
+          id?: string
+          organization_id: string
+          size_bytes: number
+          uploaded_by?: string | null
+          url: string
+        }
+        Update: {
+          category?: string
+          content_type?: string
+          created_at?: string
+          filename?: string
+          id?: string
+          organization_id?: string
+          size_bytes?: number
+          uploaded_by?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_assets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       members: {
         Row: {
           created_at: string | null
@@ -2882,22 +3008,35 @@ export type Database = {
       organizations: {
         Row: {
           account_type: string | null
+          avatar_url: string | null
+          banner_url: string | null
+          billing_address: Json | null
           billing_email: string | null
+          company_address: Json | null
+          company_email: string | null
+          company_phone: string | null
           created_at: string | null
+          date_format: string | null
           description: string | null
           domain: string | null
           email: string | null
           facebook_url: string | null
+          font_family: string | null
+          grace_period_ends_at: string | null
+          headquarters_address: Json | null
           headquarters_branch_id: string | null
           id: string
+          industry: string | null
           instagram_url: string | null
           linkedin_url: string | null
           logo_url: string | null
+          mission_statement: string | null
           name: string
           onboarding_completed_at: string | null
           onboarding_status: string | null
           phone: string | null
           primary_color: string | null
+          secondary_color: string | null
           selected_billing_cycle: string | null
           selected_plan: string | null
           settings: Json | null
@@ -2908,6 +3047,7 @@ export type Database = {
           subscription_started_at: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          timezone: string | null
           trial_ends_at: string | null
           twitter_url: string | null
           updated_at: string | null
@@ -2915,22 +3055,35 @@ export type Database = {
         }
         Insert: {
           account_type?: string | null
+          avatar_url?: string | null
+          banner_url?: string | null
+          billing_address?: Json | null
           billing_email?: string | null
+          company_address?: Json | null
+          company_email?: string | null
+          company_phone?: string | null
           created_at?: string | null
+          date_format?: string | null
           description?: string | null
           domain?: string | null
           email?: string | null
           facebook_url?: string | null
+          font_family?: string | null
+          grace_period_ends_at?: string | null
+          headquarters_address?: Json | null
           headquarters_branch_id?: string | null
           id?: string
+          industry?: string | null
           instagram_url?: string | null
           linkedin_url?: string | null
           logo_url?: string | null
+          mission_statement?: string | null
           name: string
           onboarding_completed_at?: string | null
           onboarding_status?: string | null
           phone?: string | null
           primary_color?: string | null
+          secondary_color?: string | null
           selected_billing_cycle?: string | null
           selected_plan?: string | null
           settings?: Json | null
@@ -2941,6 +3094,7 @@ export type Database = {
           subscription_started_at?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          timezone?: string | null
           trial_ends_at?: string | null
           twitter_url?: string | null
           updated_at?: string | null
@@ -2948,22 +3102,35 @@ export type Database = {
         }
         Update: {
           account_type?: string | null
+          avatar_url?: string | null
+          banner_url?: string | null
+          billing_address?: Json | null
           billing_email?: string | null
+          company_address?: Json | null
+          company_email?: string | null
+          company_phone?: string | null
           created_at?: string | null
+          date_format?: string | null
           description?: string | null
           domain?: string | null
           email?: string | null
           facebook_url?: string | null
+          font_family?: string | null
+          grace_period_ends_at?: string | null
+          headquarters_address?: Json | null
           headquarters_branch_id?: string | null
           id?: string
+          industry?: string | null
           instagram_url?: string | null
           linkedin_url?: string | null
           logo_url?: string | null
+          mission_statement?: string | null
           name?: string
           onboarding_completed_at?: string | null
           onboarding_status?: string | null
           phone?: string | null
           primary_color?: string | null
+          secondary_color?: string | null
           selected_billing_cycle?: string | null
           selected_plan?: string | null
           settings?: Json | null
@@ -2974,6 +3141,7 @@ export type Database = {
           subscription_started_at?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          timezone?: string | null
           trial_ends_at?: string | null
           twitter_url?: string | null
           updated_at?: string | null
@@ -7311,6 +7479,72 @@ export type Database = {
           },
         ]
       }
+      widget_config_versions: {
+        Row: {
+          allowed_domains: string[] | null
+          change_note: string | null
+          change_summary: string | null
+          changed_by: string | null
+          config: Json
+          created_at: string
+          enable_structured_data: boolean | null
+          entity_id: string | null
+          id: string
+          name: string
+          status: string
+          structured_data_type: string | null
+          version: number
+          widget_config_id: string
+        }
+        Insert: {
+          allowed_domains?: string[] | null
+          change_note?: string | null
+          change_summary?: string | null
+          changed_by?: string | null
+          config?: Json
+          created_at?: string
+          enable_structured_data?: boolean | null
+          entity_id?: string | null
+          id?: string
+          name?: string
+          status?: string
+          structured_data_type?: string | null
+          version: number
+          widget_config_id: string
+        }
+        Update: {
+          allowed_domains?: string[] | null
+          change_note?: string | null
+          change_summary?: string | null
+          changed_by?: string | null
+          config?: Json
+          created_at?: string
+          enable_structured_data?: boolean | null
+          entity_id?: string | null
+          id?: string
+          name?: string
+          status?: string
+          structured_data_type?: string | null
+          version?: number
+          widget_config_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "widget_config_versions_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "widget_config_versions_widget_config_id_fkey"
+            columns: ["widget_config_id"]
+            isOneToOne: false
+            referencedRelation: "widget_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       widget_configs: {
         Row: {
           ab_test_group: string | null
@@ -7525,6 +7759,10 @@ export type Database = {
           locked_by_name: string
         }[]
       }
+      can_update_own_user_profile: {
+        Args: { target_user: Json; target_user_id: string }
+        Returns: boolean
+      }
       check_api_rate_limit: {
         Args: { p_api_key_id: string; p_rate_limit?: number }
         Returns: {
@@ -7589,6 +7827,18 @@ export type Database = {
       increment_webhook_trigger_count: {
         Args: { config_id: string }
         Returns: undefined
+      }
+      is_active_video_testimonial_upload_path: {
+        Args: { p_organization_id_text: string; p_request_id_text: string }
+        Returns: boolean
+      }
+      is_valid_video_testimonial_response_submission: {
+        Args: {
+          p_organization_id: string
+          p_request_id: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
       mark_video_testimonial_submitted: {
         Args: { p_request_id: string }
@@ -7747,11 +7997,11 @@ export type Database = {
         | "filter_change"
       widget_status: "active" | "inactive" | "draft"
       widget_type:
-        | "review_profile"
         | "lo_review"
         | "branch_review"
         | "company_review"
         | "review_carousel"
+        | "review_profile"
         | "star_rating_badge"
         | "video_testimonial"
         | "review_wall"
@@ -7975,11 +8225,11 @@ export const Constants = {
       ],
       widget_status: ["active", "inactive", "draft"],
       widget_type: [
-        "review_profile",
         "lo_review",
         "branch_review",
         "company_review",
         "review_carousel",
+        "review_profile",
         "star_rating_badge",
         "video_testimonial",
         "review_wall",

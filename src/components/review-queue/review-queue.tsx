@@ -129,39 +129,46 @@ export function ReviewQueueContent() {
           {/* Inline Filters */}
           <ReviewFiltersPanel />
 
-          {/* Bulk Actions */}
-          {state.selectedIds.size > 0 && (
-            <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
-              <span className="text-sm font-medium text-heading">
-                {state.selectedIds.size} review{state.selectedIds.size !== 1 ? "s" : ""} selected
-              </span>
-              {state.isPendingMode ? (
-                <>
-                  <Button size="sm" onClick={actions.handleBulkApprove} disabled={state.isPending}>
-                    <Check className="h-4 w-4 mr-1" />Approve All
-                  </Button>
-                  <Button size="sm" variant="destructive" onClick={() => actions.setBulkRejectDialogOpen(true)} disabled={state.isPending}>
-                    <X className="h-4 w-4 mr-1" />Reject All
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(true)}>
-                    <Flag className="h-4 w-4 mr-1" />Feature
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(false)}>
-                    Unfeature
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={actions.handleBulkArchive}>
-                    <Archive className="h-4 w-4 mr-1" />Archive
-                  </Button>
-                </>
-              )}
-              <Button size="sm" variant="ghost" onClick={() => actions.toggleSelectAll()}>
-                Cancel
-              </Button>
-            </div>
-          )}
+          {/* Bulk Actions — state-aware */}
+          {state.selectedIds.size > 0 && (() => {
+            const selectedReviews = state.reviews.filter((r) => state.selectedIds.has(r.id));
+            const hasApproved = selectedReviews.some((r) => r.status === "approved");
+            const hasPending = selectedReviews.some((r) => r.status === "pending");
+
+            return (
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-repwell-teal-300/20 bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
+                <span className="text-sm font-medium text-heading">
+                  {state.selectedIds.size} review{state.selectedIds.size !== 1 ? "s" : ""} selected
+                </span>
+                {hasPending && (
+                  <>
+                    <Button size="sm" onClick={actions.handleBulkApprove} disabled={state.isPending}>
+                      <Check className="h-4 w-4 mr-1" />Approve
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => actions.setBulkRejectDialogOpen(true)} disabled={state.isPending}>
+                      <X className="h-4 w-4 mr-1" />Reject
+                    </Button>
+                  </>
+                )}
+                {hasApproved && (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(true)} disabled={state.isPending}>
+                      <Flag className="h-4 w-4 mr-1" />Feature
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => actions.handleBulkFeature(false)} disabled={state.isPending}>
+                      Unfeature
+                    </Button>
+                  </>
+                )}
+                <Button size="sm" variant="outline" onClick={actions.handleBulkArchive} disabled={state.isPending}>
+                  <Archive className="h-4 w-4 mr-1" />Archive
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => actions.toggleSelectAll()}>
+                  Cancel
+                </Button>
+              </div>
+            );
+          })()}
 
           {/* Reviews List */}
           {state.reviews.length === 0 ? (

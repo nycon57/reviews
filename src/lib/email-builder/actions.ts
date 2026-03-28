@@ -6,8 +6,8 @@ import { createTemplateSchema, updateTemplateSchema } from "./schemas";
 import { renderEmailDocument } from "./renderer";
 import { extractMergeFields, replaceMergeFields, MERGE_FIELD_EXAMPLES } from "./merge-fields";
 import type { CustomEmailTemplate, EmailDocument } from "./types";
-import type { EmailBrandingConfig } from "@/lib/organization/types";
-import { emailBrandingConfigSchema } from "@/lib/organization/types";
+import type { Address, EmailBrandingConfig } from "@/lib/organization/types";
+import { deriveEmailBrandingConfig } from "@/lib/organization/email-branding";
 
 async function getUserContext() {
   const user = await unifiedGetUser();
@@ -41,16 +41,25 @@ async function getOrgBrandingForUser(
   const supabase = createAdminClient();
   const { data: org } = await supabase
     .from("organizations")
-    .select("settings")
+    .select("*")
     .eq("id", organizationId)
     .single();
 
-  const settings = org?.settings as Record<string, unknown> | null;
-  const raw = settings?.email_branding;
-  if (!raw) return null;
+  if (!org) return null;
 
-  const parsed = emailBrandingConfigSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
+  return deriveEmailBrandingConfig({
+    name: org.name,
+    logo_url: org.logo_url,
+    primary_color: org.primary_color,
+    company_email: org.company_email,
+    company_phone: org.company_phone,
+    website_url: org.website_url,
+    twitter_url: org.twitter_url,
+    linkedin_url: org.linkedin_url,
+    facebook_url: org.facebook_url,
+    instagram_url: org.instagram_url,
+    company_address: org.company_address as Address | null | undefined,
+  });
 }
 
 // ---------- Queries ----------
@@ -409,4 +418,3 @@ export async function sendTestEmail(input: {
     };
   }
 }
-

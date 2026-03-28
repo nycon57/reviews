@@ -17,6 +17,7 @@ import {
   SealCheck,
 } from "@phosphor-icons/react";
 import { getInitials } from "@/lib/utils";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 import { TierBadge } from "@/components/shared/tier-badge";
 import type {
   PublicBranch,
@@ -34,7 +35,7 @@ import { ProfileHeroBanner, ContactCTACard, MessageModal, ReportReviewModal, Rev
 
 interface BranchProfileContentProps {
   branch: PublicBranch;
-  organization: (Pick<Tables<"organizations">, "id" | "name" | "logo_url" | "domain"> & { slug: string }) | null;
+  organization: (Pick<Tables<"organizations">, "id" | "name" | "logo_url" | "avatar_url" | "banner_url" | "domain"> & { slug: string }) | null;
   professionals: PublicBranchProfessional[];
   reviews: PublicBranchReview[];
   breadcrumbs?: DirectoryBreadcrumbItem[];
@@ -112,7 +113,7 @@ export function BranchProfileContent({
 
   const profileUrl = typeof window !== "undefined"
     ? window.location.href
-    : `/branch/${branch.global_slug || branch.id}`;
+    : getBranchPublicPath(branch);
   const address = branch.address as {
     street?: string;
     city?: string;
@@ -218,7 +219,7 @@ export function BranchProfileContent({
       {/* Hero Banner */}
       <div className="relative">
         <ProfileHeroBanner
-          bannerUrl={branch.cover_image_url}
+          bannerUrl={branch.cover_image_url || organization?.banner_url}
           orgLogo={organization?.logo_url}
           orgName={organization?.name}
         />
@@ -245,10 +246,10 @@ export function BranchProfileContent({
             <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
               {/* Branch Photo / Logo */}
               <div>
-                <div className="h-28 w-28 md:h-32 md:w-32 shrink-0 overflow-hidden rounded-xl border-4 border-white shadow-lg -mt-16 sm:-mt-20">
-                  {branch.photo_url ? (
+                <div className="h-28 w-28 md:h-32 md:w-32 shrink-0 overflow-hidden rounded-2xl border-4 border-white shadow-lg -mt-16 sm:-mt-20">
+                  {(branch.photo_url || organization?.avatar_url) ? (
                     <img
-                      src={branch.photo_url}
+                      src={(branch.photo_url || organization?.avatar_url)!}
                       alt={branch.name}
                       className="h-full w-full object-cover"
                     />
@@ -321,7 +322,7 @@ export function BranchProfileContent({
               {/* Organization Logo */}
               {organization?.logo_url && (
                 <div className="hidden sm:block shrink-0">
-                  <div className="relative h-16 w-16 md:h-20 md:w-20 overflow-hidden">
+                  <div className="relative h-16 w-32 md:h-20 md:w-40 overflow-hidden">
                     <Image
                       src={organization.logo_url}
                       alt={organization.name || "Organization logo"}

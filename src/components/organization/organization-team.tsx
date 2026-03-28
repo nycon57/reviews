@@ -93,7 +93,9 @@ function DeactivateSwitch({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              disabled={isPending}
               onClick={() => {
+                if (isPending) return;
                 onDeactivate(memberId);
                 setDialogOpen(false);
               }}

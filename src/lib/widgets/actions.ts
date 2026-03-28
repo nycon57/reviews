@@ -16,6 +16,7 @@ import {
 import type { Json } from "@/types/database.types";
 import { sanitizeCustomCSS } from "@/embed/core/css-sanitizer";
 import { getBaseUrl } from "@/lib/seo";
+import { getBranchPublicPath } from "@/lib/branches/utils";
 import {
   getActiveBranchUserIds,
   getOrganizationProfile,
@@ -405,7 +406,7 @@ export async function getEntityCtaDefaults(
 
       const { data: branch, error } = await supabase
         .from("branches")
-        .select("global_slug")
+        .select("id, name, slug, global_slug")
         .eq("id", entityId)
         .eq("organization_id", ctx.data.organizationId)
         .single();
@@ -418,7 +419,7 @@ export async function getEntityCtaDefaults(
         success: true,
         data: {
           text: "View Profile",
-          url: `${baseUrl}/branch/${branch.global_slug || entityId}`,
+          url: `${baseUrl}${getBranchPublicPath(branch)}`,
         },
       };
     }
@@ -699,7 +700,7 @@ export async function getOrgBrandColors(): Promise<ActionResult<OrgBrandColors>>
 
     const { data: org, error } = await supabase
       .from("organizations")
-      .select("primary_color, settings")
+      .select("primary_color, secondary_color, font_family")
       .eq("id", ctx.data.organizationId)
       .single();
 
@@ -707,14 +708,12 @@ export async function getOrgBrandColors(): Promise<ActionResult<OrgBrandColors>>
       return { success: false, error: "Organization not found" };
     }
 
-    const settings = org.settings as Record<string, unknown> | null;
-
     return {
       success: true,
       data: {
-        primaryColor: (settings?.primary_color as string) ?? org.primary_color ?? "#3B82F6",
-        secondaryColor: (settings?.secondary_color as string) ?? "#1E40AF",
-        fontFamily: (settings?.font_family as string) ?? "'Inter', sans-serif",
+        primaryColor: org.primary_color ?? "#3B82F6",
+        secondaryColor: org.secondary_color ?? "#1E40AF",
+        fontFamily: org.font_family ?? "'Inter', sans-serif",
       },
     };
   } catch (err) {

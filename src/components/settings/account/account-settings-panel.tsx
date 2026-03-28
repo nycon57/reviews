@@ -1,23 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { User, CreditCard, Bell, LinkSimple, EnvelopeSimple } from '@phosphor-icons/react';
+import { User, CreditCard, Bell, LinkSimple } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 import { ProfileTab } from '@/app/(dashboard)/dashboard/settings/components/profile-tab';
 import { BillingTab } from '@/app/(dashboard)/dashboard/settings/components/billing-tab';
 import { NotificationsTab } from '@/app/(dashboard)/dashboard/settings/components/notifications-tab';
 import { SmartLinksTab } from '@/app/(dashboard)/dashboard/settings/components/smart-links-tab';
-import { EmailBrandingTab } from '@/components/settings/account/email-branding-tab';
 import type { UserProfileData } from '@/lib/auth/profile-schemas';
 
-export type AccountSubTab = 'profile' | 'billing' | 'notifications' | 'smart-links' | 'email-branding';
+export type AccountSubTab = 'profile' | 'billing' | 'notifications' | 'smart-links';
 
 const subTabs: { value: AccountSubTab; label: string; icon: React.ElementType }[] = [
   { value: 'profile', label: 'Profile', icon: User },
   { value: 'billing', label: 'Billing', icon: CreditCard },
   { value: 'notifications', label: 'Notifications', icon: Bell },
   { value: 'smart-links', label: 'Smart Links', icon: LinkSimple },
-  { value: 'email-branding', label: 'Email Branding', icon: EnvelopeSimple },
 ];
 
 interface AccountSettingsPanelProps {
@@ -74,7 +72,6 @@ export function AccountSettingsPanel({
         {activeSubTab === 'billing' && <BillingTab />}
         {activeSubTab === 'notifications' && <NotificationsTab />}
         {activeSubTab === 'smart-links' && <SmartLinksTab />}
-        {activeSubTab === 'email-branding' && <EmailBrandingTab />}
       </div>
     </div>
   );

@@ -78,7 +78,7 @@ export function SmartActionsCard({ data }: SmartActionsCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {data.map((action) => {
+        {data.slice(0, 3).map((action) => {
           const defaultConfig = { badge: "bg-muted text-foreground", label: "Info" };
           const config = priorityConfig[action.priority] ?? defaultConfig;
           const Icon = actionIcons[action.actionType] || Lightning;
@@ -130,6 +130,15 @@ export function SmartActionsCard({ data }: SmartActionsCardProps) {
 
           return <div key={action.id}>{content}</div>;
         })}
+
+        {/* Link to full tasks page */}
+        <Link
+          href="/dashboard/tasks"
+          className="flex items-center justify-center gap-1.5 rounded-lg border border-border/60 px-3 py-2 text-xs font-medium text-repwell-teal-300 transition-colors hover:bg-repwell-teal-300/5 hover:border-repwell-teal-300/30"
+        >
+          View all tasks
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </CardContent>
     </Card>
   );

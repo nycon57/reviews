@@ -56,6 +56,8 @@ interface ContactCTACardProps {
     slug: string;
   } | null;
   professionalName?: string;
+  /** Organization logo URL — displayed above the heading */
+  logoUrl?: string | null;
   /** Override the "Contact {name}" heading — use when the full name should appear (e.g. org pages) */
   contactLabel?: string;
   ctaText?: string | null;
@@ -115,6 +117,7 @@ export function ContactCTACard({
   organization,
   branch,
   professionalName,
+  logoUrl,
   contactLabel,
   ctaText = "Get Started",
   ctaUrl,
@@ -145,6 +148,15 @@ export function ContactCTACard({
   return (
     <Card className={cn("border-t-4 border-t-repwell-sage-200", className)}>
       <CardHeader variant="plain" className="pb-0">
+        {logoUrl && (
+          <div className="mb-2">
+            <img
+              src={logoUrl}
+              alt={professionalName || "Logo"}
+              className="w-full h-auto object-contain"
+            />
+          </div>
+        )}
         <CardTitle className="text-lg font-display text-repwell-teal-500">
           {contactLabel || `Contact ${professionalName?.split(" ")[0] || "Information"}`}
         </CardTitle>

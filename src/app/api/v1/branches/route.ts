@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth, type ApiAuthContext } from '@/lib/api-keys/validate';
+import { ensureUniqueBranchSlug } from '@/lib/users/slug-utils';
 import {
   apiSuccess,
   apiPaginated,
@@ -149,6 +150,8 @@ async function handlePost(
     );
   }
 
+  const globalSlug = await ensureUniqueBranchSlug(generateSlug(input.name));
+
   // Validate manager_id if provided
   if (input.manager_id) {
     const { data: managerUser, error: managerError } = await supabase
@@ -173,6 +176,7 @@ async function handlePost(
       organization_id: context.organizationId,
       name: input.name,
       slug,
+      global_slug: globalSlug,
       address: input.address as Json,
       phone: input.phone,
       email: input.email,

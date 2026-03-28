@@ -158,9 +158,9 @@ export function ProProfileContent({
                   <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
                     {/* Avatar */}
                     <div>
-                      <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-white shadow-lg -mt-16 sm:-mt-20">
+                      <Avatar className="h-28 w-28 md:h-32 md:w-32 rounded-2xl border-4 border-white shadow-lg -mt-16 sm:-mt-20">
                         <AvatarImage src={professional.photo_url || undefined} alt={professional.full_name} />
-                        <AvatarFallback className="text-2xl md:text-3xl font-semibold bg-repwell-sage-100 text-repwell-teal-400">
+                        <AvatarFallback className="rounded-2xl text-2xl md:text-3xl font-semibold bg-repwell-sage-100 text-repwell-teal-400">
                           {getInitials(professional.full_name)}
                         </AvatarFallback>
                       </Avatar>
@@ -208,13 +208,14 @@ export function ProProfileContent({
                     {/* Organization Logo */}
                     {organization?.logoUrl && (
                       <div className="hidden sm:block shrink-0">
-                        <Image
-                          src={organization.logoUrl}
-                          alt={organization.name || "Organization logo"}
-                          width={80}
-                          height={80}
-                          className="h-16 w-auto max-w-[5rem] md:h-20 md:max-w-[6rem] object-contain"
-                        />
+                        <div className="relative h-16 w-32 md:h-20 md:w-40 overflow-hidden">
+                          <Image
+                            src={organization.logoUrl}
+                            alt={organization.name || "Organization logo"}
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>

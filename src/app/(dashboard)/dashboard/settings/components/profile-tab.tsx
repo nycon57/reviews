@@ -75,7 +75,6 @@ function IndividualOrgFieldsForm({ profile }: { profile: UserProfileData }) {
   const [ctaButtonText, setCtaButtonText] = useState(profile.ctaButtonText || '');
   const [ctaButtonUrl, setCtaButtonUrl] = useState(profile.ctaButtonUrl || '');
   const [hireDate, setHireDate] = useState(profile.hireDate || '');
-  const [industry, setIndustry] = useState(profile.industry || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const { toast } = useToast();
@@ -87,7 +86,6 @@ function IndividualOrgFieldsForm({ profile }: { profile: UserProfileData }) {
       ctaButtonText: ctaButtonText || undefined,
       ctaButtonUrl: ctaButtonUrl || undefined,
       hireDate: hireDate || undefined,
-      industry: industry || undefined,
     });
     setSaving(false);
     if (result.success) {
@@ -127,10 +125,6 @@ function IndividualOrgFieldsForm({ profile }: { profile: UserProfileData }) {
           <div className="space-y-2">
             <Label htmlFor="orgHireDate">Hire Date</Label>
             <Input id="orgHireDate" type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="orgIndustry">Industry</Label>
-            <Input id="orgIndustry" placeholder="e.g. Mortgage" value={industry} onChange={(e) => setIndustry(e.target.value)} />
           </div>
         </div>
         <div className="mt-4 flex justify-end">

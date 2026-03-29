@@ -301,8 +301,8 @@ export function MobileMenu({ className }: MobileMenuProps) {
                   </Link>
                 </Button>
                 <Button asChild className="w-full">
-                  <Link href="/signup" onClick={handleNavClick}>
-                    Get Started
+                  <Link href="/demo" onClick={handleNavClick}>
+                    Book a Demo
                   </Link>
                 </Button>
               </>

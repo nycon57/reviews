@@ -216,6 +216,10 @@ export const mainNavigation: NavDropdown[] = [
     items: industryNavItems,
   },
   {
+    label: "Customers",
+    href: "/customers",
+  },
+  {
     label: "Pricing",
     href: "/pricing",
   },

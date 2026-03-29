@@ -5,6 +5,7 @@ import { industryFilterConfig } from "@/components/directory/industry-filter";
 import { competitorSlugs } from "@/lib/competitor-pages";
 import { getAllIntegrationSlugs } from "@/config/integration-pages";
 import { docSections } from "@/lib/docs/content";
+import { getAllCustomerSlugs } from "@/config/customer-pages";
 
 /**
  * Generate dynamic sitemap for SEO
@@ -101,6 +102,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Customer case study pages
+  const customerSlugs = getAllCustomerSlugs();
+  const customerIndexPage: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/customers`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    },
+  ];
+  const customerDetailPages: MetadataRoute.Sitemap = customerSlugs.map((slug) => ({
+    url: `${baseUrl}/customers/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
   // Documentation pages
   const docsLandingPage: MetadataRoute.Sitemap = [
     {
@@ -136,5 +154,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  return [...staticPages, ...industryPages, ...comparisonPages, ...integrationIndexPage, ...integrationDetailPages, ...professionalPages, ...orgPages, ...branchPages, ...docsLandingPage, ...docsArticlePages, ...developerPages];
+  return [...staticPages, ...industryPages, ...comparisonPages, ...integrationIndexPage, ...integrationDetailPages, ...customerIndexPage, ...customerDetailPages, ...professionalPages, ...orgPages, ...branchPages, ...docsLandingPage, ...docsArticlePages, ...developerPages];
 }

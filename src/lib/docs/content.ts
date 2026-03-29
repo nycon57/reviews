@@ -1424,6 +1424,296 @@ Set up error notifications:
     ],
   },
   {
+    id: "developers",
+    title: "Developers",
+    slug: "developers",
+    description: "API integration guides for developers",
+    icon: "Code2",
+    articles: [
+      {
+        id: "quickstart",
+        title: "Quick Start Guide",
+        slug: "quickstart",
+        description: "Get started with the RepWell API in minutes",
+        tags: ["developers", "api", "quickstart"],
+        content: `
+# Quick Start Guide
+
+Get up and running with the RepWell API in minutes.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+- A RepWell account with API access enabled
+- At least one survey template configured
+- Team members added to your organization
+
+## Step 1: Get Your API Key
+
+Create an API key from your dashboard:
+1. Go to **Settings** > **API Keys**
+2. Click **Generate New Key**
+3. Copy and securely store the key
+
+## Step 2: Make Your First Request
+
+Test your API key by listing your surveys:
+
+\`\`\`bash
+curl -X GET "https://api.repwell.com/v1/surveys" \\
+  -H "Authorization: Bearer rw_live_xxxxx" \\
+  -H "Content-Type: application/json"
+\`\`\`
+
+## Step 3: Create a Survey
+
+Send a survey to a customer:
+
+\`\`\`bash
+curl -X POST "https://api.repwell.com/v1/surveys" \\
+  -H "Authorization: Bearer rw_live_xxxxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "template_id": "your-template-id",
+    "customer_email": "customer@example.com",
+    "customer_name": "John Doe",
+    "user_id": "your-user-id"
+  }'
+\`\`\`
+
+## Step 4: Get Reviews
+
+Fetch reviews for your organization:
+
+\`\`\`bash
+curl -X GET "https://api.repwell.com/v1/reviews?status=published" \\
+  -H "Authorization: Bearer rw_live_xxxxx"
+\`\`\`
+
+## Response Format
+
+All API responses follow a consistent format:
+
+\`\`\`json
+{
+  "success": true,
+  "data": { ... },
+  "pagination": {
+    "page": 1,
+    "page_size": 25,
+    "total": 142,
+    "total_pages": 6
+  },
+  "meta": {
+    "request_id": "req_abc123",
+    "timestamp": "2024-01-15T10:30:00Z"
+  }
+}
+\`\`\`
+
+## Error Handling
+
+Errors include a code and message to help you debug:
+
+\`\`\`json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid request parameters",
+    "details": [
+      {
+        "field": "customer_email",
+        "message": "Invalid email format"
+      }
+    ]
+  }
+}
+\`\`\`
+
+## Next Steps
+
+- Learn about [Authentication](/docs/developers/authentication) and API key scopes
+- Explore the [API Reference](/developers/api) for all available endpoints
+        `,
+      },
+      {
+        id: "authentication",
+        title: "Authentication",
+        slug: "authentication",
+        description: "Secure your API requests with API keys and scoped permissions",
+        tags: ["developers", "api", "authentication", "security"],
+        content: `
+# Authentication
+
+The RepWell API uses API keys to authenticate requests. Each key can have specific permissions to control access to different resources.
+
+## API Key Format
+
+RepWell uses prefixed API keys to distinguish environments:
+
+- **Production keys** start with \`rw_live_\` — use these for production environments
+- **Test keys** start with \`rw_test_\` — use these for development and testing
+
+## Making Authenticated Requests
+
+Include your API key in the \`Authorization\` header:
+
+\`\`\`bash
+curl -X GET "https://api.repwell.com/v1/surveys" \\
+  -H "Authorization: Bearer rw_live_xxxxx" \\
+  -H "Content-Type: application/json"
+\`\`\`
+
+## Security Best Practices
+
+Keep your API keys secure:
+- Never expose API keys in client-side code or public repositories
+- Rotate keys periodically and immediately if compromised
+- Use environment variables to store keys securely
+- Grant only the minimum required permissions
+
+## Permission Scopes
+
+When creating an API key, you can specify which scopes it should have for fine-grained access control:
+
+| Scope | Description |
+|---|---|
+| \`surveys:read\` | List and view surveys |
+| \`surveys:write\` | Create and update surveys |
+| \`reviews:read\` | List and view reviews |
+| \`reviews:write\` | Update reviews and respond to them |
+| \`branches:read\` | List and view branches |
+| \`branches:write\` | Create, update, and delete branches |
+| \`users:read\` | List organization users |
+| \`users:write\` | Invite new users |
+| \`organization:read\` | View organization settings |
+| \`organization:write\` | Update organization settings |
+| \`webhooks:trigger\` | Trigger webhook events |
+| \`admin\` | Full access to all resources |
+
+## Rate Limiting
+
+API requests are rate limited per key. The limits are included in response headers:
+
+| Header | Description |
+|---|---|
+| \`X-RateLimit-Limit\` | Maximum requests per hour |
+| \`X-RateLimit-Remaining\` | Requests remaining in window |
+| \`X-RateLimit-Reset\` | Unix timestamp when window resets |
+
+If you exceed the rate limit, you will receive a \`429 Too Many Requests\` response. Wait until the reset time before making more requests.
+
+## Next Steps
+
+- Follow the [Quick Start Guide](/docs/developers/quickstart) to make your first API call
+- Explore the [API Reference](/developers/api) for all available endpoints
+        `,
+      },
+      {
+        id: "webhooks",
+        title: "Webhooks",
+        slug: "webhooks",
+        description: "Receive real-time notifications and trigger surveys from external systems",
+        tags: ["developers", "api", "webhooks", "automation"],
+        content: `
+# Webhooks
+
+Use webhooks to trigger surveys from your CRM or business system. When a transaction closes or a milestone is reached, send a webhook to RepWell to automatically send a survey to your customer.
+
+## Webhook Endpoint
+
+Send POST requests to trigger surveys:
+
+\`\`\`
+POST https://api.repwell.com/api/webhooks/survey-trigger
+\`\`\`
+
+Include your API key in the \`Authorization\` header or as a \`secret_key\` parameter in the request body.
+
+## Authentication
+
+Authenticate webhook requests using your API key:
+
+\`\`\`bash
+curl -X POST "https://api.repwell.com/api/webhooks/survey-trigger" \\
+  -H "Authorization: Bearer rw_live_xxxxx" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "customer": {
+      "email": "customer@example.com",
+      "name": "John Doe"
+    },
+    "professional": {
+      "email": "pro@company.com"
+    }
+  }'
+\`\`\`
+
+## Webhook Payload
+
+### survey.trigger
+
+Trigger a new survey to be sent:
+
+\`\`\`json
+{
+  "event": "survey.trigger",
+  "customer": {
+    "email": "customer@example.com",
+    "name": "John Doe",
+    "phone": "+15551234567"
+  },
+  "professional": {
+    "email": "pro@company.com",
+    "name": "Jane Smith"
+  },
+  "transaction": {
+    "type": "purchase",
+    "close_date": "2024-01-15"
+  }
+}
+\`\`\`
+
+## Required Fields
+
+- **\`customer.email\`** or **\`customer.phone\`** — at least one contact method is required
+- **\`professional.email\`** — used to match the survey to a team member
+
+## Response & Retry Logic
+
+| Status | Meaning |
+|---|---|
+| \`200 OK\` | Survey queued successfully |
+| \`400 Bad Request\` | Invalid payload — check required fields |
+| \`401 Unauthorized\` | Invalid or missing API key |
+| \`429 Too Many Requests\` | Rate limit exceeded |
+
+## Success Response
+
+\`\`\`json
+{
+  "success": true,
+  "data": {
+    "survey_id": "surv_abc123",
+    "status": "queued",
+    "scheduled_at": "2024-01-15T10:30:00Z"
+  },
+  "meta": {
+    "request_id": "req_xyz789"
+  }
+}
+\`\`\`
+
+## Next Steps
+
+- Learn about [Authentication](/docs/developers/authentication) and API key scopes
+- Explore the [API Reference](/developers/api) for all available endpoints
+        `,
+      },
+    ],
+  },
+  {
     id: "faq",
     title: "FAQ",
     slug: "faq",

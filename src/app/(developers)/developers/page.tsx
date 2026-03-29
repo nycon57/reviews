@@ -50,19 +50,19 @@ const resources = [
   {
     title: "Quick Start Guide",
     description: "Get started with the RepWell API in minutes",
-    href: "/developers/docs/quickstart",
+    href: "/docs/developers/quickstart",
     icon: Zap,
   },
   {
     title: "Authentication",
     description: "Learn how to authenticate your API requests",
-    href: "/developers/docs/authentication",
+    href: "/docs/developers/authentication",
     icon: Key,
   },
   {
     title: "Webhooks",
     description: "Receive real-time notifications for events",
-    href: "/developers/docs/webhooks",
+    href: "/docs/developers/webhooks",
     icon: Book,
   },
 ];
@@ -98,7 +98,7 @@ export default function DevelopersPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href="/developers/docs/quickstart">
+                <Link href="/docs/developers/quickstart">
                   Quick Start Guide
                 </Link>
               </Button>

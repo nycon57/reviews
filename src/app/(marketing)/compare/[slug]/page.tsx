@@ -3,12 +3,13 @@ import type { Metadata } from "next";
 import {
   competitorConfigs,
   competitorSlugs,
-  generateBreadcrumbListSchema,
   generateFAQPageSchema,
   generateProductSchema,
 } from "@/lib/competitor-pages";
 import { CompetitorComparisonPage } from "@/components/competitor-pages";
 import { getBaseUrl } from "@/lib/seo";
+import { buildCompareBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
+import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 
 // ---------------------------------------------------------------------------
 // Static generation — all competitor pages are pre-rendered at build time
@@ -87,7 +88,7 @@ export default async function CompareSlugPage({
   }
 
   const baseUrl = getBaseUrl();
-  const breadcrumbSchema = generateBreadcrumbListSchema(config, baseUrl);
+  const { items: breadcrumbItems, schema: breadcrumbSchema } = buildCompareBreadcrumbs(config, baseUrl);
   const productSchema = generateProductSchema(config);
   const faqSchema = generateFAQPageSchema(config.faq);
 
@@ -121,6 +122,9 @@ export default async function CompareSlugPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+        <MarketingBreadcrumbs items={breadcrumbItems} />
+      </div>
       <CompetitorComparisonPage config={config} />
     </>
   );

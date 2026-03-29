@@ -4,6 +4,9 @@ import {
   getAllFeaturePageSlugs,
   getFeaturePageConfigBySlug,
 } from "@/config/feature-pages";
+import { getBaseUrl } from "@/lib/seo";
+import { buildFeatureBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
+import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 import { FeatureLandingPage } from "./feature-landing-page";
 
 interface PageProps {
@@ -52,5 +55,20 @@ export default async function FeaturePage({ params }: PageProps) {
     notFound();
   }
 
-  return <FeatureLandingPage config={config} />;
+  const baseUrl = getBaseUrl();
+  const { items, schema } = buildFeatureBreadcrumbs(config, baseUrl);
+
+  return (
+    <>
+      {/* BreadcrumbList JSON-LD — safe: sourced from static build-time feature config */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+        <MarketingBreadcrumbs items={items} />
+      </div>
+      <FeatureLandingPage config={config} />
+    </>
+  );
 }

@@ -4,6 +4,9 @@ import {
   getAllSolutionPageSlugs,
   getSolutionPageConfigBySlug,
 } from "@/config/solution-pages";
+import { getBaseUrl } from "@/lib/seo";
+import { buildSolutionBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
+import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 import { SolutionLandingPage } from "./solution-landing-page";
 
 interface PageProps {
@@ -52,5 +55,20 @@ export default async function SolutionPage({ params }: PageProps) {
     notFound();
   }
 
-  return <SolutionLandingPage config={config} />;
+  const baseUrl = getBaseUrl();
+  const { items, schema } = buildSolutionBreadcrumbs(config, baseUrl);
+
+  return (
+    <>
+      {/* BreadcrumbList JSON-LD — safe: sourced from static build-time solution config */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+      />
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+        <MarketingBreadcrumbs items={items} />
+      </div>
+      <SolutionLandingPage config={config} />
+    </>
+  );
 }

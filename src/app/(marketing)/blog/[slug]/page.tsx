@@ -5,6 +5,8 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
 import { getPostBySlug, getRelatedPosts, getAllPostSlugs } from "@/lib/blog";
 import { JsonLd } from "@/components/blog/json-ld";
+import { buildBlogBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
+import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 import { BlogPostClient } from "./blog-post-client";
 
 export const revalidate = 3600;
@@ -120,9 +122,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     image: post.image || undefined,
   };
 
+  const { items: breadcrumbItems, schema: breadcrumbSchema } = buildBlogBreadcrumbs(post, siteUrl);
+
   return (
     <>
       <JsonLd data={structuredData} />
+      {/* BreadcrumbList JSON-LD — safe: sourced from controlled blog post data, serialized via JSON.stringify */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
+        <MarketingBreadcrumbs items={breadcrumbItems} />
+      </div>
       <BlogPostClient
         post={post}
         mdxSource={mdxSource}

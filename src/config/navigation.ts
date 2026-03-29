@@ -314,3 +314,69 @@ export function getSolutionNavItem(slug: SolutionSlug): SolutionNavItem | undefi
 export function getIndustryNavItem(slug: string): IndustryNavItem | undefined {
   return industryNavItems.find((item) => item.slug === slug);
 }
+
+/**
+ * Footer link
+ */
+export interface FooterLink {
+  label: string;
+  href: string;
+  external?: boolean;
+}
+
+/**
+ * Footer section (column)
+ */
+export interface FooterSection {
+  title: string;
+  links: FooterLink[];
+}
+
+/**
+ * Footer navigation — 5-column layout
+ * Only includes links to pages that exist.
+ */
+export const footerNavigation: FooterSection[] = [
+  {
+    title: "Product",
+    links: [
+      { label: "Features", href: "/features" },
+      { label: "Solutions", href: "/solutions/review-growth" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "vs Experience.com", href: "/compare/experience-com-alternative" },
+      { label: "vs Birdeye", href: "/compare/birdeye-alternative" },
+      { label: "vs Trustpilot", href: "/compare/trustpilot-alternative" },
+    ],
+  },
+  {
+    title: "Industries",
+    links: industryNavItems.map((item) => ({
+      label: item.title,
+      href: item.href,
+    })),
+  },
+  {
+    title: "Resources",
+    links: [
+      { label: "Blog", href: "/blog" },
+      { label: "Developer Hub", href: "/developers" },
+      { label: "API Docs", href: "/developers/api" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Contact", href: "/contact" },
+      { label: "Request Demo", href: "/demo" },
+      { label: "Directory", href: "/directory" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy", href: "/privacy" },
+      { label: "Terms", href: "/terms" },
+    ],
+  },
+];

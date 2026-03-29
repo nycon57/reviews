@@ -87,13 +87,13 @@ describe("MarketingNav", () => {
     });
 
     const signInLink = container.querySelector('a[href="/login"]');
-    const getStartedLink = container.querySelector('a[href="/signup"]');
+    const getStartedLink = container.querySelector('a[href="/demo"]');
     const signInButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent?.trim() === "Sign In"
     );
 
     expect(signInLink?.textContent).toContain("Sign In");
-    expect(getStartedLink?.textContent).toContain("Get Started");
+    expect(getStartedLink?.textContent).toContain("Book a Demo");
     expect(signInButton).toBeUndefined();
   });
 
@@ -117,7 +117,7 @@ describe("MarketingNav", () => {
 
     const dashboardLink = container.querySelector('a[href="/dashboard"]');
     const signInLink = container.querySelector('a[href="/login"]');
-    const getStartedLink = container.querySelector('a[href="/signup"]');
+    const getStartedLink = container.querySelector('a[href="/demo"]');
 
     expect(dashboardLink?.textContent).toContain("Dashboard");
     expect(signInLink).toBeNull();

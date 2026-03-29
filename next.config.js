@@ -270,6 +270,33 @@ const nextConfig = {
         destination: "/dashboard/team",
         permanent: true,
       },
+      // Documentation consolidation: /developers/docs/* → /docs/developers/*
+      {
+        source: "/developers/docs",
+        destination: "/docs/developers/quickstart",
+        permanent: true,
+      },
+      {
+        source: "/developers/docs/authentication",
+        destination: "/docs/developers/authentication",
+        permanent: true,
+      },
+      {
+        source: "/developers/docs/quickstart",
+        destination: "/docs/developers/quickstart",
+        permanent: true,
+      },
+      {
+        source: "/developers/docs/webhooks",
+        destination: "/docs/developers/webhooks",
+        permanent: true,
+      },
+      // /api-docs → /developers/api (interactive Swagger UI)
+      {
+        source: "/api-docs",
+        destination: "/developers/api",
+        permanent: true,
+      },
     ];
   },
 };

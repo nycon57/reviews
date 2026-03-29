@@ -4,6 +4,7 @@ import { getBaseUrl } from "@/lib/seo";
 import { industryFilterConfig } from "@/components/directory/industry-filter";
 import { competitorSlugs } from "@/lib/competitor-pages";
 import { getAllIntegrationSlugs } from "@/config/integration-pages";
+import { docSections } from "@/lib/docs/content";
 
 /**
  * Generate dynamic sitemap for SEO
@@ -100,5 +101,40 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...industryPages, ...comparisonPages, ...integrationIndexPage, ...integrationDetailPages, ...professionalPages, ...orgPages, ...branchPages];
+  // Documentation pages
+  const docsLandingPage: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/docs`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.7,
+    },
+  ];
+
+  const docsArticlePages: MetadataRoute.Sitemap = docSections.flatMap((section) =>
+    section.articles.map((article) => ({
+      url: `${baseUrl}/docs/${section.slug}/${article.slug}`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    }))
+  );
+
+  // Developer portal pages
+  const developerPages: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/developers`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/developers/api`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+  ];
+
+  return [...staticPages, ...industryPages, ...comparisonPages, ...integrationIndexPage, ...integrationDetailPages, ...professionalPages, ...orgPages, ...branchPages, ...docsLandingPage, ...docsArticlePages, ...developerPages];
 }

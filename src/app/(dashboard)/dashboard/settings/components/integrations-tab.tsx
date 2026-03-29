@@ -277,7 +277,7 @@ export function IntegrationsTab() {
                   icon={<ExternalLink weight="duotone" className="h-4 w-4 text-repwell-teal-300" />}
                   title="View Documentation"
                   description="Learn about integrations"
-                  href="/developers/docs"
+                  href="/docs/integrations/webhooks"
                 />
               </div>
 

@@ -392,9 +392,9 @@ export const birdeyeConfig: CompetitorPageConfig = {
   ],
 
   // ---------------------------------------------------------------------------
-  // Section 10: Mortgage-Specific Features
+  // Section 10: Industry-Specific Features
   // ---------------------------------------------------------------------------
-  mortgageFeatures: [
+  industryFeatures: [
     {
       icon: "UserCircle",
       title: "Loan officer profiles with NMLS display",
@@ -435,12 +435,12 @@ export const birdeyeConfig: CompetitorPageConfig = {
       repwellExclusive: true,
     },
   ],
-  mortgageSectionConfig: {
-    headline: "Built for mortgage — not adapted from a generic platform",
+  industrySectionConfig: {
+    headline: "Built for your industry — not adapted from a generic platform",
     description:
-      "Birdeye serves dozens of industries with the same tools. RepWell is purpose-built for mortgage, so nothing is bolted on and nothing is missing.",
-    cta: { label: "See Mortgage Features", href: "/features/mortgage" },
-    stat: { value: "500+", label: "mortgage companies use RepWell" },
+      "Birdeye serves dozens of industries with the same tools. RepWell is purpose-built for sales-based industries, so nothing is bolted on and nothing is missing.",
+    cta: { label: "See Industry Features", href: "/features" },
+    stat: { value: "500+", label: "companies use RepWell" },
   },
 
   // ---------------------------------------------------------------------------

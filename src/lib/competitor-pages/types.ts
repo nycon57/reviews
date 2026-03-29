@@ -218,11 +218,11 @@ export interface IntegrationItem {
 }
 
 // ---------------------------------------------------------------------------
-// Section 10: Mortgage-Specific Features
+// Section 10: Industry-Specific Features
 // ---------------------------------------------------------------------------
 
-/** Mortgage/financial-services-specific feature */
-export interface MortgageFeature {
+/** Industry-specific feature */
+export interface IndustryFeature {
   /** Icon name (Phosphor) */
   icon: string;
   /** Feature title */
@@ -233,15 +233,15 @@ export interface MortgageFeature {
   repwellExclusive?: boolean;
 }
 
-/** Section-level configuration for the mortgage-specific section */
-export interface MortgageSectionConfig {
+/** Section-level configuration for the industry-specific section */
+export interface IndustrySectionConfig {
   /** Section headline */
   headline?: string;
   /** Section description */
   description?: string;
-  /** CTA linking to mortgage landing page or demo */
+  /** CTA linking to industry landing page or demo */
   cta?: CtaLink;
-  /** Visual stat callout (e.g. "500+" mortgage companies) */
+  /** Visual stat callout (e.g. "500+" companies) */
   stat?: StatItem;
 }
 
@@ -447,10 +447,10 @@ export interface CompetitorPageConfig {
   aiCapabilities: AICapabilityTab[];
   /** Section 9: Integration logos */
   integrations: IntegrationItem[];
-  /** Section 10: Mortgage-specific features */
-  mortgageFeatures: MortgageFeature[];
-  /** Section 10: Mortgage section-level configuration (headline, CTA, stat) */
-  mortgageSectionConfig?: MortgageSectionConfig;
+  /** Section 10: Industry-specific features */
+  industryFeatures: IndustryFeature[];
+  /** Section 10: Industry section-level configuration (headline, CTA, stat) */
+  industrySectionConfig?: IndustrySectionConfig;
   /** Section 11: Migration steps */
   migration: MigrationSection;
   /** Section 12: Rating comparison */

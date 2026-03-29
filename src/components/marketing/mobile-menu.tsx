@@ -24,6 +24,7 @@ import {
   featureNavItems,
   solutionNavItems,
   industryNavItems,
+  compareNavItems,
 } from "@/config/navigation";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -228,6 +229,37 @@ export function MobileMenu({ className }: MobileMenuProps) {
                   <span>{item.title}</span>
                 </Link>
               ))}
+            </div>
+          </MobileAccordion>
+
+          {/* Compare Accordion */}
+          <MobileAccordion title="Compare">
+            <div className="flex flex-col gap-1">
+              {compareNavItems.map((item) => (
+                <Link
+                  key={item.slug}
+                  href={item.href}
+                  onClick={handleNavClick}
+                  className={cn(
+                    linkStyles,
+                    isActive(item.href) && "bg-accent text-accent-foreground"
+                  )}
+                >
+                  <DynamicIcon
+                    name={item.icon}
+                    className="h-4 w-4 text-primary"
+                  />
+                  <span>{item.title}</span>
+                </Link>
+              ))}
+              <Separator className="my-2" />
+              <Link
+                href="/compare"
+                onClick={handleNavClick}
+                className={cn(linkStyles, "text-primary font-medium")}
+              >
+                See All Comparisons
+              </Link>
             </div>
           </MobileAccordion>
 

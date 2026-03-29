@@ -8,51 +8,7 @@ import {
   TwitterLogo as Twitter,
 } from "@phosphor-icons/react";
 import { fadeInUp, staggerContainer, viewportOnce } from "@/lib/motion";
-
-interface FooterLink {
-  label: string;
-  href: string;
-  external?: boolean;
-}
-
-interface FooterSection {
-  title: string;
-  links: FooterLink[];
-}
-
-const footerSections: FooterSection[] = [
-  {
-    title: "Product",
-    links: [
-      { label: "Features", href: "/features" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "Demo", href: "/demo" },
-    ],
-  },
-  {
-    title: "Compare",
-    links: [
-      { label: "vs Experience.com", href: "/compare/experience-com-alternative" },
-      { label: "vs Birdeye", href: "/compare/birdeye-alternative" },
-      { label: "vs Trustpilot", href: "/compare/trustpilot-alternative" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "/about" },
-      { label: "Contact", href: "/contact" },
-      { label: "Blog", href: "/blog" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
-    ],
-  },
-];
+import { footerNavigation, type FooterLink } from "@/config/navigation";
 
 const socialLinks: FooterLink[] = [
   { label: "LinkedIn", href: "https://linkedin.com", external: true },
@@ -71,9 +27,9 @@ export function MarketingFooter() {
       className="border-t border-border/50 bg-background"
     >
       <div className="container mx-auto px-4 py-16">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-7">
           {/* Brand Column */}
-          <motion.div variants={fadeInUp} className="lg:col-span-2">
+          <motion.div variants={fadeInUp} className="sm:col-span-2">
             <Link href="/" className="inline-block mb-5">
               <Image
                 src="https://temwotqafrafajehuiuh.supabase.co/storage/v1/object/public/repwell/branding/RepWell-Logo-Full-Color.png"
@@ -108,9 +64,11 @@ export function MarketingFooter() {
           </motion.div>
 
           {/* Link Columns */}
-          {footerSections.map((section) => (
+          {footerNavigation.map((section) => (
             <motion.div key={section.title} variants={fadeInUp}>
-              <h3 className="font-semibold text-body-sm text-repwell-teal-500 mb-4">{section.title}</h3>
+              <h3 className="font-semibold text-body-sm text-repwell-teal-500 mb-4">
+                {section.title}
+              </h3>
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.href}>

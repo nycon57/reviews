@@ -1,4 +1,5 @@
 // Feature page types for individual feature landing pages
+import type { SolutionSlug } from "@/lib/solutions/types";
 
 /**
  * Feature page slug identifiers
@@ -188,6 +189,9 @@ export interface FeaturePageConfig {
 
   /** Related features for cross-linking */
   relatedFeatures: FeatureSlug[];
+
+  /** Related solutions for cross-linking */
+  relatedSolutions?: SolutionSlug[];
 
   /** Final CTA */
   cta: {

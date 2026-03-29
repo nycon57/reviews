@@ -185,6 +185,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
   ],
 
   relatedFeatures: ["analytics", "amplification", "surveys"],
+  relatedSolutions: ["review-growth", "reputation-management"],
 
   cta: {
     headline: "Start Collecting Reviews Automatically",
@@ -382,6 +383,7 @@ export const analyticsFeatureConfig: FeaturePageConfig = {
   ],
 
   relatedFeatures: ["reviews", "ai-insights", "surveys"],
+  relatedSolutions: ["customer-intelligence", "team-performance"],
 
   cta: {
     headline: "Get Real-Time Visibility Into Customer Satisfaction",
@@ -578,6 +580,7 @@ export const aiInsightsFeatureConfig: FeaturePageConfig = {
   ],
 
   relatedFeatures: ["analytics", "reviews", "surveys"],
+  relatedSolutions: ["customer-intelligence"],
 
   cta: {
     headline: "Let AI Turn Feedback Into Action",
@@ -774,6 +777,7 @@ export const amplificationFeatureConfig: FeaturePageConfig = {
   ],
 
   relatedFeatures: ["reviews", "testimonials", "analytics"],
+  relatedSolutions: ["reputation-management", "review-growth"],
 
   cta: {
     headline: "Turn Reviews Into Your Marketing Engine",
@@ -971,6 +975,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
   ],
 
   relatedFeatures: ["reviews", "analytics", "ai-insights"],
+  relatedSolutions: ["customer-intelligence"],
 
   cta: {
     headline: "Surveys That Actually Get Completed",
@@ -1167,6 +1172,7 @@ export const testimonialsFeatureConfig: FeaturePageConfig = {
   ],
 
   relatedFeatures: ["reviews", "amplification", "surveys"],
+  relatedSolutions: ["review-growth"],
 
   cta: {
     headline: "Start Collecting Powerful Testimonials",

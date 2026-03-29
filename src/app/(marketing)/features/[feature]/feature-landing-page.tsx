@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import type { FeaturePageConfig } from "@/lib/features/types";
 import { PainPointSection } from "@/components/marketing/pain-point-section";
 import { getFeaturePageConfigBySlug } from "@/config/feature-pages";
+import { getSolutionPageConfigBySlug } from "@/config/solution-pages";
 
 interface FeatureLandingPageProps {
   config: FeaturePageConfig;
@@ -539,6 +540,86 @@ function RelatedFeaturesSection({ config }: { config: FeaturePageConfig }) {
 }
 
 /**
+ * Related Solutions Section
+ */
+function RelatedSolutionsSection({ config }: { config: FeaturePageConfig }) {
+  if (!config.relatedSolutions || config.relatedSolutions.length === 0) return null;
+
+  const relatedConfigs = config.relatedSolutions
+    .map((slug) => getSolutionPageConfigBySlug(slug))
+    .filter(Boolean);
+
+  if (relatedConfigs.length === 0) return null;
+
+  return (
+    <section className="py-16 md:py-24 bg-repwell-sage-100/30">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <Badge
+            variant="outline"
+            className="px-4 py-1.5 text-sm border-repwell-teal-300/50 text-repwell-teal-400 mb-4"
+          >
+            Related Solutions
+          </Badge>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-repwell-teal-500 mb-4">
+            Solutions This Powers
+          </h2>
+          <p className="font-sans text-lg text-repwell-teal-400 max-w-2xl mx-auto">
+            See how {config.shortTitle} drives results across these solutions.
+          </p>
+        </motion.div>
+
+        {/* Related solutions grid */}
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          className={cn(
+            "grid gap-6",
+            relatedConfigs.length === 1 ? "max-w-md mx-auto" : "md:grid-cols-2 max-w-3xl mx-auto"
+          )}
+        >
+          {relatedConfigs.map((related) => {
+            if (!related) return null;
+            const Icon = getIconByName(related.icon);
+            return (
+              <motion.div key={related.slug} variants={fadeInUp}>
+                <Link
+                  href={`/solutions/${related.slug}`}
+                  className="block group p-6 bg-white border border-border rounded-2xl hover:shadow-lg hover:border-repwell-teal-300/50 transition-all duration-300"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-repwell-sage-100 text-repwell-teal-300 mb-4 group-hover:bg-repwell-teal-300 group-hover:text-white transition-colors duration-300">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-sans text-lg font-semibold text-repwell-teal-500 mb-2 group-hover:text-repwell-teal-300 transition-colors">
+                    {related.title}
+                  </h3>
+                  <p className="font-sans text-sm text-repwell-teal-400">
+                    {related.hero.description.slice(0, 120)}...
+                  </p>
+                  <div className="flex items-center gap-1 mt-4 text-repwell-teal-300 text-sm font-medium">
+                    Explore solution
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/**
  * Final CTA Section
  */
 function FinalCTASection({ config }: { config: FeaturePageConfig }) {
@@ -630,7 +711,10 @@ export function FeatureLandingPage({ config }: FeatureLandingPageProps) {
       {/* 7. Related Features */}
       <RelatedFeaturesSection config={config} />
 
-      {/* 8. Final CTA */}
+      {/* 8. Related Solutions */}
+      <RelatedSolutionsSection config={config} />
+
+      {/* 9. Final CTA */}
       <FinalCTASection config={config} />
     </main>
   );

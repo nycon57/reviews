@@ -274,6 +274,16 @@ export function MobileMenu({ className }: MobileMenuProps) {
               Blog
             </Link>
             <Link
+              href="/developers"
+              onClick={handleNavClick}
+              className={cn(
+                linkStyles,
+                isActive("/developers") && "bg-accent text-accent-foreground"
+              )}
+            >
+              Developers
+            </Link>
+            <Link
               href="/contact"
               onClick={handleNavClick}
               className={cn(

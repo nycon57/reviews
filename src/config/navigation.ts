@@ -227,6 +227,29 @@ export const mainNavigation: NavDropdown[] = [
 export const directNavLinks = [
   { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
+  { label: "Developers", href: "/developers" },
+  { label: "Contact", href: "/contact" },
+];
+
+/**
+ * Resource navigation items (for future Resources dropdown — REP-181)
+ */
+export interface ResourceNavItem {
+  slug: string;
+  title: string;
+  description: string;
+  icon: string;
+  href: string;
+}
+
+export const resourceNavItems: ResourceNavItem[] = [
+  {
+    slug: "developers",
+    title: "Developer Hub",
+    description: "API docs, widgets, and integrations",
+    icon: "Code",
+    href: "/developers",
+  },
 ];
 
 /**

@@ -253,6 +253,16 @@ export function MegaMenu() {
         <NavigationMenu.Item>
           <NavLink href="/about">About</NavLink>
         </NavigationMenu.Item>
+
+        {/* Developers (direct link) */}
+        <NavigationMenu.Item>
+          <NavLink href="/developers">Developers</NavLink>
+        </NavigationMenu.Item>
+
+        {/* Contact (direct link) */}
+        <NavigationMenu.Item>
+          <NavLink href="/contact">Contact</NavLink>
+        </NavigationMenu.Item>
       </NavigationMenu.List>
 
       {/* Viewport for dropdown content - animates as single unit */}

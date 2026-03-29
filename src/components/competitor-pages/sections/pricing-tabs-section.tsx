@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Check, X } from "@phosphor-icons/react";
 import type { PricingTab, PricingComparisonRow } from "@/lib/competitor-pages";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -147,6 +148,14 @@ export function PricingTabsSection({ tabs }: PricingTabsSectionProps) {
               >
                 {tab.ctaLabel}
               </a>
+              <div className="mt-3">
+                <Link
+                  href="/pricing"
+                  className="text-sm font-medium text-repwell-teal-400 transition-colors duration-200 hover:text-repwell-teal-500"
+                >
+                  See full pricing details &rarr;
+                </Link>
+              </div>
             </div>
           </TabsContent>
         ))}

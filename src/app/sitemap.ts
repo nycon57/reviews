@@ -3,6 +3,7 @@ import { getAllPublicUserSlugs, getAllOrganizationSlugs, getAllPublicBranchSlugs
 import { getBaseUrl } from "@/lib/seo";
 import { industryFilterConfig } from "@/components/directory/industry-filter";
 import { competitorSlugs } from "@/lib/competitor-pages";
+import { getAllIntegrationSlugs } from "@/config/integration-pages";
 
 /**
  * Generate dynamic sitemap for SEO
@@ -82,5 +83,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticPages, ...industryPages, ...comparisonPages, ...professionalPages, ...orgPages, ...branchPages];
+  // Integration pages
+  const integrationSlugs = getAllIntegrationSlugs();
+  const integrationIndexPage: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/integrations`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    },
+  ];
+  const integrationDetailPages: MetadataRoute.Sitemap = integrationSlugs.map((slug) => ({
+    url: `${baseUrl}/integrations/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+  }));
+
+  return [...staticPages, ...industryPages, ...comparisonPages, ...integrationIndexPage, ...integrationDetailPages, ...professionalPages, ...orgPages, ...branchPages];
 }

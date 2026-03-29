@@ -199,6 +199,10 @@ export const mainNavigation: NavDropdown[] = [
     },
   },
   {
+    label: "Integrations",
+    href: "/integrations",
+  },
+  {
     label: "Solutions",
     items: solutionNavItems,
     cta: {

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { FeatureCard } from "@/lib/competitor-pages";
 import { useScrollReveal } from "@/hooks/use-scroll-reveal";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,15 @@ export function FeatureShowcaseSection({
             isVisible={isVisible}
           />
         ))}
+      </div>
+
+      <div className="mt-10 text-center">
+        <Link
+          href="/features"
+          className="text-sm font-medium text-repwell-teal-400 transition-colors duration-200 hover:text-repwell-teal-500"
+        >
+          Explore all features &rarr;
+        </Link>
       </div>
     </div>
   );

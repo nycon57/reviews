@@ -12,9 +12,11 @@ import {
   featureNavItems,
   solutionNavItems,
   industryNavItems,
+  compareNavItems,
   type FeatureNavItem,
   type SolutionNavItem,
   type IndustryNavItem,
+  type CompareNavItem,
 } from "@/config/navigation";
 
 // Dynamic icon component
@@ -30,11 +32,11 @@ function DynamicIcon({
   return <IconComponent className={className} />;
 }
 
-// Navigation link item for Features and Solutions
+// Navigation link item for Features, Solutions, and Compare
 function NavLinkItem({
   item,
 }: {
-  item: FeatureNavItem | SolutionNavItem;
+  item: FeatureNavItem | SolutionNavItem | CompareNavItem;
 }) {
   return (
     <NavigationMenu.Link asChild>
@@ -80,7 +82,7 @@ function IndustryGridItem({ item }: { item: IndustryNavItem }) {
 // Features dropdown content
 function FeaturesDropdown() {
   return (
-    <div className="grid gap-4 p-4 w-[700px] grid-cols-2">
+    <div className="grid gap-4 p-4 w-[950px] grid-cols-3">
       <div className="space-y-1">
         {featureNavItems.slice(0, 3).map((item) => (
           <NavLinkItem key={item.slug} item={item}  />
@@ -90,6 +92,23 @@ function FeaturesDropdown() {
         {featureNavItems.slice(3).map((item) => (
           <NavLinkItem key={item.slug} item={item}  />
         ))}
+      </div>
+      <div className="space-y-1 border-l border-border pl-4">
+        <div className="mb-2 font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-400/70">
+          Compare
+        </div>
+        {compareNavItems.map((item) => (
+          <NavLinkItem key={item.slug} item={item} />
+        ))}
+        <NavigationMenu.Link asChild>
+          <Link
+            href="/compare"
+            className="mt-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 font-sans text-xs font-semibold text-repwell-teal-400 transition-colors hover:bg-repwell-sage-100/50 hover:text-repwell-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-repwell-teal-300/20"
+          >
+            <DynamicIcon name="ArrowRight" className="h-3.5 w-3.5" />
+            See All Comparisons
+          </Link>
+        </NavigationMenu.Link>
       </div>
       {/* CTA row */}
       <div className="col-span-full border-t border-border pt-4 mt-2">

@@ -13,11 +13,11 @@ import {
   Star,
   type Icon as PhosphorIcon,
 } from "@phosphor-icons/react";
-import type { MortgageFeature, CtaLink } from "@/lib/competitor-pages";
+import type { IndustryFeature, CtaLink } from "@/lib/competitor-pages";
 import { cn } from "@/lib/utils";
 
-interface MortgageSpecificSectionProps {
-  features: MortgageFeature[];
+interface IndustrySpecificSectionProps {
+  features: IndustryFeature[];
   headline?: string;
   description?: string;
   cta?: CtaLink;
@@ -52,7 +52,7 @@ const iconMap: Record<string, PhosphorIcon> = {
 };
 
 /** Renders a Phosphor icon or a decorative dot fallback. */
-function MortgageIcon({ name }: { name: string }) {
+function FeatureIcon({ name }: { name: string }) {
   const IconComponent = iconMap[name.toLowerCase()];
 
   return (
@@ -69,13 +69,13 @@ function MortgageIcon({ name }: { name: string }) {
   );
 }
 
-/** Single mortgage feature card with entrance animation. */
-function MortgageFeatureCard({
+/** Single industry feature card with entrance animation. */
+function IndustryFeatureCard({
   feature,
   index,
   isVisible,
 }: {
-  feature: MortgageFeature;
+  feature: IndustryFeature;
   index: number;
   isVisible: boolean;
 }) {
@@ -95,7 +95,7 @@ function MortgageFeatureCard({
         </span>
       )}
 
-      <MortgageIcon name={feature.icon} />
+      <FeatureIcon name={feature.icon} />
 
       <h3 className="mt-4 font-sans text-lg font-semibold text-repwell-teal-500 md:text-xl">
         {feature.title}
@@ -108,7 +108,7 @@ function MortgageFeatureCard({
   );
 }
 
-/** Visual stat callout element for the mortgage section. */
+/** Visual stat callout element for the industry section. */
 function StatCallout({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl bg-repwell-teal-500 px-8 py-10 text-center shadow-lg">
@@ -123,22 +123,22 @@ function StatCallout({ value, label }: { value: string; label: string }) {
 }
 
 /**
- * Section 10: Mortgage-specific features.
+ * Section 10: Industry-specific features.
  *
- * Explains why mortgage companies need RepWell with feature cards
- * covering HMDA compliance, loan officer profiles, branch management, etc.
+ * Highlights why companies in specific industries need RepWell, with feature
+ * cards covering compliance, professional profiles, branch management, etc.
  * Includes a visual stat callout and a CTA button.
  *
  * Cards animate in with staggered fade-up on scroll.
  * All content driven by config data.
  */
-export function MortgageSpecificSection({
+export function IndustrySpecificSection({
   features,
-  headline = "Built for Mortgage Professionals",
-  description = "Purpose-built for the compliance, workflow, and reputation needs unique to mortgage.",
+  headline = "Built for Your Industry",
+  description = "Purpose-built for the compliance, workflow, and reputation needs unique to your business.",
   cta,
   stat,
-}: MortgageSpecificSectionProps) {
+}: IndustrySpecificSectionProps) {
   const { ref: sectionRef, isVisible } = useScrollReveal();
 
   if (features.length === 0) return null;
@@ -177,7 +177,7 @@ export function MortgageSpecificSection({
       {/* Feature grid */}
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
         {features.map((f, i) => (
-          <MortgageFeatureCard
+          <IndustryFeatureCard
             key={`${f.title}-${i}`}
             feature={f}
             index={i}

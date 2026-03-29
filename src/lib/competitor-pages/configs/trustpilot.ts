@@ -473,9 +473,9 @@ export const trustpilotConfig: CompetitorPageConfig = {
   ],
 
   // ---------------------------------------------------------------------------
-  // Section 10: Mortgage-Specific Features
+  // Section 10: Industry-Specific Features
   // ---------------------------------------------------------------------------
-  mortgageFeatures: [
+  industryFeatures: [
     {
       icon: "UserCircle",
       title: "Loan officer profiles with NMLS display",
@@ -516,12 +516,12 @@ export const trustpilotConfig: CompetitorPageConfig = {
       repwellExclusive: true,
     },
   ],
-  mortgageSectionConfig: {
-    headline: "Built for mortgage companies — not consumer marketplaces",
+  industrySectionConfig: {
+    headline: "Built for your industry — not consumer marketplaces",
     description:
-      "Trustpilot serves e-commerce, retail, and SaaS with the same consumer platform. RepWell is purpose-built for mortgage, so every feature addresses the specific needs of lenders, loan officers, and compliance teams.",
-    cta: { label: "See Mortgage Features", href: "/features/mortgage" },
-    stat: { value: "500+", label: "mortgage companies use RepWell" },
+      "Trustpilot serves e-commerce, retail, and SaaS with the same consumer platform. RepWell is purpose-built for sales-based industries, so every feature addresses the specific needs of your team.",
+    cta: { label: "See Industry Features", href: "/features" },
+    stat: { value: "500+", label: "companies use RepWell" },
   },
 
   // ---------------------------------------------------------------------------

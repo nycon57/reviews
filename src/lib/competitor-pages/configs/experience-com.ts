@@ -366,9 +366,9 @@ export const experienceComConfig: CompetitorPageConfig = {
   ],
 
   // ---------------------------------------------------------------------------
-  // Section 10: Mortgage-Specific Features
+  // Section 10: Industry-Specific Features
   // ---------------------------------------------------------------------------
-  mortgageFeatures: [
+  industryFeatures: [
     {
       icon: "UserCircle",
       title: "Loan officer profiles with NMLS display",
@@ -409,12 +409,12 @@ export const experienceComConfig: CompetitorPageConfig = {
       repwellExclusive: true,
     },
   ],
-  mortgageSectionConfig: {
-    headline: "Built for mortgage — not adapted from a generic platform",
+  industrySectionConfig: {
+    headline: "Built for your industry — not adapted from a generic platform",
     description:
-      "Experience.com serves dozens of industries. RepWell is purpose-built for mortgage and financial services, so every feature fits how your team actually works.",
-    cta: { label: "See Mortgage Features", href: "/features/mortgage" },
-    stat: { value: "500+", label: "mortgage companies use RepWell" },
+      "Experience.com serves dozens of industries with generic tooling. RepWell is purpose-built for sales-based industries, so every feature fits how your team actually works.",
+    cta: { label: "See Industry Features", href: "/features" },
+    stat: { value: "500+", label: "companies use RepWell" },
   },
 
   // ---------------------------------------------------------------------------

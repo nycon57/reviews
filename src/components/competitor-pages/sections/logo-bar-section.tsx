@@ -23,7 +23,7 @@ export function LogoBarSection({ logos }: LogoBarSectionProps) {
   return (
     <div className="py-12 md:py-16">
       <p className="mb-8 text-center font-sans text-sm text-repwell-teal-300">
-        Trusted by mortgage professionals nationwide
+        Trusted by professionals nationwide
       </p>
 
       {/* Scroll container with gradient masks — fixed height prevents CLS */}

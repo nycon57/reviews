@@ -78,10 +78,10 @@ const IntegrationLogosSection = dynamic(
   { loading: () => <SectionSkeleton height="sm" /> },
 );
 
-const MortgageSpecificSection = dynamic(
+const IndustrySpecificSection = dynamic(
   () =>
-    import("./sections/mortgage-specific-section").then(
-      (m) => m.MortgageSpecificSection,
+    import("./sections/industry-specific-section").then(
+      (m) => m.IndustrySpecificSection,
     ),
   { loading: () => <SectionSkeleton /> },
 );
@@ -233,14 +233,14 @@ export function CompetitorComparisonPage({
         <IntegrationLogosSection integrations={config.integrations} />
       </SectionWrapper>
 
-      {/* Section 10: Mortgage-Specific Features */}
-      <SectionWrapper id="mortgage-features" background="subtle" lazyRender estimatedHeight="900px">
-        <MortgageSpecificSection
-          features={config.mortgageFeatures}
-          headline={config.mortgageSectionConfig?.headline}
-          description={config.mortgageSectionConfig?.description}
-          cta={config.mortgageSectionConfig?.cta}
-          stat={config.mortgageSectionConfig?.stat}
+      {/* Section 10: Industry-Specific Features */}
+      <SectionWrapper id="industry-features" background="subtle" lazyRender estimatedHeight="900px">
+        <IndustrySpecificSection
+          features={config.industryFeatures}
+          headline={config.industrySectionConfig?.headline}
+          description={config.industrySectionConfig?.description}
+          cta={config.industrySectionConfig?.cta}
+          stat={config.industrySectionConfig?.stat}
         />
       </SectionWrapper>
 

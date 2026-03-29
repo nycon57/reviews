@@ -7,6 +7,7 @@ import * as PhosphorIcons from "@phosphor-icons/react";
 import {
   ArrowRight,
   CheckCircle,
+  MagnifyingGlass,
   Star,
   Question,
   type IconProps,
@@ -15,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { IndustryPageConfig } from "@/lib/industry/types";
+import { getIndustryConfig } from "@/lib/industry/configs";
 import { PainPointSection } from "@/components/marketing/pain-point-section";
 import { GuaranteeSection } from "@/components/marketing/guarantee-section";
 import { FeatureTabsShowcase } from "@/components/marketing/feature-tabs-showcase";
@@ -476,6 +478,58 @@ function IntegrationsSection({ config }: { config: IndustryPageConfig }) {
 }
 
 /**
+ * Directory CTA Section
+ * Links users to the /directory/[industry] page to browse professionals
+ */
+function DirectoryCTASection({ config }: { config: IndustryPageConfig }) {
+  const industryConfig = getIndustryConfig(config.industry);
+  const professionalPlural = industryConfig.labels.professionalPlural;
+  const industryName = industryConfig.name;
+
+  return (
+    <section className="py-16 md:py-24 bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="relative overflow-hidden rounded-2xl border border-repwell-teal-300/20 bg-gradient-to-br from-repwell-sage-100/40 to-white p-8 md:p-12 lg:p-16 text-center"
+        >
+          {/* Decorative accent */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-repwell-teal-300 to-repwell-sage-200" />
+
+          <Badge
+            variant="outline"
+            className="px-4 py-1.5 text-sm border-repwell-teal-300/50 text-repwell-teal-400 mb-4"
+          >
+            Professional Directory
+          </Badge>
+
+          <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-repwell-teal-500 mb-4">
+            Browse {industryName} {professionalPlural}
+          </h2>
+
+          <p className="font-sans text-lg text-repwell-teal-400 max-w-2xl mx-auto mb-8">
+            Find top-rated {professionalPlural.toLowerCase()} in your area with verified reviews and ratings from real{" "}
+            {industryConfig.labels.customerPlural}.
+          </p>
+
+          <div className="flex justify-center">
+            <Button size="lg" asChild>
+              <Link href={`/directory/${config.slug}`}>
+                <MagnifyingGlass className="mr-2 h-4 w-4" />
+                Browse {professionalPlural}
+              </Link>
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/**
  * Final CTA Section
  */
 function FinalCTASection({ config }: { config: IndustryPageConfig }) {
@@ -577,7 +631,10 @@ export function IndustryLandingPage({ config }: IndustryLandingPageProps) {
       {/* 8. Integrations */}
       <IntegrationsSection config={config} />
 
-      {/* 9. Guarantees */}
+      {/* 9. Directory CTA */}
+      <DirectoryCTASection config={config} />
+
+      {/* 10. Guarantees */}
       <GuaranteeSection
         badge="Our Promise"
         heading="Risk-Free Guarantee"
@@ -585,7 +642,7 @@ export function IndustryLandingPage({ config }: IndustryLandingPageProps) {
         guarantees={config.guarantees}
       />
 
-      {/* 10. Final CTA */}
+      {/* 11. Final CTA */}
       <FinalCTASection config={config} />
     </main>
   );

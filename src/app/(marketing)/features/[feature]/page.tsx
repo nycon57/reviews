@@ -65,9 +65,7 @@ export default async function FeaturePage({ params }: PageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
       />
-      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-        <MarketingBreadcrumbs items={items} />
-      </div>
+      <MarketingBreadcrumbs items={items} />
       <FeatureLandingPage config={config} />
     </>
   );

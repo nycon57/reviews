@@ -14,6 +14,8 @@ const nextConfig = {
     "@remotion/compositor-linux-x64-musl",
     "@remotion/compositor-win32-x64-msvc",
     "@resvg/resvg-js",
+    "pg",
+    "bcrypt",
   ],
   experimental: {
     // Enable server actions

@@ -132,9 +132,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 lg:px-8">
-        <MarketingBreadcrumbs items={breadcrumbItems} />
-      </div>
+      <MarketingBreadcrumbs items={breadcrumbItems} />
       <BlogPostClient
         post={post}
         mdxSource={mdxSource}

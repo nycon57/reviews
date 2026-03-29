@@ -32,7 +32,7 @@ export default function RootLayout({
         )}
         {process.env.NODE_ENV === "development" && (
           <Script
-            src="https://unpkg.com/@react-grab/claude-code/dist/client.global.js"
+            src="https://unpkg.com/@react-grab/mcp/dist/client.global.js"
             strategy="lazyOnload"
           />
         )}

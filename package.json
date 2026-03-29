@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npx @react-grab/claude-code@latest && next dev",
+    "dev": "npx @react-grab/mcp@latest && next dev",
     "prebuild": "npx tsx scripts/build-embed.ts",
     "build": "next build",
     "start": "next start",

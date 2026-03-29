@@ -59,7 +59,7 @@ function getIconByName(name: string): React.ComponentType<IconProps> {
  */
 function HeroSection({ config }: { config: IndustryPageConfig }) {
   return (
-    <section className="relative pt-32 pb-16 md:pt-40 md:pb-24 overflow-hidden">
+    <section className="relative pt-8 pb-16 md:pt-12 md:pb-24 overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-repwell-sage-100/20 to-transparent" />
 

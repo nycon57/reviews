@@ -1,0 +1,37 @@
+{
+  "project": "RepWell",
+  "description": "Customer experience & review management platform for sales-based industries",
+  "linearTeamKey": "REP",
+  "linearTeamId": "89209944-c1ad-4023-a7ec-ed8868ac2202",
+  "linearProjectId": null,
+  "linearStates": {
+    "Backlog": "1dd7010c-2532-4d33-bc4b-f41c252b6e4b",
+    "Planning": "05ef754a-3921-4d19-aa95-d7607c0da853",
+    "In Progress": "7ee5079e-4f50-4dc5-9cc6-7ce96e10f1b8",
+    "In Review": "1efebedd-a544-4166-a972-05183560eb0f",
+    "Done": "da664684-41a1-4425-b1b4-95a1dc120cb8",
+    "Canceled": "06459159-3d73-4ada-af6d-3ae2095ea8b7"
+  },
+  "repo": "jarrettstanley/reviews",
+  "techStack": {
+    "framework": "Next.js 16 (App Router)",
+    "database": "Supabase PostgreSQL",
+    "auth": "Better Auth",
+    "ui": "ShadCN/UI + Tailwind CSS",
+    "email": "React Email + Resend",
+    "payments": "Stripe",
+    "hosting": "Vercel"
+  },
+  "qualityGates": [
+    "npm run build",
+    "npm run lint",
+    "/simplify",
+    "/react-doctor"
+  ],
+  "domainLabels": ["db", "frontend", "api", "email", "auth", "billing", "ai", "seo", "sms", "marketing"],
+  "conventions": {
+    "claudeMdPath": "CLAUDE.md",
+    "designSystemPath": "docs/design/REPWELL_DESIGN_SYSTEM",
+    "typesPath": "src/types/database.types.ts"
+  }
+}

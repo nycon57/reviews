@@ -46,6 +46,7 @@ import {
   staggerContainer,
   fadeInUp,
 } from "@/lib/motion";
+import type { StarterTemplate } from "@/lib/email-builder/starter-templates";
 import type { EmailDocument, BlockNode } from "@/lib/email-builder/types";
 
 type ViewMode = "grid" | "list";
@@ -224,6 +225,29 @@ export function TemplateGallery({
         variant: "destructive",
       });
     }
+  }
+
+  function handlePreviewStarter(starter: StarterTemplate) {
+    const document = resolveOrgFields(starter.document);
+    setPreviewTemplate({
+      id: `starter-${starter.name}`,
+      organization_id: null,
+      created_by: null,
+      name: starter.name,
+      description: starter.description,
+      category: starter.category,
+      document,
+      subject: starter.subject,
+      preview_text: null,
+      html_cache: null,
+      thumbnail_url: null,
+      is_starter: true,
+      is_default: false,
+      version: 1,
+      merge_fields: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
   }
 
   // Key that changes when filters change, so stagger re-triggers
@@ -464,6 +488,7 @@ export function TemplateGallery({
                       <StarterCard
                         starter={starter}
                         onClick={() => handleCreateFromStarter(starter.name)}
+                        onPreview={() => handlePreviewStarter(starter)}
                       />
                     </motion.div>
                   ))}
@@ -481,6 +506,7 @@ export function TemplateGallery({
                       <StarterListRow
                         starter={starter}
                         onClick={() => handleCreateFromStarter(starter.name)}
+                        onPreview={() => handlePreviewStarter(starter)}
                       />
                     </motion.div>
                   ))}
@@ -547,40 +573,47 @@ function TemplateListRow({
       </div>
 
       {/* Actions */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {onPreview && (
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+            className="h-8 w-8 p-0 text-muted-foreground hover:text-repwell-teal-300"
+            onClick={onPreview}
+            aria-label={`Preview ${template.name}`}
           >
-            <DotsThree size={16} />
+            <Eye size={16} />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {onPreview && (
-            <DropdownMenuItem onClick={onPreview}>
-              <Eye size={14} className="mr-2" />
-              Preview
+        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0"
+            >
+              <DotsThree size={16} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>
+              <PencilSimple size={14} className="mr-2" />
+              Edit
             </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onClick={onEdit}>
-            <PencilSimple size={14} className="mr-2" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDuplicate}>
-            <Copy size={14} className="mr-2" />
-            Duplicate
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={onDelete}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash size={14} className="mr-2" />
-            Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuItem onClick={onDuplicate}>
+              <Copy size={14} className="mr-2" />
+              Duplicate
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash size={14} className="mr-2" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 }
@@ -589,26 +622,17 @@ function TemplateListRow({
 // Starter template cards
 // ---------------------------------------------------------------------------
 
-interface StarterInfo {
-  name: string;
-  description: string;
-  category: string;
-  subject: string;
-}
-
 function StarterCard({
   starter,
   onClick,
+  onPreview,
 }: {
-  starter: StarterInfo;
+  starter: StarterTemplate;
   onClick: () => void;
+  onPreview: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className="group relative w-full rounded-xl border border-border/60 bg-card p-4 text-left transition-all hover:border-repwell-teal-300/50 hover:shadow-sm"
-      onClick={onClick}
-    >
+    <div className="group relative w-full rounded-xl border border-border/60 bg-card p-4 text-left transition-all hover:border-repwell-teal-300/50 hover:shadow-sm">
       {/* Decorative top accent */}
       <div className="absolute inset-x-0 top-0 h-px rounded-t-xl bg-gradient-to-r from-transparent via-repwell-teal-300/30 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
@@ -616,38 +640,48 @@ function StarterCard({
         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${getCategoryColor(starter.category)}`}>
           {getCategoryLabel(starter.category)}
         </span>
-        <Plus
-          size={14}
-          className="text-muted-foreground/0 transition-all group-hover:text-repwell-teal-300 group-hover:translate-x-0 -translate-x-1"
-        />
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onPreview}
+            className="rounded-md p-1 text-muted-foreground/0 transition-all group-hover:text-muted-foreground hover:!text-repwell-teal-300 hover:bg-repwell-teal-300/10"
+            aria-label={`Preview ${starter.name}`}
+          >
+            <Eye size={14} />
+          </button>
+          <Plus
+            size={14}
+            className="text-muted-foreground/0 transition-all group-hover:text-repwell-teal-300 group-hover:translate-x-0 -translate-x-1"
+          />
+        </div>
       </div>
 
-      <p className="text-sm font-medium text-foreground">{starter.name}</p>
-      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-        {starter.description}
-      </p>
-    </button>
+      <button type="button" className="w-full text-left" onClick={onClick}>
+        <p className="text-sm font-medium text-foreground">{starter.name}</p>
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {starter.description}
+        </p>
+      </button>
+    </div>
   );
 }
 
 function StarterListRow({
   starter,
   onClick,
+  onPreview,
 }: {
-  starter: StarterInfo;
+  starter: StarterTemplate;
   onClick: () => void;
+  onPreview: () => void;
 }) {
   return (
-    <button
-      type="button"
-      className="group flex w-full items-center gap-4 rounded-lg border border-border/60 bg-card px-4 py-3 text-left transition-all hover:border-repwell-teal-300/40 hover:shadow-sm"
-      onClick={onClick}
-    >
+    <div className="group flex w-full items-center gap-4 rounded-lg border border-border/60 bg-card px-4 py-3 text-left transition-all hover:border-repwell-teal-300/40 hover:shadow-sm">
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-repwell-teal-300/8">
         <Sparkle size={18} className="text-repwell-teal-300/50" />
       </div>
 
-      <div className="min-w-0 flex-1">
+      <button type="button" className="min-w-0 flex-1 text-left" onClick={onClick}>
         <div className="flex items-center gap-2">
           <p className="truncate text-sm font-medium text-foreground">
             {starter.name}
@@ -659,12 +693,23 @@ function StarterListRow({
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {starter.description}
         </p>
-      </div>
+      </button>
 
-      <Plus
-        size={16}
-        className="shrink-0 text-muted-foreground/0 transition-all group-hover:text-repwell-teal-300"
-      />
-    </button>
+      <button
+        type="button"
+        onClick={onPreview}
+        className="shrink-0 rounded-md p-1.5 text-muted-foreground/0 transition-all group-hover:text-muted-foreground hover:!text-repwell-teal-300 hover:bg-repwell-teal-300/10"
+        aria-label={`Preview ${starter.name}`}
+      >
+        <Eye size={16} />
+      </button>
+
+      <button type="button" onClick={onClick} className="shrink-0" aria-label={`Use ${starter.name}`}>
+        <Plus
+          size={16}
+          className="text-muted-foreground/0 transition-all group-hover:text-repwell-teal-300"
+        />
+      </button>
+    </div>
   );
 }

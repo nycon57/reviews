@@ -28,10 +28,23 @@ export function TemplateCard({
     <div className="group rounded-xl border border-border bg-card p-4 transition-colors hover:border-repwell-teal-300/50">
       {/* Preview thumbnail */}
       <div
-        className="mb-3 flex h-32 items-center justify-center rounded-lg bg-muted/40 cursor-pointer"
+        className="relative mb-3 flex h-32 items-center justify-center rounded-lg bg-muted/40 cursor-pointer"
         onClick={onEdit}
       >
         <Envelope size={32} className="text-muted-foreground/40" />
+        {onPreview && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreview();
+            }}
+            className="absolute top-2 right-2 rounded-md p-1.5 bg-background/80 backdrop-blur-sm border border-border/60 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-repwell-teal-300 hover:border-repwell-teal-300/40"
+            aria-label={`Preview ${template.name}`}
+          >
+            <Eye size={14} />
+          </button>
+        )}
       </div>
 
       {/* Info */}

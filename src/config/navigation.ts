@@ -249,21 +249,21 @@ export const compareNavItems: CompareNavItem[] = [
     title: "RepWell vs Experience.com",
     description: "Transparent pricing, no contracts",
     icon: "Swap",
-    href: "/compare/experience-com-alternative",
+    href: "/compare/experience-com",
   },
   {
     slug: "birdeye",
     title: "RepWell vs Birdeye",
     description: "Mortgage-native, not generic",
     icon: "Swap",
-    href: "/compare/birdeye-alternative",
+    href: "/compare/birdeye",
   },
   {
     slug: "trustpilot",
     title: "RepWell vs Trustpilot",
     description: "Built for mortgage professionals",
     icon: "Swap",
-    href: "/compare/trustpilot-alternative",
+    href: "/compare/trustpilot",
   },
 ];
 

@@ -8,8 +8,8 @@ import type { ABTestConfig, PageABTestConfig } from "./types";
  * Toggle `enabled` to activate/deactivate tests per page.
  */
 export const abTestConfigs: Record<string, PageABTestConfig> = {
-  "experience-com-alternative": {
-    slug: "experience-com-alternative",
+  "experience-com": {
+    slug: "experience-com",
     h1Test: {
       id: "experience-com-h1",
       name: "Experience.com H1 Headline",
@@ -36,8 +36,8 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
     },
   },
 
-  "birdeye-alternative": {
-    slug: "birdeye-alternative",
+  "birdeye": {
+    slug: "birdeye",
     h1Test: {
       id: "birdeye-h1",
       name: "Birdeye H1 Headline",
@@ -64,8 +64,8 @@ export const abTestConfigs: Record<string, PageABTestConfig> = {
     },
   },
 
-  "trustpilot-alternative": {
-    slug: "trustpilot-alternative",
+  "trustpilot": {
+    slug: "trustpilot",
     h1Test: {
       id: "trustpilot-h1",
       name: "Trustpilot H1 Headline",

@@ -13,7 +13,7 @@ import type { CompetitorPageConfig } from "../types";
  * Review cadence: Quarterly — next review due 2026-05-01.
  */
 export const trustpilotConfig: CompetitorPageConfig = {
-  slug: "trustpilot-alternative",
+  slug: "trustpilot",
   competitorName: "Trustpilot",
   competitorLogo: "/images/competitors/trustpilot-logo.svg",
 

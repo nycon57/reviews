@@ -8,7 +8,7 @@ import type { CompetitorPageConfig } from "../types";
  * easy to use, fast to deploy.
  */
 export const experienceComConfig: CompetitorPageConfig = {
-  slug: "experience-com-alternative",
+  slug: "experience-com",
   competitorName: "Experience.com",
   competitorLogo: "/images/competitors/experience-com-logo.svg",
 

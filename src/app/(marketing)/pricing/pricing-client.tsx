@@ -662,17 +662,17 @@ export function PricingPageClient() {
               {[
                 {
                   name: "Experience.com",
-                  href: "/compare/experience-com-alternative",
+                  href: "/compare/experience-com",
                   tagline: "Transparent pricing, no contracts",
                 },
                 {
                   name: "Birdeye",
-                  href: "/compare/birdeye-alternative",
+                  href: "/compare/birdeye",
                   tagline: "Better value, no setup fees",
                 },
                 {
                   name: "Trustpilot",
-                  href: "/compare/trustpilot-alternative",
+                  href: "/compare/trustpilot",
                   tagline: "Built for sales professionals",
                 },
               ].map((competitor) => (

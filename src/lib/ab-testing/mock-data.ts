@@ -44,7 +44,7 @@ function createMockEvent(
     slug,
     timestamp: randomDate(30),
     source: randomItem(SOURCES),
-    switchingFrom: Math.random() > 0.6 ? slug.replace("-alternative", "") : undefined,
+    switchingFrom: Math.random() > 0.6 ? slug : undefined,
   };
 }
 

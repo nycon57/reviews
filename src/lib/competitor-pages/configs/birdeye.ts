@@ -12,7 +12,7 @@ import type { CompetitorPageConfig } from "../types";
  * Review cadence: Quarterly — next review due 2026-05-01.
  */
 export const birdeyeConfig: CompetitorPageConfig = {
-  slug: "birdeye-alternative",
+  slug: "birdeye",
   competitorName: "Birdeye",
   competitorLogo: "/images/competitors/birdeye-logo.svg",
 

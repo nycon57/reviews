@@ -33,9 +33,9 @@ const footerSections: FooterSection[] = [
   {
     title: "Compare",
     links: [
-      { label: "vs Experience.com", href: "/compare/experience-com-alternative" },
-      { label: "vs Birdeye", href: "/compare/birdeye-alternative" },
-      { label: "vs Trustpilot", href: "/compare/trustpilot-alternative" },
+      { label: "vs Experience.com", href: "/compare/experience-com" },
+      { label: "vs Birdeye", href: "/compare/birdeye" },
+      { label: "vs Trustpilot", href: "/compare/trustpilot" },
     ],
   },
   {

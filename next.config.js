@@ -232,20 +232,36 @@ const nextConfig = {
         destination: "/pro/:id",
         permanent: true,
       },
-      // /vs/[competitor] aliases → /compare/[competitor]-alternative
+      // /vs/[competitor] aliases → /compare/[competitor]
       {
         source: "/vs/experience-com",
-        destination: "/compare/experience-com-alternative",
+        destination: "/compare/experience-com",
         permanent: true,
       },
       {
         source: "/vs/birdeye",
-        destination: "/compare/birdeye-alternative",
+        destination: "/compare/birdeye",
         permanent: true,
       },
       {
         source: "/vs/trustpilot",
-        destination: "/compare/trustpilot-alternative",
+        destination: "/compare/trustpilot",
+        permanent: true,
+      },
+      // Old -alternative slugs → new shorter slugs
+      {
+        source: "/compare/experience-com-alternative",
+        destination: "/compare/experience-com",
+        permanent: true,
+      },
+      {
+        source: "/compare/birdeye-alternative",
+        destination: "/compare/birdeye",
+        permanent: true,
+      },
+      {
+        source: "/compare/trustpilot-alternative",
+        destination: "/compare/trustpilot",
         permanent: true,
       },
       // Consolidated manager dashboard into /dashboard/team

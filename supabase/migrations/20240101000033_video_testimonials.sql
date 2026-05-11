@@ -288,6 +288,14 @@ ON storage.objects FOR INSERT
 TO anon
 WITH CHECK (
   bucket_id = 'video-testimonials'
+  AND array_length(storage.foldername(name), 1) >= 2
+  AND EXISTS (
+    SELECT 1
+    FROM video_testimonial_requests r
+    WHERE r.organization_id::text = (storage.foldername(name))[1]
+      AND r.id::text = (storage.foldername(name))[2]
+      AND r.status NOT IN ('expired', 'cancelled', 'submitted')
+  )
 );
 
 -- ===========================================
@@ -362,10 +370,12 @@ CREATE POLICY "managers_manage_video_responses" ON video_testimonial_responses
 -- Allow public submission only for valid, non-expired requests
 -- Additional validation (token matching) must be done server-side
 CREATE POLICY "public_submit_video_responses" ON video_testimonial_responses
-  FOR INSERT WITH CHECK (
+  FOR INSERT TO anon WITH CHECK (
     EXISTS (
       SELECT 1 FROM video_testimonial_requests r
       WHERE r.id = request_id
+        AND r.organization_id = organization_id
+        AND r.loan_officer_id = loan_officer_id
         AND r.status NOT IN ('expired', 'cancelled', 'submitted')
     )
   );

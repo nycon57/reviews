@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { SPECIALTIES, LANGUAGES } from "./constants";
 import type { IndustryType } from "@/lib/industry/types";
+import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
 
 // Types
 export interface DirectoryProfessional {
@@ -291,11 +292,11 @@ export async function searchProfessionals(
           distanceMap.set(r.user_id, r.distance_miles);
         }
 
-        let radiusQuery = supabase
-          .from("users")
-          .select(PROFESSIONAL_SELECT)
-          .eq("is_active", true)
-          .in("id", radiusIds);
+        let radiusQuery = applyPublicProfessionalFilters(
+          supabase
+            .from("users")
+            .select(PROFESSIONAL_SELECT)
+        ).in("id", radiusIds);
 
         if (filters.organizationId) radiusQuery = radiusQuery.eq("organization_id", filters.organizationId);
         // Industry filtering handled at the page level via industryFilter prop
@@ -358,10 +359,11 @@ export async function searchProfessionals(
     }
 
     // ---------- STANDARD ILIKE SEARCH (name/bio/title) ----------
-    let query = supabase
-      .from("users")
-      .select(PROFESSIONAL_SELECT, { count: "exact" })
-      .eq("is_active", true);
+    let query = applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select(PROFESSIONAL_SELECT, { count: "exact" })
+    );
 
     if (filters.organizationId) {
       query = query.eq("organization_id", filters.organizationId);
@@ -447,10 +449,11 @@ export async function searchProfessionals(
 
 /** Build standard facets (states, specialties, languages) */
 async function buildFacets(supabase: ReturnType<typeof createAdminClient>) {
-  const { data: stateData } = await supabase
-    .from("users")
-    .select("address")
-    .eq("is_active", true);
+  const { data: stateData } = await applyPublicProfessionalFilters(
+    supabase
+      .from("users")
+      .select("address")
+  );
 
   const stateCounts = new Map<string, number>();
   (stateData || []).forEach((record) => {
@@ -667,17 +670,18 @@ export async function getAvailableIndustries(): Promise<
     const supabase = createAdminClient();
 
     // Get all active professionals with their organization's industry
-    const { data } = await supabase
-      .from("users")
-      .select(
+    const { data } = await applyPublicProfessionalFilters(
+      supabase
+        .from("users")
+        .select(
+          `
+          id,
+          organizations!inner (
+            industry
+          )
         `
-        id,
-        organizations!inner (
-          industry
         )
-      `
-      )
-      .eq("is_active", true);
+    );
 
     if (!data) return [];
 

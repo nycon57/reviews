@@ -22,12 +22,5 @@ CREATE POLICY "Allow public unsubscribe"
   ON email_unsubscribes FOR INSERT
   WITH CHECK (true);
 
--- Policy for selecting own unsubscribe status
-CREATE POLICY "Allow selecting own unsubscribe"
-  ON email_unsubscribes FOR SELECT
-  USING (true);
-
--- Policy for deleting (resubscribing) - only the token holder can resubscribe
-CREATE POLICY "Allow resubscribe with token"
-  ON email_unsubscribes FOR DELETE
-  USING (true);
+-- No public SELECT/DELETE policies: reads and resubscribe deletes are handled
+-- by server-side API routes using the service role key.

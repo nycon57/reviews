@@ -6,7 +6,7 @@ import {
   Platform,
   ScrollView,
   Alert,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -96,14 +96,14 @@ export function LoginScreen({ navigation }: Props) {
                 error={errors.password}
               />
 
-              <TouchableOpacity
+              <Pressable
                 onPress={() => navigation.navigate('ForgotPassword')}
                 style={styles.forgotPassword}
               >
                 <Text variant="small" color="muted">
                   Forgot your password?
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
 
               <Button
                 onPress={handleLogin}
@@ -117,11 +117,11 @@ export function LoginScreen({ navigation }: Props) {
 
           <View style={styles.footer}>
             <Text variant="muted">Don't have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+            <Pressable onPress={() => navigation.navigate('SignUp')}>
               <Text variant="body" style={{ color: colors.primary, marginLeft: 4 }}>
                 Sign Up
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -4,15 +4,15 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  TouchableOpacity,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import {
   Text,
+  Icon,
   Card,
   CardContent,
   CardHeader,
@@ -34,27 +34,50 @@ interface FormErrors {
   customerEmail?: string;
 }
 
+interface CreateRequestState {
+  isLoading: boolean;
+  submitting: boolean;
+  professionals: Professional[];
+  userProfessionalId: string | null;
+  selectedProfessional: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  maxDuration: string;
+  promptText: string;
+  errors: FormErrors;
+}
+
+const initialCreateRequestState: CreateRequestState = {
+  isLoading: false,
+  submitting: false,
+  professionals: [],
+  userProfessionalId: null,
+  selectedProfessional: '',
+  customerName: '',
+  customerEmail: '',
+  customerPhone: '',
+  maxDuration: '120',
+  promptText: '',
+  errors: {},
+};
+
 export function CreateRequestScreen({ navigation }: { navigation: any }) {
   const colors = Colors.light;
+  const [state, setState] = useState<CreateRequestState>(initialCreateRequestState);
 
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [userProfessionalId, setUserProfessionalId] = useState<string | null>(null);
+  const updateState = useCallback((nextState: Partial<CreateRequestState>) => {
+    setState((current) => ({ ...current, ...nextState }));
+  }, []);
 
-  // Form fields
-  const [selectedProfessional, setSelectedProfessional] = useState<string>('');
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [maxDuration, setMaxDuration] = useState<string>('120');
-  const [promptText, setPromptText] = useState('');
-  const [errors, setErrors] = useState<FormErrors>({});
+  const updateErrors = useCallback((nextErrors: FormErrors) => {
+    setState((current) => ({ ...current, errors: { ...current.errors, ...nextErrors } }));
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        setLoading(true);
+        updateState({ isLoading: true });
 
         // Fetch profile and professionals in parallel for better performance
         const [profile, professionalList] = await Promise.all([
@@ -62,69 +85,68 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
           getProfessionals(),
         ]);
 
-        setProfessionals(professionalList);
-
-        // If user is a professional, pre-select themselves
+        let selectedProfessional = '';
+        let userProfessionalId: string | null = null;
         if (profile?.role === 'user') {
-          // Match by user_id, not professional id
           const userProfessional = professionalList.find(p => p.user_id === profile.id);
           if (userProfessional) {
-            setSelectedProfessional(userProfessional.id);
-            setUserProfessionalId(userProfessional.id);
+            selectedProfessional = userProfessional.id;
+            userProfessionalId = userProfessional.id;
           }
         } else if (professionalList.length === 1) {
-          // Auto-select if only one option
-          setSelectedProfessional(professionalList[0].id);
+          selectedProfessional = professionalList[0].id;
         }
+
+        updateState({ professionals: professionalList, selectedProfessional, userProfessionalId });
       } catch (err) {
         console.error('Error loading data:', err);
         Alert.alert('Error', 'Failed to load data. Please try again.');
       } finally {
-        setLoading(false);
+        updateState({ isLoading: false });
       }
     }
     fetchData();
-  }, []);
+  }, [updateState]);
 
   const validateForm = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!selectedProfessional) {
+    if (!state.selectedProfessional) {
       newErrors.professional = 'Please select a professional';
     }
 
-    if (!customerName.trim()) {
+    if (!state.customerName.trim()) {
       newErrors.customerName = 'Customer name is required';
     }
 
-    if (!customerEmail.trim()) {
+    if (!state.customerEmail.trim()) {
       newErrors.customerEmail = 'Customer email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(state.customerEmail)) {
       newErrors.customerEmail = 'Please enter a valid email address';
     }
 
-    setErrors(newErrors);
+    updateState({ errors: newErrors });
     return Object.keys(newErrors).length === 0;
-  }, [selectedProfessional, customerName, customerEmail]);
+  }, [state.selectedProfessional, state.customerName, state.customerEmail, updateState]);
 
   const handleSubmit = useCallback(async () => {
     if (!validateForm()) return;
 
     try {
-      setSubmitting(true);
+      updateState({ submitting: true });
 
-      const result = await createVideoTestimonialRequest({
-        user_id: selectedProfessional,
-        customer_name: customerName.trim(),
-        customer_email: customerEmail.trim().toLowerCase(),
-        customer_phone: customerPhone.trim() || undefined,
-        max_duration_seconds: parseInt(maxDuration) || 120,
-        prompt_text: promptText.trim() || undefined,
+      await createVideoTestimonialRequest({
+        user_id: state.selectedProfessional,
+        customer_name: state.customerName.trim(),
+        customer_email: state.customerEmail.trim().toLowerCase(),
+        customer_phone: state.customerPhone.trim() || undefined,
+        max_duration_seconds: parseInt(state.maxDuration) || 120,
+        prompt_text: state.promptText.trim() || undefined,
       });
 
       Alert.alert(
         'Request Sent',
-        `Video testimonial request has been sent to ${customerName}. They will receive an email with instructions.`,
+        `Video testimonial request has been sent to ${state.customerName}. They will receive an email with instructions.`,
         [
           {
             text: 'OK',
@@ -136,17 +158,13 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
       console.error('Error creating request:', err);
       Alert.alert('Error', 'Failed to send request. Please try again.');
     } finally {
-      setSubmitting(false);
+      updateState({ submitting: false });
     }
   }, [
     validateForm,
-    selectedProfessional,
-    customerName,
-    customerEmail,
-    customerPhone,
-    maxDuration,
-    promptText,
+    state,
     navigation,
+    updateState,
   ]);
 
   return (
@@ -157,9 +175,9 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.foreground} />
-          </TouchableOpacity>
+          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Icon name="arrow-back" size={24} color={colors.foreground} />
+          </Pressable>
           <Text variant="h4">Send Request</Text>
           <View style={styles.headerSpacer} />
         </View>
@@ -179,35 +197,35 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
               <CardTitle>Professional</CardTitle>
             </CardHeader>
             <CardContent>
-              {userProfessionalId ? (
+              {state.userProfessionalId ? (
                 <View style={styles.selectedProfessional}>
-                  <Ionicons name="person" size={20} color={colors.primary} />
+                  <Icon name="person" size={20} color={colors.primary} />
                   <Text variant="body" style={{ marginLeft: 8 }}>
-                    {professionals.find(p => p.id === userProfessionalId)?.full_name || 'You'}
+                    {state.professionals.find(p => p.id === state.userProfessionalId)?.full_name || 'You'}
                   </Text>
                 </View>
               ) : (
-                <View style={[styles.pickerContainer, { borderColor: errors.professional ? colors.destructive : colors.border }]}>
+                <View style={[styles.pickerContainer, { borderColor: state.errors.professional ? colors.destructive : colors.border }]}>
                   <Picker
-                    selectedValue={selectedProfessional}
+                    selectedValue={state.selectedProfessional}
                     onValueChange={(value: string) => {
-                      setSelectedProfessional(value);
-                      if (errors.professional) {
-                        setErrors(prev => ({ ...prev, professional: undefined }));
+                      updateState({ selectedProfessional: value });
+                      if (state.errors.professional) {
+                        updateErrors({ professional: undefined });
                       }
                     }}
                     style={styles.picker}
                   >
-                    <Picker.Item label="Select professional..." value="" />
-                    {professionals.map((prof) => (
+                    <Picker.Item label="Select professional…" value="" />
+                    {state.professionals.map((prof) => (
                       <Picker.Item key={prof.id} label={prof.full_name} value={prof.id} />
                     ))}
                   </Picker>
                 </View>
               )}
-              {errors.professional && (
+              {state.errors.professional && (
                 <Text variant="small" style={[styles.errorText, { color: colors.destructive }]}>
-                  {errors.professional}
+                  {state.errors.professional}
                 </Text>
               )}
             </CardContent>
@@ -222,14 +240,14 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
               <Input
                 label="Customer Name"
                 placeholder="John Smith"
-                value={customerName}
+                value={state.customerName}
                 onChangeText={(text) => {
-                  setCustomerName(text);
-                  if (errors.customerName) {
-                    setErrors(prev => ({ ...prev, customerName: undefined }));
+                  updateState({ customerName: text });
+                  if (state.errors.customerName) {
+                    updateErrors({ customerName: undefined });
                   }
                 }}
-                error={errors.customerName}
+                error={state.errors.customerName}
                 autoCapitalize="words"
               />
 
@@ -238,14 +256,14 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
               <Input
                 label="Email Address"
                 placeholder="customer@example.com"
-                value={customerEmail}
+                value={state.customerEmail}
                 onChangeText={(text) => {
-                  setCustomerEmail(text);
-                  if (errors.customerEmail) {
-                    setErrors(prev => ({ ...prev, customerEmail: undefined }));
+                  updateState({ customerEmail: text });
+                  if (state.errors.customerEmail) {
+                    updateErrors({ customerEmail: undefined });
                   }
                 }}
-                error={errors.customerEmail}
+                error={state.errors.customerEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -256,8 +274,8 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
               <Input
                 label="Phone (Optional)"
                 placeholder="(555) 123-4567"
-                value={customerPhone}
-                onChangeText={setCustomerPhone}
+                value={state.customerPhone}
+                onChangeText={(customerPhone) => updateState({ customerPhone })}
                 keyboardType="phone-pad"
               />
             </CardContent>
@@ -273,9 +291,9 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
                 Maximum Duration
               </Text>
               <View style={[styles.pickerContainer, { borderColor: colors.border }]}>
-                <Picker
-                  selectedValue={maxDuration}
-                  onValueChange={setMaxDuration}
+                  <Picker
+                  selectedValue={state.maxDuration}
+                  onValueChange={(maxDuration) => updateState({ maxDuration })}
                   style={styles.picker}
                 >
                   <Picker.Item label="1 minute" value="60" />
@@ -290,8 +308,8 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
               <Input
                 label="Custom Prompt (Optional)"
                 placeholder="What would you like the customer to talk about?"
-                value={promptText}
-                onChangeText={setPromptText}
+                value={state.promptText}
+                onChangeText={(promptText) => updateState({ promptText })}
                 multiline
                 numberOfLines={3}
                 helperText="This will be shown to the customer before they start recording"
@@ -305,11 +323,11 @@ export function CreateRequestScreen({ navigation }: { navigation: any }) {
               variant="default"
               size="lg"
               onPress={handleSubmit}
-              isLoading={submitting}
-              disabled={loading}
+              isLoading={state.submitting}
+              disabled={state.isLoading}
               style={styles.submitButton}
             >
-              Send Request
+              <Text variant="body" style={{ color: colors.primaryForeground }}>Send Request</Text>
             </Button>
             <Text variant="small" color="muted" style={styles.submitHint}>
               The customer will receive an email invitation

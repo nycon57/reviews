@@ -35,9 +35,9 @@ function NpsGauge({ score }: { score: number }) {
   return (
     <div className="rw-nps__gauge">
       <svg viewBox="0 0 180 100" aria-hidden="true">
-        {zones.map((z, i) => (
+        {zones.map((z) => (
           <path
-            key={i}
+            key={`${z.start}-${z.end}`}
             d={describeArc(z.start, z.end)}
             fill="none"
             stroke={z.color}

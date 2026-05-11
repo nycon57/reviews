@@ -6,7 +6,7 @@ import {
   Platform,
   ScrollView,
   Alert,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -21,10 +21,12 @@ export function SignUpScreen({ navigation }: Props) {
   const { signUp, isLoading } = useAuth();
   const colors = Colors.light;
 
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [errors, setErrors] = useState<{
     name?: string;
     email?: string;
@@ -32,38 +34,42 @@ export function SignUpScreen({ navigation }: Props) {
     confirmPassword?: string;
   }>({});
 
+  const updateField = useCallback((field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  }, []);
+
   const validate = useCallback(() => {
     const newErrors: typeof errors = {};
 
-    if (!name.trim()) {
+    if (!form.name.trim()) {
       newErrors.name = 'Name is required';
     }
 
-    if (!email.trim()) {
+    if (!form.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
       newErrors.email = 'Please enter a valid email';
     }
 
-    if (!password) {
+    if (!form.password) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 8) {
+    } else if (form.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     }
 
-    if (password !== confirmPassword) {
+    if (form.password !== form.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [name, email, password, confirmPassword]);
+  }, [form]);
 
   const handleSignUp = useCallback(async () => {
     if (!validate()) return;
 
     try {
-      await signUp(email.trim(), password, name.trim());
+      await signUp(form.email.trim(), form.password, form.name.trim());
       Alert.alert(
         'Account Created',
         'Please check your email to verify your account.',
@@ -73,7 +79,7 @@ export function SignUpScreen({ navigation }: Props) {
       const message = error instanceof Error ? error.message : 'Sign up failed';
       Alert.alert('Sign Up Error', message);
     }
-  }, [email, password, name, signUp, validate, navigation]);
+  }, [form, signUp, validate, navigation]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -100,8 +106,8 @@ export function SignUpScreen({ navigation }: Props) {
                 label="Full Name"
                 placeholder="John Doe"
                 autoCapitalize="words"
-                value={name}
-                onChangeText={setName}
+                value={form.name}
+                onChangeText={(name) => updateField('name', name)}
                 error={errors.name}
               />
 
@@ -111,8 +117,8 @@ export function SignUpScreen({ navigation }: Props) {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                value={email}
-                onChangeText={setEmail}
+                value={form.email}
+                onChangeText={(email) => updateField('email', email)}
                 error={errors.email}
               />
 
@@ -120,8 +126,8 @@ export function SignUpScreen({ navigation }: Props) {
                 label="Password"
                 placeholder="••••••••"
                 secureTextEntry
-                value={password}
-                onChangeText={setPassword}
+                value={form.password}
+                onChangeText={(password) => updateField('password', password)}
                 error={errors.password}
                 helperText="At least 8 characters"
               />
@@ -130,8 +136,8 @@ export function SignUpScreen({ navigation }: Props) {
                 label="Confirm Password"
                 placeholder="••••••••"
                 secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                value={form.confirmPassword}
+                onChangeText={(confirmPassword) => updateField('confirmPassword', confirmPassword)}
                 error={errors.confirmPassword}
               />
 
@@ -147,11 +153,11 @@ export function SignUpScreen({ navigation }: Props) {
 
           <View style={styles.footer}>
             <Text variant="muted">Already have an account?</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Pressable onPress={() => navigation.navigate('Login')}>
               <Text variant="body" style={{ color: colors.primary, marginLeft: 4 }}>
                 Sign In
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

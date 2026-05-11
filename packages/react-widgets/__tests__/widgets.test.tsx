@@ -11,7 +11,7 @@ import {
   ReviewWall,
   NPSScoreBadge,
   SocialProofBanner,
-} from "../src/index";
+} from "../src";
 import type { PublicWidgetConfig, PublicReview, NpsData, VideoTestimonial } from "../src/types";
 
 // ── Test Fixtures ────────────────────────────────────────────────────

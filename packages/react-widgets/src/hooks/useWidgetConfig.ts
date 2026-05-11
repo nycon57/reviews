@@ -37,6 +37,15 @@ export function useWidgetConfig(options: UseWidgetConfigOptions): UseWidgetConfi
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  const applyInlineConfig = useCallback((nextConfig: PublicWidgetConfig) => {
+    setConfig(nextConfig);
+    setLoading(false);
+  }, []);
+
+  const applyInlineReviews = useCallback((nextReviews: PublicReview[]) => {
+    setReviews(nextReviews);
+  }, []);
+
   const fetchData = useCallback(async () => {
     if (!widgetId || inlineConfig) return;
 
@@ -106,16 +115,15 @@ export function useWidgetConfig(options: UseWidgetConfigOptions): UseWidgetConfi
   // Update if inline data changes
   useEffect(() => {
     if (inlineConfig) {
-      setConfig(inlineConfig);
-      setLoading(false);
+      applyInlineConfig(inlineConfig);
     }
-  }, [inlineConfig]);
+  }, [inlineConfig, applyInlineConfig]);
 
   useEffect(() => {
     if (inlineReviews) {
-      setReviews(inlineReviews);
+      applyInlineReviews(inlineReviews);
     }
-  }, [inlineReviews]);
+  }, [inlineReviews, applyInlineReviews]);
 
   return { config, reviews, loading, error };
 }

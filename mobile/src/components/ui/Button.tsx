@@ -1,20 +1,22 @@
 import React from 'react';
 import {
-  TouchableOpacity,
+  Pressable,
   Text,
   ActivityIndicator,
   StyleSheet,
-  type TouchableOpacityProps,
+  type PressableProps,
+  type StyleProp,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
 import { Colors } from '../../constants/colors';
 
-export interface ButtonProps extends TouchableOpacityProps {
+export interface ButtonProps extends PressableProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   isLoading?: boolean;
   children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function Button({
@@ -115,7 +117,7 @@ export function Button({
   const isDisabled = disabled || isLoading;
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[
         styles.base,
         variantStyles[variant],
@@ -124,7 +126,6 @@ export function Button({
         style,
       ]}
       disabled={isDisabled}
-      activeOpacity={0.7}
       {...props}
     >
       {isLoading ? (
@@ -143,7 +144,7 @@ export function Button({
           {children}
         </Text>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 

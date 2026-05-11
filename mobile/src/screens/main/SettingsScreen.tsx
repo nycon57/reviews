@@ -3,10 +3,9 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Text,
   Card,
@@ -28,11 +27,10 @@ function SettingsItem({ label, value, onPress, showChevron = true }: SettingsIte
   const colors = Colors.light;
 
   return (
-    <TouchableOpacity
+    <Pressable
       style={[styles.settingsItem, { borderBottomColor: colors.border }]}
       onPress={onPress}
       disabled={!onPress}
-      activeOpacity={onPress ? 0.7 : 1}
     >
       <Text variant="body">{label}</Text>
       <View style={styles.settingsItemRight}>
@@ -45,7 +43,7 @@ function SettingsItem({ label, value, onPress, showChevron = true }: SettingsIte
           <Text style={{ color: colors.mutedForeground }}>›</Text>
         )}
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -75,8 +73,12 @@ export function SettingsScreen() {
   }, [signOut]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="automatic"
+      >
         <View style={styles.header}>
           <Text variant="h2">Settings</Text>
         </View>
@@ -136,7 +138,7 @@ export function SettingsScreen() {
           {Config.appName} v{Config.appVersion}
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

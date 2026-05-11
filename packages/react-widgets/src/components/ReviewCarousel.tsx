@@ -95,6 +95,10 @@ export function ReviewCarousel({
   }, [autoplay, interval, maxIndex, reviews.length, visibleCards]);
 
   const dotCount = maxIndex + 1;
+  const dots = Array.from({ length: dotCount }, (_, i) => ({
+    id: `slide-${i + 1}`,
+    index: i,
+  }));
   const offset = -(currentIndex * (100 / visibleCards));
 
   return (
@@ -181,15 +185,15 @@ export function ReviewCarousel({
 
           {showDots && dotCount > 1 && (
             <div className="rw-carousel__dots" role="tablist" aria-label="Review slides">
-              {Array.from({ length: dotCount }, (_, i) => (
+              {dots.map(({ id, index }) => (
                 <button
-                  key={i}
+                  key={id}
                   type="button"
-                  className={`rw-carousel__dot ${i === currentIndex ? "rw-carousel__dot--active" : ""}`}
+                  className={`rw-carousel__dot ${index === currentIndex ? "rw-carousel__dot--active" : ""}`}
                   role="tab"
-                  aria-label={`Go to slide ${i + 1}`}
-                  aria-selected={i === currentIndex}
-                  onClick={() => goTo(i)}
+                  aria-label={`Go to slide ${index + 1}`}
+                  aria-selected={index === currentIndex}
+                  onClick={() => goTo(index)}
                 />
               ))}
             </div>

@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React from 'react';
 import {
   TextInput,
   View,
@@ -12,49 +12,46 @@ export interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
   helperText?: string;
+  ref?: React.Ref<TextInput>;
 }
 
-export const Input = forwardRef<TextInput, InputProps>(
-  ({ label, error, helperText, style, ...props }, ref) => {
-    const colors = Colors.light;
+export function Input({ label, error, helperText, style, ref, ...props }: InputProps) {
+  const colors = Colors.light;
 
-    return (
-      <View style={styles.container}>
-        {label && (
-          <Text style={[styles.label, { color: colors.foreground }]}>
-            {label}
-          </Text>
-        )}
-        <TextInput
-          ref={ref}
-          style={[
-            styles.input,
-            {
-              backgroundColor: colors.background,
-              borderColor: error ? colors.destructive : colors.border,
-              color: colors.foreground,
-            },
-            style,
-          ]}
-          placeholderTextColor={colors.mutedForeground}
-          {...props}
-        />
-        {error && (
-          <Text style={[styles.error, { color: colors.destructive }]}>
-            {error}
-          </Text>
-        )}
-        {helperText && !error && (
-          <Text style={[styles.helper, { color: colors.mutedForeground }]}>
-            {helperText}
-          </Text>
-        )}
-      </View>
-    );
-  }
-);
-
-Input.displayName = 'Input';
+  return (
+    <View style={styles.container}>
+      {label && (
+        <Text style={[styles.label, { color: colors.foreground }]}>
+          {label}
+        </Text>
+      )}
+      <TextInput
+        ref={ref}
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.background,
+            borderColor: error ? colors.destructive : colors.border,
+            color: colors.foreground,
+          },
+          style,
+        ]}
+        placeholderTextColor={colors.mutedForeground}
+        {...props}
+      />
+      {error && (
+        <Text style={[styles.error, { color: colors.destructive }]}>
+          {error}
+        </Text>
+      )}
+      {helperText && !error && (
+        <Text style={[styles.helper, { color: colors.mutedForeground }]}>
+          {helperText}
+        </Text>
+      )}
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {

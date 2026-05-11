@@ -9,4 +9,5 @@ export {
   CardFooter,
 } from './Card';
 export { Text, type TextProps } from './Text';
+export { Icon } from './Icon';
 export { LoadingScreen } from './LoadingScreen';

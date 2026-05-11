@@ -1,12 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
-import type { Session, User } from '@supabase/supabase-js';
+import React, { createContext, use, useEffect, useState, useCallback, type ReactNode } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { AuthContextType, AuthState } from '../types';
 
 const initialState: AuthState = {
   user: null,
   session: null,
-  isLoading: true,
+  isLoading: isSupabaseConfigured(),
   isAuthenticated: false,
 };
 
@@ -19,37 +19,35 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>(initialState);
 
+  const applySession = useCallback((session: Session | null) => {
+    setState({
+      user: session?.user ?? null,
+      session,
+      isLoading: false,
+      isAuthenticated: Boolean(session?.user),
+    });
+  }, []);
+
   useEffect(() => {
     if (!isSupabaseConfigured()) {
       console.warn('Supabase not configured. Auth features will be disabled.');
-      setState(prev => ({ ...prev, isLoading: false }));
       return;
     }
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setState({
-        user: session?.user ?? null,
-        session,
-        isLoading: false,
-        isAuthenticated: Boolean(session?.user),
-      });
+      applySession(session);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setState({
-        user: session?.user ?? null,
-        session,
-        isLoading: false,
-        isAuthenticated: Boolean(session?.user),
-      });
+      applySession(session);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [applySession]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     setState(prev => ({ ...prev, isLoading: true }));
@@ -115,7 +113,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 export function useAuth(): AuthContextType {
-  const context = useContext(AuthContext);
+  const context = use(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

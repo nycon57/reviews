@@ -4,15 +4,14 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
-  TouchableOpacity,
-  Image,
+  Pressable,
   ActivityIndicator,
-  ScrollView,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import {
   Text,
+  Icon,
   Card,
   CardContent,
   Button,
@@ -37,28 +36,27 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
 
 interface VideoCardProps {
   video: VideoTestimonialResponse;
-  onPress: () => void;
-  canApprove: boolean;
+  onPress: (video: VideoTestimonialResponse) => void;
 }
 
-const VideoCard = React.memo(function VideoCard({ video, onPress, canApprove }: VideoCardProps) {
+const VideoCard = React.memo(function VideoCard({ video, onPress }: VideoCardProps) {
   const colors = Colors.light;
   const statusInfo = getStatusDisplay(video.approval_status);
   const formattedDate = new Date(video.submitted_at).toLocaleDateString();
 
   return (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+    <Pressable onPress={() => onPress(video)}>
       <Card style={styles.videoCard}>
         <View style={styles.thumbnailContainer}>
           {video.thumbnail_url ? (
             <Image
               source={{ uri: video.thumbnail_url }}
               style={styles.thumbnail}
-              resizeMode="cover"
+              contentFit="cover"
             />
           ) : (
             <View style={[styles.thumbnail, styles.thumbnailPlaceholder]}>
-              <Ionicons name="videocam" size={32} color={colors.mutedForeground} />
+              <Icon name="videocam" size={32} color={colors.mutedForeground} />
             </View>
           )}
           {video.duration_seconds && (
@@ -79,7 +77,7 @@ const VideoCard = React.memo(function VideoCard({ video, onPress, canApprove }: 
             {video.customer_name}
           </Text>
           <Text variant="small" color="muted" numberOfLines={1}>
-            {video.loan_officer_name} • {formattedDate}
+            {video.user_name} • {formattedDate}
           </Text>
           <View style={styles.cardFooter}>
             <View
@@ -94,7 +92,7 @@ const VideoCard = React.memo(function VideoCard({ video, onPress, canApprove }: 
             </View>
             {video.sentiment_label && (
               <View style={styles.sentimentBadge}>
-                <Ionicons
+                <Icon
                   name={video.sentiment_label === 'positive' ? 'happy' : 'sad'}
                   size={14}
                   color={video.sentiment_label === 'positive' ? colors.success : colors.warning}
@@ -104,7 +102,7 @@ const VideoCard = React.memo(function VideoCard({ video, onPress, canApprove }: 
           </View>
         </CardContent>
       </Card>
-    </TouchableOpacity>
+    </Pressable>
   );
 });
 
@@ -112,6 +110,131 @@ interface StatsCardProps {
   label: string;
   value: number;
   color?: string;
+}
+
+interface StatsItem {
+  label: string;
+  value: number;
+  color?: string;
+}
+
+interface VideoTestimonialsState {
+  refreshing: boolean;
+  isLoading: boolean;
+  videos: VideoTestimonialResponse[];
+  stats: VideoTestimonialStats | null;
+  activeFilter: FilterTab;
+  canApprove: boolean;
+  error: string | null;
+}
+
+const initialVideoTestimonialsState: VideoTestimonialsState = {
+  refreshing: false,
+  isLoading: true,
+  videos: [],
+  stats: null,
+  activeFilter: 'all',
+  canApprove: false,
+  error: null,
+};
+
+const STAT_COLORS = {
+  published: '#3b82f6',
+};
+
+const keyStatsItem = (item: StatsItem) => item.label;
+const keyFilterTab = (item: { key: FilterTab }) => item.key;
+
+function StatsList({ items }: { items: StatsItem[] }) {
+  const renderStat = useCallback(
+    ({ item }: { item: StatsItem }) => (
+      <StatsCard label={item.label} value={item.value} color={item.color} />
+    ),
+    []
+  );
+
+  return (
+    <FlatList
+      data={items}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.statsRow}
+      contentContainerStyle={styles.statsRowContent}
+      keyExtractor={keyStatsItem}
+      renderItem={renderStat}
+    />
+  );
+}
+
+const FilterPill = React.memo(function FilterPill({
+  tab,
+  active,
+  activeColor,
+  onSelect,
+}: {
+  tab: { key: FilterTab; label: string };
+  active: boolean;
+  activeColor: string;
+  onSelect: (key: FilterTab) => void;
+}) {
+  const handlePress = useCallback(() => {
+    onSelect(tab.key);
+  }, [onSelect, tab.key]);
+
+  return (
+    <Pressable
+      style={[
+        styles.filterTab,
+        active && styles.filterTabActive,
+        active && { borderColor: activeColor },
+      ]}
+      onPress={handlePress}
+    >
+      <Text
+        variant="small"
+        style={[
+          styles.filterTabText,
+          active && { color: activeColor },
+        ]}
+      >
+        {tab.label}
+      </Text>
+    </Pressable>
+  );
+});
+
+function FilterTabs({
+  activeFilter,
+  activeColor,
+  onSelect,
+}: {
+  activeFilter: FilterTab;
+  activeColor: string;
+  onSelect: (key: FilterTab) => void;
+}) {
+  const renderFilter = useCallback(
+    ({ item }: { item: { key: FilterTab; label: string } }) => (
+      <FilterPill
+        tab={item}
+        active={activeFilter === item.key}
+        activeColor={activeColor}
+        onSelect={onSelect}
+      />
+    ),
+    [activeFilter, activeColor, onSelect]
+  );
+
+  return (
+    <FlatList
+      data={FILTER_TABS}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.filterRow}
+      contentContainerStyle={styles.filterRowContent}
+      keyExtractor={keyFilterTab}
+      renderItem={renderFilter}
+    />
+  );
 }
 
 function StatsCard({ label, value, color }: StatsCardProps) {
@@ -132,22 +255,19 @@ function StatsCard({ label, value, color }: StatsCardProps) {
 
 export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
   const colors = Colors.light;
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [videos, setVideos] = useState<VideoTestimonialResponse[]>([]);
-  const [stats, setStats] = useState<VideoTestimonialStats | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
-  const [canApprove, setCanApprove] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<VideoTestimonialsState>(initialVideoTestimonialsState);
+
+  const updateState = useCallback((nextState: Partial<VideoTestimonialsState>) => {
+    setState((current) => ({ ...current, ...nextState }));
+  }, []);
 
   const fetchVideos = useCallback(async (showLoader = true) => {
     try {
-      if (showLoader) setLoading(true);
-      setError(null);
+      updateState({ isLoading: showLoader ? true : state.isLoading, error: null });
 
       // Fetch profile and videos in parallel for better performance
-      const params = activeFilter !== 'all'
-        ? { approvalStatus: activeFilter }
+      const params = state.activeFilter !== 'all'
+        ? { approvalStatus: state.activeFilter }
         : undefined;
 
       const [profile, result] = await Promise.all([
@@ -155,26 +275,27 @@ export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
         getVideoTestimonialResponses(params),
       ]);
 
-      setCanApprove(profile?.role === 'admin' || profile?.role === 'manager');
-      setVideos(result.responses);
-      setStats(result.stats);
+      updateState({
+        canApprove: profile?.role === 'admin' || profile?.role === 'manager',
+        videos: result.responses,
+        stats: result.stats,
+      });
     } catch (err) {
       console.error('Error fetching videos:', err);
-      setError('Failed to load videos. Pull down to retry.');
+      updateState({ error: 'Failed to load videos. Pull down to retry.' });
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      updateState({ isLoading: false, refreshing: false });
     }
-  }, [activeFilter]);
+  }, [state.activeFilter, state.isLoading, updateState]);
 
   useEffect(() => {
     fetchVideos();
   }, [fetchVideos]);
 
   const onRefresh = useCallback(() => {
-    setRefreshing(true);
+    updateState({ refreshing: true });
     fetchVideos(false);
-  }, [fetchVideos]);
+  }, [fetchVideos, updateState]);
 
   const handleVideoPress = useCallback((video: VideoTestimonialResponse) => {
     navigation.navigate('VideoDetail', { videoId: video.id });
@@ -184,79 +305,56 @@ export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
     navigation.navigate('CreateRequest');
   }, [navigation]);
 
+  const handleSelectFilter = useCallback((activeFilter: FilterTab) => {
+    updateState({ activeFilter });
+  }, [updateState]);
+
   const renderVideo = useCallback(
     ({ item }: { item: VideoTestimonialResponse }) => (
       <VideoCard
         video={item}
-        onPress={() => handleVideoPress(item)}
-        canApprove={canApprove}
+        onPress={handleVideoPress}
       />
     ),
-    [handleVideoPress, canApprove]
+    [handleVideoPress]
   );
 
   const ListHeader = useCallback(() => (
     <View style={styles.listHeader}>
       {/* Stats Row */}
-      {stats && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.statsRow}
-          contentContainerStyle={styles.statsRowContent}
-        >
-          <StatsCard label="Total" value={stats.total} />
-          <StatsCard label="Pending" value={stats.pending} color={colors.warning} />
-          <StatsCard label="Approved" value={stats.approved} color={colors.success} />
-          <StatsCard label="Published" value={stats.published} color="#3b82f6" />
-        </ScrollView>
+      {state.stats && (
+        <StatsList
+          items={[
+            { label: 'Total', value: state.stats.total },
+            { label: 'Pending', value: state.stats.pending, color: colors.warning },
+            { label: 'Approved', value: state.stats.approved, color: colors.success },
+            { label: 'Published', value: state.stats.published, color: STAT_COLORS.published },
+          ]}
+        />
       )}
 
       {/* Filter Tabs */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterRow}
-        contentContainerStyle={styles.filterRowContent}
-      >
-        {FILTER_TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab.key}
-            style={[
-              styles.filterTab,
-              activeFilter === tab.key && styles.filterTabActive,
-              activeFilter === tab.key && { borderColor: colors.primary },
-            ]}
-            onPress={() => setActiveFilter(tab.key)}
-          >
-            <Text
-              variant="small"
-              style={[
-                styles.filterTabText,
-                activeFilter === tab.key && { color: colors.primary },
-              ]}
-            >
-              {tab.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <FilterTabs
+        activeFilter={state.activeFilter}
+        activeColor={colors.primary}
+        onSelect={handleSelectFilter}
+      />
     </View>
-  ), [stats, activeFilter, colors]);
+  ), [state.stats, state.activeFilter, colors, handleSelectFilter]);
 
   const ListEmpty = useCallback(() => (
     <Card style={styles.emptyCard}>
       <CardContent style={styles.emptyContent}>
-        <Ionicons name="videocam-outline" size={48} color={colors.mutedForeground} />
+        <Icon name="videocam-outline" size={48} color={colors.mutedForeground} />
         <Text variant="h4" style={styles.emptyTitle}>
           No videos yet
         </Text>
         <Text variant="muted" style={styles.emptyText}>
-          {activeFilter === 'all'
+          {state.activeFilter === 'all'
             ? 'Video testimonials will appear here once customers submit them.'
-            : `No ${activeFilter} videos found.`}
+            : `No ${state.activeFilter} videos found.`}
         </Text>
-        {canApprove && (
+        {state.canApprove && (
           <Button
             variant="outline"
             style={styles.emptyButton}
@@ -267,9 +365,9 @@ export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
         )}
       </CardContent>
     </Card>
-  ), [activeFilter, canApprove, handleCreateRequest, colors]);
+  ), [state.activeFilter, state.canApprove, handleCreateRequest, colors]);
 
-  if (loading && !refreshing) {
+  if (state.isLoading && !state.refreshing) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.header}>
@@ -277,7 +375,7 @@ export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text variant="muted" style={styles.loadingText}>Loading videos...</Text>
+          <Text variant="muted" style={styles.loadingText}>Loading videos…</Text>
         </View>
       </SafeAreaView>
     );
@@ -288,31 +386,31 @@ export function VideoTestimonialsScreen({ navigation }: { navigation: any }) {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Text variant="h2">Video Testimonials</Text>
-          {canApprove && (
-            <TouchableOpacity
+          {state.canApprove && (
+            <Pressable
               style={[styles.addButton, { backgroundColor: colors.primary }]}
               onPress={handleCreateRequest}
             >
-              <Ionicons name="add" size={24} color={colors.primaryForeground} />
-            </TouchableOpacity>
+              <Icon name="add" size={24} color={colors.primaryForeground} />
+            </Pressable>
           )}
         </View>
-        {error && (
+        {state.error && (
           <View style={[styles.errorBanner, { backgroundColor: colors.destructive + '20' }]}>
-            <Text variant="small" style={{ color: colors.destructive }}>{error}</Text>
+            <Text variant="small" style={{ color: colors.destructive }}>{state.error}</Text>
           </View>
         )}
       </View>
 
       <FlatList
-        data={videos}
+        data={state.videos}
         renderItem={renderVideo}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={ListHeader}
         ListEmptyComponent={ListEmpty}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={state.refreshing} onRefresh={onRefresh} />
         }
         showsVerticalScrollIndicator={false}
       />

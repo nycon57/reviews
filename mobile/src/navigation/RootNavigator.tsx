@@ -12,7 +12,7 @@ export function RootNavigator() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <LoadingScreen message="Loading..." />;
+    return <LoadingScreen message="Loading…" />;
   }
 
   return (

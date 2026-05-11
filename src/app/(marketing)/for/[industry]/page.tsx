@@ -6,7 +6,6 @@ import {
 } from "@/config/industry-pages";
 import { getBaseUrl } from "@/lib/seo";
 import { buildIndustryBreadcrumbs } from "@/lib/seo/marketing-breadcrumbs";
-import { MarketingBreadcrumbs } from "@/components/shared/marketing-breadcrumbs";
 import { IndustryLandingPage } from "./industry-landing-page";
 
 interface PageProps {
@@ -56,16 +55,12 @@ export default async function IndustryPage({ params }: PageProps) {
   }
 
   const baseUrl = getBaseUrl();
-  const { items, schema } = buildIndustryBreadcrumbs(config, baseUrl);
+  const { schema } = buildIndustryBreadcrumbs(config, baseUrl);
 
   return (
     <>
-      {/* BreadcrumbList JSON-LD — safe: sourced from static build-time industry config */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-      />
-      <MarketingBreadcrumbs items={items} />
+      {/* BreadcrumbList JSON-LD is sourced from static build-time industry config. */}
+      <script type="application/ld+json">{JSON.stringify(schema)}</script>
       <IndustryLandingPage config={config} />
     </>
   );

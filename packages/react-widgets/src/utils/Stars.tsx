@@ -23,6 +23,8 @@ function StarSVG({ filled, color }: { filled: boolean; color: string }) {
   );
 }
 
+const STAR_KEYS = ["star-1", "star-2", "star-3", "star-4", "star-5"];
+
 function PartialStar({
   fraction,
   filledColor,
@@ -67,21 +69,21 @@ export function Stars({
       aria-label={`${rating.toFixed(1)} out of 5 stars`}
       style={{ display: "inline-flex", gap: 2, alignItems: "center" }}
     >
-      {Array.from({ length: 5 }, (_, i) => {
+      {STAR_KEYS.map((key, i) => {
         if (i < fullCount) {
-          return <StarSVG key={i} filled color={filledColor} />;
+          return <StarSVG key={key} filled color={filledColor} />;
         }
         if (partial && i === fullCount && fraction > 0.05) {
           return (
             <PartialStar
-              key={i}
+              key={key}
               fraction={fraction}
               filledColor={filledColor}
               emptyColor={emptyColor}
             />
           );
         }
-        return <StarSVG key={i} filled={false} color={emptyColor} />;
+        return <StarSVG key={key} filled={false} color={emptyColor} />;
       })}
     </span>
   );

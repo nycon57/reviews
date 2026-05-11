@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../components/ui';
 import { HomeScreen, ReviewsScreen, SettingsScreen } from '../screens/main';
 import { VideoNavigator } from './VideoNavigator';
 import { Colors } from '../constants/colors';
@@ -44,7 +44,7 @@ export function TabNavigator() {
               iconName = 'home-outline';
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Icon name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,

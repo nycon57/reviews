@@ -6,7 +6,7 @@ import {
   Platform,
   ScrollView,
   Alert,
-  TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -22,7 +22,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   const colors = Colors.light;
 
   const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [resetPending, setResetPending] = useState(false);
   const [error, setError] = useState('');
 
   const validate = useCallback(() => {
@@ -41,7 +41,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   const handleResetPassword = useCallback(async () => {
     if (!validate()) return;
 
-    setIsLoading(true);
+    setResetPending(true);
     try {
       await resetPassword(email.trim());
       Alert.alert(
@@ -53,7 +53,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       const message = err instanceof Error ? err.message : 'Failed to send reset email';
       Alert.alert('Error', message);
     } finally {
-      setIsLoading(false);
+      setResetPending(false);
     }
   }, [email, resetPassword, validate, navigation]);
 
@@ -91,7 +91,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
 
               <Button
                 onPress={handleResetPassword}
-                isLoading={isLoading}
+                isLoading={resetPending}
                 style={styles.button}
               >
                 <Text variant="body">Send Reset Link</Text>
@@ -99,12 +99,12 @@ export function ForgotPasswordScreen({ navigation }: Props) {
             </CardContent>
           </Card>
 
-          <TouchableOpacity
+          <Pressable
             onPress={() => navigation.navigate('Login')}
             style={styles.backLink}
           >
             <Text variant="muted">Back to Sign In</Text>
-          </TouchableOpacity>
+          </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

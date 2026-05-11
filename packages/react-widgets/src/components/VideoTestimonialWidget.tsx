@@ -62,8 +62,8 @@ function VideoPlayer({
 
       {transcriptPosition !== "hidden" && testimonial.transcript && testimonial.transcript.length > 0 && (
         <div className="rw-video__transcript">
-          {testimonial.transcript.map((seg, i) => (
-            <p key={i} className="rw-video__transcript-seg">
+          {testimonial.transcript.map((seg) => (
+            <p key={`${seg.start}-${seg.end}-${seg.text}`} className="rw-video__transcript-seg">
               {seg.text}
             </p>
           ))}

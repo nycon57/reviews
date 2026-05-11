@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text as RNText, StyleSheet, type TextProps as RNTextProps, type TextStyle } from 'react-native';
+import { Text as RNText, type TextProps as RNTextProps, type TextStyle } from 'react-native';
 import { Colors } from '../../constants/colors';
 
 export interface TextProps extends RNTextProps {
@@ -85,5 +85,3 @@ export function Text({
     </RNText>
   );
 }
-
-const styles = StyleSheet.create({});

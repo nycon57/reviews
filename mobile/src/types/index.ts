@@ -125,8 +125,8 @@ export interface VideoTestimonialResponse {
   request_id: string;
   organization_id: string;
   user_id: string;
-  video_url: string;
-  video_path: string;
+  video_url: string | null;
+  video_path: string | null;
   thumbnail_url: string | null;
   duration_seconds: number | null;
   file_size_bytes: number | null;

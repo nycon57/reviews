@@ -30,6 +30,18 @@ RETURNS BOOLEAN AS $$
   )
 $$ LANGUAGE SQL SECURITY DEFINER STABLE;
 
+-- Helper function to get current user's role
+CREATE OR REPLACE FUNCTION get_user_role()
+RETURNS TEXT AS $$
+  SELECT role FROM users WHERE id = auth.uid()
+$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+
+-- Helper function to get current user's active status
+CREATE OR REPLACE FUNCTION get_user_is_active()
+RETURNS BOOLEAN AS $$
+  SELECT is_active FROM users WHERE id = auth.uid()
+$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+
 -- ============================================
 -- ORGANIZATIONS POLICIES
 -- ============================================
@@ -60,6 +72,12 @@ CREATE POLICY "users_view_same_org" ON users
 CREATE POLICY "users_update_own_profile" ON users
   FOR UPDATE USING (
     id = auth.uid()
+  )
+  WITH CHECK (
+    id = auth.uid()
+    AND organization_id = get_user_organization_id()
+    AND role = get_user_role()
+    AND is_active = get_user_is_active()
   );
 
 -- Admins can insert new users in their org

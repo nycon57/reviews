@@ -218,6 +218,7 @@ async function getVideoTestimonialProps(
       )
     `)
     .eq("id", request.videoResponseId)
+    .eq("organization_id", request.organizationId)
     .single();
 
   if (error || !response) {
@@ -299,6 +300,7 @@ async function getTextTestimonialProps(
       )
     `)
     .eq("id", request.testimonialId)
+    .eq("organization_id", request.organizationId)
     .single();
 
   if (error || !testimonial) {
@@ -350,6 +352,7 @@ async function getLeaderboardCelebrationProps(
       .from("users")
       .select("id, full_name, photo_url")
       .eq("id", request.userId)
+      .eq("organization_id", request.organizationId)
       .single();
 
     // Fetch their stats
@@ -357,6 +360,7 @@ async function getLeaderboardCelebrationProps(
       .from("leaderboard_snapshots")
       .select("reputation_score, rank, total_reviews, average_rating")
       .eq("user_id", request.userId)
+      .eq("organization_id", request.organizationId)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -554,6 +558,7 @@ async function getSocialClipProps(
         )
       `)
       .eq("id", request.sourceId)
+      .eq("organization_id", request.organizationId)
       .single();
 
     if (data) {
@@ -566,6 +571,7 @@ async function getSocialClipProps(
       .from("reviews")
       .select("text, customer_name, rating")
       .eq("id", request.sourceId)
+      .eq("organization_id", request.organizationId)
       .single();
 
     if (data) {
@@ -618,6 +624,7 @@ async function getVideoThumbnailProps(
       )
     `)
     .eq("id", request.videoResponseId)
+    .eq("organization_id", request.organizationId)
     .single();
 
   if (error || !response) {

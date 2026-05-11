@@ -31,13 +31,11 @@ function slugify(text: string): string {
 }
 
 /**
- * Get base URL from request headers (handles any port in dev or prod domain)
+ * Trusted app URL for security-sensitive links (e.g. password reset emails).
+ * Must never be derived from request headers.
  */
-async function getBaseUrl(): Promise<string> {
-  const headersList = await headers();
-  const host = headersList.get("host") || "localhost:3000";
-  const protocol = headersList.get("x-forwarded-proto") || "http";
-  return `${protocol}://${host}`;
+function getTrustedAppUrl(): string {
+  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
 }
 
 /**
@@ -198,9 +196,9 @@ export async function signInWithMagicLinkBetterAuth(
 
   try {
     // Call the magic link endpoint directly
-    const baseUrl = await getBaseUrl();
+    const appUrl = getTrustedAppUrl();
     const response = await fetch(
-      `${baseUrl}/api/auth/sign-in/magic-link`,
+      `${appUrl}/api/auth/sign-in/magic-link`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -244,13 +242,13 @@ export async function resetPasswordBetterAuth(
 
   try {
     // Call the forget password endpoint directly
-    const baseUrl = await getBaseUrl();
-    const response = await fetch(`${baseUrl}/api/auth/forget-password`, {
+    const appUrl = getTrustedAppUrl();
+    const response = await fetch(`${appUrl}/api/auth/forget-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email,
-        redirectTo: `${baseUrl}/reset-password`,
+        redirectTo: `${appUrl}/reset-password`,
       }),
     });
 
@@ -375,9 +373,9 @@ export async function resendVerificationEmailBetterAuth(): Promise<AuthResult> {
     }
 
     // Call the send verification email endpoint directly
-    const baseUrl = await getBaseUrl();
+    const appUrl = getTrustedAppUrl();
     const response = await fetch(
-      `${baseUrl}/api/auth/send-verification-email`,
+      `${appUrl}/api/auth/send-verification-email`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

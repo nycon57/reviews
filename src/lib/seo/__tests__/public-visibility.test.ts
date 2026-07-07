@@ -77,7 +77,7 @@ describe("public visibility queries in seo actions", () => {
     expect(usersChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(usersChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(usersChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(usersChain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+    expect(usersChain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
   });
 
   it("applies public visibility filters to sitemap user queries", async () => {
@@ -102,7 +102,7 @@ describe("public visibility queries in seo actions", () => {
       expect(chain.neq).toHaveBeenCalledWith("role", "manager");
       expect(chain.neq).toHaveBeenCalledWith("role", "enterprise");
       expect(chain.neq).not.toHaveBeenCalledWith("role", "admin");
-      expect(chain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+      expect(chain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
     }
 
     expect(slugChain.not).toHaveBeenCalledWith("slug", "is", null);
@@ -171,7 +171,7 @@ describe("public visibility queries in seo actions", () => {
     expect(branchUsersChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(branchUsersChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(branchUsersChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(branchUsersChain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+    expect(branchUsersChain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
   });
 
   it("applies public visibility filters to the public professional list", async () => {
@@ -191,6 +191,6 @@ describe("public visibility queries in seo actions", () => {
     expect(usersChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(usersChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(usersChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(usersChain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+    expect(usersChain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
   });
 });

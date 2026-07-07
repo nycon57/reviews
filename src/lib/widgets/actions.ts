@@ -96,7 +96,7 @@ async function getAuthedUserContext(
 
   const { data: userData, error: userError } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id, role")
+    .select("organization_id, role, organizations(account_type)")
     .eq("id", user.id)
     .single();
 
@@ -104,13 +104,14 @@ async function getAuthedUserContext(
     return { success: false, error: "Organization not found" };
   }
 
-  // Resolve organization ID: enterprise uses organization_id, individual uses individual_organization_id
-  const orgId = userData?.organization_id || userData?.individual_organization_id;
+  // Single path (ADR 0006): one org per account; account_type discriminates.
+  const orgId = userData?.organization_id;
   if (!orgId) {
     return { success: false, error: "Organization not found" };
   }
 
-  const isIndividual = !userData.organization_id && !!userData.individual_organization_id;
+  const isIndividual =
+    (userData.organizations as { account_type?: string } | null)?.account_type === "individual";
 
   // Enterprise users need admin/manager role; individual users (always admin of their own org) pass through
   if (!isIndividual && userData.role !== "admin" && userData.role !== "manager") {

@@ -97,15 +97,15 @@ async function requireSurveyAccess(): Promise<ActionResult | null> {
   return null; // No error — access granted
 }
 
-/** Resolve the caller's organization ID (works for both individual + enterprise) */
+/** Resolve the caller's organization ID (one org per account — ADR 0006). */
 async function resolveOrgId(supabase: ReturnType<typeof createAdminClient>, userId: string): Promise<string | null> {
   const { data: userData } = await supabase
     .from("users")
-    .select("organization_id, individual_organization_id")
+    .select("organization_id")
     .eq("id", userId)
     .single();
 
-  return userData?.organization_id || userData?.individual_organization_id || null;
+  return userData?.organization_id || null;
 }
 
 // Get all survey templates for the current organization

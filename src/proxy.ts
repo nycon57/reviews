@@ -22,6 +22,12 @@ interface RouteConfig {
   requiresEnterprise?: boolean;
   /** Requires admin role within enterprise account */
   requiresEnterpriseAdmin?: boolean;
+  /**
+   * Requires org-admin access: individual account owners (their own admin) OR
+   * enterprise admins. Mirrors `requireIndividualOrEnterpriseAdmin` so the
+   * middleware and the page guard agree (ADR 0007).
+   */
+  requiresOrgAdmin?: boolean;
 }
 
 // Tier hierarchy for comparison
@@ -42,8 +48,9 @@ const roleProtectedRoutes: RouteConfig[] = [
   { path: "/dashboard/recognition", requiresEnterprise: true },
   { path: "/dashboard/analytics/leaderboard", requiresEnterprise: true },
 
-  // Enterprise admin only routes
-  { path: "/dashboard/organization", requiresEnterpriseAdmin: true },
+  // Org-admin routes: individual owners AND enterprise admins (ADR 0007 —
+  // individuals reach their own Workspace/org area; the page guard agrees).
+  { path: "/dashboard/organization", requiresOrgAdmin: true },
   // Note: /dashboard/surveys access control is handled at the page level (open to individuals + enterprise admins)
 
   // Pro tier features (available to pro individuals and all enterprise users)
@@ -222,14 +229,14 @@ export async function proxy(request: NextRequest) {
   }
 
   // Fetch user data once for both onboarding and access checks
-  let cachedUserData: { role: string | null; organization_id: string | null; individual_organization_id: string | null; address: unknown } | null = null;
+  let cachedUserData: { role: string | null; organization_id: string | null } | null = null;
   let cachedOrgData: { subscription_tier: string | null; account_type: string | null; onboarding_status: string | null } | null = null;
 
   if (user && supabase && isProtectedPath) {
     // Fetch user data using .limit(1) instead of .single() to avoid PGRST116 errors
     const { data: userRows, error: userQueryError } = await supabase
       .from("users")
-      .select("role, organization_id, individual_organization_id, address")
+      .select("role, organization_id")
       .eq("id", user.id)
       .limit(1);
 
@@ -238,7 +245,9 @@ export async function proxy(request: NextRequest) {
     } else if (userRows && userRows.length > 0) {
       cachedUserData = userRows[0];
 
-      // Fetch organization data if user has an enterprise organization
+      // Single path (ADR 0006): every account has one organizations row, and
+      // account_type discriminates individual vs enterprise. subscription_tier
+      // and onboarding_status are read straight from it for both.
       if (cachedUserData?.organization_id) {
         const { data: orgRows, error: orgQueryError } = await supabase
           .from("organizations")
@@ -251,44 +260,6 @@ export async function proxy(request: NextRequest) {
         } else if (orgRows && orgRows.length > 0) {
           cachedOrgData = orgRows[0];
         }
-      } else if (cachedUserData?.individual_organization_id) {
-        // Individual user — fetch onboarding_status from individual_organizations
-        const { data: indivOrgRows, error: indivOrgError } = await supabase
-          .from("individual_organizations")
-          .select("name, onboarding_status")
-          .eq("id", cachedUserData.individual_organization_id)
-          .limit(1);
-
-        if (indivOrgError) {
-          console.error(`[Middleware] Individual org query error:`, indivOrgError.message);
-        }
-
-        // Individuals keep organization_id for backward compat; their real
-        // subscription tier lives on the organizations row (billing's source),
-        // so read it instead of assuming "basic" and gating out paying users.
-        let individualTier = "basic";
-        if (cachedUserData.organization_id) {
-          const { data: orgTierRows } = await supabase
-            .from("organizations")
-            .select("subscription_tier")
-            .eq("id", cachedUserData.organization_id)
-            .limit(1);
-          const orgTier = (orgTierRows?.[0] as Record<string, unknown>)?.subscription_tier as string | undefined;
-          if (orgTier) individualTier = orgTier;
-        }
-
-        const indivOnboardingStatus = (indivOrgRows?.[0] as Record<string, unknown>)?.onboarding_status as string | null;
-
-        // Use address from the initial users query as fallback for profile completion check
-        const hasAddress = cachedUserData.address &&
-          typeof cachedUserData.address === "object" &&
-          (cachedUserData.address as Record<string, unknown>).city;
-
-        cachedOrgData = {
-          subscription_tier: individualTier,
-          account_type: "individual",
-          onboarding_status: (indivOnboardingStatus !== null && indivOnboardingStatus !== '') ? indivOnboardingStatus : (hasAddress ? "completed" : "payment_complete"),
-        };
       }
     }
   }
@@ -310,7 +281,7 @@ export async function proxy(request: NextRequest) {
       request.nextUrl.pathname.startsWith(route.path)
     );
 
-    if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin) {
+    if (routeConfig?.allowedRoles || routeConfig?.minTier || routeConfig?.requiresEnterprise || routeConfig?.requiresEnterpriseAdmin || routeConfig?.requiresOrgAdmin) {
       // Default to "user" role if not set (consistent with access module)
       // Also handle legacy "loan_officer" role by treating it as "user"
       const rawRole = cachedUserData?.role;
@@ -332,6 +303,19 @@ export async function proxy(request: NextRequest) {
       // Check if route requires enterprise admin
       if (routeConfig.requiresEnterpriseAdmin) {
         if (accountType !== "enterprise" || userRole !== "admin") {
+          const redirectUrl = new URL("/dashboard", request.url);
+          redirectUrl.searchParams.set("error", "admin_only");
+          return NextResponse.redirect(redirectUrl);
+        }
+      }
+
+      // Check if route requires org-admin access (individual owners OR
+      // enterprise admins). Enterprise non-admins are bounced; individuals pass.
+      if (routeConfig.requiresOrgAdmin) {
+        const isOrgAdmin =
+          accountType === "individual" ||
+          (accountType === "enterprise" && userRole === "admin");
+        if (!isOrgAdmin) {
           const redirectUrl = new URL("/dashboard", request.url);
           redirectUrl.searchParams.set("error", "admin_only");
           return NextResponse.redirect(redirectUrl);

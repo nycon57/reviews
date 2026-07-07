@@ -73,23 +73,27 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     return { success: false, error: "Failed to create user" };
   }
 
-  // Create individual organization for self-serve signup
-  // Uses individual_organizations table (not organizations — reserved for enterprise)
-  const { data: indivOrgData, error: indivOrgError } = await supabase
-    .from("individual_organizations")
+  // Create the organization for self-serve signup (ADR 0006: one organizations
+  // table; account_type discriminates). Self-serve accounts are 'individual' and
+  // skip plan + payment, so onboarding starts at the profile step.
+  const { data: orgData, error: orgError } = await supabase
+    .from("organizations")
     .insert({
       name: organizationName,
       slug: orgSlug,
+      account_type: "individual",
+      subscription_tier: "basic",
+      onboarding_status: "payment_complete",
     })
     .select()
     .single();
 
-  if (indivOrgError) {
-    console.error("Individual organization creation error:", indivOrgError);
+  if (orgError) {
+    console.error("Organization creation error:", orgError);
   }
 
   // Create the user record in our users table
-  if (indivOrgData) {
+  if (orgData) {
     // Generate SEO-friendly slug for the user
     let userSlug: string;
     try {
@@ -103,7 +107,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
       .from("users")
       .insert({
         id: authData.user.id,
-        individual_organization_id: indivOrgData.id,
+        organization_id: orgData.id,
         email: email,
         full_name: fullName,
         slug: userSlug,
@@ -116,7 +120,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
       console.error("User record creation error:", userError);
     }
 
-    // Skip widget seeding for individual orgs — widgets require enterprise organization_id
+    // Widget seeding is intentionally skipped here; individual accounts seed on demand.
   }
 
   return {

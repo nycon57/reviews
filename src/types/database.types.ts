@@ -2874,110 +2874,6 @@ export type Database = {
           },
         ]
       }
-      individual_branches: {
-        Row: {
-          address: Json | null
-          created_at: string
-          email: string | null
-          id: string
-          individual_organization_id: string
-          is_active: boolean
-          latitude: number | null
-          longitude: number | null
-          name: string
-          phone: string | null
-          region: string | null
-          slug: string
-          updated_at: string
-          website_url: string | null
-        }
-        Insert: {
-          address?: Json | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          individual_organization_id: string
-          is_active?: boolean
-          latitude?: number | null
-          longitude?: number | null
-          name: string
-          phone?: string | null
-          region?: string | null
-          slug: string
-          updated_at?: string
-          website_url?: string | null
-        }
-        Update: {
-          address?: Json | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          individual_organization_id?: string
-          is_active?: boolean
-          latitude?: number | null
-          longitude?: number | null
-          name?: string
-          phone?: string | null
-          region?: string | null
-          slug?: string
-          updated_at?: string
-          website_url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "individual_branches_individual_organization_id_fkey"
-            columns: ["individual_organization_id"]
-            isOneToOne: false
-            referencedRelation: "individual_organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      individual_organizations: {
-        Row: {
-          address: Json | null
-          created_at: string
-          email: string | null
-          id: string
-          industry: string | null
-          logo_url: string | null
-          name: string
-          onboarding_status: string | null
-          phone: string | null
-          slug: string
-          updated_at: string
-          website_url: string | null
-        }
-        Insert: {
-          address?: Json | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          industry?: string | null
-          logo_url?: string | null
-          name: string
-          onboarding_status?: string | null
-          phone?: string | null
-          slug: string
-          updated_at?: string
-          website_url?: string | null
-        }
-        Update: {
-          address?: Json | null
-          created_at?: string
-          email?: string | null
-          id?: string
-          industry?: string | null
-          logo_url?: string | null
-          name?: string
-          onboarding_status?: string | null
-          phone?: string | null
-          slug?: string
-          updated_at?: string
-          website_url?: string | null
-        }
-        Relationships: []
-      }
       invitations: {
         Row: {
           created_at: string | null
@@ -8200,8 +8096,6 @@ export type Database = {
           google_place_id: string | null
           hire_date: string | null
           id: string
-          individual_branch_id: string | null
-          individual_organization_id: string | null
           industry: string | null
           instagram_url: string | null
           is_active: boolean | null
@@ -8259,8 +8153,6 @@ export type Database = {
           google_place_id?: string | null
           hire_date?: string | null
           id: string
-          individual_branch_id?: string | null
-          individual_organization_id?: string | null
           industry?: string | null
           instagram_url?: string | null
           is_active?: boolean | null
@@ -8318,8 +8210,6 @@ export type Database = {
           google_place_id?: string | null
           hire_date?: string | null
           id?: string
-          individual_branch_id?: string | null
-          individual_organization_id?: string | null
           industry?: string | null
           instagram_url?: string | null
           is_active?: boolean | null
@@ -8364,20 +8254,6 @@ export type Database = {
             columns: ["department_id"]
             isOneToOne: false
             referencedRelation: "departments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "users_individual_branch_id_fkey"
-            columns: ["individual_branch_id"]
-            isOneToOne: false
-            referencedRelation: "individual_branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "users_individual_organization_id_fkey"
-            columns: ["individual_organization_id"]
-            isOneToOne: false
-            referencedRelation: "individual_organizations"
             referencedColumns: ["id"]
           },
           {

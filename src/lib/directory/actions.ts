@@ -136,9 +136,8 @@ const PROFESSIONAL_SELECT = `
   latitude,
   longitude,
   organization_id,
-  individual_organization_id,
   role,
-  organizations (
+  organizations!inner (
     id,
     name,
     slug,
@@ -152,11 +151,6 @@ const PROFESSIONAL_SELECT = `
     latitude,
     longitude,
     address
-  ),
-  individual_organizations (
-    id,
-    name,
-    slug
   )
 ` as const;
 
@@ -183,11 +177,6 @@ function transformRecord(
     account_type: string | null;
     subscription_tier: string | null;
   } | null;
-  const indivOrg = record.individual_organizations as {
-    id: string;
-    name: string;
-    slug: string;
-  } | null;
   const branchData = record.branches as {
     id: string;
     name: string;
@@ -206,9 +195,7 @@ function transformRecord(
 
   const effectiveOrg = org
     ? { id: org.id, name: org.name, slug: org.slug, logo_url: org.logo_url, industry: null }
-    : indivOrg
-      ? { id: indivOrg.id, name: indivOrg.name, slug: indivOrg.slug, logo_url: null, industry: null }
-      : null;
+    : null;
 
   const safeAddress = sanitizePublicAddress(
     record.address as DirectoryProfessional["address"]
@@ -440,7 +427,7 @@ async function buildFacets(supabase: ReturnType<typeof createAdminClient>) {
   const { data: stateData } = await applyPublicProfessionalFilters(
     supabase
       .from("users")
-      .select("address")
+      .select("address, organizations!inner(account_type)")
   );
 
   const stateCounts = new Map<string, number>();

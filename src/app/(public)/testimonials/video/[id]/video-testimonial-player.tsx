@@ -42,12 +42,15 @@ interface VideoTestimonialPlayerProps {
   video: PublicVideoTestimonial;
   pageUrl: string;
   embedUrl: string;
+  /** Optional landing-page content rendered below the player card (e.g. contact card on smart links). */
+  belowContent?: React.ReactNode;
 }
 
 export function VideoTestimonialPlayer({
   video,
   pageUrl,
   embedUrl,
+  belowContent,
 }: VideoTestimonialPlayerProps) {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -323,6 +326,8 @@ export function VideoTestimonialPlayer({
             </div>
           </div>
         </motion.div>
+
+        {belowContent}
 
         {/* Footer */}
         <motion.footer

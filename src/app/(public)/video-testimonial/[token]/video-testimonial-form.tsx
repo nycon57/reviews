@@ -3,7 +3,6 @@
 import { useState, useTransition, useRef, useMemo, useEffect, useCallback } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,8 +34,19 @@ import {
   XCircle,
   UploadSimple as Upload,
   WarningCircle as AlertCircle,
+  Clock,
+  ArrowsClockwise,
+  Eye,
+  Sun,
+  ChatCircleText,
+  Quotes,
 } from "@phosphor-icons/react";
+import posthog from "posthog-js";
 import { VideoRecorder } from "@/components/video-testimonials/video-recorder";
+import { TestimonialShell, StepRail, ProBadge, Panel, firstName } from "./testimonial-shell";
+import { RatingStars } from "./rating-stars";
+import { HighPathThankYou } from "./high-path-thank-you";
+import { LowPathThankYou } from "./low-path-thank-you";
 
 interface VideoTestimonialFormProps {
   request: PublicVideoTestimonialRequest;
@@ -260,6 +270,12 @@ async function generateThumbnailFromVideo(videoBlob: Blob): Promise<Blob | null>
   });
 }
 
+const RECORDING_TIPS = [
+  { icon: Sun, text: "Face a window" },
+  { icon: Eye, text: "Camera at eye level" },
+  { icon: ChatCircleText, text: "Mention one specific outcome" },
+];
+
 const RELATIONSHIP_OPTIONS = [
   { value: "home_buyer", label: "Home Buyer" },
   { value: "refinancer", label: "Refinancer" },
@@ -276,6 +292,8 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   // Form state
   const [displayName, setDisplayName] = useState(request.customerName || "");
   const [relationship, setRelationship] = useState<RelationshipType | "">("");
+  const [rating, setRating] = useState(0);
+  const [celebration, setCelebration] = useState<boolean | null>(null);
   const [nilConsent, setNilConsent] = useState(false);
   const [usageRightsConsent, setUsageRightsConsent] = useState(false);
   const [aiTextGenerationConsent, setAiTextGenerationConsent] = useState(false);
@@ -285,7 +303,6 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   const [formState, setFormState] = useState<FormState>("preflight");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [preflightCopied, setPreflightCopied] = useState(false);
   const [deviceCheck, setDeviceCheck] = useState<DeviceCheckState>({
     browserSupported: true,
     mediaDevicesSupported: true,
@@ -316,14 +333,10 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     () => (organization.primaryColor ? { backgroundColor: organization.primaryColor } : undefined),
     [organization.primaryColor]
   );
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@repwell.com";
-  const requestNewLinkHref = useMemo(() => {
-    const subject = encodeURIComponent("Request new video testimonial link");
-    const body = encodeURIComponent(
-      `Please send me a new video testimonial link for ${organization.name}. Current customer email: ${request.customerEmail}.`
-    );
-    return `mailto:${supportEmail}?subject=${subject}&body=${body}`;
-  }, [organization.name, request.customerEmail, supportEmail]);
+
+  const customerFirst = firstName(displayName || request.customerName || "there");
+  const proFirst = firstName(professional.fullName);
+  const maxMinutes = Math.max(1, Math.round(request.maxDurationSeconds / 60));
 
   // Focus first input when returning from error state
   useEffect(() => {
@@ -336,6 +349,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
 
   // Validation
   const isFormValid =
+    rating >= 1 &&
     displayName.trim().length > 0 &&
     relationship.length > 0 &&
     nilConsent &&
@@ -369,17 +383,6 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     });
   }, []);
 
-  const handleCopyCurrentLink = useCallback(async () => {
-    try {
-      if (!navigator.clipboard) return;
-      await navigator.clipboard.writeText(window.location.href);
-      setPreflightCopied(true);
-      setTimeout(() => setPreflightCopied(false), 2000);
-    } catch {
-      // Ignore clipboard errors; user can still copy manually from browser address bar.
-    }
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
@@ -394,6 +397,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
         customerInfo: {
           displayName: displayName.trim(),
           relationship: relationship as RelationshipType,
+          rating,
         },
         consents: {
           nilConsent,
@@ -410,6 +414,14 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
       });
 
       if (result.success) {
+        posthog.capture("video_testimonial_consent_submitted", {
+          professional_id: professional.id,
+          organization_id: organization.id,
+          rating,
+          relationship,
+          marketing_consent: marketingConsent,
+        });
+        setCelebration(result.data?.celebration ?? null);
         await runDeviceCheck();
         setFormState("deviceCheck");
       } else {
@@ -423,7 +435,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
   const statusMessage = useMemo(() => {
     switch (formState) {
       case "preflight":
-        return "Video testimonial preflight instructions loaded.";
+        return "Video testimonial invitation loaded.";
       case "deviceCheck":
         return "Device compatibility check complete.";
       case "submitting":
@@ -470,12 +482,6 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
         (globalThis.crypto?.randomUUID?.() ||
           `vt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
 
-      console.log("[VideoTestimonial] Recording complete", {
-        size: blob.size,
-        type: blob.type,
-        durationSeconds,
-      });
-
       // Store blob for potential retry
       setPendingBlob(blob);
       setPendingDuration(durationSeconds);
@@ -491,13 +497,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
         setUploadSessionId(null);
 
         // 1. Generate thumbnail from video (don't block on failure)
-        console.log("[VideoTestimonial] Generating thumbnail...");
         const thumbnailBlob = await generateThumbnailFromVideo(blob);
-        if (thumbnailBlob) {
-          console.log("[VideoTestimonial] Thumbnail generated", { size: thumbnailBlob.size });
-        } else {
-          console.log("[VideoTestimonial] Thumbnail generation failed, proceeding without thumbnail");
-        }
 
         // 2. Get signed upload URLs for video and thumbnail
         const uploadUrlResult = await createVideoUploadUrls({
@@ -569,6 +569,12 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
         });
 
         if (result.success) {
+          posthog.capture("video_testimonial_completed", {
+            professional_id: professional.id,
+            organization_id: organization.id,
+            duration_seconds: durationSeconds,
+            file_size_bytes: blob.size,
+          });
           setFormState("completed");
         } else {
           setErrorMessage(result.error || "Processing failed");
@@ -591,7 +597,7 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
         setUploadStartedAt(null);
       }
     },
-    [request.token, submissionIdempotencyKey]
+    [request.token, submissionIdempotencyKey, organization.id, professional.id]
   );
 
   // Retry upload handler
@@ -714,344 +720,386 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
     [handleRecordingComplete, request.maxDurationSeconds]
   );
 
+  const orgFooter = organization.logoUrl ? (
+    <div className="mb-4 flex justify-center">
+      <img
+        src={organization.logoUrl}
+        alt={organization.name}
+        className="h-12 max-w-[220px] object-contain"
+      />
+    </div>
+  ) : undefined;
+
   // ===========================================================================
   // Conditional Renders - all hooks must be above this line
   // ===========================================================================
 
   if (formState === "preflight") {
     return (
-      <FormContainer statusMessage={statusMessage}>
-        <Card className="mx-auto max-w-lg shadow-lg">
-          <CardHeader variant="plain">
-            <CardTitle className="font-sans text-xl text-repwell-teal-500">
-              You Have a New Video Review Request
-            </CardTitle>
-            <CardDescription className="font-sans">
-              This usually takes 2-3 minutes. A stable internet connection works best.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-              <p className="font-sans font-medium text-repwell-teal-500">Before you start:</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5 font-sans text-muted-foreground">
-                <li>Use a quiet room with good lighting.</li>
-                <li>Have camera + microphone enabled.</li>
-                <li>Keep your testimonial under {Math.round(request.maxDurationSeconds / 60)} minutes.</li>
-              </ul>
-            </div>
+      <TestimonialShell statusMessage={statusMessage} footer={orgFooter}>
+        <div className="flex flex-1 animate-fade-in-up flex-col justify-center text-center">
+          {/* Professional portrait with decorative accent */}
+          <div className="relative mx-auto mb-7 h-24 w-24">
+            <div
+              aria-hidden
+              className="absolute -bottom-2 -right-2 h-9 w-9 rotate-12 rounded-xl bg-repwell-sage-200/70"
+            />
+            <div
+              aria-hidden
+              className="absolute -left-3 top-1 h-4 w-4 rounded-full bg-repwell-teal-300/50"
+            />
+            {professional.photoUrl ? (
+              <img
+                src={professional.photoUrl}
+                alt={professional.fullName}
+                className="relative z-10 h-24 w-24 rounded-full object-cover ring-4 ring-white shadow-medium"
+              />
+            ) : (
+              <div className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full bg-repwell-teal-400 font-display text-3xl text-white ring-4 ring-white shadow-medium">
+                {professional.fullName.charAt(0)}
+              </div>
+            )}
+          </div>
 
-            <div className="rounded-lg border border-repwell-sage-200/40 bg-repwell-sage-100/20 p-4 text-sm">
-              <p className="font-sans font-medium text-repwell-teal-500">Need to switch devices?</p>
-              <p className="mt-1 font-sans text-muted-foreground">
-                Open the original email on the other device, or copy this link now.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-3 w-full"
-                onClick={handleCopyCurrentLink}
+          <p className="font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-300">
+            A personal request from {professional.fullName}
+          </p>
+
+          <h1 className="mt-3 text-balance font-display text-4xl tracking-tight text-repwell-teal-500 sm:text-5xl">
+            {customerFirst}, will you share your story?
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-md font-sans text-base leading-relaxed text-repwell-teal-400">
+            {proFirst} would love a short video about your experience working together.
+            It takes a couple of minutes, and you can re-record as many times as you like.
+          </p>
+
+          {promptText && (
+            <figure className="relative mx-auto mt-8 max-w-md text-left">
+              <Quotes
+                weight="fill"
+                aria-hidden
+                className="absolute -left-2 -top-3 h-8 w-8 text-repwell-sage-200/50"
+              />
+              <blockquote className="rounded-2xl bg-repwell-sage-100/30 px-6 py-5">
+                <p className="font-display text-lg italic leading-relaxed text-repwell-teal-500">
+                  {promptText}
+                </p>
+                <figcaption className="mt-2 font-sans text-xs font-medium text-repwell-teal-300">
+                  {professional.fullName}
+                  {professional.title ? `, ${professional.title}` : ""}
+                </figcaption>
+              </blockquote>
+            </figure>
+          )}
+
+          {/* What to expect */}
+          <ul className="mx-auto mt-9 flex max-w-md flex-col items-start gap-3 text-left sm:flex-row sm:items-stretch sm:gap-0 sm:divide-x sm:divide-repwell-sage-100">
+            {[
+              { icon: Clock, text: `About ${maxMinutes <= 2 ? "two" : maxMinutes} minutes` },
+              { icon: ArrowsClockwise, text: "Re-record anytime" },
+              { icon: Eye, text: "Preview before you send" },
+            ].map(({ icon: Icon, text }) => (
+              <li
+                key={text}
+                className="flex items-center gap-2.5 sm:flex-1 sm:flex-col sm:gap-2 sm:px-4 sm:text-center"
               >
-                {preflightCopied ? "Link Copied" : "Copy Current Link"}
-              </Button>
-            </div>
+                <Icon weight="duotone" size={22} className="shrink-0 text-repwell-teal-300" />
+                <span className="font-sans text-sm text-repwell-teal-400">{text}</span>
+              </li>
+            ))}
+          </ul>
 
+          <div className="mt-10">
             <Button
               type="button"
-              className="w-full"
+              size="lg"
+              className="min-w-[240px] gap-2 text-base shadow-medium"
               style={buttonStyle}
-              onClick={() => setFormState("form")}
+              onClick={() => {
+                posthog.capture("video_testimonial_started", {
+                  professional_id: professional.id,
+                  organization_id: organization.id,
+                });
+                setFormState("form");
+              }}
             >
-              Continue on This Device
+              <Video weight="fill" className="h-5 w-5" />
+              Let&apos;s do it
             </Button>
-            <Button type="button" variant="outline" className="w-full" asChild>
-              <a href={requestNewLinkHref}>Request New Link</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </FormContainer>
+            <p className="mt-4 font-sans text-xs text-repwell-teal-300">
+              Works best in a quiet, well-lit spot. Phone or laptop, either is great.
+            </p>
+          </div>
+        </div>
+      </TestimonialShell>
     );
   }
 
   if (formState === "deviceCheck") {
-    const allChecksPassed =
-      deviceCheck.browserSupported &&
-      deviceCheck.mediaDevicesSupported &&
-      deviceCheck.cameraLikelyAvailable &&
-      deviceCheck.microphoneLikelyAvailable;
+    const checks = [
+      { label: "Browser supports recording", ok: deviceCheck.browserSupported },
+      { label: "Media access available", ok: deviceCheck.mediaDevicesSupported },
+      { label: "Camera detected", ok: deviceCheck.cameraLikelyAvailable },
+      { label: "Microphone detected", ok: deviceCheck.microphoneLikelyAvailable },
+    ];
+    const allChecksPassed = checks.every((c) => c.ok);
 
     return (
-      <FormContainer statusMessage={statusMessage}>
-        <Card className="mx-auto max-w-lg shadow-lg">
-          <CardHeader variant="plain">
-            <CardTitle className="font-sans text-xl text-repwell-teal-500">
-              Quick Device Check
-            </CardTitle>
-            <CardDescription className="font-sans">
-              Confirming camera, microphone, and browser support before recording.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2 rounded-lg border p-4 text-sm">
-              <p className="flex items-center justify-between font-sans">
-                <span>Browser recording support</span>
-                <span>{deviceCheck.browserSupported ? "Ready" : "Not supported"}</span>
-              </p>
-              <p className="flex items-center justify-between font-sans">
-                <span>Media devices API</span>
-                <span>{deviceCheck.mediaDevicesSupported ? "Ready" : "Not available"}</span>
-              </p>
-              <p className="flex items-center justify-between font-sans">
-                <span>Camera detected</span>
-                <span>{deviceCheck.cameraLikelyAvailable ? "Detected" : "Not detected"}</span>
-              </p>
-              <p className="flex items-center justify-between font-sans">
-                <span>Microphone detected</span>
-                <span>{deviceCheck.microphoneLikelyAvailable ? "Detected" : "Not detected"}</span>
-              </p>
-            </div>
+      <TestimonialShell statusMessage={statusMessage} footer={orgFooter}>
+        <StepRail current={2} />
+        <div className="flex flex-1 animate-fade-in-up flex-col justify-center text-center">
+          <h1 className="font-display text-3xl tracking-tight text-repwell-teal-500">
+            Checking your setup
+          </h1>
+          <p className="mt-2 font-sans text-sm text-repwell-teal-400">
+            One quick look at your camera, microphone, and browser before you record.
+          </p>
 
-            <Button
-              type="button"
-              className="w-full"
-              style={buttonStyle}
-              onClick={() => setFormState("success")}
-            >
-              {allChecksPassed ? "Start Recording" : "Continue to Recording Options"}
-            </Button>
+          <Panel className="mx-auto mt-8 max-w-sm p-2">
+            <ul className="divide-y divide-[#eef2ee]">
+              {checks.map(({ label, ok }) => (
+                <li key={label} className="flex items-center justify-between gap-6 px-4 py-3.5">
+                  <span className="font-sans text-sm text-repwell-teal-400">{label}</span>
+                  {ok ? (
+                    <span className="flex items-center gap-1.5 font-sans text-xs font-semibold text-repwell-sage-200">
+                      <CheckCircle2 weight="fill" size={18} className="text-repwell-sage-200" />
+                      Ready
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 font-sans text-xs font-semibold text-[#c47c7c]">
+                      <XCircle weight="fill" size={18} />
+                      Not found
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Panel>
 
-            {!allChecksPassed && (
-              <p className="text-center font-sans text-xs text-muted-foreground">
-                If checks fail, use the fallback file upload option in the next step.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      </FormContainer>
+          <Button
+            type="button"
+            size="lg"
+            className="mt-8 min-w-[240px] gap-2 self-center text-base shadow-medium"
+            style={buttonStyle}
+            onClick={() => setFormState("success")}
+          >
+            {allChecksPassed ? "Start recording" : "Continue anyway"}
+          </Button>
+
+          {!allChecksPassed && (
+            <p className="mx-auto mt-4 max-w-sm font-sans text-xs text-repwell-teal-300">
+              No camera? No problem. On the next step you can upload a video recorded
+              on another device instead.
+            </p>
+          )}
+        </div>
+      </TestimonialShell>
     );
   }
 
   // Submitting state
   if (formState === "submitting") {
     return (
-      <FormContainer statusMessage={statusMessage}>
-        <Card className="mx-auto max-w-lg shadow-lg">
-          <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-repwell-teal-300" />
-            <p className="mt-4 font-sans text-lg font-medium text-repwell-teal-500">
-              Saving your information...
-            </p>
-            <p className="mt-2 font-sans text-sm text-muted-foreground">Please wait a moment</p>
-          </CardContent>
-        </Card>
-      </FormContainer>
+      <TestimonialShell statusMessage={statusMessage} footer={orgFooter}>
+        <StepRail current={1} />
+        <CenteredState
+          icon={<Loader2 className="h-10 w-10 animate-spin text-repwell-teal-300" />}
+          title="Saving your details"
+          body="Just a moment."
+        />
+      </TestimonialShell>
     );
   }
 
   // Error state
   if (formState === "error") {
     return (
-      <FormContainer statusMessage={statusMessage}>
-        <Card className="mx-auto max-w-lg shadow-lg">
-          <CardContent className="py-12 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
-              <XCircle className="h-10 w-10" aria-label="Error" />
-            </div>
-            <h2 className="font-sans text-2xl font-semibold text-repwell-teal-500">
-              Something went wrong
-            </h2>
-            <p className="mt-2 font-sans text-muted-foreground">{submitError}</p>
-            <Button
-              className="mt-6"
-              onClick={() => {
-                setFormState("form");
-                setSubmitError(null);
-              }}
-              style={buttonStyle}
-            >
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      </FormContainer>
+      <TestimonialShell statusMessage={statusMessage} footer={orgFooter}>
+        <StepRail current={1} />
+        <CenteredState
+          icon={<XCircle weight="duotone" className="h-10 w-10 text-[#c47c7c]" />}
+          iconBg="bg-[#c47c7c]/10"
+          title="Something went wrong"
+          body={submitError || "We couldn't save your details."}
+        >
+          <Button
+            className="mt-2"
+            onClick={() => {
+              setFormState("form");
+              setSubmitError(null);
+            }}
+            style={buttonStyle}
+          >
+            Try again
+          </Button>
+        </CenteredState>
+      </TestimonialShell>
     );
   }
 
   // Upload progress state
   if (formState === "uploading") {
     return (
-      <FormContainer statusMessage="Uploading your video. Please wait.">
-        <Card className="mx-auto max-w-lg shadow-lg">
-          <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
-            <Upload className="h-12 w-12 text-repwell-teal-300 animate-pulse" />
-            <h2 className="mt-4 font-sans text-xl font-semibold text-repwell-teal-500">
-              Uploading Video
-            </h2>
-            <p className="mt-2 font-sans text-sm text-muted-foreground">
-              Please keep this page open
-            </p>
-            <div className="mt-6 w-full max-w-xs">
-              <Progress value={uploadProgress} className="h-2" />
-              <p className="mt-2 text-center font-sans text-sm font-medium text-repwell-teal-400">
+      <TestimonialShell statusMessage="Uploading your video. Please wait." footer={orgFooter}>
+        <StepRail current={2} />
+        <CenteredState
+          icon={<Upload weight="duotone" className="h-10 w-10 animate-pulse text-repwell-teal-300" />}
+          title="Sending your video"
+          body="Please keep this page open while it uploads."
+        >
+          <div className="mt-2 w-full max-w-xs">
+            <Progress value={uploadProgress} className="h-2" />
+            <div className="mt-2 flex items-baseline justify-between">
+              <span className="font-sans text-sm font-semibold text-repwell-teal-400">
                 {uploadProgress}%
-              </p>
+              </span>
               {estimatedUploadRemainingSeconds !== null && (
-                <p className="mt-1 text-center font-sans text-xs text-muted-foreground">
-                  Est. {estimatedUploadRemainingSeconds}s remaining
-                </p>
+                <span className="font-sans text-xs text-repwell-teal-300">
+                  about {estimatedUploadRemainingSeconds}s left
+                </span>
               )}
             </div>
-            <Button
-              variant="outline"
-              onClick={handleCancelUpload}
-              className="mt-6"
-            >
-              Cancel
-            </Button>
-          </CardContent>
-        </Card>
-      </FormContainer>
+          </div>
+          <Button variant="ghost" size="sm" onClick={handleCancelUpload} className="mt-4">
+            Cancel
+          </Button>
+        </CenteredState>
+      </TestimonialShell>
     );
   }
 
   // Processing state
   if (formState === "processing") {
     return (
-      <FormContainer statusMessage="Submitting your video. Please wait.">
-        <Card className="mx-auto max-w-lg shadow-lg">
-          <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
-            <Loader2 className="h-12 w-12 text-repwell-teal-300 animate-spin" />
-            <h2 className="mt-4 font-sans text-xl font-semibold text-repwell-teal-500">
-              Submitting Your Video
-            </h2>
-            <p className="mt-2 font-sans text-sm text-muted-foreground">
-              This may take a moment. Please don&apos;t close this page.
-            </p>
-          </CardContent>
-        </Card>
-      </FormContainer>
+      <TestimonialShell statusMessage="Submitting your video. Please wait." footer={orgFooter}>
+        <StepRail current={2} />
+        <CenteredState
+          icon={<Loader2 className="h-10 w-10 animate-spin text-repwell-teal-300" />}
+          title="Almost there"
+          body="Finishing up your submission. Please don't close this page."
+        />
+      </TestimonialShell>
     );
   }
 
-  // Completed state — final screen for the customer
+  // Completed state — branches on the celebration threshold (ADR 0001)
   if (formState === "completed") {
     return (
-      <FormContainer statusMessage="Your video has been submitted successfully.">
-        <Card className="mx-auto max-w-lg shadow-lg">
-          <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-repwell-sage-200/20">
-              <CheckCircle2 className="h-10 w-10 text-repwell-sage-200" />
-            </div>
-            <h2 className="mt-4 font-sans text-xl font-semibold text-repwell-teal-500">
-              Thank You!
-            </h2>
-            <p className="mt-2 max-w-sm text-center font-sans text-sm text-muted-foreground">
-              Your video testimonial has been submitted successfully. The team will be notified.
-            </p>
-          </CardContent>
-        </Card>
-      </FormContainer>
+      <TestimonialShell
+        statusMessage="Your video has been submitted successfully."
+        footer={orgFooter}
+      >
+        <StepRail current={3} />
+        {celebration === true ? (
+          <HighPathThankYou
+            request={request}
+            customerFirst={customerFirst}
+            buttonStyle={buttonStyle}
+          />
+        ) : (
+          <LowPathThankYou
+            token={request.token}
+            customerFirst={customerFirst}
+            professionalName={professional.fullName}
+            buttonStyle={buttonStyle}
+          />
+        )}
+      </TestimonialShell>
     );
   }
 
   // Upload error state
   if (formState === "uploadError") {
     return (
-      <FormContainer statusMessage={`Upload error: ${errorMessage}`}>
-        <Card className="mx-auto max-w-lg border-destructive/50 shadow-lg">
-          <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-              <AlertCircle className="h-10 w-10 text-destructive" />
-            </div>
-            <h2 className="mt-4 font-sans text-xl font-semibold text-repwell-teal-500">
-              Upload Failed
-            </h2>
-            <p className="mt-2 max-w-sm text-center font-sans text-sm text-muted-foreground">
-              {errorMessage || "There was a problem uploading your video."}
-            </p>
-            <div className="mt-6 flex gap-3">
-              <Button variant="outline" onClick={handleReRecord}>
-                Re-record
-              </Button>
-              <Button onClick={handleRetryUpload} style={buttonStyle}>
-                Try Again
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </FormContainer>
+      <TestimonialShell statusMessage={`Upload error: ${errorMessage}`} footer={orgFooter}>
+        <StepRail current={2} />
+        <CenteredState
+          icon={<AlertCircle weight="duotone" className="h-10 w-10 text-[#c47c7c]" />}
+          iconBg="bg-[#c47c7c]/10"
+          title="The upload didn't go through"
+          body={errorMessage || "There was a problem uploading your video. Your recording is safe, so just try again."}
+        >
+          <div className="mt-2 flex gap-3">
+            <Button variant="outline" onClick={handleReRecord}>
+              Re-record
+            </Button>
+            <Button onClick={handleRetryUpload} style={buttonStyle}>
+              Try again
+            </Button>
+          </div>
+        </CenteredState>
+      </TestimonialShell>
     );
   }
 
   // Processing error state
   if (formState === "processError") {
     return (
-      <FormContainer statusMessage={`Processing error: ${errorMessage}`}>
-        <Card className="mx-auto max-w-lg border-destructive/50 shadow-lg">
-          <CardContent className="flex min-h-[300px] flex-col items-center justify-center py-12">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-              <AlertCircle className="h-10 w-10 text-destructive" />
-            </div>
-            <h2 className="mt-4 font-sans text-xl font-semibold text-repwell-teal-500">
-              Processing Failed
-            </h2>
-            <p className="mt-2 max-w-sm text-center font-sans text-sm text-muted-foreground">
-              {errorMessage || "There was a problem processing your video."}
-            </p>
-            <div className="mt-6 flex gap-3">
-              <Button variant="outline" onClick={handleReRecord}>
-                Re-record
-              </Button>
-              <Button onClick={handleRetryProcessing} style={buttonStyle}>
-                Try Again
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </FormContainer>
+      <TestimonialShell statusMessage={`Processing error: ${errorMessage}`} footer={orgFooter}>
+        <StepRail current={2} />
+        <CenteredState
+          icon={<AlertCircle weight="duotone" className="h-10 w-10 text-[#c47c7c]" />}
+          iconBg="bg-[#c47c7c]/10"
+          title="We hit a snag"
+          body={errorMessage || "There was a problem processing your video. Your upload is safe, so just try again."}
+        >
+          <div className="mt-2 flex gap-3">
+            <Button variant="outline" onClick={handleReRecord}>
+              Re-record
+            </Button>
+            <Button onClick={handleRetryProcessing} style={buttonStyle}>
+              Try again
+            </Button>
+          </div>
+        </CenteredState>
+      </TestimonialShell>
     );
   }
 
   // Success state - ready for video recording
   if (formState === "success") {
     return (
-      <FormContainer statusMessage={statusMessage}>
-        <div className="mx-auto max-w-lg space-y-6">
-          {/* Header */}
-          <Card className="shadow-lg">
-            <CardContent className="py-6 text-center">
-              <p className="mb-2 font-sans text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Step 4 of 4: Record and submit
-              </p>
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-repwell-sage-200/20 text-repwell-sage-200">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-              <h2 className="font-sans text-xl font-semibold text-repwell-teal-500">
-                You&apos;re all set, {displayName}!
-              </h2>
-              <p className="mt-2 font-sans text-sm text-muted-foreground">
-                Record your video testimonial for {professional.fullName}
-              </p>
-              {promptText && (
-                <div className="mt-4 rounded-lg bg-muted/50 p-4 text-left">
-                  <p className="font-sans text-xs font-medium text-muted-foreground">
-                    Prompt from {professional.fullName}:
-                  </p>
-                  <p className="mt-1 font-sans text-sm italic text-foreground">
-                    &quot;{promptText}&quot;
-                  </p>
-                </div>
-              )}
+      <TestimonialShell statusMessage={statusMessage} footer={orgFooter} wide>
+        <StepRail current={2} />
+        <div className="animate-fade-in-up space-y-6">
+          <div className="text-center">
+            <h1 className="font-display text-3xl tracking-tight text-repwell-teal-500 sm:text-4xl">
+              You&apos;re on, {customerFirst}.
+            </h1>
+            <p className="mt-2 font-sans text-sm text-repwell-teal-400">
+              Speak naturally, like you&apos;re telling a friend about working with {proFirst}.
+            </p>
+          </div>
 
-              <div className="mt-4 rounded-lg border border-repwell-sage-200/40 bg-repwell-sage-100/20 p-3 text-left">
-                <p className="font-sans text-xs font-medium text-repwell-teal-500">Quality tips:</p>
-                <ul className="mt-1 list-disc space-y-0.5 pl-4 font-sans text-xs text-muted-foreground">
-                  <li>Face a window or soft light source</li>
-                  <li>Keep camera at eye level</li>
-                  <li>Mention one specific outcome</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Talking points */}
+          <div className="mx-auto max-w-lg rounded-2xl bg-repwell-sage-100/30 px-6 py-5">
+            <p className="font-sans text-xs font-semibold uppercase tracking-wider text-repwell-teal-300">
+              If you&apos;re not sure where to start
+            </p>
+            {promptText ? (
+              <p className="mt-2 font-display text-base italic leading-relaxed text-repwell-teal-500">
+                &ldquo;{promptText}&rdquo;
+              </p>
+            ) : (
+              <ol className="mt-3 space-y-2.5">
+                {[
+                  `How did you start working with ${proFirst}?`,
+                  "What result made the biggest difference for you?",
+                  "Who would you recommend them to, and why?",
+                ].map((cue, i) => (
+                  <li key={cue} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white font-sans text-[11px] font-bold text-repwell-teal-300">
+                      {i + 1}
+                    </span>
+                    <span className="font-sans text-sm leading-relaxed text-repwell-teal-500">
+                      {cue}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
 
           {/* Video Recorder */}
           <VideoRecorder
@@ -1061,136 +1109,102 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
             autoRequestPermissions={false}
           />
 
-          {/* Fallback file upload */}
-          <Card className="border-dashed">
-            <CardContent className="space-y-3 py-4">
-              <p className="font-sans text-sm font-medium text-repwell-teal-500">
-                Camera not working? Upload a video file instead.
-              </p>
-              <p className="font-sans text-xs text-muted-foreground">
-                MP4, MOV, or WebM up to 100MB. We&apos;ll process it the same way.
-              </p>
-              <input
-                ref={fallbackFileRef}
-                type="file"
-                accept="video/mp4,video/quicktime,video/webm,video/*"
-                className="hidden"
-                onChange={handleFallbackFileSelected}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={() => fallbackFileRef.current?.click()}
-                disabled={isFallbackFilePending}
-              >
-                {isFallbackFilePending ? "Preparing upload..." : "Upload Existing Video"}
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Quick tips */}
+          <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            {RECORDING_TIPS.map(({ icon: Icon, text }) => (
+              <li key={text} className="flex items-center gap-1.5">
+                <Icon weight="duotone" size={16} className="text-repwell-teal-300" />
+                <span className="font-sans text-xs text-repwell-teal-400">{text}</span>
+              </li>
+            ))}
+          </ul>
 
-          {/* Organization branding */}
-          {organization.logoUrl && (
-            <div className="flex justify-center opacity-60">
-              <img
-                src={organization.logoUrl}
-                alt={organization.name}
-                className="h-8 max-w-[150px] object-contain"
-              />
-            </div>
-          )}
+          {/* Fallback file upload */}
+          <div className="text-center">
+            <input
+              ref={fallbackFileRef}
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm,video/*"
+              className="hidden"
+              onChange={handleFallbackFileSelected}
+            />
+            <button
+              type="button"
+              onClick={() => fallbackFileRef.current?.click()}
+              disabled={isFallbackFilePending}
+              className="font-sans text-sm font-medium text-repwell-teal-300 underline-offset-4 transition-colors hover:text-repwell-teal-400 hover:underline disabled:opacity-50"
+            >
+              {isFallbackFilePending
+                ? "Preparing upload..."
+                : "Camera trouble? Upload a video file instead"}
+            </button>
+            <p className="mt-1 font-sans text-xs text-repwell-teal-300/80">
+              MP4, MOV, or WebM up to 100MB
+            </p>
+          </div>
         </div>
-      </FormContainer>
+      </TestimonialShell>
     );
   }
 
   // Main form
   return (
-    <FormContainer statusMessage={statusMessage}>
-      <Card className="mx-auto max-w-lg shadow-lg">
-        <CardHeader variant="plain" className="space-y-4 pb-4">
-          {organization.logoUrl && (
-            <div className="flex justify-center">
-              <img
-                src={organization.logoUrl}
-                alt={organization.name}
-                className="h-12 max-w-[200px] object-contain"
-              />
-            </div>
-          )}
+    <TestimonialShell statusMessage={statusMessage} footer={orgFooter}>
+      <StepRail current={1} />
+      <div className="animate-fade-in-up">
+        <div className="text-center">
+          <h1 className="font-display text-3xl tracking-tight text-repwell-teal-500 sm:text-4xl">
+            First, a little about you
+          </h1>
+          <p className="mt-2 font-sans text-sm text-repwell-teal-400">
+            So {proFirst} knows who this wonderful review is from.
+          </p>
+        </div>
 
-          {/* Header */}
-          <div className="text-center">
-            <p className="mb-1 font-sans text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Step 2 of 4: Identity and consent
-            </p>
-            <CardTitle className="font-sans text-xl text-repwell-teal-500">
-              Share Your Experience
-            </CardTitle>
-            <CardDescription className="mt-1.5 font-sans">
-              Record a short video testimonial about working with {professional.fullName}
-            </CardDescription>
-          </div>
+        <div className="mt-6 flex justify-center">
+          <ProBadge
+            name={professional.fullName}
+            title={professional.title}
+            photoUrl={professional.photoUrl}
+            orgName={organization.name}
+          />
+        </div>
 
-          {/* Loan Officer Info */}
-          <div className="flex items-center justify-center gap-3 rounded-lg bg-muted/50 p-4">
-            {professional.photoUrl ? (
-              <img
-                src={professional.photoUrl}
-                alt={professional.fullName}
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-background"
-              />
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-repwell-teal-300/10 text-lg font-semibold text-repwell-teal-300">
-                {professional.fullName.charAt(0)}
-              </div>
-            )}
-            <div className="text-left">
-              <p className="font-sans font-medium text-repwell-teal-500">{professional.fullName}</p>
-              {professional.title && (
-                <p className="font-sans text-sm text-muted-foreground">{professional.title}</p>
-              )}
-              <p className="font-sans text-xs text-muted-foreground">{organization.name}</p>
-            </div>
-          </div>
-
-          {/* Prompt Text */}
-          {promptText && (
-            <div className="rounded-lg border border-repwell-sage-200/30 bg-repwell-sage-100/20 p-4">
-              <p className="font-sans text-sm italic text-repwell-teal-400">&ldquo;{promptText}&rdquo;</p>
-            </div>
-          )}
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Panel className="mt-6 p-6 sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-7">
             {/* Customer Info Section */}
-            <div className="space-y-4">
+            <div className="space-y-5">
+              <RatingStars
+                value={rating}
+                onChange={setRating}
+                label={`How was your experience with ${proFirst}?`}
+              />
+
               <div className="space-y-2">
-                <Label htmlFor="displayName" className="font-sans text-sm font-medium">
-                  Your Name <span className="text-destructive">*</span>
+                <Label htmlFor="displayName" className="font-sans text-sm font-medium text-repwell-teal-500">
+                  Your name
                 </Label>
                 <Input
                   ref={nameInputRef}
                   id="displayName"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="How would you like to be identified?"
+                  placeholder="How you'd like to be credited"
                   className="font-sans"
                   required
                 />
-                <p className="font-sans text-xs text-muted-foreground">
-                  This name will appear with your testimonial
+                <p className="font-sans text-xs text-repwell-teal-300">
+                  Shown alongside your testimonial
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="relationship" className="font-sans text-sm font-medium">
-                  Your Relationship <span className="text-destructive">*</span>
+                <Label htmlFor="relationship" className="font-sans text-sm font-medium text-repwell-teal-500">
+                  How did you work together?
                 </Label>
                 <Select value={relationship} onValueChange={(v) => setRelationship(v as RelationshipType)} required>
                   <SelectTrigger id="relationship" className="font-sans">
-                    <SelectValue placeholder="How did you work together?" />
+                    <SelectValue placeholder="Choose the closest fit" />
                   </SelectTrigger>
                   <SelectContent>
                     {RELATIONSHIP_OPTIONS.map((option) => (
@@ -1205,12 +1219,14 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
 
             {/* Consent Section */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-repwell-teal-500">
-                <Shield className="h-4 w-4" />
-                <span className="font-sans">Required Consents</span>
+              <div className="flex items-center gap-2">
+                <Shield weight="duotone" size={18} className="text-repwell-teal-300" />
+                <span className="font-sans text-sm font-semibold text-repwell-teal-500">
+                  A few quick permissions
+                </span>
               </div>
 
-              <div className="space-y-4 rounded-lg border p-4">
+              <div className="space-y-5 rounded-xl bg-[#f7faf7] p-5">
                 {/* Video Recording Consent */}
                 <div className="flex items-start gap-3">
                   <Checkbox
@@ -1223,12 +1239,12 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
                   <div className="flex-1">
                     <Label
                       htmlFor="nilConsent"
-                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
+                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium text-repwell-teal-500"
                     >
-                      <Video className="h-4 w-4 text-repwell-teal-300" />
-                      Name, Image, Likeness, and Voice Consent <span className="text-destructive">*</span>
+                      <Video weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
+                      Name, image, likeness, and voice
                     </Label>
-                    <p className="font-sans text-xs text-muted-foreground">
+                    <p className="mt-1 font-sans text-xs leading-relaxed text-repwell-teal-300">
                       I consent to use of my name, image, likeness, and voice in testimonial
                       content and related marketing materials.
                     </p>
@@ -1247,12 +1263,12 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
                   <div className="flex-1">
                     <Label
                       htmlFor="usageRightsConsent"
-                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
+                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium text-repwell-teal-500"
                     >
-                      <FileText className="h-4 w-4 text-repwell-teal-300" />
-                      Usage Rights <span className="text-destructive">*</span>
+                      <FileText weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
+                      Where it can appear
                     </Label>
-                    <p className="font-sans text-xs text-muted-foreground">
+                    <p className="mt-1 font-sans text-xs leading-relaxed text-repwell-teal-300">
                       I grant permission to use my testimonial across website pages, social media,
                       email campaigns, and related marketing channels.
                     </p>
@@ -1271,21 +1287,17 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
                   <div className="flex-1">
                     <Label
                       htmlFor="aiTextGenerationConsent"
-                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium"
+                      className="flex cursor-pointer items-center gap-2 font-sans text-sm font-medium text-repwell-teal-500"
                     >
-                      <Sparkles className="h-4 w-4 text-repwell-teal-300" />
-                      AI Text Generation <span className="text-destructive">*</span>
+                      <Sparkles weight="duotone" className="h-4 w-4 text-repwell-teal-300" />
+                      A written version of your video
                     </Label>
-                    <p className="font-sans text-xs text-muted-foreground">
+                    <p className="mt-1 font-sans text-xs leading-relaxed text-repwell-teal-300">
                       I consent to transcription and AI-generated draft text from this video.
                     </p>
                   </div>
                 </div>
               </div>
-
-              <p className="font-sans text-xs text-muted-foreground">
-                Consent version: {VIDEO_TESTIMONIAL_CONSENT_VERSION}
-              </p>
 
               {/* Optional Marketing Consent */}
               <div className="flex items-start gap-3 px-1">
@@ -1298,70 +1310,80 @@ export function VideoTestimonialForm({ request }: VideoTestimonialFormProps) {
                 <div className="flex-1">
                   <Label
                     htmlFor="marketingConsent"
-                    className="cursor-pointer font-sans text-sm font-medium"
+                    className="cursor-pointer font-sans text-sm font-medium text-repwell-teal-500"
                   >
-                    Marketing Communications (Optional)
+                    Keep me posted <span className="font-normal text-repwell-teal-300">(optional)</span>
                   </Label>
-                  <p className="font-sans text-xs text-muted-foreground">
-                    I&apos;d like to receive occasional updates and promotional materials
+                  <p className="mt-0.5 font-sans text-xs text-repwell-teal-300">
+                    Occasional updates and promotional materials from {organization.name}
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Submit Button */}
-            <Button
-              type="submit"
-              disabled={!isFormValid || isPending}
-              className="w-full gap-2"
-              style={buttonStyle}
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Video className="h-4 w-4" />
-                  Continue to Device Check
-                </>
+            <div className="space-y-3">
+              <Button
+                type="submit"
+                disabled={!isFormValid || isPending}
+                className="w-full gap-2"
+                size="lg"
+                style={buttonStyle}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Continue"
+                )}
+              </Button>
+
+              {/* Form validation hint */}
+              {!isFormValid && (
+                <p className="text-center font-sans text-xs text-repwell-teal-300">
+                  Tap a star rating, fill in your details, and check the three permission boxes to continue
+                </p>
               )}
-            </Button>
-
-            {/* Form validation hint */}
-            {!isFormValid && (
-              <p className="text-center font-sans text-xs text-muted-foreground">
-                Please complete all required fields and consent checkboxes to continue
-              </p>
-            )}
+            </div>
           </form>
-        </CardContent>
-      </Card>
+        </Panel>
 
-      {/* Footer */}
-      <p className="mt-4 text-center font-sans text-xs text-muted-foreground">
-        Your privacy is important to us. Your video will only be used as described above.
-      </p>
-    </FormContainer>
+        <p className="mt-3 text-center font-sans text-[11px] text-repwell-teal-300/70">
+          Consent version {VIDEO_TESTIMONIAL_CONSENT_VERSION}
+        </p>
+      </div>
+    </TestimonialShell>
   );
 }
 
-// Container component with consistent styling and ARIA live region
-function FormContainer({
+// Shared centered status presentation for transient and terminal states
+function CenteredState({
+  icon,
+  iconBg = "bg-repwell-sage-100/50",
+  title,
+  body,
   children,
-  statusMessage,
 }: {
-  children: React.ReactNode;
-  statusMessage?: string;
+  icon: React.ReactNode;
+  iconBg?: string;
+  title: string;
+  body: string;
+  children?: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#f8faf8] px-4 py-8 sm:py-12">
-      {/* ARIA live region for screen reader announcements */}
-      <div role="status" aria-live="polite" className="sr-only">
-        {statusMessage}
+    <div className="flex flex-1 animate-fade-in flex-col items-center justify-center text-center">
+      <div className={`mb-6 flex h-16 w-16 items-center justify-center rounded-full ${iconBg}`}>
+        {icon}
       </div>
-      <div className="mx-auto max-w-lg">{children}</div>
+      <h1 className="font-display text-2xl tracking-tight text-repwell-teal-500 sm:text-3xl">
+        {title}
+      </h1>
+      <p className="mx-auto mt-3 max-w-sm font-sans text-sm leading-relaxed text-repwell-teal-400">
+        {body}
+      </p>
+      <div className="mt-6 flex flex-col items-center">{children}</div>
     </div>
   );
 }

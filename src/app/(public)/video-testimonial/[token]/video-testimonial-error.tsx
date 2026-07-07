@@ -1,11 +1,14 @@
-import { Card, CardContent } from "@/components/ui/card";
+"use client";
+
 import {
   WarningCircle as AlertCircle,
   Clock,
   CheckCircle,
   FileX,
   Prohibit as Ban,
-} from "@phosphor-icons/react/dist/ssr";
+} from "@phosphor-icons/react";
+
+import { TestimonialShell } from "./testimonial-shell";
 
 interface VideoTestimonialErrorProps {
   message: string;
@@ -19,19 +22,19 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
     if (lowerMessage.includes("expired")) {
       return {
         icon: Clock,
-        title: "Request Expired",
+        title: "This link has expired",
         iconColor: "text-[#d4a574]",
         bgColor: "bg-[#d4a574]/10",
-        helpText: "Please contact the sender if you need a new link.",
+        helpText: "Reach out to the person who sent it and they can share a fresh one.",
       };
     }
 
     if (lowerMessage.includes("already been submitted") || lowerMessage.includes("submitted")) {
       return {
         icon: CheckCircle,
-        title: "Already Submitted",
+        title: "You're all done",
         iconColor: "text-repwell-sage-200",
-        bgColor: "bg-repwell-sage-200/20",
+        bgColor: "bg-repwell-sage-100/60",
         helpText: "Thank you! Your video testimonial has already been recorded.",
       };
     }
@@ -39,9 +42,9 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
     if (lowerMessage.includes("cancelled")) {
       return {
         icon: Ban,
-        title: "Request Cancelled",
-        iconColor: "text-muted-foreground",
-        bgColor: "bg-muted",
+        title: "Request cancelled",
+        iconColor: "text-repwell-teal-300",
+        bgColor: "bg-repwell-sage-100/50",
         helpText: "This video testimonial request is no longer active.",
       };
     }
@@ -49,18 +52,18 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
     if (lowerMessage.includes("not found") || lowerMessage.includes("invalid")) {
       return {
         icon: FileX,
-        title: "Request Not Found",
-        iconColor: "text-muted-foreground",
-        bgColor: "bg-muted",
+        title: "We couldn't find that request",
+        iconColor: "text-repwell-teal-300",
+        bgColor: "bg-repwell-sage-100/50",
         helpText: "The link may be incorrect or the request may have been removed.",
       };
     }
 
     return {
       icon: AlertCircle,
-      title: "Unable to Load Request",
-      iconColor: "text-destructive",
-      bgColor: "bg-destructive/10",
+      title: "Unable to load this request",
+      iconColor: "text-[#c47c7c]",
+      bgColor: "bg-[#c47c7c]/10",
       helpText: "Please try again later or contact support.",
     };
   };
@@ -68,19 +71,21 @@ export function VideoTestimonialError({ message }: VideoTestimonialErrorProps) {
   const { icon: Icon, title, iconColor, bgColor, helpText } = getErrorDetails();
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f8faf8] px-4 py-8">
-      <Card className="mx-auto max-w-md shadow-lg">
-        <CardContent className="py-12 text-center">
-          <div
-            className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${bgColor} ${iconColor}`}
-          >
-            <Icon className="h-8 w-8" />
-          </div>
-          <h1 className="font-sans text-2xl font-semibold text-repwell-teal-500">{title}</h1>
-          <p className="mt-3 font-sans text-repwell-teal-400">{message}</p>
-          <p className="mt-4 font-sans text-sm text-muted-foreground">{helpText}</p>
-        </CardContent>
-      </Card>
-    </div>
+    <TestimonialShell>
+      <div className="flex flex-1 animate-fade-in flex-col items-center justify-center text-center">
+        <div
+          className={`mb-6 flex h-16 w-16 items-center justify-center rounded-full ${bgColor} ${iconColor}`}
+        >
+          <Icon weight="duotone" className="h-9 w-9" />
+        </div>
+        <h1 className="text-balance font-display text-3xl tracking-tight text-repwell-teal-500">
+          {title}
+        </h1>
+        <p className="mx-auto mt-3 max-w-sm font-sans text-sm leading-relaxed text-repwell-teal-400">
+          {message}
+        </p>
+        <p className="mx-auto mt-4 max-w-sm font-sans text-xs text-repwell-teal-300">{helpText}</p>
+      </div>
+    </TestimonialShell>
   );
 }

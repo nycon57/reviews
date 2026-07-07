@@ -8,6 +8,7 @@ import {
   Flag,
   PaperPlaneRight,
   ShareNetwork,
+  AddressBook,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,8 @@ import type {
 import { ReviewQueue } from "@/components/reviews/review-queue";
 import { VideoLibraryProvider, VideoTabContent } from "@/components/video-library";
 import { UnifiedRequestsTab } from "@/components/requests/unified-requests-tab";
+import { ContactsTab } from "@/components/contacts";
+import type { ContactListItem } from "@/lib/contacts/queries";
 
 // ============================================================================
 // Types
@@ -64,6 +67,10 @@ interface UnifiedContentHubProps {
   initialRequestsTotal?: number;
   initialRequestStats?: UnifiedRequestStats;
   canSendRequests?: boolean;
+  // Contacts tab (optional — shown alongside Requests)
+  initialContacts?: ContactListItem[];
+  initialContactsTotal?: number;
+  contactsEnabled?: boolean;
   // Share Studio tab (optional — hidden when not provided)
   shareStudioContent?: React.ReactNode;
   // Disputes tab (optional — admins/managers only)
@@ -71,7 +78,13 @@ interface UnifiedContentHubProps {
   openDisputeCount?: number;
 }
 
-type ContentTab = "reviews" | "videos" | "requests" | "share-studio" | "disputes";
+type ContentTab =
+  | "reviews"
+  | "videos"
+  | "requests"
+  | "contacts"
+  | "share-studio"
+  | "disputes";
 
 // ============================================================================
 // Main Unified Content Hub Component
@@ -93,6 +106,9 @@ export function UnifiedContentHub({
   initialRequestsTotal,
   initialRequestStats,
   canSendRequests,
+  initialContacts,
+  initialContactsTotal = 0,
+  contactsEnabled,
   shareStudioContent,
   disputesContent,
   openDisputeCount = 0,
@@ -104,7 +120,9 @@ export function UnifiedContentHub({
       ? "videos"
       : tabParam === "requests" && canSendRequests
         ? "requests"
-        : tabParam === "share-studio" && shareStudioContent
+        : tabParam === "contacts" && contactsEnabled
+          ? "contacts"
+          : tabParam === "share-studio" && shareStudioContent
           ? "share-studio"
           : tabParam === "disputes" && disputesContent
             ? "disputes"
@@ -112,12 +130,16 @@ export function UnifiedContentHub({
   const [activeTab, setActiveTab] = useState<ContentTab>(defaultTab);
 
   const showRequestsTab = canSendRequests && initialRequestStats;
+  const showContactsTab = contactsEnabled && initialContacts;
 
   const tabs: Array<{ value: ContentTab; label: string; icon: typeof MessageSquare; count: number }> = [
     { value: "reviews", label: "Text Reviews", icon: MessageSquare, count: reviewStats.total },
     { value: "videos", label: "Video Reviews", icon: Film, count: videoStats.total },
     ...(showRequestsTab
       ? [{ value: "requests" as const, label: "Requests", icon: PaperPlaneRight, count: initialRequestStats.total }]
+      : []),
+    ...(showContactsTab
+      ? [{ value: "contacts" as const, label: "Contacts", icon: AddressBook, count: initialContactsTotal }]
       : []),
     ...(shareStudioContent
       ? [{ value: "share-studio" as const, label: "Share Studio", icon: ShareNetwork, count: 0 }]
@@ -194,6 +216,17 @@ export function UnifiedContentHub({
               initialRequests={initialRequests ?? []}
               initialTotal={initialRequestsTotal ?? 0}
               initialStats={initialRequestStats}
+              teamMembers={teamMembers}
+              userRole={userRole}
+            />
+          </TabsContent>
+        )}
+
+        {showContactsTab && (
+          <TabsContent value="contacts" className="mt-6">
+            <ContactsTab
+              initialContacts={initialContacts ?? []}
+              initialTotal={initialContactsTotal}
               teamMembers={teamMembers}
               userRole={userRole}
             />

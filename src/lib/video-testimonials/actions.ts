@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { queueClipRender } from "@/lib/share-studio/service";
 import { getCelebrationThreshold } from "./public-actions";
 import { z } from "zod";
 import type { Json, Database } from "@/types/database.types";
 import { sendInitialVideoTestimonialEmailImmediately } from "./queue-service";
+import { findOrCreateContact } from "@/lib/contacts/actions";
 import { IMMEDIATE_SEND_THRESHOLD } from "./types";
 
 // Status type from database enum
@@ -291,12 +292,38 @@ export async function createVideoTestimonialRequest(
     const nowIso = new Date().toISOString();
     const initialStatus = validated.data.sendImmediately ? "pending" : "queued";
 
-    // Create the video testimonial request
-    const { data: request, error: requestError } = await supabase
+    // Resolve (or create) the Contact for this acquisition request (ADR 0004).
+    // Owner = the professional the request is for; inline name/email/phone stay
+    // on the request as the immutable Send-Time Snapshot. Resilient: a contacts
+    // hiccup must not block the send — suppression is enforced at send time.
+    let contactId: string | null = null;
+    try {
+      const contact = await findOrCreateContact(
+        userData.organization_id,
+        {
+          email: validated.data.customerEmail,
+          name: validated.data.customerName,
+          phone: validated.data.customerPhone || null,
+        },
+        validated.data.loanOfficerId,
+        "video_testimonial"
+      );
+      contactId = contact.id;
+    } catch (contactError) {
+      console.error(
+        "createVideoTestimonialRequest: contact resolution failed",
+        contactError
+      );
+    }
+
+    // Create the video testimonial request. Untyped admin client because
+    // contact_id is a new column not yet in the generated types.
+    const { data: request, error: requestError } = await createUntypedAdminClient()
       .from("video_testimonial_requests")
       .insert({
         organization_id: userData.organization_id,
         user_id: validated.data.loanOfficerId,
+        contact_id: contactId,
         created_by: user.id,
         customer_name: validated.data.customerName,
         customer_email: validated.data.customerEmail,

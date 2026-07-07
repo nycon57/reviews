@@ -31,6 +31,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -60,8 +61,14 @@ import type {
   UnifiedRequest,
   UnifiedRequestStats,
   RequestType,
+  RequestAttention,
 } from "@/lib/requests/unified-requests";
 import { getUnifiedRequests } from "@/lib/requests/unified-requests";
+import {
+  FUNNEL_STAGES,
+  FUNNEL_STAGE_LABELS,
+  furthestStageIndex,
+} from "@/lib/requests/funnel-logic";
 import {
   resendVideoTestimonialRequest,
   cancelVideoTestimonialRequest,
@@ -188,6 +195,99 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 // ============================================================================
+// Funnel Chip
+// ============================================================================
+
+const FUNNEL_LABELS = FUNNEL_STAGE_LABELS;
+
+function AttentionBadge({
+  attention,
+  reason,
+}: {
+  attention: RequestAttention;
+  reason: string | null;
+}) {
+  if (attention === "held") {
+    return (
+      <Badge
+        variant="outline"
+        title={reason ?? undefined}
+        className="gap-1 border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-400"
+      >
+        <AlertCircle className="h-3 w-3" />
+        Held
+      </Badge>
+    );
+  }
+  return (
+    <Badge
+      variant="outline"
+      title="Sent over 14 days ago and never opened"
+      className="gap-1 border-destructive/30 bg-destructive/5 text-destructive"
+    >
+      <Clock className="h-3 w-3" />
+      Stuck
+    </Badge>
+  );
+}
+
+/**
+ * Compact acquisition funnel: five stage dots (sent → opened → started →
+ * submitted → published) filled up to the furthest stage reached, the current
+ * stage's label, and any attention flag. Terminal requests (expired/cancelled)
+ * fall back to the plain status badge since the funnel has halted.
+ */
+function FunnelChip({ request }: { request: UnifiedRequest }) {
+  if (request.status === "expired" || request.status === "cancelled") {
+    return (
+      <div className="flex items-center gap-2">
+        <StatusBadge status={request.status} />
+        {request.attention && (
+          <AttentionBadge attention={request.attention} reason={request.heldReason} />
+        )}
+      </div>
+    );
+  }
+
+  const idx = furthestStageIndex(request);
+  const label = idx >= 0 ? FUNNEL_LABELS[FUNNEL_STAGES[idx]] : "Not sent";
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="flex items-center" aria-hidden>
+        {FUNNEL_STAGES.map((stage, i) => {
+          const reached = i <= idx;
+          return (
+            <div key={stage} className="flex items-center">
+              <span
+                title={FUNNEL_LABELS[stage]}
+                className={cn(
+                  "h-2 w-2 rounded-full transition-colors",
+                  reached ? "bg-repwell-teal-300" : "bg-border",
+                  i === idx && "ring-2 ring-repwell-teal-300/30"
+                )}
+              />
+              {i < FUNNEL_STAGES.length - 1 && (
+                <span
+                  className={cn(
+                    "h-px w-3",
+                    i < idx ? "bg-repwell-teal-300" : "bg-border"
+                  )}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {request.attention && (
+        <AttentionBadge attention={request.attention} reason={request.heldReason} />
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
 // Type Badge
 // ============================================================================
 
@@ -271,7 +371,7 @@ function UnifiedRequestTable({
           <TableRow className="bg-muted/30 hover:bg-muted/30">
             <TableHead className="text-xs font-medium uppercase tracking-wider">Type</TableHead>
             <TableHead className="text-xs font-medium uppercase tracking-wider">Customer</TableHead>
-            <TableHead className="text-xs font-medium uppercase tracking-wider">Status</TableHead>
+            <TableHead className="text-xs font-medium uppercase tracking-wider">Funnel</TableHead>
             <TableHead className="text-xs font-medium uppercase tracking-wider">Sent</TableHead>
             <TableHead className="text-xs font-medium uppercase tracking-wider">Completed</TableHead>
             <TableHead className="text-xs font-medium uppercase tracking-wider">Reminders</TableHead>
@@ -293,7 +393,7 @@ function UnifiedRequestTable({
                 </div>
               </TableCell>
               <TableCell>
-                <StatusBadge status={request.status} />
+                <FunnelChip request={request} />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 {formatDate(request.sentAt)}

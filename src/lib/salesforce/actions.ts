@@ -20,6 +20,8 @@ import {
   type SalesforceSyncLog,
   type ActionResult,
 } from './types';
+import { findOrCreateContact } from '@/lib/contacts/actions';
+import { matchOpportunityOwnerToUser } from './attribution';
 import type { Json } from '@/types/database.types';
 
 // Get user's role and organization ID
@@ -690,12 +692,67 @@ export async function syncSalesforceData(
 }
 
 // Helper function to trigger survey for opportunity
+/**
+ * Best-effort assignee for a Held survey (unmatched Salesforce owner): the org's
+ * configured default acquisition assignee if it is a real active user, else the
+ * first active org admin, else null (surveys.user_id is nullable). The survey is
+ * still Held (never sent) — this only controls whose queue it parks in.
+ */
+async function resolveHeldAssignee(
+  adminClient: ReturnType<typeof createUntypedAdminClient>,
+  organizationId: string
+): Promise<string | null> {
+  const { data: org } = await adminClient
+    .from('organizations')
+    .select('settings')
+    .eq('id', organizationId)
+    .maybeSingle();
+  const settings =
+    ((org as { settings?: Record<string, unknown> } | null)?.settings ?? {}) as Record<
+      string,
+      unknown
+    >;
+  const configured =
+    typeof settings.acquisitionDefaultAssignee === 'string'
+      ? (settings.acquisitionDefaultAssignee as string)
+      : null;
+
+  if (configured) {
+    const { data: user } = await adminClient
+      .from('users')
+      .select('id')
+      .eq('id', configured)
+      .eq('organization_id', organizationId)
+      .eq('is_active', true)
+      .maybeSingle();
+    if (user) return (user as { id: string }).id;
+  }
+
+  const { data: admin } = await adminClient
+    .from('users')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .eq('role', 'admin')
+    .eq('is_active', true)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  return (admin as { id: string } | null)?.id ?? null;
+}
+
 async function triggerSurveyForOpportunity(
   adminClient: ReturnType<typeof createUntypedAdminClient>,
   organizationId: string,
   connectionId: string,
   mappingId: string,
-  opportunity: { Id: string; Name: string; AccountId?: string; ContactId?: string },
+  opportunity: {
+    Id: string;
+    Name: string;
+    AccountId?: string;
+    ContactId?: string;
+    OwnerId?: string;
+    Owner?: { Email?: string; Name?: string };
+  },
   tokenInfo: { accessToken: string; instanceUrl: string }
 ): Promise<void> {
   try {
@@ -729,18 +786,57 @@ async function triggerSurveyForOpportunity(
       return;
     }
 
-    // Find a loan officer to assign (could be improved with mapping)
-    const { data: loanOfficer } = await adminClient
-      .from('users')
-      .select('id')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .limit(1)
-      .single();
+    // Owner attribution (ADR 0004 / Grill #1 decision 10): map the Opportunity
+    // owner to an org professional by email. A confident match owns the survey
+    // and the Contact. No match produces a HELD survey that is never sent under
+    // a guessed name — "a wrong-name ask is worse than a delayed ask" — parked
+    // with a best-effort assignee for visibility and released manually later.
+    const ownerEmail = opportunity.Owner?.Email?.trim().toLowerCase() || null;
+    let assigneeUserId: string | null = null;
 
-    if (!loanOfficer) {
-      console.warn('No active loan officer found');
-      return;
+    if (ownerEmail) {
+      const { data: orgUsers } = await adminClient
+        .from('users')
+        .select('id, email')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true);
+      assigneeUserId = matchOpportunityOwnerToUser(
+        ownerEmail,
+        (orgUsers as Array<{ id: string; email: string | null }> | null) ?? []
+      );
+    }
+
+    const heldReason = assigneeUserId ? null : 'salesforce_owner_unmatched';
+    if (heldReason) {
+      // Unmatched → Held. Park with the org default assignee (a user_id in
+      // organizations.settings.acquisitionDefaultAssignee) if set and valid,
+      // else the first active org admin; may remain null (surveys.user_id is
+      // nullable). It will not send while held_reason is set.
+      assigneeUserId = await resolveHeldAssignee(adminClient, organizationId);
+    }
+
+    // The Contact's Owner tracks the attributed professional; a Held (unmatched)
+    // request is deliberately left unassigned at the Contact level.
+    const contactOwnerUserId = heldReason ? null : assigneeUserId;
+
+    let contactId: string | null = null;
+    try {
+      const resolvedContact = await findOrCreateContact(
+        organizationId,
+        {
+          email: contactEmail,
+          name: contact.Name,
+          phone: contact.Phone || contact.MobilePhone || null,
+        },
+        contactOwnerUserId,
+        'salesforce'
+      );
+      contactId = resolvedContact.id;
+    } catch (contactError) {
+      console.error(
+        'triggerSurveyForOpportunity: contact resolution failed',
+        contactError
+      );
     }
 
     // Create survey
@@ -752,7 +848,9 @@ async function triggerSurveyForOpportunity(
       .insert({
         organization_id: organizationId,
         template_id: template.id,
-        user_id: loanOfficer.id,
+        user_id: assigneeUserId,
+        contact_id: contactId,
+        held_reason: heldReason,
         customer_name: contact.Name,
         customer_email: contactEmail,
         customer_phone: contact.Phone || contact.MobilePhone || null,
@@ -766,6 +864,7 @@ async function triggerSurveyForOpportunity(
           salesforce_opportunity_name: opportunity.Name,
           salesforce_contact_id: contact.Id,
           salesforce_account_id: opportunity.AccountId,
+          salesforce_opportunity_owner_email: ownerEmail,
           connection_id: connectionId,
         },
       })
@@ -777,6 +876,25 @@ async function triggerSurveyForOpportunity(
       return;
     }
 
+    // Observability back-link only (ADR 0004; documented on B1's migration
+    // 20260707100000): stamp contact_id on the CRM mapping now that this person
+    // is a real acquisition Contact. Attribution/dedup key off the Contact, never
+    // this row — best-effort, so a mapping-update hiccup never fails the survey.
+    if (contactId) {
+      const { error: mappingLinkError } = await adminClient
+        .from('salesforce_contact_mappings')
+        .update({ contact_id: contactId })
+        .eq('organization_id', organizationId)
+        .eq('connection_id', connectionId)
+        .eq('salesforce_contact_id', contact.Id);
+      if (mappingLinkError) {
+        console.error(
+          'triggerSurveyForOpportunity: mapping back-link failed',
+          mappingLinkError
+        );
+      }
+    }
+
     // Update opportunity mapping with survey reference
     await adminClient
       .from('salesforce_opportunity_mappings')
@@ -786,18 +904,26 @@ async function triggerSurveyForOpportunity(
       })
       .eq('id', mappingId);
 
-    // Add to distribution queue
-    await adminClient.from('survey_distribution_queue').insert({
-      organization_id: organizationId,
-      survey_id: survey.id,
-      type: 'initial',
-      scheduled_at: new Date().toISOString(),
-      priority: 1,
-    });
-
-    console.log(
-      `Survey ${survey.id} created for Salesforce opportunity ${opportunity.Id}`
-    );
+    // Add to distribution queue — a Held survey must NOT be enqueued/sent until
+    // it is released (held_reason cleared).
+    if (!heldReason) {
+      await adminClient.from('survey_distribution_queue').insert({
+        organization_id: organizationId,
+        survey_id: survey.id,
+        type: 'initial',
+        scheduled_at: new Date().toISOString(),
+        priority: 1,
+      });
+      console.log(
+        `Survey ${survey.id} created for Salesforce opportunity ${opportunity.Id}`
+      );
+    } else {
+      console.log(
+        `Survey ${survey.id} HELD (unmatched Salesforce owner ${
+          ownerEmail ?? 'none'
+        }) for opportunity ${opportunity.Id}`
+      );
+    }
   } catch (error) {
     console.error('Failed to trigger survey for opportunity:', error);
   }

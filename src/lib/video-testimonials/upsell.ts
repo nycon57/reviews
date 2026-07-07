@@ -13,6 +13,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendReviewVideoUpsellEmail } from "@/lib/email/send";
 import { getCelebrationThreshold } from "./public-actions";
+import { findOrCreateContact } from "@/lib/contacts/actions";
+import { guardAcquisitionSend } from "@/lib/contacts/send-guard";
+import { resolveContactUnsubscribeUrl } from "@/lib/contacts/tokens";
 import type { Json } from "@/types/database.types";
 
 // =============================================================================
@@ -39,6 +42,8 @@ export interface VideoRequestForReview {
   requestId: string;
   token: string;
   url: string;
+  /** The linked Contact (ADR 0004), when resolved. */
+  contactId: string | null;
   /** False when an existing request for this review was returned instead */
   created: boolean;
 }
@@ -116,7 +121,7 @@ export async function createVideoRequestForReview(params: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: existing } = await (supabase as any)
     .from("video_testimonial_requests")
-    .select("id, token")
+    .select("id, token, contact_id")
     .eq("source_metadata->>review_id", params.reviewId)
     .limit(1)
     .maybeSingle();
@@ -126,8 +131,28 @@ export async function createVideoRequestForReview(params: {
       requestId: existing.id,
       token: existing.token,
       url: getVideoRequestUrl(existing.token),
+      contactId: (existing.contact_id as string | null) ?? null,
       created: false,
     };
+  }
+
+  // Resolve (or create) the Contact (ADR 0004). Owner = the professional who
+  // received the review. Normally the review's verification path already
+  // created this Contact, so this de-dupes onto it.
+  let contactId: string | null = null;
+  try {
+    const contact = await findOrCreateContact(
+      review.organization_id,
+      { email: review.customer_email as string, name: review.customer_name },
+      review.user_id,
+      "video_testimonial"
+    );
+    contactId = contact.id;
+  } catch (contactError) {
+    console.error(
+      "createVideoRequestForReview: contact resolution failed",
+      contactError
+    );
   }
 
   const expiresAt = new Date();
@@ -141,6 +166,7 @@ export async function createVideoRequestForReview(params: {
     .insert({
       organization_id: review.organization_id,
       user_id: review.user_id,
+      contact_id: contactId,
       created_by: null,
       customer_name: review.customer_name || "Customer",
       customer_email: review.customer_email,
@@ -171,6 +197,7 @@ export async function createVideoRequestForReview(params: {
     requestId: request.id,
     token: request.token,
     url: getVideoRequestUrl(request.token),
+    contactId,
     created: true,
   };
 }
@@ -278,6 +305,28 @@ export async function sendReviewVideoUpsellEmails(
         continue;
       }
 
+      // Send-time suppression gate (ADR 0004): the upsell is acquisition mail, so
+      // it honors Suppression. A suppressed customer is skipped (and recorded),
+      // and marked so the sweep does not keep re-selecting the review.
+      const suppressed = await guardAcquisitionSend({
+        organizationId: review.organization_id,
+        email: review.customer_email as string,
+        channel: "email",
+        sendKind: "review_video_upsell",
+        contactId: request.contactId,
+        sourceTable: "reviews",
+        sourceId: review.id,
+      });
+      if (suppressed) {
+        await markReviewUpsellMetadata(review, "video_upsell_skipped_at");
+        result.skipped++;
+        continue;
+      }
+
+      const contactUnsubscribeUrl = request.contactId
+        ? (await resolveContactUnsubscribeUrl(request.contactId)) ?? undefined
+        : undefined;
+
       let proName = proNameByUser.get(review.user_id);
       if (proName === undefined) {
         const { data: pro } = await supabase
@@ -298,6 +347,7 @@ export async function sendReviewVideoUpsellEmails(
         customerName: review.customer_name ?? undefined,
         professionalName: proName ?? "your professional",
         requestUrl: request.url,
+        unsubscribeUrl: contactUnsubscribeUrl,
       });
 
       if (sendResult.success) {

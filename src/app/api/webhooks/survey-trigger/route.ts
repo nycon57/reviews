@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 import crypto from "crypto";
 import type { Json } from "@/types/database.types";
 import { verifyNotBot, hasApiKey } from "@/lib/botid";
+import { findOrCreateContact } from "@/lib/contacts/actions";
 
 // Webhook payload schemas
 const loanClosedPayloadSchema = z.object({
@@ -617,13 +618,34 @@ async function processWebhook(
   const expiresAt = new Date(scheduledAt);
   expiresAt.setDate(expiresAt.getDate() + 14);
 
-  // Create the survey
-  const { data: survey, error: surveyError } = await supabase
+  // Resolve (or create) the Contact for this acquisition request (ADR 0004).
+  // Owner = the resolved professional; inline PII stays on the survey as the
+  // Send-Time Snapshot. Resilient — suppression is enforced at send time.
+  let contactId: string | null = null;
+  try {
+    const contact = await findOrCreateContact(
+      organizationId,
+      { email: customerEmail, name: customerName, phone: customerPhone },
+      userId,
+      "survey"
+    );
+    contactId = contact.id;
+  } catch (contactError) {
+    console.error(
+      "survey-trigger webhook: contact resolution failed",
+      contactError
+    );
+  }
+
+  // Create the survey. Untyped admin client because contact_id is a new column
+  // not yet in the generated types (house pattern for new columns).
+  const { data: survey, error: surveyError } = await createUntypedAdminClient()
     .from("surveys")
     .insert({
       organization_id: organizationId,
       template_id: templateId,
       user_id: userId,
+      contact_id: contactId,
       customer_name: customerName,
       customer_email: customerEmail,
       customer_phone: customerPhone,

@@ -25,7 +25,7 @@ interface ReviewVideoUpsellEmailProps {
 }
 
 export function ReviewVideoUpsellEmail({ data }: ReviewVideoUpsellEmailProps) {
-  const { customerName, professionalName, requestUrl, toEmail } = data;
+  const { customerName, professionalName, requestUrl, toEmail, unsubscribeUrl } = data;
 
   return (
     <EmailLayout preview={`${professionalName} would love a quick video version of your review`}>
@@ -70,7 +70,7 @@ export function ReviewVideoUpsellEmail({ data }: ReviewVideoUpsellEmailProps) {
 
       <Spacer size="lg" />
 
-      <RepwellFooter email={toEmail} />
+      <RepwellFooter email={toEmail} unsubscribeUrlOverride={unsubscribeUrl} />
     </EmailLayout>
   );
 }

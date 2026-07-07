@@ -10,8 +10,10 @@ import {
 import { getUsersForVideoRequests } from "@/lib/video-testimonials/actions";
 import { getResponseAnalytics } from "@/lib/reviews/response-actions";
 import { AnalyticsPageClient } from "@/components/analytics/analytics-page-client";
+import { RequestFunnelCard } from "@/components/analytics/request-funnel-card";
 import { ChannelEffectivenessCard, PerformanceScorecard } from "@/components/insights";
 import { getChannelEffectiveness, getLOPerformanceScorecard } from "@/lib/ai";
+import { getRequestFunnelRollup } from "@/lib/analytics/request-funnel";
 import { CardSkeleton } from "@/components/shared";
 
 export const metadata = {
@@ -37,6 +39,11 @@ async function ChannelEffectivenessSection({ userId }: { userId?: string }) {
   }
 
   return <ChannelEffectivenessCard data={result.data} />;
+}
+
+async function RequestFunnelSection() {
+  const rollup = await getRequestFunnelRollup(30);
+  return <RequestFunnelCard initialRollup={rollup} />;
 }
 
 export default async function AnalyticsPage() {
@@ -121,6 +128,11 @@ export default async function AnalyticsPage() {
         initialResponseAnalytics={responseAnalytics}
         teamMembers={users}
       />
+      <div className="mt-6">
+        <Suspense fallback={<CardSkeleton className="h-[350px]" />}>
+          <RequestFunnelSection />
+        </Suspense>
+      </div>
       {isPro && (
         <div className="mt-6">
           <Suspense fallback={<CardSkeleton className="h-[350px]" />}>

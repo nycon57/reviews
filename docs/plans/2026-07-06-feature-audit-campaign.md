@@ -366,6 +366,7 @@ Ten grill sessions complete (§6–§6k: nine feature areas + engineering standa
 - **Milestone email templates incomplete** (from A1): dispatcher sends first_review / review_milestone / first_5_star; rating_improvement / nps_improvement / profile_completion have NO templates; leaderboard/badge/streak/video milestone types need richer payload assembly (rank, participants, badge meta). Belongs to the engagement area (#8).
 - **Google reply auto-retry**: migration 20260707000001 adds retry_count/last_attempt_at; A1 extending processor.
 - **Nav/middleware "Organization for individuals" contradiction intentionally NOT hotfixed** — resolution is ADR 0006/0007 work (IA area), not a patch.
+- **Contact erasure covers PII columns only** (from B1): video_testimonial_responses media/transcripts carry likeness beyond columns — a media-deletion path on erasure is a video-area follow-up (noted in eraseContact doc comment).
 
 ## 8. Phase 1b — Honesty Sweep (new workstream from grill decisions)
 

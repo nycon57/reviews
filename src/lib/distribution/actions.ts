@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { z } from "zod";
 import { randomBytes } from "crypto";
@@ -13,6 +13,7 @@ import {
 import { sendSurveyInvitationEmail } from "@/lib/email";
 import { emailConfig } from "@/lib/email/client";
 import type { SurveyInvitationEmailData } from "@/lib/email/types";
+import { findOrCreateContact } from "@/lib/contacts/actions";
 import type { Json } from "@/types/database.types";
 
 // Input validation schemas
@@ -194,13 +195,38 @@ export async function createSurveyAndQueue(
       return { success: false, error: "No active survey template found" };
     }
 
-    // Create the survey
-    const { data: survey, error: surveyError } = await supabase
+    // Resolve (or create) the Contact for this acquisition request (ADR 0004).
+    // Owner = the professional the survey is for (surveys.user_id). The inline
+    // name/email/phone stay on the survey as the immutable Send-Time Snapshot;
+    // contact_id links to the living Contact for dedup and suppression. Kept
+    // resilient: a contacts hiccup must not block the revenue-path send — the
+    // send-time suppression check keys off the email regardless of linkage.
+    let contactId: string | null = null;
+    try {
+      const contact = await findOrCreateContact(
+        userData.organization_id,
+        {
+          email: validated.data.customerEmail,
+          name: validated.data.customerName,
+          phone: validated.data.customerPhone,
+        },
+        validated.data.loanOfficerId,
+        "survey"
+      );
+      contactId = contact.id;
+    } catch (contactError) {
+      console.error("createSurveyAndQueue: contact resolution failed", contactError);
+    }
+
+    // Create the survey. Uses the untyped admin client because contact_id is a
+    // new column not yet in the generated types (house pattern for new columns).
+    const { data: survey, error: surveyError } = await createUntypedAdminClient()
       .from("surveys")
       .insert({
         organization_id: userData.organization_id,
         template_id: surveyTemplateId,
         user_id: validated.data.loanOfficerId,
+        contact_id: contactId,
         customer_name: validated.data.customerName,
         customer_email: validated.data.customerEmail,
         customer_phone: validated.data.customerPhone,

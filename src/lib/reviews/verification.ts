@@ -16,6 +16,7 @@ import {
 } from "@/lib/reviews/notifications";
 import { getCelebrationThreshold } from "@/lib/video-testimonials/public-actions";
 import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
+import { findOrCreateContact } from "@/lib/contacts/actions";
 
 /** Single source of truth for verification token crypto (raw token emailed, only the hash stored). */
 export function generateVerificationToken(): { rawToken: string; tokenHash: string } {
@@ -53,7 +54,7 @@ export async function verifyDirectReview(
   const { data: review, error } = await (supabase as any)
     .from("reviews")
     .select(
-      "id, organization_id, user_id, rating, customer_name, moderation_verdict"
+      "id, organization_id, user_id, rating, customer_name, customer_email, moderation_verdict"
     )
     .eq("verification_token_hash", tokenHash)
     .is("verified_at", null)
@@ -111,6 +112,29 @@ export async function verifyDirectReview(
   // that actually flipped the row runs the one-time publish side effects.
   const isFirstVerification =
     Array.isArray(verifiedRows) && verifiedRows.length === 1;
+
+  // Contact resolution happens at VERIFICATION, not submission: the email is
+  // only proven here (ADR 0004). Link on the first verification regardless of
+  // moderation outcome — a quarantined reviewer still proved their email — so
+  // dedup and suppression cover them. Owner = the professional the review is
+  // for. Best-effort: never fail verification over Contact linkage.
+  if (isFirstVerification && review.customer_email) {
+    try {
+      const contact = await findOrCreateContact(
+        review.organization_id,
+        { email: review.customer_email, name: review.customer_name },
+        review.user_id,
+        "direct_review"
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any)
+        .from("reviews")
+        .update({ contact_id: contact.id })
+        .eq("id", review.id);
+    } catch (contactError) {
+      console.error("verifyDirectReview: contact link failed", contactError);
+    }
+  }
 
   let showVideoUpsell = false;
 

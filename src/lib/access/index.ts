@@ -91,15 +91,31 @@ export async function getAccessContext(): Promise<AccessContext | null> {
     .eq("id", authUser.id)
     .single();
 
+  const org = userData?.organizations as {
+    account_type?: string;
+    subscription_tier?: string;
+    subscription_status?: string;
+    grace_period_ends_at?: string;
+  } | null;
+
+  // Individual path: identified by individual_organization_id. Individuals keep
+  // organization_id for backward compat, so their real subscription tier lives on
+  // the organizations row — the same source billing/Stripe writes to. Read it
+  // instead of assuming "basic" so paying individuals aren't gated out of Pro.
+  if (userData?.individual_organization_id) {
+    return {
+      userId: authUser.id,
+      role: (userData.role || "admin") as UserRole,
+      accountType: "individual" as AccountType,
+      subscriptionTier: (org?.subscription_tier || "basic") as SubscriptionTier,
+      organizationId: userData.individual_organization_id,
+      isOwner: true,
+      isGracePeriod: false,
+    };
+  }
+
   // Enterprise path: organization_id is set
   if (userData?.organization_id) {
-    const org = userData.organizations as {
-      account_type?: string;
-      subscription_tier?: string;
-      subscription_status?: string;
-      grace_period_ends_at?: string;
-    } | null;
-
     const gracePeriod = isInGracePeriod(
       org?.subscription_status,
       org?.grace_period_ends_at
@@ -118,19 +134,6 @@ export async function getAccessContext(): Promise<AccessContext | null> {
       organizationId: userData.organization_id,
       isOwner: userData.is_owner || false,
       isGracePeriod: gracePeriod,
-    };
-  }
-
-  // Individual path: individual_organization_id is set (no enterprise org)
-  if (userData?.individual_organization_id) {
-    return {
-      userId: authUser.id,
-      role: (userData.role || "admin") as UserRole,
-      accountType: "individual" as AccountType,
-      subscriptionTier: "basic" as SubscriptionTier,
-      organizationId: userData.individual_organization_id,
-      isOwner: true,
-      isGracePeriod: false,
     };
   }
 

@@ -21,8 +21,8 @@ interface ContactProfessionalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   professional: {
+    id: string;
     full_name: string;
-    email: string;
     title: string | null;
     photo_url: string | null;
   };
@@ -47,7 +47,7 @@ export function ContactProfessionalModal({
     setError(null);
     startTransition(async () => {
       const result = await contactProfessional({
-        professionalEmail: professional.email,
+        professionalId: professional.id,
         professionalName: professional.full_name,
         senderName: form.name,
         senderEmail: form.email,

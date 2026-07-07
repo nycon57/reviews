@@ -136,7 +136,7 @@ export async function checkNoRecentRequests(
       title: "Send review requests to keep momentum",
       description:
         "You haven't sent any review requests in the past 7 days. Consistent outreach drives steady review growth.",
-      actionUrl: "/dashboard/surveys/send",
+      actionUrl: "/dashboard/reviews?tab=requests",
     },
   ];
 }
@@ -185,7 +185,7 @@ export async function checkSurveyVelocityDecline(
       priority: "medium",
       title: `Review requests down ${pctBelow}% from last week`,
       description: `You sent ${thisCount} this week vs ${lastCount} last week. Consistent outreach drives steady growth.`,
-      actionUrl: "/dashboard/surveys/send",
+      actionUrl: "/dashboard/reviews?tab=requests",
       metadata: { thisCount, lastCount, pctBelow },
     },
   ];

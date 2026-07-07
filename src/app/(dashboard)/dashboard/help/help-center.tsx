@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +16,8 @@ import {
   Book,
   FileText,
   Envelope as Mail,
-  ChatCircle as MessageCircle,
   MagnifyingGlass as Search,
   ArrowSquareOut as ExternalLink,
-  VideoCamera as Video,
   Lightbulb,
   Shield,
   Gear as Settings,
@@ -114,20 +113,14 @@ const QUICK_LINKS = [
     title: "Getting Started Guide",
     description: "Learn the basics of RepWell",
     icon: Book,
-    href: "#",
+    href: "/docs/getting-started",
     badge: "New",
-  },
-  {
-    title: "Video Tutorials",
-    description: "Watch step-by-step tutorials",
-    icon: Video,
-    href: "#",
   },
   {
     title: "API Documentation",
     description: "Integrate with your systems",
     icon: FileText,
-    href: "#",
+    href: "/docs/developers",
   },
 ];
 
@@ -140,11 +133,11 @@ const SUPPORT_OPTIONS = [
     actionLabel: "Send Email",
   },
   {
-    title: "Live Chat",
-    description: "Chat with our support team",
-    icon: MessageCircle,
-    action: "#",
-    actionLabel: "Start Chat",
+    title: "Email Support",
+    description: "Reach our support team by email",
+    icon: Mail,
+    action: "support@repwell.com",
+    actionLabel: "Send Email",
   },
   {
     title: "Security",
@@ -189,29 +182,31 @@ export function HelpCenter() {
       {/* Quick links */}
       <div className="grid gap-4 md:grid-cols-3">
         {QUICK_LINKS.map((link) => (
-          <Card key={link.title} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <link.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold">{link.title}</h3>
-                    {link.badge && (
-                      <Badge variant="secondary" className="text-xs">
-                        {link.badge}
-                      </Badge>
-                    )}
+          <Link key={link.title} href={link.href} className="block">
+            <Card className="h-full hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <link.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {link.description}
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-semibold">{link.title}</h3>
+                      {link.badge && (
+                        <Badge variant="secondary" className="text-xs">
+                          {link.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {link.description}
+                    </p>
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
                 </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 

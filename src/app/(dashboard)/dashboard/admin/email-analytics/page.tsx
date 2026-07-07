@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { unifiedGetUser } from "@/lib/auth/actions";
+import { checkAdminAccess } from "@/lib/auth/actions";
 import { StatsRowSkeleton, ChartSkeleton, TableSkeleton } from "@/components/shared";
 import {
   Envelope as Mail,
@@ -12,23 +11,6 @@ export const metadata = {
   title: "Email Analytics | RepWell",
   description: "Monitor email performance, delivery rates, and engagement metrics",
 };
-
-async function checkAdminAccess() {
-  const user = await unifiedGetUser();
-
-  if (!user) {
-    return false;
-  }
-
-  const supabase = createAdminClient();
-  const { data: userData } = await supabase
-    .from("users")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  return userData?.role === "admin";
-}
 
 export default async function EmailAnalyticsPage() {
   const hasAccess = await checkAdminAccess();

@@ -230,7 +230,7 @@ export function EnhancedLeaderboard({
         {data.map((entry) => (
           <Link
             key={entry.id}
-            href={`/dashboard/team/${entry.id}`}
+            href={`/dashboard/analytics/member/${entry.id}`}
             className={`flex items-center gap-3 rounded-lg p-3 transition-all hover:bg-repwell-sage-100/20 dark:hover:bg-repwell-teal-300/10 ${getRankBackground(entry.rank)}`}
           >
             {/* Rank */}

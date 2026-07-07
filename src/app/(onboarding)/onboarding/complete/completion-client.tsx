@@ -38,7 +38,7 @@ const nextSteps = [
     icon: Rocket,
     title: "Connect integrations",
     description: "Link Google Business Profile and other platforms",
-    href: "/dashboard/settings/integrations",
+    href: "/dashboard/settings?tab=integrations",
   },
 ];
 

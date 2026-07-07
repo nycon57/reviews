@@ -1292,7 +1292,7 @@ export async function getSmartActionItems(
       actionType: "send_requests",
       title: `Send review requests — you're ${pctBelow}% below last week`,
       description: `You sent ${thisWeekSurveys} review requests this week vs ${lastWeekSurveys} last week. Consistent outreach drives steady review growth.`,
-      actionUrl: "/dashboard/surveys/send",
+      actionUrl: "/dashboard/reviews?tab=requests",
       dismissible: true,
     });
   }

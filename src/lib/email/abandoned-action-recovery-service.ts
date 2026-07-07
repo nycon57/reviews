@@ -507,7 +507,7 @@ async function sendRecoveryEmail(
         ...baseEmailData,
         employeesSelected: safeInteger(context.contacts_selected, 0, 0, 10000),
         templateName: safeString(context.template_name),
-        sendSurveyUrl: `${baseUrl}/dashboard/surveys/send`,
+        sendSurveyUrl: `${baseUrl}/dashboard/reviews?tab=requests`,
       };
       break;
 

@@ -237,6 +237,14 @@ const nextConfig = {
   // Redirect root to dashboard for authenticated users
   async redirects() {
     return [
+      // WordPress/legacy embed snippet points at /embed.js — send it to the
+      // canonical minified embed script (which carries the CORS + content-type
+      // headers defined above) instead of 404-ing.
+      {
+        source: "/embed.js",
+        destination: "/embed/v1/embed.min.js",
+        permanent: true,
+      },
       // Redirect old /lo/ routes to new /pro/ routes
       {
         source: "/lo",

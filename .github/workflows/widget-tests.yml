@@ -40,7 +40,7 @@ jobs:
         run: npx tsx scripts/build-embed.ts
 
       - name: Run bundle size assertion
-        run: npx vitest run tests/performance/embed-bundle-size.test.ts
+        run: npx vitest run --config vitest.performance.config.ts
 
   unit-tests:
     name: Widget Unit Tests

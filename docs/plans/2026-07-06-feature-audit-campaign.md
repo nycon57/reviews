@@ -361,6 +361,12 @@ Cross-cutting standards binding on ALL campaign teams (these amend §5 Phase 3 m
 
 Ten grill sessions complete (§6–§6k: nine feature areas + engineering standards). Every Phase 2 area now has pre-made decisions; remaining choices are implementation-level and belong to PM teams under the deviation rules of `fable-pm-opus-teams.md`.
 
+## 7b. Scoped follow-ups logged during Team A execution (2026-07-07)
+
+- **Milestone email templates incomplete** (from A1): dispatcher sends first_review / review_milestone / first_5_star; rating_improvement / nps_improvement / profile_completion have NO templates; leaderboard/badge/streak/video milestone types need richer payload assembly (rank, participants, badge meta). Belongs to the engagement area (#8).
+- **Google reply auto-retry**: migration 20260707000001 adds retry_count/last_attempt_at; A1 extending processor.
+- **Nav/middleware "Organization for individuals" contradiction intentionally NOT hotfixed** — resolution is ADR 0006/0007 work (IA area), not a patch.
+
 ## 8. Phase 1b — Honesty Sweep (new workstream from grill decisions)
 
 One team removes every shipped fiction in a single pass: delist SMS/Teams/HubSpot/Apple-Business-Connect marketing claims + fix the fictional Zapier doc (real Zapier build comes later with acquisition); archive mobile app (`archive/mobile-app`) and `@repwell/react-widgets` (`archive/react-widgets`); delete referral email service + templates; kill GEO route + fake-data writers + purge fabricated rows; remove SMS preference toggles, Send-SMS builder node, Teams senders/toggles; hardcoded "API status" pill and mobile-era claims. Paired with H-fixes so honesty and correctness land together.

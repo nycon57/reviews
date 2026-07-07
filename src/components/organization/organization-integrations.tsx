@@ -10,7 +10,6 @@ import {
   GoogleLogo,
   ShareNetwork,
   SlackLogo,
-  MicrosoftTeamsLogo,
 } from "@phosphor-icons/react";
 import {
   getOrgIntegrationSettings,
@@ -42,12 +41,6 @@ const INTEGRATIONS: {
     name: "Slack",
     description: "Get real-time review notifications in Slack channels",
     icon: <SlackLogo weight="duotone" className="h-5 w-5" />,
-  },
-  {
-    key: "teams",
-    name: "Microsoft Teams",
-    description: "Get review notifications in Microsoft Teams channels",
-    icon: <MicrosoftTeamsLogo weight="duotone" className="h-5 w-5" />,
   },
 ];
 

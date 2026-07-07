@@ -135,7 +135,7 @@ const salesforceConfig: IntegrationPageConfig = {
     },
   ],
 
-  relatedIntegrations: ["hubspot", "zapier", "slack"],
+  relatedIntegrations: ["zapier", "slack"],
 
   seo: {
     title: "Salesforce Integration | RepWell",
@@ -399,7 +399,7 @@ const slackConfig: IntegrationPageConfig = {
     },
   ],
 
-  relatedIntegrations: ["microsoft-teams", "zapier", "google-business-profile"],
+  relatedIntegrations: ["zapier", "google-business-profile"],
 
   seo: {
     title: "Slack Integration | RepWell",
@@ -411,138 +411,6 @@ const slackConfig: IntegrationPageConfig = {
       "review alerts slack",
       "customer feedback slack",
       "nps slack notifications",
-    ],
-  },
-};
-
-/**
- * Microsoft Teams integration configuration
- */
-const microsoftTeamsConfig: IntegrationPageConfig = {
-  slug: "microsoft-teams",
-  name: "Microsoft Teams",
-  shortDescription:
-    "Receive review alerts, NPS updates, and team reports directly in your Microsoft Teams channels.",
-  category: "communication",
-  icon: "MicrosoftTeamsLogo",
-
-  hero: {
-    headline: "Connect RepWell with Microsoft Teams",
-    description:
-      "Bring customer feedback into your Microsoft Teams workflow. Review notifications, NPS alerts, and performance reports arrive right where your team already works.",
-    badge: "Communication",
-  },
-
-  overview: {
-    whatItDoes:
-      "The Microsoft Teams integration delivers real-time customer feedback notifications and automated reports to your Teams channels. Configure alert rules to ensure the right people see the right information at the right time.",
-    dataFlow: [
-      { direction: "out", label: "Review notifications to Teams" },
-      { direction: "out", label: "NPS and performance alerts" },
-      { direction: "out", label: "Automated weekly reports" },
-    ],
-  },
-
-  features: [
-    {
-      icon: "Bell",
-      title: "Review Notifications",
-      description:
-        "New reviews appear as rich cards in your Teams channels with rating, text, and quick-action buttons.",
-    },
-    {
-      icon: "Warning",
-      title: "Priority Alerts",
-      description:
-        "Low-rating reviews trigger urgent notifications to managers and support teams for rapid response.",
-    },
-    {
-      icon: "ChartBar",
-      title: "Scheduled Reports",
-      description:
-        "Weekly and monthly performance summaries posted to channels automatically. No manual reporting.",
-    },
-    {
-      icon: "Sliders",
-      title: "Flexible Routing",
-      description:
-        "Send different notification types to different channels or teams based on your organizational structure.",
-    },
-    {
-      icon: "ShieldCheck",
-      title: "Enterprise Security",
-      description:
-        "Built on Microsoft Graph API with enterprise-grade security. Respects your Teams admin policies.",
-    },
-    {
-      icon: "ArrowSquareOut",
-      title: "One-Click Actions",
-      description:
-        "Respond to reviews, view customer details, or escalate issues directly from the Teams notification card.",
-    },
-  ],
-
-  setupSteps: [
-    {
-      step: 1,
-      title: "Install the App",
-      description:
-        "Find RepWell in the Microsoft Teams app store or install via the RepWell integrations page.",
-      icon: "Plus",
-    },
-    {
-      step: 2,
-      title: "Select Teams & Channels",
-      description:
-        "Choose which Teams channels should receive RepWell notifications. Works with any channel type.",
-      icon: "Hash",
-    },
-    {
-      step: 3,
-      title: "Set Alert Rules",
-      description:
-        "Configure which events trigger notifications and set priority levels for different review types.",
-      icon: "Sliders",
-    },
-    {
-      step: 4,
-      title: "Go Live",
-      description:
-        "Enable the integration and notifications begin immediately. Manage settings from either platform.",
-      icon: "Play",
-    },
-  ],
-
-  useCases: [
-    {
-      title: "Enterprise Communication",
-      description:
-        "For organizations on Microsoft 365, keep feedback visible without adding another tool to the stack.",
-    },
-    {
-      title: "Manager Oversight",
-      description:
-        "Branch managers receive alerts in their Teams channels, enabling quick action on customer issues.",
-    },
-    {
-      title: "Cross-Team Coordination",
-      description:
-        "Route feedback to the right department automatically -- support issues to support, compliments to sales.",
-    },
-  ],
-
-  relatedIntegrations: ["slack", "salesforce", "zapier"],
-
-  seo: {
-    title: "Microsoft Teams Integration | RepWell",
-    description:
-      "Connect Microsoft Teams with RepWell for real-time review notifications, NPS alerts, and automated performance reports.",
-    keywords: [
-      "microsoft teams integration",
-      "teams review notifications",
-      "microsoft 365 review management",
-      "teams customer feedback",
-      "enterprise review alerts",
     ],
   },
 };
@@ -663,7 +531,7 @@ const zapierConfig: IntegrationPageConfig = {
     },
   ],
 
-  relatedIntegrations: ["salesforce", "hubspot", "slack"],
+  relatedIntegrations: ["salesforce", "slack"],
 
   seo: {
     title: "Zapier Integration | RepWell",
@@ -675,138 +543,6 @@ const zapierConfig: IntegrationPageConfig = {
       "zapier review management",
       "no code review automation",
       "zapier customer feedback",
-    ],
-  },
-};
-
-/**
- * HubSpot integration configuration
- */
-const hubspotConfig: IntegrationPageConfig = {
-  slug: "hubspot",
-  name: "HubSpot",
-  shortDescription:
-    "Sync contacts, trigger surveys from deal stages, and enrich HubSpot records with review data.",
-  category: "crm",
-  icon: "Hexagon",
-
-  hero: {
-    headline: "Connect RepWell with HubSpot",
-    description:
-      "Bridge the gap between your HubSpot CRM and customer feedback. Sync contacts, trigger review requests from deal pipelines, and see satisfaction data right inside HubSpot.",
-    badge: "CRM Integration",
-  },
-
-  overview: {
-    whatItDoes:
-      "The HubSpot integration syncs your CRM contacts with RepWell, triggers review requests based on deal stage changes, and enriches HubSpot contact records with NPS scores and review activity. Get a complete customer view without switching tools.",
-    dataFlow: [
-      { direction: "in", label: "Contact and deal data from HubSpot" },
-      { direction: "out", label: "NPS scores and review data to HubSpot" },
-      { direction: "both", label: "Customer lifecycle data" },
-    ],
-  },
-
-  features: [
-    {
-      icon: "ArrowsClockwise",
-      title: "Contact Sync",
-      description:
-        "Keep contacts synchronized between HubSpot and RepWell. New deals automatically create survey recipients.",
-    },
-    {
-      icon: "Lightning",
-      title: "Pipeline Triggers",
-      description:
-        "Fire review requests when deals move to specific pipeline stages. Automate the ask at the perfect moment.",
-    },
-    {
-      icon: "Notepad",
-      title: "Custom Properties",
-      description:
-        "RepWell creates custom HubSpot properties for NPS score, review count, and last review date on contact records.",
-    },
-    {
-      icon: "ListChecks",
-      title: "Smart Lists",
-      description:
-        "Build HubSpot lists based on RepWell data -- promoters, detractors, unreviewed customers, and more.",
-    },
-    {
-      icon: "Envelope",
-      title: "Marketing Automation",
-      description:
-        "Use RepWell data in HubSpot workflows. Send targeted campaigns to promoters or re-engagement to detractors.",
-    },
-    {
-      icon: "ChartBar",
-      title: "Reporting Integration",
-      description:
-        "Add RepWell data to HubSpot reports and dashboards for unified business intelligence.",
-    },
-  ],
-
-  setupSteps: [
-    {
-      step: 1,
-      title: "Connect HubSpot",
-      description:
-        "Navigate to RepWell integrations and click 'Connect HubSpot'. Sign in with your HubSpot admin account.",
-      icon: "Link",
-    },
-    {
-      step: 2,
-      title: "Map Properties",
-      description:
-        "Review the default field mapping and customize as needed. RepWell auto-creates custom properties in HubSpot.",
-      icon: "Table",
-    },
-    {
-      step: 3,
-      title: "Configure Triggers",
-      description:
-        "Select which pipeline stages should trigger survey sends. Set timing and channel preferences.",
-      icon: "Lightning",
-    },
-    {
-      step: 4,
-      title: "Activate Sync",
-      description:
-        "Turn on the integration and monitor initial sync from the RepWell dashboard. Data flows in minutes.",
-      icon: "ArrowsClockwise",
-    },
-  ],
-
-  useCases: [
-    {
-      title: "Inbound Lead Nurturing",
-      description:
-        "Enrich HubSpot workflows with review data. Send testimonial requests to happy customers or save offers to unhappy ones.",
-    },
-    {
-      title: "Customer Success Scoring",
-      description:
-        "Combine HubSpot engagement data with RepWell NPS scores for a comprehensive customer health score.",
-    },
-    {
-      title: "Revenue Attribution",
-      description:
-        "Track which deals generated the most positive reviews and correlate review activity with revenue.",
-    },
-  ],
-
-  relatedIntegrations: ["salesforce", "zapier", "google-business-profile"],
-
-  seo: {
-    title: "HubSpot Integration | RepWell",
-    description:
-      "Connect HubSpot with RepWell to sync contacts, trigger review requests from pipelines, and enrich CRM records with customer feedback data.",
-    keywords: [
-      "hubspot integration",
-      "hubspot review management",
-      "hubspot nps",
-      "hubspot customer feedback",
-      "crm review automation",
     ],
   },
 };
@@ -1082,9 +818,7 @@ export const integrationPageConfigs: Record<IntegrationSlug, IntegrationPageConf
   salesforce: salesforceConfig,
   "google-business-profile": googleBusinessConfig,
   slack: slackConfig,
-  "microsoft-teams": microsoftTeamsConfig,
   zapier: zapierConfig,
-  hubspot: hubspotConfig,
   encompass: encompassConfig,
   facebook: facebookConfig,
 };

@@ -200,25 +200,12 @@ export function validateGraph(nodes: WorkflowNode[], edges: WorkflowEdge[]): Val
       }
     }
 
-    if (node.type === "action-sms") {
-      const template = String(node.data?.smsTemplateName ?? "").trim();
-      if (!template) {
-        warnings.push({
-          id: makeIssueId("sms-template", node.id),
-          message: "SMS action has no template selected.",
-          severity: "warning",
-          nodeId: node.id,
-        });
-      }
-    }
-
     if (node.type === "action-smart") {
       const emailTemplate = String(node.data?.templateName ?? "").trim();
-      const smsTemplate = String(node.data?.smsTemplateName ?? "").trim();
-      if (!emailTemplate && !smsTemplate) {
+      if (!emailTemplate) {
         warnings.push({
           id: makeIssueId("smart-template", node.id),
-          message: "Smart send action should define at least one template.",
+          message: "Smart send action should define an email template.",
           severity: "warning",
           nodeId: node.id,
         });
@@ -300,7 +287,6 @@ export function hasBlockingActivationWarnings(warnings: ValidationIssue[]): bool
   return warnings.some((warning) => {
     if (!warning.nodeId) return false;
     return warning.id.startsWith("email-template")
-      || warning.id.startsWith("sms-template")
       || warning.id.startsWith("smart-template");
   });
 }

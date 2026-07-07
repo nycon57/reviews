@@ -1320,105 +1320,49 @@ For API support:
       },
       {
         id: "zapier",
-        title: "Zapier Integration",
+        title: "Zapier & Automation",
         slug: "zapier",
-        description: "Connect with thousands of apps via Zapier",
-        tags: ["integrations", "zapier", "automation"],
+        description: "Connect RepWell to Zapier and other tools using webhooks and the REST API",
+        tags: ["integrations", "zapier", "automation", "webhooks", "api"],
         content: `
-# Zapier Integration
+# Zapier & Automation
 
-Connect RepWell with thousands of apps using Zapier.
+RepWell does not ship a native Zapier app, but you can still connect RepWell to Zapier — and thousands of other tools — using RepWell **webhooks** and the **REST API**. This gives you the same automation power without waiting on a dedicated connector.
 
-## What is Zapier?
+## How it works
 
-Zapier lets you connect RepWell with 5,000+ apps to automate workflows without code. Create "Zaps" that trigger actions based on events.
+- **RepWell to other apps:** Configure a webhook in RepWell to push events (such as a new review, a completed survey, or a low-rating alert) to any URL. In Zapier, use the **Webhooks by Zapier** trigger ("Catch Hook") to receive them.
+- **Other apps to RepWell:** Use the **Webhooks by Zapier** action (or any HTTP client) to call the RepWell REST API — create contacts, send survey requests, and more — authenticated with your API key.
 
-## Getting Started
+## Send RepWell events to Zapier
 
-### Step 1: Create Zapier Account
-Sign up at zapier.com if you don't have an account.
+1. In Zapier, create a Zap with the **Webhooks by Zapier → Catch Hook** trigger and copy the generated URL.
+2. In RepWell, go to **Settings → Webhooks** and add an endpoint with that URL.
+3. Choose which events to send.
+4. Save, then send a test event to confirm Zapier receives the payload.
 
-### Step 2: Connect RepWell
-1. Search for "RepWell" in Zapier
-2. Click **Connect Account**
-3. Enter your API key
-4. Test the connection
+See the [Webhooks guide](/docs/integrations/webhooks) for the full event list and payload format.
 
-## Available Triggers
+## Trigger RepWell actions from Zapier
 
-### New Review
-Fires when a new review is received:
-- Review text
-- Star rating
-- Reviewer name
-- Loan officer
-- Timestamp
+1. Add a **Webhooks by Zapier → Custom Request** action to your Zap.
+2. Point it at the relevant RepWell REST API endpoint.
+3. Add an Authorization header of the form "Bearer YOUR_API_KEY" using a key from **Settings → API**.
+4. Map fields from the previous step into the request body.
 
-### Survey Completed
-Fires when a customer completes a survey:
-- Response data
-- Survey template
-- Customer email
-- Completion time
+See [API Authentication](/docs/developers/authentication) to create and use API keys.
 
-### Low Rating Alert
-Fires for reviews below a threshold:
-- Rating value
-- Review content
-- Customer details
+## Example automations
 
-## Available Actions
+- **CRM deal closed → send a survey:** Catch the CRM event in Zapier, then call the RepWell API to send a review request.
+- **New review → Slack:** Send a RepWell new-review webhook to Zapier, then post to a Slack channel.
+- **Low rating → email the team:** Send a low-rating webhook to Zapier, then send an email via Gmail.
 
-### Send Survey
-Trigger a survey to a customer:
-- Customer email (required)
-- Customer name
-- Loan officer
-- Template selection
+## Best practices
 
-### Create Contact
-Add a new contact to RepWell:
-- Email address
-- Name
-- Phone number
-- Custom fields
-
-## Example Zaps
-
-### CRM to Survey
-When a deal closes in your CRM:
-1. Trigger: Deal closed in [CRM]
-2. Action: Send survey in RepWell
-
-### Review to Slack
-Get notified of new reviews:
-1. Trigger: New review in RepWell
-2. Action: Send message to Slack channel
-
-### Low Rating to Email
-Alert team of negative feedback:
-1. Trigger: Low rating alert in RepWell
-2. Action: Send email via Gmail
-
-## Best Practices
-
-### Test Your Zaps
-Always test before going live:
-- Use test data
-- Verify correct mapping
-- Check all conditions
-
-### Monitor Zap History
-Keep tabs on your automations:
-- Review task history
-- Check for errors
-- Optimize performance
-
-### Handle Errors
-Set up error notifications:
-- Email alerts for failures
-- Retry failed tasks
-- Log issues for debugging
+- Verify the webhook signature on incoming events (see the Webhooks guide).
+- Store your API key as a Zapier secret; never hard-code it.
+- Test each Zap with sample data before turning it on.
         `,
       },
     ],
@@ -1787,7 +1731,7 @@ RepWell works on:
 - Edge (latest 2 versions)
 
 ### Is there a mobile app?
-Yes, RepWell has mobile apps for iOS and Android. Download from the App Store or Google Play.
+There is no native mobile app yet. RepWell is a fully responsive web app, so you can use it in any mobile browser and add it to your home screen for quick access.
 
 ### How secure is my data?
 We use:

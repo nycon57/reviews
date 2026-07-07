@@ -94,13 +94,6 @@ export const NAV_CONFIG: NavConfig = {
           permission: PERMISSIONS.VIEW_AI_INSIGHTS,
           requiresPro: true,
         },
-        // {
-        //   title: "AI Visibility",
-        //   href: "/dashboard/geo",
-        //   icon: "Eye",
-        //   permission: PERMISSIONS.VIEW_GEO_VISIBILITY,
-        //   requiresPro: true,
-        // },
       ],
     },
     {

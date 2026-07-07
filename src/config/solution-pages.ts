@@ -71,14 +71,14 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
       title: "Smart Follow-Up Sequences",
       description:
         "Gentle reminders for non-responders maximize completions without annoying customers.",
-      features: ["Optimized spacing", "Multi-channel", "Auto-stop on response"],
+      features: ["Optimized spacing", "Email delivery", "Auto-stop on response"],
     },
     {
       icon: "Smartphone",
-      title: "Multi-Channel Outreach",
+      title: "Automated Outreach",
       description:
-        "Reach customers via email, SMS, or both. Meet them where they prefer to engage.",
-      features: ["Email + SMS", "Mobile-optimized", "Personalized content"],
+        "Reach customers via email. Meet them where they prefer to engage.",
+      features: ["Email", "Mobile-optimized", "Personalized content"],
     },
   ],
 
@@ -119,7 +119,7 @@ export const reviewGrowthSolutionConfig: SolutionPageConfig = {
     {
       slug: "surveys",
       title: "Survey Management",
-      contribution: "Industry-specific templates with multi-channel distribution",
+      contribution: "Industry-specific templates with automated email distribution",
       icon: "Send",
     },
     {
@@ -288,7 +288,7 @@ export const reputationManagementSolutionConfig: SolutionPageConfig = {
       title: "Instant Alerts",
       description:
         "Get notified immediately when new reviews come in or sentiment drops. Never miss negative feedback.",
-      features: ["Email/SMS alerts", "Sentiment triggers", "Customizable rules"],
+      features: ["Email alerts", "Sentiment triggers", "Customizable rules"],
     },
     {
       icon: "MessageCircle",

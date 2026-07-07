@@ -95,7 +95,6 @@ export function WorkflowCanvas({
       "trigger-time": TriggerNode,
       "trigger-manual": TriggerNode,
       "action-email": ActionNode,
-      "action-sms": ActionNode,
       "action-smart": ActionNode,
       "condition-ifelse": ConditionNode,
       "condition-absplit": ABSplitNode,

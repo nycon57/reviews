@@ -135,16 +135,6 @@ export function PropertiesPanel({
         updateNodeData(selectedNode.id, { [field.key]: defaults });
       }
     }
-
-    // Persist default SMS requirements if missing
-    const smsFields = config.configFields.filter((f) => f.type === "sms-requirements");
-    for (const field of smsFields) {
-      if (!selectedNode.data[field.key]) {
-        updateNodeData(selectedNode.id, {
-          [field.key]: { requireConsent: true, requirePhoneNumber: true, respectQuietHours: true },
-        });
-      }
-    }
   }, [selectedNode?.id, readOnly, config, updateNodeData, selectedNode]);
 
   if (!selectedNode || !config) {
@@ -508,37 +498,6 @@ export function PropertiesPanel({
                     </div>
                   ))}
                 </div>
-              </div>
-            );
-          }
-
-          if (field.type === "sms-requirements") {
-            const requirements = (selectedNode.data[field.key] as Record<string, boolean> | undefined) ?? {};
-
-            return (
-              <div key={field.key} className="space-y-2 rounded-lg border p-3">
-                <Label>SMS Requirements</Label>
-                {[
-                  { key: "requireConsent", label: "Require consent" },
-                  { key: "requirePhoneNumber", label: "Require phone" },
-                  { key: "respectQuietHours", label: "Respect quiet hours" },
-                ].map((item) => (
-                  <div key={item.key} className="flex items-center justify-between rounded border px-2 py-1.5">
-                    <p className="text-xs">{item.label}</p>
-                    <Switch
-                      checked={Boolean(requirements[item.key])}
-                      onCheckedChange={(checked) => {
-                        updateData({
-                          [field.key]: {
-                            ...requirements,
-                            [item.key]: checked,
-                          },
-                        });
-                      }}
-                      disabled={readOnly}
-                    />
-                  </div>
-                ))}
               </div>
             );
           }

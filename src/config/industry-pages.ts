@@ -348,7 +348,7 @@ export const realEstatePageConfig: IndustryPageConfig = {
         "Post-closing surveys trigger automatically. Smart timing and follow-ups maximize responses without being pushy.",
       bulletPoints: [
         "Auto-send after closing date",
-        "Multi-channel: email, SMS, or both",
+        "Email delivery",
         "Route 5-star reviews to Zillow & Google",
       ],
       layoutVariant: "single",
@@ -430,7 +430,6 @@ export const realEstatePageConfig: IndustryPageConfig = {
         "Automated post-closing surveys",
         "Direct Zillow and Google integration",
         "Social media content generator",
-        "Mobile app for on-the-go access",
       ],
     },
     {
@@ -623,7 +622,7 @@ export const insurancePageConfig: IndustryPageConfig = {
       bulletPoints: [
         "Post-purchase and renewal triggers",
         "Claims follow-up surveys",
-        "Multi-channel outreach (email + SMS)",
+        "Email outreach",
       ],
       layoutVariant: "single",
       images: [
@@ -1389,9 +1388,8 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       icon: "Star",
       tabName: "Reviews",
       title: "Review Collection on Autopilot",
-      summary: "Text surveys send after every job. No extra work for you or your techs.",
+      summary: "Email surveys send after every job. No extra work for you or your techs.",
       bulletPoints: [
-        "SMS surveys after job completion",
         "One-tap review requests",
         "Route to Google, Yelp, Angi",
       ],
@@ -1468,7 +1466,6 @@ export const homeServicesPageConfig: IndustryPageConfig = {
       description: "Build your personal reputation",
       features: [
         "Personal review dashboard",
-        "Mobile app for job completion",
         "Performance tracking",
         "Customer feedback view",
         "Gamification and rankings",
@@ -1514,8 +1511,8 @@ export const homeServicesPageConfig: IndustryPageConfig = {
     },
     {
       step: 3,
-      title: "Customers Get Texted",
-      description: "Simple SMS surveys. Customers tap to leave a review.",
+      title: "Customers Get Emailed",
+      description: "Simple email surveys. Customers tap to leave a review.",
       icon: "Smartphone",
     },
     {

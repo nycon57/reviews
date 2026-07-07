@@ -59,9 +59,9 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
     },
     {
       icon: "MessageSquare",
-      title: "Multi-Channel Outreach",
+      title: "Automated Outreach",
       description:
-        "Reach customers via email, SMS, or both. Smart sequencing with gentle reminders that boost responses without annoying customers.",
+        "Reach customers via email. Smart sequencing with gentle reminders that boost responses without annoying customers.",
     },
     {
       icon: "Route",
@@ -108,7 +108,7 @@ export const reviewsFeatureConfig: FeaturePageConfig = {
       step: 3,
       title: "Surveys Send Automatically",
       description:
-        "Customers receive perfectly-timed requests via email, SMS, or both.",
+        "Customers receive perfectly-timed requests via email.",
       icon: "Send",
     },
     {
@@ -815,7 +815,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
     title: "Surveys That Get ",
     titleAccent: "Responses",
     description:
-      "Custom survey templates, multi-channel distribution, and smart follow-ups. Capture the feedback you need with surveys customers actually complete.",
+      "Custom survey templates, automated distribution, and smart follow-ups. Capture the feedback you need with surveys customers actually complete.",
     primaryCta: "Start Free Trial",
     secondaryCta: "See Templates",
     stat: { value: "42%", label: "Average response rate" },
@@ -839,7 +839,7 @@ export const surveysFeatureConfig: FeaturePageConfig = {
       icon: "Mail",
       title: "Single Channel Limits Reach",
       description:
-        "Email-only surveys miss customers who prefer text. Multi-channel distribution maximizes response rates.",
+        "Well-timed, automated email surveys maximize response rates without extra manual work.",
     },
     {
       icon: "Clock",
@@ -864,9 +864,9 @@ export const surveysFeatureConfig: FeaturePageConfig = {
     },
     {
       icon: "Smartphone",
-      title: "Multi-Channel Distribution",
+      title: "Smart Distribution",
       description:
-        "Send surveys via email, SMS, or both. Smart sequencing ensures maximum reach without over-messaging.",
+        "Send surveys via email. Smart sequencing ensures maximum reach without over-messaging.",
     },
     {
       icon: "Timer",
@@ -958,14 +958,13 @@ export const surveysFeatureConfig: FeaturePageConfig = {
   integrations: [
     { name: "Encompass", logoUrl: "/integrations/encompass.svg", category: "LOS" },
     { name: "Salesforce", logoUrl: "/integrations/salesforce.svg", category: "CRM" },
-    { name: "Twilio", logoUrl: "/integrations/twilio.svg", category: "SMS" },
     { name: "SendGrid", logoUrl: "/integrations/sendgrid.svg", category: "Email" },
   ],
 
   testimonials: [
     {
       quote:
-        "Our response rate went from 8% to 45% after switching to RepWell. The SMS option made all the difference.",
+        "Our response rate went from 8% to 45% after switching to RepWell. The automated timing made all the difference.",
       name: "Amanda Foster",
       title: "Operations Manager",
       company: "First Choice Lending",
@@ -988,11 +987,10 @@ export const surveysFeatureConfig: FeaturePageConfig = {
   seo: {
     title: "Customer Survey Software & Templates | RepWell",
     description:
-      "Industry-specific survey templates with multi-channel distribution. 42% average response rate. Free trial available.",
+      "Industry-specific survey templates with automated email distribution. 42% average response rate. Free trial available.",
     keywords: [
       "customer survey software",
       "survey templates",
-      "SMS surveys",
       "feedback collection",
       "NPS surveys",
     ],
@@ -1090,7 +1088,7 @@ export const testimonialsFeatureConfig: FeaturePageConfig = {
       step: 1,
       title: "Send Request",
       description:
-        "One click sends a testimonial request via email or SMS.",
+        "One click sends a testimonial request via email.",
       icon: "Send",
     },
     {

@@ -34,7 +34,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: { df -h /; npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /; }
+        run: df -h / && npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /
 
       - name: Build embed.js
         run: npx tsx scripts/build-embed.ts
@@ -56,7 +56,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: { df -h /; npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /; }
+        run: df -h / && npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /
 
       - name: Build embed.js
         run: npx tsx scripts/build-embed.ts
@@ -79,7 +79,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: { df -h /; npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /; }
+        run: df -h / && npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -123,7 +123,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: { df -h /; npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /; }
+        run: df -h / && npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

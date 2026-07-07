@@ -248,7 +248,10 @@ interface ResolvedContact {
 }
 
 /** Collapse sightings into one resolved Contact per (org, email). */
-function resolveContacts(sightings: Sighting[]): Map<string, ResolvedContact> {
+async function resolveContacts(
+  supabase: SupabaseClient,
+  sightings: Sighting[]
+): Promise<Map<string, ResolvedContact>> {
   const byKey = new Map<string, Sighting[]>();
   for (const s of sightings) {
     const k = keyOf(s.organizationId, s.email);
@@ -257,11 +260,24 @@ function resolveContacts(sightings: Sighting[]): Map<string, ResolvedContact> {
     else byKey.set(k, [s]);
   }
 
+  // Owner ids on old rows can point at since-deleted users; the owner FK is
+  // nullable by design, so drop unknown ids rather than violating the FK.
+  const { data: userRows, error: usersError } = await supabase
+    .from("users")
+    .select("id");
+  if (usersError) throw new Error(`users preload failed: ${usersError.message}`);
+  const validUserIds = new Set(
+    ((userRows ?? []) as { id: string }[]).map((u) => u.id)
+  );
+
   const resolved = new Map<string, ResolvedContact>();
   for (const [k, list] of byKey) {
     const byTimeDesc = [...list].sort((a, b) => b.time - a.time);
     const byTimeAsc = [...list].sort((a, b) => a.time - b.time);
-    const owner = byTimeDesc.find((s) => s.ownerUserId)?.ownerUserId ?? null;
+    const owner =
+      byTimeDesc.find(
+        (s) => s.ownerUserId && validUserIds.has(s.ownerUserId)
+      )?.ownerUserId ?? null;
     const name = byTimeDesc.find((s) => s.name && s.name.trim())?.name?.trim() ?? null;
     const phone = byTimeDesc.find((s) => s.phone)?.phone ?? null;
     resolved.set(k, {
@@ -312,20 +328,29 @@ async function upsertContacts(
       continue;
     }
 
-    const { data: inserted, error: insertError } = await supabase
-      .from("contacts")
-      .insert({
-        organization_id: c.organizationId,
-        owner_user_id: c.ownerUserId,
-        name: c.name,
-        email: c.email,
-        phone: c.phone,
-        source: c.source,
-        email_sha256: emailSha256,
-        created_at: c.earliest > 0 ? new Date(c.earliest).toISOString() : undefined,
-      })
-      .select("id")
-      .single();
+    const insertRow = (phone: string | null) =>
+      supabase
+        .from("contacts")
+        .insert({
+          organization_id: c.organizationId,
+          owner_user_id: c.ownerUserId,
+          name: c.name,
+          email: c.email,
+          phone,
+          source: c.source,
+          email_sha256: emailSha256,
+          created_at: c.earliest > 0 ? new Date(c.earliest).toISOString() : undefined,
+        })
+        .select("id")
+        .single();
+
+    let { data: inserted, error: insertError } = await insertRow(c.phone);
+    // Two different emails in one org can share a phone (family members, test
+    // data). Phone is a secondary identifier — keep the first claimant and
+    // insert later ones phoneless rather than failing the backfill.
+    if (insertError?.message.includes("contacts_org_phone_unique")) {
+      ({ data: inserted, error: insertError } = await insertRow(null));
+    }
     if (insertError) throw new Error(`contacts insert failed: ${insertError.message}`);
     contactIds.set(k, (inserted as { id: string }).id);
     created++;
@@ -464,7 +489,7 @@ async function main(): Promise<void> {
 
   console.log("Collecting sightings from the six PII sources…");
   const { sightings, skippedNoEmail } = await collectSightings(supabase);
-  const resolved = resolveContacts(sightings);
+  const resolved = await resolveContacts(supabase, sightings);
   console.log(`  ${sightings.length} sightings → ${resolved.size} distinct (org, email) Contacts`);
 
   console.log("Upserting Contacts…");

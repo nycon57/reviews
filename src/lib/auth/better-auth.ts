@@ -49,6 +49,68 @@ function getPool(): Pool {
   return pool;
 }
 
+const LOCAL_AUTH_HOSTS = [
+  "localhost",
+  "localhost:*",
+  "127.0.0.1",
+  "127.0.0.1:*",
+  "[::1]",
+  "[::1]:*",
+];
+
+const LOCAL_AUTH_ORIGINS = [
+  "http://localhost:*",
+  "http://127.0.0.1:*",
+  "http://[::1]:*",
+];
+
+// Only trust loopback origins/hosts outside production. Preview builds also run
+// with NODE_ENV="production" but are served from real domains, so dropping the
+// localhost entries there is behaviour-neutral while closing the prod hole.
+const ALLOW_LOCAL_AUTH_ORIGINS = process.env.NODE_ENV !== "production";
+
+function getConfiguredAppUrl() {
+  return process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+}
+
+function getConfiguredAppOrigin() {
+  try {
+    return new URL(getConfiguredAppUrl()).origin;
+  } catch {
+    return null;
+  }
+}
+
+function isLocalAuthOrigin(origin: string) {
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === "http:" &&
+      (url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1")
+    );
+  } catch {
+    return false;
+  }
+}
+
+// Trusted origins that never vary between requests: the configured app origin
+// plus (outside production) the loopback origins. Computed once at module load.
+const CONFIGURED_APP_ORIGIN = getConfiguredAppOrigin();
+const STATIC_TRUSTED_AUTH_ORIGINS: string[] = [
+  ...(ALLOW_LOCAL_AUTH_ORIGINS ? LOCAL_AUTH_ORIGINS : []),
+  ...(CONFIGURED_APP_ORIGIN ? [CONFIGURED_APP_ORIGIN] : []),
+];
+
+function getTrustedAuthOrigins(request?: Request) {
+  const requestOrigin = request?.headers.get("origin");
+
+  if (ALLOW_LOCAL_AUTH_ORIGINS && requestOrigin && isLocalAuthOrigin(requestOrigin)) {
+    return [...STATIC_TRUSTED_AUTH_ORIGINS, requestOrigin];
+  }
+
+  return STATIC_TRUSTED_AUTH_ORIGINS;
+}
+
 /**
  * Better Auth configuration for RepWell
  *
@@ -58,6 +120,12 @@ function getPool(): Pool {
  * - New tables: sessions, accounts, verifications (created by migration)
  */
 export const auth = betterAuth({
+  baseURL: {
+    allowedHosts: LOCAL_AUTH_HOSTS,
+    fallback: getConfiguredAppUrl(),
+    protocol: "auto",
+  },
+
   database: getPool(),
 
   // Use Next.js cookies for SSR support
@@ -309,9 +377,7 @@ export const auth = betterAuth({
   },
 
   // Trusted origins for CSRF
-  trustedOrigins: [
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  ],
+  trustedOrigins: getTrustedAuthOrigins,
 
   // Database hooks for custom logic
   databaseHooks: {

@@ -212,14 +212,28 @@ const nextConfig = {
     ];
   },
   // Rewrite source map requests to 404 to prevent public access
+  // Also proxy PostHog requests to avoid ad-blockers
   async rewrites() {
     return [
       {
         source: "/embed/:path*.map",
         destination: "/404",
       },
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      {
+        source: "/ingest/array/:path*",
+        destination: "https://us-assets.i.posthog.com/array/:path*",
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://us.i.posthog.com/:path*",
+      },
     ];
   },
+  skipTrailingSlashRedirect: true,
   // Redirect root to dashboard for authenticated users
   async redirects() {
     return [

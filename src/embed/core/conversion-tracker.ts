@@ -39,7 +39,7 @@ export function setupConversionTracking(
       // Fire tracking pixel
       const sessionId = getSessionId();
       const pixelUrl = `${apiBase}/api/v1/widgets/${encodeURIComponent(widgetId)}/pixel?event=conversion&session=${encodeURIComponent(sessionId)}`;
-      const img = new Image(1, 1);
+      const img = new window.Image(1, 1);
       img.src = pixelUrl;
     }
   }

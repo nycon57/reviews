@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { SPECIALTIES, LANGUAGES } from "./constants";
 import type { IndustryType } from "@/lib/industry/types";
 import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
+import { sanitizePublicAddress } from "./public-sanitizers";
 
 // Types
 export interface DirectoryProfessional {
@@ -167,19 +168,6 @@ function isEnterpriseAdmin(record: Record<string, unknown>): boolean {
   if (record.role !== "admin") return false;
   const org = record.organizations as { account_type?: string } | null;
   return org?.account_type === "enterprise";
-}
-
-export function sanitizePublicAddress(
-  address: DirectoryProfessional["address"]
-): DirectoryProfessional["address"] {
-  if (!address || (!address.city && !address.state)) {
-    return null;
-  }
-
-  return {
-    city: address.city,
-    state: address.state,
-  };
 }
 
 /** Transform a raw DB record into a DirectoryProfessional */
@@ -475,7 +463,13 @@ async function buildFacets(supabase: ReturnType<typeof createAdminClient>) {
 }
 
 /** @deprecated Use searchProfessionals instead */
-export const searchLoanOfficers = searchProfessionals;
+export async function searchLoanOfficers(
+  filters: SearchFilters,
+  page = 1,
+  pageSize = 20
+) {
+  return searchProfessionals(filters, page, pageSize);
+}
 
 
 /**
@@ -507,7 +501,13 @@ export async function updateUserCoordinates(
 }
 
 /** @deprecated Use updateUserCoordinates instead */
-export const updateLoanOfficerCoordinates = updateUserCoordinates;
+export async function updateLoanOfficerCoordinates(
+  id: string,
+  latitude: number,
+  longitude: number
+) {
+  return updateUserCoordinates(id, latitude, longitude);
+}
 
 /**
  * Batch geocode users that don't have coordinates
@@ -584,7 +584,9 @@ export async function batchGeocodeUsers(
 }
 
 /** @deprecated Use batchGeocodeUsers instead */
-export const batchGeocodeLoanOfficers = batchGeocodeUsers;
+export async function batchGeocodeLoanOfficers(limit = 10) {
+  return batchGeocodeUsers(limit);
+}
 
 /**
  * Batch geocode branches that don't have coordinates

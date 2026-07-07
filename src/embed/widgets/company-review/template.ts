@@ -33,6 +33,7 @@ import { buildLoanTypeTag } from "../../components/loan-type-tag";
 import { buildFirstTimeBuyerBadge } from "../../components/first-time-buyer-badge";
 import { buildFilterControls } from "../shared/filter-controls";
 import { t } from "../../i18n";
+import { formatEmbedSource } from "../../core/source-labels";
 
 // ── Shared Helpers (exported for branch-review) ─────────────────────
 
@@ -61,6 +62,7 @@ const SOURCE_LABELS: Record<string, string> = {
   google: "Google",
   zillow: "Zillow",
   internal: "RepWell",
+  video_testimonial: "Video Testimonial",
 };
 
 // ── Organization Header ──────────────────────────────────────────────
@@ -160,7 +162,7 @@ export function buildSourceBreakdown(
     item.appendChild(icon);
 
     const info = el("div", "rw-co-sources__info");
-    info.appendChild(text("span", SOURCE_LABELS[src.source] ?? src.source, "rw-co-sources__name"));
+    info.appendChild(text("span", SOURCE_LABELS[src.source] ?? formatEmbedSource(src.source), "rw-co-sources__name"));
 
     const meta = el("span", "rw-co-sources__meta");
     meta.textContent = `${src.count} ${src.count === 1 ? t("review") : t("reviews")} \u00B7 ${src.average.toFixed(1)} ${t("avgSuffix")}`;
@@ -275,7 +277,7 @@ export function buildReviewCard(
   const tags = el("div", "rw-co-review__tags");
   let hasTags = false;
   if (content?.showSource !== false && review.source) {
-    tags.appendChild(text("span", `${t("via")} ${SOURCE_LABELS[review.source] ?? review.source}`, "rw-co-review__source"));
+    tags.appendChild(text("span", `${t("via")} ${SOURCE_LABELS[review.source] ?? formatEmbedSource(review.source)}`, "rw-co-review__source"));
     hasTags = true;
   }
   if (review.loan_type) {

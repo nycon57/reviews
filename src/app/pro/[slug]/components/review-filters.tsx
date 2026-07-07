@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SourceIcon } from "@/components/shared/review-item";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 
 export interface ReviewFilters {
   search: string;
@@ -58,7 +59,7 @@ const SORT_OPTIONS = [
 ];
 
 function formatSourceLabel(source: string) {
-  return source.charAt(0).toUpperCase() + source.slice(1);
+  return formatReviewSource(source);
 }
 
 export function ReviewFiltersBar({

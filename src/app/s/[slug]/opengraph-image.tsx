@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getProofLinkBySlug } from "@/lib/share-studio/service";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,11 +82,7 @@ export default async function OpenGraphImage(
   const secondaryColor = brand.secondaryColor || brand.primaryColor || "#0f172a";
 
   const sourcePlatform = (item.source_platform as string | null) || "";
-  const platformLabel = sourcePlatform.toLowerCase() === "google" ? "Google" :
-    sourcePlatform.toLowerCase() === "zillow" ? "Zillow" :
-    sourcePlatform.toLowerCase() === "facebook" ? "Facebook" :
-    sourcePlatform.toLowerCase() === "yelp" ? "Yelp" :
-    sourcePlatform ? sourcePlatform.charAt(0).toUpperCase() + sourcePlatform.slice(1) : null;
+  const platformLabel = sourcePlatform ? formatReviewSource(sourcePlatform) : null;
 
   if (sourceType === "video_testimonial") {
     return new ImageResponse(

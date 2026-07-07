@@ -16,6 +16,7 @@ import {
 } from "./dom-helpers";
 import { createEqualHousingLenderSVG } from "../assets/equal-housing-lender";
 import { setLocale, t } from "../i18n";
+import { formatEmbedSource } from "./source-labels";
 
 // ── Main render ─────────────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ export function renderWidget(
 
       // Source badge
       if (content?.showSource !== false && review.source) {
-        card.appendChild(text("span", `${t("via")} ${review.source}`, "rw-review__source"));
+        card.appendChild(text("span", `${t("via")} ${formatEmbedSource(review.source)}`, "rw-review__source"));
       }
 
       list.appendChild(card);

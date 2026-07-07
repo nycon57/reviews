@@ -24,15 +24,12 @@ function XIcon({ className }: { className?: string }) {
   );
 }
 
-function ZillowIcon({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 26" fill="currentColor" className={className} aria-hidden="true">
-      <path d="m16.243 7.097c.117-.026.169.013.24.091.403.448 1.691 2.021 2.041 2.45.065.078.02.163-.032.208-2.6 2.028-5.493 4.901-7.105 6.955-.032.046-.006.046.02.039 2.808-1.209 9.405-3.14 12.376-3.679v-3.763L12.155.2.507 9.391v4.114c3.607-2.144 11.953-5.466 15.736-6.408z" />
-      <path d="m6.779 22.905c-.097.052-.176.039-.254-.039l-2.171-2.587c-.058-.072-.065-.111.013-.221 1.678-2.457 5.103-6.286 7.287-7.904.039-.026.026-.059-.02-.039-2.275.741-8.742 3.523-11.134 4.875v8.787h23.277v-8.462c-3.172.539-12.675 3.367-16.998 5.59z" />
-    </svg>
-  );
-}
-
+import { ZillowIcon } from "@/components/icons/zillow-icon";
+import {
+  getSafeUrl,
+  getDisplayHostname,
+  formatAddressLines,
+} from "@/lib/contact-display";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,42 +71,6 @@ interface ContactCTACardProps {
   className?: string;
 }
 
-/** Returns a safe http/https URL or null if the scheme is unsafe. */
-function getSafeUrl(url: string): string | null {
-  const trimmed = url.trim();
-  if (!trimmed) return null;
-  try {
-    const parsed = new URL(
-      /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`,
-    );
-    return parsed.href;
-  } catch {
-    return null;
-  }
-}
-
-function getDisplayHostname(url: string): string {
-  try {
-    const parsed = new URL(url);
-    return parsed.hostname.replace(/^www\./, "") + (parsed.pathname !== "/" ? parsed.pathname : "");
-  } catch {
-    return url;
-  }
-}
-
-function formatAddress(address: NonNullable<ContactCTACardProps["address"]>) {
-  const lines: string[] = [];
-  if (address.street) lines.push(address.street);
-  const cityStateZip = [
-    address.city,
-    address.state ? `${address.state}${address.zip ? ` ${address.zip}` : ""}` : address.zip,
-  ]
-    .filter(Boolean)
-    .join(", ");
-  if (cityStateZip) lines.push(cityStateZip);
-  return lines;
-}
-
 export function ContactCTACard({
   phone,
   email,
@@ -132,7 +93,7 @@ export function ContactCTACard({
   shareButton,
   className,
 }: ContactCTACardProps) {
-  const addressLines = address ? formatAddress(address) : [];
+  const addressLines = address ? formatAddressLines(address) : [];
 
   const safeCtaUrl = ctaUrl ? getSafeUrl(ctaUrl) : null;
   const safeDirectionsUrl = directionsUrl ? getSafeUrl(directionsUrl) : null;

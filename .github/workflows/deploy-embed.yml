@@ -28,7 +28,13 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: df -h / && npm ci --ignore-scripts --loglevel=notice; echo "CI_EXIT=$?"; ls -la package.json; df -h /
+        run: |
+          pwd; ls -la | head -20
+          sha256sum package.json package-lock.json .npmrc
+          npm config list
+          npm ci --dry-run 2>&1 | tail -3
+          npm ci --ignore-scripts || echo "CI_FAILED=$?"
+          echo "=== AFTER ==="; pwd; ls -la | head -20; ls node_modules 2>/dev/null | wc -l
 
       - name: Build embed.js
         run: npx tsx scripts/build-embed.ts

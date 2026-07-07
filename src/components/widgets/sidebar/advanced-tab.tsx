@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { CustomCSSEditor } from "../custom-css-editor";
 import { DomainTab } from "./domain-tab";
@@ -45,6 +47,22 @@ export function AdvancedTab({
         />
       </div>
 
+      <div className="border-t pt-4">
+        <Label className="text-sm font-semibold text-heading mb-1 block">
+          Developer API
+        </Label>
+        <p className="text-xs text-muted-foreground mb-3">
+          Hooks, runtime configuration, and dynamic entity overrides live in the
+          dedicated developer docs.
+        </p>
+        <Link
+          href="/dashboard/widgets/developer"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+        >
+          Open docs
+          <ArrowUpRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
     </div>
   );
 }

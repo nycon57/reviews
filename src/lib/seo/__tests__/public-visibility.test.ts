@@ -21,7 +21,9 @@ type MockChain = {
   order: ReturnType<typeof vi.fn>;
   limit: ReturnType<typeof vi.fn>;
   not: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
   single: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
   then: ReturnType<typeof vi.fn>;
 };
 
@@ -40,7 +42,9 @@ function createMockQueryChain(finalResult: {
   chain.order = vi.fn().mockImplementation(returnChain);
   chain.limit = vi.fn().mockImplementation(returnChain);
   chain.not = vi.fn().mockImplementation(returnChain);
+  chain.update = vi.fn().mockImplementation(returnChain);
   chain.single = vi.fn().mockResolvedValue(finalResult);
+  chain.maybeSingle = vi.fn().mockResolvedValue(finalResult);
   chain.then = vi.fn().mockImplementation((resolve: (value: unknown) => unknown) =>
     Promise.resolve(finalResult).then(resolve)
   );

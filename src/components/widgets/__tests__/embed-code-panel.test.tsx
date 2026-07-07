@@ -69,9 +69,9 @@ describe("EmbedCodePanel", () => {
       root.render(<EmbedCodePanel widgetId="widget-slug-123" entityType="user" entityId="user-456" organizationId="org-123" />);
     });
 
-    expect(container.textContent).toContain("Script Embed");
-    expect(container.textContent).toContain("Iframe Embed");
-    expect(container.textContent).toContain("Widget ID");
+    expect(container.textContent).toContain("Script");
+    expect(container.textContent).toContain("Iframe");
+    expect(container.textContent).toContain("data-repwell-widget");
     expect(container.textContent).toContain("widget-slug-123");
     expect(container.textContent).toContain("data-repwell-entity-type");
     expect(container.textContent).toContain("data-repwell-entity-id");

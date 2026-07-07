@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { formatDistanceToNow } from "date-fns";
+import posthog from "posthog-js";
 import { useRouter } from "next/navigation";
 import {
   Copy,
@@ -165,12 +166,22 @@ export function CampaignsDashboard({ campaigns, templates }: CampaignsDashboardP
       try {
         if (campaign.status === "active") {
           await pauseCampaign(campaign.id);
+          posthog.capture("campaign_paused", {
+            campaign_id: campaign.id,
+            campaign_name: campaign.name,
+            trigger_type: campaign.triggerType,
+          });
           toast({
             title: "Campaign paused",
             description: `${campaign.name} is now paused.`,
           });
         } else {
           await activateCampaign(campaign.id);
+          posthog.capture("campaign_activated", {
+            campaign_id: campaign.id,
+            campaign_name: campaign.name,
+            trigger_type: campaign.triggerType,
+          });
           toast({
             title: "Campaign activated",
             description: `${campaign.name} is now active.`,

@@ -32,6 +32,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import posthog from "posthog-js";
 import { createCampaign } from "@/lib/campaigns/actions";
 import type { WorkflowTemplate } from "@/lib/campaigns/types";
 import { useToast } from "@/hooks/use-toast";
@@ -229,6 +230,15 @@ export function NewCampaignModal({
           templateId: template.id,
         });
 
+        posthog.capture("campaign_created", {
+          campaign_id: campaign.id,
+          campaign_name: campaign.name,
+          template_id: template.id,
+          template_name: template.name,
+          template_category: template.category,
+          source: "template",
+        });
+
         onOpenChange(false);
         router.push(`/dashboard/campaigns/${campaign.id}`);
         router.refresh();
@@ -247,6 +257,12 @@ export function NewCampaignModal({
     startTransition(async () => {
       try {
         const campaign = await createCampaign({ name: "Untitled Campaign" });
+
+        posthog.capture("campaign_created", {
+          campaign_id: campaign.id,
+          campaign_name: campaign.name,
+          source: "blank",
+        });
 
         onOpenChange(false);
         router.push(`/dashboard/campaigns/${campaign.id}`);

@@ -182,6 +182,7 @@ describe("WidgetPreview filters", () => {
         maxReviews: 2,
         sortOrder: "highest",
       }),
+      "en",
     );
 
     const reviewCards = Array.from(container.querySelectorAll("article"));

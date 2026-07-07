@@ -83,6 +83,7 @@ export const SOURCE_LABELS: Record<string, string> = {
   google: "Google",
   zillow: "Zillow",
   internal: "RepWell",
+  video_testimonial: "Video Testimonial",
 };
 
 export const SOURCE_ICONS: Record<string, { bg: string; letter: string; icon?: string }> = {

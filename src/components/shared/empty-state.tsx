@@ -1,5 +1,6 @@
 "use client";
 
+import { createElement } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ export function EmptyState({
   compact = false,
   animated = false,
 }: EmptyStateProps) {
-  const Icon = getIconOrDefault(iconName);
+  const iconComponent = getIconOrDefault(iconName);
 
   const Wrapper = animated ? motion.div : "div";
   const ItemWrapper = animated ? motion.div : "div";
@@ -77,11 +78,11 @@ export function EmptyState({
           )}
           {...iconProps}
         >
-          <Icon
-            weight="duotone"
-            size={compact ? 28 : 40}
-            className="text-repwell-teal-300"
-          />
+          {createElement(iconComponent, {
+            weight: "duotone",
+            size: compact ? 28 : 40,
+            className: "text-repwell-teal-300",
+          })}
         </ItemWrapper>
 
         {/* Title */}
@@ -160,7 +161,7 @@ export function EmptyStateCard({
   action,
   className,
 }: EmptyStateCardProps) {
-  const Icon = getIconOrDefault(iconName);
+  const iconComponent = getIconOrDefault(iconName);
 
   return (
     <div
@@ -170,7 +171,11 @@ export function EmptyStateCard({
       )}
     >
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-card shadow-sm">
-        <Icon weight="duotone" size={24} className="text-label" />
+        {createElement(iconComponent, {
+          weight: "duotone",
+          size: 24,
+          className: "text-label",
+        })}
       </div>
       <h4 className="text-sm font-medium text-heading">{title}</h4>
       <p className="mt-1 text-xs text-label max-w-[200px]">{description}</p>

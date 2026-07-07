@@ -30,7 +30,15 @@ vi.mock("@/lib/widgets/actions", () => ({
 }));
 
 vi.mock("../widget-builder-sidebar", () => ({
-  WidgetBuilderSidebar: () => <div>Sidebar</div>,
+  WidgetBuilderSidebar: ({
+    onDomainsChange,
+  }: {
+    onDomainsChange: (domains: string[]) => void;
+  }) => (
+    <button type="button" onClick={() => onDomainsChange(["example.com"])}>
+      Mark dirty
+    </button>
+  ),
 }));
 
 vi.mock("../widget-preview", () => ({
@@ -100,6 +108,18 @@ describe("WidgetBuilder", () => {
       root.render(<WidgetBuilder widget={widget} />);
     });
 
+    // Save stays disabled until there are unsaved changes; mark the builder dirty
+    // via the sidebar before attempting to save.
+    const dirtyButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent?.includes("Mark dirty"),
+    );
+
+    await act(async () => {
+      dirtyButton?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true, button: 0 }),
+      );
+    });
+
     const saveButton = Array.from(container.querySelectorAll("button")).find(
       (button) => button.textContent?.includes("Save"),
     );
@@ -118,6 +138,7 @@ describe("WidgetBuilder", () => {
       config: widget.config,
       allowed_domains: ["example.com"],
       entity_id: undefined,
+      entity_type: "user",
     });
 
     const payload = updateWidget.mock.calls[0][0] as Record<string, unknown>;

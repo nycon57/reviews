@@ -861,11 +861,11 @@ Public profile customization:
 
 ## Workflow Settings
 
-### Approval Rules
-Configure auto-approval:
-- Star threshold for auto-approve
-- Review all negative feedback
-- Require manager approval
+### Review Publishing
+Reviews publish automatically after machine screening:
+- Screened reviews go live immediately at any rating
+- Flagged reviews are quarantined for human release
+- Live reviews are only removed through a dispute
 
 ### Notification Defaults
 Organization-wide defaults:

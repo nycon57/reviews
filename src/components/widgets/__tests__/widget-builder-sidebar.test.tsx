@@ -76,6 +76,7 @@ describe("WidgetBuilderSidebar", () => {
           organizationId="org-123"
           allowedDomains={["app.repwell.com"]}
           templateName="Review Carousel"
+          widgetId={null}
           onConfigChange={vi.fn()}
           onDomainsChange={vi.fn()}
           onEntityTypeChange={vi.fn()}

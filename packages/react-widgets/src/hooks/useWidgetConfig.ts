@@ -31,20 +31,13 @@ function getCached<T>(cache: Map<string, { data: T; ts: number }>, key: string):
  */
 export function useWidgetConfig(options: UseWidgetConfigOptions): UseWidgetConfigResult {
   const { widgetId, config: inlineConfig, reviews: inlineReviews, apiBaseUrl } = options;
-  const [config, setConfig] = useState<PublicWidgetConfig | null>(inlineConfig ?? null);
-  const [reviews, setReviews] = useState<PublicReview[]>(inlineReviews ?? []);
+  const [fetchedConfig, setFetchedConfig] = useState<PublicWidgetConfig | null>(null);
+  const [fetchedReviews, setFetchedReviews] = useState<PublicReview[]>([]);
   const [loading, setLoading] = useState(!inlineConfig && !!widgetId);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
-  const applyInlineConfig = useCallback((nextConfig: PublicWidgetConfig) => {
-    setConfig(nextConfig);
-    setLoading(false);
-  }, []);
-
-  const applyInlineReviews = useCallback((nextReviews: PublicReview[]) => {
-    setReviews(nextReviews);
-  }, []);
+  const config = inlineConfig ?? fetchedConfig;
+  const reviews = inlineReviews ?? fetchedReviews;
 
   const fetchData = useCallback(async () => {
     if (!widgetId || inlineConfig) return;
@@ -53,8 +46,8 @@ export function useWidgetConfig(options: UseWidgetConfigOptions): UseWidgetConfi
     const cachedConfig = getCached(configCache, widgetId);
     const cachedReviews = inlineReviews ?? getCached(reviewsCache, widgetId);
     if (cachedConfig && cachedReviews) {
-      setConfig(cachedConfig);
-      setReviews(cachedReviews);
+      setFetchedConfig(cachedConfig);
+      setFetchedReviews(cachedReviews);
       setLoading(false);
       return;
     }
@@ -84,16 +77,14 @@ export function useWidgetConfig(options: UseWidgetConfigOptions): UseWidgetConfi
 
       const configData = (await configRes.json()) as PublicWidgetConfig;
       configCache.set(widgetId, { data: configData, ts: Date.now() });
-      setConfig(configData);
+      setFetchedConfig(configData);
 
       if (reviewsRes) {
         if (reviewsRes.ok) {
           const reviewsData = (await reviewsRes.json()) as ReviewsResponse;
           reviewsCache.set(widgetId, { data: reviewsData.reviews, ts: Date.now() });
-          setReviews(reviewsData.reviews);
+          setFetchedReviews(reviewsData.reviews);
         }
-      } else if (inlineReviews) {
-        setReviews(inlineReviews);
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
@@ -112,18 +103,5 @@ export function useWidgetConfig(options: UseWidgetConfigOptions): UseWidgetConfi
     };
   }, [fetchData]);
 
-  // Update if inline data changes
-  useEffect(() => {
-    if (inlineConfig) {
-      applyInlineConfig(inlineConfig);
-    }
-  }, [inlineConfig, applyInlineConfig]);
-
-  useEffect(() => {
-    if (inlineReviews) {
-      applyInlineReviews(inlineReviews);
-    }
-  }, [inlineReviews, applyInlineReviews]);
-
-  return { config, reviews, loading, error };
+  return { config, reviews, loading: inlineConfig ? false : loading, error };
 }

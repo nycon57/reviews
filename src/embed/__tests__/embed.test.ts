@@ -487,11 +487,7 @@ describe("api-client", () => {
     const controller = new AbortController();
     await expect(
       fetchConfig("https://app.repwell.com", "missing", controller.signal)
-    ).rejects.toMatchObject<{
-      message: string;
-      status: number;
-      code: string;
-    }>({
+    ).rejects.toMatchObject({
       message: "Entity overrides are not supported for this widget type",
       status: 400,
       code: "UNSUPPORTED_ENTITY_OVERRIDE",

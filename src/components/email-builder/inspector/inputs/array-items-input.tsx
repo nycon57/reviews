@@ -1,15 +1,11 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useCallback } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash, CaretUp, CaretDown } from "@phosphor-icons/react";
-
-let nextItemId = 0;
-function genId() {
-  return `item_${++nextItemId}`;
-}
+import { useStableIds } from "@/hooks/use-stable-ids";
 
 function singularize(word: string): string {
   if (word.endsWith("ies")) return word.slice(0, -3) + "y";
@@ -35,26 +31,18 @@ export function ArrayItemsInput({
   maxItems = 10,
   singularLabel,
 }: ArrayItemsInputProps) {
-  // Maintain stable IDs for each item — sync before render so idsRef.current[index] is always safe
-  const idsRef = useRef<string[]>(items.map(() => genId()));
-
-  if (idsRef.current.length < items.length) {
-    const next = [...idsRef.current];
-    while (next.length < items.length) next.push(genId());
-    idsRef.current = next;
-  } else if (idsRef.current.length > items.length) {
-    idsRef.current = idsRef.current.slice(0, items.length);
-  }
+  // Stable IDs so inputs keep DOM identity across reorders.
+  const { ids, appendId, removeIdAt, moveId } = useStableIds(items.length);
 
   const addItem = useCallback(() => {
     if (items.length < maxItems) {
-      idsRef.current = [...idsRef.current, genId()];
+      appendId();
       onChange([...items, ""]);
     }
-  }, [items, maxItems, onChange]);
+  }, [items, maxItems, onChange, appendId]);
 
   function removeItem(index: number) {
-    idsRef.current = idsRef.current.filter((_, i) => i !== index);
+    removeIdAt(index);
     onChange(items.filter((_, i) => i !== index));
   }
 
@@ -69,12 +57,7 @@ export function ArrayItemsInput({
     const next = [...items];
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
-
-    const nextIds = [...idsRef.current];
-    const [movedId] = nextIds.splice(from, 1);
-    nextIds.splice(to, 0, movedId);
-    idsRef.current = nextIds;
-
+    moveId(from, to);
     onChange(next);
   }
 
@@ -85,7 +68,7 @@ export function ArrayItemsInput({
       <Label className="text-xs">{label}</Label>
       <div className="space-y-1.5">
         {items.map((item, index) => (
-          <div key={idsRef.current[index]} className="flex items-center gap-1">
+          <div key={ids[index]} className="flex items-center gap-1">
             <div className="flex flex-col">
               <button
                 type="button"

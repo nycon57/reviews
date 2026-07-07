@@ -10,7 +10,7 @@ import {
 } from "./integration-card";
 
 const IFRAME_BASIC = `<iframe
-  src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
+  src="https://repwell.ai/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
   width="100%"
   height="600"
   style="border: none; overflow: hidden;"
@@ -21,7 +21,7 @@ const IFRAME_BASIC = `<iframe
 
 const IFRAME_RESPONSIVE = `<div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; overflow: hidden;">
   <iframe
-    src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
+    src="https://repwell.ai/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;"
     title="RepWell Reviews Widget"
     loading="lazy"
@@ -31,7 +31,7 @@ const IFRAME_RESPONSIVE = `<div style="position: relative; width: 100%; padding-
 
 const IFRAME_AUTO_RESIZE = `<iframe
   id="repwell-widget"
-  src="https://app.repwell.com/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
+  src="https://repwell.ai/api/v1/widgets/YOUR_WIDGET_ID/embed?entityType=user&entityId=YOUR_ENTITY_ID"
   width="100%"
   style="border: none;"
   title="RepWell Reviews Widget"

@@ -9,7 +9,7 @@ import {
   TroubleshootingSection,
 } from "./integration-card";
 
-const SQUARESPACE_HEADER_SCRIPT = `<script src="https://app.repwell.com/embed.js" async></script>`;
+const SQUARESPACE_HEADER_SCRIPT = `<script src="https://repwell.ai/embed.js" async></script>`;
 
 const SQUARESPACE_CODE_BLOCK = `<div
   data-repwell-widget="YOUR_WIDGET_ID"
@@ -17,7 +17,7 @@ const SQUARESPACE_CODE_BLOCK = `<div
   data-repwell-entity-id="YOUR_ENTITY_ID"
 ></div>`;
 
-const SQUARESPACE_FULL = `<script src="https://app.repwell.com/embed.js" async></script>
+const SQUARESPACE_FULL = `<script src="https://repwell.ai/embed.js" async></script>
 <div
   data-repwell-widget="YOUR_WIDGET_ID"
   data-repwell-entity-type="user"

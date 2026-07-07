@@ -34,7 +34,7 @@ export async function generateMetadata({
     };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.ai";
   const postUrl = `${siteUrl}/blog/${slug}`;
 
   return {
@@ -82,7 +82,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const relatedPosts = await getRelatedPosts(slug, post.category, post.tags, 3);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.com";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://repwell.ai";
   const postUrl = `${siteUrl}/blog/${slug}`;
 
   // Serialize MDX content on the server

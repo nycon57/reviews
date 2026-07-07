@@ -10,7 +10,7 @@ import { sendNewReviewNotificationEmail } from "@/lib/email";
 import { sendNegativeReviewAlertEnhancedEmail } from "@/lib/email/send";
 import type { Json } from "@/types/database.types";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
 
 type ReviewRecipient = { id: string; full_name: string | null; email: string | null };
 

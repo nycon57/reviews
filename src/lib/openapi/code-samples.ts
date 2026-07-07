@@ -18,7 +18,7 @@ export interface CodeSampleParams {
  * Generate a cURL code sample
  */
 export function generateCurlSample(params: CodeSampleParams): string {
-  const { method, path, baseUrl = "https://app.repwell.com", queryParams, body } = params;
+  const { method, path, baseUrl = "https://repwell.ai", queryParams, body } = params;
 
   let url = `${baseUrl}${path}`;
   if (queryParams && Object.keys(queryParams).length > 0) {
@@ -44,7 +44,7 @@ export function generateCurlSample(params: CodeSampleParams): string {
  * Generate a JavaScript/TypeScript code sample using fetch
  */
 export function generateJavaScriptSample(params: CodeSampleParams): string {
-  const { method, path, baseUrl = "https://app.repwell.com", queryParams, body } = params;
+  const { method, path, baseUrl = "https://repwell.ai", queryParams, body } = params;
 
   let url = `${baseUrl}${path}`;
   if (queryParams && Object.keys(queryParams).length > 0) {
@@ -76,7 +76,7 @@ console.log(data);`;
  * Generate a Python code sample using requests library
  */
 export function generatePythonSample(params: CodeSampleParams): string {
-  const { method, path, baseUrl = "https://app.repwell.com", queryParams, body } = params;
+  const { method, path, baseUrl = "https://repwell.ai", queryParams, body } = params;
 
   const lines: string[] = ["import requests", ""];
 

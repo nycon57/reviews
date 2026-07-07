@@ -245,7 +245,7 @@ export async function generateVideoPostPreview(
   const professional = video.users as unknown as ProfessionalData;
   const organization = video.organizations as unknown as OrgData;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const smartLink = await ensureSmartLinkForSource({
     organizationId: video.organization_id as string,
     sourceType: "video_testimonial",
@@ -346,7 +346,7 @@ export async function createVideoSocialPost(params: {
   }
 
   const status = params.publishImmediately ? "publishing" : params.scheduledFor ? "scheduled" : "draft";
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const smartLink = await ensureSmartLinkForSource({
     organizationId: video.organization_id as string,
     sourceType: "video_testimonial",

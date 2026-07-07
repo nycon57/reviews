@@ -79,7 +79,7 @@ const defaultVideoTestimonialProps: VideoTestimonialProps = {
     professionalTitle: "Senior Loan Officer",
     professionalPhotoUrl: null,
     ctaText: "Get Started",
-    qrUrl: "https://repwell.com/s/example",
+    qrUrl: "https://repwell.ai/s/example",
     phone: "(555) 123-4567",
     website: "repwell.com",
   },

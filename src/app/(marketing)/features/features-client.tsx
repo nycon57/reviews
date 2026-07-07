@@ -184,7 +184,7 @@ function FeaturesHero() {
             className="hidden lg:block"
           >
             <BrowserMockup
-              url="app.repwell.com/dashboard"
+              url="repwell.ai/dashboard"
               className="shadow-2xl"
             >
               <div className="aspect-[16/10] bg-gradient-to-br from-repwell-sage-100/50 to-white p-6">

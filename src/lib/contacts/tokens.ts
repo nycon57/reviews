@@ -21,7 +21,7 @@ import { emailConfig } from "@/lib/email/client";
  * Base URL for public links. Single source of truth: emailConfig.baseUrl
  * (NEXT_PUBLIC_APP_URL), so acquisition links, email footers, and the video
  * thank-you page all resolve to the same origin rather than drifting between
- * hardcoded app.repwell.com / app.repwell.ai hosts.
+ * hardcoded repwell.ai / repwell.ai hosts.
  */
 function getBaseUrl(): string {
   return emailConfig.baseUrl.replace(/\/$/, "");

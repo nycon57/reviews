@@ -710,7 +710,7 @@ export function BranchReviewPreview({
         >
           {previewT(lang, "poweredBy")}{" "}
           <a
-            href="https://repwell.com"
+            href="https://repwell.ai"
             target="_blank"
             rel="noopener noreferrer"
             className="no-underline hover:underline"

@@ -408,7 +408,7 @@ export function ReviewCarouselPreview({
       {content.showBranding !== false && (
         <div className="mt-3 pt-2 border-t border-gray-100 text-[11px] text-gray-400 text-center">
           {previewT(lang, "poweredBy")}{" "}
-          <a href="https://repwell.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 no-underline hover:underline">
+          <a href="https://repwell.ai" target="_blank" rel="noopener noreferrer" className="text-gray-500 no-underline hover:underline">
             RepWell
           </a>
         </div>

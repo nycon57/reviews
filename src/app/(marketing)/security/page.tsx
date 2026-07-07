@@ -26,11 +26,11 @@ export default function SecurityPage() {
             name: "Security & Compliance",
             description:
               "Learn how RepWell protects your data with enterprise-grade security, SOC 2 compliance, encryption, and comprehensive data handling practices.",
-            url: "https://repwell.com/security",
+            url: "https://repwell.ai/security",
             publisher: {
               "@type": "Organization",
               name: "RepWell",
-              url: "https://repwell.com",
+              url: "https://repwell.ai",
             },
           }),
         }}

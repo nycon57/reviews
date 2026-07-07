@@ -9,7 +9,7 @@ import {
   TroubleshootingSection,
 } from "./integration-card";
 
-const GTM_SCRIPT_TAG = `<script src="https://app.repwell.com/embed.js" async></script>
+const GTM_SCRIPT_TAG = `<script src="https://repwell.ai/embed.js" async></script>
 <div
   data-repwell-widget="YOUR_WIDGET_ID"
   data-repwell-entity-type="YOUR_ENTITY_TYPE"
@@ -121,7 +121,7 @@ export function GtmGuide() {
             {
               problem: "Content Security Policy (CSP) blocks the script",
               solution:
-                "Add app.repwell.com to your script-src and connect-src CSP directives, or use the iframe embed method instead.",
+                "Add repwell.ai to your script-src and connect-src CSP directives, or use the iframe embed method instead.",
             },
             {
               problem: "Widget loads but shows no reviews",

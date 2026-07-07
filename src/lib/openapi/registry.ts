@@ -967,12 +967,12 @@ Common error codes:
       contact: {
         name: 'RepWell Support',
         email: 'support@repwell.com',
-        url: 'https://repwell.com/support',
+        url: 'https://repwell.ai/support',
       },
     },
     servers: [
       {
-        url: 'https://app.repwell.com',
+        url: 'https://repwell.ai',
         description: 'Production',
       },
       {

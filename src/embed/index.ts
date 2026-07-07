@@ -58,7 +58,7 @@ function resolveApiBase(): string {
     return scriptTag.dataset.apiBase.replace(/\/$/, "");
   }
 
-  // Derive from script src (e.g. https://app.repwell.com/embed.js -> https://app.repwell.com)
+  // Derive from script src (e.g. https://repwell.ai/embed.js -> https://repwell.ai)
   if (scriptTag?.src) {
     try {
       const url = new URL(scriptTag.src);

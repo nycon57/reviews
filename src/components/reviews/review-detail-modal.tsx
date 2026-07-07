@@ -28,6 +28,7 @@ import {
   archiveReview,
   toggleReviewFeatured,
 } from "@/lib/reviews/aggregation-actions";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { ResponseComposer } from "./response-composer";
 import { SocialPostComposer } from "@/components/social";
 
@@ -77,14 +78,6 @@ export function ReviewDetailModal({
     approved: { label: "Approved", className: "border-green-300 text-green-700 bg-green-50" },
     rejected: { label: "Rejected", className: "border-red-300 text-red-700 bg-red-50" },
     archived: { label: "Archived", className: "border-border text-muted-foreground bg-muted" },
-  };
-
-  const sourceLabels: Record<string, string> = {
-    internal: "Survey",
-    google: "Google",
-    zillow: "Zillow",
-    facebook: "Facebook",
-    yelp: "Yelp",
   };
 
   const handleArchive = () => {
@@ -170,7 +163,7 @@ export function ReviewDetailModal({
                     {status.label}
                   </Badge>
                   <Badge variant="secondary" className="text-xs">
-                    {sourceLabels[review.source] || review.source}
+                    {formatReviewSource(review.source)}
                   </Badge>
                 </div>
               </div>
@@ -247,7 +240,7 @@ export function ReviewDetailModal({
                           rel="noopener noreferrer"
                           className="text-label hover:text-repwell-teal-500 dark:hover:text-foreground transition-colors inline-flex items-center gap-1"
                         >
-                          View on {sourceLabels[review.source] || review.source}
+                          View on {formatReviewSource(review.source)}
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       );

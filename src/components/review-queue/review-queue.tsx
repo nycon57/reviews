@@ -39,8 +39,8 @@ export function ReviewQueueContent() {
             <Sparkles className="h-4 w-4 text-amber-600" />
           </div>
           <div>
-            <span className="text-sm font-medium text-amber-800">Moderation Mode</span>
-            <span className="text-sm text-amber-600"> &mdash; Review and approve or reject pending reviews</span>
+            <span className="text-sm font-medium text-amber-800">Needs attention</span>
+            <span className="text-sm text-amber-600"> &middot; Held by automated screening. Publish or remove them.</span>
           </div>
         </div>
       )}
@@ -49,9 +49,9 @@ export function ReviewQueueContent() {
       {state.isPendingMode ? (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
-            { label: "Pending", value: state.stats.pending, icon: ClockCounterClockwise, color: "text-amber-500" },
-            { label: "Approved", value: state.stats.approved, icon: CheckCircle, color: "text-green-500" },
-            { label: "Rejected", value: state.stats.rejected, icon: XCircle, color: "text-red-500" },
+            { label: "Needs attention", value: state.stats.pending, icon: ClockCounterClockwise, color: "text-amber-500" },
+            { label: "Live", value: state.stats.approved, icon: CheckCircle, color: "text-green-500" },
+            { label: "Removed", value: state.stats.rejected, icon: XCircle, color: "text-red-500" },
             { label: "Total", value: state.stats.total, icon: ChartBar, color: "text-repwell-teal-300" },
           ].map((stat) => {
             const Icon = stat.icon;

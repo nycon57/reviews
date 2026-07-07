@@ -155,7 +155,11 @@ export type EmailTemplate =
   | "referral_reminder"
   | "referral_leaderboard"
   // Profile referral introduction email (public profile page)
-  | "profile_referral_introduction";
+  | "profile_referral_introduction"
+  // Review verification email (direct review submissions)
+  | "review_verification"
+  | "review_video_upsell"
+  | "review_dispute_escalation";
 
 // Base email data
 export interface BaseEmailData {
@@ -2497,6 +2501,50 @@ export interface ProfileReferralIntroductionReview {
   customerName: string;
   rating: number;
   text: string;
+}
+
+// =============================================================================
+// REVIEW VERIFICATION EMAIL (Direct review submissions)
+// =============================================================================
+
+export interface ReviewVerificationEmailData extends BaseEmailData {
+  reviewId: string;
+  customerName?: string;
+  professionalName: string;
+  rating: number;
+  reviewText: string;
+  verifyUrl: string;
+  organizationName?: string;
+}
+
+// =============================================================================
+// REVIEW VIDEO UPSELL EMAIL (Invite published text reviewers to record video)
+// =============================================================================
+
+export interface ReviewVideoUpsellEmailData extends BaseEmailData {
+  reviewId: string;
+  customerName?: string;
+  professionalName: string;
+  requestUrl: string;
+  organizationName?: string;
+}
+
+// =============================================================================
+// REVIEW DISPUTE ESCALATION EMAIL (Individual account disputes to RepWell team)
+// =============================================================================
+
+export interface ReviewDisputeEscalationEmailData extends BaseEmailData {
+  flagId: string;
+  reviewId: string;
+  organizationName: string;
+  reporterName?: string;
+  reporterEmail?: string;
+  reasonLabel: string;
+  details?: string;
+  rating: number;
+  customerName?: string;
+  reviewExcerpt: string;
+  reviewUrl: string;
 }
 
 export interface ProfileReferralIntroductionEmailData extends BaseEmailData {

@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { SourceIcon } from "@/components/shared/review-item";
-import type { Review } from "@/lib/reviews/types";
+import { REVIEW_STATUS_LABELS as STATUS_LABELS, type Review } from "@/lib/reviews/types";
 
 export function getStatusBadge(status: Review["status"]) {
   const variants: Record<string, string> = {
@@ -11,7 +11,7 @@ export function getStatusBadge(status: Review["status"]) {
   };
   return (
     <Badge variant="outline" className={variants[status]}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {STATUS_LABELS[status] ?? status}
     </Badge>
   );
 }

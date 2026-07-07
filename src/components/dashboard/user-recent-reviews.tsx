@@ -36,6 +36,7 @@ import type { RecentReview } from "@/lib/dashboard";
 import { getUserRecentReviews } from "@/lib/dashboard";
 import { useToast } from "@/hooks/use-toast";
 import { ensureReviewSmartLink } from "@/lib/share-studio/actions";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { AnimatedTransition, AnimatedList, AnimatedItem } from "@/components/motion";
 
 interface RecentReviewsProps {
@@ -231,9 +232,12 @@ export function UserRecentReviews({
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-heading">
+                        <a
+                          href={`/dashboard/reviews/${review.id}`}
+                          className="rounded-sm font-medium text-heading transition-colors hover:text-repwell-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                        >
                           {review.customerName || "Anonymous"}
-                        </span>
+                        </a>
                         <Badge
                           variant={
                             review.status === "approved"
@@ -271,7 +275,7 @@ export function UserRecentReviews({
                           addSuffix: true,
                         })}
                         {review.source !== "internal" && (
-                          <span className="ml-2 capitalize">via {review.source}</span>
+                          <span className="ml-2">via {formatReviewSource(review.source)}</span>
                         )}
                       </span>
                       <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -317,7 +321,7 @@ export function UserRecentReviews({
                           asChild
                           title="Respond"
                         >
-                          <a href={`/dashboard/reviews?id=${review.id}`}>
+                          <a href={`/dashboard/reviews/${review.id}`}>
                             <MessageCircle className="h-3.5 w-3.5" />
                           </a>
                         </Button>

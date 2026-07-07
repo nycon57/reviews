@@ -28,6 +28,15 @@ import { AnnouncementSecurityEmail } from "./announcement-security";
 // Profile Referral Introduction Template
 import { ProfileReferralIntroductionEmail } from "./profile-referral-introduction";
 
+// Review Verification Template (direct review submissions)
+import { ReviewVerificationEmail } from "./review-verification";
+
+// Review Video Upsell Template (invite published text reviewers to record video)
+import { ReviewVideoUpsellEmail } from "./review-video-upsell";
+
+// Review Dispute Escalation Template (individual account disputes)
+import { ReviewDisputeEscalationEmail } from "./review-dispute-escalation";
+
 // Referral Program Templates (S094)
 import { ReferralInviteEmail } from "./referral-invite";
 import { ReferralFriendSignedUpEmail } from "./referral-friend-signed-up";
@@ -67,6 +76,12 @@ export {
   AnnouncementSecurityEmail,
   // Profile referral introduction
   ProfileReferralIntroductionEmail,
+  // Review verification (direct review submissions)
+  ReviewVerificationEmail,
+  // Review video upsell (invite published text reviewers to record video)
+  ReviewVideoUpsellEmail,
+  // Review dispute escalation (individual account disputes)
+  ReviewDisputeEscalationEmail,
   // Referral program templates (S094)
   ReferralInviteEmail,
   ReferralFriendSignedUpEmail,
@@ -93,6 +108,12 @@ import type {
   AnnouncementSecurityEmailData,
   // Profile referral introduction
   ProfileReferralIntroductionEmailData,
+  // Review verification (direct review submissions)
+  ReviewVerificationEmailData,
+  // Review video upsell (invite published text reviewers to record video)
+  ReviewVideoUpsellEmailData,
+  // Review dispute escalation (individual account disputes)
+  ReviewDisputeEscalationEmailData,
 } from "../types";
 
 // =============================================================================
@@ -276,5 +297,50 @@ export async function renderProfileReferralIntroductionEmail(
   const html = await render(
     <ProfileReferralIntroductionEmail data={data} />
   );
+  return { subject, html };
+}
+
+// =============================================================================
+// REVIEW VERIFICATION EMAIL RENDERING FUNCTION
+// =============================================================================
+
+/**
+ * Render Review Verification email to HTML
+ */
+export async function renderReviewVerificationEmail(
+  data: ReviewVerificationEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = `Confirm your review of ${data.professionalName}`;
+  const html = await render(<ReviewVerificationEmail data={data} />);
+  return { subject, html };
+}
+
+// =============================================================================
+// REVIEW VIDEO UPSELL EMAIL RENDERING FUNCTION
+// =============================================================================
+
+/**
+ * Render Review Video Upsell email to HTML
+ */
+export async function renderReviewVideoUpsellEmail(
+  data: ReviewVideoUpsellEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = "Your review is making an impact";
+  const html = await render(<ReviewVideoUpsellEmail data={data} />);
+  return { subject, html };
+}
+
+// =============================================================================
+// REVIEW DISPUTE ESCALATION EMAIL RENDERING FUNCTION
+// =============================================================================
+
+/**
+ * Render Review Dispute Escalation email to HTML
+ */
+export async function renderReviewDisputeEscalationEmail(
+  data: ReviewDisputeEscalationEmailData
+): Promise<{ subject: string; html: string }> {
+  const subject = `Review dispute escalated by ${data.organizationName}`;
+  const html = await render(<ReviewDisputeEscalationEmail data={data} />);
   return { subject, html };
 }

@@ -296,6 +296,8 @@ export async function saveDraftResponse(
   }
 
   revalidatePath("/dashboard/all-reviews");
+  revalidatePath("/dashboard/reviews");
+  revalidatePath(`/dashboard/reviews/${reviewId}`);
   revalidatePath("/dashboard/organization");
   return { success: true };
 }
@@ -438,6 +440,8 @@ export async function postResponse(
   }
 
   revalidatePath("/dashboard/all-reviews");
+  revalidatePath("/dashboard/reviews");
+  revalidatePath(`/dashboard/reviews/${reviewId}`);
   revalidatePath("/dashboard/organization");
   return { success: true };
 }

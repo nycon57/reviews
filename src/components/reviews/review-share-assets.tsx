@@ -355,7 +355,6 @@ export function ReviewShareAssets({
                   className="max-h-[70vh] w-full rounded-lg"
                 />
               ) : (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={previewAsset.url}
                   alt={previewAsset.label}

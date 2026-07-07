@@ -25,7 +25,7 @@ describe("coerceAutoReplySettings", () => {
       auto_reply_enabled: false,
       auto_reply_tone: "professional",
       auto_reply_delay_hours: 24,
-      auto_reply_min_rating: 1,
+      auto_reply_min_rating: 4,
     });
   });
 
@@ -57,7 +57,7 @@ describe("coerceAutoReplySettings", () => {
       auto_reply_enabled: false,
       auto_reply_tone: "professional",
       auto_reply_delay_hours: 24,
-      auto_reply_min_rating: 1,
+      auto_reply_min_rating: 4,
     });
   });
 });

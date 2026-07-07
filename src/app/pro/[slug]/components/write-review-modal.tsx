@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Star, CheckCircle, Spinner, PencilSimple } from "@phosphor-icons/react";
 
+import posthog from "posthog-js";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -34,11 +35,7 @@ const reviewSchema = z.object({
   title: z.string().max(200).optional(),
   text: z.string().min(10, "Review must be at least 10 characters").max(2000),
   customerName: z.string().max(100).optional(),
-  customerEmail: z
-    .string()
-    .email("Please enter a valid email")
-    .optional()
-    .or(z.literal("")),
+  customerEmail: z.string().email("Please enter a valid email"),
   customerLocation: z.string().max(100).optional(),
   consentGiven: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms to submit a review",
@@ -110,7 +107,7 @@ export function WriteReviewModal({
 }: WriteReviewModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [isPending, setIsPending] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<ReviewFormData>({
@@ -137,8 +134,14 @@ export function WriteReviewModal({
       });
 
       if (result.success) {
+        posthog.capture("review_submitted", {
+          professional_id: loanOfficerId,
+          rating: data.rating,
+          has_title: Boolean(data.title),
+          review_length: data.text.length,
+        });
         setIsSuccess(true);
-        setIsPending(result.data?.status === "pending");
+        setSubmittedEmail(data.customerEmail);
       } else {
         setError(result.error || "Failed to submit review");
       }
@@ -155,7 +158,7 @@ export function WriteReviewModal({
       // Reset state after modal closes
       setTimeout(() => {
         setIsSuccess(false);
-        setIsPending(false);
+        setSubmittedEmail("");
         setError(null);
         form.reset();
       }, 200);
@@ -179,12 +182,10 @@ export function WriteReviewModal({
           <div className="py-8 text-center">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-repwell-teal-500 mb-2">
-              {isPending ? "Review Submitted for Moderation" : "Review Submitted!"}
+              Check your email to publish your review
             </h3>
             <p className="text-repwell-teal-400 mb-4">
-              {isPending
-                ? "Thank you for your review. It will be visible once approved."
-                : "Thank you for your review! It's now visible on the profile."}
+              We sent a confirmation link to {submittedEmail}.
             </p>
             <Button
               onClick={handleClose}
@@ -257,7 +258,7 @@ export function WriteReviewModal({
               {/* Personal Information */}
               <div className="space-y-3 pt-2 border-t">
                 <h4 className="font-medium text-repwell-teal-500 text-sm pt-2">
-                  Your Information (Optional)
+                  Your Information
                 </h4>
                 <FormField
                   control={form.control}
@@ -275,38 +276,39 @@ export function WriteReviewModal({
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-3">
-                  <FormField
-                    control={form.control}
-                    name="customerEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="you@example.com"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="customerLocation"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <FormControl>
-                          <Input placeholder="City, State" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="customerEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="you@example.com"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        We&apos;ll send you a quick link to confirm your review.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="customerLocation"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="City, State" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Consent */}

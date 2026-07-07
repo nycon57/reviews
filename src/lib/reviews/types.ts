@@ -14,6 +14,8 @@ export interface Review {
   approvedAt: string | null;
   approvedBy: string | null;
   rejectionReason: string | null;
+  /** Machine-screening reasons present when status is 'pending' (quarantined) */
+  moderationReasons?: string[] | null;
   isPublished: boolean;
   publishedAt: string | null;
   reviewDate: string;
@@ -104,18 +106,6 @@ export interface ActionResult<T = void> {
   error?: string;
 }
 
-// Auto-approval rules types
-export interface AutoApprovalRule {
-  id: string;
-  type: "rating" | "source" | "sentiment";
-  enabled: boolean;
-  config: {
-    minRating?: number; // For rating-based rules
-    sources?: string[]; // For source-based rules
-    minSentiment?: number; // For sentiment-based rules
-  };
-}
-
 // Auto-reply settings stored in organization settings JSON
 export interface AutoReplySettings {
   auto_reply_enabled: boolean;
@@ -131,18 +121,56 @@ export const DEFAULT_AUTO_REPLY_SETTINGS: AutoReplySettings = {
   auto_reply_min_rating: 4,
 };
 
-// Default auto-approval rules stored in organization settings
-export const DEFAULT_AUTO_APPROVAL_RULES: AutoApprovalRule[] = [
-  {
-    id: "auto-5-star",
-    type: "rating",
-    enabled: false,
-    config: { minRating: 5 },
-  },
-  {
-    id: "auto-4-5-star",
-    type: "rating",
-    enabled: false,
-    config: { minRating: 4 },
-  },
-];
+// ============================================================================
+// Review flags (disputes)
+// ============================================================================
+
+export type ReviewFlagReason =
+  | "inaccurate_information"
+  | "impersonation"
+  | "inappropriate_content"
+  | "spam_fake_review"
+  | "other";
+
+/**
+ * Display labels for the inverted publish model: 'pending' means
+ * machine-quarantined awaiting human release, never "awaiting approval".
+ */
+export const REVIEW_STATUS_LABELS: Record<Review["status"], string> = {
+  pending: "Needs attention",
+  approved: "Live",
+  rejected: "Removed",
+  archived: "Archived",
+};
+
+export const FLAG_REASON_LABELS: Record<ReviewFlagReason, string> = {
+  inaccurate_information: "Inaccurate information",
+  impersonation: "Impersonation",
+  inappropriate_content: "Inappropriate content",
+  spam_fake_review: "Spam or fake review",
+  other: "Other",
+};
+
+export type ReviewFlagStatus = "pending" | "reviewed" | "dismissed" | "actioned";
+
+export interface ReviewFlag {
+  id: string;
+  reviewId: string;
+  reason: ReviewFlagReason;
+  details: string | null;
+  reporterName: string | null;
+  reporterEmail: string | null;
+  flaggedByName: string | null;
+  status: ReviewFlagStatus;
+  resolutionNote: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  review: {
+    id: string;
+    rating: number;
+    customerName: string | null;
+    textExcerpt: string | null;
+    status: string;
+    userId: string | null;
+  } | null;
+}

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Section, Text, Link, Row, Column, Img } from "@react-email/components";
 import { colors, typography, spacing } from "../theme";
+import { emailConfig } from "../client";
 
 // =============================================================================
 // SOCIAL LINK ICONS (inline SVG data URIs for email compatibility)
@@ -340,7 +341,7 @@ export function RepwellFooter({
   unsubscribeToken,
   email,
   unsubscribeUrlOverride,
-  baseUrl = "https://app.repwell.ai",
+  baseUrl = emailConfig.baseUrl,
   variant = "default",
 }: RepwellFooterProps) {
   // An acquisition Contact-scoped URL wins; otherwise prefer token-based

@@ -59,6 +59,7 @@ import {
   resumeABTest,
   deleteABTest,
   declareWinner,
+  applyWinnerToFuture,
   getTestTypeDisplayName,
   getWinningMetricDisplayName,
   formatRate,
@@ -233,6 +234,18 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
     });
   };
 
+  const handleApplyWinner = () => {
+    startTransition(async () => {
+      const result = await applyWinnerToFuture(test.id);
+      if (result.success) {
+        toast({ title: result.data?.message ?? "Winner applied to future sends" });
+        router.refresh();
+      } else {
+        toast({ title: result.error || "Failed to apply winner", variant: "destructive" });
+      }
+    });
+  };
+
   // Calculate total stats
   const totalSent = test.results.reduce((sum, r) => sum + r.emailsSent, 0);
   const totalOpened = test.results.reduce((sum, r) => sum + r.emailsOpened, 0);
@@ -344,7 +357,28 @@ export function ABTestDetailClient({ test: initialTest }: ABTestDetailClientProp
                   {test.winnerDeclaredAt && ` on ${format(new Date(test.winnerDeclaredAt), "PPp")}`}
                   {test.winnerReason && ` — ${test.winnerReason}`}
                 </p>
+                {test.winnerAppliedAt && (
+                  <p className="mt-1 text-sm text-amber-700">
+                    Applied to future {test.emailType} sends on{" "}
+                    {format(new Date(test.winnerAppliedAt), "PPp")}.
+                  </p>
+                )}
               </div>
+              {test.winnerAppliedAt ? (
+                <Badge className="gap-1 bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Applied
+                </Badge>
+              ) : (
+                <Button onClick={handleApplyWinner} disabled={isPending}>
+                  {isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                  )}
+                  Apply to future sends
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>

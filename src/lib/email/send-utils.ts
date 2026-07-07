@@ -15,6 +15,8 @@ import { render } from "@react-email/components";
 import type { ReactElement } from "react";
 import { getResendClient, emailConfig } from "./client";
 import { generateEmailPreferenceTokenForUser } from "../email-preferences/actions";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { resolveEmailTypeSend } from "@/lib/email-ab-testing/overrides";
 
 // =============================================================================
 // TYPES
@@ -45,10 +47,25 @@ export interface EmailSendOptions {
   userId?: string;
   /** Include List-Unsubscribe header (default: true for marketing) */
   includeListUnsubscribe?: boolean;
+  /**
+   * Explicit List-Unsubscribe URL. When set, headers are included even for a
+   * transactional email and this URL is used verbatim (wins over the userId /
+   * recipient resolution). Used by acquisition emails to point the machine
+   * one-click at the Contact-scoped suppression endpoint.
+   */
+  listUnsubscribeUrl?: string;
   /** Maximum retries (default: 3) */
   maxRetries?: number;
   /** Timeout in milliseconds (default: 30000) */
   timeout?: number;
+  /**
+   * Organization + email type enable send-time A/B resolution: an applied
+   * winner's subject (email_type_overrides) or a running test's assigned variant
+   * subject is swapped in, and the assigned variant ids are returned for logging.
+   * Only the subject is swapped — preview text is already baked into the HTML.
+   */
+  organizationId?: string;
+  emailType?: string;
 }
 
 export interface EmailSendResult {
@@ -57,6 +74,11 @@ export interface EmailSendResult {
   error?: string;
   retries?: number;
   htmlSize?: number;
+  /** The subject actually sent (may differ from the requested subject after A/B resolution). */
+  effectiveSubject?: string;
+  /** Set when a running A/B test assigned this send a variant — stamp on email_logs. */
+  abTestId?: string;
+  abTestVariant?: string;
 }
 
 // =============================================================================
@@ -262,9 +284,12 @@ export async function getEmailPreferencesUrl(
  */
 export async function getListUnsubscribeHeaders(
   userId?: string,
-  recipientEmail?: string
+  recipientEmail?: string,
+  explicitUrl?: string
 ): Promise<Record<string, string>> {
-  const unsubscribeUrl = await getUnsubscribeUrl(userId, recipientEmail);
+  // An explicit URL (e.g. an acquisition email's Contact-scoped one-click URL)
+  // wins over the platform-user token/email resolution.
+  const unsubscribeUrl = explicitUrl ?? (await getUnsubscribeUrl(userId, recipientEmail));
   const unsubscribeMailto = "unsubscribe@repwell.ai";
 
   return {
@@ -410,8 +435,11 @@ export async function sendEmailWithReliability(
     tags = [],
     userId,
     includeListUnsubscribe = true,
+    listUnsubscribeUrl,
     maxRetries = 3,
     timeout = DEFAULT_TIMEOUT,
+    organizationId,
+    emailType,
   } = options;
 
   // Validate that either react or html is provided
@@ -451,14 +479,38 @@ export async function sendEmailWithReliability(
     console.warn(`Email size warning for ${idempotencyKey}: ${sizeCheck.warning}`);
   }
 
+  // Send-time A/B resolution (subject only — the HTML/preheader is already
+  // rendered). Applies an applied-winner override or assigns a running test's
+  // variant for (organizationId, emailType). Best-effort: failures fall through
+  // to the requested subject.
+  let effectiveSubject = subject;
+  let abTestId: string | undefined;
+  let abTestVariant: string | undefined;
+  if (organizationId && emailType) {
+    const resolution = await resolveEmailTypeSend(createUntypedAdminClient(), {
+      organizationId,
+      emailType,
+      subject,
+    });
+    effectiveSubject = resolution.subject;
+    abTestId = resolution.abTestId;
+    abTestVariant = resolution.abTestVariant;
+  }
+
   // Build headers
   const headers: Record<string, string> = {
     "X-Idempotency-Key": idempotencyKey,
   };
 
-  // Add List-Unsubscribe headers for marketing emails
-  if (includeListUnsubscribe) {
-    const unsubscribeHeaders = await getListUnsubscribeHeaders(userId, to);
+  // Add List-Unsubscribe headers for marketing emails, or whenever an explicit
+  // unsubscribe URL is supplied (e.g. an acquisition email whose human footer
+  // and machine one-click must both hit the Contact suppression system).
+  if (includeListUnsubscribe || listUnsubscribeUrl) {
+    const unsubscribeHeaders = await getListUnsubscribeHeaders(
+      userId,
+      to,
+      listUnsubscribeUrl
+    );
     Object.assign(headers, unsubscribeHeaders);
   }
 
@@ -477,7 +529,7 @@ export async function sendEmailWithReliability(
         from,
         to: toName ? `${toName} <${to}>` : to,
         replyTo,
-        subject,
+        subject: effectiveSubject,
         html,
         text,
         tags,
@@ -495,6 +547,9 @@ export async function sendEmailWithReliability(
         messageId: response.data?.id,
         retries,
         htmlSize: sizeCheck.size,
+        effectiveSubject,
+        abTestId,
+        abTestVariant,
       };
     } catch (error) {
       clearTimeout(timeoutId);
@@ -725,6 +780,15 @@ export interface SimpleSendOptions {
   userId?: string;
   /** Is this a transactional email (no unsubscribe header)? Default: false */
   isTransactional?: boolean;
+  /** Organization for send-time A/B resolution (see EmailSendOptions). */
+  organizationId?: string;
+  /** Email type / template name for send-time A/B resolution. */
+  emailType?: string;
+  /**
+   * Explicit List-Unsubscribe URL. Forces the header on even for a transactional
+   * email — used by acquisition sends to point one-click at the Contact endpoint.
+   */
+  listUnsubscribeUrl?: string;
 }
 
 /**
@@ -753,5 +817,8 @@ export async function sendWithReliability(
     tags: options.tags,
     userId: options.userId,
     includeListUnsubscribe: !options.isTransactional,
+    listUnsubscribeUrl: options.listUnsubscribeUrl,
+    organizationId: options.organizationId,
+    emailType: options.emailType,
   });
 }

@@ -131,17 +131,24 @@ export function NotificationsList({
   // directly (client-side filtering produced wrong counts and pagination).
   const displayedNotifications = notifications;
 
-  React.useEffect(() => {
-    if (filter === "all" && page === 1) {
-      // Restore the server-rendered first page so returning to "all" doesn't
-      // leave stale filtered results or counts on screen.
+  // Restore the server-rendered first page when returning to the default view —
+  // done during render (prev-comparison) so stale filtered rows never paint.
+  const isDefaultView = filter === "all" && page === 1;
+  const [prevIsDefaultView, setPrevIsDefaultView] = React.useState(true);
+  if (isDefaultView !== prevIsDefaultView) {
+    setPrevIsDefaultView(isDefaultView);
+    if (isDefaultView) {
       setNotifications(initialNotifications);
       setTotal(initialTotal);
       setSelectedIds(new Set());
-      return;
     }
-    fetchNotifications();
-  }, [filter, page, fetchNotifications, initialNotifications, initialTotal]);
+  }
+
+  React.useEffect(() => {
+    if (!isDefaultView) {
+      fetchNotifications();
+    }
+  }, [isDefaultView, fetchNotifications]);
 
   const handleMarkAllAsRead = async () => {
     setBulkActioning(true);

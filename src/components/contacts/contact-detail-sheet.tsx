@@ -128,11 +128,20 @@ export function ContactDetailSheet({
     }
   }, [contactId]);
 
-  useEffect(() => {
-    if (open) {
+  // Clear stale content during render when a different contact opens
+  // (prev-comparison pattern — avoids the flash react-doctor flags when the
+  // reset happens one commit later inside an effect).
+  const [prevContactId, setPrevContactId] = useState<string | null>(null);
+  if (contactId !== prevContactId) {
+    setPrevContactId(contactId);
+    if (contactId) {
       setData(null);
-      load();
+      setNotFound(false);
     }
+  }
+
+  useEffect(() => {
+    if (open) load();
   }, [open, load]);
 
   const suppressed = data

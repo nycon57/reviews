@@ -30,18 +30,19 @@ function UnsubscribedContent() {
           <CardTitle className="text-2xl">
             {isResubscribed
               ? "Welcome Back!"
-              : "Unsubscribed Successfully"}
+              : "Unsubscribed"}
           </CardTitle>
           <CardDescription className="text-base">
             {isResubscribed
-              ? "You've been resubscribed to our emails. You'll now receive survey invitations and notifications."
-              : "You've been unsubscribed from our email list. You won't receive any more survey invitations or reminder emails from us."}
+              ? "You've been resubscribed. You'll receive emails from us again at this address."
+              : "You've been unsubscribed. You won't receive further emails from us at this address."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {!isResubscribed && (
             <p className="text-sm text-muted-foreground text-center">
-              Changed your mind? Contact support to resubscribe.
+              Changed your mind? Use the link in any email you previously
+              received, or contact the sender to opt back in.
             </p>
           )}
           <div className="flex justify-center">

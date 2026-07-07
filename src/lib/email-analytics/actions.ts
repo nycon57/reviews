@@ -159,12 +159,18 @@ export async function getEmailMetrics(
   const openRate = totalDelivered > 0 ? (totalOpened / totalDelivered) * 100 : 0;
   const clickRate = totalOpened > 0 ? (totalClicked / totalOpened) * 100 : 0;
   const bounceRate = totalSent > 0 ? (totalBounced / totalSent) * 100 : 0;
+  // Failures as a share of attempted sends (sent + failed).
+  const failureRate =
+    totalSent + totalFailed > 0
+      ? (totalFailed / (totalSent + totalFailed)) * 100
+      : 0;
 
   // Calculate previous period metrics for comparison
   const prevEmails = previousEmails || [];
   const prevSent = prevEmails.filter(
     (e) => e.status !== "queued" && e.status !== "failed"
   ).length;
+  const prevFailed = prevEmails.filter((e) => e.status === "failed").length;
   const prevDelivered = prevEmails.filter(
     (e) => e.status === "delivered" || e.status === "opened" || e.status === "clicked"
   ).length;
@@ -185,6 +191,9 @@ export async function getEmailMetrics(
   const deliveryRateChange = Number((deliveryRate - prevDeliveryRate).toFixed(1));
   const openRateChange = Number((openRate - prevOpenRate).toFixed(1));
   const clickRateChange = Number((clickRate - prevClickRate).toFixed(1));
+  const prevFailureRate =
+    prevSent + prevFailed > 0 ? (prevFailed / (prevSent + prevFailed)) * 100 : 0;
+  const failureRateChange = Number((failureRate - prevFailureRate).toFixed(1));
 
   return {
     success: true,
@@ -199,10 +208,12 @@ export async function getEmailMetrics(
       openRate: Number(openRate.toFixed(1)),
       clickRate: Number(clickRate.toFixed(1)),
       bounceRate: Number(bounceRate.toFixed(1)),
+      failureRate: Number(failureRate.toFixed(1)),
       sentChange,
       deliveryRateChange,
       openRateChange,
       clickRateChange,
+      failureRateChange,
     },
   };
 }
@@ -243,7 +254,14 @@ export async function getEmailTrends(
   // Group by day
   const dailyData = new Map<
     string,
-    { sent: number; delivered: number; opened: number; clicked: number; bounced: number }
+    {
+      sent: number;
+      delivered: number;
+      opened: number;
+      clicked: number;
+      bounced: number;
+      failed: number;
+    }
   >();
 
   for (const email of emails || []) {
@@ -253,7 +271,14 @@ export async function getEmailTrends(
     const dateKey = date.toISOString().split("T")[0];
 
     if (!dailyData.has(dateKey)) {
-      dailyData.set(dateKey, { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 });
+      dailyData.set(dateKey, {
+        sent: 0,
+        delivered: 0,
+        opened: 0,
+        clicked: 0,
+        bounced: 0,
+        failed: 0,
+      });
     }
 
     const entry = dailyData.get(dateKey)!;
@@ -277,6 +302,9 @@ export async function getEmailTrends(
     if (email.status === "bounced") {
       entry.bounced += 1;
     }
+    if (email.status === "failed") {
+      entry.failed += 1;
+    }
   }
 
   // Fill in missing days
@@ -291,6 +319,7 @@ export async function getEmailTrends(
       opened: 0,
       clicked: 0,
       bounced: 0,
+      failed: 0,
     };
 
     trends.push({
@@ -339,14 +368,28 @@ export async function getEmailTypePerformance(
   // Group by template
   const templateData = new Map<
     string,
-    { sent: number; delivered: number; opened: number; clicked: number; bounced: number }
+    {
+      sent: number;
+      delivered: number;
+      opened: number;
+      clicked: number;
+      bounced: number;
+      failed: number;
+    }
   >();
 
   for (const email of emails || []) {
     const template = email.template_name || "unknown";
 
     if (!templateData.has(template)) {
-      templateData.set(template, { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0 });
+      templateData.set(template, {
+        sent: 0,
+        delivered: 0,
+        opened: 0,
+        clicked: 0,
+        bounced: 0,
+        failed: 0,
+      });
     }
 
     const entry = templateData.get(template)!;
@@ -370,6 +413,9 @@ export async function getEmailTypePerformance(
     if (email.status === "bounced") {
       entry.bounced += 1;
     }
+    if (email.status === "failed") {
+      entry.failed += 1;
+    }
   }
 
   // Convert to array and calculate rates
@@ -383,12 +429,17 @@ export async function getEmailTypePerformance(
       opened: data.opened,
       clicked: data.clicked,
       bounced: data.bounced,
+      failed: data.failed,
       deliveryRate: data.sent > 0 ? Number(((data.delivered / data.sent) * 100).toFixed(1)) : 0,
       openRate:
         data.delivered > 0 ? Number(((data.opened / data.delivered) * 100).toFixed(1)) : 0,
       clickRate: data.opened > 0 ? Number(((data.clicked / data.opened) * 100).toFixed(1)) : 0,
+      failureRate:
+        data.sent + data.failed > 0
+          ? Number(((data.failed / (data.sent + data.failed)) * 100).toFixed(1))
+          : 0,
     }))
-    .filter((p) => p.totalSent > 0)
+    .filter((p) => p.totalSent > 0 || p.failed > 0)
     .sort((a, b) => b.totalSent - a.totalSent);
 
   return { success: true, data: performance };

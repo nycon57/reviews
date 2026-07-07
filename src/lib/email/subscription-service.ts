@@ -19,7 +19,7 @@
  * - Logs all emails for analytics
  */
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { getResendClient, getFromAddress, emailConfig } from "./client";
 import type {
   EmailTemplate,
@@ -1017,6 +1017,61 @@ async function sendEmail(params: {
 // ============================================================================
 
 /**
+ * Real renewal billing for an org, read from the synced Stripe mirror
+ * (subscriptions + subscription_items). Returns null when there is no synced
+ * subscription or no priced line items — the caller then skips the reminder
+ * rather than sending a fabricated amount. Amounts are in the currency's minor
+ * unit (cents), matching the email template's formatCurrency (which /100s).
+ *
+ * These tables are not in the generated types yet, so the untyped client is used.
+ */
+async function getSyncedRenewalBilling(organizationId: string): Promise<{
+  renewalAmount: number;
+  currency: string;
+  billingCycle: "monthly" | "yearly";
+  renewalDate: string | null;
+  planTier: string | null;
+} | null> {
+  const supabase = createUntypedAdminClient();
+
+  const { data: sub } = await supabase
+    .from("subscriptions")
+    .select("id, plan_tier, billing_cycle, current_period_end")
+    .eq("organization_id", organizationId)
+    .in("status", ["active", "trialing"])
+    .order("current_period_end", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!sub) return null;
+
+  const { data: items } = await supabase
+    .from("subscription_items")
+    .select("unit_amount, quantity, currency")
+    .eq("subscription_id", sub.id);
+
+  const lines = (items || []) as Array<{
+    unit_amount: number | null;
+    quantity: number | null;
+    currency: string | null;
+  }>;
+
+  const renewalAmount = lines.reduce(
+    (sum, item) => sum + (item.unit_amount ?? 0) * (item.quantity ?? 1),
+    0
+  );
+  if (renewalAmount <= 0) return null;
+
+  return {
+    renewalAmount,
+    currency: lines.find((item) => item.currency)?.currency ?? "usd",
+    billingCycle: sub.billing_cycle === "year" ? "yearly" : "monthly",
+    renewalDate: (sub.current_period_end as string | null) ?? null,
+    planTier: (sub.plan_tier as string | null) ?? null,
+  };
+}
+
+/**
  * Process renewal reminders for annual subscriptions
  * Called daily by cron job to send 14-day advance notices
  */
@@ -1064,15 +1119,21 @@ export async function processRenewalReminders(): Promise<{
         continue; // Already sent reminder recently
       }
 
-      // TODO: Fetch actual subscription data from Stripe
-      // For now, use placeholder values
+      // Real billing from the synced Stripe mirror. Skip when there is no
+      // priced subscription to report rather than sending a $0 placeholder.
+      const billing = await getSyncedRenewalBilling(org.id);
+      if (!billing) {
+        continue;
+      }
+
       const sendResult = await sendSubscriptionRenewalReminderEmail({
         organizationId: org.id,
-        planName: org.subscription_tier || "professional",
-        renewalDate: org.subscription_ends_at || targetDate.toISOString(),
-        renewalAmount: 0, // Would be fetched from Stripe
-        currency: "usd",
-        billingCycle: "yearly",
+        planName: billing.planTier || org.subscription_tier || "professional",
+        renewalDate:
+          billing.renewalDate || org.subscription_ends_at || targetDate.toISOString(),
+        renewalAmount: billing.renewalAmount,
+        currency: billing.currency,
+        billingCycle: billing.billingCycle,
       });
 
       if (sendResult.success) {

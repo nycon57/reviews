@@ -1191,7 +1191,8 @@ export interface WeeklySummaryLOEmailData extends WeeklySummaryEmailBaseData {
 
   // Response metrics
   responseRate: number;
-  averageResponseTime: string;
+  /** Mean time-to-respond label (e.g. "6 hours"); null when not computable. */
+  averageResponseTime: string | null;
 
   // Pending actions
   pendingReviewResponses: number;
@@ -1236,7 +1237,8 @@ export interface WeeklySummaryManagerEmailData extends WeeklySummaryEmailBaseDat
 
   // Team response metrics
   teamResponseRate: number;
-  teamAverageResponseTime: string;
+  /** Mean team time-to-respond label (e.g. "6 hours"); null when not computable. */
+  teamAverageResponseTime: string | null;
 
   // Top performers (top 3)
   topPerformers: Array<{
@@ -2174,6 +2176,21 @@ export interface AdminAlertDigestItem {
   actionUrl: string;
 }
 
+// Email deliverability health summary included in the digest when an org's
+// failed-send count in the window crosses its threshold (Grill #2.7).
+export interface AdminAlertEmailHealthTemplate {
+  templateName: string;
+  count: number;
+}
+
+export interface AdminAlertEmailHealth {
+  failedCount: number;
+  threshold: number;
+  windowHours: number;
+  topTemplates: AdminAlertEmailHealthTemplate[];
+  analyticsUrl: string;
+}
+
 // Daily digest of all admin alerts
 export interface AdminAlertDigestEmailData extends BaseEmailData {
   recipientName: string;
@@ -2186,6 +2203,8 @@ export interface AdminAlertDigestEmailData extends BaseEmailData {
   dashboardUrl: string;
   alertSettingsUrl: string;
   unsubscribeUrl: string;
+  /** Present only when the org exceeded its failed-send threshold in the window. */
+  emailHealth?: AdminAlertEmailHealth;
 }
 
 // Admin alert preferences (mirrors database table)

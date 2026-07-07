@@ -20,11 +20,32 @@ import { toast } from "@/hooks/use-toast";
 import {
   getOrganizationBranding,
   queueReviewRenderJob,
-  queueVideoRenderJob,
+  queueClipRenderJob,
+  getRenderJobStatus,
+  getClipMusicTracks,
   renderImageInline,
   renderTemplateInline,
   type OrganizationBrandingResult,
+  type ClipMusicTrack,
 } from "@/lib/share-studio/actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  CheckCircle,
+  WarningCircle,
+  DownloadSimple,
+  FilmSlate,
+  ClosedCaptioning,
+  MusicNotes,
+  QrCode,
+} from "@phosphor-icons/react";
 import { SocialClip } from "@/remotion/compositions/SocialClip";
 import type { OrganizationBranding } from "@/remotion/types";
 import { calculateSocialClipDuration } from "@/remotion/utils/timing";
@@ -57,8 +78,41 @@ interface AssetCreatorModalProps {
     customerName: string | null;
     rating: number;
   };
+  /** Source video details; enables the Clip tweak options for video testimonials */
+  clipSource?: {
+    transcript: string | null;
+    durationSeconds: number | null;
+  };
   onQueued?: () => void;
 }
+
+interface ClipTweaks {
+  /** "crop" fills the frame (center-crop); "card" places the source in a card on the brand background */
+  framing: "crop" | "card";
+  showCaptions: boolean;
+  /** "off" or a clip_music_tracks id */
+  music: string;
+  showIntro: boolean;
+  showOutro: boolean;
+  /** Seconds into the source video; empty string = auto-trim */
+  trimStartSec: string;
+  trimEndSec: string;
+  correctedTranscript: string | null;
+}
+
+const DEFAULT_CLIP_TWEAKS: ClipTweaks = {
+  framing: "crop",
+  showCaptions: true,
+  music: "off",
+  showIntro: true,
+  showOutro: true,
+  trimStartSec: "",
+  trimEndSec: "",
+  correctedTranscript: null,
+};
+
+const CLIP_POLL_INTERVAL_MS = 5000;
+const CLIP_POLL_TIMEOUT_MS = 12 * 60 * 1000;
 
 // ============================================================================
 // Dimension helpers
@@ -149,6 +203,7 @@ export function AssetCreatorModal({
   sourceType,
   sourceId,
   reviewData,
+  clipSource,
   onQueued,
 }: AssetCreatorModalProps) {
   const [assetType, setAssetType] = useState<AssetType>("image");
@@ -161,13 +216,83 @@ export function AssetCreatorModal({
   );
   const [isQueuing, setIsQueuing] = useState(false);
 
-  // Fetch branding on open
+  // Clip (branded video testimonial) tweaks + render progress
+  const isClip = sourceType === "video_testimonial" && assetType === "video";
+  const [clipTweaks, setClipTweaks] = useState<ClipTweaks>(DEFAULT_CLIP_TWEAKS);
+  const [musicTracks, setMusicTracks] = useState<ClipMusicTrack[]>([]);
+  const [clipJob, setClipJob] = useState<{
+    jobId: string;
+    status: "queued" | "processing" | "completed" | "failed";
+    assetUrl: string | null;
+    error: string | null;
+  } | null>(null);
+
+  // Fetch branding on open; reset progress state on close
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setClipJob(null);
+      return;
+    }
     void getOrganizationBranding().then((data) => {
       if (data) setBranding(data);
     });
-  }, [open]);
+    if (sourceType === "video_testimonial") {
+      void getClipMusicTracks().then(setMusicTracks);
+    }
+  }, [open, sourceType]);
+
+  // Poll the clip render job until it resolves. Keyed to the job id only so
+  // status updates don't tear down and recreate the interval.
+  const clipJobId = clipJob?.jobId ?? null;
+  useEffect(() => {
+    if (!open || !clipJobId) return;
+
+    const updateClipJob = (
+      updates: Partial<NonNullable<typeof clipJob>>
+    ): void => setClipJob((prev) => (prev ? { ...prev, ...updates } : prev));
+
+    const startedAt = Date.now();
+    const interval = setInterval(async () => {
+      if (Date.now() - startedAt > CLIP_POLL_TIMEOUT_MS) {
+        clearInterval(interval);
+        updateClipJob({ status: "failed", error: "Render timed out" });
+        return;
+      }
+      try {
+        const result = await getRenderJobStatus(clipJobId);
+        if (result.status === "completed") {
+          clearInterval(interval);
+          updateClipJob({ status: "completed", assetUrl: result.asset?.url ?? null });
+          onQueued?.();
+        } else if (result.status === "failed") {
+          clearInterval(interval);
+          updateClipJob({ status: "failed", error: result.errorMessage });
+        } else if (result.status === "processing") {
+          updateClipJob({ status: "processing" });
+        }
+      } catch {
+        // Transient polling failure: keep trying until the timeout
+      }
+    }, CLIP_POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [open, clipJobId, onQueued]);
+
+  // Clips default to the vertical social format and start from the source
+  // transcript for Caption Correction. Adjusted during render (prev-comparison)
+  // instead of an effect so the first frame never shows the stale format.
+  const clipSyncKey = isClip ? (clipSource?.transcript ?? "") : null;
+  const [prevClipSyncKey, setPrevClipSyncKey] = useState<string | null>(null);
+  if (clipSyncKey !== prevClipSyncKey) {
+    setPrevClipSyncKey(clipSyncKey);
+    if (isClip) {
+      setFormat("9:16");
+      setClipTweaks((prev) =>
+        prev.correctedTranscript === null
+          ? { ...prev, correctedTranscript: clipSource?.transcript ?? null }
+          : prev
+      );
+    }
+  }
 
   // Image stills use CSS preview; videos use Remotion Player
   const useVideoPlayer = assetType === "video";
@@ -254,8 +379,47 @@ export function AssetCreatorModal({
             });
           }
         }
+      } else if (sourceType === "video_testimonial") {
+        // Clip: branded testimonial built from the source video. The modal
+        // stays open and polls until the render resolves.
+        const trimStartMs = clipTweaks.trimStartSec.trim()
+          ? Math.max(0, Math.round(parseFloat(clipTweaks.trimStartSec) * 1000))
+          : undefined;
+        const trimEndMs = clipTweaks.trimEndSec.trim()
+          ? Math.max(0, Math.round(parseFloat(clipTweaks.trimEndSec) * 1000))
+          : undefined;
+
+        const result = await queueClipRenderJob(sourceId, {
+          format,
+          framing: clipTweaks.framing,
+          showCaptions: clipTweaks.showCaptions,
+          showIntro: clipTweaks.showIntro,
+          showOutro: clipTweaks.showOutro,
+          ...(clipTweaks.music !== "off" ? { musicTrackId: clipTweaks.music } : {}),
+          ...(trimStartMs !== undefined ? { trimStartMs } : {}),
+          ...(trimEndMs !== undefined ? { trimEndMs } : {}),
+          ...(clipTweaks.correctedTranscript &&
+          clipTweaks.correctedTranscript.trim() !== (clipSource?.transcript ?? "").trim()
+            ? { correctedTranscript: clipTweaks.correctedTranscript.trim() }
+            : {}),
+        });
+
+        if (result.success && result.jobId) {
+          setClipJob({
+            jobId: result.jobId,
+            status: "queued",
+            assetUrl: null,
+            error: null,
+          });
+        } else {
+          toast({
+            title: "Queue failed",
+            description: result.error || "Could not queue the clip render.",
+            variant: "destructive",
+          });
+        }
       } else {
-        // Videos go through background queue + Remotion
+        // Review-sourced videos: animated quote clip through the queue
         const options = {
           assetType: "video" as const,
           format,
@@ -265,10 +429,7 @@ export function AssetCreatorModal({
           priority: 0,
         };
 
-        const result =
-          sourceType === "review"
-            ? await queueReviewRenderJob(sourceId, options)
-            : await queueVideoRenderJob(sourceId, options);
+        const result = await queueReviewRenderJob(sourceId, options);
 
         if (result.success) {
           toast({
@@ -288,7 +449,7 @@ export function AssetCreatorModal({
     } finally {
       setIsQueuing(false);
     }
-  }, [assetType, format, templateCategory, simpleTemplate, premiumTemplateId, showTemplateSelector, sourceType, sourceId, onOpenChange, onQueued]);
+  }, [assetType, format, templateCategory, simpleTemplate, premiumTemplateId, showTemplateSelector, sourceType, sourceId, clipTweaks, clipSource, onOpenChange, onQueued]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -340,6 +501,165 @@ export function AssetCreatorModal({
                 {FORMAT_LABELS[format]}
               </p>
             </div>
+
+            {/* Clip tweaks (video testimonials only) */}
+            {isClip && (
+              <div className="space-y-4">
+                {/* Framing */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Framing
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <ToggleButton
+                      active={clipTweaks.framing === "crop"}
+                      onClick={() =>
+                        setClipTweaks((p) => ({ ...p, framing: "crop" }))
+                      }
+                      label="Fill frame"
+                    />
+                    <ToggleButton
+                      active={clipTweaks.framing === "card"}
+                      onClick={() =>
+                        setClipTweaks((p) => ({ ...p, framing: "card" }))
+                      }
+                      label="Card"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {clipTweaks.framing === "crop"
+                      ? "Your video fills the frame edge to edge, cropped to center."
+                      : "Your video sits in a card on your brand background, nothing cropped."}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <ClosedCaptioning className="h-4 w-4 text-muted-foreground" />
+                    Captions
+                  </Label>
+                  <Switch
+                    checked={clipTweaks.showCaptions}
+                    onCheckedChange={(v) =>
+                      setClipTweaks((p) => ({ ...p, showCaptions: v }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <MusicNotes className="h-4 w-4 text-muted-foreground" />
+                    Music
+                  </Label>
+                  <Select
+                    value={clipTweaks.music}
+                    onValueChange={(value) =>
+                      setClipTweaks((p) => ({ ...p, music: value }))
+                    }
+                  >
+                    <SelectTrigger aria-label="Background music">
+                      <SelectValue placeholder="No music" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="off">No music</SelectItem>
+                      {musicTracks.map((track) => (
+                        <SelectItem key={track.id} value={track.id}>
+                          {track.name}
+                          <span className="ml-1.5 text-muted-foreground">
+                            {track.mood}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {clipTweaks.music !== "off" && (
+                    <p className="text-xs text-muted-foreground">
+                      {musicTracks.find((track) => track.id === clipTweaks.music)
+                        ?.description ?? "Plays softly and ducks under speech."}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2 text-sm font-medium">
+                    <FilmSlate className="h-4 w-4 text-muted-foreground" />
+                    Intro and end card
+                  </Label>
+                  <Switch
+                    checked={clipTweaks.showIntro && clipTweaks.showOutro}
+                    onCheckedChange={(v) =>
+                      setClipTweaks((p) => ({ ...p, showIntro: v, showOutro: v }))
+                    }
+                  />
+                </div>
+
+                {/* Trim */}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Trim (seconds)
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      placeholder="Auto"
+                      aria-label="Trim start in seconds"
+                      value={clipTweaks.trimStartSec}
+                      onChange={(e) =>
+                        setClipTweaks((p) => ({ ...p, trimStartSec: e.target.value }))
+                      }
+                      className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    />
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      placeholder="Auto"
+                      aria-label="Trim end in seconds"
+                      value={clipTweaks.trimEndSec}
+                      onChange={(e) =>
+                        setClipTweaks((p) => ({ ...p, trimEndSec: e.target.value }))
+                      }
+                      className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Auto removes silence at the start and end.
+                  </p>
+                  {(clipSource?.durationSeconds ?? 0) > 60 && (
+                    <p className="flex items-start gap-1.5 text-xs text-amber-600">
+                      <WarningCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      This video runs over 60 seconds. Short clips hold attention
+                      better on social; consider trimming.
+                    </p>
+                  )}
+                </div>
+
+                {/* Caption Correction */}
+                {clipSource?.transcript && (
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Caption text
+                    </Label>
+                    <Textarea
+                      rows={4}
+                      value={clipTweaks.correctedTranscript ?? ""}
+                      onChange={(e) =>
+                        setClipTweaks((p) => ({
+                          ...p,
+                          correctedTranscript: e.target.value,
+                        }))
+                      }
+                      className="text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Fix misheard words here; caption timing stays the same.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Template Category (image only) */}
             {showTemplateSelector && assetType === "image" && (
@@ -415,7 +735,10 @@ export function AssetCreatorModal({
             <Button
               className="w-full"
               onClick={() => void handleCreate()}
-              disabled={isQueuing}
+              disabled={
+                isQueuing ||
+                (clipJob !== null && ["queued", "processing"].includes(clipJob.status))
+              }
             >
               {isQueuing ? (
                 <>
@@ -424,6 +747,12 @@ export function AssetCreatorModal({
                 </>
               ) : assetType === "image" ? (
                 "Create Image"
+              ) : isClip ? (
+                clipJob?.status === "completed" || clipJob?.status === "failed" ? (
+                  "Render Again"
+                ) : (
+                  "Render Clip"
+                )
               ) : (
                 "Queue Video"
               )}
@@ -432,7 +761,16 @@ export function AssetCreatorModal({
 
           {/* Preview (right) */}
           <div className="order-1 sm:order-2 flex items-center justify-center rounded-lg border bg-muted/30 p-4 min-h-[300px]">
-            {useVideoPlayer && Player && videoCompositionProps ? (
+            {isClip ? (
+              <ClipStatusPanel
+                job={clipJob}
+                tweaks={clipTweaks}
+                musicName={
+                  musicTracks.find((track) => track.id === clipTweaks.music)
+                    ?.name ?? null
+                }
+              />
+            ) : useVideoPlayer && Player && videoCompositionProps ? (
               <div
                 className="w-full"
                 style={{
@@ -704,6 +1042,117 @@ function StillPreview({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Clip status panel — what the render contains + live job progress
+// ============================================================================
+
+function ClipStatusPanel({
+  job,
+  tweaks,
+  musicName,
+}: {
+  job: {
+    status: "queued" | "processing" | "completed" | "failed";
+    assetUrl: string | null;
+    error: string | null;
+  } | null;
+  tweaks: ClipTweaks;
+  musicName: string | null;
+}) {
+  const segments = [
+    tweaks.showIntro && { icon: <FilmSlate className="h-4 w-4" />, label: "Branded intro" },
+    {
+      icon: <ClosedCaptioning className="h-4 w-4" />,
+      label: tweaks.showCaptions ? "Your video with captions" : "Your video",
+    },
+    tweaks.music !== "off" &&
+      musicName && {
+        icon: <MusicNotes className="h-4 w-4" />,
+        label: `${musicName}, ducked under speech`,
+      },
+    tweaks.showOutro && {
+      icon: <QrCode className="h-4 w-4" />,
+      label: "End card with contact info and QR",
+    },
+  ].filter(Boolean) as Array<{ icon: React.ReactNode; label: string }>;
+
+  if (job?.status === "completed" && job.assetUrl) {
+    return (
+      <div className="flex flex-col items-center gap-4 text-center">
+        <CheckCircle className="h-10 w-10 text-repwell-sage-200" weight="fill" />
+        <div>
+          <p className="font-medium">Your clip is ready</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            It is also saved to your Share Studio library.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild>
+            <a href={job.assetUrl} download target="_blank" rel="noopener noreferrer">
+              <DownloadSimple className="h-4 w-4" />
+              Download clip
+            </a>
+          </Button>
+        </div>
+        <video
+          src={job.assetUrl}
+          controls
+          playsInline
+          className="max-h-[340px] rounded-lg border"
+        />
+      </div>
+    );
+  }
+
+  if (job?.status === "failed") {
+    return (
+      <div className="flex flex-col items-center gap-3 text-center">
+        <WarningCircle className="h-10 w-10 text-destructive" weight="fill" />
+        <div>
+          <p className="font-medium">Render failed</p>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            {job.error || "Something went wrong. Adjust the options and try again."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (job) {
+    return (
+      <div className="flex flex-col items-center gap-3 text-center">
+        <Loader2 className="h-9 w-9 animate-spin text-muted-foreground" />
+        <div>
+          <p className="font-medium">
+            {job.status === "processing" ? "Rendering your clip" : "Waiting in queue"}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Usually takes a couple of minutes. You can close this window; the
+            finished clip lands in your Share Studio library.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-xs space-y-3">
+      <p className="text-sm font-medium">This clip will include</p>
+      <ul className="space-y-2.5">
+        {segments.map((segment) => (
+          <li key={segment.label} className="flex items-center gap-2.5 text-sm text-muted-foreground">
+            <span className="text-repwell-teal-300">{segment.icon}</span>
+            {segment.label}
+          </li>
+        ))}
+      </ul>
+      <p className="pt-1 text-xs text-muted-foreground">
+        Styling follows your organization&apos;s branding automatically.
+      </p>
     </div>
   );
 }

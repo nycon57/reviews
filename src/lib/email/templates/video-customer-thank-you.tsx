@@ -22,6 +22,7 @@ import {
   spacing,
 } from "../components";
 import type { VideoCustomerThankYouEmailData } from "../types";
+import { emailConfig } from "../client";
 
 interface VideoCustomerThankYouEmailProps {
   data: VideoCustomerThankYouEmailData;
@@ -41,7 +42,7 @@ export function VideoCustomerThankYouEmail({
     toEmail,
   } = data;
 
-  const unsubscribeUrl = `https://app.repwell.ai/api/email/unsubscribe?email=${encodeURIComponent(toEmail)}`;
+  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(toEmail)}`;
 
   return (
     <EmailLayout preview={`Thank you for sharing your experience with ${loanOfficerName}`}>

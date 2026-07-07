@@ -1,25 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/supabase/admin", () => ({
   createUntypedAdminClient: vi.fn(),
 }));
 
+// Base URL is now sourced from emailConfig (single source of truth); mock it so
+// the resolved origin is stable and independent of process env.
+vi.mock("@/lib/email/client", () => ({
+  emailConfig: { baseUrl: "https://app.example.com" },
+}));
+
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { emailConfig } from "@/lib/email/client";
 import {
   buildContactUnsubscribeUrl,
   getContactUnsubscribeUrl,
   resolveContactUnsubscribeUrl,
 } from "../tokens";
 
-const ORIGINAL_APP_URL = process.env.NEXT_PUBLIC_APP_URL;
-
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.NEXT_PUBLIC_APP_URL = "https://app.example.com";
-});
-
-afterEach(() => {
-  process.env.NEXT_PUBLIC_APP_URL = ORIGINAL_APP_URL;
+  emailConfig.baseUrl = "https://app.example.com";
 });
 
 describe("buildContactUnsubscribeUrl", () => {
@@ -30,7 +31,7 @@ describe("buildContactUnsubscribeUrl", () => {
   });
 
   it("strips a trailing slash on the base URL", () => {
-    process.env.NEXT_PUBLIC_APP_URL = "https://app.example.com/";
+    emailConfig.baseUrl = "https://app.example.com/";
     expect(buildContactUnsubscribeUrl("t")).toBe("https://app.example.com/u/c/t");
   });
 });

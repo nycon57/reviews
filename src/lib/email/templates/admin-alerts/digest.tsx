@@ -23,10 +23,83 @@ import {
   spacing,
   layout,
 } from "../../components";
-import type { AdminAlertDigestEmailData, AdminAlertDigestItem } from "../../types";
+import type {
+  AdminAlertDigestEmailData,
+  AdminAlertDigestItem,
+  AdminAlertEmailHealth,
+} from "../../types";
 
 interface Props {
   data: AdminAlertDigestEmailData;
+}
+
+function EmailHealthSection({ health }: { health: AdminAlertEmailHealth }) {
+  return (
+    <Section style={{ marginBottom: spacing[4] }}>
+      <Text
+        style={{
+          margin: `0 0 ${spacing[2]} 0`,
+          fontFamily: typography.fontFamily.body,
+          fontSize: typography.fontSize.sm,
+          fontWeight: typography.fontWeight.semibold,
+          color: colors.text.secondary,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+        }}
+      >
+        Email Deliverability
+      </Text>
+      <Section
+        style={{
+          padding: spacing[3],
+          borderLeft: "4px solid #EA580C",
+          background: "#FFEDD5",
+          borderRadius: layout.borderRadius.md,
+        }}
+      >
+        <Text
+          style={{
+            margin: 0,
+            fontFamily: typography.fontFamily.body,
+            fontSize: typography.fontSize.sm,
+            fontWeight: typography.fontWeight.semibold,
+            color: "#9A3412",
+          }}
+        >
+          ⚠️ {health.failedCount} email
+          {health.failedCount !== 1 ? "s" : ""} failed to send in the last{" "}
+          {health.windowHours} hours (threshold {health.threshold}).
+        </Text>
+        {health.topTemplates.length > 0 && (
+          <Text
+            style={{
+              margin: `${spacing[2]} 0 0 0`,
+              fontFamily: typography.fontFamily.body,
+              fontSize: typography.fontSize.sm,
+              color: "#9A3412",
+            }}
+          >
+            Top failing: {health.topTemplates
+              .map((t) => `${t.templateName} (${t.count})`)
+              .join(", ")}
+          </Text>
+        )}
+        <Text style={{ margin: `${spacing[2]} 0 0 0` }}>
+          <Link
+            href={health.analyticsUrl}
+            style={{
+              fontFamily: typography.fontFamily.body,
+              fontSize: typography.fontSize.xs,
+              color: colors.primary,
+              textDecoration: "none",
+            }}
+          >
+            View email analytics →
+          </Link>
+        </Text>
+      </Section>
+    </Section>
+  );
 }
 
 const alertTypeLabels: Record<string, { label: string; icon: string }> = {
@@ -176,6 +249,7 @@ export function AdminAlertDigestEmail({ data }: Props) {
     dashboardUrl,
     alertSettingsUrl,
     toEmail,
+    emailHealth,
   } = data;
 
   // Group alerts by severity
@@ -353,6 +427,9 @@ export function AdminAlertDigestEmail({ data }: Props) {
         <AlertGroup severity="high" alerts={highAlerts} />
         <AlertGroup severity="medium" alerts={mediumAlerts} />
         <AlertGroup severity="low" alerts={lowAlerts} />
+
+        {/* Email deliverability health (only when over threshold) */}
+        {emailHealth && <EmailHealthSection health={emailHealth} />}
 
         <Spacer size="md" />
 

@@ -54,7 +54,7 @@ export function WeeklySummaryLOEmail({ data }: WeeklySummaryLOEmailProps) {
 
     // Response metrics
     responseRate,
-    averageResponseTime: _averageResponseTime,
+    averageResponseTime,
 
     // Pending actions
     pendingReviewResponses,
@@ -149,6 +149,14 @@ export function WeeklySummaryLOEmail({ data }: WeeklySummaryLOEmailProps) {
               value: `${responseRate}%`,
               label: "Response Rate",
             },
+            ...(averageResponseTime
+              ? [
+                  {
+                    value: averageResponseTime,
+                    label: "Avg Response Time",
+                  },
+                ]
+              : []),
           ]}
         />
       </SingleColumnLayout>

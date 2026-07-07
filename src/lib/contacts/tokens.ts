@@ -15,15 +15,16 @@
  * src/lib/contacts/actions.ts).
  */
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
+import { emailConfig } from "@/lib/email/client";
 
 /**
- * Base URL for public links. Matches the video-request href convention
- * (getRequestUrl in src/lib/video-testimonials/actions.ts) so acquisition links
- * resolve to the same origin: NEXT_PUBLIC_APP_URL in every real environment,
- * with the production host as the fallback.
+ * Base URL for public links. Single source of truth: emailConfig.baseUrl
+ * (NEXT_PUBLIC_APP_URL), so acquisition links, email footers, and the video
+ * thank-you page all resolve to the same origin rather than drifting between
+ * hardcoded app.repwell.com / app.repwell.ai hosts.
  */
 function getBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com").replace(/\/$/, "");
+  return emailConfig.baseUrl.replace(/\/$/, "");
 }
 
 /** The public path prefix for the Contact unsubscribe page (B3 owns the page). */
@@ -32,6 +33,24 @@ export const CONTACT_UNSUBSCRIBE_PATH = "/u/c";
 /** Build the public unsubscribe URL from a raw token. */
 export function buildContactUnsubscribeUrl(token: string): string {
   return `${getBaseUrl()}${CONTACT_UNSUBSCRIBE_PATH}/${token}`;
+}
+
+/**
+ * Convert the human Contact page URL (/u/c/<token>) into the POST-capable
+ * one-click unsubscribe URL (/api/email/unsubscribe?c=<token>) used in the
+ * List-Unsubscribe header. A Next.js page route cannot accept the RFC-8058
+ * one-click POST, so the machine header targets the API route, which writes the
+ * same Contact suppression. Returns null for anything that is not a /u/c URL.
+ */
+export function contactPageUrlToOneClickUrl(pageUrl: string): string | null {
+  try {
+    const url = new URL(pageUrl);
+    const match = url.pathname.match(/\/u\/c\/([^/]+)\/?$/);
+    if (!match) return null;
+    return `${url.origin}/api/email/unsubscribe?c=${encodeURIComponent(match[1])}`;
+  } catch {
+    return null;
+  }
 }
 
 /**

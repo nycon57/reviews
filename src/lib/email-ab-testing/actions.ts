@@ -900,8 +900,28 @@ export async function declareWinner(
 }
 
 /**
- * Apply winning variant configuration to future email sends
- * This is a placeholder - actual implementation would update email templates or settings
+ * Postgres "undefined_table" (42P01) / "undefined_column" (42703). Used to
+ * degrade gracefully when the email_type_overrides table or winner_applied_*
+ * columns (migration 20260707150000) have not been applied yet.
+ */
+function isMissingSchema(error: { code?: string } | null | undefined): boolean {
+  return error?.code === "42P01" || error?.code === "42703";
+}
+
+/**
+ * Apply a declared winner to future email sends.
+ *
+ * Mechanically, "applying" writes the winning variant's subject line / preview
+ * text into `email_type_overrides` keyed by (organization_id, email_type). The
+ * send path consults that store (see `resolveEmailTypeOverride` in
+ * ./overrides) and swaps in the winning copy for every subsequent send of that
+ * email type — even after the test itself is archived. The test row is stamped
+ * winner_applied_at/by so the admin UI can distinguish "declared" from
+ * "applied".
+ *
+ * Scope: subject-line / preview-text winners (the dominant test dimension).
+ * A winning variant that only changes body content or send time has nothing to
+ * persist into the copy override and is reported as unsupported.
  */
 export async function applyWinnerToFuture(
   testId: string
@@ -933,23 +953,85 @@ export async function applyWinnerToFuture(
   }
 
   // Get winning variant details
-  const variants = test.variants as { id: string; name: string }[];
+  const variants = test.variants as {
+    id: string;
+    name: string;
+    subjectLine?: string;
+    previewText?: string;
+  }[];
   const winningVariant = variants.find((v) => v.id === test.winner_variant);
   if (!winningVariant) {
     return { success: false, error: "Winner variant not found" };
   }
 
-  // TODO: Implement logic to update email templates or campaign defaults
-  // This would depend on the specific integration requirements
-  // For example:
-  // - Update survey_templates table with new subject line
-  // - Update email sequence configuration
-  // - Store in organization settings for this email type
+  const subjectLine = winningVariant.subjectLine?.trim() || null;
+  const previewText = winningVariant.previewText?.trim() || null;
+
+  if (!subjectLine && !previewText) {
+    return {
+      success: false,
+      error:
+        "Only subject-line and preview-text winners can be applied automatically. This variant changes body content or send time — apply it in the template manually.",
+    };
+  }
+
+  // Persist the effective override the send path reads. Upsert so re-applying a
+  // corrected winner overwrites the prior one for this (org, email_type).
+  const nowIso = new Date().toISOString();
+  const { error: overrideError } = await supabase
+    .from("email_type_overrides")
+    .upsert(
+      {
+        organization_id: context.organizationId,
+        email_type: test.email_type,
+        subject_line: subjectLine,
+        preview_text: previewText,
+        source_ab_test_id: test.id,
+        applied_at: nowIso,
+        applied_by: context.userId,
+        updated_at: nowIso,
+      },
+      { onConflict: "organization_id,email_type" }
+    );
+
+  if (overrideError) {
+    if (isMissingSchema(overrideError)) {
+      return {
+        success: false,
+        error:
+          "Email override storage is not available yet (pending migration). Ask an administrator to apply the latest database migrations.",
+      };
+    }
+    console.error("Error writing email type override:", overrideError);
+    return { success: false, error: "Failed to apply winner" };
+  }
+
+  // Stamp the applied state for the admin UI. Non-fatal: the override (the
+  // functional part) already succeeded, so a missing column only costs the badge.
+  const { error: stampError } = await supabase
+    .from("email_ab_tests")
+    .update({ winner_applied_at: nowIso, winner_applied_by: context.userId })
+    .eq("id", test.id)
+    .eq("organization_id", context.organizationId);
+
+  if (stampError && !isMissingSchema(stampError)) {
+    console.error("Error stamping winner_applied_at:", stampError);
+  }
+
+  revalidatePath("/dashboard/admin/email-ab-tests");
+  revalidatePath(`/dashboard/admin/email-ab-tests/${testId}`);
+
+  const applied = [
+    subjectLine ? "subject line" : null,
+    previewText ? "preview text" : null,
+  ]
+    .filter(Boolean)
+    .join(" and ");
 
   return {
     success: true,
     data: {
-      message: `Winner variant "${winningVariant.name}" marked for future ${test.email_type} emails. Please update email templates manually.`,
+      message: `Applied variant "${winningVariant.name}" ${applied} to all future ${test.email_type} emails.`,
     },
   };
 }

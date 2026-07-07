@@ -292,6 +292,13 @@ export function EmailAnalyticsDashboard() {
     .sort((a, b) => b.openRate - a.openRate)
     .slice(0, 5);
 
+  // Templates with the most send failures (for the deliverability card).
+  const topFailingTemplates = [...typePerformance]
+    .filter((t) => t.failed > 0)
+    .sort((a, b) => b.failed - a.failed)
+    .slice(0, 5);
+  const totalFailedInPeriod = typePerformance.reduce((sum, t) => sum + t.failed, 0);
+
   return (
     <div className="space-y-6">
       {/* Controls */}
@@ -342,7 +349,7 @@ export function EmailAnalyticsDashboard() {
       )}
 
       {/* Overview Metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <MetricCard
           title="Emails Sent"
           value={metrics?.totalSent.toLocaleString() || "0"}
@@ -386,6 +393,17 @@ export function EmailAnalyticsDashboard() {
           icon={AlertTriangle}
           benchmark={INDUSTRY_BENCHMARKS.bounceRate}
           benchmarkLabel="bounce rate"
+          iconBg="bg-red-100 text-red-600"
+          suffix="%"
+          lowerIsBetter={true}
+        />
+        <MetricCard
+          title="Failure Rate"
+          value={metrics?.failureRate || 0}
+          icon={MailX}
+          change={metrics?.failureRateChange}
+          benchmark={INDUSTRY_BENCHMARKS.failureRate}
+          benchmarkLabel="failure rate"
           iconBg="bg-red-100 text-red-600"
           suffix="%"
           lowerIsBetter={true}
@@ -539,6 +557,102 @@ export function EmailAnalyticsDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Send Failures */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+            <MailX className="h-5 w-5 text-primary" />
+            Send Failures
+          </CardTitle>
+          <CardDescription>
+            Failed sends by day and the templates driving them
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {totalFailedInPeriod === 0 ? (
+            <div className="flex h-[240px] items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <CheckCircle2 className="mx-auto mb-3 h-12 w-12 opacity-20" />
+                <p className="text-sm">No send failures in this period</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-6 lg:grid-cols-2">
+              <div className="h-[240px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={trends}
+                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      stroke="hsl(var(--border))"
+                    />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      dy={10}
+                    />
+                    <YAxis
+                      allowDecimals={false}
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                      dx={-10}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(var(--popover))",
+                        border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        fontSize: "12px",
+                      }}
+                    />
+                    <Bar
+                      dataKey="failed"
+                      fill="hsl(var(--destructive))"
+                      radius={[4, 4, 0, 0]}
+                      name="Failed"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-3">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Top failing templates
+                </p>
+                {topFailingTemplates.map((template) => (
+                  <div
+                    key={template.templateName}
+                    className="flex items-center justify-between gap-4"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {template.displayName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {template.category}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-red-600">
+                        {template.failed.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {template.failureRate}% fail rate
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Top Performing Templates */}
       <Card>

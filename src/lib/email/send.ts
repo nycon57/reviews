@@ -102,6 +102,7 @@ import {
   renderReviewDisputeEscalationEmail,
 } from "./templates/index";
 import { resolveTemplateById } from "@/lib/email-builder/actions";
+import { contactPageUrlToOneClickUrl } from "@/lib/contacts/tokens";
 
 // Check if email is unsubscribed
 async function isEmailUnsubscribed(email: string): Promise<boolean> {
@@ -130,6 +131,8 @@ async function logEmail(params: {
   resendMessageId?: string;
   status: string;
   errorMessage?: string;
+  abTestId?: string;
+  abTestVariant?: string;
 }): Promise<string | null> {
   const supabase = createAdminClient();
 
@@ -150,6 +153,8 @@ async function logEmail(params: {
       status: params.status,
       sent_at: params.status === "sent" ? new Date().toISOString() : null,
       error_message: params.errorMessage,
+      ab_test_id: params.abTestId ?? null,
+      ab_test_variant: params.abTestVariant ?? null,
     })
     .select("id")
     .single();
@@ -211,6 +216,14 @@ export async function sendSurveyInvitationEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    // Enable send-time A/B resolution only for the default template — a custom
+    // template's subject is the org's explicit choice and must not be swapped.
+    organizationId: data.organizationId,
+    emailType: data.customTemplateId ? undefined : "survey_invitation",
+    // Contact-linked acquisition sends: machine one-click → Contact suppression.
+    listUnsubscribeUrl: data.unsubscribeUrl
+      ? contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined
+      : undefined,
     tags: [
       { name: "template", value: "survey_invitation" },
       ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
@@ -226,7 +239,7 @@ export async function sendSurveyInvitationEmail(
     toName: data.customerName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "survey_invitation",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
@@ -234,6 +247,8 @@ export async function sendSurveyInvitationEmail(
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -270,6 +285,11 @@ export async function sendSurveyReminderEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: templateName,
+    listUnsubscribeUrl: data.unsubscribeUrl
+      ? contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined
+      : undefined,
     tags: [
       { name: "template", value: templateName },
       ...(data.surveyId ? [{ name: "survey_id", value: data.surveyId }] : []),
@@ -285,7 +305,7 @@ export async function sendSurveyReminderEmail(
     toName: data.customerName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName,
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
@@ -293,6 +313,8 @@ export async function sendSurveyReminderEmail(
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;
@@ -478,6 +500,11 @@ export async function sendVideoTestimonialInvitationEmail(
     idempotencyKey,
     userId: data.loanOfficerId,
     isTransactional: true,
+    organizationId: data.organizationId,
+    emailType: "video_testimonial_invitation",
+    listUnsubscribeUrl: data.unsubscribeUrl
+      ? contactPageUrlToOneClickUrl(data.unsubscribeUrl) ?? undefined
+      : undefined,
     tags: [
       { name: "template", value: "video_testimonial_invitation" },
       ...(data.requestId
@@ -503,7 +530,7 @@ export async function sendVideoTestimonialInvitationEmail(
     toName: data.customerName,
     fromEmail: emailConfig.defaultFromEmail,
     fromName: data.organizationName,
-    subject,
+    subject: result.effectiveSubject ?? subject,
     templateName: "video_testimonial_invitation",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
@@ -511,6 +538,8 @@ export async function sendVideoTestimonialInvitationEmail(
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,
+    abTestId: result.abTestId,
+    abTestVariant: result.abTestVariant,
   });
 
   return result;

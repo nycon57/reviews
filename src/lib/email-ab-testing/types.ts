@@ -67,6 +67,8 @@ export interface ABTest {
   winnerDeclaredBy: string | null;
   winnerAuto: boolean;
   winnerReason: string | null;
+  winnerAppliedAt: string | null;
+  winnerAppliedBy: string | null;
 
   // Timestamps
   createdBy: string | null;
@@ -378,6 +380,8 @@ export function mapDbTestToTs(dbTest: Record<string, unknown>): ABTest {
     winnerDeclaredBy: dbTest.winner_declared_by as string | null,
     winnerAuto: dbTest.winner_auto as boolean,
     winnerReason: dbTest.winner_reason as string | null,
+    winnerAppliedAt: (dbTest.winner_applied_at as string | null) ?? null,
+    winnerAppliedBy: (dbTest.winner_applied_by as string | null) ?? null,
     createdBy: dbTest.created_by as string | null,
     startedAt: dbTest.started_at as string | null,
     endedAt: dbTest.ended_at as string | null,

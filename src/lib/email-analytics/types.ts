@@ -17,11 +17,14 @@ export interface EmailMetrics {
   openRate: number;
   clickRate: number;
   bounceRate: number;
+  // Failed sends as a percentage of attempted sends (sent + failed).
+  failureRate: number;
   // Changes vs previous period
   sentChange: number;
   deliveryRateChange: number;
   openRateChange: number;
   clickRateChange: number;
+  failureRateChange: number;
 }
 
 export interface EmailTrendPoint {
@@ -31,6 +34,7 @@ export interface EmailTrendPoint {
   opened: number;
   clicked: number;
   bounced: number;
+  failed: number;
 }
 
 export interface EmailTypePerformance {
@@ -42,9 +46,11 @@ export interface EmailTypePerformance {
   opened: number;
   clicked: number;
   bounced: number;
+  failed: number;
   deliveryRate: number;
   openRate: number;
   clickRate: number;
+  failureRate: number;
 }
 
 export interface UnsubscribeMetrics {
@@ -85,6 +91,8 @@ export const INDUSTRY_BENCHMARKS = {
   clickRate: 2.5,
   bounceRate: 2.5,
   unsubscribeRate: 0.3,
+  // Provider/infra send failures should be near-zero; 1% is the "investigate" line.
+  failureRate: 1,
 } as const;
 
 // Email template categories for grouping

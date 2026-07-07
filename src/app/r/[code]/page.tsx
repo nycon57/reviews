@@ -1,0 +1,50 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Link Unavailable | RepWell",
+  robots: { index: false, follow: false },
+};
+
+// The short-link (/r/…) resolver has been retired. Any /r/<code> now lands on
+// this dead-link page so old links fail gracefully instead of 404-ing.
+export default function DeadShortLinkPage() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+          <svg
+            className="h-8 w-8 text-amber-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+        </div>
+
+        <h1 className="mb-2 text-2xl font-semibold text-gray-900">
+          This link is no longer active
+        </h1>
+        <p className="mb-8 text-gray-600">
+          The link you followed has expired or is no longer available. Please
+          request a new link from the person who shared it with you.
+        </p>
+
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        >
+          Go to RepWell
+        </Link>
+
+        <p className="mt-8 text-xs text-gray-400">Powered by RepWell</p>
+      </div>
+    </div>
+  );
+}

@@ -1,7 +1,11 @@
 {
   "crons": [
     {
-      "path": "/api/cron/share-render-jobs",
+      "path": "/api/cron/process-video-ai",
+      "schedule": "*/2 * * * *"
+    },
+    {
+      "path": "/api/cron/process-queue",
       "schedule": "*/5 * * * *"
     },
     {
@@ -9,20 +13,104 @@
       "schedule": "*/5 * * * *"
     },
     {
-      "path": "/api/cron/process-video-ai",
-      "schedule": "*/2 * * * *"
-    },
-    {
       "path": "/api/cron/process-video-queue",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/share-render-jobs",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-google-replies",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/send-alerts",
+      "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/cron/process-auto-replies",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/social-posts",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/social-graphics",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/social-publish",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/process-milestone-emails",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/process-welcome-sequence",
+      "schedule": "5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-reengagement",
+      "schedule": "10 * * * *"
+    },
+    {
+      "path": "/api/cron/process-org-onboarding",
+      "schedule": "15 * * * *"
+    },
+    {
+      "path": "/api/cron/process-role-onboarding",
+      "schedule": "20 * * * *"
+    },
+    {
+      "path": "/api/cron/process-profile-reminders",
+      "schedule": "25 * * * *"
+    },
+    {
+      "path": "/api/cron/process-abandoned-actions",
+      "schedule": "30 * * * *"
+    },
+    {
+      "path": "/api/cron/process-team-invites",
+      "schedule": "35 * * * *"
+    },
+    {
+      "path": "/api/cron/process-trial-ending",
+      "schedule": "40 * * * *"
+    },
+    {
+      "path": "/api/cron/process-subscription-lifecycle",
+      "schedule": "45 * * * *"
+    },
+    {
+      "path": "/api/cron/google-sync",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/reports",
+      "schedule": "0 7 * * *"
     },
     {
       "path": "/api/cron/video-review-recapture",
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/cron/send-digests",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/send-admin-alert-digests",
+      "schedule": "30 13 * * *"
+    },
+    {
       "path": "/api/cron/review-video-upsell",
       "schedule": "0 16 * * *"
+    },
+    {
+      "path": "/api/cron/send-weekly-summaries",
+      "schedule": "0 14 * * 1"
     }
   ]
 }

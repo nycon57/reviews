@@ -72,7 +72,6 @@ export type WorkflowNodeType =
   | "trigger-time"
   | "trigger-manual"
   | "action-email"
-  | "action-sms"
   | "action-smart"
   | "action-survey"
   | "condition-ifelse"
@@ -102,7 +101,6 @@ export interface WorkflowNodeData {
   templateName?: string;
   emailTemplateId?: string;
   surveyTemplateId?: string;
-  smsTemplateName?: string;
   subjectOverride?: string;
   event?: TriggerEvent;
   customEvent?: string;
@@ -112,12 +110,7 @@ export interface WorkflowNodeData {
   frequency?: "daily" | "weekly" | "monthly";
   time?: string;
   daysOfWeek?: string[];
-  strategy?: "prefer_sms" | "prefer_email" | "best_available";
-  smsRequirements?: {
-    requireConsent?: boolean;
-    requirePhoneNumber?: boolean;
-    respectQuietHours?: boolean;
-  };
+  strategy?: "prefer_email" | "best_available";
   fallbackToEmail?: boolean;
   enableAbTest?: boolean;
   abVariants?: WorkflowVariant[];
@@ -185,7 +178,6 @@ export const NODE_FAMILY_BY_TYPE: Record<WorkflowNodeType, NodeFamily> = {
   "trigger-time": "trigger",
   "trigger-manual": "trigger",
   "action-email": "action",
-  "action-sms": "action",
   "action-smart": "action",
   "action-survey": "action",
   "condition-ifelse": "condition",

@@ -51,9 +51,8 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
 };
 
 const TIER_CONFIG: Record<string, { name: string; gradient: string; icon: React.ReactNode }> = {
-  free: { name: 'Free', gradient: 'from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700', icon: <Sparkle weight="duotone" className="h-6 w-6" /> },
-  starter: { name: 'Starter', gradient: 'from-repwell-sage-200 to-repwell-teal-300', icon: <Zap weight="duotone" className="h-6 w-6" /> },
-  professional: { name: 'Professional', gradient: 'from-repwell-teal-300 to-repwell-teal-400', icon: <Crown weight="duotone" className="h-6 w-6" /> },
+  basic: { name: 'Basic', gradient: 'from-repwell-sage-200 to-repwell-teal-300', icon: <Zap weight="duotone" className="h-6 w-6" /> },
+  pro: { name: 'Pro', gradient: 'from-repwell-teal-300 to-repwell-teal-400', icon: <Crown weight="duotone" className="h-6 w-6" /> },
   enterprise: { name: 'Enterprise', gradient: 'from-repwell-teal-400 to-repwell-teal-500', icon: <ShieldCheck weight="duotone" className="h-6 w-6" /> },
 };
 
@@ -91,9 +90,9 @@ export function BillingTab() {
     };
   }, []);
 
-  const currentTier = billingData?.tier?.id || 'free';
+  const currentTier = billingData?.tier?.id || 'basic';
   const currentStatus = billingData?.subscription?.status || 'active';
-  const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG.free;
+  const tierConfig = TIER_CONFIG[currentTier] || TIER_CONFIG.basic;
   const statusConfig = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.active;
 
   const { isTrialing, daysRemaining } = useMemo(() => {
@@ -105,7 +104,7 @@ export function BillingTab() {
   }, [currentStatus, billingData]);
 
   const subscriptionEndsAt = billingData?.subscription?.currentPeriodEnd;
-  const hasPaidSubscription = currentTier !== 'free' && stripeAvailable;
+  const hasPaidSubscription = stripeAvailable;
 
   const handleManageSubscription = async () => {
     setPortalLoading(true);
@@ -216,7 +215,7 @@ export function BillingTab() {
                 )}
               </div>
 
-              {currentTier !== 'free' && subscriptionEndsAt && (
+              {subscriptionEndsAt && (
                 <div className="mt-6 flex items-center gap-3 text-white/90">
                   <Calendar weight="duotone" className="h-5 w-5" />
                   <span className="text-sm">
@@ -258,17 +257,7 @@ export function BillingTab() {
                   </Button>
                 )}
 
-                {currentTier === 'free' && (
-                  <Button
-                    onClick={() => router.push('/pricing')}
-                    className="bg-gradient-to-r from-repwell-teal-300 to-repwell-teal-400 hover:from-repwell-teal-400 hover:to-repwell-teal-500 text-white shadow-md"
-                  >
-                    <Sparkle weight="duotone" className="mr-2 h-4 w-4" />
-                    Upgrade Plan
-                  </Button>
-                )}
-
-                {currentTier !== 'free' && currentTier !== 'enterprise' && (
+                {currentTier !== 'enterprise' && (
                   <Button
                     variant="outline"
                     onClick={() => router.push('/pricing')}

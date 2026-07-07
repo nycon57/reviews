@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -41,6 +41,8 @@ import {
 
 type AuthMode = "password" | "magic-link";
 
+const MAGIC_LINK_RESEND_COOLDOWN_SECONDS = 60;
+
 function LoginPageFallback() {
   return (
     <Card>
@@ -74,11 +76,19 @@ function LoginContent() {
   const [mode, setMode] = useState<AuthMode>("password");
   const [isLoading, setIsLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const redirectTo = searchParams.get("redirect") || "/dashboard";
   const reason = searchParams.get("reason");
+
+  // Tick down the magic-link resend cooldown once per second.
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   // Password form
   const passwordForm = useForm<SignInInput>({
@@ -127,11 +137,13 @@ function LoginContent() {
   };
 
   const onMagicLinkSubmit = async (data: MagicLinkInput) => {
+    if (isLoading || resendCooldown > 0) return;
     setIsLoading(true);
     try {
       const result = await unifiedSignInWithMagicLink(data);
       if (result.success) {
         setMagicLinkSent(true);
+        setResendCooldown(MAGIC_LINK_RESEND_COOLDOWN_SECONDS);
         toast({
           title: "Magic link sent!",
           description: "Check your email for a sign-in link.",
@@ -187,10 +199,10 @@ function LoginContent() {
             Didn&apos;t receive the email?{" "}
             <button
               onClick={() => onMagicLinkSubmit(magicLinkForm.getValues())}
-              className="text-primary hover:underline"
-              disabled={isLoading}
+              className="text-primary hover:underline disabled:opacity-60 disabled:no-underline"
+              disabled={isLoading || resendCooldown > 0}
             >
-              Resend
+              {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend"}
             </button>
           </p>
         </CardFooter>

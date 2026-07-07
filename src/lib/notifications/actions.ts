@@ -5,6 +5,7 @@ import { unifiedGetUser } from "@/lib/auth/actions";
 import type {
   Notification,
   NotificationPreferences,
+  NotificationType,
   NotificationWithDetails,
   CreateNotificationParams,
 } from "./types";
@@ -66,13 +67,14 @@ export async function getNotifications(options: {
   offset?: number;
   unreadOnly?: boolean;
   includeArchived?: boolean;
+  type?: NotificationType;
 }): Promise<{ notifications: NotificationWithDetails[]; total: number }> {
   const user = await unifiedGetUser();
   if (!user) {
     return { notifications: [], total: 0 };
   }
 
-  const { limit = 20, offset = 0, unreadOnly = false, includeArchived = false } = options;
+  const { limit = 20, offset = 0, unreadOnly = false, includeArchived = false, type } = options;
 
   // Use untyped admin client for new tables
   const supabase = createUntypedAdminClient();
@@ -97,6 +99,12 @@ export async function getNotifications(options: {
 
   if (!includeArchived) {
     query = query.eq("is_archived", false);
+  }
+
+  // Filter by notification type server-side so pagination and the total count
+  // reflect the selected type (client-side filtering broke both).
+  if (type) {
+    query = query.eq("type", type);
   }
 
   const { data, count, error } = await query;
@@ -258,11 +266,16 @@ export async function updateNotificationPreferences(
   return { success: true };
 }
 
-// Create a notification (server-side, for use by other actions)
+// Create a notification (server-side, for use by other actions).
+// Persists the in-app row, then fans the same event out to Slack. Slack
+// dispatch self-gates on the user's preferences and notification type
+// (sendSlackNotification no-ops for anything other than an enabled
+// new_review / negative_review), so it is safe to call unconditionally.
 export async function createNotification(
   params: CreateNotificationParams
 ): Promise<{ success: boolean; notificationId?: string; error?: string }> {
   const supabase = createUntypedAdminClient();
+  const createdAt = new Date().toISOString();
 
   const { data, error } = await supabase
     .from("notifications")
@@ -284,6 +297,31 @@ export async function createNotification(
   if (error) {
     console.error("Error creating notification:", error);
     return { success: false, error: error.message };
+  }
+
+  // Best-effort Slack fan-out. A webhook failure must never fail the caller
+  // or roll back the in-app notification that already persisted.
+  try {
+    await sendSlackNotification(params.userId, {
+      id: data.id,
+      user_id: params.userId,
+      organization_id: params.organizationId ?? null,
+      type: params.type,
+      title: params.title,
+      message: params.message,
+      review_id: params.reviewId ?? null,
+      target_user_id: params.loanOfficerId ?? null,
+      metadata: params.metadata || {},
+      is_read: false,
+      read_at: null,
+      is_archived: false,
+      archived_at: null,
+      action_url: params.actionUrl ?? null,
+      priority: params.priority || 0,
+      created_at: createdAt,
+    });
+  } catch (slackError) {
+    console.error("Slack notification dispatch failed:", slackError);
   }
 
   return { success: true, notificationId: data.id };
@@ -571,162 +609,6 @@ function getDigestCutoffTime(): string {
   const now = new Date();
   now.setHours(now.getHours() - 1); // Allow 1 hour buffer
   return now.toISOString();
-}
-
-// Send MS Teams notification using Adaptive Cards
-export async function sendTeamsNotification(
-  userId: string,
-  notification: Notification
-): Promise<{ success: boolean; error?: string }> {
-  const supabase = createUntypedAdminClient();
-
-  // Get user's Teams preferences
-  const { data: prefs } = await supabase
-    .from("notification_preferences")
-    .select("teams_enabled, teams_webhook_url, teams_new_review, teams_negative_review")
-    .eq("user_id", userId)
-    .single();
-
-  if (!prefs?.teams_enabled || !prefs.teams_webhook_url) {
-    return { success: false, error: "Teams not configured" };
-  }
-
-  // Validate webhook URL to prevent SSRF attacks (defense-in-depth)
-  if (!isValidTeamsWebhookUrl(prefs.teams_webhook_url)) {
-    return { success: false, error: "Invalid Teams webhook URL configured" };
-  }
-
-  // Check if this notification type should be sent to Teams
-  const shouldSend =
-    (notification.type === "new_review" && prefs.teams_new_review) ||
-    (notification.type === "negative_review" && prefs.teams_negative_review);
-
-  if (!shouldSend) {
-    return { success: false, error: "Notification type not enabled for Teams" };
-  }
-
-  // Build Adaptive Card message
-  const rating = (notification.metadata as Record<string, unknown>)?.rating as number | undefined;
-  const customerName = (notification.metadata as Record<string, unknown>)?.customer_name as string | undefined;
-
-  // Color based on notification type and rating
-  const color =
-    notification.type === "negative_review" ? "Attention" : rating && rating >= 4 ? "Good" : "Warning";
-
-  const payload = {
-    type: "message",
-    attachments: [
-      {
-        contentType: "application/vnd.microsoft.card.adaptive",
-        contentUrl: null,
-        content: {
-          $schema: "http://adaptivecards.io/schemas/adaptive-card.json",
-          type: "AdaptiveCard",
-          version: "1.5",
-          body: [
-            {
-              type: "TextBlock",
-              text: notification.title,
-              size: "Medium",
-              weight: "Bolder",
-              color,
-            },
-            {
-              type: "TextBlock",
-              text: notification.message,
-              wrap: true,
-            },
-            ...(rating || customerName
-              ? [
-                  {
-                    type: "FactSet",
-                    facts: [
-                      ...(rating
-                        ? [
-                            {
-                              title: "Rating",
-                              value: "⭐".repeat(rating) + "☆".repeat(5 - rating),
-                            },
-                          ]
-                        : []),
-                      ...(customerName
-                        ? [
-                            {
-                              title: "Customer",
-                              value: customerName,
-                            },
-                          ]
-                        : []),
-                    ],
-                  },
-                ]
-              : []),
-            {
-              type: "TextBlock",
-              text: "RepWell",
-              size: "Small",
-              isSubtle: true,
-            },
-          ],
-          ...(notification.action_url
-            ? {
-                actions: [
-                  {
-                    type: "Action.OpenUrl",
-                    title: "View Review",
-                    url: `${process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com"}${notification.action_url}`,
-                  },
-                ],
-              }
-            : {}),
-        },
-      },
-    ],
-  };
-
-  try {
-    const response = await fetch(prefs.teams_webhook_url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const responseBody = await response.text();
-
-    // Log the webhook call
-    await supabase.from("teams_webhook_logs").insert({
-      user_id: userId,
-      organization_id: notification.organization_id,
-      notification_id: notification.id,
-      webhook_url: prefs.teams_webhook_url,
-      payload,
-      response_status: response.status,
-      response_body: responseBody,
-      success: response.ok,
-      error_message: response.ok ? null : responseBody,
-    });
-
-    if (!response.ok) {
-      return { success: false, error: `Teams webhook failed: ${responseBody}` };
-    }
-
-    return { success: true };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    // Log the error
-    await supabase.from("teams_webhook_logs").insert({
-      user_id: userId,
-      organization_id: notification.organization_id,
-      notification_id: notification.id,
-      webhook_url: prefs.teams_webhook_url,
-      payload,
-      success: false,
-      error_message: errorMessage,
-    });
-
-    return { success: false, error: errorMessage };
-  }
 }
 
 // Test MS Teams webhook with Adaptive Card

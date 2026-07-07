@@ -11,6 +11,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import type { ActionResult } from "@/lib/reviews/types";
 import {
+  sendFirstReviewMilestoneEmail,
+  sendReviewCountMilestoneEmail,
+  sendFirst5StarMilestoneEmail,
+} from "@/lib/email/send";
+import {
   REVIEW_MILESTONES,
   STREAK_MILESTONES,
   VIDEO_MILESTONES,
@@ -24,6 +29,9 @@ import {
   type MilestoneRecord,
   type MilestoneCheckResult,
 } from "./types";
+
+const MILESTONE_APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
 
 // Helper to access milestone tables that may not be in generated types yet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1064,5 +1072,189 @@ export async function getMilestoneStats(userId?: string): Promise<
       recentMilestones,
       nextMilestones,
     },
+  };
+}
+
+// =============================================================================
+// MILESTONE EMAIL QUEUE PROCESSING (cron-safe — no auth context required)
+// =============================================================================
+
+type MilestoneEmailContextData = {
+  user: {
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    total_reviews: number | null;
+    average_rating: number | null;
+  } | null;
+  orgName: string;
+  latestReview: {
+    id: string;
+    customer_name: string | null;
+    rating: number | null;
+    review_date: string | null;
+  } | null;
+};
+
+async function loadMilestoneEmailContext(
+  record: MilestoneRecord
+): Promise<MilestoneEmailContextData> {
+  const supabase = createAdminClient();
+  const [{ data: user }, { data: org }, { data: latestReview }] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, full_name, email, total_reviews, average_rating")
+      .eq("id", record.userId)
+      .maybeSingle(),
+    supabase
+      .from("organizations")
+      .select("name")
+      .eq("id", record.organizationId)
+      .maybeSingle(),
+    supabase
+      .from("reviews")
+      .select("id, customer_name, rating, review_date")
+      .eq("user_id", record.userId)
+      .order("review_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  return {
+    user: user as MilestoneEmailContextData["user"],
+    orgName: org?.name || "your organization",
+    latestReview: latestReview as MilestoneEmailContextData["latestReview"],
+  };
+}
+
+/**
+ * Dispatch the correct milestone celebration email for one pending record.
+ * Returns the status to persist. Preference/unsubscribe gating lives inside
+ * the individual senders, so a non-success send result is treated as a skip.
+ *
+ * Coverage is intentionally scoped to the review-driven milestone types whose
+ * payloads can be assembled with high fidelity from the record + user stats +
+ * latest review. The remaining milestone types (leaderboard, rating/NPS
+ * improvement, badge, streak, video, profile) are marked 'skipped' pending a
+ * dedicated payload-assembly follow-up — several also lack a template today.
+ */
+async function dispatchMilestoneEmail(
+  record: MilestoneRecord
+): Promise<{ status: "sent" | "skipped"; messageId?: string }> {
+  const { user, orgName, latestReview } = await loadMilestoneEmailContext(record);
+
+  if (!user?.email) {
+    return { status: "skipped" };
+  }
+
+  const firstName = (user.full_name || "").trim().split(/\s+/)[0] || "there";
+  const achievedAt = new Date(record.achievedAt).toISOString();
+  const base = {
+    toEmail: user.email,
+    toName: user.full_name || undefined,
+    organizationId: record.organizationId,
+    loanOfficerId: record.userId,
+    firstName,
+    organizationName: orgName,
+    dashboardUrl: `${MILESTONE_APP_URL}/dashboard`,
+    unsubscribeUrl: `${MILESTONE_APP_URL}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`,
+    milestoneId: record.id,
+    achievedAt,
+  };
+  const reviewUrl = latestReview?.id
+    ? `${MILESTONE_APP_URL}/dashboard/reviews/${latestReview.id}`
+    : `${MILESTONE_APP_URL}/dashboard/reviews`;
+
+  let result: { success: boolean; messageId?: string } | null = null;
+
+  switch (record.milestoneType) {
+    case "first_review":
+      result = await sendFirstReviewMilestoneEmail({
+        ...base,
+        customerName: latestReview?.customer_name || "A customer",
+        reviewRating: latestReview?.rating ?? 5,
+        reviewDate: latestReview?.review_date || achievedAt,
+        nextMilestoneCount: 5,
+        viewReviewUrl: reviewUrl,
+      });
+      break;
+    case "review_milestone": {
+      const reviewCount = record.milestoneValue ?? user.total_reviews ?? 0;
+      result = await sendReviewCountMilestoneEmail({
+        ...base,
+        reviewCount,
+        averageRating: user.average_rating ?? 0,
+        previousMilestone: getPreviousMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
+        nextMilestone: getNextMilestone(reviewCount, REVIEW_MILESTONES) ?? undefined,
+        viewReviewsUrl: `${MILESTONE_APP_URL}/dashboard/reviews`,
+      });
+      break;
+    }
+    case "first_5_star":
+      result = await sendFirst5StarMilestoneEmail({
+        ...base,
+        customerName: latestReview?.customer_name || "A customer",
+        reviewDate: latestReview?.review_date || achievedAt,
+        totalReviews: user.total_reviews ?? 0,
+        viewReviewUrl: reviewUrl,
+      });
+      break;
+    default:
+      // No high-fidelity payload/template wired for this type yet.
+      return { status: "skipped" };
+  }
+
+  return result?.success
+    ? { status: "sent", messageId: result.messageId }
+    : { status: "skipped" };
+}
+
+/**
+ * Drain the pending milestone email queue. Cron-safe: reads pending
+ * user_milestones across all organizations (no auth/org scoping) and updates
+ * each row's email_status to sent/skipped/failed.
+ */
+export async function processPendingMilestoneEmails(
+  limit = 50
+): Promise<
+  ActionResult<{ processed: number; sent: number; skipped: number; failed: number }>
+> {
+  const supabase = createAdminClient();
+
+  const { data: pending, error } = await fromTable(supabase, "user_milestones")
+    .select("*")
+    .eq("email_status", "pending")
+    .order("achieved_at", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error fetching pending milestone emails:", error);
+    return { success: false, error: "Failed to fetch pending milestone emails" };
+  }
+
+  const records = (pending || []).map(mapMilestoneRecord);
+  let sent = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  for (const record of records) {
+    try {
+      const outcome = await dispatchMilestoneEmail(record);
+      await updateMilestoneEmailStatus(record.id, outcome.status, outcome.messageId);
+      if (outcome.status === "sent") {
+        sent += 1;
+      } else {
+        skipped += 1;
+      }
+    } catch (err) {
+      console.error(`Error processing milestone email ${record.id}:`, err);
+      await updateMilestoneEmailStatus(record.id, "failed");
+      failed += 1;
+    }
+  }
+
+  return {
+    success: true,
+    data: { processed: records.length, sent, skipped, failed },
   };
 }

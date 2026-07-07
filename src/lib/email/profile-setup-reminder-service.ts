@@ -893,7 +893,7 @@ async function sendReminderEmail(
       const data: SetupReminderFirstSurveyEmailData = {
         ...baseData,
         completionPercent: status.setupCompletionPercent,
-        sendSurveyUrl: `${baseUrl}/dashboard/surveys/send`,
+        sendSurveyUrl: `${baseUrl}/dashboard/reviews?tab=requests`,
         setupProgress: status.setupCompletionPercent,
       };
       emailContent = getSetupReminderFirstSurveyEmail(data);

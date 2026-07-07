@@ -48,7 +48,6 @@ const roleProtectedRoutes: RouteConfig[] = [
 
   // Pro tier features (available to pro individuals and all enterprise users)
   { path: "/dashboard/insights", minTier: "pro" },
-  { path: "/dashboard/geo", minTier: "pro" },
 ];
 
 // Paths that are part of the onboarding flow
@@ -264,6 +263,20 @@ export async function proxy(request: NextRequest) {
           console.error(`[Middleware] Individual org query error:`, indivOrgError.message);
         }
 
+        // Individuals keep organization_id for backward compat; their real
+        // subscription tier lives on the organizations row (billing's source),
+        // so read it instead of assuming "basic" and gating out paying users.
+        let individualTier = "basic";
+        if (cachedUserData.organization_id) {
+          const { data: orgTierRows } = await supabase
+            .from("organizations")
+            .select("subscription_tier")
+            .eq("id", cachedUserData.organization_id)
+            .limit(1);
+          const orgTier = (orgTierRows?.[0] as Record<string, unknown>)?.subscription_tier as string | undefined;
+          if (orgTier) individualTier = orgTier;
+        }
+
         const indivOnboardingStatus = (indivOrgRows?.[0] as Record<string, unknown>)?.onboarding_status as string | null;
 
         // Use address from the initial users query as fallback for profile completion check
@@ -272,7 +285,7 @@ export async function proxy(request: NextRequest) {
           (cachedUserData.address as Record<string, unknown>).city;
 
         cachedOrgData = {
-          subscription_tier: "basic",
+          subscription_tier: individualTier,
           account_type: "individual",
           onboarding_status: (indivOnboardingStatus !== null && indivOnboardingStatus !== '') ? indivOnboardingStatus : (hasAddress ? "completed" : "payment_complete"),
         };

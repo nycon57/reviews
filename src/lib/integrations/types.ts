@@ -18,9 +18,7 @@ export type IntegrationSlug =
   | "salesforce"
   | "google-business-profile"
   | "slack"
-  | "microsoft-teams"
   | "zapier"
-  | "hubspot"
   | "encompass"
   | "facebook";
 

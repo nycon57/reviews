@@ -37,14 +37,6 @@ import { ReviewVideoUpsellEmail } from "./review-video-upsell";
 // Review Dispute Escalation Template (individual account disputes)
 import { ReviewDisputeEscalationEmail } from "./review-dispute-escalation";
 
-// Referral Program Templates (S094)
-import { ReferralInviteEmail } from "./referral-invite";
-import { ReferralFriendSignedUpEmail } from "./referral-friend-signed-up";
-import { ReferralFriendConvertedEmail } from "./referral-friend-converted";
-import { ReferralRewardEarnedEmail } from "./referral-reward-earned";
-import { ReferralReminderEmail } from "./referral-reminder";
-import { ReferralLeaderboardEmail } from "./referral-leaderboard";
-
 // Admin Alert Templates (S089)
 export {
   AdminAlertNegativeReviewEmail,
@@ -82,13 +74,6 @@ export {
   ReviewVideoUpsellEmail,
   // Review dispute escalation (individual account disputes)
   ReviewDisputeEscalationEmail,
-  // Referral program templates (S094)
-  ReferralInviteEmail,
-  ReferralFriendSignedUpEmail,
-  ReferralFriendConvertedEmail,
-  ReferralRewardEarnedEmail,
-  ReferralReminderEmail,
-  ReferralLeaderboardEmail,
 };
 
 // Types

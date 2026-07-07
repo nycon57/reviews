@@ -32,7 +32,6 @@ import {
   Megaphone,
   Gift,
   EnvelopeSimple as MailCheck,
-  ChatText,
 } from "@phosphor-icons/react";
 import type { EmailPreferences, CommunicationPreferencesWithToken } from "@/lib/email-preferences/types";
 import {
@@ -44,7 +43,6 @@ import {
 import {
   getCommunicationPreferencesByToken,
   updateEmailPreferencesByToken,
-  updateSmsConsentByToken,
   resubscribeByToken,
 } from "@/lib/email-preferences/actions";
 import Link from "next/link";
@@ -174,43 +172,6 @@ export default function PublicEmailPreferencesPage() {
       setSaving(false);
     }
   }, [token, toast]);
-
-  const handleSmsConsentChange = React.useCallback(
-    async (optOut: boolean) => {
-      setSaving(true);
-      try {
-        const result = await updateSmsConsentByToken(token, optOut);
-        if (result.success) {
-          setPreferences((prev) =>
-            prev
-              ? { ...prev, sms_consent_status: optOut ? "opted_out" : "opted_in" }
-              : null
-          );
-          toast({
-            title: optOut ? "SMS unsubscribed" : "SMS resubscribed",
-            description: optOut
-              ? "You will no longer receive SMS messages."
-              : "You will now receive SMS messages.",
-          });
-        } else {
-          toast({
-            title: "Error",
-            description: result.error,
-            variant: "destructive",
-          });
-        }
-      } catch {
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        });
-      } finally {
-        setSaving(false);
-      }
-    },
-    [token, toast]
-  );
 
   if (loading) {
     return (
@@ -386,42 +347,6 @@ export default function PublicEmailPreferencesPage() {
                       </div>
                     );
                   })}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* SMS Preferences */}
-            {preferences?.sms_phone_number && (
-              <Card className="mb-6">
-                <CardHeader variant="plain">
-                  <CardTitle className="flex items-center gap-2">
-                    <ChatText className="h-5 w-5" />
-                    SMS Notifications
-                  </CardTitle>
-                  <CardDescription>
-                    Manage SMS notifications sent to {preferences.sms_phone_number}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
-                      <Label className="text-base font-medium">SMS Messages</Label>
-                      <p className="text-sm text-muted-foreground">
-                        {preferences.sms_consent_status === "opted_in"
-                          ? "You are currently receiving SMS messages"
-                          : "You are not receiving SMS messages"}
-                      </p>
-                    </div>
-                    <Switch
-                      checked={preferences.sms_consent_status === "opted_in"}
-                      onCheckedChange={(checked) => handleSmsConsentChange(!checked)}
-                      disabled={saving}
-                    />
-                  </div>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    You can also text STOP to any message to unsubscribe from SMS, or START to
-                    resubscribe.
-                  </p>
                 </CardContent>
               </Card>
             )}

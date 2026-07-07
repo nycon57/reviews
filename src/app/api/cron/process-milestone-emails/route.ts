@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { z } from "zod";
-import { processTeamInviteQueue } from "@/lib/email/team-invite-service";
+import { processPendingMilestoneEmails } from "@/lib/milestones/actions";
 
-// Zod schema for query parameters
 const cronParamsSchema = z.object({
   batch_size: z.coerce
     .number()
@@ -12,43 +12,51 @@ const cronParamsSchema = z.object({
     .default(50),
 });
 
-// Verify the request is from a valid cron job source
 function verifyCronSecret(request: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
 
-  // If no secret is configured, only allow in development
   if (!cronSecret) {
-    return process.env.NODE_ENV === "development";
+    if (process.env.NODE_ENV === "development") {
+      return true;
+    }
+    console.error("CRON_SECRET is not configured - denying access");
+    return false;
   }
 
   const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${cronSecret}`;
+  if (!authHeader) {
+    return false;
+  }
+
+  const expectedHeader = `Bearer ${cronSecret}`;
+  if (authHeader.length !== expectedHeader.length) {
+    return false;
+  }
+
+  try {
+    return timingSafeEqual(
+      Buffer.from(authHeader, "utf8"),
+      Buffer.from(expectedHeader, "utf8")
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
- * POST /api/cron/process-team-invites
+ * POST /api/cron/process-milestone-emails
  *
- * This endpoint processes the team member invite email sequence queue.
- * It should be called by a cron job at regular intervals (recommended: every hour).
+ * Drains the pending milestone email queue (`user_milestones` rows with
+ * email_status = 'pending') and sends the matching celebration email.
  *
- * Features:
- * - Sends reminder emails for pending invitations
- * - Day 2: First reminder if not accepted
- * - Day 5: Final reminder with urgency
- * - Day 14: Expiration notice
- * - Tracks invite → acceptance → activation funnel
- *
- * Query Parameters:
- * - batch_size: Number of invitations to process (default: 50, max: 100)
+ * Recommended schedule: every 30 minutes.
  */
 export async function POST(request: NextRequest) {
-  // Verify the request is authorized
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Validate and parse query params with Zod
     const url = new URL(request.url);
     const parseResult = cronParamsSchema.safeParse({
       batch_size: url.searchParams.get("batch_size") ?? undefined,
@@ -65,22 +73,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { batch_size: batchSize } = parseResult.data;
+    const result = await processPendingMilestoneEmails(parseResult.data.batch_size);
 
-    // Process the team invite queue
-    const result = await processTeamInviteQueue(batchSize);
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error,
+          timestamp: new Date().toISOString(),
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      processed: result.processed,
-      failed: result.failed,
-      expired: result.expired,
-      errors: result.errors.slice(0, 10), // Limit error details returned
+      ...result.data,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Team invite queue cron job error:", error);
-
+    console.error("Milestone email queue cron job error:", error);
     return NextResponse.json(
       {
         success: false,

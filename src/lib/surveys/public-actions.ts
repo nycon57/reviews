@@ -9,10 +9,25 @@ import type {
 } from "@/types/survey.types";
 import { screenReviewText } from "@/lib/reviews/moderation";
 import { queueQuoteCardKitAfterPublish } from "@/lib/reviews/asset-kit";
-import { notifyReviewNeedsResponse } from "@/lib/reviews/notifications";
+import {
+  notifyReviewNeedsResponse,
+  notifyReviewPublished,
+} from "@/lib/reviews/notifications";
 import { getCelebrationThreshold } from "@/lib/video-testimonials/public-actions";
+import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
 import { analyzeNewReview } from "@/lib/ai/actions";
 import type { PublicSurvey, ActionResult } from "./public-types";
+
+/**
+ * Build the Google "write a review" deep link for a place id. Mirrors the
+ * validated pattern used by the video high-path share kit — only well-formed
+ * place ids produce a link, everything else yields null (button hidden).
+ */
+function buildGoogleWriteReviewUrl(placeId: string | null | undefined): string | null {
+  if (!placeId) return null;
+  if (!/^[A-Za-z0-9_-]+$/.test(placeId)) return null;
+  return `https://search.google.com/local/writereview?placeid=${encodeURIComponent(placeId)}`;
+}
 
 // Get public survey by token (no auth required)
 export async function getSurveyByToken(
@@ -175,7 +190,13 @@ export type SubmitSurveyResponseInput = z.infer<typeof submitSurveyResponseSchem
 // Submit a survey response (no auth required)
 export async function submitSurveyResponse(
   input: SubmitSurveyResponseInput
-): Promise<ActionResult<{ responseId: string; showReviewRedirect: boolean }>> {
+): Promise<
+  ActionResult<{
+    responseId: string;
+    showReviewRedirect: boolean;
+    googleReviewUrl: string | null;
+  }>
+> {
   try {
     const validated = submitSurveyResponseSchema.safeParse(input);
     if (!validated.success) {
@@ -200,6 +221,9 @@ export async function submitSurveyResponse(
         organization_id,
         user_id,
         template_id,
+        users!user_id (
+          google_place_id
+        ),
         survey_templates!inner (
           thank_you_config
         )
@@ -319,7 +343,19 @@ export async function submitSurveyResponse(
           queueQuoteCardKitAfterPublish(survey.organization_id, [reviewId], survey.user_id);
 
           const threshold = await getCelebrationThreshold(survey.organization_id);
-          if (overallRating < threshold) {
+          const belowThreshold = overallRating < threshold;
+
+          await notifyReviewPublished({
+            reviewId,
+            organizationId: survey.organization_id,
+            ownerUserId: survey.user_id,
+            customerName,
+            rating: overallRating,
+            reviewText,
+            belowThreshold,
+          });
+
+          if (belowThreshold) {
             await notifyReviewNeedsResponse({
               reviewId,
               organizationId: survey.organization_id,
@@ -328,6 +364,16 @@ export async function submitSurveyResponse(
               rating: overallRating,
             });
           }
+
+          // Cheapest-correct milestone detection; best-effort, never blocks.
+          await checkAllMilestonesForReview(
+            survey.user_id,
+            survey.organization_id,
+            survey.user_id,
+            overallRating
+          ).catch((error) => {
+            console.error("Error checking review milestones:", error);
+          });
         }
 
         // Trigger AI sentiment analysis (runs async, doesn't block response)
@@ -355,15 +401,57 @@ export async function submitSurveyResponse(
       }
     }
 
+    // Deep link the promoter to Google's write-a-review flow for this
+    // professional. Only surfaced when we are already showing the redirect
+    // and the professional has a Google place id on file.
+    const professional = survey.users as unknown as {
+      google_place_id: string | null;
+    } | null;
+    const googleReviewUrl = showReviewRedirect
+      ? buildGoogleWriteReviewUrl(professional?.google_place_id)
+      : null;
+
     return {
       success: true,
       data: {
         responseId: response.id,
         showReviewRedirect,
+        googleReviewUrl,
       },
     };
   } catch (error) {
     console.error("Error submitting survey response:", error);
     return { success: false, error: "Failed to submit your response" };
+  }
+}
+
+// Record a survey respondent clicking through to the external Google review
+// CTA (no auth — the respondent is anonymous). Fire-and-forget from the client;
+// stamps the first click only. Uses the untyped client because
+// google_review_clicked_at lands with migration 20260707000001 and is not in
+// the generated types yet; a missing column just no-ops gracefully.
+export async function recordSurveyGoogleReviewClick(
+  responseId: string
+): Promise<{ success: boolean }> {
+  if (!responseId) {
+    return { success: false };
+  }
+
+  try {
+    const supabase = createUntypedAdminClient();
+    const { error } = await supabase
+      .from("survey_responses")
+      .update({ google_review_clicked_at: new Date().toISOString() })
+      .eq("id", responseId)
+      .is("google_review_clicked_at", null);
+
+    if (error) {
+      console.error("Error recording survey Google review click:", error);
+      return { success: false };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error recording survey Google review click:", error);
+    return { success: false };
   }
 }

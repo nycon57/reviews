@@ -23,7 +23,7 @@ describe("validateGraph", () => {
   it("requires exactly one trigger", () => {
     const nodes: WorkflowNode[] = [
       makeNode({ id: "a1", type: "action-email" }),
-      makeNode({ id: "a2", type: "action-sms" }),
+      makeNode({ id: "a2", type: "action-smart" }),
     ];
 
     const result = validateGraph(nodes, [makeEdge("a1", "a2")]);

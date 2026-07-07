@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   AddressBook,
   MagnifyingGlass,
   Plus,
@@ -34,6 +44,7 @@ export function EmployeesPageClient() {
   // Dialog state
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
   const employeeImportConfig = useMemo(() => createEmployeeImportConfig(), []);
 
   const pageSize = 25;
@@ -89,6 +100,13 @@ export function EmployeesPageClient() {
         toast({ title: "Error", description: result.error || "Failed to delete employee", variant: "destructive" });
       }
     });
+  };
+
+  const confirmDelete = () => {
+    if (employeeToDelete) {
+      handleDelete(employeeToDelete);
+      setEmployeeToDelete(null);
+    }
   };
 
   const totalPages = Math.ceil(total / pageSize);
@@ -226,7 +244,7 @@ export function EmployeesPageClient() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(employee)}
+                            onClick={() => setEmployeeToDelete(employee)}
                             disabled={isPending}
                             className="h-8 w-8 text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
                           >
@@ -273,6 +291,38 @@ export function EmployeesPageClient() {
       {/* Dialogs */}
       <AddEmployeeDialog open={addOpen} onOpenChange={setAddOpen} onSuccess={refetch} />
       <CsvImportWizard open={importOpen} onOpenChange={setImportOpen} onComplete={refetch} config={employeeImportConfig} />
+
+      <AlertDialog
+        open={!!employeeToDelete}
+        onOpenChange={(open) => {
+          if (!open) setEmployeeToDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate employee</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to deactivate{" "}
+              {employeeToDelete?.fullName ? (
+                <span className="font-medium text-foreground">{employeeToDelete.fullName}</span>
+              ) : (
+                "this employee"
+              )}
+              ? They&apos;ll be marked inactive and removed from the active
+              directory. You can add them again later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Deactivate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

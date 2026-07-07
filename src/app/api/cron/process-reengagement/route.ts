@@ -154,36 +154,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/cron/process-reengagement
- *
- * Health check endpoint for the re-engagement sequence processor.
- * Returns the current status of the endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-reengagement",
-    description: "Re-engagement email sequence processor for inactive users",
-    schedule: "Daily for detection, every 5 minutes for queue processing",
-    features: [
-      "4-email re-engagement sequence",
-      "Inactive user detection (7, 14, 30, 45 days)",
-      "Paid vs free user differentiation",
-      "Exit on user login",
-      "Missed reviews metrics",
-      "Personal messaging ('from the team')",
-    ],
-    sequence_timing: {
-      email_1: "7 days inactive - 'We miss you'",
-      email_2: "14 days inactive - 'What's new'",
-      email_3: "30 days inactive - 'Last chance'",
-      email_4: "45 days inactive - 'Final email'",
-    },
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

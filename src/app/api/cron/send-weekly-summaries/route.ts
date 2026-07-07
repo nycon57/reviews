@@ -89,21 +89,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/cron/send-weekly-summaries
- *
- * Health check endpoint for the weekly summary cron job.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "send-weekly-summaries",
-    description: "Weekly performance summary emails for users and managers",
-    recommendedSchedule: "Every Monday at 8:00 AM local time",
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

@@ -267,7 +267,7 @@ export function UserComparisonTable({ data }: UserComparisonTableProps) {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/dashboard/team/${member.id}`}>
+                      <Link href={`/dashboard/analytics/member/${member.id}`}>
                         <Eye className="mr-1 h-3 w-3" />
                         View
                       </Link>

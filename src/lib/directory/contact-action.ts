@@ -1,10 +1,12 @@
 "use server";
 
 import { getResendClient, emailConfig } from "@/lib/email/client";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
 import { z } from "zod";
 
 const contactSchema = z.object({
-  professionalEmail: z.string().email(),
+  professionalId: z.string().uuid(),
   professionalName: z.string().min(1),
   senderName: z.string().min(1).max(100),
   senderEmail: z.string().email(),
@@ -12,7 +14,7 @@ const contactSchema = z.object({
 });
 
 export async function contactProfessional(input: {
-  professionalEmail: string;
+  professionalId: string;
   professionalName: string;
   senderName: string;
   senderEmail: string;
@@ -23,7 +25,23 @@ export async function contactProfessional(input: {
     return { success: false, error: "Invalid input." };
   }
 
-  const { professionalEmail, senderName, senderEmail, message } = parsed.data;
+  const { professionalId, senderName, senderEmail, message } = parsed.data;
+
+  // Resolve the recipient server-side from the professional id. The caller never
+  // supplies the destination address, so this endpoint can't be used as an open
+  // relay, and only publicly listed directory professionals are contactable.
+  const admin = createAdminClient();
+  const { data: professional, error: lookupError } = await applyPublicProfessionalFilters(
+    admin.from("users").select("email")
+  )
+    .eq("id", professionalId)
+    .maybeSingle();
+
+  if (lookupError || !professional?.email) {
+    return { success: false, error: "This professional can't be contacted right now." };
+  }
+
+  const professionalEmail = professional.email as string;
 
   const safeName = escapeHtml(senderName);
   const safeEmail = escapeHtml(senderEmail);

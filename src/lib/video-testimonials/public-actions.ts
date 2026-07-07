@@ -25,7 +25,11 @@ import { createChatCompletion, isAIEnabled } from "@/lib/ai/client";
 import { generateReviewFromTranscript } from "@/lib/ai/transcript-to-review";
 import { screenReviewText } from "@/lib/reviews/moderation";
 import { queueQuoteCardKitAfterPublish } from "@/lib/reviews/asset-kit";
-import { notifyReviewNeedsResponse } from "@/lib/reviews/notifications";
+import {
+  notifyReviewNeedsResponse,
+  notifyReviewPublished,
+} from "@/lib/reviews/notifications";
+import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
 import { transcribeWithWordTimestamps } from "@/lib/share-studio/transcription-service";
 import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
 import {
@@ -1612,7 +1616,19 @@ async function createCanonicalReviewForResponse(params: {
       queueQuoteCardKitAfterPublish(params.organizationId, [reviewId], params.ownerUserId);
 
       const threshold = await getCelebrationThreshold(params.organizationId);
-      if (response.customer_rating < threshold) {
+      const belowThreshold = response.customer_rating < threshold;
+
+      await notifyReviewPublished({
+        reviewId,
+        organizationId: params.organizationId,
+        ownerUserId: params.ownerUserId,
+        customerName: params.customerName,
+        rating: response.customer_rating,
+        reviewText: params.reviewText,
+        belowThreshold,
+      });
+
+      if (belowThreshold) {
         await notifyReviewNeedsResponse({
           reviewId,
           organizationId: params.organizationId,
@@ -1621,6 +1637,16 @@ async function createCanonicalReviewForResponse(params: {
           rating: response.customer_rating,
         });
       }
+
+      // Cheapest-correct milestone detection; best-effort, never blocks.
+      await checkAllMilestonesForReview(
+        params.ownerUserId,
+        params.organizationId,
+        params.ownerUserId,
+        response.customer_rating
+      ).catch((error) => {
+        console.error("Error checking review milestones:", error);
+      });
     }
   } catch (error) {
     console.error("Unified review: error creating canonical review:", error);

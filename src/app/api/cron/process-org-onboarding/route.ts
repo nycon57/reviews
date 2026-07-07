@@ -101,29 +101,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/cron/process-org-onboarding
- *
- * Health check endpoint for the org onboarding sequence queue processor.
- * Returns the current status of the endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-org-onboarding",
-    description: "Organization onboarding email sequence queue processor",
-    schedule: "Every 5 minutes",
-    features: [
-      "6-email onboarding sequence for org admins",
-      "Branding, team, integrations, billing setup guidance",
-      "Conditional branching (skip completed setup steps)",
-      "Setup progress tracking",
-      "Exit on activation milestone",
-    ],
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

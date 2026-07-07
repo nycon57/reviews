@@ -13,7 +13,6 @@ import {
   Plus,
   CheckCircle,
   ArrowRight,
-  SealCheck,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import {
@@ -318,16 +317,6 @@ export function ApiTab() {
                   description="API reference & guides"
                   href="/developers"
                 />
-
-                <div className="w-full flex items-center gap-3 p-3 rounded-lg bg-repwell-sage-100/30 dark:bg-repwell-teal-300/10">
-                  <div className="p-2 rounded-lg bg-repwell-sage-100/50 dark:bg-repwell-teal-300/15">
-                    <SealCheck weight="duotone" className="h-4 w-4 text-repwell-sage-200" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-heading-accent">API Status</p>
-                    <p className="text-xs text-repwell-sage-200">All systems operational</p>
-                  </div>
-                </div>
               </div>
 
               {/* Security Features */}

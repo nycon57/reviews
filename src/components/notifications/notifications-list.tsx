@@ -21,6 +21,7 @@ import {
   Star,
   Warning as AlertTriangle,
   Chats as MessageSquare,
+  EnvelopeOpen,
   Trophy,
   FileText,
   Archive,
@@ -50,6 +51,7 @@ const notificationIcons: Record<NotificationType, React.ElementType> = {
   negative_review: AlertTriangle,
   review_approved: Check,
   review_rejected: AlertTriangle,
+  review_needs_response: EnvelopeOpen,
   response_posted: MessageSquare,
   badge_earned: Trophy,
   milestone_reached: Trophy,
@@ -64,6 +66,7 @@ const notificationColors: Record<NotificationType, string> = {
   negative_review: "bg-red-100 text-red-600",
   review_approved: "bg-green-100 text-green-600",
   review_rejected: "bg-red-100 text-red-600",
+  review_needs_response: "bg-amber-100 text-amber-600",
   response_posted: "bg-blue-100 text-blue-600",
   badge_earned: "bg-purple-100 text-purple-600",
   milestone_reached: "bg-purple-100 text-purple-600",
@@ -78,6 +81,7 @@ const notificationTypeLabels: Record<NotificationType, string> = {
   negative_review: "Negative Review",
   review_approved: "Review Approved",
   review_rejected: "Review Rejected",
+  review_needs_response: "Needs response",
   response_posted: "Response Posted",
   badge_earned: "Badge Earned",
   milestone_reached: "Milestone Reached",
@@ -115,6 +119,7 @@ export function NotificationsList({
       limit: PAGE_SIZE,
       offset,
       unreadOnly: filter === "unread",
+      type: filter !== "all" && filter !== "unread" ? filter : undefined,
     });
     setNotifications(result.notifications);
     setTotal(result.total);
@@ -122,21 +127,21 @@ export function NotificationsList({
     setSelectedIds(new Set());
   }, [filter, page]);
 
-  // Filter client-side for type filters (server handles unread filter)
-  const displayedNotifications = React.useMemo(() => {
-    if (filter === "all" || filter === "unread") {
-      return notifications;
-    }
-    return notifications.filter((n) => n.type === filter);
-  }, [notifications, filter]);
+  // The server now filters by type and unread state, so render the fetched list
+  // directly (client-side filtering produced wrong counts and pagination).
+  const displayedNotifications = notifications;
 
   React.useEffect(() => {
     if (filter === "all" && page === 1) {
-      // Use initial data
+      // Restore the server-rendered first page so returning to "all" doesn't
+      // leave stale filtered results or counts on screen.
+      setNotifications(initialNotifications);
+      setTotal(initialTotal);
+      setSelectedIds(new Set());
       return;
     }
     fetchNotifications();
-  }, [filter, page, fetchNotifications]);
+  }, [filter, page, fetchNotifications, initialNotifications, initialTotal]);
 
   const handleMarkAllAsRead = async () => {
     setBulkActioning(true);

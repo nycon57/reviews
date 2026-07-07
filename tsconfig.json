@@ -38,7 +38,6 @@
   ],
   "exclude": [
     "node_modules",
-    "mobile",
     "wordpress-plugin",
     "packages",
     "truetone-stack-repwell",

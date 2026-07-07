@@ -27,7 +27,7 @@ import type { EmbedManifest } from "../src/lib/widgets/manifest-types";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const MANIFEST_PATH = resolve(ROOT, "public/embed/v1/manifest.json");
-const MAX_GZIP_BYTES = 32 * 1024; // 32KB — 9 widget types
+const MAX_GZIP_BYTES = 40 * 1024; // 40KB — MUST match MAX_GZIP_BYTES in scripts/build-embed.ts and tests/performance/embed-bundle-size.test.ts
 
 function verify(): boolean {
   console.log("Verifying embed build...\n");

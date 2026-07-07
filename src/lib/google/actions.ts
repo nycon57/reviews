@@ -1,6 +1,6 @@
 'use server';
 
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient, createUntypedAdminClient } from '@/lib/supabase/admin';
 import { unifiedGetUser } from '@/lib/auth/actions';
 import { revalidatePath } from 'next/cache';
 import {
@@ -616,6 +616,158 @@ export async function replyToGoogleReview(
 
     return { success: false, error: `Failed to send reply: ${errorMessage}` };
   }
+}
+
+type PendingGoogleReply = {
+  id: string;
+  organization_id: string;
+  review_id: string;
+  connection_id: string;
+  reply_text: string;
+  retry_count: number | null;
+};
+
+/**
+ * Persist the outcome of a reply attempt. Isolated + defensive: the
+ * retry_count / last_attempt_at columns arrive with migration
+ * 20260707000001, so until db:push lands a status update could fail on a
+ * missing column. We swallow + record that here so one bad write can never
+ * abort the whole batch (or crash the cron route).
+ */
+async function markGoogleReplyOutcome(
+  client: ReturnType<typeof createUntypedAdminClient>,
+  replyId: string,
+  update: Record<string, unknown>,
+  errors: string[]
+): Promise<void> {
+  const { error } = await client
+    .from('google_review_replies')
+    .update(update)
+    .eq('id', replyId);
+  if (error) {
+    console.error(`Failed to update google_review_reply ${replyId}:`, error);
+    errors.push(`${replyId}: status update failed: ${error.message}`);
+  }
+}
+
+/**
+ * Post the backlog of unsent Google review replies.
+ *
+ * `google_review_replies` rows are inserted with status 'pending' by the
+ * response composer and the auto-reply processor, but nothing posted them to
+ * Google until now. This is the cron-safe drainer: unlike `replyToGoogleReview`
+ * it requires no auth session and operates on EXISTING rows (it does not create
+ * new ones). Each row is posted with the reusable token + reply primitives, then
+ * marked 'sent', or 'failed' with the error + attempt bookkeeping captured.
+ *
+ * Bounded auto-retry: picks up fresh 'pending' rows AND 'failed' rows still
+ * under the retry cap (retry_count < 3), incrementing retry_count and stamping
+ * last_attempt_at on every attempt so a persistently failing reply stops after
+ * 3 tries. If those columns are not present yet (migration not applied), the
+ * initial select fails cleanly and the batch returns its error instead of
+ * crashing — and per-row status writes degrade gracefully via
+ * markGoogleReplyOutcome.
+ */
+export async function processPendingGoogleReplies(
+  limit = 25
+): Promise<{ processed: number; posted: number; failed: number; errors: string[] }> {
+  const adminClient = createAdminClient();
+  // Untyped client: retry_count / last_attempt_at are not in the generated
+  // types until db:types is regenerated post-migration.
+  const untypedAdmin = createUntypedAdminClient();
+  const errors: string[] = [];
+  let posted = 0;
+  let failed = 0;
+
+  const { data: pending, error } = await untypedAdmin
+    .from('google_review_replies')
+    .select('id, organization_id, review_id, connection_id, reply_text, retry_count')
+    .or('status.eq.pending,and(status.eq.failed,retry_count.lt.3)')
+    .order('created_at', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching pending Google replies:', error);
+    return { processed: 0, posted: 0, failed: 0, errors: [error.message] };
+  }
+
+  const rows = (pending || []) as PendingGoogleReply[];
+
+  for (const row of rows) {
+    const now = new Date().toISOString();
+    const attemptNo = (row.retry_count ?? 0) + 1;
+    try {
+      const [{ data: review }, { data: connection }] = await Promise.all([
+        adminClient
+          .from('reviews')
+          .select('id, source_review_id')
+          .eq('id', row.review_id)
+          .maybeSingle(),
+        adminClient
+          .from('google_connections')
+          .select('id, google_account_id, location_id, is_active')
+          .eq('id', row.connection_id)
+          .maybeSingle(),
+      ]);
+
+      if (!review?.source_review_id) {
+        throw new Error('Review or Google review id not found');
+      }
+      if (!connection || connection.is_active === false) {
+        throw new Error('Google connection is inactive or missing');
+      }
+
+      const accessToken = await getValidAccessToken(connection.id);
+      if (!accessToken) {
+        throw new Error('Failed to get valid access token');
+      }
+
+      const reviewName = `accounts/${connection.google_account_id}/locations/${connection.location_id}/reviews/${review.source_review_id}`;
+      const result = await googleReplyToReview(accessToken, reviewName, row.reply_text);
+
+      await markGoogleReplyOutcome(
+        untypedAdmin,
+        row.id,
+        {
+          status: 'sent',
+          sent_at: now,
+          google_reply_time: result.updateTime,
+          retry_count: attemptNo,
+          last_attempt_at: now,
+        },
+        errors
+      );
+
+      // Mirror the reply onto the review record (parity with replyToGoogleReview).
+      await adminClient
+        .from('reviews')
+        .update({
+          response_text: row.reply_text,
+          response_at: now,
+          response_synced_at: result.updateTime,
+        })
+        .eq('id', row.review_id);
+
+      posted += 1;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      errors.push(`${row.id}: ${message} (attempt ${attemptNo}/3)`);
+      await markGoogleReplyOutcome(
+        untypedAdmin,
+        row.id,
+        {
+          status: 'failed',
+          error_message: message,
+          retry_count: attemptNo,
+          last_attempt_at: now,
+        },
+        errors
+      );
+      failed += 1;
+    }
+  }
+
+  return { processed: rows.length, posted, failed, errors };
 }
 
 // Get sync logs for a connection

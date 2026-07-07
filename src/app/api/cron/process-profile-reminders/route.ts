@@ -163,40 +163,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/cron/process-profile-reminders
- *
- * Health check endpoint for the profile/setup reminder sequence processor.
- * Returns the current status of the endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-profile-reminders",
-    description: "Profile and setup reminder email sequence processor",
-    schedule: "Daily for detection, every 5 minutes for queue processing",
-    features: [
-      "Profile completion reminders (photo, bio)",
-      "Setup completion reminders (survey, Google, team)",
-      "Progress bar in emails",
-      "Impact stats to encourage completion",
-      "Deep links to incomplete sections",
-      "Exit when steps completed",
-      "Role-based reminders (admin-specific)",
-    ],
-    reminder_timing: {
-      profile_photo: "Day 3 - Missing photo reminder",
-      profile_bio: "Day 7 - Incomplete bio reminder",
-      profile_final: "Day 14 - Final profile reminder with impact stats",
-      setup_survey_template: "Day 3 - No survey template created",
-      setup_first_survey: "Day 7 - No survey sent",
-      setup_google_connect: "Day 5 - No Google connected (admins)",
-      setup_invite_team: "Day 7 - No team members invited (admins)",
-    },
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

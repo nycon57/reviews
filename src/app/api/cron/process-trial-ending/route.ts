@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "crypto";
 import { z } from "zod";
-import { processTeamInviteQueue } from "@/lib/email/team-invite-service";
+import {
+  checkAndStartTrialEndingSequences,
+  processTrialEndingSequenceQueue,
+} from "@/lib/email/trial-ending-service";
 
-// Zod schema for query parameters
 const cronParamsSchema = z.object({
   batch_size: z.coerce
     .number()
@@ -12,43 +15,52 @@ const cronParamsSchema = z.object({
     .default(50),
 });
 
-// Verify the request is from a valid cron job source
 function verifyCronSecret(request: NextRequest): boolean {
   const cronSecret = process.env.CRON_SECRET;
 
-  // If no secret is configured, only allow in development
   if (!cronSecret) {
-    return process.env.NODE_ENV === "development";
+    if (process.env.NODE_ENV === "development") {
+      return true;
+    }
+    console.error("CRON_SECRET is not configured - denying access");
+    return false;
   }
 
   const authHeader = request.headers.get("authorization");
-  return authHeader === `Bearer ${cronSecret}`;
+  if (!authHeader) {
+    return false;
+  }
+
+  const expectedHeader = `Bearer ${cronSecret}`;
+  if (authHeader.length !== expectedHeader.length) {
+    return false;
+  }
+
+  try {
+    return timingSafeEqual(
+      Buffer.from(authHeader, "utf8"),
+      Buffer.from(expectedHeader, "utf8")
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
- * POST /api/cron/process-team-invites
+ * POST /api/cron/process-trial-ending
  *
- * This endpoint processes the team member invite email sequence queue.
- * It should be called by a cron job at regular intervals (recommended: every hour).
+ * Runs the trial-ending email sequence:
+ * 1. Enrolls organizations whose trial ends in ~7 days.
+ * 2. Sends any sequence steps that are now due.
  *
- * Features:
- * - Sends reminder emails for pending invitations
- * - Day 2: First reminder if not accepted
- * - Day 5: Final reminder with urgency
- * - Day 14: Expiration notice
- * - Tracks invite → acceptance → activation funnel
- *
- * Query Parameters:
- * - batch_size: Number of invitations to process (default: 50, max: 100)
+ * Recommended schedule: hourly.
  */
 export async function POST(request: NextRequest) {
-  // Verify the request is authorized
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Validate and parse query params with Zod
     const url = new URL(request.url);
     const parseResult = cronParamsSchema.safeParse({
       batch_size: url.searchParams.get("batch_size") ?? undefined,
@@ -65,22 +77,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { batch_size: batchSize } = parseResult.data;
-
-    // Process the team invite queue
-    const result = await processTeamInviteQueue(batchSize);
+    const started = await checkAndStartTrialEndingSequences();
+    const processed = await processTrialEndingSequenceQueue(
+      parseResult.data.batch_size
+    );
 
     return NextResponse.json({
       success: true,
-      processed: result.processed,
-      failed: result.failed,
-      expired: result.expired,
-      errors: result.errors.slice(0, 10), // Limit error details returned
+      started: started.started,
+      startErrors: started.errors.slice(0, 10),
+      processed: processed.processed,
+      failed: processed.failed,
+      skipped: processed.skipped,
+      exited: processed.exited,
+      errors: processed.errors.slice(0, 10),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Team invite queue cron job error:", error);
-
+    console.error("Trial-ending sequence cron job error:", error);
     return NextResponse.json(
       {
         success: false,

@@ -225,17 +225,10 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint for health checks
-export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
 
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "send-alerts",
-    timestamp: new Date().toISOString(),
-  });
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
+export async function GET(request: NextRequest) {
+  return POST(request);
 }

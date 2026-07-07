@@ -92,29 +92,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/cron/process-role-onboarding
- *
- * Health check endpoint for the role onboarding sequence queue processor.
- * Returns the current status of the endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-role-onboarding",
-    description: "Role-based feature onboarding email sequence queue processor",
-    schedule: "Every hour",
-    features: [
-      "Loan Officer: 7 emails (dashboard, surveys, sharing, responding, video, mobile, Google)",
-      "Manager: 6 emails (team dashboard, approvals, leaderboards, reports, coaching, analytics)",
-      "Admin: 5 emails (settings, users, integrations, billing, compliance)",
-      "Weekly pacing to avoid fatigue",
-      "Skips emails for features already used",
-    ],
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

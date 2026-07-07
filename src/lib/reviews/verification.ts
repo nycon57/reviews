@@ -10,8 +10,12 @@
 import { createHash, randomBytes } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { queueQuoteCardKitAfterPublish } from "@/lib/reviews/asset-kit";
-import { notifyReviewNeedsResponse } from "@/lib/reviews/notifications";
+import {
+  notifyReviewNeedsResponse,
+  notifyReviewPublished,
+} from "@/lib/reviews/notifications";
 import { getCelebrationThreshold } from "@/lib/video-testimonials/public-actions";
+import { checkAllMilestonesForReview } from "@/lib/milestones/actions";
 
 /** Single source of truth for verification token crypto (raw token emailed, only the hash stored). */
 export function generateVerificationToken(): { rawToken: string; tokenHash: string } {
@@ -118,7 +122,18 @@ export async function verifyDirectReview(
     );
 
     const threshold = await getCelebrationThreshold(review.organization_id);
-    if (review.rating < threshold) {
+    const belowThreshold = review.rating < threshold;
+
+    await notifyReviewPublished({
+      reviewId: review.id,
+      organizationId: review.organization_id,
+      ownerUserId: review.user_id,
+      customerName: review.customer_name,
+      rating: review.rating,
+      belowThreshold,
+    });
+
+    if (belowThreshold) {
       await notifyReviewNeedsResponse({
         reviewId: review.id,
         organizationId: review.organization_id,
@@ -129,6 +144,18 @@ export async function verifyDirectReview(
     } else {
       showVideoUpsell = true;
     }
+
+    // Cheapest-correct milestone detection (populates the pending queue that
+    // the process-milestone-emails cron drains). Best-effort: never block or
+    // fail publish over a milestone check.
+    await checkAllMilestonesForReview(
+      review.user_id,
+      review.organization_id,
+      review.user_id,
+      review.rating
+    ).catch((error) => {
+      console.error("Error checking review milestones:", error);
+    });
   }
 
   return {

@@ -45,14 +45,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-auto-replies",
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

@@ -175,34 +175,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/cron/process-abandoned-actions
- *
- * Health check endpoint for the abandoned action recovery processor.
- * Returns the current status of the endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-abandoned-actions",
-    description: "Abandoned action recovery email processor",
-    schedule: "Every 5 minutes for queue processing",
-    features: [
-      "Recovery email 1: 1 hour after action start",
-      "Recovery email 2: 24 hours after action start",
-      "Action expiration: 7 days without completion",
-      "Tracks: survey_creation, survey_send, video_request, billing_upgrade, profile_completion, integration_setup",
-    ],
-    query_params: {
-      batch_size: "Number of actions to process per queue (default: 50, max: 100)",
-      email_1_only: "Only process email 1 queue (default: false)",
-      email_2_only: "Only process email 2 queue (default: false)",
-      skip_expire: "Skip expiring old actions (default: false)",
-    },
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

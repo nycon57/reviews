@@ -36,6 +36,11 @@ vi.mock("@/lib/reviews/asset-kit", () => ({
 
 vi.mock("@/lib/reviews/notifications", () => ({
   notifyReviewNeedsResponse: vi.fn(),
+  notifyReviewPublished: vi.fn(),
+}));
+
+vi.mock("@/lib/milestones/actions", () => ({
+  checkAllMilestonesForReview: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
 
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";

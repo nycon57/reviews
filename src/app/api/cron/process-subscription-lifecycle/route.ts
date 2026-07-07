@@ -121,27 +121,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * GET /api/cron/process-subscription-lifecycle
- *
- * Health check endpoint.
- */
+// Vercel Cron triggers this endpoint with a GET request (carrying the
+// Authorization: Bearer <CRON_SECRET> header). Delegate to POST so the job
+// actually runs its work on the scheduled trigger.
 export async function GET(request: NextRequest) {
-  if (!verifyCronSecret(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return NextResponse.json({
-    status: "healthy",
-    endpoint: "process-subscription-lifecycle",
-    description:
-      "Processes renewal reminders and cancellation feedback requests",
-    schedule: "Daily",
-    features: [
-      "Renewal reminders 14 days before annual renewal",
-      "Cancellation feedback requests 2 days after cancellation",
-      "Deduplication via email_logs table",
-    ],
-    timestamp: new Date().toISOString(),
-  });
+  return POST(request);
 }

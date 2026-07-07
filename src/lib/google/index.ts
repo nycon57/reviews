@@ -25,6 +25,7 @@ export {
   disconnectGoogle,
   syncGoogleReviews,
   replyToGoogleReview,
+  processPendingGoogleReplies,
   getSyncLogs,
   getAvailableLocations,
   getProfessionalsForGoogle,

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
-import { createAdminClient } from '@/lib/supabase/admin';
+import { createAdminClient, createUntypedAdminClient } from '@/lib/supabase/admin';
 import { withApiAuth, type ApiAuthContext } from '@/lib/api-keys/validate';
+import { findOrCreateContact } from '@/lib/contacts/actions';
 import {
   apiSuccess,
   apiPaginated,
@@ -203,13 +204,35 @@ async function handlePost(
   const expiresAt = new Date(scheduledAt);
   expiresAt.setDate(expiresAt.getDate() + 14);
 
-  // Create survey
-  const { data: survey, error: surveyError } = await supabase
+  // Resolve (or create) the Contact for this acquisition request (ADR 0004).
+  // Owner = the resolved professional; inline PII stays on the survey as the
+  // Send-Time Snapshot. Resilient — suppression is enforced at send time.
+  let contactId: string | null = null;
+  try {
+    const contact = await findOrCreateContact(
+      context.organizationId,
+      {
+        email: input.customer_email,
+        name: input.customer_name,
+        phone: input.customer_phone,
+      },
+      userId as string,
+      'survey'
+    );
+    contactId = contact.id;
+  } catch (contactError) {
+    console.error('POST /api/v1/surveys: contact resolution failed', contactError);
+  }
+
+  // Create survey. Untyped admin client because contact_id is a new column not
+  // yet in the generated types (house pattern for new columns).
+  const { data: survey, error: surveyError } = await createUntypedAdminClient()
     .from('surveys')
     .insert({
       organization_id: context.organizationId,
       template_id: templateId as string,
       user_id: userId as string,
+      contact_id: contactId,
       customer_name: input.customer_name,
       customer_email: input.customer_email,
       customer_phone: input.customer_phone,

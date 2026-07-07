@@ -253,7 +253,7 @@ export async function getOpportunities(
   lastModifiedSince?: Date,
   stages?: string[]
 ): Promise<SalesforceOpportunity[]> {
-  let soql = `SELECT Id, AccountId, Name, StageName, Amount, CloseDate, Probability, Type, LeadSource, Description, IsClosed, IsWon, ContactId, CreatedDate, LastModifiedDate FROM Opportunity`;
+  let soql = `SELECT Id, AccountId, Name, StageName, Amount, CloseDate, Probability, Type, LeadSource, Description, IsClosed, IsWon, ContactId, OwnerId, Owner.Email, Owner.Name, CreatedDate, LastModifiedDate FROM Opportunity`;
 
   const conditions: string[] = [];
 

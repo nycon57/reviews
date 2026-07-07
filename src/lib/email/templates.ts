@@ -110,6 +110,23 @@ function wrapInEmailTemplate(
 `;
 }
 
+/**
+ * Footer unsubscribe URL for ACQUISITION emails (survey/video invitations and
+ * reminders). When the send path supplies a Contact-scoped unsubscribe link
+ * (/u/c/[token], ADR 0004 / Grill #2 decision 6) it is used; otherwise we keep
+ * the legacy email-preferences link so un-migrated callers still render a valid
+ * footer.
+ */
+function acquisitionUnsubscribeUrl(data: {
+  toEmail: string;
+  unsubscribeUrl?: string;
+}): string {
+  return (
+    data.unsubscribeUrl ??
+    `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`
+  );
+}
+
 // Survey invitation email template
 export function getSurveyInvitationEmail(data: SurveyInvitationEmailData): {
   subject: string;
@@ -129,7 +146,7 @@ export function getSurveyInvitationEmail(data: SurveyInvitationEmailData): {
     ? `for your recent ${data.transactionType}`
     : "for your recent transaction";
 
-  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+  const unsubscribeUrl = acquisitionUnsubscribeUrl(data);
 
   const content = `
     <tr>
@@ -176,7 +193,7 @@ export function getSurveyReminder3DayEmail(data: SurveyReminderEmailData): {
 } {
   const subject = `Reminder: Share your feedback with ${data.loanOfficerName}`;
 
-  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+  const unsubscribeUrl = acquisitionUnsubscribeUrl(data);
 
   const content = `
     <tr>
@@ -217,7 +234,7 @@ export function getSurveyReminder7DayEmail(data: SurveyReminderEmailData): {
 } {
   const subject = `Last chance: Share your feedback with ${data.loanOfficerName}`;
 
-  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+  const unsubscribeUrl = acquisitionUnsubscribeUrl(data);
 
   const content = `
     <tr>
@@ -1165,7 +1182,7 @@ export function getVideoTestimonialInvitationEmail(
       `
     : "";
 
-  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+  const unsubscribeUrl = acquisitionUnsubscribeUrl(data);
 
   const content = `
     <tr>
@@ -1235,7 +1252,7 @@ export function getVideoTestimonialReminder3DayEmail(
   // Sanitize URL to prevent javascript: URI injection
   const safeRequestUrl = sanitizeUrl(data.requestUrl);
 
-  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+  const unsubscribeUrl = acquisitionUnsubscribeUrl(data);
 
   const content = `
     <tr>
@@ -1294,7 +1311,7 @@ export function getVideoTestimonialReminder7DayEmail(
   // Sanitize URL to prevent javascript: URI injection
   const safeRequestUrl = sanitizeUrl(data.requestUrl);
 
-  const unsubscribeUrl = `${emailConfig.baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(data.toEmail)}`;
+  const unsubscribeUrl = acquisitionUnsubscribeUrl(data);
 
   const content = `
     <tr>

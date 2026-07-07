@@ -1,6 +1,6 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import {
   sendSurveyInvitationEmail,
   sendSurveyReminderEmail,
@@ -10,6 +10,8 @@ import type {
   SurveyInvitationEmailData,
   SurveyReminderEmailData,
 } from "@/lib/email/types";
+import { guardAcquisitionSend } from "@/lib/contacts/send-guard";
+import { resolveContactUnsubscribeUrl } from "@/lib/contacts/tokens";
 import { TIER_LIMITS, type SubscriptionTier } from "@/lib/organization/types";
 
 export interface QueueItem {
@@ -23,6 +25,7 @@ export interface QueueItem {
 export interface SurveyWithDetails {
   id: string;
   token: string;
+  contact_id: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
@@ -149,7 +152,8 @@ export async function checkRateLimit(
 export async function getSurveyForSending(
   surveyId: string
 ): Promise<SurveyWithDetails | null> {
-  const supabase = createAdminClient();
+  // Untyped client: contact_id is a new column not yet in the generated types.
+  const supabase = createUntypedAdminClient();
 
   const { data: survey, error } = await supabase
     .from("surveys")
@@ -157,6 +161,7 @@ export async function getSurveyForSending(
       `
       id,
       token,
+      contact_id,
       customer_name,
       customer_email,
       customer_phone,
@@ -204,6 +209,7 @@ export async function getSurveyForSending(
   return {
     id: survey.id,
     token: survey.token,
+    contact_id: (survey.contact_id as string | null) ?? null,
     customer_name: survey.customer_name,
     customer_email: survey.customer_email,
     customer_phone: survey.customer_phone,
@@ -306,6 +312,45 @@ export async function processQueueItem(
     return { success: true };
   }
 
+  // Send-time suppression gate (ADR 0004): the single check every acquisition
+  // send must pass. Both the initial invitation and reminders flow through here,
+  // so one gate covers them. A suppressed send is cancelled (not retried) and
+  // recorded via guardAcquisitionSend so it never vanishes silently.
+  const sendKind = item.type === "initial" ? "survey_invitation" : "survey_reminder";
+  const suppressed = await guardAcquisitionSend({
+    organizationId: survey.organization.id,
+    email: survey.customer_email,
+    channel: "email",
+    sendKind,
+    contactId: survey.contact_id,
+    sourceTable: "survey_distribution_queue",
+    sourceId: item.id,
+  });
+  if (suppressed) {
+    await supabase
+      .from("survey_distribution_queue")
+      .update({
+        status: "cancelled",
+        error_message: "Suppressed: recipient unsubscribed (email)",
+        processed_at: new Date().toISOString(),
+      })
+      .eq("id", item.id);
+    // Suppression is org-wide and durable — cancel any pending reminders too.
+    await supabase
+      .from("survey_distribution_queue")
+      .update({ status: "cancelled" })
+      .eq("survey_id", item.survey_id)
+      .eq("status", "pending");
+    return { success: true };
+  }
+
+  // Contact-scoped unsubscribe link for the acquisition email footer (ADR 0004);
+  // falls back to the legacy email-preferences link when the survey has no
+  // linked Contact (legacy rows).
+  const contactUnsubscribeUrl = survey.contact_id
+    ? (await resolveContactUnsubscribeUrl(survey.contact_id)) ?? undefined
+    : undefined;
+
   const surveyUrl = `${emailConfig.baseUrl}/survey/${survey.token}`;
 
   // Send email based on type
@@ -327,6 +372,7 @@ export async function processQueueItem(
       loanOfficerId: survey.loan_officer.id,
       surveyId: survey.id,
       customTemplateId,
+      unsubscribeUrl: contactUnsubscribeUrl,
     };
 
     result = await sendSurveyInvitationEmail(emailData);
@@ -358,6 +404,7 @@ export async function processQueueItem(
       organizationId: survey.organization.id,
       loanOfficerId: survey.loan_officer.id,
       surveyId: survey.id,
+      unsubscribeUrl: contactUnsubscribeUrl,
     };
 
     result = await sendSurveyReminderEmail(emailData);

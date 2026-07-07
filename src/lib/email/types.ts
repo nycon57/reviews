@@ -168,6 +168,13 @@ export interface BaseEmailData {
   organizationId?: string;
   loanOfficerId?: string;
   surveyId?: string;
+  /**
+   * Optional footer unsubscribe URL. Only ACQUISITION emails (survey/video
+   * invitations and reminders, review→video upsell) honor this — the send path
+   * supplies the Contact-scoped /u/c/[token] link (ADR 0004). When omitted, the
+   * builder falls back to the legacy email-preferences link.
+   */
+  unsubscribeUrl?: string;
 }
 
 // Survey invitation email data

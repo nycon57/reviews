@@ -60,6 +60,10 @@ export interface SalesforceOpportunity {
   IsClosed: boolean;
   IsWon: boolean;
   ContactId?: string; // Primary contact
+  OwnerId?: string;
+  // Owner relationship fields (SOQL Owner.Email / Owner.Name) used for
+  // acquisition owner-attribution (ADR 0004 / Grill #1 decision 10).
+  Owner?: { Email?: string; Name?: string };
   CreatedDate: string;
   LastModifiedDate: string;
 }

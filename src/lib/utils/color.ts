@@ -10,7 +10,7 @@ function analyseImageColors(
   imageUrl: string,
 ): Promise<Array<{ rgb: [number, number, number]; count: number }>> {
   return new Promise((resolve) => {
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "anonymous";
 
     img.onload = () => {

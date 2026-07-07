@@ -4,9 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import type { Json } from "@/types/database.types";
-import type { Review, ActionResult, AutoApprovalRule } from "./types";
-import { DEFAULT_AUTO_APPROVAL_RULES } from "./types";
+import type { Review, ActionResult } from "./types";
+import { queueQuoteCardKitAfterPublish } from "./asset-kit";
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -66,6 +65,47 @@ async function requireManagerRole(): Promise<{
   return {
     userId: context.id,
     organizationId: context.organization_id!,
+  };
+}
+
+async function requireReviewPublishingAccess(reviewId: string): Promise<{
+  userId: string;
+  organizationId: string;
+  existingReview: {
+    id: string;
+    status: string | null;
+    user_id: string | null;
+  };
+} | null> {
+  const context = await getUserContext();
+
+  if (!context?.organization_id) {
+    return null;
+  }
+
+  const supabase = createAdminClient();
+  const { data: existingReview } = await supabase
+    .from("reviews")
+    .select("id, status, user_id")
+    .eq("id", reviewId)
+    .eq("organization_id", context.organization_id)
+    .single();
+
+  if (!existingReview) {
+    return null;
+  }
+
+  const canManageOrg = ["admin", "manager"].includes(context.role);
+  const ownsReview = existingReview.user_id === context.id;
+
+  if (!canManageOrg && !ownsReview) {
+    return null;
+  }
+
+  return {
+    userId: context.id,
+    organizationId: context.organization_id,
+    existingReview,
   };
 }
 
@@ -448,66 +488,53 @@ export async function getReviewById(
 // Approve review schema
 const approveReviewSchema = z.object({
   reviewId: z.string().uuid(),
-  editedText: z.string().optional(),
-  publish: z.boolean().default(true),
   notes: z.string().optional(),
 });
 
-// Approve a review
+// Release a machine-quarantined review. Under the auto-publish model
+// 'pending' means quarantined-awaiting-human-release, so approving always
+// publishes.
 export async function approveReview(
   input: z.infer<typeof approveReviewSchema>
 ): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
   const validated = approveReviewSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
 
-  const { reviewId, editedText, publish } = validated.data;
+  const { reviewId } = validated.data;
+  const access = await requireReviewPublishingAccess(reviewId);
+  if (!access) {
+    return { success: false, error: "Unauthorized to publish this review" };
+  }
+
+  if (access.existingReview.status !== "pending") {
+    return { success: false, error: "Only quarantined reviews can be released" };
+  }
+
   const supabase = createAdminClient();
 
-  // Verify review belongs to organization
-  const { data: existingReview } = await supabase
-    .from("reviews")
-    .select("id, organization_id, status")
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .single();
-
-  if (!existingReview) {
-    return { success: false, error: "Review not found" };
-  }
-
-  // Update the review
-  const updateData: Record<string, unknown> = {
-    status: "approved",
-    approved_at: new Date().toISOString(),
-    approved_by: context.userId,
-    rejection_reason: null,
-  };
-
-  if (editedText !== undefined) {
-    updateData.text = editedText;
-  }
-
-  if (publish) {
-    updateData.is_published = true;
-    updateData.published_at = new Date().toISOString();
-  }
-
+  const now = new Date().toISOString();
   const { error } = await supabase
     .from("reviews")
-    .update(updateData)
-    .eq("id", reviewId);
+    .update({
+      status: "approved",
+      approved_at: now,
+      approved_by: access.userId,
+      rejection_reason: null,
+      is_published: true,
+      published_at: now,
+    })
+    .eq("id", reviewId)
+    .eq("organization_id", access.organizationId)
+    .eq("status", "pending");
 
   if (error) {
     console.error("Error approving review:", error);
     return { success: false, error: "Failed to approve review" };
   }
+
+  queueQuoteCardKitAfterPublish(access.organizationId, [reviewId], access.userId);
 
   revalidatePath("/dashboard/reviews");
   return { success: true };
@@ -523,30 +550,25 @@ const rejectReviewSchema = z.object({
 export async function rejectReview(
   input: z.infer<typeof rejectReviewSchema>
 ): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
   const validated = rejectReviewSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
 
   const { reviewId, reason } = validated.data;
-  const supabase = createAdminClient();
-
-  // Verify review belongs to organization
-  const { data: existingReview } = await supabase
-    .from("reviews")
-    .select("id, organization_id")
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .single();
-
-  if (!existingReview) {
-    return { success: false, error: "Review not found" };
+  const access = await requireReviewPublishingAccess(reviewId);
+  if (!access) {
+    return { success: false, error: "Unauthorized to reject this review" };
   }
+
+  if (access.existingReview.status !== "pending") {
+    return {
+      success: false,
+      error: "Live reviews can only be removed through a dispute.",
+    };
+  }
+
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("reviews")
@@ -556,7 +578,9 @@ export async function rejectReview(
       is_published: false,
       published_at: null,
     })
-    .eq("id", reviewId);
+    .eq("id", reviewId)
+    .eq("organization_id", access.organizationId)
+    .eq("status", "pending");
 
   if (error) {
     console.error("Error rejecting review:", error);
@@ -577,49 +601,16 @@ const updateReviewTextSchema = z.object({
 export async function updateReviewText(
   input: z.infer<typeof updateReviewTextSchema>
 ): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
   const validated = updateReviewTextSchema.safeParse(input);
   if (!validated.success) {
     return { success: false, error: validated.error.errors[0]?.message };
   }
-
-  const { reviewId, text } = validated.data;
-  const supabase = createAdminClient();
-
-  // Verify review belongs to organization
-  const { data: existingReview } = await supabase
-    .from("reviews")
-    .select("id, organization_id")
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId)
-    .single();
-
-  if (!existingReview) {
-    return { success: false, error: "Review not found" };
-  }
-
-  const { error } = await supabase
-    .from("reviews")
-    .update({ text })
-    .eq("id", reviewId);
-
-  if (error) {
-    console.error("Error updating review text:", error);
-    return { success: false, error: "Failed to update review text" };
-  }
-
-  revalidatePath("/dashboard/reviews");
-  return { success: true };
+  return { success: false, error: "Review text cannot be edited" };
 }
 
-// Bulk approve reviews
+// Bulk release machine-quarantined reviews (always publishes)
 export async function bulkApproveReviews(
-  reviewIds: string[],
-  publish: boolean = true
+  reviewIds: string[]
 ): Promise<ActionResult<{ approved: number; failed: number }>> {
   const context = await requireManagerRole();
   if (!context) {
@@ -631,25 +622,19 @@ export async function bulkApproveReviews(
   }
 
   const supabase = createAdminClient();
-  let approved = 0;
-  let failed = 0;
+  const now = new Date().toISOString();
 
-  const updateData: Record<string, unknown> = {
-    status: "approved",
-    approved_at: new Date().toISOString(),
-    approved_by: context.userId,
-    rejection_reason: null,
-  };
-
-  if (publish) {
-    updateData.is_published = true;
-    updateData.published_at = new Date().toISOString();
-  }
-
-  // Process reviews
+  // Only quarantined (pending) reviews can be released
   const { data, error } = await supabase
     .from("reviews")
-    .update(updateData)
+    .update({
+      status: "approved",
+      approved_at: now,
+      approved_by: context.userId,
+      rejection_reason: null,
+      is_published: true,
+      published_at: now,
+    })
     .in("id", reviewIds)
     .eq("organization_id", context.organizationId)
     .eq("status", "pending")
@@ -660,8 +645,14 @@ export async function bulkApproveReviews(
     return { success: false, error: "Failed to approve reviews" };
   }
 
-  approved = data?.length || 0;
-  failed = reviewIds.length - approved;
+  const approved = data?.length || 0;
+  const failed = reviewIds.length - approved;
+
+  queueQuoteCardKitAfterPublish(
+    context.organizationId,
+    (data || []).map((r) => String(r.id)),
+    context.userId
+  );
 
   revalidatePath("/dashboard/reviews");
   return { success: true, data: { approved, failed } };
@@ -708,151 +699,15 @@ export async function bulkRejectReviews(
   const rejected = data?.length || 0;
   const failed = reviewIds.length - rejected;
 
+  if (rejected === 0) {
+    return {
+      success: false,
+      error: "Live reviews can only be removed through a dispute.",
+    };
+  }
+
   revalidatePath("/dashboard/reviews");
   return { success: true, data: { rejected, failed } };
-}
-
-// Revert review to pending status
-export async function revertToPending(reviewId: string): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("reviews")
-    .update({
-      status: "pending",
-      approved_at: null,
-      approved_by: null,
-      rejection_reason: null,
-      is_published: false,
-      published_at: null,
-    })
-    .eq("id", reviewId)
-    .eq("organization_id", context.organizationId);
-
-  if (error) {
-    console.error("Error reverting review:", error);
-    return { success: false, error: "Failed to revert review" };
-  }
-
-  revalidatePath("/dashboard/reviews");
-  return { success: true };
-}
-
-// Get auto-approval rules for organization
-export async function getAutoApprovalRules(): Promise<
-  ActionResult<AutoApprovalRule[]>
-> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = createAdminClient();
-
-  const { data: org, error } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", context.organizationId)
-    .single();
-
-  if (error) {
-    console.error("Error fetching organization settings:", error);
-    return { success: false, error: "Failed to fetch auto-approval rules" };
-  }
-
-  const settings = (org?.settings as Record<string, unknown>) || {};
-  const rules = (settings.autoApprovalRules as AutoApprovalRule[]) || DEFAULT_AUTO_APPROVAL_RULES;
-
-  return { success: true, data: rules };
-}
-
-// Update auto-approval rules
-export async function updateAutoApprovalRules(
-  rules: AutoApprovalRule[]
-): Promise<ActionResult> {
-  const context = await requireManagerRole();
-  if (!context) {
-    return { success: false, error: "Unauthorized - Manager role required" };
-  }
-
-  const supabase = createAdminClient();
-
-  // Get current settings
-  const { data: org } = await supabase
-    .from("organizations")
-    .select("settings")
-    .eq("id", context.organizationId)
-    .single();
-
-  const currentSettings = (org?.settings as Record<string, unknown>) || {};
-  const updatedSettings = {
-    ...currentSettings,
-    autoApprovalRules: rules,
-  } as unknown as Json;
-
-  const { error } = await supabase
-    .from("organizations")
-    .update({ settings: updatedSettings })
-    .eq("id", context.organizationId);
-
-  if (error) {
-    console.error("Error updating auto-approval rules:", error);
-    return { success: false, error: "Failed to update auto-approval rules" };
-  }
-
-  return { success: true };
-}
-
-// Apply auto-approval rules to a review (called when review is created)
-export async function applyAutoApprovalRules(
-  reviewId: string,
-  organizationId: string,
-  rating: number
-): Promise<{ autoApproved: boolean }> {
-  const adminClient = createAdminClient();
-
-  // Get organization settings
-  const { data: org } = await adminClient
-    .from("organizations")
-    .select("settings")
-    .eq("id", organizationId)
-    .single();
-
-  const settings = (org?.settings as Record<string, unknown>) || {};
-  const rules = (settings.autoApprovalRules as AutoApprovalRule[]) || DEFAULT_AUTO_APPROVAL_RULES;
-
-  // Check if any enabled rule matches
-  let shouldAutoApprove = false;
-
-  for (const rule of rules) {
-    if (!rule.enabled) continue;
-
-    if (rule.type === "rating" && rule.config.minRating) {
-      if (rating >= rule.config.minRating) {
-        shouldAutoApprove = true;
-        break;
-      }
-    }
-  }
-
-  if (shouldAutoApprove) {
-    await adminClient
-      .from("reviews")
-      .update({
-        status: "approved",
-        approved_at: new Date().toISOString(),
-        is_published: true,
-        published_at: new Date().toISOString(),
-      })
-      .eq("id", reviewId);
-  }
-
-  return { autoApproved: shouldAutoApprove };
 }
 
 // Get review statistics for dashboard

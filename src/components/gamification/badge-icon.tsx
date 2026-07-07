@@ -1,5 +1,6 @@
 "use client";
 
+import { createElement } from "react";
 import { Medal } from "@phosphor-icons/react";
 import {
   Tooltip,
@@ -68,7 +69,7 @@ export function BadgeIcon({
   isEarned = true,
   className,
 }: BadgeIconProps) {
-  const Icon = getIconOrDefault(badge.icon, Medal);
+  const iconComponent = getIconOrDefault(badge.icon, Medal);
   const tier = badge.tier || "bronze";
   const colors = tierColors[tier];
   const sizeClasses = sizeConfig[size];
@@ -87,7 +88,11 @@ export function BadgeIcon({
         className
       )}
     >
-      <Icon size={sizeClasses.iconSize} weight="fill" className={colors.icon} />
+      {createElement(iconComponent, {
+        size: sizeClasses.iconSize,
+        weight: "fill",
+        className: colors.icon,
+      })}
       {tier === "platinum" && isEarned && (
         <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 opacity-30 blur-sm -z-10" />
       )}

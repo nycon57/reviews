@@ -21,6 +21,8 @@ import { TIER_FEATURES } from "@/lib/organization/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { getUnifiedRequests, getUnifiedRequestStats } from "@/lib/requests/unified-requests";
+import { getReviewFlags, getReviewFlagStats } from "@/lib/reviews/flag-actions";
+import { DisputeQueue } from "@/components/reviews/dispute-queue";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
 import { getAccessContext } from "@/lib/access";
 import { ShareStudioCards } from "@/components/dashboard/share-studio-cards";
@@ -114,6 +116,7 @@ export default async function ReviewsPage({
   ]);
 
   const canSendRequests = hasPermission(accessCtx, PERMISSIONS.SEND_SURVEY);
+  const canManageDisputes = userRole === "admin" || userRole === "manager";
 
   // Fetch all data in parallel
   const [
@@ -126,6 +129,10 @@ export default async function ReviewsPage({
     orgResult,
     requestsResult,
     requestStatsResult,
+    openFlagsResult,
+    resolvedFlagsResult,
+    flagStatsResult,
+    accountTypeRow,
   ] = await Promise.all([
     getAggregatedReviews({ page: 1, limit: 20 }),
     getReviewStats(),
@@ -136,6 +143,16 @@ export default async function ReviewsPage({
     getCurrentOrganization(),
     canSendRequests ? getUnifiedRequests({ page: 1, pageSize: 25 }) : null,
     canSendRequests ? getUnifiedRequestStats() : null,
+    canManageDisputes ? getReviewFlags({ status: "pending" }) : null,
+    canManageDisputes ? getReviewFlags({ status: "resolved" }) : null,
+    canManageDisputes ? getReviewFlagStats() : null,
+    canManageDisputes && accessCtx
+      ? createAdminClient()
+          .from("organizations")
+          .select("account_type")
+          .eq("id", accessCtx.organizationId)
+          .single()
+      : null,
   ]);
 
   // Process text reviews data
@@ -190,6 +207,17 @@ export default async function ReviewsPage({
   // Determine AI access based on subscription tier
   const subscriptionTier = orgResult.organization?.subscription_tier ?? "basic";
   const hasAiAccess = TIER_FEATURES[subscriptionTier]?.ai_insights ?? false;
+
+  // Process disputes data (admins/managers only)
+  const openFlags = openFlagsResult?.success ? openFlagsResult.data?.flags ?? [] : [];
+  const resolvedFlags = resolvedFlagsResult?.success
+    ? resolvedFlagsResult.data?.flags ?? []
+    : [];
+  const openDisputeCount = flagStatsResult?.success
+    ? flagStatsResult.data?.open ?? 0
+    : openFlags.length;
+  const accountType =
+    accountTypeRow?.data?.account_type === "enterprise" ? "enterprise" : "individual";
 
   // Process requests data
   const initialRequests = requestsResult?.requests ?? [];
@@ -251,6 +279,16 @@ export default async function ReviewsPage({
               <Suspense fallback={<Skeleton className="h-[200px]" />}>
                 <ShareStudioCards organizationId={accessCtx.organizationId} />
               </Suspense>
+            ) : undefined
+          }
+          openDisputeCount={openDisputeCount}
+          disputesContent={
+            canManageDisputes ? (
+              <DisputeQueue
+                initialOpenFlags={openFlags}
+                initialResolvedFlags={resolvedFlags}
+                accountType={accountType}
+              />
             ) : undefined
           }
         />

@@ -3,20 +3,31 @@
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { headers } from "next/headers";
-import { sendProfileReferralIntroductionEmail } from "@/lib/email/send";
+import {
+  sendProfileReferralIntroductionEmail,
+  sendReviewVerificationEmail,
+} from "@/lib/email/send";
 import { emailConfig } from "@/lib/email/client";
-import type { ProfileReferralIntroductionEmailData } from "@/lib/email/types";
+import type {
+  ProfileReferralIntroductionEmailData,
+  ReviewVerificationEmailData,
+} from "@/lib/email/types";
+import { screenReviewText } from "@/lib/reviews/moderation";
+import { generateVerificationToken } from "@/lib/reviews/verification";
+import { routeNewFlag } from "@/lib/reviews/flag-actions";
 
 // Schema definitions
 const submitPublicReviewSchema = z.object({
   loanOfficerId: z.string().uuid(),
   rating: z.number().int().min(1).max(5),
-  text: z.string().min(10).max(2000).optional(),
+  text: z.string().min(10).max(2000),
   title: z.string().max(200).optional(),
   customerName: z.string().max(100).optional(),
-  customerEmail: z.string().email().optional().or(z.literal("")),
+  customerEmail: z.string().email("Please enter a valid email"),
   customerLocation: z.string().max(100).optional(),
-  consentGiven: z.boolean().default(false),
+  consentGiven: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the terms to submit a review",
+  }),
 });
 
 const submitReferralSchema = z.object({
@@ -52,7 +63,11 @@ export type ActionResult<T = void> = {
 };
 
 /**
- * Submit a public review from the profile page
+ * Submit a public review from the profile page.
+ *
+ * Writes directly to `reviews` with source 'direct'. The review stays
+ * unpublished until the reviewer confirms their email; publication then
+ * depends on the machine-screening verdict recorded here.
  */
 export async function submitPublicReview(
   input: z.infer<typeof submitPublicReviewSchema>
@@ -70,7 +85,7 @@ export async function submitPublicReview(
     // Verify user exists and accepts public reviews
     const { data: user, error: userError } = await supabase
       .from("users")
-      .select("id, organization_id, accepts_public_reviews")
+      .select("id, organization_id, accepts_public_reviews, full_name")
       .eq("id", validated.loanOfficerId)
       .eq("is_active", true)
       .single();
@@ -87,37 +102,96 @@ export async function submitPublicReview(
       return { success: false, error: "This professional is not accepting public reviews" };
     }
 
-    // Determine initial status: auto-approve 4-5 star reviews, pending for 1-3
-    const status = validated.rating >= 4 ? "approved" : "pending";
+    // Rate limit: max 3 direct submissions per hour per IP per professional
+    if (ipAddress) {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      // TODO: Remove type assertion after running db:push && db:types
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { count, error: countError } = await (supabase as any)
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .eq("source", "direct")
+        .eq("user_id", validated.loanOfficerId)
+        .gte("created_at", oneHourAgo)
+        .eq("metadata->>ip_address", ipAddress);
 
-    // Insert the review submission
-    const { data: submission, error: insertError } = await supabase
-      .from("public_review_submissions")
+      if (countError) {
+        console.error("Error checking review rate limit:", countError);
+      } else if ((count ?? 0) >= 3) {
+        return {
+          success: false,
+          error: "Too many submissions from this network. Please try again later.",
+        };
+      }
+    }
+
+    // Machine screening (fail-closed: errors quarantine)
+    const screenInput = validated.title
+      ? `${validated.text}\n${validated.title}`
+      : validated.text;
+    const screen = await screenReviewText(screenInput, validated.customerName);
+
+    // Email verification token: store only the sha256 hash
+    const { rawToken, tokenHash } = generateVerificationToken();
+
+    // Insert the review (unpublished until email verification)
+    // TODO: Remove type assertion after running db:push && db:types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: review, error: insertError } = await (supabase as any)
+      .from("reviews")
       .insert({
-        user_id: validated.loanOfficerId,
+        source: "direct",
         organization_id: user.organization_id,
+        user_id: validated.loanOfficerId,
         rating: validated.rating,
-        text: validated.text || null,
+        text: validated.text,
         title: validated.title || null,
         customer_name: validated.customerName || null,
-        customer_email: validated.customerEmail || null,
+        customer_email: validated.customerEmail,
         customer_location: validated.customerLocation || null,
-        consent_given: validated.consentGiven,
-        status,
-        ip_address: ipAddress,
-        user_agent: userAgent,
+        review_date: new Date().toISOString(),
+        status: "pending",
+        is_published: false,
+        metadata: {
+          consent_given: validated.consentGiven,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+        },
+        moderation_verdict: screen.verdict,
+        moderation_reasons: screen.reasons,
+        moderation_checked_at: new Date().toISOString(),
+        moderation_provider: screen.provider,
+        verification_token_hash: tokenHash,
       })
-      .select("id, status")
+      .select("id")
       .single();
 
-    if (insertError || !submission) {
+    if (insertError || !review) {
       console.error("Error submitting review:", insertError);
       return { success: false, error: "Failed to submit review" };
     }
 
+    // Send verification email (fire-and-forget — don't block the response)
+    const emailData: ReviewVerificationEmailData = {
+      toEmail: validated.customerEmail,
+      toName: validated.customerName,
+      organizationId: user.organization_id,
+      loanOfficerId: validated.loanOfficerId,
+      reviewId: review.id,
+      customerName: validated.customerName,
+      professionalName: user.full_name ?? "this professional",
+      rating: validated.rating,
+      reviewText: validated.text,
+      verifyUrl: `${emailConfig.baseUrl}/review/verify/${rawToken}`,
+    };
+
+    sendReviewVerificationEmail(emailData).catch((err) => {
+      console.error("Failed to send review verification email:", err);
+    });
+
     return {
       success: true,
-      data: { id: submission.id, status: submission.status || "pending" },
+      data: { id: review.id, status: "awaiting_verification" },
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -281,7 +355,7 @@ export async function flagReview(
     // Insert flag into review_flags table
     // TODO: Remove type assertion after running db:push && db:types
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: insertError } = await (supabase as any)
+    const { data: flag, error: insertError } = await (supabase as any)
       .from("review_flags")
       .insert({
         review_id: validated.reviewId,
@@ -292,12 +366,17 @@ export async function flagReview(
         reporter_email: validated.reporterEmail || null,
         ip_address: ipAddress,
         user_agent: userAgent,
-      });
+      })
+      .select("id")
+      .single();
 
-    if (insertError) {
+    if (insertError || !flag) {
       console.error("Error inserting review flag:", insertError);
       return { success: false, error: "Failed to submit report" };
     }
+
+    // Route the dispute: notify enterprise managers or escalate to RepWell
+    await routeNewFlag({ id: flag.id as string }, review.organization_id);
 
     return { success: true };
   } catch (error) {

@@ -65,7 +65,6 @@ function BlockPreview({ block }: { block: BlockNode }) {
     case "image":
       return p.src ? (
         <div style={{ textAlign: (p.align as "left" | "center" | "right") ?? "center" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={p.src as string}
             alt={(p.alt as string) ?? ""}
@@ -185,7 +184,6 @@ function BlockPreview({ block }: { block: BlockNode }) {
     case "logo":
       return p.src ? (
         <div style={{ textAlign: (p.align as "left" | "center" | "right") ?? "center" }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={p.src as string}
             alt={(p.alt as string) ?? "Logo"}

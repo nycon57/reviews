@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import { useSyncedState } from "@/hooks/use-synced-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -51,13 +52,9 @@ export function EditorToolbar({
   const { state, zoom, setZoom, canUndo, canRedo, undo, redo, setCanvasSize, setBackground, setGridSize } =
     editor;
 
-  const [customWidth, setCustomWidth] = useState(state.canvasSize.width);
-  const [customHeight, setCustomHeight] = useState(state.canvasSize.height);
-
-  useEffect(() => {
-    setCustomWidth(state.canvasSize.width);
-    setCustomHeight(state.canvasSize.height);
-  }, [state.canvasSize.width, state.canvasSize.height]);
+  // Sync custom inputs when the canvas size changes externally.
+  const [customWidth, setCustomWidth] = useSyncedState(state.canvasSize.width);
+  const [customHeight, setCustomHeight] = useSyncedState(state.canvasSize.height);
 
   const handleZoomIn = useCallback(() => {
     const idx = ZOOM_LEVELS.indexOf(zoom);

@@ -235,7 +235,6 @@ export const mainNavigation: NavDropdown[] = [
 export const directNavLinks = [
   { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
-  { label: "Developers", href: "/developers" },
   { label: "Contact", href: "/contact" },
 ];
 

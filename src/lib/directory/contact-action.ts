@@ -23,7 +23,7 @@ export async function contactProfessional(input: {
     return { success: false, error: "Invalid input." };
   }
 
-  const { professionalEmail, professionalName, senderName, senderEmail, message } = parsed.data;
+  const { professionalEmail, senderName, senderEmail, message } = parsed.data;
 
   const safeName = escapeHtml(senderName);
   const safeEmail = escapeHtml(senderEmail);
@@ -35,7 +35,7 @@ export async function contactProfessional(input: {
     await resend.emails.send({
       from: emailConfig.defaultFromEmail
         ? `RepWell Directory <${emailConfig.defaultFromEmail}>`
-        : "RepWell Directory <noreply@repwell.ai>",
+        : "RepWell Directory <noreply@mail.repwell.ai>",
       to: professionalEmail,
       replyTo: senderEmail,
       subject: `New message from ${sanitizeSubjectField(senderName)} via RepWell`,

@@ -22,9 +22,26 @@ vi.mock("@/lib/email", () => ({
   sendVideoTestimonialReceivedEmail: vi.fn(),
 }));
 
+vi.mock("@/lib/reviews/moderation", () => ({
+  screenReviewText: vi.fn().mockResolvedValue({
+    verdict: "pass",
+    reasons: [],
+    provider: "baseline",
+  }),
+}));
+
+vi.mock("@/lib/reviews/asset-kit", () => ({
+  queueQuoteCardKitAfterPublish: vi.fn(),
+}));
+
+vi.mock("@/lib/reviews/notifications", () => ({
+  notifyReviewNeedsResponse: vi.fn(),
+}));
+
 import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { ensureSmartLinkForSource } from "@/lib/share-studio/service";
 import {
-  recordConsentEvent,
+  getShareKit,
   submitCustomerInfoAndConsent,
   submitVideoTestimonial,
 } from "../public-actions";
@@ -40,6 +57,7 @@ describe("video testimonial public actions", () => {
       customerInfo: {
         displayName: "Jane Customer",
         relationship: "home_buyer",
+        rating: 5,
       },
       consents: {
         nilConsent: false,
@@ -50,19 +68,6 @@ describe("video testimonial public actions", () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain("likeness consent");
-  });
-
-  it("rejects recordConsentEvent with invalid payload", async () => {
-    const result = await recordConsentEvent({
-      requestId: "not-a-uuid",
-      consentType: "usage_rights",
-      granted: true,
-      consentVersion: "2026-03-01-v1",
-      legalTextSnapshot: "snapshot",
-    });
-
-    expect(result.success).toBe(false);
-    expect(result.error).toContain("Invalid request ID");
   });
 
   it("returns existing response for idempotent submitVideoTestimonial retry", async () => {
@@ -106,6 +111,16 @@ describe("video testimonial public actions", () => {
             select: vi.fn(() => responseQuery),
           };
         }
+        if (table === "organizations") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi
+                .fn()
+                .mockResolvedValue({ data: { settings: null }, error: null }),
+            })),
+          };
+        }
         return {};
       }),
     };
@@ -123,5 +138,165 @@ describe("video testimonial public actions", () => {
     expect(result.success).toBe(true);
     expect(result.responseId).toBe("resp-existing");
   });
-});
 
+  it("does not ensure a public smart link for pending video share kits", async () => {
+    const requestQuery = {
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          id: "req-1",
+          organization_id: "org-1",
+          user_id: "user-1",
+          customer_name: "Jane Customer",
+          source_metadata: { share_caption: "I loved working with Loan." },
+          users: {
+            full_name: "Loan Officer",
+            google_place_id: null,
+            zillow_profile_url: null,
+          },
+        },
+        error: null,
+      }),
+    };
+
+    const responseQuery = {
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          id: "resp-1",
+          transcription: "Great experience.",
+          transcription_status: "completed",
+          ai_generated_text: "Jane had a great experience.",
+          ai_generation_status: "completed",
+          thumbnail_url: null,
+          approval_status: "pending",
+          quarantined: false,
+        },
+        error: null,
+      }),
+    };
+
+    const mockSupabase = {
+      from: vi.fn((table: string) => {
+        if (table === "video_testimonial_requests") {
+          return {
+            select: vi.fn(() => requestQuery),
+          };
+        }
+        if (table === "video_testimonial_responses") {
+          return {
+            select: vi.fn(() => responseQuery),
+          };
+        }
+        if (table === "organizations") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi
+                .fn()
+                .mockResolvedValue({ data: { settings: null }, error: null }),
+            })),
+          };
+        }
+        return {};
+      }),
+    };
+
+    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const result = await getShareKit("test-token");
+
+    expect(result.success).toBe(true);
+    expect(result.data?.status).toBe("ready");
+    expect(result.data?.smartLinkUrl).toBeNull();
+    expect(result.data?.smartLinkPendingApproval).toBe(true);
+    expect(ensureSmartLinkForSource).not.toHaveBeenCalled();
+  });
+
+  it("ensures a public smart link immediately for 4+ star video share kits", async () => {
+    (ensureSmartLinkForSource as ReturnType<typeof vi.fn>).mockResolvedValue({
+      url: "/s/great-review",
+    });
+
+    const requestQuery = {
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: {
+          id: "req-1",
+          organization_id: "org-1",
+          user_id: "user-1",
+          customer_name: "Jane Customer",
+          source_metadata: { share_caption: "I loved working with Loan." },
+          users: {
+            full_name: "Loan Officer",
+            google_place_id: null,
+            zillow_profile_url: null,
+          },
+        },
+        error: null,
+      }),
+    };
+
+    const responseQuery = {
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          id: "resp-1",
+          transcription: "Great experience.",
+          transcription_status: "completed",
+          ai_generated_text: "Jane had a great experience.",
+          ai_generation_status: "completed",
+          thumbnail_url: null,
+          approval_status: "pending",
+          customer_rating: 5,
+          quarantined: false,
+        },
+        error: null,
+      }),
+    };
+
+    const mockSupabase = {
+      from: vi.fn((table: string) => {
+        if (table === "video_testimonial_requests") {
+          return {
+            select: vi.fn(() => requestQuery),
+          };
+        }
+        if (table === "video_testimonial_responses") {
+          return {
+            select: vi.fn(() => responseQuery),
+          };
+        }
+        if (table === "organizations") {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn().mockReturnThis(),
+              maybeSingle: vi
+                .fn()
+                .mockResolvedValue({ data: { settings: null }, error: null }),
+            })),
+          };
+        }
+        return {};
+      }),
+    };
+
+    (createAdminClient as ReturnType<typeof vi.fn>).mockReturnValue(mockSupabase);
+
+    const result = await getShareKit("test-token");
+
+    expect(result.success).toBe(true);
+    expect(result.data?.smartLinkUrl).toBe("https://app.repwell.com/s/great-review");
+    expect(result.data?.smartLinkPendingApproval).toBe(false);
+    expect(ensureSmartLinkForSource).toHaveBeenCalledWith({
+      organizationId: "org-1",
+      sourceType: "video_testimonial",
+      sourceId: "resp-1",
+      actorUserId: "user-1",
+    });
+  });
+});

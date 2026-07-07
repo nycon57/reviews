@@ -14,10 +14,12 @@ import {
   Link as Link2,
   Check,
   Medal,
+  VideoCamera,
 } from "@phosphor-icons/react";
 import { motion } from "framer-motion";
 
 import { cn, getInitials } from "@/lib/utils";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,12 +51,22 @@ export const SOURCE_CONFIG: Record<string, { icon: string; name: string; url?: s
 
 export function SourceIcon({ source }: { source: string }) {
   const normalizedSource = source.toLowerCase();
+  const sourceLabel = formatReviewSource(source);
 
   // Map internal/survey sources to RepWell
   const mappedSource =
     normalizedSource === "internal" || normalizedSource === "survey"
       ? "repwell"
       : normalizedSource;
+
+  if (mappedSource === "video_testimonial") {
+    return (
+      <Badge variant="outline" className="gap-1 text-xs">
+        <VideoCamera className="h-3 w-3" weight="duotone" />
+        {sourceLabel}
+      </Badge>
+    );
+  }
 
   const config = SOURCE_CONFIG[mappedSource];
 
@@ -91,7 +103,7 @@ export function SourceIcon({ source }: { source: string }) {
 
   return (
     <Badge variant="outline" className="text-xs">
-      {source}
+      {sourceLabel}
     </Badge>
   );
 }

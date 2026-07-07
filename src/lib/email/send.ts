@@ -49,6 +49,11 @@ import type {
   TrialEnding5WinbackEmailData,
   // Profile referral introduction
   ProfileReferralIntroductionEmailData,
+  // Review verification (direct review submissions)
+  ReviewVerificationEmailData,
+  ReviewVideoUpsellEmailData,
+  // Review dispute escalation (individual account disputes)
+  ReviewDisputeEscalationEmailData,
 } from "./types";
 import {
   getSurveyInvitationEmail,
@@ -90,7 +95,12 @@ import {
   getTrialEnding4GracePeriodEmail,
   getTrialEnding5WinbackEmail,
 } from "./trial-ending-templates";
-import { renderProfileReferralIntroductionEmail } from "./templates/index";
+import {
+  renderProfileReferralIntroductionEmail,
+  renderReviewVerificationEmail,
+  renderReviewVideoUpsellEmail,
+  renderReviewDisputeEscalationEmail,
+} from "./templates/index";
 import { resolveTemplateById } from "@/lib/email-builder/actions";
 
 // Check if email is unsubscribed
@@ -2745,6 +2755,149 @@ export async function sendProfileReferralIntroductionEmail(
     templateName: "profile_referral_introduction",
     organizationId: data.organizationId,
     loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
+
+  return result;
+}
+
+// =============================================================================
+// REVIEW VERIFICATION EMAIL
+// =============================================================================
+
+/**
+ * Send review verification email for a direct (pro-page) review submission.
+ * The reviewer must click the link to publish their review. This is a
+ * consent-critical transactional email, so it intentionally skips the
+ * unsubscribe check: without it the reviewer could never verify.
+ */
+export async function sendReviewVerificationEmail(
+  data: ReviewVerificationEmailData
+): Promise<EmailSendResult> {
+  const fromAddress = getFromAddress(data.organizationName);
+  const { subject, html } = await renderReviewVerificationEmail(data);
+  const idempotencyKey = `review-verification-${data.reviewId}`;
+
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.customerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "review_verification" },
+      { name: "review_id", value: data.reviewId },
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
+
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.customerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName: "review_verification",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
+
+  return result;
+}
+
+/**
+ * Send the review video upsell email inviting a published text reviewer to
+ * record a quick video version. Idempotent per review.
+ */
+export async function sendReviewVideoUpsellEmail(
+  data: ReviewVideoUpsellEmailData
+): Promise<EmailSendResult> {
+  const fromAddress = getFromAddress(data.organizationName);
+  const { subject, html } = await renderReviewVideoUpsellEmail(data);
+  const idempotencyKey = `review-video-upsell-${data.reviewId}`;
+
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    toName: data.customerName,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    userId: data.loanOfficerId,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "review_video_upsell" },
+      { name: "review_id", value: data.reviewId },
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
+
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    toName: data.customerName,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: data.organizationName,
+    subject,
+    templateName: "review_video_upsell",
+    organizationId: data.organizationId,
+    loanOfficerId: data.loanOfficerId,
+    resendMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    errorMessage: result.error,
+  });
+
+  return result;
+}
+
+/**
+ * Send a review dispute escalation email to the RepWell moderation team.
+ * Used for individual accounts, which cannot adjudicate their own disputes.
+ */
+export async function sendReviewDisputeEscalationEmail(
+  data: ReviewDisputeEscalationEmailData
+): Promise<EmailSendResult> {
+  const fromAddress = getFromAddress("RepWell");
+  const { subject, html } = await renderReviewDisputeEscalationEmail(data);
+  const idempotencyKey = `review-dispute-escalation-${data.flagId}`;
+
+  const result = await sendWithReliability({
+    to: data.toEmail,
+    from: fromAddress,
+    subject,
+    html,
+    idempotencyKey,
+    isTransactional: true,
+    tags: [
+      { name: "template", value: "review_dispute_escalation" },
+      { name: "review_id", value: data.reviewId },
+      ...(data.organizationId
+        ? [{ name: "organization_id", value: data.organizationId }]
+        : []),
+    ],
+  });
+
+  // Log email result
+  await logEmail({
+    toEmail: data.toEmail,
+    fromEmail: emailConfig.defaultFromEmail,
+    fromName: "RepWell",
+    subject,
+    templateName: "review_dispute_escalation",
+    organizationId: data.organizationId,
     resendMessageId: result.messageId,
     status: result.success ? "sent" : "failed",
     errorMessage: result.error,

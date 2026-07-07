@@ -19,15 +19,8 @@ import {
 } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 import { useReviewQueue } from "./review-queue-context";
-
-const SOURCE_LABELS: Record<string, string> = {
-  internal: "Survey",
-  google: "Google",
-  zillow: "Zillow",
-  facebook: "Facebook",
-  yelp: "Yelp",
-};
 
 export function ReviewFiltersPanel() {
   const { state, actions } = useReviewQueue();
@@ -78,9 +71,9 @@ export function ReviewFiltersPanel() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="pending">Needs attention</SelectItem>
+            <SelectItem value="approved">Live</SelectItem>
+            <SelectItem value="rejected">Removed</SelectItem>
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
@@ -96,7 +89,7 @@ export function ReviewFiltersPanel() {
             <SelectItem value="all">All Sources</SelectItem>
             {availableSources.map((source) => (
               <SelectItem key={source} value={source}>
-                {SOURCE_LABELS[source] || source.charAt(0).toUpperCase() + source.slice(1)}
+                {formatReviewSource(source)}
               </SelectItem>
             ))}
           </SelectContent>

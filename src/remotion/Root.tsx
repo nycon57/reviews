@@ -69,6 +69,20 @@ const defaultVideoTestimonialProps: VideoTestimonialProps = {
   showIntro: true,
   showOutro: true,
   videoDurationMs: 10000,
+  trimStartMs: 0,
+  trimEndMs: 10000,
+  sourceWidth: 1280,
+  sourceHeight: 720,
+  music: null,
+  endCard: {
+    professionalName: "Sarah Johnson",
+    professionalTitle: "Senior Loan Officer",
+    professionalPhotoUrl: null,
+    ctaText: "Get Started",
+    qrUrl: "https://repwell.com/s/example",
+    phone: "(555) 123-4567",
+    website: "repwell.com",
+  },
 };
 
 const defaultTextTestimonialProps: TextTestimonialProps = {
@@ -341,6 +355,23 @@ export const RemotionRoot: React.FC = () => {
         width={1080}
         height={1080}
         defaultProps={{ ...defaultSocialClipProps, format: "1:1" }}
+        calculateMetadata={({ props }) => ({
+          durationInFrames: calculateSocialClipDuration(props as unknown as SocialClipProps, FPS),
+        })}
+      />
+
+      {/* Social Clip - 16:9 Landscape */}
+      <Composition
+        id="SocialClip-16-9"
+        component={SocialClipComponent}
+        durationInFrames={calculateSocialClipDuration(
+          { ...defaultSocialClipProps, format: "16:9" },
+          FPS
+        )}
+        fps={FPS}
+        width={1920}
+        height={1080}
+        defaultProps={{ ...defaultSocialClipProps, format: "16:9" }}
         calculateMetadata={({ props }) => ({
           durationInFrames: calculateSocialClipDuration(props as unknown as SocialClipProps, FPS),
         })}

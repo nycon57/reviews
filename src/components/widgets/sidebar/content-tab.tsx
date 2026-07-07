@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSyncedState } from "@/hooks/use-synced-state";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,14 +24,16 @@ import {
 } from "./content-defaults";
 
 function TruncateLengthField({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const [localValue, setLocalValue] = useState(String(value));
+  const [localValue, setLocalValue] = useSyncedState(String(value));
   const [error, setError] = useState("");
 
-  // Sync from parent when value changes externally
-  useEffect(() => {
-    setLocalValue(String(value));
+  // useSyncedState re-syncs localValue when `value` changes externally; also
+  // clear any stale validation error on that same transition.
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setError("");
-  }, [value]);
+  }
 
   const validate = (str: string) => {
     if (str.trim() === "") {

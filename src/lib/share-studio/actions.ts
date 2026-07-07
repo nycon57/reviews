@@ -8,7 +8,11 @@ import {
   createRenderJob,
   ensureSmartLinkForSource,
   getShareStudioAssetsBySource,
+  getRenderJob,
+  queueClipRender,
+  kickRenderWorker,
 } from "@/lib/share-studio/service";
+import type { ClipRenderOptions } from "@/lib/share-studio/clip-renderer";
 import { resolveBrandTokens } from "@/lib/share-studio/template-resolver";
 import { renderStillWithSatori } from "@/lib/share-studio/satori-renderer";
 import { renderTemplateToPng } from "@/lib/share-studio/templates/svg-renderer";
@@ -180,11 +184,7 @@ async function queueRenderJobForSource(input: {
     revalidatePath("/dashboard/share-studio");
 
     // Fire-and-forget: trigger render worker immediately for faster processing
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-    fetch(`${appUrl}/api/cron/share-render-jobs`, {
-      method: "POST",
-      headers: { "x-cron-secret": process.env.CRON_SECRET || "" },
-    }).catch(() => {});
+    kickRenderWorker();
 
     return {
       success: true,
@@ -197,6 +197,149 @@ async function queueRenderJobForSource(input: {
       error: err instanceof Error ? err.message : "Failed to queue render job",
     };
   }
+}
+
+/**
+ * Queue a Clip render (branded VideoTestimonial composition) for a video
+ * testimonial response. Used by the asset creator / tweak panel; always
+ * renders, even when a kit clip already exists (regenerate).
+ */
+export async function queueClipRenderJob(
+  videoResponseId: string,
+  options: ClipRenderOptions & { musicTrackId?: string }
+): Promise<QueueRenderAssetResult> {
+  const context = await getAuthenticatedOrganizationContext();
+  if (!context) {
+    return { success: false, error: "Could not load user profile" };
+  }
+
+  // Music is resolved server-side from the curated library; clients send a
+  // track id, never a URL, so the render pipeline only plays approved audio.
+  const { musicTrackId, ...clipOptions } = options;
+  clipOptions.music = "off";
+  if (musicTrackId) {
+    const tracks = await getClipMusicTracks();
+    const track = tracks.find((candidate) => candidate.id === musicTrackId);
+    if (!track) {
+      return { success: false, error: "Selected music track is unavailable" };
+    }
+    clipOptions.music = { url: track.url };
+  }
+
+  try {
+    const result = await queueClipRender({
+      organizationId: context.organizationId,
+      videoResponseId,
+      actorUserId: context.userId,
+      options: clipOptions as unknown as Record<string, unknown>,
+      idempotent: false,
+    });
+
+    revalidatePath("/dashboard/share-studio");
+
+    return {
+      success: true,
+      jobId: result.jobId ?? undefined,
+      proofItemId: result.proofItemId,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to queue clip render",
+    };
+  }
+}
+
+export interface ClipMusicTrack {
+  id: string;
+  name: string;
+  mood: string;
+  description: string | null;
+  url: string;
+  durationSeconds: number | null;
+}
+
+/** Curated background-music library shown in the asset creator. */
+export async function getClipMusicTracks(): Promise<ClipMusicTrack[]> {
+  const context = await getAuthenticatedOrganizationContext();
+  if (!context) return [];
+
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("clip_music_tracks")
+    .select("id, name, mood, description, url, duration_seconds")
+    .eq("is_active", true)
+    .order("sort_order");
+
+  if (error) {
+    console.error("[share-studio] Failed to load clip music tracks:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => ({
+    id: String(row.id),
+    name: String(row.name),
+    mood: String(row.mood),
+    description: (row.description as string | null) ?? null,
+    url: String(row.url),
+    durationSeconds:
+      typeof row.duration_seconds === "number"
+        ? row.duration_seconds
+        : row.duration_seconds
+          ? Number(row.duration_seconds)
+          : null,
+  }));
+}
+
+export interface RenderJobStatusResult {
+  status: "queued" | "processing" | "completed" | "failed" | "not_found";
+  errorMessage: string | null;
+  asset: { url: string; mimeType: string | null } | null;
+}
+
+/** Poll a render job until it resolves; used by the asset creator modal. */
+export async function getRenderJobStatus(
+  jobId: string
+): Promise<RenderJobStatusResult> {
+  const context = await getAuthenticatedOrganizationContext();
+  if (!context) {
+    return { status: "not_found", errorMessage: "Not authenticated", asset: null };
+  }
+
+  const job = await getRenderJob(context.organizationId, jobId);
+  if (!job) {
+    return { status: "not_found", errorMessage: null, asset: null };
+  }
+
+  const rawStatus = String(job.status ?? "queued");
+  const status: RenderJobStatusResult["status"] = [
+    "queued",
+    "processing",
+    "completed",
+    "failed",
+  ].includes(rawStatus)
+    ? (rawStatus as RenderJobStatusResult["status"])
+    : "queued";
+
+  const assets = job.proof_assets as
+    | Array<{ asset_url?: string | null; mime_type?: string | null; id?: string }>
+    | { asset_url?: string | null; mime_type?: string | null }
+    | null;
+  const outputAssetId = job.output_asset_id as string | null;
+  const assetList = Array.isArray(assets) ? assets : assets ? [assets] : [];
+  const matched =
+    assetList.find((a) => "id" in a && a.id === outputAssetId) ??
+    assetList[assetList.length - 1] ??
+    null;
+
+  return {
+    status,
+    errorMessage: (job.error_message as string | null) ?? null,
+    asset:
+      status === "completed" && matched?.asset_url
+        ? { url: String(matched.asset_url), mimeType: matched.mime_type ?? null }
+        : null,
+  };
 }
 
 export async function queueReviewRenderJob(

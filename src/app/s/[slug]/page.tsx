@@ -8,6 +8,11 @@ import { SmartLinkContent, type Professional } from "./smart-link-content";
 import { getInitials } from "@/lib/utils";
 import { VideoTestimonialPlayer } from "@/app/(public)/testimonials/video/[id]/video-testimonial-player";
 import type { PublicVideoTestimonial } from "@/lib/video-testimonials/public-actions";
+import { applyPublicProfessionalFilters } from "@/lib/users/public-visibility";
+import {
+  LandingPanel,
+  type SmartLinkProfessionalContact,
+} from "./landing-panel";
 
 interface RouteParams {
   params: Promise<{ slug: string }>;
@@ -86,6 +91,77 @@ function sanitizeSignedPath(path: string): string {
   return path.replace(/^\/+/, "");
 }
 
+/**
+ * Fetch the professional's public contact fields (same set the pro profile
+ * page exposes) for the contact card shown below the showcased review.
+ * Returns null when the user is not publicly visible or has no name.
+ */
+async function fetchLandingContact(
+  supabase: ReturnType<typeof createUntypedAdminClient>,
+  professionalId: string,
+  slug: string
+): Promise<SmartLinkProfessionalContact | null> {
+  // Minimal builder shape: the untyped admin client's self-referential
+  // builder type exceeds TS instantiation depth inside the filter helper.
+  type ContactRow = {
+    id: string;
+    full_name: string | null;
+    phone: string | null;
+    address: SmartLinkProfessionalContact["address"];
+    cta_button_text: string | null;
+    cta_button_url: string | null;
+    linkedin_url: string | null;
+    facebook_url: string | null;
+    instagram_url: string | null;
+    twitter_url: string | null;
+    personal_website_url: string | null;
+    zillow_profile_url: string | null;
+  };
+  type ContactQuery = {
+    eq(column: string, value: unknown): ContactQuery;
+    neq(column: string, value: unknown): ContactQuery;
+    or(filters: string): ContactQuery;
+    maybeSingle(): Promise<{ data: ContactRow | null }>;
+  };
+
+  try {
+    const contactQuery = supabase
+      .from("users")
+      .select(
+        "id, full_name, phone, address, cta_button_text, cta_button_url, linkedin_url, facebook_url, instagram_url, twitter_url, personal_website_url, zillow_profile_url"
+      ) as unknown as ContactQuery;
+
+    const { data: contactRow } = await applyPublicProfessionalFilters(contactQuery)
+      .eq("id", professionalId)
+      .maybeSingle();
+
+    if (!contactRow?.full_name) return null;
+
+    return {
+      id: String(contactRow.id),
+      fullName: contactRow.full_name,
+      phone: contactRow.phone,
+      address: contactRow.address ?? null,
+      ctaText: contactRow.cta_button_text,
+      ctaUrl: contactRow.cta_button_url,
+      linkedinUrl: contactRow.linkedin_url,
+      facebookUrl: contactRow.facebook_url,
+      instagramUrl: contactRow.instagram_url,
+      twitterUrl: contactRow.twitter_url,
+      personalWebsiteUrl: contactRow.personal_website_url,
+      zillowUrl: contactRow.zillow_profile_url,
+    };
+  } catch (err) {
+    console.error("Failed to fetch landing contact for smart link", {
+      professionalId,
+      slug,
+      error: err,
+    });
+    // Render the page without the contact card
+    return null;
+  }
+}
+
 export default async function SmartLinkPage({ params }: RouteParams) {
   const { slug } = await params;
   const data = await getProofLinkBySlug(slug);
@@ -142,6 +218,8 @@ export default async function SmartLinkPage({ params }: RouteParams) {
   const primaryColor = brand.primaryColor || "#0f172a";
   const sourceType = (item.source_type as string | null) || "review";
 
+  const supabase = createUntypedAdminClient();
+
   // Fetch professional data from presenter owner (fallback: link creator).
   let professional: Professional | null = null;
   let ctaLabel = `Connect with ${organizationName}`;
@@ -149,18 +227,44 @@ export default async function SmartLinkPage({ params }: RouteParams) {
     (item.presenter_user_id as string | null) ||
     (link.created_by as string | null);
 
+  // Where the primary CTA sends visitors: the presenter's public RepWell
+  // profile. Starts as the UUID URL (which redirects to the SEO slug) and is
+  // upgraded to the slug URL once we've loaded the user.
+  let professionalProfileUrl: string | null = presenterUserId
+    ? `/pro/${presenterUserId}`
+    : null;
+
+  // The org logo links to the org's public RepWell page, but only for
+  // enterprise accounts — individual accounts have no verified org page.
+  const orgSlug = (data.organization.slug as string | null) || null;
+  const orgProfileUrl =
+    data.organization.account_type === "enterprise" && orgSlug
+      ? `/org/${orgSlug}`
+      : null;
+
+  // Text reviews need the presenter's public contact fields too; start that
+  // query alongside the professional fetch instead of after it. (The video
+  // branch resolves its own professional from the response row.)
+  const landingContactPromise =
+    sourceType !== "video_testimonial" && presenterUserId
+      ? fetchLandingContact(supabase, String(presenterUserId), slug)
+      : null;
+
   if (presenterUserId) {
     try {
-      const supabase = createUntypedAdminClient();
       const { data: userData } = await supabase
         .from("users")
         .select(
-          "full_name, title, photo_url, avatar_url, nmls_id, average_rating, total_reviews, cta_button_text"
+          "slug, full_name, title, photo_url, avatar_url, nmls_id, average_rating, total_reviews, cta_button_text"
         )
         .eq("id", presenterUserId)
         .maybeSingle();
 
       if (userData) {
+        const userSlug = (userData.slug as string | null) || null;
+        if (userSlug) {
+          professionalProfileUrl = `/pro/${userSlug}`;
+        }
         const fullName = (userData.full_name as string | null) || null;
         if (fullName) {
           professional = {
@@ -197,12 +301,11 @@ export default async function SmartLinkPage({ params }: RouteParams) {
       notFound();
     }
 
-    const supabase = createUntypedAdminClient();
     const { data: videoRow, error: videoError } = await supabase
       .from("video_testimonial_responses")
       .select(`
         id, video_path, video_url, thumbnail_url, duration_seconds, transcription, ai_generated_text,
-        key_phrases, sentiment_label, submitted_at, published_at, user_id,
+        key_phrases, sentiment_label, approval_status, quarantined, submitted_at, published_at, user_id,
         video_testimonial_requests!inner (customer_name, source_metadata),
         users!user_id (id, full_name, photo_url, title)
       `)
@@ -211,6 +314,16 @@ export default async function SmartLinkPage({ params }: RouteParams) {
       .maybeSingle();
 
     if (videoError || !videoRow) {
+      notFound();
+    }
+
+    // Quarantine enforcement (ADR 0001): never serve a video publicly unless
+    // it is approved/published and not quarantined.
+    const videoApprovalStatus = String(videoRow.approval_status ?? "");
+    if (
+      videoRow.quarantined ||
+      !["approved", "published"].includes(videoApprovalStatus)
+    ) {
       notFound();
     }
 
@@ -298,15 +411,48 @@ export default async function SmartLinkPage({ params }: RouteParams) {
       },
     };
 
+    // Landing-page parity: fetch the professional's public contact fields
+    // (same set the pro profile page exposes) for the contact card below the player.
+    let landingContact: SmartLinkProfessionalContact | null = null;
+    const videoProfessionalId =
+      sourceProfessional?.id ||
+      (videoRow.user_id as string | null) ||
+      presenterUserId;
+
+    if (videoProfessionalId) {
+      landingContact = await fetchLandingContact(
+        supabase,
+        String(videoProfessionalId),
+        slug
+      );
+    }
+
     return (
       <VideoTestimonialPlayer
         video={videoData}
         pageUrl={pageUrl}
         embedUrl={`${baseUrl()}/embed/video/${sourceId}`}
+        belowContent={
+          landingContact ? (
+            <LandingPanel
+              contact={landingContact}
+              primaryColor={primaryColor}
+            />
+          ) : undefined
+        }
       />
     );
   }
 
+  // Prefer the full review text captured in the source snapshot over the
+  // 300-char clipped quote so the showcased review never ends mid-sentence.
+  const snapshot = (item.source_snapshot as Record<string, unknown> | null) ?? null;
+  const snapshotText = typeof snapshot?.text === "string" ? snapshot.text.trim() : "";
+  const fullQuote = snapshotText || quote;
+
+  const landingContact = landingContactPromise ? await landingContactPromise : null;
+
+  // Share intents keep the clipped quote; a full review is too long for a tweet.
   const shareText = quote
     ? `"${quote}" — ${customerName}`
     : `Check out this review from ${organizationName}`;
@@ -321,17 +467,9 @@ export default async function SmartLinkPage({ params }: RouteParams) {
     "Verified customer experience";
 
   return (
-    <main
-      className="min-h-screen"
-      style={{
-        backgroundColor: "#f8faf8",
-        backgroundImage:
-          "radial-gradient(circle, #c8d5c8 0.75px, transparent 0.75px)",
-        backgroundSize: "24px 24px",
-      }}
-    >
+    <main className="min-h-screen">
       <SmartLinkContent
-        quote={quote}
+        quote={fullQuote}
         fallbackText={fallbackText}
         customerName={customerName}
         initials={getInitials(customerName)}
@@ -345,11 +483,14 @@ export default async function SmartLinkPage({ params }: RouteParams) {
         professional={professional}
         ctaLabel={ctaLabel}
         ctaHref={`/s/${slug}/go`}
+        profileUrl={professionalProfileUrl}
+        orgProfileUrl={orgProfileUrl}
         destinationUrl={destinationUrl}
         pageUrl={pageUrl}
         twitterUrl={twitterUrl}
         linkedinUrl={linkedinUrl}
         emailUrl={emailUrl}
+        contact={landingContact}
       />
     </main>
   );

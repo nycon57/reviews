@@ -304,9 +304,9 @@ describe("LO Review Widget", () => {
     expect(sources.length).toBeGreaterThan(0);
 
     const sourceTexts = Array.from(sources).map((s) => s.textContent);
-    expect(sourceTexts).toContain("via google");
-    expect(sourceTexts).toContain("via zillow");
-    expect(sourceTexts).toContain("via internal");
+    expect(sourceTexts).toContain("via Google");
+    expect(sourceTexts).toContain("via Zillow");
+    expect(sourceTexts).toContain("via RepWell");
   });
 
   it("has accessible ARIA labels on stars", async () => {

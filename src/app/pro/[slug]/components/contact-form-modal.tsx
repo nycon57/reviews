@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import posthog from "posthog-js";
 import { contactProfessional } from "@/lib/pro/contact-actions";
 
 interface ContactFormModalProps {
@@ -56,6 +57,10 @@ export function ContactFormModal({
     });
 
     if (result.success) {
+      posthog.capture("contact_form_submitted", {
+        professional_id: professionalId,
+        has_phone: Boolean(phone),
+      });
       setStatus("success");
     } else {
       setStatus("error");

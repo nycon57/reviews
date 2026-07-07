@@ -3,6 +3,8 @@ import {
   CheckCircle,
   XCircle,
   ShareNetwork as Share2,
+  Star,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -45,6 +47,46 @@ export function SentimentBadge({ label }: { label: string | null }) {
     >
       {label}
     </Badge>
+  );
+}
+
+// ============================================================================
+// Quarantine (Needs Attention) Badge Component
+// ============================================================================
+
+export function QuarantineBadge() {
+  return (
+    <Badge variant="outline" className="gap-1 border-amber-500/50 text-amber-600">
+      <WarningCircle className="h-3 w-3" weight="fill" />
+      Low rating, needs review
+    </Badge>
+  );
+}
+
+// ============================================================================
+// Customer Rating Stars Component
+// ============================================================================
+
+export function CustomerRatingStars({ rating }: { rating: number | null }) {
+  if (rating === null) return null;
+
+  return (
+    <div
+      className="flex items-center gap-0.5"
+      role="img"
+      aria-label={`Customer rating: ${rating} out of 5 stars`}
+    >
+      {[1, 2, 3, 4, 5].map((value) => (
+        <Star
+          key={value}
+          weight={value <= rating ? "fill" : "regular"}
+          className={cn(
+            "h-3.5 w-3.5",
+            value <= rating ? "text-amber-500" : "text-muted-foreground/40"
+          )}
+        />
+      ))}
+    </div>
   );
 }
 

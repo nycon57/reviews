@@ -160,8 +160,8 @@ export function VideoFeedbackSection({ video, canManage }: VideoFeedbackSectionP
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
-              {video.keyPhrases.map((phrase, idx) => (
-                <Badge key={idx} variant="outline">
+              {video.keyPhrases.map((phrase) => (
+                <Badge key={phrase} variant="outline">
                   {phrase}
                 </Badge>
               ))}

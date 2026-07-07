@@ -51,9 +51,9 @@ function ReadOnlyManagerFeedbackList({
 }
 
 async function RecognitionFeedSection() {
+  let result: Awaited<ReturnType<typeof getRecognitions>>;
   try {
-    const result = await getRecognitions({ limit: 10 });
-    return <ReadOnlyRecognitionFeed initialRecognitions={result.data} />;
+    result = await getRecognitions({ limit: 10 });
   } catch (err) {
     console.error("Failed to load recognitions:", err);
     return (
@@ -62,12 +62,13 @@ async function RecognitionFeedSection() {
       </div>
     );
   }
+  return <ReadOnlyRecognitionFeed initialRecognitions={result.data} />;
 }
 
 async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string }) {
+  let result: Awaited<ReturnType<typeof getManagerFeedback>>;
   try {
-    const result = await getManagerFeedback({ limit: 10 });
-    return <ReadOnlyManagerFeedbackList initialFeedback={result.data} currentUserId={currentUserId} />;
+    result = await getManagerFeedback({ limit: 10 });
   } catch (err) {
     console.error("Failed to load manager feedback:", err);
     return (
@@ -76,6 +77,7 @@ async function ManagerFeedbackSection({ currentUserId }: { currentUserId: string
       </div>
     );
   }
+  return <ReadOnlyManagerFeedbackList initialFeedback={result.data} currentUserId={currentUserId} />;
 }
 
 export default async function RecognitionPage() {

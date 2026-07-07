@@ -45,7 +45,7 @@ vi.mock("@/components/ui/select", () => {
     const items: Array<{ value: string; label: string }> = [];
 
     for (const child of React.Children.toArray(node)) {
-      if (!React.isValidElement(child)) continue;
+      if (!React.isValidElement<{ value: string; children: React.ReactNode }>(child)) continue;
 
       if (child.type === SelectItem) {
         items.push({

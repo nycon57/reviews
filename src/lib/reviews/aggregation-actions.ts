@@ -93,6 +93,7 @@ function mapRowToAggregatedReview(
     approvedAt: row.approved_at as string | null,
     approvedBy: row.approved_by as string | null,
     rejectionReason: row.rejection_reason as string | null,
+    moderationReasons: (row.moderation_reasons as string[] | null) ?? null,
     isPublished: (row.is_published as boolean) ?? false,
     publishedAt: row.published_at as string | null,
     reviewDate: row.review_date as string,
@@ -154,7 +155,9 @@ export async function getAggregatedReviews(
   };
   const sortColumn = sortColumnMap[sortBy] || "review_date";
 
-  let query = supabase
+  // `moderation_reasons` is not yet in the generated database types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
     .from("reviews")
     .select(
       `
@@ -178,6 +181,7 @@ export async function getAggregatedReviews(
       approved_at,
       approved_by,
       rejection_reason,
+      moderation_reasons,
       response_text,
       response_at,
       response_by,
@@ -273,7 +277,7 @@ export async function getAggregatedReviews(
     return { success: false, error: error.message || "Failed to fetch reviews" };
   }
 
-  const reviews: AggregatedReview[] = (data || []).map((row) => {
+  const reviews: AggregatedReview[] = (data || []).map((row: Record<string, unknown>) => {
     const loanOfficer = row.users as unknown as {
       id: string;
       full_name: string;
@@ -308,7 +312,9 @@ export async function getAggregatedReviewById(
 
   const supabase = createAdminClient();
 
-  let query = supabase
+  // `moderation_reasons` is not yet in the generated database types
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
     .from("reviews")
     .select(
       `
@@ -332,6 +338,7 @@ export async function getAggregatedReviewById(
       approved_at,
       approved_by,
       rejection_reason,
+      moderation_reasons,
       response_text,
       response_at,
       response_by,

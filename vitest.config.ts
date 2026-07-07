@@ -5,6 +5,15 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    exclude: [
+      "**/node_modules/**",
+      "**/.worktrees/**",
+      "**/.claude/**",
+      "**/mobile/**",
+      "**/packages/**",
+      "tests/e2e/**",
+      "tests/performance/**",
+    ],
   },
   resolve: {
     alias: {

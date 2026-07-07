@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-22T00:00:00-04:00",
+  "title": "Design System: RepWell",
+  "extensions": {
+    "colorMeta": {
+      "page-bg": {
+        "role": "neutral",
+        "displayName": "App Mist",
+        "canonical": "hsl(97 14% 96%)",
+        "tonalRamp": ["#ffffff", "#f7f8f5", "#f0f4ef", "#d9ded4"]
+      },
+      "sage-100": {
+        "role": "secondary",
+        "displayName": "Light Sage Surface",
+        "canonical": "#cad2c5",
+        "tonalRamp": ["#f0f4ef", "#cad2c5", "#84a98c"]
+      },
+      "sage-200": {
+        "role": "secondary",
+        "displayName": "Sage Signal",
+        "canonical": "#84a98c",
+        "tonalRamp": ["#cad2c5", "#84a98c", "#6b9b76", "#4a7a56"]
+      },
+      "teal-300": {
+        "role": "primary",
+        "displayName": "RepWell Teal",
+        "canonical": "#52796f",
+        "tonalRamp": ["#8fa9a3", "#6b928a", "#52796f", "#354f52", "#2f3e46"]
+      },
+      "teal-500": {
+        "role": "neutral",
+        "displayName": "Deep Reputation Teal",
+        "canonical": "#2f3e46",
+        "tonalRamp": ["#52796f", "#354f52", "#2f3e46"]
+      },
+      "muted-divider": {
+        "role": "neutral",
+        "displayName": "Muted Divider",
+        "canonical": "hsl(97 14% 92%)",
+        "tonalRamp": ["hsl(97 14% 92%)", "#e9ece6", "#d9ded4"]
+      },
+      "legacy-print-gray": {
+        "role": "neutral",
+        "displayName": "Legacy Print Gray",
+        "canonical": "#666",
+        "tonalRamp": ["#666", "#666666"]
+      },
+      "shadow-black-10": {
+        "role": "shadow",
+        "displayName": "Shadow Black 10",
+        "canonical": "rgba(0, 0, 0, 0.1)",
+        "tonalRamp": ["rgba(0, 0, 0, 0.1)", "rgba(0, 0, 0, 0.05)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero headlines, marketing statements, and major page identity moments."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles and important section headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Dashboard panels, cards, dialogs, and feature sections."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Product copy, form help, descriptions, and readable content."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Navigation groups, metadata, filter labels, and compact UI text."
+      }
+    },
+    "shadows": [
+      {
+        "name": "elevation-1",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Low resting elevation."
+      },
+      {
+        "name": "card",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
+        "purpose": "Standard card and panel elevation."
+      },
+      {
+        "name": "third-party-popup",
+        "value": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        "purpose": "Leaflet and Google Places overlays that need to sit above the app surface."
+      },
+      {
+        "name": "card-hover",
+        "value": "0 8px 16px -4px rgb(0 0 0 / 0.08), 0 4px 8px -4px rgb(0 0 0 / 0.04)",
+        "purpose": "Interactive card hover."
+      },
+      {
+        "name": "button-hover",
+        "value": "0 4px 12px -2px rgb(82 121 111 / 0.25)",
+        "purpose": "Primary action hover feedback."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "150ms ease-out",
+        "purpose": "Small state transitions such as hover, focus, and selection."
+      },
+      {
+        "name": "state-standard",
+        "value": "200ms ease-out",
+        "purpose": "Buttons, cards, menus, and dialog affordances."
+      },
+      {
+        "name": "surface-reveal",
+        "value": "300ms ease-out",
+        "purpose": "Short reveals and slide-ins when state changes."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "2xl-container",
+        "value": "1400px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action style for product and marketing CTAs.",
+      "html": "<button class=\"ds-btn-primary\">Send request</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 10px 16px; border: 0; border-radius: 8px; background: #52796f; color: #ffffff; font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 14px; font-weight: 600; line-height: 1; transition: transform 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out; } .ds-btn-primary:hover { background: #354f52; transform: translateY(-2px); box-shadow: 0 4px 12px -2px rgb(82 121 111 / 0.25); } .ds-btn-primary:focus-visible { outline: 2px solid rgb(82 121 111 / 0.35); outline-offset: 2px; }"
+    },
+    {
+      "name": "Default Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Standard content surface for dashboard panels and review modules.",
+      "html": "<section class=\"ds-card\"><h3>Review activity</h3><p>Recent customer feedback and pending actions.</p></section>",
+      "css": ".ds-card { border: 1px solid #d9ded4; border-radius: 12px; background: #ffffff; color: #2f3e46; padding: 24px; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); font-family: 'Source Sans 3', system-ui, sans-serif; } .ds-card h3 { margin: 0 0 6px; color: #2f3e46; font-size: 20px; line-height: 1.4; font-weight: 600; } .ds-card p { margin: 0; color: #52796f; font-size: 14px; line-height: 1.5; }"
+    },
+    {
+      "name": "Default Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Text field style for forms, filters, and customer-facing inputs.",
+      "html": "<label class=\"ds-field\"><span>Email address</span><input placeholder=\"customer@example.com\" /></label>",
+      "css": ".ds-field { display: grid; gap: 6px; color: #354f52; font-family: 'Source Sans 3', system-ui, sans-serif; font-size: 14px; font-weight: 600; } .ds-field input { min-height: 44px; border: 1px solid #d9ded4; border-radius: 8px; background: #f7f8f5; color: #2f3e46; padding: 10px 16px; font: inherit; font-weight: 400; transition: border-color 150ms ease-out, box-shadow 150ms ease-out; } .ds-field input:focus-visible { outline: none; border-color: #52796f; box-shadow: 0 0 0 3px rgb(82 121 111 / 0.20); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Reputation Control Room",
+    "overview": "RepWell is a calm operating surface for reputation work: precise enough for managers, warm enough for customer-facing professionals, and polished enough to support public trust. The system uses restrained teal and sage, white and softly tinted surfaces, and a serif display voice only when it adds credibility or editorial warmth.",
+    "keyCharacteristics": [
+      "Restrained teal and sage palette with deep teal text.",
+      "Erstoria for brand presence and Source Sans 3 for product UI.",
+      "White cards, light sage-tinted backgrounds, visible borders, and small radius.",
+      "Short, stateful, reduced-motion-aware interaction."
+    ],
+    "rules": [
+      {
+        "name": "The Teal Does Work Rule",
+        "body": "Teal is for primary action, active state, links, charts, and meaningful emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Serif Has a Job Rule",
+        "body": "Use Erstoria for trust and brand presence, not for controls or dense data.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Until Touched Rule",
+        "body": "Surfaces should not look floaty at rest; elevation appears in response to interaction.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the existing teal and sage tokens for brand vocabulary.",
+      "Do show workflow state for reviews, videos, approvals, publishing, and follow-ups.",
+      "Do keep product transitions short and stateful."
+    ],
+    "donts": [
+      "Don't use cluttered dashboards, aggressive CTAs, sterile corporate SaaS, or overly playful startup styling.",
+      "Don't use purple gradients, neon AI tooling, glassmorphism, decorative motion, or gradient text.",
+      "Don't use generic gray panels when a teal or sage tinted neutral already exists."
+    ]
+  }
+}

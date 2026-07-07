@@ -27,6 +27,13 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useMediaRecorder, type RecorderStatus } from "@/hooks/use-media-recorder";
+import { useIsDesktop } from "@/hooks/use-is-desktop";
+
+// Width fraction of the centered 9:16 strip inside a 16:9 frame:
+// (9/16) / (16/9) = 81/256
+const PORTRAIT_STRIP_FRACTION = 81 / 256;
+const GUIDE_LEFT_PERCENT = ((1 - PORTRAIT_STRIP_FRACTION) / 2) * 100;
+const GUIDE_RIGHT_PERCENT = 100 - GUIDE_LEFT_PERCENT;
 
 export interface VideoRecorderProps {
   /** Maximum recording duration in milliseconds (default: 120000 = 2 minutes) */
@@ -56,6 +63,11 @@ export function VideoRecorder({
   autoRequestPermissions = false,
   primaryColor,
 }: VideoRecorderProps) {
+  // Mobile devices record portrait (9:16, social-native); desktops record
+  // landscape with a framing guide showing the eventual 9:16 crop region.
+  const isDesktop = useIsDesktop();
+  const orientation = isDesktop ? "landscape" : "portrait";
+
   const {
     status,
     recordedBlob,
@@ -79,6 +91,7 @@ export function VideoRecorder({
     setVideoDevice,
   } = useMediaRecorder({
     maxDuration,
+    orientation,
     onRecordingComplete: undefined, // We handle this in the confirm action
   });
 
@@ -172,7 +185,14 @@ export function VideoRecorder({
 
       <CardContent className="p-0">
         {/* Video Display Area */}
-        <div className="relative aspect-video bg-black">
+        <div
+          className={cn(
+            "relative bg-black",
+            orientation === "portrait"
+              ? "mx-auto aspect-[9/16] w-full max-w-[calc(70vh*9/16)]"
+              : "aspect-video"
+          )}
+        >
           {/* Idle State - Permission prompt */}
           {status === "idle" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-repwell-teal-500/10 p-6">
@@ -256,6 +276,24 @@ export function VideoRecorder({
                 muted
                 className="h-full w-full object-cover"
               />
+
+              {/* Desktop framing guide: marks the centered 9:16 region that
+                  social crops keep. Live preview only, never on playback. */}
+              {orientation === "landscape" && (
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+                  <div
+                    className="absolute inset-y-0 w-px bg-white/25"
+                    style={{ left: `${GUIDE_LEFT_PERCENT}%` }}
+                  />
+                  <div
+                    className="absolute inset-y-0 w-px bg-white/25"
+                    style={{ left: `${GUIDE_RIGHT_PERCENT}%` }}
+                  />
+                  <p className="absolute bottom-3 left-1/2 w-max max-w-[90%] -translate-x-1/2 rounded-full bg-black/40 px-3 py-1 text-center font-sans text-xs text-white/70 backdrop-blur-sm">
+                    Stay between the lines so your video crops well for social.
+                  </p>
+                </div>
+              )}
 
               {/* Recording indicator */}
               {(status === "recording" || status === "paused" ||
@@ -345,7 +383,8 @@ export function VideoRecorder({
           </div>
         )}
 
-        {/* Controls */}
+        {/* Controls (idle/requesting/error actions live inside the video area) */}
+        {status !== "idle" && status !== "requesting" && status !== "error" && (
         <div className="p-4">
           {/* Ready State - Start Recording */}
           {status === "ready" && (
@@ -520,6 +559,7 @@ export function VideoRecorder({
             </div>
           )}
         </div>
+        )}
       </CardContent>
     </Card>
   );

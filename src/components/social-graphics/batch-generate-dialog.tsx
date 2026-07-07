@@ -24,6 +24,7 @@ import {
   type CanvasSize,
   type TemplateId,
 } from "@/lib/social-graphics/types";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 
 interface ReviewOption {
   id: string;
@@ -178,7 +179,7 @@ export function BatchGenerateDialog({
                               {"★".repeat(review.rating)}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {review.source}
+                              {formatReviewSource(review.source)}
                             </span>
                           </div>
                           <p className="text-sm text-foreground">

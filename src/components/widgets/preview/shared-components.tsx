@@ -4,6 +4,7 @@ import {
   getPreviewMetaStyle,
   previewT,
 } from "./shared";
+import { formatReviewSource } from "@/lib/reviews/source-labels";
 
 interface SourceBadgeProps {
   source: string;
@@ -14,7 +15,7 @@ interface SourceBadgeProps {
 /** Source badge with icon + "Via Google" label for review cards. */
 export function SourceBadge({ source, lang = "en", metaScale = 0.8 }: SourceBadgeProps) {
   const iconData = SOURCE_ICONS[source];
-  const label = SOURCE_LABELS[source] ?? source;
+  const label = SOURCE_LABELS[source] ?? formatReviewSource(source);
 
   return (
     <span

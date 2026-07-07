@@ -289,7 +289,7 @@ describe("Video Testimonial Widget", () => {
     expect(disclaimer).not.toBeNull();
     expect(disclaimer?.textContent).toContain("Equal Housing Lender");
 
-    const nmlsLink = dom.querySelector(".rw-vt__disclaimer-link") as HTMLAnchorElement;
+    const nmlsLink = dom.querySelector(".rw-vt__disclaimer__nmls-link") as HTMLAnchorElement;
     expect(nmlsLink.textContent).toBe("NMLS Consumer Access");
     expect(nmlsLink.href).toContain("nmlsconsumeraccess.org");
   });

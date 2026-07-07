@@ -4,4 +4,4 @@ export { VideoCard } from "./video-card";
 
 export { VideoDialogs } from "./video-dialogs";
 export { VideoBulkActionBar } from "./video-bulk-action-bar";
-export { ApprovalStatusBadge, SentimentBadge, formatDuration, formatDate } from "./video-shared";
+export { ApprovalStatusBadge, SentimentBadge, QuarantineBadge, CustomerRatingStars, formatDuration, formatDate } from "./video-shared";

@@ -5,6 +5,7 @@
  * - Notifications page (filters, bulk actions, pagination)
  */
 
+import type { Page } from "@playwright/test";
 import { test, expect } from "../helpers/dashboard-fixture";
 import { TEST_USERS } from "../helpers/pages";
 
@@ -302,7 +303,7 @@ test.describe("Notifications", () => {
   /**
    * Intercept notification API calls and return mock data.
    */
-  async function mockNotificationsApi(page: Awaited<ReturnType<typeof test["info"]>>["page"]) {
+  async function mockNotificationsApi(page: Page) {
     // Track archived/read state for mock mutations
     const archivedIds = new Set<string>();
     const readIds = new Set<string>();

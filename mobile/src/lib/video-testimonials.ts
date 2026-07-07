@@ -1,10 +1,8 @@
 import { supabase } from './supabase';
 import type {
-  VideoTestimonialRequest,
   VideoTestimonialResponse,
   VideoTestimonialStats,
   Professional,
-  LoanOfficer,
   CreateVideoRequestInput,
   VideoTestimonialApprovalStatus,
 } from '../types';
@@ -56,9 +54,6 @@ async function getUserProfessionalId(userId: string): Promise<string | null> {
     .single();
   return data?.id ?? null;
 }
-
-/** @deprecated Use getUserProfessionalId instead */
-const getLoanOfficerIdForUser = getUserProfessionalId;
 
 /**
  * Transform raw video response data to typed VideoTestimonialResponse
@@ -322,106 +317,6 @@ export async function getVideoTestimonialResponse(
 }
 
 /**
- * Get video testimonial requests with filtering
- */
-export async function getVideoTestimonialRequests(params?: {
-  status?: string;
-  professionalId?: string;
-  /** @deprecated Use professionalId instead */
-  loanOfficerId?: string;
-  page?: number;
-  pageSize?: number;
-}): Promise<{
-  requests: VideoTestimonialRequest[];
-  total: number;
-}> {
-  const page = params?.page ?? 1;
-  const pageSize = params?.pageSize ?? 20;
-  const offset = (page - 1) * pageSize;
-
-  const auth = await getAuthenticatedUserContext();
-
-  let query = supabase
-    .from('video_testimonial_requests')
-    .select(`
-      id,
-      token,
-      organization_id,
-      user_id,
-      customer_name,
-      customer_email,
-      customer_phone,
-      max_duration_seconds,
-      prompt_text,
-      status,
-      sent_at,
-      opened_at,
-      submitted_at,
-      expires_at,
-      reminder_count,
-      created_at,
-      users!user_id (
-        full_name
-      )
-    `, { count: 'exact' })
-    .eq('organization_id', auth.organizationId)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + pageSize - 1);
-
-  if (params?.status) {
-    query = query.eq('status', params.status);
-  }
-
-  // Support both professionalId and deprecated loanOfficerId
-  const filterProfessionalId = params?.professionalId ?? params?.loanOfficerId;
-  if (filterProfessionalId) {
-    query = query.eq('user_id', filterProfessionalId);
-  }
-
-  // Role-based filtering for users
-  if (auth.role === 'user') {
-    const professionalId = await getUserProfessionalId(auth.userId);
-    if (professionalId) {
-      query = query.eq('user_id', professionalId);
-    } else {
-      return { requests: [], total: 0 };
-    }
-  }
-
-  const { data, count, error } = await query;
-
-  if (error) {
-    console.error('Error fetching video requests:', error);
-    throw error;
-  }
-
-  const requests: VideoTestimonialRequest[] = (data || []).map((req) => {
-    const professional = req.users as unknown as { full_name: string };
-    return {
-      id: req.id,
-      token: req.token,
-      organization_id: req.organization_id,
-      user_id: req.user_id,
-      customer_name: req.customer_name,
-      customer_email: req.customer_email,
-      customer_phone: req.customer_phone,
-      max_duration_seconds: req.max_duration_seconds || 120,
-      prompt_text: req.prompt_text,
-      status: req.status,
-      sent_at: req.sent_at,
-      opened_at: req.opened_at,
-      submitted_at: req.submitted_at,
-      expires_at: req.expires_at,
-      reminder_count: req.reminder_count || 0,
-      created_at: req.created_at,
-      user_name: professional.full_name,
-    };
-  });
-
-  return { requests, total: count ?? 0 };
-}
-
-/**
  * Create a video testimonial request
  */
 export async function createVideoTestimonialRequest(
@@ -528,14 +423,12 @@ export async function updateVideoApprovalStatus(
  * Get signed URL for video playback
  */
 export async function getVideoSignedUrl(videoPath: string): Promise<string> {
-  // Verify user is authenticated
-  await getAuthenticatedUserContext();
-
-  // Sanitize path
   const sanitizedPath = videoPath.replace(/^\/+/, '');
   if (sanitizedPath.includes('..') || sanitizedPath.includes('//')) {
     throw new Error('Invalid video path');
   }
+
+  await getAuthenticatedUserContext();
 
   const { data, error } = await supabase.storage
     .from('video-testimonials')
@@ -575,9 +468,6 @@ export async function getProfessionals(): Promise<Professional[]> {
   }));
 }
 
-/** @deprecated Use getProfessionals instead */
-export const getLoanOfficers = getProfessionals;
-
 /**
  * Get user profile with role
  */
@@ -586,24 +476,17 @@ export async function getUserProfile(): Promise<{
   role: string;
   organizationId: string;
 } | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return null;
+  try {
+    const auth = await getAuthenticatedUserContext();
+    return {
+      id: auth.userId,
+      role: auth.role,
+      organizationId: auth.organizationId,
+    };
+  } catch (error) {
+    if (error instanceof Error && ['Not authenticated', 'Organization not found'].includes(error.message)) {
+      return null;
+    }
+    throw error;
   }
-
-  const { data } = await supabase
-    .from('users')
-    .select('id, role, organization_id')
-    .eq('id', user.id)
-    .single();
-
-  if (!data) {
-    return null;
-  }
-
-  return {
-    id: data.id,
-    role: data.role,
-    organizationId: data.organization_id,
-  };
 }

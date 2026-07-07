@@ -6686,6 +6686,74 @@ export type Database = {
           },
         ]
       }
+      user_tasks: {
+        Row: {
+          action_url: string | null
+          completed_at: string | null
+          created_at: string
+          dedup_key: string | null
+          description: string
+          dismissed_at: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          priority: string
+          snooze_until: string | null
+          source: string
+          status: string
+          task_type: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          description: string
+          dismissed_at?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          priority?: string
+          snooze_until?: string | null
+          source?: string
+          status?: string
+          task_type: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          dedup_key?: string | null
+          description?: string
+          dismissed_at?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          priority?: string
+          snooze_until?: string | null
+          source?: string
+          status?: string
+          task_type?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           accepts_public_reviews: boolean | null
@@ -7134,6 +7202,7 @@ export type Database = {
           consent_timestamp: string | null
           consent_version: string | null
           created_at: string
+          customer_rating: number | null
           device_type: string | null
           duration_seconds: number | null
           file_size_bytes: number | null
@@ -7149,13 +7218,18 @@ export type Database = {
           mime_type: string
           nil_consent_given: boolean
           organization_id: string
+          platform_passthrough_clicked_at: string | null
+          private_feedback: string | null
           processing_error_code: string | null
           processing_error_stage: string | null
           published_at: string | null
           published_platforms: string[] | null
+          quarantined: boolean
+          recapture_email_sent_at: string | null
           rejection_reason: string | null
           request_id: string
           retry_count: number
+          review_id: string | null
           sentiment_label: string | null
           sentiment_score: number | null
           submission_idempotency_key: string | null
@@ -7175,6 +7249,7 @@ export type Database = {
           video_path: string
           video_url: string
           width: number | null
+          word_timestamps: Json | null
         }
         Insert: {
           ai_generated_text?: string | null
@@ -7195,6 +7270,7 @@ export type Database = {
           consent_timestamp?: string | null
           consent_version?: string | null
           created_at?: string
+          customer_rating?: number | null
           device_type?: string | null
           duration_seconds?: number | null
           file_size_bytes?: number | null
@@ -7210,13 +7286,18 @@ export type Database = {
           mime_type: string
           nil_consent_given?: boolean
           organization_id: string
+          platform_passthrough_clicked_at?: string | null
+          private_feedback?: string | null
           processing_error_code?: string | null
           processing_error_stage?: string | null
           published_at?: string | null
           published_platforms?: string[] | null
+          quarantined?: boolean
+          recapture_email_sent_at?: string | null
           rejection_reason?: string | null
           request_id: string
           retry_count?: number
+          review_id?: string | null
           sentiment_label?: string | null
           sentiment_score?: number | null
           submission_idempotency_key?: string | null
@@ -7236,6 +7317,7 @@ export type Database = {
           video_path: string
           video_url: string
           width?: number | null
+          word_timestamps?: Json | null
         }
         Update: {
           ai_generated_text?: string | null
@@ -7256,6 +7338,7 @@ export type Database = {
           consent_timestamp?: string | null
           consent_version?: string | null
           created_at?: string
+          customer_rating?: number | null
           device_type?: string | null
           duration_seconds?: number | null
           file_size_bytes?: number | null
@@ -7271,13 +7354,18 @@ export type Database = {
           mime_type?: string
           nil_consent_given?: boolean
           organization_id?: string
+          platform_passthrough_clicked_at?: string | null
+          private_feedback?: string | null
           processing_error_code?: string | null
           processing_error_stage?: string | null
           published_at?: string | null
           published_platforms?: string[] | null
+          quarantined?: boolean
+          recapture_email_sent_at?: string | null
           rejection_reason?: string | null
           request_id?: string
           retry_count?: number
+          review_id?: string | null
           sentiment_label?: string | null
           sentiment_score?: number | null
           submission_idempotency_key?: string | null
@@ -7297,6 +7385,7 @@ export type Database = {
           video_path?: string
           video_url?: string
           width?: number | null
+          word_timestamps?: Json | null
         }
         Relationships: [
           {
@@ -7325,6 +7414,13 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "video_testimonial_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_testimonial_responses_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
             referencedColumns: ["id"]
           },
           {

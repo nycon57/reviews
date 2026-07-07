@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { startWelcomeSequence } from "@/lib/email/welcome-sequence-service";
 import { exitReengagementSequencesOnLogin } from "@/lib/email/reengagement-sequence-service";
+import { getPostHogClient } from "@/lib/posthog-server";
 
 // Feature flag for Better Auth migration
 const USE_BETTER_AUTH = process.env.NEXT_PUBLIC_USE_BETTER_AUTH === "true";
@@ -65,6 +66,33 @@ export async function GET(request: NextRequest) {
             const userCreatedAt = new Date(userData.created_at);
             const now = new Date();
             const isNewUser = now.getTime() - userCreatedAt.getTime() < 300000; // 5 minutes
+
+            // Await delivery: serverless can freeze the instance right after the
+            // redirect, dropping queued events. The *Immediate variants send
+            // synchronously. PostHog failures must never break the auth flow.
+            try {
+              const posthog = getPostHogClient();
+              await Promise.all([
+                posthog.identifyImmediate({
+                  distinctId: user.id,
+                  properties: {
+                    email: user.email,
+                    organization_id: userData.organization_id,
+                  },
+                }),
+                posthog.captureImmediate({
+                  distinctId: user.id,
+                  event: "user_signed_in",
+                  properties: {
+                    is_new_user: isNewUser,
+                    organization_id: userData.organization_id,
+                    provider: user.app_metadata?.provider,
+                  },
+                }),
+              ]);
+            } catch (posthogError) {
+              console.error("Failed to record PostHog sign-in events:", posthogError);
+            }
 
             // Start welcome sequence for new users (async, don't wait)
             if (isNewUser) {

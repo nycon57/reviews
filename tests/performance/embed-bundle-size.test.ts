@@ -15,7 +15,7 @@ import { resolve } from "path";
 
 const ROOT = resolve(__dirname, "../..");
 const EMBED_DIR = resolve(ROOT, "public/embed/v1");
-const MAX_GZIP_BYTES = 38 * 1024; // 38KB — matches build-embed.ts budget for 9 widget types
+const MAX_GZIP_BYTES = 40 * 1024; // 40KB — MUST match MAX_GZIP_BYTES in scripts/build-embed.ts (10 widget types + filters + i18n + sanitizer/hooks)
 
 describe("Embed Bundle Size", () => {
   it("embed.min.js exists", () => {
@@ -23,7 +23,7 @@ describe("Embed Bundle Size", () => {
     expect(existsSync(embedPath)).toBe(true);
   });
 
-  it("embed.min.js is under 38KB gzipped", () => {
+  it("embed.min.js is under 40KB gzipped", () => {
     const embedPath = resolve(EMBED_DIR, "embed.min.js");
     if (!existsSync(embedPath)) {
       // Build may not have run — skip gracefully in dev

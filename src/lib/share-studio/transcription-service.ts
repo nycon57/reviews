@@ -339,6 +339,22 @@ ${contextInstruction}`;
 
   if (!parsedPayload) {
     const fallbackText = stripMarkdownCodeFence(textResponse).trim();
+    // Gemini was instructed to return JSON, so a malformed/truncated response
+    // still looks like JSON. Never store that as the transcript: salvage the
+    // full_text value if present, otherwise fail so the caller can retry.
+    if (fallbackText.startsWith("{")) {
+      console.warn(
+        "[share-studio] Gemini transcription JSON failed to parse; salvaging full_text. Consider raising the token budget if this recurs."
+      );
+      const salvaged = extractFullTextFromMalformedJson(fallbackText);
+      if (!salvaged) {
+        throw new WordTimestampTranscriptionError(
+          "Gemini returned malformed JSON and no transcript could be salvaged.",
+          502
+        );
+      }
+      return buildFallbackResult(salvaged, input.durationSeconds, "gemini-2.5-flash");
+    }
     return buildFallbackResult(fallbackText, input.durationSeconds, "gemini-2.5-flash");
   }
 
@@ -759,12 +775,13 @@ function resolveMimeType(audioUrl: string, contentType: string): string {
 }
 
 function computeMaxOutputTokens(durationSeconds: number | null): number {
-  // Each second of audio produces ~2.5 words; each word-level JSON object
-  // expands to ~8-10 tokens (key names, numbers, punctuation).  Use ~25
-  // tokens/second to cover word + segment JSON and some safety margin.
-  const TOKENS_PER_SECOND = 25;
+  // Each second of audio produces ~2.5 words; Gemini tends to pretty-print
+  // the JSON, so each word object costs ~25-35 tokens (keys, numbers,
+  // whitespace).  Budget ~90 tokens/second so the words array never truncates
+  // mid-stream (a truncated response loses all word timestamps).
+  const TOKENS_PER_SECOND = 90;
   const JSON_OVERHEAD = 4096;
-  const MIN_TOKENS = 8192;
+  const MIN_TOKENS = 16384;
   const MAX_TOKENS = 65536;
 
   if (!durationSeconds || durationSeconds <= 0) {
@@ -813,6 +830,20 @@ function normalizeProviderError(
     fallbackMessage || toErrorMessage(error),
     statusCode
   );
+}
+
+/**
+ * Pulls the "full_text" string value out of JSON that failed to parse
+ * (typically truncated mid-stream). Handles escaped quotes and newlines.
+ */
+function extractFullTextFromMalformedJson(raw: string): string | null {
+  const match = raw.match(/"full_text"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  if (!match) return null;
+  try {
+    return (JSON.parse(`"${match[1]}"`) as string).trim() || null;
+  } catch {
+    return null;
+  }
 }
 
 function stripMarkdownCodeFence(content: string): string {

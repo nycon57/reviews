@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { sanitizePublicAddress } from "../actions";
+import { sanitizePublicAddress } from "../public-sanitizers";
 
 describe("sanitizePublicAddress", () => {
   it("returns null when the address has no public city or state", () => {

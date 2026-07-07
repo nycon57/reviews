@@ -22,6 +22,7 @@ import {
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useOrigin } from "@/hooks/use-origin";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { ProfileBanner } from "@/components/settings/profile-banner";
 import { EditSlugDialog } from "@/components/shared/edit-slug-dialog";
@@ -61,9 +62,7 @@ export function EditMemberContent({ member, isEditingSelf = false }: EditMemberC
   const [branches, setBranches] = useState<Branch[]>([]);
   const [slugDialogOpen, setSlugDialogOpen] = useState(false);
   const [currentSlug, setCurrentSlug] = useState(member.slug || "");
-  const [origin, setOrigin] = useState(() =>
-    typeof window !== "undefined" ? window.location.origin : ""
-  );
+  const origin = useOrigin();
 
   // Admin-only fields state
   const [ctaButtonText, setCtaButtonText] = useState(member.cta_button_text || "");
@@ -92,7 +91,6 @@ export function EditMemberContent({ member, isEditingSelf = false }: EditMemberC
   }, [currentSlug, showDangerZone]);
 
   useEffect(() => {
-    if (!origin) setOrigin(window.location.origin);
     getBranches({ isActive: true }).then((result) => {
       if (result.success && result.data) {
         setBranches(result.data);

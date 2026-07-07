@@ -212,12 +212,12 @@ export function ResponseComposer({
 
   return (
     <div className="space-y-4">
-      {/* Template Selection */}
+      {/* Canned responses */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium flex items-center gap-2">
             <FileText className="h-4 w-4" />
-            Response Templates
+            Canned responses
           </label>
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-[140px] h-8 text-xs">
@@ -276,14 +276,14 @@ export function ResponseComposer({
 
       {/* AI Suggestion */}
       {hasAiAccess ? (
-        <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-100">
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-600" />
-              <span className="text-sm font-medium text-purple-900">AI Response Suggestion</span>
+              <Sparkles className="h-4 w-4 text-repwell-teal-300" />
+              <span className="text-sm font-medium text-heading">Generated response</span>
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Generate a response based on the review content
+              Draft from the review content, then edit before posting
             </p>
           </div>
           <Select value={aiTone} onValueChange={(v) => setAiTone(v as typeof aiTone)}>
@@ -363,11 +363,12 @@ export function ResponseComposer({
       </AnimatedPresence>
 
       {/* Actions */}
-      <div className="flex items-center justify-between pt-2">
-        <Button variant="ghost" size="sm" onClick={onCancel}>
-          Cancel
-        </Button>
-
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-2">
+        {onCancel && (
+          <Button variant="ghost" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
         <div className="flex items-center gap-2">
           <TooltipProvider>
             <Tooltip>

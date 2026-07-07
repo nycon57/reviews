@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import {
   FilmStrip as Film,
   Chats as MessageSquare,
+  Flag,
   PaperPlaneRight,
   ShareNetwork,
 } from "@phosphor-icons/react";
@@ -65,9 +66,12 @@ interface UnifiedContentHubProps {
   canSendRequests?: boolean;
   // Share Studio tab (optional — hidden when not provided)
   shareStudioContent?: React.ReactNode;
+  // Disputes tab (optional — admins/managers only)
+  disputesContent?: React.ReactNode;
+  openDisputeCount?: number;
 }
 
-type ContentTab = "reviews" | "videos" | "requests" | "share-studio";
+type ContentTab = "reviews" | "videos" | "requests" | "share-studio" | "disputes";
 
 // ============================================================================
 // Main Unified Content Hub Component
@@ -90,6 +94,8 @@ export function UnifiedContentHub({
   initialRequestStats,
   canSendRequests,
   shareStudioContent,
+  disputesContent,
+  openDisputeCount = 0,
 }: UnifiedContentHubProps) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
@@ -100,7 +106,9 @@ export function UnifiedContentHub({
         ? "requests"
         : tabParam === "share-studio" && shareStudioContent
           ? "share-studio"
-          : "reviews";
+          : tabParam === "disputes" && disputesContent
+            ? "disputes"
+            : "reviews";
   const [activeTab, setActiveTab] = useState<ContentTab>(defaultTab);
 
   const showRequestsTab = canSendRequests && initialRequestStats;
@@ -113,6 +121,9 @@ export function UnifiedContentHub({
       : []),
     ...(shareStudioContent
       ? [{ value: "share-studio" as const, label: "Share Studio", icon: ShareNetwork, count: 0 }]
+      : []),
+    ...(disputesContent
+      ? [{ value: "disputes" as const, label: "Disputes", icon: Flag, count: openDisputeCount }]
       : []),
   ];
 
@@ -192,6 +203,12 @@ export function UnifiedContentHub({
         {shareStudioContent && (
           <TabsContent value="share-studio" className="mt-6">
             {shareStudioContent}
+          </TabsContent>
+        )}
+
+        {disputesContent && (
+          <TabsContent value="disputes" className="mt-6">
+            {disputesContent}
           </TabsContent>
         )}
       </Tabs>

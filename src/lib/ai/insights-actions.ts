@@ -26,6 +26,7 @@ import type {
 } from "./insights-types";
 import type { ReviewTheme, SentimentLabel } from "./types";
 import { createChatCompletion, isAIEnabled } from "./client";
+import { parseAIJsonResponse } from "./json";
 import { THEME_DESCRIPTIONS } from "./types";
 import { randomUUID } from "crypto";
 
@@ -33,6 +34,12 @@ import { randomUUID } from "crypto";
 function subtractMonths(date: Date, months: number): void {
   date.setDate(1);
   date.setMonth(date.getMonth() - months);
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
 }
 
 /**
@@ -635,9 +642,12 @@ Generate a monthly performance summary.`;
         areasOfImprovement?: unknown;
       };
       try {
-        parsed = JSON.parse(response);
-      } catch {
-        console.error("AI summary JSON parse failed, using fallback");
+        parsed = parseAIJsonResponse(response);
+      } catch (parseError) {
+        console.warn(
+          "AI summary JSON parse failed, using fallback:",
+          parseError instanceof Error ? parseError.message : parseError
+        );
         return {
           success: true,
           data: {
@@ -663,10 +673,8 @@ Generate a monthly performance summary.`;
           periodStart: startDate,
           periodEnd: endDate,
           summary: parsed.summary || "Summary generation in progress.",
-          highlights: Array.isArray(parsed.highlights) ? parsed.highlights : [],
-          areasOfImprovement: Array.isArray(parsed.areasOfImprovement)
-            ? parsed.areasOfImprovement
-            : [],
+          highlights: stringArray(parsed.highlights),
+          areasOfImprovement: stringArray(parsed.areasOfImprovement),
           generatedAt: new Date(),
         },
       };

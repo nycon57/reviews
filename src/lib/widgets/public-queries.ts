@@ -368,14 +368,12 @@ export async function getNpsData(organizationId: string): Promise<NpsData> {
 
   const total = data.length;
   let promoters = 0;
-  let passives = 0;
   let detractors = 0;
 
   for (const row of data) {
     const s = row.nps_score as number;
     if (s >= 9) promoters++;
-    else if (s >= 7) passives++;
-    else detractors++;
+    else if (s < 7) detractors++;
   }
 
   // Round percentages ensuring they sum to 100
@@ -659,7 +657,10 @@ export async function getVideoTestimonials(
       "id, video_url, thumbnail_url, duration_seconds, transcription, approval_status, request_id, video_testimonial_requests!inner(customer_name, user_id, transaction_type)"
     )
     .eq("organization_id", organizationId)
-    .eq("approval_status", "approved")
+    // Quarantine enforcement (ADR 0001): only approved/published,
+    // non-quarantined videos may surface in public widgets.
+    .in("approval_status", ["approved", "published"])
+    .eq("quarantined", false)
     .order("created_at", { ascending: false })
     .limit(20);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Star,
@@ -23,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useOrigin } from "@/hooks/use-origin";
 
 interface QuickAction {
   icon: React.ReactNode;
@@ -41,15 +42,8 @@ interface UserQuickActionsProps {
 export function UserQuickActions({ profileSlug, userName }: UserQuickActionsProps) {
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [profileUrl, setProfileUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (profileSlug) {
-      setProfileUrl(`${window.location.origin}/pro/${profileSlug}`);
-    } else {
-      setProfileUrl(null);
-    }
-  }, [profileSlug]);
+  const origin = useOrigin();
+  const profileUrl = origin && profileSlug ? `${origin}/pro/${profileSlug}` : null;
 
   const actions: QuickAction[] = [
     {

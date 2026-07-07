@@ -20,62 +20,6 @@ export function ReviewDialogs() {
 
   return (
     <>
-      {/* Edit Review Dialog */}
-      <Dialog open={!!state.editingReview} onOpenChange={() => actions.setEditingReview(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Review</DialogTitle>
-            <DialogDescription>
-              Edit the review text before approving. The original text will be
-              preserved in the survey response.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      state.editingReview && i < state.editingReview.rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "fill-muted text-muted"
-                    }`}
-                  />
-                ))}
-              </div>
-              <span className="text-muted-foreground">
-                from {state.editingReview?.customerName || "Anonymous"}
-              </span>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="review-text">Review Text</Label>
-              <Textarea
-                id="review-text"
-                value={state.editedText}
-                onChange={(e) => actions.setEditedText(e.target.value)}
-                rows={6}
-                placeholder="Enter review text..."
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => actions.setEditingReview(null)}>
-              Cancel
-            </Button>
-            <Button variant="secondary" onClick={actions.handleUpdateText} disabled={state.isPending}>
-              Save Changes
-            </Button>
-            <Button
-              onClick={() => state.editingReview && actions.handleApprove(state.editingReview)}
-              disabled={state.isPending}
-            >
-              Save & Approve
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Reject Review Dialog */}
       <Dialog open={!!state.rejectingReview} onOpenChange={() => actions.setRejectingReview(null)}>
         <DialogContent>

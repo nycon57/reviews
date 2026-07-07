@@ -17,7 +17,6 @@ import {
   Star,
   Check,
   X,
-  PencilSimple as Edit2,
   DotsThree as MoreHorizontal,
   Archive,
   Flag,
@@ -47,16 +46,32 @@ function formatDate(dateString: string) {
 function getStatusBadge(status: Review["status"]) {
   switch (status) {
     case "pending":
-      return <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">Pending</Badge>;
+      return <Badge variant="outline" className="border-yellow-500 text-yellow-600 bg-yellow-50">Needs attention</Badge>;
     case "approved":
-      return <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">Approved</Badge>;
+      return <Badge variant="outline" className="border-green-500 text-green-600 bg-green-50">Live</Badge>;
     case "rejected":
-      return <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">Rejected</Badge>;
+      return <Badge variant="outline" className="border-red-500 text-red-600 bg-red-50">Removed</Badge>;
     case "archived":
       return <Badge variant="outline" className="border-border text-muted-foreground">Archived</Badge>;
     default:
       return null;
   }
+}
+
+const MODERATION_REASON_LABELS: Record<string, string> = {
+  profanity: "Profanity",
+  pii_email: "PII: email",
+  pii_phone: "PII: phone",
+  pii_ssn: "PII: SSN",
+  pii_address: "PII: address",
+  spam_links: "Spam: links",
+  spam_repetition: "Spam: repetition",
+  ai_flagged: "AI flagged",
+  screen_error: "Screen error",
+};
+
+function formatModerationReason(reason: string): string {
+  return MODERATION_REASON_LABELS[reason] ?? reason.replace(/_/g, " ");
 }
 
 export function ReviewListItem({ review }: { review: Review | AggregatedReview }) {
@@ -119,6 +134,20 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
         ) : (
           <p className="text-sm text-muted-foreground/60 italic">No written review provided</p>
         )}
+        {/* Machine-screening reasons for quarantined reviews */}
+        {review.status === "pending" && (review.moderationReasons?.length ?? 0) > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {review.moderationReasons!.map((reason) => (
+              <Badge
+                key={reason}
+                variant="outline"
+                className="border-border/60 text-xs font-normal text-muted-foreground"
+              >
+                {formatModerationReason(reason)}
+              </Badge>
+            ))}
+          </div>
+        )}
         {/* Response display */}
         {hasResponse && (() => {
           const isAiResponse = aggregatedReview.aiSuggestedResponse &&
@@ -140,29 +169,13 @@ export function ReviewListItem({ review }: { review: Review | AggregatedReview }
             </div>
           );
         })()}
-        <div className="flex items-center justify-end pt-2" onClick={(e) => e.stopPropagation()}>
-          {/* Pending mode: inline Approve/Reject for quick triage */}
-          {review.status === "pending" && state.isPendingMode && (
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => actions.handleApprove(review)} disabled={state.isPending}>
-                <Check className="mr-1 h-3 w-3" />Approve
-              </Button>
-              <Button size="sm" variant="destructive" onClick={() => actions.setRejectingReview(review)} disabled={state.isPending}>
-                <X className="mr-1 h-3 w-3" />Reject
-              </Button>
-            </div>
-          )}
-
+        <div className="flex items-center justify-end gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
           {/* Ellipsis menu — state-based actions */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => actions.openEditDialog(review)}>
-                <Edit2 className="mr-2 h-4 w-4" />Edit
-              </DropdownMenuItem>
-
               {review.status === "approved" && (
                 <>
                   <DropdownMenuItem onClick={() => actions.handleToggleFeatured(review.id, !isFeatured)}>

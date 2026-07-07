@@ -51,7 +51,6 @@ next-env.d.ts
 # Supabase
 supabase/.temp/
 supabase/.branches/
-supabase/migrations/
 
 # Ralph state (keep templates, ignore state)
 .ralph/runs/
@@ -91,10 +90,15 @@ agent-browser.json
 *.pem
 .turbo
 .worktrees/
+.claude/worktrees/
 .mcp.json
-
-# docs
-docs/
-# Added by ggshield
 .cache_ggshield
 .firecrawl
+
+# Test-user credentials (never commit)
+docs/test-users.md
+
+# Vendored agent skills (restorable via skills-lock.json)
+.claude/skills/
+.github/skills/
+.agents/skills/

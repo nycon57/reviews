@@ -17,10 +17,8 @@ import type { Review, AggregatedReview, AggregatedReviewFilters, ReviewAggregati
 import {
   approveReview,
   rejectReview,
-  updateReviewText,
   bulkApproveReviews,
   bulkRejectReviews,
-  revertToPending,
 } from "@/lib/reviews/actions";
 import {
   getAggregatedReviews,
@@ -42,7 +40,7 @@ interface TeamMember {
   fullName: string;
 }
 
-type OpenDialog = null | "edit" | "reject" | "bulkReject";
+type OpenDialog = null | "reject" | "bulkReject";
 
 // Filter state managed by useReducer
 interface FilterState {
@@ -104,8 +102,6 @@ interface ReviewQueueState {
   filters: FilterState;
   selectedIds: Set<string>;
   openDialog: OpenDialog;
-  editingReview: Review | null;
-  editedText: string;
   rejectingReview: Review | null;
   rejectionReason: string;
   bulkRejectionReason: string;
@@ -127,10 +123,8 @@ interface ReviewQueueActions {
   handlePageChange: (page: number) => void;
   clearFilters: () => void;
   handleExport: () => void;
-  handleApprove: (review: Review, publish?: boolean) => void;
+  handleApprove: (review: Review) => void;
   handleReject: () => void;
-  handleUpdateText: () => void;
-  handleRevertToPending: (reviewId: string) => void;
   handleBulkApprove: () => void;
   handleBulkReject: () => void;
   handleBulkArchive: () => void;
@@ -140,13 +134,10 @@ interface ReviewQueueActions {
   openReviewDetail: (review: Review | AggregatedReview) => void;
   toggleSelection: (id: string) => void;
   toggleSelectAll: () => void;
-  openEditDialog: (review: Review) => void;
-  setEditedText: (text: string) => void;
   setRejectingReview: (review: Review | null) => void;
   setRejectionReason: (reason: string) => void;
   setBulkRejectDialogOpen: (open: boolean) => void;
   setBulkRejectionReason: (reason: string) => void;
-  setEditingReview: (review: Review | null) => void;
   setDetailModalOpen: (open: boolean) => void;
   setSelectedReview: (review: AggregatedReview | null) => void;
 }
@@ -219,8 +210,6 @@ export function ReviewQueueProvider({
 
   // Dialog state - unified enum
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [editedText, setEditedText] = useState("");
   const [rejectingReview, setRejectingReview] = useState<Review | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [bulkRejectionReason, setBulkRejectionReason] = useState("");
@@ -363,15 +352,12 @@ export function ReviewQueueProvider({
     });
   };
 
-  const handleApprove = async (review: Review, publish: boolean = true) => {
+  const handleApprove = async (review: Review) => {
     startTransition(async () => {
       const result = await approveReview({
         reviewId: review.id,
-        editedText: editingReview?.id === review.id ? editedText : undefined,
-        publish,
       });
       if (result.success) {
-        setEditingReview(null);
         setOpenDialog(null);
         refreshReviews();
         setStats((prev) => ({ ...prev, pending: Math.max(0, prev.pending - 1), approved: prev.approved + 1 }));
@@ -390,23 +376,6 @@ export function ReviewQueueProvider({
         refreshReviews();
         setStats((prev) => ({ ...prev, pending: Math.max(0, prev.pending - 1), rejected: prev.rejected + 1 }));
       }
-    });
-  };
-
-  const handleUpdateText = async () => {
-    if (!editingReview) return;
-    startTransition(async () => {
-      const result = await updateReviewText({ reviewId: editingReview.id, text: editedText });
-      if (result.success) {
-        setReviews((prev) => prev.map((r) => r.id === editingReview.id ? { ...r, text: editedText } : r));
-      }
-    });
-  };
-
-  const handleRevertToPending = async (reviewId: string) => {
-    startTransition(async () => {
-      const result = await revertToPending(reviewId);
-      if (result.success) refreshReviews();
     });
   };
 
@@ -484,12 +453,6 @@ export function ReviewQueueProvider({
     else setSelectedIds(new Set(reviews.map((r) => r.id)));
   };
 
-  const openEditDialog = (review: Review) => {
-    setEditingReview(review);
-    setEditedText(review.text || "");
-    setOpenDialog("edit");
-  };
-
   const setBulkRejectDialogOpen = (open: boolean) => {
     setOpenDialog(open ? "bulkReject" : null);
   };
@@ -498,7 +461,7 @@ export function ReviewQueueProvider({
     () => ({
       state: {
         reviews, total, stats, aggregatedStats, isPending, filters,
-        selectedIds, openDialog, editingReview, editedText,
+        selectedIds, openDialog,
         rejectingReview, rejectionReason, bulkRejectionReason,
         selectedReview, detailModalOpen, teamMembers, hasAiAccess,
         limit, totalPages, isPendingMode, hasActiveFilters,
@@ -506,18 +469,18 @@ export function ReviewQueueProvider({
       actions: {
         dispatch, refreshReviews, handleFilterChange, handleSearch,
         handlePageChange, clearFilters, handleExport, handleApprove,
-        handleReject, handleUpdateText, handleRevertToPending,
+        handleReject,
         handleBulkApprove, handleBulkReject, handleBulkArchive,
         handleBulkFeature, handleToggleFeatured, handleArchive,
         openReviewDetail, toggleSelection, toggleSelectAll,
-        openEditDialog, setEditedText, setRejectingReview,
+        setRejectingReview,
         setRejectionReason, setBulkRejectDialogOpen, setBulkRejectionReason,
-        setEditingReview, setDetailModalOpen, setSelectedReview,
+        setDetailModalOpen, setSelectedReview,
       },
     }),
     [
       reviews, total, stats, aggregatedStats, isPending, filters,
-      selectedIds, openDialog, editingReview, editedText,
+      selectedIds, openDialog,
       rejectingReview, rejectionReason, bulkRejectionReason,
       selectedReview, detailModalOpen, teamMembers, hasAiAccess,
       totalPages, isPendingMode, hasActiveFilters,

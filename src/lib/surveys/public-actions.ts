@@ -1,13 +1,16 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 import type {
   Question,
   SurveyBranding,
   ThankYouConfig,
 } from "@/types/survey.types";
-import { applyAutoApprovalRules } from "@/lib/reviews/actions";
+import { screenReviewText } from "@/lib/reviews/moderation";
+import { queueQuoteCardKitAfterPublish } from "@/lib/reviews/asset-kit";
+import { notifyReviewNeedsResponse } from "@/lib/reviews/notifications";
+import { getCelebrationThreshold } from "@/lib/video-testimonials/public-actions";
 import { analyzeNewReview } from "@/lib/ai/actions";
 import type { PublicSurvey, ActionResult } from "./public-types";
 
@@ -273,11 +276,20 @@ export async function submitSurveyResponse(
       .eq("id", survey.id)
       .single();
 
-    // Create a review record from the survey response
+    // Create a review record from the survey response. Publish inversion:
+    // machine screening is the only gate — a pass verdict publishes
+    // immediately at any rating; quarantine awaits human release.
     if (overallRating) {
       const reviewText = testimonialText || null;
+      const customerName = surveyDetails?.customer_name || null;
+      const now = new Date().toISOString();
 
-      const { data: newReview, error: reviewError } = await supabase
+      const moderation = await screenReviewText(reviewText ?? "", customerName);
+      const publish = moderation.verdict === "pass";
+
+      // moderation_* columns are not in the generated types yet — untyped client
+      const untypedAdmin = createUntypedAdminClient();
+      const { data: newReview, error: reviewError } = await untypedAdmin
         .from("reviews")
         .insert({
           organization_id: survey.organization_id,
@@ -286,23 +298,40 @@ export async function submitSurveyResponse(
           survey_response_id: response.id,
           rating: overallRating,
           text: reviewText,
-          customer_name: surveyDetails?.customer_name || null,
-          status: "pending",
-          review_date: new Date().toISOString(),
+          customer_name: customerName,
+          status: publish ? "approved" : "pending",
+          is_published: publish,
+          approved_at: publish ? now : null,
+          published_at: publish ? now : null,
+          moderation_verdict: moderation.verdict,
+          moderation_reasons: moderation.reasons,
+          moderation_checked_at: now,
+          moderation_provider: moderation.provider,
+          review_date: now,
         })
         .select("id")
         .single();
 
       if (!reviewError && newReview) {
-        // Apply auto-approval rules
-        await applyAutoApprovalRules(
-          newReview.id,
-          survey.organization_id,
-          overallRating
-        );
+        const reviewId = String((newReview as { id: string }).id);
+
+        if (publish && survey.user_id) {
+          queueQuoteCardKitAfterPublish(survey.organization_id, [reviewId], survey.user_id);
+
+          const threshold = await getCelebrationThreshold(survey.organization_id);
+          if (overallRating < threshold) {
+            await notifyReviewNeedsResponse({
+              reviewId,
+              organizationId: survey.organization_id,
+              ownerUserId: survey.user_id,
+              customerName,
+              rating: overallRating,
+            });
+          }
+        }
 
         // Trigger AI sentiment analysis (runs async, doesn't block response)
-        analyzeNewReview(newReview.id, reviewText, overallRating).catch((err) =>
+        analyzeNewReview(reviewId, reviewText, overallRating).catch((err) =>
           console.error("Sentiment analysis failed:", err)
         );
       }

@@ -21,6 +21,7 @@ import { TIER_FEATURES } from "@/lib/organization/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { getUnifiedRequests, getUnifiedRequestStats } from "@/lib/requests/unified-requests";
+import { getContacts } from "@/lib/contacts/queries";
 import { getReviewFlags, getReviewFlagStats } from "@/lib/reviews/flag-actions";
 import { DisputeQueue } from "@/components/reviews/dispute-queue";
 import { hasPermission, PERMISSIONS } from "@/lib/permissions";
@@ -129,6 +130,7 @@ export default async function ReviewsPage({
     orgResult,
     requestsResult,
     requestStatsResult,
+    contactsResult,
     openFlagsResult,
     resolvedFlagsResult,
     flagStatsResult,
@@ -143,6 +145,7 @@ export default async function ReviewsPage({
     getCurrentOrganization(),
     canSendRequests ? getUnifiedRequests({ page: 1, pageSize: 25 }) : null,
     canSendRequests ? getUnifiedRequestStats() : null,
+    canSendRequests ? getContacts({ page: 1, pageSize: 25 }) : null,
     canManageDisputes ? getReviewFlags({ status: "pending" }) : null,
     canManageDisputes ? getReviewFlags({ status: "resolved" }) : null,
     canManageDisputes ? getReviewFlagStats() : null,
@@ -224,6 +227,10 @@ export default async function ReviewsPage({
   const initialRequestsTotal = requestsResult?.total ?? 0;
   const initialRequestStats = requestStatsResult ?? undefined;
 
+  // Process contacts data (same acquisition permission as requests)
+  const initialContacts = contactsResult?.contacts ?? [];
+  const initialContactsTotal = contactsResult?.total ?? 0;
+
   return (
     <div className="flex-1 space-y-6">
       {/* Page header */}
@@ -274,6 +281,9 @@ export default async function ReviewsPage({
           initialRequestsTotal={initialRequestsTotal}
           initialRequestStats={initialRequestStats}
           canSendRequests={canSendRequests}
+          initialContacts={initialContacts}
+          initialContactsTotal={initialContactsTotal}
+          contactsEnabled={canSendRequests}
           shareStudioContent={
             accessCtx ? (
               <Suspense fallback={<Skeleton className="h-[200px]" />}>

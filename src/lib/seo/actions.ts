@@ -137,6 +137,7 @@ export type PublicLoanOfficerListItem = PublicProfessionalListItem;
 // Full interface for profile views with customization fields
 export interface PublicProfessional extends PublicProfessionalListItem {
   slug: string | null;
+  updated_at: string | null;
   branch_id: string | null;
   google_maps_url: string | null;
   // Profile customization fields
@@ -161,6 +162,7 @@ export interface PublicReview {
   text: string | null;
   title: string | null;
   review_date: string;
+  updated_at: string | null;
   source: string;
   response_text: string | null;
   featured: boolean;
@@ -253,6 +255,7 @@ export const getPublicLOProfile = cache(async function getPublicLOProfile(
           personal_website_url,
           average_rating,
           total_reviews,
+          updated_at,
           nps_score,
           is_active,
           organization_id,
@@ -321,6 +324,7 @@ export const getPublicLOProfile = cache(async function getPublicLOProfile(
         review_date,
         source,
         response_text,
+        updated_at,
         featured
       `
       )
@@ -347,6 +351,7 @@ export const getPublicLOProfile = cache(async function getPublicLOProfile(
           review_date,
           source,
           response_text,
+          updated_at,
           featured
         `
         )
@@ -417,6 +422,7 @@ export const getPublicLOProfile = cache(async function getPublicLOProfile(
           personal_website_url: user.personal_website_url ?? null,
           average_rating: user.average_rating,
           total_reviews: user.total_reviews,
+          updated_at: user.updated_at,
           nps_score: user.nps_score,
           latitude: user.latitude ?? branchLatitude,
           longitude: user.longitude ?? branchLongitude,

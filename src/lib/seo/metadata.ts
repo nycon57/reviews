@@ -23,6 +23,12 @@ interface MetadataProfessional {
   address?: Json | null;
   average_rating: number | null;
   total_reviews: number | null;
+  updated_at?: string | null;
+}
+
+interface MetadataReview {
+  updated_at?: string | null;
+  review_date?: string | null;
 }
 
 /**
@@ -67,20 +73,53 @@ function buildOgImageMetadata(profileUrl: string, alt: string) {
   };
 }
 
+function getValidTimestamp(value: string | null | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+export function getProfessionalDateModified(
+  professional: MetadataProfessional,
+  reviews: MetadataReview[] = []
+): string | undefined {
+  const timestamps = [
+    getValidTimestamp(professional.updated_at),
+    ...reviews.map((review) =>
+      getValidTimestamp(review.updated_at) ?? getValidTimestamp(review.review_date)
+    ),
+  ].filter((timestamp): timestamp is number => timestamp !== null);
+
+  if (timestamps.length === 0) {
+    return undefined;
+  }
+
+  return new Date(Math.max(...timestamps)).toISOString();
+}
+
 /**
  * Generate metadata for a professional profile page
  */
 export function generateLOProfileMetadata(
   professional: MetadataProfessional,
   organization: MetadataOrganization | null,
-  baseUrl: string
+  baseUrl: string,
+  reviews: MetadataReview[] = []
 ): Metadata {
   const title = `${professional.full_name} - ${professional.title || "Professional"} Reviews`;
+  const rating = professional.average_rating
+    ? Number(professional.average_rating).toFixed(1)
+    : "0.0";
+  const reviewCount = professional.total_reviews || 0;
+  const companyName = organization?.name || "their company";
   const description =
-    professional.bio ||
-    `Read reviews and ratings for ${professional.full_name}, ${professional.title || "Professional"}${organization ? ` at ${organization.name}` : ""}. ${professional.total_reviews || 0} reviews with ${professional.average_rating ? `${Number(professional.average_rating).toFixed(1)} average rating` : "ratings available"}.`;
+    `${professional.full_name} is a ${rating}-star rated ${professional.title || "Professional"} at ${companyName} with ${reviewCount} verified reviews on RepWell`;
   const publicSlug = professional.slug || professional.id;
   const profileUrl = `${baseUrl}/pro/${publicSlug}`;
+  const dateModified = getProfessionalDateModified(professional, reviews);
   const ogImageMetadata = buildOgImageMetadata(
     profileUrl,
     `${professional.full_name} reviews on RepWell`
@@ -88,7 +127,7 @@ export function generateLOProfileMetadata(
 
   const metadata: Metadata = {
     title,
-    description: description.slice(0, 160), // SEO best practice: 155-160 chars
+    description,
     alternates: {
       canonical: profileUrl,
     },
@@ -96,7 +135,8 @@ export function generateLOProfileMetadata(
       title,
       description,
       url: profileUrl,
-      type: "profile",
+      type: "article",
+      modifiedTime: dateModified,
       siteName: organization?.name || "RepWell",
       locale: "en_US",
       ...ogImageMetadata.openGraph,

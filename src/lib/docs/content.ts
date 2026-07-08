@@ -1571,6 +1571,129 @@ Errors include a code and message to help you debug:
         `,
       },
       {
+        id: "public-api-v2",
+        title: "Public API v2",
+        slug: "public-api-v2",
+        description: "Use RepWell's open and keyed public API v2 for professional review data",
+        tags: ["developers", "api", "v2", "agents"],
+        content: `
+# Public API v2
+
+RepWell public API v2 is designed for developer integrations and AI agent workflows that need verified professional reputation data.
+
+## Base URLs
+
+- Production app base: \`https://repwell.com/api/v2\`
+- OpenAPI JSON: [/api/openapi-v2.json](/api/openapi-v2.json)
+- OpenAPI schema alias: [/api/v2/schema](/api/v2/schema)
+- Agent discovery file: [/llms.txt](/llms.txt)
+
+## Tiers
+
+### Open tier
+
+The open tier does not require an API key. It supports professional discovery and is rate limited to 60 requests per minute per IP address.
+
+### Keyed tier
+
+The keyed tier requires an API key in the \`Authorization\` header and is rate limited to 300 requests per minute per API key.
+
+\`\`\`http
+Authorization: Bearer rw_live_xxxxx
+\`\`\`
+
+Create and rotate keys in [Workspace API Keys](/dashboard/organization?tab=api). The older settings API key route redirects there.
+
+## Endpoints
+
+| Method | Endpoint | Tier | Description |
+|---|---|---|---|
+| \`GET\` | \`/api/v2/professionals\` | Open | Search active professionals by name, industry, location, rating, page, and sort order |
+| \`GET\` | \`/api/v2/professionals/{id}\` | Keyed | Full professional profile with recent approved reviews and reputation stats |
+| \`GET\` | \`/api/v2/professionals/{id}/reviews\` | Keyed | Paginated approved reviews for one professional |
+| \`GET\` | \`/api/v2/companies\` | Keyed | Company list with aggregate team reputation metrics |
+| \`GET\` | \`/api/v2/companies/{id}\` | Keyed | Company detail with team roster summary |
+| \`GET\` | \`/api/v2/reviews\` | Keyed | Cross-professional approved review search by keyword, platform, rating, date, industry, and location |
+
+## curl example
+
+\`\`\`bash
+curl "https://repwell.com/api/v2/professionals?name=jane+smith&industry=mortgage" \\
+  -H "Accept: application/json"
+\`\`\`
+
+## Python example
+
+\`\`\`python
+import requests
+
+response = requests.get(
+    "https://repwell.com/api/v2/professionals/pro_123/reviews",
+    headers={"Authorization": "Bearer rw_live_xxxxx"},
+    params={"per_page": 25, "sort_by": "date_desc"},
+    timeout=10,
+)
+response.raise_for_status()
+print(response.json())
+\`\`\`
+
+## JavaScript example
+
+\`\`\`js
+const response = await fetch(
+  "https://repwell.com/api/v2/reviews?keyword=responsive&min_rating=4",
+  {
+    headers: {
+      Authorization: \`Bearer \${process.env.REPWELL_API_KEY}\`,
+      Accept: "application/json",
+    },
+  }
+);
+
+if (!response.ok) {
+  throw new Error(\`RepWell API error: \${response.status}\`);
+}
+
+const data = await response.json();
+\`\`\`
+
+## Response shape
+
+\`\`\`json
+{
+  "data": [
+    {
+      "id": "pro_123",
+      "full_name": "Jane Smith",
+      "title": "Mortgage Advisor",
+      "company_name": "Summit Mortgage",
+      "industry": "mortgage",
+      "location": "Chicago, IL",
+      "average_rating": 4.9,
+      "total_reviews": 47,
+      "profile_url": "https://repwell.com/pro/jane-smith"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "per_page": 20,
+    "total_pages": 1
+  }
+}
+\`\`\`
+
+## Rate limits
+
+| Tier | Limit | Key |
+|---|---|---|
+| Open | 60 requests/minute | IP address |
+| Keyed | 300 requests/minute | API key |
+
+When the limit is exceeded, the API returns \`429\` with a \`Retry-After\` header.
+        `,
+      },
+      {
         id: "authentication",
         title: "Authentication",
         slug: "authentication",

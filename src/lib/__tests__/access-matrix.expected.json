@@ -46,6 +46,11 @@
       "permission": "VIEW_LEADERBOARD"
     },
     {
+      "title": "Agents",
+      "route": "/dashboard/analytics/agents",
+      "permission": "VIEW_TEAM"
+    },
+    {
       "title": "Team",
       "route": "/dashboard/analytics/team",
       "permission": "VIEW_TEAM"
@@ -173,6 +178,7 @@
     "/dashboard/analytics",
     "/dashboard/analytics/trends",
     "/dashboard/analytics/leaderboard",
+    "/dashboard/analytics/agents",
     "/dashboard/analytics/team",
     "/dashboard/insights",
     "/dashboard/people",

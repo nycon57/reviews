@@ -96,6 +96,12 @@ export const NAV_CONFIG: NavConfig = {
           icon: "Trophy",
           permission: PERMISSIONS.VIEW_LEADERBOARD,
         },
+        {
+          title: "Agents",
+          href: "/dashboard/analytics/agents",
+          icon: "Sparkle",
+          permission: PERMISSIONS.VIEW_TEAM,
+        },
         // Team performance overview moved out of the Team page into Insights
         // (ADR 0007); member management now lives under People.
         {

@@ -14,6 +14,7 @@
  */
 import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { normalizeEmail, normalizePhone, sha256Email } from "@/lib/contacts/identity";
+import { emitWebhookEvent } from "@/lib/webhooks/outbound";
 
 export type SuppressionChannel = "email" | "sms";
 export type SuppressionReason =
@@ -42,6 +43,11 @@ export interface ContactRow {
   erased_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface FindOrCreateContactResult {
+  contact: ContactRow;
+  createdNew: boolean;
 }
 
 interface ContactIdentityInput {
@@ -76,7 +82,7 @@ export async function findOrCreateContact(
   identity: ContactIdentityInput,
   ownerUserId: string | null,
   source: ContactSource
-): Promise<ContactRow> {
+): Promise<FindOrCreateContactResult> {
   const email = normalizeEmail(identity.email);
   if (!email) {
     throw new Error("findOrCreateContact: a valid email is required");
@@ -103,7 +109,9 @@ export async function findOrCreateContact(
     if (name) patch.name = name;
     if (phone) patch.phone = phone;
     if (ownerUserId) patch.owner_user_id = ownerUserId;
-    if (Object.keys(patch).length === 0) return existing as ContactRow;
+    if (Object.keys(patch).length === 0) {
+      return { contact: existing as ContactRow, createdNew: false };
+    }
 
     const { data: updated, error: updateError } = await supabase
       .from("contacts")
@@ -116,7 +124,7 @@ export async function findOrCreateContact(
         `findOrCreateContact: freshness update failed: ${updateError.message}`
       );
     }
-    return updated as ContactRow;
+    return { contact: updated as ContactRow, createdNew: false };
   }
 
   // 2. No live Contact. Was this email erased before? (tombstone via hash)
@@ -155,6 +163,7 @@ export async function findOrCreateContact(
     .single();
 
   let contact: ContactRow;
+  let createdNew = false;
   if (insertError) {
     if (insertError.code === "23505") {
       // Lost a race — the Contact now exists. Re-select and return it.
@@ -178,6 +187,7 @@ export async function findOrCreateContact(
     }
   } else {
     contact = created as ContactRow;
+    createdNew = true;
   }
 
   // 4. Preserve suppressions across erase→re-import and absorb waiting
@@ -190,7 +200,23 @@ export async function findOrCreateContact(
     erasedContactId
   );
 
-  return contact;
+  if (createdNew) {
+    await emitWebhookEvent({
+      organizationId,
+      type: "contact.created",
+      data: {
+        contact_id: contact.id,
+        full_name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
+        source: contact.source,
+      },
+    }).catch((error) => {
+      console.error("Failed to enqueue contact.created webhook:", error);
+    });
+  }
+
+  return { contact, createdNew };
 }
 
 /**

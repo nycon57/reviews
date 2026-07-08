@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { unifiedGetUser } from "@/lib/auth/actions";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import type { ActionResult } from "./types";
 import {
   generateResponseSuggestion,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/ai/response-suggestions";
 import { sendReviewResponseConfirmationEmail } from "./response-confirmation";
 import { isReviewLive } from "./publish";
+import { emitWebhookEvent } from "@/lib/webhooks/outbound";
 
 // Response template types
 export interface ResponseTemplate {
@@ -432,6 +434,20 @@ export async function postResponse(
   }).catch((err) => {
     // Log error but don't fail the response posting
     console.error("Failed to send review response confirmation:", err);
+  });
+
+  after(async () => {
+    await emitWebhookEvent({
+      organizationId: context.organizationId,
+      type: "review.responded",
+      data: {
+        review_id: reviewId,
+        response_text: responseText,
+        responded_at: now,
+      },
+    }).catch((err) => {
+      console.error("Failed to enqueue review.responded webhook:", err);
+    });
   });
 
   revalidatePath("/dashboard/all-reviews");

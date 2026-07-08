@@ -55,7 +55,7 @@ export function contactPageUrlToOneClickUrl(pageUrl: string): string | null {
 
 /**
  * Build the unsubscribe URL for a Contact that already carries its token (e.g.
- * the row returned from findOrCreateContact, which selects `*`). Synchronous —
+ * the contact row in the findOrCreateContact result). Synchronous —
  * no I/O. Returns null only if the token is somehow absent, so callers can
  * decide whether to fall back to {@link resolveContactUnsubscribeUrl}.
  */

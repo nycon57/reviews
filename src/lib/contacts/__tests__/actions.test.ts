@@ -123,7 +123,7 @@ describe("findOrCreateContact", () => {
       "survey"
     );
 
-    expect(result).toEqual(updated);
+    expect(result).toEqual({ contact: updated, createdNew: false });
     // Second contacts touch is the freshness update carrying normalized values.
     const updateArgs = argsFor(log, "contacts", "update")?.[0] as Record<string, unknown>;
     expect(updateArgs).toMatchObject({
@@ -155,7 +155,7 @@ describe("findOrCreateContact", () => {
       "video_testimonial"
     );
 
-    expect(result).toEqual(created);
+    expect(result).toEqual({ contact: created, createdNew: true });
     const insertArgs = argsFor(log, "contacts", "insert")?.[0] as Record<string, unknown>;
     expect(insertArgs.email).toBe("new@example.com");
     expect(insertArgs.source).toBe("video_testimonial");

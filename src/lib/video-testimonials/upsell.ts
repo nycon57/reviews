@@ -141,7 +141,7 @@ export async function createVideoRequestForReview(params: {
   // created this Contact, so this de-dupes onto it.
   let contactId: string | null = null;
   try {
-    const contact = await findOrCreateContact(
+    const { contact } = await findOrCreateContact(
       review.organization_id,
       { email: review.customer_email as string, name: review.customer_name },
       review.user_id,

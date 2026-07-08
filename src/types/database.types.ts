@@ -8819,6 +8819,75 @@ export type Database = {
           },
         ]
       }
+      webhook_deliveries: {
+        Row: {
+          attempt_count: number
+          created_at: string
+          delivered_at: string | null
+          error_message: string | null
+          event_id: string
+          event_type: string
+          id: string
+          last_attempt_at: string | null
+          max_attempts: number
+          organization_id: string
+          payload: Json
+          response_status: number | null
+          scheduled_at: string
+          status: string
+          subscription_id: string
+        }
+        Insert: {
+          attempt_count?: number
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_id?: string
+          event_type: string
+          id?: string
+          last_attempt_at?: string | null
+          max_attempts?: number
+          organization_id: string
+          payload: Json
+          response_status?: number | null
+          scheduled_at?: string
+          status?: string
+          subscription_id: string
+        }
+        Update: {
+          attempt_count?: number
+          created_at?: string
+          delivered_at?: string | null
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          last_attempt_at?: string | null
+          max_attempts?: number
+          organization_id?: string
+          payload?: Json
+          response_status?: number | null
+          scheduled_at?: string
+          status?: string
+          subscription_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_deliveries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_deliveries_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_logs: {
         Row: {
           created_at: string | null
@@ -8882,6 +8951,79 @@ export type Database = {
             columns: ["webhook_config_id"]
             isOneToOne: false
             referencedRelation: "webhook_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_subscriptions: {
+        Row: {
+          api_key_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          events: string[]
+          failure_count: number
+          id: string
+          is_active: boolean
+          last_delivery_at: string | null
+          organization_id: string
+          secret: string
+          source: string
+          target_url: string
+          updated_at: string
+        }
+        Insert: {
+          api_key_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          events?: string[]
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          last_delivery_at?: string | null
+          organization_id: string
+          secret: string
+          source?: string
+          target_url: string
+          updated_at?: string
+        }
+        Update: {
+          api_key_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          events?: string[]
+          failure_count?: number
+          id?: string
+          is_active?: boolean
+          last_delivery_at?: string | null
+          organization_id?: string
+          secret?: string
+          source?: string
+          target_url?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_subscriptions_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_subscriptions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

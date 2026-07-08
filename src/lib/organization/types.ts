@@ -5,7 +5,13 @@ export const SUBSCRIPTION_TIERS = ["basic", "pro", "enterprise"] as const;
 export type SubscriptionTier = (typeof SUBSCRIPTION_TIERS)[number];
 
 // Subscription statuses
-export const SUBSCRIPTION_STATUSES = ["active", "trialing", "past_due", "cancelled", "paused"] as const;
+export const SUBSCRIPTION_STATUSES = [
+  "active",
+  "trialing",
+  "past_due",
+  "cancelled",
+  "paused",
+] as const;
 export type SubscriptionStatus = (typeof SUBSCRIPTION_STATUSES)[number];
 
 // Address schema
@@ -42,7 +48,7 @@ export const organizationFeaturesSchema = z.object({
 export type OrganizationFeatures = z.infer<typeof organizationFeaturesSchema>;
 
 // Integration management
-export const INTEGRATION_KEYS = ["google", "social", "slack", "teams"] as const;
+export const INTEGRATION_KEYS = ["google", "social", "slack", "teams", "salesforce"] as const;
 export type IntegrationKey = (typeof INTEGRATION_KEYS)[number];
 
 export const integrationConfigSchema = z.object({
@@ -55,6 +61,7 @@ export const orgIntegrationsSchema = z.object({
   social: integrationConfigSchema.optional(),
   slack: integrationConfigSchema.optional(),
   teams: integrationConfigSchema.optional(),
+  salesforce: integrationConfigSchema.optional(),
 });
 export type OrgIntegrations = z.infer<typeof orgIntegrationsSchema>;
 
@@ -67,8 +74,14 @@ export const organizationSchema = z.object({
   logo_url: z.string().url().nullable().optional(),
   avatar_url: z.string().url().nullable().optional(),
   banner_url: z.string().url().nullable().optional(),
-  primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").default("#3B82F6"),
-  secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").default("#1E40AF"),
+  primary_color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
+    .default("#3B82F6"),
+  secondary_color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
+    .default("#1E40AF"),
   font_family: z.string().default("Inter"),
   company_email: z.string().email().nullable().optional(),
   company_phone: z.string().nullable().optional(),
@@ -128,8 +141,14 @@ export const updateOrganizationBrandingSchema = z.object({
   logo_url: z.string().url("Invalid URL").nullable().optional(),
   avatar_url: z.string().url("Invalid URL").nullable().optional(),
   banner_url: z.string().url("Invalid URL").nullable().optional(),
-  primary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").optional(),
-  secondary_color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format").optional(),
+  primary_color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
+    .optional(),
+  secondary_color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, "Invalid color format")
+    .optional(),
   font_family: z.string().optional(),
 });
 export type UpdateOrganizationBranding = z.infer<typeof updateOrganizationBrandingSchema>;
@@ -277,9 +296,7 @@ export const emailBrandingConfigSchema = z.object({
       logoAlt: z.string().default("Logo"),
       logoHeight: z.number().min(20).max(120).default(42),
       variant: z.enum(["centered", "inline", "social"]).default("centered"),
-      navLinks: z
-        .array(z.object({ label: z.string(), href: z.string() }))
-        .default([]),
+      navLinks: z.array(z.object({ label: z.string(), href: z.string() })).default([]),
       socialLinks: z
         .object({
           twitter: z.string().optional(),

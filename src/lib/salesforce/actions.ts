@@ -1,28 +1,17 @@
-'use server';
+"use server";
 
-import { createAdminClient, createUntypedAdminClient } from '@/lib/supabase/admin';
-import { unifiedGetUser } from '@/lib/auth/actions';
-import { revalidatePath } from 'next/cache';
+import { createAdminClient, createUntypedAdminClient } from "@/lib/supabase/admin";
+import { unifiedGetUser } from "@/lib/auth/actions";
+import { revalidatePath } from "next/cache";
 import {
   exchangeCodeForTokens,
-  refreshAccessToken,
   getUserInfo,
-  getContacts,
-  getOpportunities,
   getOpportunityStages,
-  getOpportunityContacts,
   createTask,
-  isTokenExpired,
   getAuthorizationUrl,
-} from './client';
-import {
-  type SalesforceConnection,
-  type SalesforceSyncLog,
-  type ActionResult,
-} from './types';
-import { findOrCreateContact } from '@/lib/contacts/actions';
-import { matchOpportunityOwnerToUser } from './attribution';
-import type { Json } from '@/types/database.types';
+} from "./client";
+import { type SalesforceConnection, type SalesforceSyncLog, type ActionResult } from "./types";
+import { getValidAccessToken, syncSalesforceConnection } from "./sync-service";
 
 // Get user's role and organization ID
 async function getUserContext() {
@@ -33,9 +22,9 @@ async function getUserContext() {
 
   const supabase = createAdminClient();
   const { data: userData } = await supabase
-    .from('users')
-    .select('id, organization_id, role')
-    .eq('id', user.id)
+    .from("users")
+    .select("id, organization_id, role")
+    .eq("id", user.id)
     .single();
 
   return userData;
@@ -52,7 +41,7 @@ async function requireAdminRole(): Promise<{
     return null;
   }
 
-  if (context.role !== 'admin') {
+  if (context.role !== "admin") {
     return null;
   }
 
@@ -62,64 +51,11 @@ async function requireAdminRole(): Promise<{
   };
 }
 
-// Get valid access token (refreshing if needed)
-async function getValidAccessToken(connectionId: string): Promise<{
-  accessToken: string;
-  instanceUrl: string;
-} | null> {
-  const adminClient = createUntypedAdminClient();
-
-  const { data: connection, error } = await adminClient
-    .from('salesforce_connections')
-    .select('access_token, refresh_token, token_expires_at, instance_url')
-    .eq('id', connectionId)
-    .eq('is_active', true)
-    .single();
-
-  if (error || !connection) {
-    return null;
-  }
-
-  // Check if token is expired
-  if (isTokenExpired(new Date(connection.token_expires_at))) {
-    try {
-      const newTokens = await refreshAccessToken(
-        connection.refresh_token,
-        connection.instance_url
-      );
-
-      // Update tokens in database
-      await adminClient
-        .from('salesforce_connections')
-        .update({
-          access_token: newTokens.accessToken,
-          refresh_token: newTokens.refreshToken,
-          token_expires_at: newTokens.expiresAt.toISOString(),
-          instance_url: newTokens.instanceUrl,
-        })
-        .eq('id', connectionId);
-
-      return {
-        accessToken: newTokens.accessToken,
-        instanceUrl: newTokens.instanceUrl,
-      };
-    } catch (error) {
-      console.error('Failed to refresh Salesforce token:', error);
-      return null;
-    }
-  }
-
-  return {
-    accessToken: connection.access_token,
-    instanceUrl: connection.instance_url,
-  };
-}
-
 // Generate OAuth state and URL
 export async function initiateSalesforceOAuth(): Promise<ActionResult<{ url: string }>> {
   const context = await requireAdminRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Admin role required' };
+    return { success: false, error: "Unauthorized - Admin role required" };
   }
 
   // Create state with organization info
@@ -129,7 +65,7 @@ export async function initiateSalesforceOAuth(): Promise<ActionResult<{ url: str
       userId: context.userId,
       timestamp: Date.now(),
     })
-  ).toString('base64url');
+  ).toString("base64url");
 
   const url = getAuthorizationUrl(state);
 
@@ -143,12 +79,12 @@ export async function handleSalesforceOAuthCallback(
 ): Promise<ActionResult<{ connectionId: string }>> {
   try {
     // Decode state
-    const stateData = JSON.parse(Buffer.from(state, 'base64url').toString());
+    const stateData = JSON.parse(Buffer.from(state, "base64url").toString());
     const { organizationId, userId: _userId } = stateData;
 
     // Validate timestamp (5 minute expiry)
     if (Date.now() - stateData.timestamp > 5 * 60 * 1000) {
-      return { success: false, error: 'OAuth session expired' };
+      return { success: false, error: "OAuth session expired" };
     }
 
     // Exchange code for tokens
@@ -161,17 +97,17 @@ export async function handleSalesforceOAuthCallback(
 
     // Check if a connection already exists for this Salesforce org
     const { data: existingConnection } = await adminClient
-      .from('salesforce_connections')
-      .select('id')
-      .eq('organization_id', organizationId)
-      .eq('salesforce_org_id', userInfo.organizationId)
-      .eq('is_active', true)
+      .from("salesforce_connections")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .eq("salesforce_org_id", userInfo.organizationId)
+      .eq("is_active", true)
       .single();
 
     if (existingConnection) {
       // Update existing connection
       await adminClient
-        .from('salesforce_connections')
+        .from("salesforce_connections")
         .update({
           salesforce_user_id: userInfo.id,
           salesforce_username: userInfo.username,
@@ -180,17 +116,17 @@ export async function handleSalesforceOAuthCallback(
           refresh_token: tokens.refreshToken,
           token_expires_at: tokens.expiresAt.toISOString(),
           scopes: tokens.scopes,
-          sync_status: 'pending',
+          sync_status: "pending",
           sync_error: null,
         })
-        .eq('id', existingConnection.id);
+        .eq("id", existingConnection.id);
 
       return { success: true, data: { connectionId: existingConnection.id } };
     }
 
     // Create new connection
     const { data: connection, error } = await adminClient
-      .from('salesforce_connections')
+      .from("salesforce_connections")
       .insert({
         organization_id: organizationId,
         instance_url: tokens.instanceUrl,
@@ -202,44 +138,46 @@ export async function handleSalesforceOAuthCallback(
         token_expires_at: tokens.expiresAt.toISOString(),
         scopes: tokens.scopes,
         is_active: true,
-        sync_status: 'pending',
+        sync_status: "pending",
       })
-      .select('id')
+      .select("id")
       .single();
 
     if (error) {
-      console.error('Failed to create Salesforce connection:', error);
-      return { success: false, error: 'Failed to save Salesforce connection' };
+      console.error("Failed to create Salesforce connection:", error);
+      return { success: false, error: "Failed to save Salesforce connection" };
     }
 
     return { success: true, data: { connectionId: connection.id } };
   } catch (error) {
-    console.error('Salesforce OAuth callback error:', error);
-    return { success: false, error: 'Failed to complete Salesforce authentication' };
+    console.error("Salesforce OAuth callback error:", error);
+    return { success: false, error: "Failed to complete Salesforce authentication" };
   }
 }
 
 // Get Salesforce connection for organization
-export async function getSalesforceConnection(): Promise<ActionResult<SalesforceConnection | null>> {
+export async function getSalesforceConnection(): Promise<
+  ActionResult<SalesforceConnection | null>
+> {
   const context = await getUserContext();
   if (!context || !context.organization_id) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: "Unauthorized" };
   }
 
   // Use untyped client for salesforce_connections table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
-    .from('salesforce_connections')
-    .select('*')
-    .eq('organization_id', context.organization_id)
-    .eq('is_active', true)
+    .from("salesforce_connections")
+    .select("*")
+    .eq("organization_id", context.organization_id)
+    .eq("is_active", true)
     .single();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error && error.code !== "PGRST116") {
     // PGRST116 = no rows returned
-    console.error('Failed to fetch Salesforce connection:', error);
-    return { success: false, error: 'Failed to fetch Salesforce connection' };
+    console.error("Failed to fetch Salesforce connection:", error);
+    return { success: false, error: "Failed to fetch Salesforce connection" };
   }
 
   if (!data) {
@@ -255,13 +193,13 @@ export async function getSalesforceConnection(): Promise<ActionResult<Salesforce
     salesforceUsername: data.salesforce_username,
     isActive: data.is_active ?? true,
     lastSyncAt: data.last_sync_at,
-    syncStatus: data.sync_status as SalesforceConnection['syncStatus'],
+    syncStatus: data.sync_status as SalesforceConnection["syncStatus"],
     syncError: data.sync_error,
     syncContacts: data.sync_contacts ?? true,
     syncAccounts: data.sync_accounts ?? true,
     syncOpportunities: data.sync_opportunities ?? true,
     autoCreateSurveys: data.auto_create_surveys ?? false,
-    opportunityStageTrigger: data.opportunity_stage_trigger ?? 'Closed Won',
+    opportunityStageTrigger: data.opportunity_stage_trigger ?? "Closed Won",
     contactsSynced: data.contacts_synced ?? 0,
     accountsSynced: data.accounts_synced ?? 0,
     opportunitiesSynced: data.opportunities_synced ?? 0,
@@ -278,24 +216,24 @@ export async function getSalesforceConnection(): Promise<ActionResult<Salesforce
 export async function disconnectSalesforce(connectionId: string): Promise<ActionResult> {
   const context = await requireAdminRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Admin role required' };
+    return { success: false, error: "Unauthorized - Admin role required" };
   }
 
   // Use untyped client for salesforce_connections table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const { error } = await supabase
-    .from('salesforce_connections')
+    .from("salesforce_connections")
     .update({ is_active: false })
-    .eq('id', connectionId)
-    .eq('organization_id', context.organizationId);
+    .eq("id", connectionId)
+    .eq("organization_id", context.organizationId);
 
   if (error) {
-    console.error('Failed to disconnect Salesforce:', error);
-    return { success: false, error: 'Failed to disconnect Salesforce' };
+    console.error("Failed to disconnect Salesforce:", error);
+    return { success: false, error: "Failed to disconnect Salesforce" };
   }
 
-  revalidatePath('/dashboard/settings');
+  revalidatePath("/dashboard/settings");
   return { success: true };
 }
 
@@ -312,17 +250,15 @@ export async function updateSalesforceSettings(
 ): Promise<ActionResult> {
   const context = await requireAdminRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Admin role required' };
+    return { success: false, error: "Unauthorized - Admin role required" };
   }
 
   // Use untyped client for salesforce_connections table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const updateData: Record<string, unknown> = {};
-  if (settings.syncContacts !== undefined)
-    updateData.sync_contacts = settings.syncContacts;
-  if (settings.syncAccounts !== undefined)
-    updateData.sync_accounts = settings.syncAccounts;
+  if (settings.syncContacts !== undefined) updateData.sync_contacts = settings.syncContacts;
+  if (settings.syncAccounts !== undefined) updateData.sync_accounts = settings.syncAccounts;
   if (settings.syncOpportunities !== undefined)
     updateData.sync_opportunities = settings.syncOpportunities;
   if (settings.autoCreateSurveys !== undefined)
@@ -331,17 +267,17 @@ export async function updateSalesforceSettings(
     updateData.opportunity_stage_trigger = settings.opportunityStageTrigger;
 
   const { error } = await supabase
-    .from('salesforce_connections')
+    .from("salesforce_connections")
     .update(updateData)
-    .eq('id', connectionId)
-    .eq('organization_id', context.organizationId);
+    .eq("id", connectionId)
+    .eq("organization_id", context.organizationId);
 
   if (error) {
-    console.error('Failed to update Salesforce settings:', error);
-    return { success: false, error: 'Failed to update settings' };
+    console.error("Failed to update Salesforce settings:", error);
+    return { success: false, error: "Failed to update settings" };
   }
 
-  revalidatePath('/dashboard/settings');
+  revalidatePath("/dashboard/settings");
   return { success: true };
 }
 
@@ -351,582 +287,41 @@ export async function getAvailableOpportunityStages(
 ): Promise<ActionResult<string[]>> {
   const context = await requireAdminRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Admin role required' };
+    return { success: false, error: "Unauthorized - Admin role required" };
   }
 
   const tokenInfo = await getValidAccessToken(connectionId);
   if (!tokenInfo) {
-    return { success: false, error: 'Failed to get valid access token' };
+    return { success: false, error: "Failed to get valid access token" };
   }
 
   try {
-    const stages = await getOpportunityStages(
-      tokenInfo.accessToken,
-      tokenInfo.instanceUrl
-    );
+    const stages = await getOpportunityStages(tokenInfo.accessToken, tokenInfo.instanceUrl);
     return { success: true, data: stages };
   } catch (error) {
-    console.error('Failed to fetch opportunity stages:', error);
-    return { success: false, error: 'Failed to fetch opportunity stages' };
+    console.error("Failed to fetch opportunity stages:", error);
+    return { success: false, error: "Failed to fetch opportunity stages" };
   }
 }
 
 // Sync Salesforce data
 export async function syncSalesforceData(
   connectionId: string,
-  syncType: 'full' | 'incremental' | 'manual' = 'manual',
-  objectTypes?: ('contacts' | 'accounts' | 'opportunities')[]
+  syncType: "full" | "incremental" | "manual" = "manual",
+  objectTypes?: ("contacts" | "accounts" | "opportunities")[]
 ): Promise<ActionResult<SalesforceSyncLog>> {
   const context = await requireAdminRole();
   if (!context) {
-    return { success: false, error: 'Unauthorized - Admin role required' };
+    return { success: false, error: "Unauthorized - Admin role required" };
   }
 
-  const adminClient = createUntypedAdminClient();
-
-  // Get connection
-  const { data: connection, error: connError } = await adminClient
-    .from('salesforce_connections')
-    .select('*')
-    .eq('id', connectionId)
-    .eq('organization_id', context.organizationId)
-    .eq('is_active', true)
-    .single();
-
-  if (connError || !connection) {
-    return { success: false, error: 'Connection not found' };
-  }
-
-  // Create sync log
-  const { data: syncLog, error: logError } = await adminClient
-    .from('salesforce_sync_logs')
-    .insert({
-      organization_id: context.organizationId,
-      connection_id: connectionId,
-      sync_type: syncType,
-      sync_direction: 'inbound',
-      status: 'started',
-    })
-    .select()
-    .single();
-
-  if (logError || !syncLog) {
-    return { success: false, error: 'Failed to start sync' };
-  }
-
-  // Update connection status
-  await adminClient
-    .from('salesforce_connections')
-    .update({ sync_status: 'syncing' })
-    .eq('id', connectionId);
-
-  const startTime = Date.now();
-  let recordsFetched = 0;
-  let recordsCreated = 0;
-  let recordsUpdated = 0;
-  let recordsFailed = 0;
-  const errors: string[] = [];
-
-  try {
-    // Get valid access token
-    const tokenInfo = await getValidAccessToken(connectionId);
-    if (!tokenInfo) {
-      throw new Error('Failed to get valid access token');
-    }
-
-    const typesToSync = objectTypes || [];
-    if (typesToSync.length === 0) {
-      if (connection.sync_contacts) typesToSync.push('contacts');
-      if (connection.sync_accounts) typesToSync.push('accounts');
-      if (connection.sync_opportunities) typesToSync.push('opportunities');
-    }
-
-    // Get last sync time for incremental sync
-    const lastSyncAt =
-      syncType === 'incremental' && connection.last_sync_at
-        ? new Date(connection.last_sync_at)
-        : undefined;
-
-    // Sync contacts
-    if (typesToSync.includes('contacts')) {
-      try {
-        const contacts = await getContacts(
-          tokenInfo.accessToken,
-          tokenInfo.instanceUrl,
-          500,
-          lastSyncAt
-        );
-
-        recordsFetched += contacts.length;
-
-        for (const contact of contacts) {
-          try {
-            // Upsert contact mapping
-            const { data: existing } = await adminClient
-              .from('salesforce_contact_mappings')
-              .select('id')
-              .eq('connection_id', connectionId)
-              .eq('salesforce_contact_id', contact.Id)
-              .single();
-
-            if (existing) {
-              await adminClient
-                .from('salesforce_contact_mappings')
-                .update({
-                  salesforce_account_id: contact.AccountId,
-                  customer_email: contact.Email,
-                  customer_name: contact.Name,
-                  customer_phone: contact.Phone || contact.MobilePhone,
-                  salesforce_data: contact as unknown as Json,
-                  last_synced_at: new Date().toISOString(),
-                  sync_status: 'synced',
-                })
-                .eq('id', existing.id);
-              recordsUpdated++;
-            } else {
-              await adminClient.from('salesforce_contact_mappings').insert({
-                organization_id: context.organizationId,
-                connection_id: connectionId,
-                salesforce_contact_id: contact.Id,
-                salesforce_account_id: contact.AccountId,
-                customer_email: contact.Email,
-                customer_name: contact.Name,
-                customer_phone: contact.Phone || contact.MobilePhone,
-                salesforce_data: contact as unknown as Json,
-              });
-              recordsCreated++;
-            }
-          } catch (err) {
-            recordsFailed++;
-            errors.push(`Contact ${contact.Id}: ${err}`);
-          }
-        }
-      } catch (err) {
-        errors.push(`Contact sync failed: ${err}`);
-      }
-    }
-
-    // Sync opportunities
-    if (typesToSync.includes('opportunities')) {
-      try {
-        const opportunities = await getOpportunities(
-          tokenInfo.accessToken,
-          tokenInfo.instanceUrl,
-          500,
-          lastSyncAt
-        );
-
-        recordsFetched += opportunities.length;
-
-        for (const opp of opportunities) {
-          try {
-            // Upsert opportunity mapping
-            const { data: existing } = await adminClient
-              .from('salesforce_opportunity_mappings')
-              .select('id, survey_id')
-              .eq('connection_id', connectionId)
-              .eq('salesforce_opportunity_id', opp.Id)
-              .single();
-
-            if (existing) {
-              await adminClient
-                .from('salesforce_opportunity_mappings')
-                .update({
-                  salesforce_account_id: opp.AccountId,
-                  salesforce_contact_id: opp.ContactId,
-                  opportunity_name: opp.Name,
-                  opportunity_stage: opp.StageName,
-                  opportunity_amount: opp.Amount,
-                  close_date: opp.CloseDate,
-                  salesforce_data: opp as unknown as Json,
-                  last_synced_at: new Date().toISOString(),
-                })
-                .eq('id', existing.id);
-              recordsUpdated++;
-
-              // Check if we should trigger a survey for closed-won opportunities
-              if (
-                connection.auto_create_surveys &&
-                opp.StageName === connection.opportunity_stage_trigger &&
-                !existing.survey_id
-              ) {
-                await triggerSurveyForOpportunity(
-                  adminClient,
-                  context.organizationId,
-                  connectionId,
-                  existing.id,
-                  opp,
-                  tokenInfo
-                );
-              }
-            } else {
-              const { data: newMapping } = await adminClient
-                .from('salesforce_opportunity_mappings')
-                .insert({
-                  organization_id: context.organizationId,
-                  connection_id: connectionId,
-                  salesforce_opportunity_id: opp.Id,
-                  salesforce_account_id: opp.AccountId,
-                  salesforce_contact_id: opp.ContactId,
-                  opportunity_name: opp.Name,
-                  opportunity_stage: opp.StageName,
-                  opportunity_amount: opp.Amount,
-                  close_date: opp.CloseDate,
-                  salesforce_data: opp as unknown as Json,
-                })
-                .select('id')
-                .single();
-              recordsCreated++;
-
-              // Check if we should trigger a survey
-              if (
-                connection.auto_create_surveys &&
-                opp.StageName === connection.opportunity_stage_trigger &&
-                newMapping
-              ) {
-                await triggerSurveyForOpportunity(
-                  adminClient,
-                  context.organizationId,
-                  connectionId,
-                  newMapping.id,
-                  opp,
-                  tokenInfo
-                );
-              }
-            }
-          } catch (err) {
-            recordsFailed++;
-            errors.push(`Opportunity ${opp.Id}: ${err}`);
-          }
-        }
-      } catch (err) {
-        errors.push(`Opportunity sync failed: ${err}`);
-      }
-    }
-
-    // Update connection with sync results
-    const updateStats: Record<string, unknown> = {
-      sync_status: 'completed',
-      last_sync_at: new Date().toISOString(),
-      sync_error: errors.length > 0 ? errors[0] : null,
-    };
-
-    if (typesToSync.includes('contacts')) {
-      updateStats.contacts_synced = recordsCreated + recordsUpdated;
-    }
-    if (typesToSync.includes('opportunities')) {
-      updateStats.opportunities_synced = recordsCreated + recordsUpdated;
-    }
-
-    await adminClient
-      .from('salesforce_connections')
-      .update(updateStats)
-      .eq('id', connectionId);
-
-    // Update sync log
-    const durationMs = Date.now() - startTime;
-    const { data: completedLog } = await adminClient
-      .from('salesforce_sync_logs')
-      .update({
-        status: 'completed',
-        records_fetched: recordsFetched,
-        records_created: recordsCreated,
-        records_updated: recordsUpdated,
-        records_failed: recordsFailed,
-        errors: errors.length > 0 ? errors : null,
-        completed_at: new Date().toISOString(),
-        duration_ms: durationMs,
-      })
-      .eq('id', syncLog.id)
-      .select()
-      .single();
-
-    revalidatePath('/dashboard/settings');
-
-    return {
-      success: true,
-      data: {
-        id: completedLog?.id || syncLog.id,
-        organizationId: context.organizationId,
-        connectionId,
-        syncType,
-        syncDirection: 'inbound',
-        objectType: typesToSync.join(','),
-        status: 'completed',
-        recordsFetched,
-        recordsCreated,
-        recordsUpdated,
-        recordsFailed,
-        errors,
-        startedAt: syncLog.started_at!,
-        completedAt: new Date().toISOString(),
-        durationMs,
-      },
-    };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    errors.push(errorMessage);
-
-    // Update connection with error
-    await adminClient
-      .from('salesforce_connections')
-      .update({
-        sync_status: 'failed',
-        sync_error: errorMessage,
-      })
-      .eq('id', connectionId);
-
-    // Update sync log with error
-    await adminClient
-      .from('salesforce_sync_logs')
-      .update({
-        status: 'failed',
-        errors,
-        completed_at: new Date().toISOString(),
-        duration_ms: Date.now() - startTime,
-      })
-      .eq('id', syncLog.id);
-
-    return { success: false, error: `Sync failed: ${errorMessage}` };
-  }
-}
-
-// Helper function to trigger survey for opportunity
-/**
- * Best-effort assignee for a Held survey (unmatched Salesforce owner): the org's
- * configured default acquisition assignee if it is a real active user, else the
- * first active org admin, else null (surveys.user_id is nullable). The survey is
- * still Held (never sent) — this only controls whose queue it parks in.
- */
-async function resolveHeldAssignee(
-  adminClient: ReturnType<typeof createUntypedAdminClient>,
-  organizationId: string
-): Promise<string | null> {
-  const { data: org } = await adminClient
-    .from('organizations')
-    .select('settings')
-    .eq('id', organizationId)
-    .maybeSingle();
-  const settings =
-    ((org as { settings?: Record<string, unknown> } | null)?.settings ?? {}) as Record<
-      string,
-      unknown
-    >;
-  const configured =
-    typeof settings.acquisitionDefaultAssignee === 'string'
-      ? (settings.acquisitionDefaultAssignee as string)
-      : null;
-
-  if (configured) {
-    const { data: user } = await adminClient
-      .from('users')
-      .select('id')
-      .eq('id', configured)
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .maybeSingle();
-    if (user) return (user as { id: string }).id;
-  }
-
-  const { data: admin } = await adminClient
-    .from('users')
-    .select('id')
-    .eq('organization_id', organizationId)
-    .eq('role', 'admin')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  return (admin as { id: string } | null)?.id ?? null;
-}
-
-async function triggerSurveyForOpportunity(
-  adminClient: ReturnType<typeof createUntypedAdminClient>,
-  organizationId: string,
-  connectionId: string,
-  mappingId: string,
-  opportunity: {
-    Id: string;
-    Name: string;
-    AccountId?: string;
-    ContactId?: string;
-    OwnerId?: string;
-    Owner?: { Email?: string; Name?: string };
-  },
-  tokenInfo: { accessToken: string; instanceUrl: string }
-): Promise<void> {
-  try {
-    // Get contacts for this opportunity
-    const contacts = await getOpportunityContacts(
-      tokenInfo.accessToken,
-      tokenInfo.instanceUrl,
-      opportunity.Id
-    );
-
-    const contactWithEmail = contacts.find((c) => c.Email);
-    if (!contactWithEmail || !contactWithEmail.Email) {
-      console.warn(`No contact with email found for opportunity ${opportunity.Id}`);
-      return;
-    }
-
-    const contact = contactWithEmail;
-    const contactEmail = contactWithEmail.Email; // Guaranteed to exist after check
-
-    // Get default survey template
-    const { data: template } = await adminClient
-      .from('survey_templates')
-      .select('id')
-      .eq('organization_id', organizationId)
-      .eq('is_active', true)
-      .eq('is_default', true)
-      .single();
-
-    if (!template) {
-      console.warn('No default survey template found');
-      return;
-    }
-
-    // Owner attribution (ADR 0004 / Grill #1 decision 10): map the Opportunity
-    // owner to an org professional by email. A confident match owns the survey
-    // and the Contact. No match produces a HELD survey that is never sent under
-    // a guessed name — "a wrong-name ask is worse than a delayed ask" — parked
-    // with a best-effort assignee for visibility and released manually later.
-    const ownerEmail = opportunity.Owner?.Email?.trim().toLowerCase() || null;
-    let assigneeUserId: string | null = null;
-
-    if (ownerEmail) {
-      const { data: orgUsers } = await adminClient
-        .from('users')
-        .select('id, email')
-        .eq('organization_id', organizationId)
-        .eq('is_active', true);
-      assigneeUserId = matchOpportunityOwnerToUser(
-        ownerEmail,
-        (orgUsers as Array<{ id: string; email: string | null }> | null) ?? []
-      );
-    }
-
-    const heldReason = assigneeUserId ? null : 'salesforce_owner_unmatched';
-    if (heldReason) {
-      // Unmatched → Held. Park with the org default assignee (a user_id in
-      // organizations.settings.acquisitionDefaultAssignee) if set and valid,
-      // else the first active org admin; may remain null (surveys.user_id is
-      // nullable). It will not send while held_reason is set.
-      assigneeUserId = await resolveHeldAssignee(adminClient, organizationId);
-    }
-
-    // The Contact's Owner tracks the attributed professional; a Held (unmatched)
-    // request is deliberately left unassigned at the Contact level.
-    const contactOwnerUserId = heldReason ? null : assigneeUserId;
-
-    let contactId: string | null = null;
-    try {
-      const resolvedContact = await findOrCreateContact(
-        organizationId,
-        {
-          email: contactEmail,
-          name: contact.Name,
-          phone: contact.Phone || contact.MobilePhone || null,
-        },
-        contactOwnerUserId,
-        'salesforce'
-      );
-      contactId = resolvedContact.id;
-    } catch (contactError) {
-      console.error(
-        'triggerSurveyForOpportunity: contact resolution failed',
-        contactError
-      );
-    }
-
-    // Create survey
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 14);
-
-    const { data: survey, error: surveyError } = await adminClient
-      .from('surveys')
-      .insert({
-        organization_id: organizationId,
-        template_id: template.id,
-        user_id: assigneeUserId,
-        contact_id: contactId,
-        held_reason: heldReason,
-        customer_name: contact.Name,
-        customer_email: contactEmail,
-        customer_phone: contact.Phone || contact.MobilePhone || null,
-        transaction_id: opportunity.Id,
-        transaction_type: 'salesforce_opportunity',
-        status: 'pending',
-        expires_at: expiresAt.toISOString(),
-        source: 'salesforce',
-        source_metadata: {
-          salesforce_opportunity_id: opportunity.Id,
-          salesforce_opportunity_name: opportunity.Name,
-          salesforce_contact_id: contact.Id,
-          salesforce_account_id: opportunity.AccountId,
-          salesforce_opportunity_owner_email: ownerEmail,
-          connection_id: connectionId,
-        },
-      })
-      .select('id')
-      .single();
-
-    if (surveyError) {
-      console.error('Failed to create survey:', surveyError);
-      return;
-    }
-
-    // Observability back-link only (ADR 0004; documented on B1's migration
-    // 20260707100000): stamp contact_id on the CRM mapping now that this person
-    // is a real acquisition Contact. Attribution/dedup key off the Contact, never
-    // this row — best-effort, so a mapping-update hiccup never fails the survey.
-    if (contactId) {
-      const { error: mappingLinkError } = await adminClient
-        .from('salesforce_contact_mappings')
-        .update({ contact_id: contactId })
-        .eq('organization_id', organizationId)
-        .eq('connection_id', connectionId)
-        .eq('salesforce_contact_id', contact.Id);
-      if (mappingLinkError) {
-        console.error(
-          'triggerSurveyForOpportunity: mapping back-link failed',
-          mappingLinkError
-        );
-      }
-    }
-
-    // Update opportunity mapping with survey reference
-    await adminClient
-      .from('salesforce_opportunity_mappings')
-      .update({
-        survey_id: survey.id,
-        survey_triggered_at: new Date().toISOString(),
-      })
-      .eq('id', mappingId);
-
-    // Add to distribution queue — a Held survey must NOT be enqueued/sent until
-    // it is released (held_reason cleared).
-    if (!heldReason) {
-      await adminClient.from('survey_distribution_queue').insert({
-        organization_id: organizationId,
-        survey_id: survey.id,
-        type: 'initial',
-        scheduled_at: new Date().toISOString(),
-        priority: 1,
-      });
-      console.log(
-        `Survey ${survey.id} created for Salesforce opportunity ${opportunity.Id}`
-      );
-    } else {
-      console.log(
-        `Survey ${survey.id} HELD (unmatched Salesforce owner ${
-          ownerEmail ?? 'none'
-        }) for opportunity ${opportunity.Id}`
-      );
-    }
-  } catch (error) {
-    console.error('Failed to trigger survey for opportunity:', error);
-  }
+  return syncSalesforceConnection({
+    connectionId,
+    organizationId: context.organizationId,
+    syncType,
+    objectTypes,
+    revalidateDashboard: true,
+  });
 }
 
 // Sync review data back to Salesforce
@@ -936,27 +331,27 @@ export async function syncReviewToSalesforce(
 ): Promise<ActionResult> {
   const context = await getUserContext();
   if (!context || !context.organization_id) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: "Unauthorized" };
   }
 
   const adminClient = createUntypedAdminClient();
 
   // Get review details
   const { data: review, error: reviewError } = await adminClient
-    .from('reviews')
-    .select('*, loan_officers(full_name)')
-    .eq('id', reviewId)
-    .eq('organization_id', context.organization_id)
+    .from("reviews")
+    .select("*, loan_officers(full_name)")
+    .eq("id", reviewId)
+    .eq("organization_id", context.organization_id)
     .single();
 
   if (reviewError || !review) {
-    return { success: false, error: 'Review not found' };
+    return { success: false, error: "Review not found" };
   }
 
   // Get Salesforce connection
   const tokenInfo = await getValidAccessToken(connectionId);
   if (!tokenInfo) {
-    return { success: false, error: 'Failed to get valid access token' };
+    return { success: false, error: "Failed to get valid access token" };
   }
 
   try {
@@ -967,13 +362,15 @@ export async function syncReviewToSalesforce(
     // If review came from a survey, check if survey has Salesforce link
     if (review.survey_response_id) {
       const { data: surveyResponse } = await adminClient
-        .from('survey_responses')
-        .select('survey_id, surveys!inner(source_metadata)')
-        .eq('id', review.survey_response_id)
+        .from("survey_responses")
+        .select("survey_id, surveys!inner(source_metadata)")
+        .eq("id", review.survey_response_id)
         .single();
 
       if (surveyResponse?.surveys) {
-        const surveySourceMetadata = (surveyResponse.surveys as unknown as { source_metadata: Record<string, unknown> | null }).source_metadata;
+        const surveySourceMetadata = (
+          surveyResponse.surveys as unknown as { source_metadata: Record<string, unknown> | null }
+        ).source_metadata;
         if (surveySourceMetadata?.salesforce_contact_id) {
           salesforceContactId = surveySourceMetadata.salesforce_contact_id as string;
           salesforceAccountId = surveySourceMetadata.salesforce_account_id as string | undefined;
@@ -984,10 +381,10 @@ export async function syncReviewToSalesforce(
     // Fallback: Try to find contact by customer name if we have it
     if (!salesforceContactId && review.customer_name) {
       const { data: mapping } = await adminClient
-        .from('salesforce_contact_mappings')
-        .select('salesforce_contact_id, salesforce_account_id')
-        .eq('connection_id', connectionId)
-        .eq('customer_name', review.customer_name)
+        .from("salesforce_contact_mappings")
+        .select("salesforce_contact_id, salesforce_account_id")
+        .eq("connection_id", connectionId)
+        .eq("customer_name", review.customer_name)
         .single();
 
       if (mapping) {
@@ -997,32 +394,28 @@ export async function syncReviewToSalesforce(
     }
 
     // Create a task in Salesforce
-    const taskSubject = `Customer Review: ${review.rating} stars from ${review.customer_name || 'Customer'}`;
+    const taskSubject = `Customer Review: ${review.rating} stars from ${review.customer_name || "Customer"}`;
     const taskDescription = `
 Rating: ${review.rating} out of 5 stars
-${review.text ? `\nReview:\n${review.text}` : ''}
-${review.loan_officers ? `\nLoan Officer: ${(review.loan_officers as { full_name: string }).full_name}` : ''}
-Source: ${review.source || 'Internal Survey'}
+${review.text ? `\nReview:\n${review.text}` : ""}
+${review.loan_officers ? `\nLoan Officer: ${(review.loan_officers as { full_name: string }).full_name}` : ""}
+Source: ${review.source || "Internal Survey"}
 Date: ${review.review_date || review.created_at}
     `.trim();
 
-    const taskResult = await createTask(
-      tokenInfo.accessToken,
-      tokenInfo.instanceUrl,
-      {
-        WhoId: salesforceContactId,
-        WhatId: salesforceAccountId,
-        Subject: taskSubject,
-        Description: taskDescription,
-        Status: 'Completed',
-        Priority: review.rating <= 2 ? 'High' : 'Normal',
-        ActivityDate: new Date().toISOString().split('T')[0],
-      }
-    );
+    const taskResult = await createTask(tokenInfo.accessToken, tokenInfo.instanceUrl, {
+      WhoId: salesforceContactId,
+      WhatId: salesforceAccountId,
+      Subject: taskSubject,
+      Description: taskDescription,
+      Status: "Completed",
+      Priority: review.rating <= 2 ? "High" : "Normal",
+      ActivityDate: new Date().toISOString().split("T")[0],
+    });
 
     // Record the sync
     await adminClient
-      .from('salesforce_review_data')
+      .from("salesforce_review_data")
       .upsert({
         organization_id: context.organization_id,
         connection_id: connectionId,
@@ -1034,16 +427,16 @@ Date: ${review.review_date || review.created_at}
         synced_at: new Date().toISOString(),
         sync_error: null,
       })
-      .eq('review_id', reviewId)
-      .eq('connection_id', connectionId);
+      .eq("review_id", reviewId)
+      .eq("connection_id", connectionId);
 
     return { success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     // Record the error
     await adminClient
-      .from('salesforce_review_data')
+      .from("salesforce_review_data")
       .upsert({
         organization_id: context.organization_id,
         connection_id: connectionId,
@@ -1051,8 +444,8 @@ Date: ${review.review_date || review.created_at}
         synced_to_salesforce: false,
         sync_error: errorMessage,
       })
-      .eq('review_id', reviewId)
-      .eq('connection_id', connectionId);
+      .eq("review_id", reviewId)
+      .eq("connection_id", connectionId);
 
     return { success: false, error: `Failed to sync to Salesforce: ${errorMessage}` };
   }
@@ -1065,32 +458,32 @@ export async function getSalesforceSyncLogs(
 ): Promise<ActionResult<SalesforceSyncLog[]>> {
   const context = await getUserContext();
   if (!context || !context.organization_id) {
-    return { success: false, error: 'Unauthorized' };
+    return { success: false, error: "Unauthorized" };
   }
 
   // Use untyped client for salesforce_sync_logs table (not in generated types)
   const supabase = createUntypedAdminClient();
 
   const { data, error } = await supabase
-    .from('salesforce_sync_logs')
-    .select('*')
-    .eq('connection_id', connectionId)
-    .eq('organization_id', context.organization_id)
-    .order('started_at', { ascending: false })
+    .from("salesforce_sync_logs")
+    .select("*")
+    .eq("connection_id", connectionId)
+    .eq("organization_id", context.organization_id)
+    .order("started_at", { ascending: false })
     .limit(limit);
 
   if (error) {
-    return { success: false, error: 'Failed to fetch sync logs' };
+    return { success: false, error: "Failed to fetch sync logs" };
   }
 
   const logs: SalesforceSyncLog[] = (data || []).map((row) => ({
     id: row.id,
     organizationId: row.organization_id,
     connectionId: row.connection_id,
-    syncType: row.sync_type as SalesforceSyncLog['syncType'],
-    syncDirection: row.sync_direction as SalesforceSyncLog['syncDirection'],
+    syncType: row.sync_type as SalesforceSyncLog["syncType"],
+    syncDirection: row.sync_direction as SalesforceSyncLog["syncDirection"],
     objectType: row.object_type,
-    status: row.status as SalesforceSyncLog['status'],
+    status: row.status as SalesforceSyncLog["status"],
     recordsFetched: row.records_fetched ?? 0,
     recordsCreated: row.records_created ?? 0,
     recordsUpdated: row.records_updated ?? 0,

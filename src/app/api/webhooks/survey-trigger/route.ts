@@ -623,7 +623,7 @@ async function processWebhook(
   // Send-Time Snapshot. Resilient — suppression is enforced at send time.
   let contactId: string | null = null;
   try {
-    const contact = await findOrCreateContact(
+    const { contact } = await findOrCreateContact(
       organizationId,
       { email: customerEmail, name: customerName, phone: customerPhone },
       userId,

@@ -5,29 +5,10 @@ vi.mock("@/lib/contacts/actions", () => ({
   findOrCreateContact: vi.fn(),
   isSuppressed: vi.fn(),
 }));
-vi.mock("@/lib/supabase/admin", () => ({ createUntypedAdminClient: vi.fn() }));
 
 import { getAccessContext } from "@/lib/access";
 import { findOrCreateContact, isSuppressed } from "@/lib/contacts/actions";
-import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { bulkImportContacts } from "../import";
-
-type MaybeResult = { data: unknown };
-
-/** Minimal builder whose maybeSingle() drains a per-call queue (the existence probe). */
-function mockAdmin(existenceProbeResults: MaybeResult[]) {
-  const queue = [...existenceProbeResults];
-  const builder: Record<string, unknown> = {};
-  for (const m of ["select", "eq", "is"]) {
-    builder[m] = vi.fn(() => builder);
-  }
-  builder.maybeSingle = vi.fn(() =>
-    Promise.resolve(queue.shift() ?? { data: null })
-  );
-  (createUntypedAdminClient as ReturnType<typeof vi.fn>).mockReturnValue({
-    from: vi.fn(() => builder),
-  });
-}
 
 function setCtx(overrides: Record<string, unknown> = {}) {
   (getAccessContext as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -57,9 +38,9 @@ describe("bulkImportContacts", () => {
     (isSuppressed as ReturnType<typeof vi.fn>).mockImplementation(
       (_org: string, email: string) => Promise.resolve(email === "blocked@example.com")
     );
-    (findOrCreateContact as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "c" });
-    // Probe results in row order: jane (existing → merged), john (missing → created).
-    mockAdmin([{ data: { id: "existing" } }, { data: null }]);
+    (findOrCreateContact as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({ contact: { id: "c1" }, createdNew: false })
+      .mockResolvedValueOnce({ contact: { id: "c2" }, createdNew: true });
 
     const csv = [
       "name,email,phone",
@@ -90,8 +71,10 @@ describe("bulkImportContacts", () => {
   it("forces a regular user's imports to be owned by themselves", async () => {
     setCtx({ role: "user", userId: "u9" });
     (isSuppressed as ReturnType<typeof vi.fn>).mockResolvedValue(false);
-    (findOrCreateContact as ReturnType<typeof vi.fn>).mockResolvedValue({ id: "c" });
-    mockAdmin([{ data: null }]);
+    (findOrCreateContact as ReturnType<typeof vi.fn>).mockResolvedValue({
+      contact: { id: "c" },
+      createdNew: true,
+    });
 
     await bulkImportContacts("name,email\nJane,jane@example.com", "someone-else");
 

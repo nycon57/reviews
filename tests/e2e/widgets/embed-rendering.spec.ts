@@ -11,6 +11,10 @@ import {
   loadEmbedPage,
   MOCK_WIDGET_ID,
   mockWidgetConfig,
+  mockReviewsResponse,
+  waitForWidgetRendered,
+  waitForWidgetState,
+  getShadowText,
 } from "./fixtures";
 
 test.describe("Embed Rendering", () => {
@@ -19,44 +23,28 @@ test.describe("Embed Rendering", () => {
   }) => {
     await mockWidgetApiRoutes(page, MOCK_WIDGET_ID);
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
+    await waitForWidgetRendered(page);
 
-    // Wait for widget to be initialized
     const widgetHost = page.locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`);
     await expect(widgetHost).toHaveAttribute("data-repwell-initialized", /.+/);
 
-    // Wait for async rendering to complete (skeleton removed)
-    await page.waitForFunction(
-      (wid) => {
-        const el = document.querySelector(`[data-repwell-widget="${wid}"]`);
-        if (!el?.shadowRoot) return false;
-        return !el.shadowRoot.querySelector(".rw-skeleton") && el.shadowRoot.children.length > 0;
-      },
-      MOCK_WIDGET_ID,
-      { timeout: 10_000 }
+    const reviewerName = await getShadowText(
+      page,
+      ".rw-review__name, .rw-lo-review__name"
     );
-
-    const rendered = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      if (!shadow) return { hasShadow: false, childCount: 0, text: "" };
-      return {
-        hasShadow: true,
-        childCount: shadow.children.length,
-        text: shadow.textContent?.substring(0, 200) ?? "",
-      };
-    });
-
-    expect(rendered.hasShadow).toBe(true);
-    expect(rendered.childCount).toBeGreaterThan(0);
-    // Verify rendered content includes review data from mock
-    expect(rendered.text).toContain("Reviewer");
+    expect(reviewerName).toContain("Reviewer");
   });
 
   test("shows skeleton loader initially", async ({ page }) => {
-    // Delay API response to observe skeleton
+    let releaseConfig!: () => void;
+    const configGate = new Promise<void>((resolve) => {
+      releaseConfig = resolve;
+    });
+
     await page.route(
       `**/api/v1/widgets/${MOCK_WIDGET_ID}/config`,
       async (route) => {
-        await new Promise((r) => setTimeout(r, 2000));
+        await configGate;
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -72,10 +60,7 @@ test.describe("Embed Rendering", () => {
           status: 200,
           contentType: "application/json",
           headers: { "Access-Control-Allow-Origin": "*" },
-          body: JSON.stringify({
-            reviews: [],
-            pagination: { next_cursor: null, limit: 10, has_more: false },
-          }),
+          body: JSON.stringify(mockReviewsResponse()),
         });
       }
     );
@@ -85,14 +70,15 @@ test.describe("Embed Rendering", () => {
 
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
 
-    // Check for skeleton in shadow DOM
-    const widgetHost = page.locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`);
-    const hasSkeleton = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      return !!shadow?.querySelector(".rw-skeleton");
-    });
+    await page.waitForFunction((wid) => {
+      const host = document.querySelector(`[data-repwell-widget="${wid}"]`);
+      return !!host?.shadowRoot?.querySelector(
+        ".rw-skeleton[aria-busy='true']"
+      );
+    }, MOCK_WIDGET_ID);
 
-    expect(hasSkeleton).toBe(true);
+    releaseConfig();
+    await waitForWidgetRendered(page);
   });
 
   test("renders error state when API returns 500", async ({ page }) => {
@@ -108,33 +94,90 @@ test.describe("Embed Rendering", () => {
     );
 
     await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
-    await page.waitForTimeout(2000);
+    await waitForWidgetRendered(page);
 
-    const widgetHost = page.locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`);
-    const hasError = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      if (!shadow) return false;
-      const text = shadow.textContent ?? "";
-      return (
-        text.toLowerCase().includes("error") ||
-        text.toLowerCase().includes("unable") ||
-        text.toLowerCase().includes("failed")
-      );
-    });
-
-    expect(hasError).toBe(true);
+    const errorText = await getShadowText(page, ".rw-error[role='alert']");
+    expect(errorText).toContain("Internal Server Error");
   });
 
-  test("sets minHeight to prevent CLS", async ({ page }) => {
-    await mockWidgetApiRoutes(page, MOCK_WIDGET_ID);
-    await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
+  test("sets minHeight during skeleton and clears it for compact widgets", async ({
+    page,
+  }) => {
+    let releaseConfig!: () => void;
+    const configGate = new Promise<void>((resolve) => {
+      releaseConfig = resolve;
+    });
 
-    const widgetHost = page.locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`);
-    const minHeight = await widgetHost.evaluate(
-      (el) => el.style.minHeight
+    await page.route(
+      `**/api/v1/widgets/${MOCK_WIDGET_ID}/config`,
+      async (route) => {
+        await configGate;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify(mockWidgetConfig()),
+        });
+      }
+    );
+    await page.route(
+      `**/api/v1/widgets/${MOCK_WIDGET_ID}/reviews**`,
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          headers: { "Access-Control-Allow-Origin": "*" },
+          body: JSON.stringify(mockReviewsResponse()),
+        });
+      }
+    );
+    await page.route(`**/api/v1/widgets/${MOCK_WIDGET_ID}/events`, async (route) => {
+      await route.fulfill({ status: 204 });
+    });
+
+    await loadEmbedPage(page, [{ id: MOCK_WIDGET_ID }]);
+    await page.waitForFunction((wid) => {
+      const host = document.querySelector<HTMLElement>(
+        `[data-repwell-widget="${wid}"]`
+      );
+      return (
+        host?.style.minHeight === "280px" &&
+        !!host.shadowRoot?.querySelector(".rw-skeleton")
+      );
+    }, MOCK_WIDGET_ID);
+
+    releaseConfig();
+    await waitForWidgetRendered(page);
+
+    const compactWidgetId = `${MOCK_WIDGET_ID}-compact`;
+    await mockWidgetApiRoutes(
+      page,
+      compactWidgetId,
+      {
+        widget_type: "social_proof_banner",
+        config: {
+          ...mockWidgetConfig().config,
+          socialProofBanner: {
+            displayMode: "notification",
+            placement: "bottom-right",
+            trigger: "immediate",
+            triggerValue: 0,
+            frequency: "every_visit",
+            dismissable: true,
+            animation: "fade",
+          },
+        },
+      },
+      3
     );
 
-    expect(minHeight).toBe("280px");
+    await loadEmbedPage(page, [{ id: compactWidgetId }]);
+    await waitForWidgetState(page, compactWidgetId, [4]);
+
+    const compactMinHeight = await page
+      .locator(`[data-repwell-widget="${compactWidgetId}"]`)
+      .evaluate((el) => (el as HTMLElement).style.minHeight);
+    expect(compactMinHeight).toBe("");
   });
 
   test("Shadow DOM encapsulates styles", async ({ page }) => {
@@ -143,27 +186,24 @@ test.describe("Embed Rendering", () => {
       extraHead:
         '<style>* { color: red !important; font-size: 72px !important; }</style>',
     });
+    await waitForWidgetRendered(page);
 
-    await page.waitForTimeout(2000);
-
-    // Verify host page styles do not leak into shadow DOM
     const widgetHost = page.locator(`[data-repwell-widget="${MOCK_WIDGET_ID}"]`);
     const shadowStyles = await widgetHost.evaluate((el) => {
-      const shadow = el.shadowRoot;
-      if (!shadow) return null;
-      const firstEl = shadow.querySelector("div, p, span, h1, h2, h3");
-      if (!firstEl) return null;
-      const computed = getComputedStyle(firstEl);
+      const firstEl = el.shadowRoot?.querySelector(
+        ".rw-review__name, .rw-lo-review__name"
+      );
+      if (!firstEl) {
+        throw new Error("Expected a rendered reviewer name in the shadow DOM");
+      }
+      const computed = getComputedStyle(firstEl!);
       return {
         color: computed.color,
         fontSize: computed.fontSize,
       };
     });
 
-    // Shadow DOM content should NOT have the host page's red color
-    if (shadowStyles) {
-      expect(shadowStyles.color).not.toBe("rgb(255, 0, 0)");
-      expect(shadowStyles.fontSize).not.toBe("72px");
-    }
+    expect(shadowStyles.color).not.toBe("rgb(255, 0, 0)");
+    expect(shadowStyles.fontSize).not.toBe("72px");
   });
 });

@@ -107,7 +107,7 @@ export async function verifyDirectReview(
   // for. Best-effort: never fail verification over Contact linkage.
   if (isFirstVerification && review.customer_email) {
     try {
-      const contact = await findOrCreateContact(
+      const { contact } = await findOrCreateContact(
         review.organization_id,
         { email: review.customer_email, name: review.customer_name },
         review.user_id,

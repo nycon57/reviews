@@ -25,6 +25,20 @@ Not blocking PRs (per the build-tail process). Burn down in a dedicated pass.
 - REST DELETE subscriptions/[id]: SELECT-then-UPDATE could be one UPDATE
   returning a row.
 
+## From the agent-readiness build (2026-07-08)
+- `getValidTimestamp`/`getProfessionalDateModified` duplicated between
+  seo/metadata.ts and seo/schema-generators.ts — hoist to one module.
+- `getClientIp` (api-v2/middleware) vs the inline extraction in
+  api-keys/validate.ts:335 — share one.
+- `escapeLike` duplicated between api-v2/params.ts and v1 professionals route.
+- Three bot-name lists (agents/detection.ts registry, robots.ts aiCrawlers,
+  /s/ BOT_PATTERN) — export one registry from detection.ts; robots.ts maps it.
+- api-v2 context plumbing unused by handlers — either wire X-RateLimit-*
+  response headers (useful) or drop the generic contextFactory.
+- openapi.json vs openapi-v2.json route boilerplate — shared helper if a v3
+  ever exists.
+- OpenAPI v2 hand-rolled schemas vs TS types — snapshot test to pin key drift.
+
 ## From the engagement build (2026-07-08)
 - `useSkipInitialFetch(hasInitialResult)` hook — the SSR skip-first-mount-fetch
   guard is repeated 4× across the converted list components.

@@ -111,6 +111,7 @@ export interface SchemaProfessional {
   nmls_id?: string | null;
   average_rating: number | null;
   total_reviews: number | null;
+  updated_at?: string | null;
 }
 
 /** @deprecated Use SchemaProfessional instead */
@@ -136,6 +137,7 @@ export interface SchemaReview {
   rating: number;
   text: string | null;
   review_date: string;
+  updated_at?: string | null;
   is_published?: boolean;
   status?: string;
 }
@@ -184,15 +186,44 @@ function durationToIso8601(durationSeconds?: number | null): string | undefined 
   return `PT${minutes}M${seconds}S`;
 }
 
+function getValidTimestamp(value: string | null | undefined): number | null {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function getProfessionalDateModified(
+  professional: SchemaProfessional,
+  reviews: SchemaReview[] = []
+): string | undefined {
+  const timestamps = [
+    getValidTimestamp(professional.updated_at),
+    ...reviews.map((review) =>
+      getValidTimestamp(review.updated_at) ?? getValidTimestamp(review.review_date)
+    ),
+  ].filter((timestamp): timestamp is number => timestamp !== null);
+
+  if (timestamps.length === 0) {
+    return undefined;
+  }
+
+  return new Date(Math.max(...timestamps)).toISOString();
+}
+
 /**
  * Generate Person schema with embedded AggregateRating for a professional profile
  */
 export function generatePersonSchema(
   professional: SchemaProfessional,
   organization: SchemaOrganization | null,
-  baseUrl: string
+  baseUrl: string,
+  reviews: SchemaReview[] = []
 ): PersonWithRatingSchema {
   const profileUrl = `${baseUrl}/pro/${professional.slug || professional.id}`;
+  const dateModified = getProfessionalDateModified(professional, reviews);
 
   // Parse address if available
   const address = professional.address as ProfessionalAddress | null;
@@ -230,6 +261,11 @@ export function generatePersonSchema(
     description: professional.bio || `${professional.full_name} is a professional helping clients with their needs.`,
     url: profileUrl,
   };
+
+  if (dateModified) {
+    (schema as PersonWithRatingSchema & { dateModified: string }).dateModified =
+      dateModified;
+  }
 
   // Add optional fields only if they have values
   if (professional.photo_url) {
@@ -511,7 +547,7 @@ export function generateProfilePageSchema(
   const schemas: object[] = [];
 
   // Person schema with embedded aggregate rating
-  schemas.push(generatePersonSchema(professional, organization, baseUrl));
+  schemas.push(generatePersonSchema(professional, organization, baseUrl, reviews));
 
   // Individual review schemas (limit to most recent 10 for performance)
   const publishedReviews = reviews

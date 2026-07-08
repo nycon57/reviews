@@ -15,6 +15,7 @@ Regenerated for ADR 0007 from `src/proxy.ts`, `src/lib/nav/config.ts`, and the p
 | /dashboard/analytics | nav | auth | `getAccessContext` | VIEW_ANALYTICS | Y | Y | Y | Y | By account |
 | /dashboard/analytics/trends | nav | auth | `getAccessContext` | VIEW_TRENDS | Y | Y | Y | Y | By account |
 | /dashboard/analytics/leaderboard | nav, proxy | `requiresEnterprise` | `requireEnterprise` | VIEW_LEADERBOARD | N | Y | Y | Y | By account |
+| /dashboard/analytics/agents | nav | auth | `requireEnterpriseManager` | VIEW_TEAM | N | Y | Y | N | By account |
 | /dashboard/analytics/team | nav, proxy | `requiresEnterprise`, roles admin/manager | `requireEnterpriseManager` | VIEW_TEAM | N | Y | Y | N | By account |
 | /dashboard/insights | nav, proxy | `minTier: pro` | `requireProTier` | VIEW_AI_INSIGHTS | Pro only | Y | Y | Y | By account |
 | /dashboard/people | nav, proxy | `requiresEnterprise`, roles admin/manager | `requireEnterpriseManager` | VIEW_TEAM | N | Y | Y | N | By account |

@@ -9,14 +9,14 @@ import {
   TroubleshootingSection,
 } from "./integration-card";
 
-const WEBFLOW_EMBED_CODE = `<script src="https://app.repwell.com/embed.js" async></script>
+const WEBFLOW_EMBED_CODE = `<script src="https://repwell.ai/embed.js" async></script>
 <div
   data-repwell-widget="YOUR_WIDGET_ID"
   data-repwell-entity-type="user"
   data-repwell-entity-id="YOUR_ENTITY_ID"
 ></div>`;
 
-const WEBFLOW_SITE_WIDE_SCRIPT = `<script src="https://app.repwell.com/embed.js" async></script>`;
+const WEBFLOW_SITE_WIDE_SCRIPT = `<script src="https://repwell.ai/embed.js" async></script>`;
 
 const WEBFLOW_SITE_WIDE_DIV = `<div
   data-repwell-widget="YOUR_WIDGET_ID"
@@ -130,7 +130,7 @@ export function WebflowGuide() {
             {
               problem: "Webflow CSP blocks the script",
               solution:
-                "Webflow hosted sites generally allow third-party scripts in Embed elements. If using Webflow with a custom reverse proxy, ensure app.repwell.com is allowed in your CSP.",
+                "Webflow hosted sites generally allow third-party scripts in Embed elements. If using Webflow with a custom reverse proxy, ensure repwell.ai is allowed in your CSP.",
             },
             {
               problem: "Collection fields not populating",

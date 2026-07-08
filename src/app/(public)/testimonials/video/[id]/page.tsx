@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const { title, description, customerName, thumbnailUrl, durationSeconds } = result.data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const pageUrl = smartLink ? `${baseUrl}/s/${smartLink.slug}` : `${baseUrl}/testimonials/video/${id}`;
 
   // Format duration for schema.org (ISO 8601 duration)
@@ -129,7 +129,7 @@ export default async function PublicVideoTestimonialPage({ params }: PageProps) 
   }
 
   const video = result.data;
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const pageUrl = `${baseUrl}/testimonials/video/${id}`;
 
   // Schema.org VideoObject structured data

@@ -156,7 +156,7 @@ export function renderWidget(
     const branding = el("div", "rw-branding");
     branding.textContent = `${t("poweredBy")} `;
     const link = document.createElement("a");
-    link.href = "https://repwell.com";
+    link.href = "https://repwell.ai";
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.textContent = "RepWell";

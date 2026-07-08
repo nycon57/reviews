@@ -190,7 +190,7 @@ export function EditMemberContent({ member, isEditingSelf = false }: EditMemberC
               Viewing your own profile as admin
             </p>
             <p className="text-sm text-blue-600 mt-0.5">
-              Go to <Link href="/dashboard/settings?tab=account" className="underline font-medium">Settings</Link> for password, billing, and notifications.
+              Go to <Link href="/dashboard/settings" className="underline font-medium">Settings</Link> for your profile and notifications, or the <Link href="/dashboard/organization?tab=billing" className="underline font-medium">Workspace</Link> for billing.
             </p>
           </div>
         </div>

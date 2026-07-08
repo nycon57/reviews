@@ -288,10 +288,81 @@ const nextConfig = {
         destination: "/compare/trustpilot",
         permanent: true,
       },
-      // Consolidated manager dashboard into /dashboard/team
+      // Manager dashboard -> team -> People (collapse the chain to the final home)
       {
         source: "/dashboard/manager",
-        destination: "/dashboard/team",
+        destination: "/dashboard/people?tab=members",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/settings",
+        has: [
+          {
+            type: "query",
+            key: "tab",
+            value: "(?<tab>billing|integrations|api|webhooks)",
+          },
+        ],
+        destination: "/dashboard/organization?tab=:tab",
+        permanent: true,
+      },
+      // Platform staff tooling moved out of the org-scoped dashboard.
+      {
+        source: "/dashboard/admin/:path*",
+        destination: "/staff/:path*",
+        permanent: true,
+      },
+      // ADR 0007: Campaigns absorbs Emails. The email builder lives under the
+      // Campaigns → Templates tab; its editor moved to /campaigns/templates/*.
+      {
+        source: "/dashboard/emails/new",
+        destination: "/dashboard/campaigns/templates/new",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/emails/:id",
+        destination: "/dashboard/campaigns/templates/:id",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/emails",
+        destination: "/dashboard/campaigns?tab=templates",
+        permanent: true,
+      },
+      // ADR 0007 "Me vs Us": org-scoped Settings tabs moved to the Workspace.
+      {
+        source: "/dashboard/settings/integrations/:path*",
+        destination: "/dashboard/organization?tab=integrations",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/settings/social",
+        destination: "/dashboard/organization?tab=integrations",
+        permanent: true,
+      },
+      // ADR 0007: People absorbs Team (Members) and the Employees roster;
+      // Team's performance overview moved under Analytics.
+      {
+        source: "/dashboard/team",
+        has: [{ type: "query", key: "tab", value: "overview" }],
+        destination: "/dashboard/analytics/team",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/team",
+        destination: "/dashboard/people?tab=members",
+        permanent: true,
+      },
+      {
+        source: "/dashboard/employees",
+        destination: "/dashboard/people?tab=employees",
+        permanent: true,
+      },
+      // ADR 0007: the org "Users" tab dies; membership lives under People.
+      {
+        source: "/dashboard/organization",
+        has: [{ type: "query", key: "tab", value: "team" }],
+        destination: "/dashboard/people?tab=members",
         permanent: true,
       },
       // Documentation consolidation: /developers/docs/* → /docs/developers/*

@@ -713,8 +713,8 @@ async function sendOrgOnboardingEmail(
     case 4: {
       const data: OrgOnboarding4IntegrationsEmailData = {
         ...baseData,
-        integrationsUrl: `${baseUrl}/dashboard/settings/integrations`,
-        googleConnectUrl: `${baseUrl}/dashboard/settings/integrations/google`,
+        integrationsUrl: `${baseUrl}/dashboard/organization?tab=integrations`,
+        googleConnectUrl: `${baseUrl}/dashboard/organization?tab=integrations`,
         hasGoogleConnected: onboardingStatus.google_connected,
       };
       emailContent = getOrgOnboarding4IntegrationsEmail(data);
@@ -732,7 +732,7 @@ async function sendOrgOnboardingEmail(
 
       const data: OrgOnboarding5BillingEmailData = {
         ...baseData,
-        billingUrl: `${baseUrl}/dashboard/settings?tab=billing`,
+        billingUrl: `${baseUrl}/dashboard/organization?tab=billing`,
         pricingUrl: `${baseUrl}/pricing`,
         currentPlan: org?.subscription_tier || "Free Trial",
         trialEndsAt: trialInfo.trialEndsAt,

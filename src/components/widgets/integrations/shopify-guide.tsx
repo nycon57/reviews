@@ -10,7 +10,7 @@ import {
 } from "./integration-card";
 
 const THEME_LIQUID_SCRIPT = `<!-- Add before </body> in theme.liquid -->
-<script src="https://app.repwell.com/embed.js" async></script>`;
+<script src="https://repwell.ai/embed.js" async></script>`;
 
 const SECTION_CODE = `<div
   data-repwell-widget="YOUR_WIDGET_ID"
@@ -18,7 +18,7 @@ const SECTION_CODE = `<div
   data-repwell-entity-id="YOUR_ENTITY_ID"
 ></div>`;
 
-const SHOPIFY_CUSTOM_LIQUID = `<script src="https://app.repwell.com/embed.js" async></script>
+const SHOPIFY_CUSTOM_LIQUID = `<script src="https://repwell.ai/embed.js" async></script>
 <div
   data-repwell-widget="YOUR_WIDGET_ID"
   data-repwell-entity-type="user"
@@ -30,7 +30,7 @@ const SHOPIFY_SECTION_TEMPLATE = `{% comment %}
 {% endcomment %}
 
 <div class="repwell-section" {{ block.shopify_attributes }}>
-  <script src="https://app.repwell.com/embed.js" async></script>
+  <script src="https://repwell.ai/embed.js" async></script>
   <div
     data-repwell-widget="{{ section.settings.widget_id }}"
     data-repwell-entity-type="{{ section.settings.entity_type }}"
@@ -160,7 +160,7 @@ export function ShopifyGuide() {
             {
               problem: "Shopify CSP blocks external scripts",
               solution:
-                "Shopify storefronts generally allow third-party scripts. If using a headless setup with a custom storefront, add app.repwell.com to your CSP directives.",
+                "Shopify storefronts generally allow third-party scripts. If using a headless setup with a custom storefront, add repwell.ai to your CSP directives.",
             },
             {
               problem: "Widget conflicts with Shopify theme styles",

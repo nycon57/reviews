@@ -47,7 +47,6 @@ export default async function DashboardRootLayout({
     is_owner?: boolean | null;
     is_active?: boolean | null;
     organization_id?: string | null;
-    individual_organization_id?: string | null;
     slug?: string | null;
     organizations?: {
       account_type?: string | null;
@@ -82,25 +81,18 @@ export default async function DashboardRootLayout({
   // Build user context for permission system
   const orgData = profile?.organizations;
 
-  // Build user context: enterprise org path, or individual org fallback
+  // Single path (ADR 0006): every account has one organizations row, and
+  // account_type discriminates individual vs enterprise.
   let userContext: UserContext | null = null;
   if (profile?.organization_id) {
+    const accountType = (orgData?.account_type || "individual") as AccountType;
     userContext = {
       userId: authUser.id,
-      role: (profile.role || "user") as UserContext["role"],
-      accountType: (orgData?.account_type || "individual") as AccountType,
+      role: (profile.role || (accountType === "individual" ? "admin" : "user")) as UserContext["role"],
+      accountType,
       isOwner: profile.is_owner || false,
       subscriptionTier: (orgData?.subscription_tier || "basic") as SubscriptionTier,
       organizationId: profile.organization_id,
-    };
-  } else if (profile?.individual_organization_id) {
-    userContext = {
-      userId: authUser.id,
-      role: "admin" as UserContext["role"],
-      accountType: "individual" as AccountType,
-      isOwner: true,
-      subscriptionTier: "basic" as SubscriptionTier,
-      organizationId: profile.individual_organization_id,
     };
   }
 

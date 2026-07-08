@@ -712,7 +712,7 @@ export function VideoTestimonialPreview({
         >
           {previewT(content.language, "poweredBy")}{" "}
           <a
-            href="https://repwell.com"
+            href="https://repwell.ai"
             target="_blank"
             rel="noopener noreferrer"
             className="no-underline hover:underline"

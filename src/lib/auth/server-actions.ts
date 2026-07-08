@@ -53,21 +53,25 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
   const orgSlug = slugify(organizationName);
 
   try {
-    // Use admin client to create individual organization first
-    // Self-serve signups use individual_organizations (not organizations — reserved for enterprise)
+    // Create the organization for self-serve signup (ADR 0006: one organizations
+    // table; account_type discriminates). Self-serve accounts are 'individual'
+    // and skip plan + payment, so onboarding starts at the profile step.
     const supabaseAdmin = createAdminClient();
 
-    const { data: indivOrgData, error: indivOrgError } = await supabaseAdmin
-      .from("individual_organizations")
+    const { data: orgData, error: orgError } = await supabaseAdmin
+      .from("organizations")
       .insert({
         name: organizationName,
         slug: orgSlug,
+        account_type: "individual",
+        subscription_tier: "basic",
+        onboarding_status: "payment_complete",
       })
       .select()
       .single();
 
-    if (indivOrgError) {
-      console.error("Individual organization creation error:", indivOrgError);
+    if (orgError) {
+      console.error("Organization creation error:", orgError);
       return { success: false, error: "Failed to create organization" };
     }
 
@@ -81,8 +85,8 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
     });
 
     if (!signUpResult || "error" in signUpResult) {
-      // Clean up individual organization if user creation failed
-      await supabaseAdmin.from("individual_organizations").delete().eq("id", indivOrgData.id);
+      // Clean up the organization if user creation failed
+      await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
       return {
         success: false,
         error: (signUpResult as { error?: string })?.error || "Failed to create user",
@@ -102,9 +106,9 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
         console.error("Failed to clean up user/accounts after slug error:", cleanupErr);
       }
       try {
-        await supabaseAdmin.from("individual_organizations").delete().eq("id", indivOrgData.id);
+        await supabaseAdmin.from("organizations").delete().eq("id", orgData.id);
       } catch (cleanupErr) {
-        console.error("Failed to clean up individual organization after slug error:", cleanupErr);
+        console.error("Failed to clean up organization after slug error:", cleanupErr);
       }
       return {
         success: false,
@@ -112,11 +116,11 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       };
     }
 
-    // Update user with individual organization details
+    // Link the user to their organization
     const { error: userUpdateError } = await supabaseAdmin
       .from("users")
       .update({
-        individual_organization_id: indivOrgData.id,
+        organization_id: orgData.id,
         slug: userSlug,
         role: "admin",
         is_active: true,
@@ -128,7 +132,8 @@ export async function signUpWithBetterAuth(formData: SignUpInput): Promise<AuthR
       console.error("User update error:", userUpdateError);
     }
 
-    // Skip widget seeding and membership for individual orgs — widgets require enterprise organization_id
+    // Widget seeding and membership are intentionally skipped for self-serve
+    // individual accounts; they seed on demand.
 
     return {
       success: true,

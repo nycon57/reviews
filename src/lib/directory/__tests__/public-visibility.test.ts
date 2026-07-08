@@ -70,7 +70,7 @@ describe("public visibility queries in directory actions", () => {
       expect(chain.neq).toHaveBeenCalledWith("role", "manager");
       expect(chain.neq).toHaveBeenCalledWith("role", "enterprise");
       expect(chain.neq).not.toHaveBeenCalledWith("role", "admin");
-      expect(chain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+      expect(chain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
     }
   });
 
@@ -91,6 +91,6 @@ describe("public visibility queries in directory actions", () => {
     expect(industriesChain.neq).toHaveBeenCalledWith("role", "manager");
     expect(industriesChain.neq).toHaveBeenCalledWith("role", "enterprise");
     expect(industriesChain.neq).not.toHaveBeenCalledWith("role", "admin");
-    expect(industriesChain.or).toHaveBeenCalledWith("role.neq.admin,individual_organization_id.not.is.null");
+    expect(industriesChain.or).toHaveBeenCalledWith("role.neq.admin,organizations.account_type.eq.individual");
   });
 });

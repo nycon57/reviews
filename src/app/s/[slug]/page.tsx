@@ -128,7 +128,7 @@ async function fetchLandingContact(
     const contactQuery = supabase
       .from("users")
       .select(
-        "id, full_name, phone, address, cta_button_text, cta_button_url, linkedin_url, facebook_url, instagram_url, twitter_url, personal_website_url, zillow_profile_url"
+        "id, full_name, phone, address, cta_button_text, cta_button_url, linkedin_url, facebook_url, instagram_url, twitter_url, personal_website_url, zillow_profile_url, organizations!inner(account_type)"
       ) as unknown as ContactQuery;
 
     const { data: contactRow } = await applyPublicProfessionalFilters(contactQuery)

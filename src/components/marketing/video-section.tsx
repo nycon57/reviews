@@ -100,7 +100,7 @@ export function VideoSection({
               <div className="absolute -inset-4 bg-gradient-to-br from-repwell-teal-300/20 to-repwell-sage-200/20 rounded-3xl blur-xl" />
 
               <BrowserMockup
-                url="app.repwell.ai/demo"
+                url="repwell.ai/demo"
                 className="relative shadow-2xl"
               >
                 <div className="aspect-video bg-gradient-to-br from-repwell-teal-500 to-repwell-teal-400 relative overflow-hidden">

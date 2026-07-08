@@ -526,7 +526,7 @@ async function sendRecoveryEmail(
         targetPlan: safeString(context.target_plan),
         currentPlan: safeString(context.current_plan),
         pricingUrl: `${baseUrl}/pricing`,
-        upgradeUrl: `${baseUrl}/dashboard/settings?tab=billing`,
+        upgradeUrl: `${baseUrl}/dashboard/organization?tab=billing`,
         featuresHighlight: safeStringArray(context.features_highlight),
         specialOffer: safeSpecialOffer(context.special_offer),
       };
@@ -549,7 +549,7 @@ async function sendRecoveryEmail(
         integrationDisplayName:
           getIntegrationDisplayName(integrationType) || "Integration",
         oauthStep: safeString(context.oauth_step),
-        integrationsUrl: `${baseUrl}/dashboard/settings/integrations`,
+        integrationsUrl: `${baseUrl}/dashboard/organization?tab=integrations`,
         setupGuideUrl: safeString(context.setup_guide_url),
         integrationBenefits: safeStringArray(context.benefits),
       };

@@ -515,7 +515,7 @@ export function ReviewWallPreview({
           }}
         >
           <a
-            href="https://repwell.com"
+            href="https://repwell.ai"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 no-underline hover:opacity-80 transition-opacity"

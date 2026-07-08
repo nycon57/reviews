@@ -295,7 +295,7 @@ describe("video testimonial public actions", () => {
     const result = await getShareKit("test-token");
 
     expect(result.success).toBe(true);
-    expect(result.data?.smartLinkUrl).toBe("https://app.repwell.com/s/great-review");
+    expect(result.data?.smartLinkUrl).toBe("https://repwell.ai/s/great-review");
     expect(result.data?.smartLinkPendingApproval).toBe(false);
     expect(ensureSmartLinkForSource).toHaveBeenCalledWith({
       organizationId: "org-1",

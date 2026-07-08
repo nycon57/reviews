@@ -684,7 +684,7 @@ async function sendDunningEmail(
   const baseUrl = emailConfig.baseUrl;
   const unsubscribeUrl = `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`;
   const dashboardUrl = `${baseUrl}/dashboard`;
-  const updatePaymentUrl = `${baseUrl}/dashboard/settings?tab=billing`;
+  const updatePaymentUrl = `${baseUrl}/dashboard/organization?tab=billing`;
 
   const baseData = {
     toEmail: user.email,
@@ -787,7 +787,7 @@ async function sendDunningEmail(
         accountSummary,
         dataRetentionEndsAt,
         dataRetentionDays: DUNNING_SEQUENCE_CONFIG.dataRetentionDays,
-        reactivateUrl: `${baseUrl}/dashboard/settings?tab=billing`,
+        reactivateUrl: `${baseUrl}/dashboard/organization?tab=billing`,
         exportDataUrl: `${baseUrl}/dashboard/settings/export`,
       };
       emailContent = getDunning5SuspendedEmail(data);

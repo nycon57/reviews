@@ -134,7 +134,7 @@ function getAppBaseUrl(): string {
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.SITE_URL ||
-    'https://app.repwell.com'
+    'https://repwell.ai'
   ).replace(/\/$/, '');
 }
 
@@ -291,7 +291,7 @@ export async function handleSocialOAuthCallback(
         })
         .eq('id', existing.id);
 
-      revalidatePath('/dashboard/settings/social');
+      revalidatePath('/dashboard/organization');
       return { success: true, data: { connectionId: existing.id } };
     }
 
@@ -395,7 +395,7 @@ export async function handleSocialOAuthCallback(
       return { success: false, error: 'Failed to save connection' };
     }
 
-    revalidatePath('/dashboard/settings/social');
+    revalidatePath('/dashboard/organization');
     return { success: true, data: { connectionId: connection.id } };
   } catch (error) {
     console.error('OAuth callback error:', error);
@@ -431,7 +431,7 @@ export async function selectSocialPage(
     return { success: false, error: 'Failed to update connection' };
   }
 
-  revalidatePath('/dashboard/settings/social');
+  revalidatePath('/dashboard/organization');
   return { success: true };
 }
 
@@ -503,7 +503,7 @@ export async function disconnectSocial(connectionId: string): Promise<ActionResu
     return { success: false, error: 'Failed to disconnect' };
   }
 
-  revalidatePath('/dashboard/settings/social');
+  revalidatePath('/dashboard/organization');
   return { success: true };
 }
 
@@ -534,7 +534,7 @@ export async function updateAutoPublishSettings(
     return { success: false, error: 'Failed to update settings' };
   }
 
-  revalidatePath('/dashboard/settings/social');
+  revalidatePath('/dashboard/organization');
   return { success: true };
 }
 

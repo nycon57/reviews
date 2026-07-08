@@ -33,7 +33,7 @@ function revalidateProfilePaths(userId: string) {
   revalidatePath("/dashboard", "layout");
   revalidatePath("/dashboard/settings");
   revalidatePath(`/dashboard/organization/users/${userId}`);
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
 }
 
 /**

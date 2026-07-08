@@ -236,6 +236,6 @@ describe('social OAuth state hardening', () => {
         platform_user_id: 'platform-user-1',
       })
     );
-    expect(revalidatePathMock).toHaveBeenCalledWith('/dashboard/settings/social');
+    expect(revalidatePathMock).toHaveBeenCalledWith('/dashboard/organization');
   });
 });

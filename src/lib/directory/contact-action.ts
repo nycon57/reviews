@@ -32,7 +32,7 @@ export async function contactProfessional(input: {
   // relay, and only publicly listed directory professionals are contactable.
   const admin = createAdminClient();
   const { data: professional, error: lookupError } = await applyPublicProfessionalFilters(
-    admin.from("users").select("email")
+    admin.from("users").select("email, organizations!inner(account_type)")
   )
     .eq("id", professionalId)
     .maybeSingle();

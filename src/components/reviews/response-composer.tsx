@@ -324,7 +324,7 @@ export function ResponseComposer({
             </p>
           </div>
           <Button variant="outline" size="sm" asChild className="h-8 shrink-0">
-            <Link href="/dashboard/settings?tab=billing">
+            <Link href="/dashboard/organization?tab=billing">
               Upgrade
             </Link>
           </Button>

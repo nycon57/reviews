@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChartBar } from "@phosphor-icons/react";
 import { UnifiedAnalyticsDashboard } from "@/components/analytics";
 import { AnalyticsTabsWrapper } from "@/components/analytics/analytics-tabs-wrapper";
-import { AdminAnalyticsDashboard } from "@/app/(dashboard)/dashboard/admin/analytics/admin-analytics-dashboard";
+import { AdminAnalyticsDashboard } from "@/components/analytics/staff/admin-analytics-dashboard";
 import { ScopeSelector, type AnalyticsScope } from "./scope-selector";
 import type {
   VideoTestimonialFunnelMetrics,

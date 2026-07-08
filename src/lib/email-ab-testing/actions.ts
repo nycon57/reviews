@@ -163,7 +163,7 @@ export async function createABTest(
     // Don't fail the whole operation, results will be created on first email
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
+  revalidatePath("/staff/email-ab-tests");
 
   return { success: true, data: mapDbTestToTs(test) };
 }
@@ -244,8 +244,8 @@ export async function updateABTest(
     return { success: false, error: "Failed to update A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -273,7 +273,7 @@ export async function deleteABTest(id: string): Promise<ActionResult<void>> {
     return { success: false, error: "Failed to archive A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
+  revalidatePath("/staff/email-ab-tests");
 
   return { success: true };
 }
@@ -344,8 +344,8 @@ export async function startABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to start A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -396,8 +396,8 @@ export async function stopABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to stop A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -427,8 +427,8 @@ export async function pauseABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to pause A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -458,8 +458,8 @@ export async function resumeABTest(id: string): Promise<ActionResult<ABTest>> {
     return { success: false, error: "Failed to resume A/B test" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${id}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${id}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -893,8 +893,8 @@ export async function declareWinner(
     return { success: false, error: "Failed to declare winner" };
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${testId}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${testId}`);
 
   return { success: true, data: mapDbTestToTs(updated) };
 }
@@ -1018,8 +1018,8 @@ export async function applyWinnerToFuture(
     console.error("Error stamping winner_applied_at:", stampError);
   }
 
-  revalidatePath("/dashboard/admin/email-ab-tests");
-  revalidatePath(`/dashboard/admin/email-ab-tests/${testId}`);
+  revalidatePath("/staff/email-ab-tests");
+  revalidatePath(`/staff/email-ab-tests/${testId}`);
 
   const applied = [
     subjectLine ? "subject line" : null,

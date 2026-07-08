@@ -31,7 +31,7 @@ import {
 } from "./types";
 
 const MILESTONE_APP_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
 
 // Helper to access milestone tables that may not be in generated types yet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

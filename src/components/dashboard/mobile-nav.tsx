@@ -125,7 +125,7 @@ interface MobileNavLinkProps {
 
 function MobileNavLink({ item, isActive, onClick, dynamicBadge }: MobileNavLinkProps) {
   const { isProLocked } = item;
-  const href = isProLocked ? "/dashboard/settings?tab=billing" : item.href;
+  const href = isProLocked ? "/dashboard/organization?tab=billing" : item.href;
   const IconComponent = ICON_MAP[item.icon];
 
   return (

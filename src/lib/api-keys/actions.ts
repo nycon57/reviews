@@ -259,7 +259,7 @@ export async function createApiKey(
       return { success: false, error: 'Failed to create API key' };
     }
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return {
       success: true,
@@ -332,7 +332,7 @@ export async function updateApiKey(
       return { success: false, error: 'Failed to update API key' };
     }
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return {
       success: true,
@@ -366,7 +366,7 @@ export async function deleteApiKey(id: string): Promise<ActionResult> {
       return { success: false, error: 'Failed to delete API key' };
     }
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return { success: true };
   } catch (error) {
@@ -443,7 +443,7 @@ export async function rotateApiKey(
       .update({ is_active: false })
       .eq('id', id);
 
-    revalidatePath('/dashboard/settings/api-keys');
+    revalidatePath('/dashboard/organization');
 
     return {
       success: true,

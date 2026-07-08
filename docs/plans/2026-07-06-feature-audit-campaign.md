@@ -368,6 +368,15 @@ Ten grill sessions complete (§6–§6k: nine feature areas + engineering standa
 - **Nav/middleware "Organization for individuals" contradiction intentionally NOT hotfixed** — resolution is ADR 0006/0007 work (IA area), not a patch.
 - **Contact erasure covers PII columns only** (from B1): video_testimonial_responses media/transcripts carry likeness beyond columns — a media-deletion path on erasure is a video-area follow-up (noted in eraseContact doc comment).
 
+## 7c. Production infrastructure findings (2026-07-07 evening, during checklist execution)
+
+- **Schema drift, quantified:** 117 of 119 local migrations were never registered in `supabase_migrations.schema_migrations` — the remote schema was built via dashboard SQL over months. Marker-verified and fixed tonight: 13 genuinely-missing migrations applied (six 20260707*, email_assets, stripe_billing, email_sequences, user_milestones, admin_alert_preferences, email_ab_testing, + the review_profile enum value from the partially-applied consolidation). **Six foundational tables had never existed in prod** (subscriptions/subscription_items — Stripe webhooks were syncing into a void — email_sequences, admin_alert_queue/preferences, email_ab_tests, user_milestones). Remaining workstream: full schema diff + version-registry repair so `db push` becomes trustworthy.
+- **Vercel production had ZERO environment variables.** NEXT_PUBLIC_APP_URL (https://repwell.ai) and a freshly-generated CRON_SECRET set tonight; **everything else (Supabase URLs/keys, DATABASE_URL, Stripe, Resend, Google, Gemini, BETTER_AUTH_*) still needs Jarrett to populate** — production runtime is inert until then. Dev .env values must NOT be blanket-copied (localhost URLs, test keys).
+- Canonical domain confirmed: **https://repwell.ai apex** (39 files of hardcoded wrong domains fixed). mailto addresses (@repwell.com) still need mailbox confirmation.
+- GEO purge: vacuous — geo tables never existed in prod (fabricated data was local-only).
+- Contacts backfill executed against prod: 249 contacts, 253 rows linked.
+- database.types.ts now generated from the live schema; tsc clean against it.
+
 ## 8. Phase 1b — Honesty Sweep (new workstream from grill decisions)
 
 One team removes every shipped fiction in a single pass: delist SMS/Teams/HubSpot/Apple-Business-Connect marketing claims + fix the fictional Zapier doc (real Zapier build comes later with acquisition); archive mobile app (`archive/mobile-app`) and `@repwell/react-widgets` (`archive/react-widgets`); delete referral email service + templates; kill GEO route + fake-data writers + purge fabricated rows; remove SMS preference toggles, Send-SMS builder node, Teams senders/toggles; hardcoded "API status" pill and mobile-era claims. Paired with H-fixes so honesty and correctness land together.

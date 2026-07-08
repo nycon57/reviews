@@ -662,7 +662,7 @@ async function sendWelcomeEmail(
         ...baseData,
         sampleMetrics: metrics,
         analyticsUrl: `${baseUrl}/dashboard/analytics`,
-        upgradeUrl: `${baseUrl}/dashboard/settings?tab=billing`,
+        upgradeUrl: `${baseUrl}/dashboard/organization?tab=billing`,
       };
       emailContent = getWelcome5MetricsEmail(data);
       break;

@@ -892,7 +892,7 @@ async function sendTrialEndingEmail(
   const baseUrl = emailConfig.baseUrl;
   const unsubscribeUrl = `${baseUrl}/api/email/unsubscribe?email=${encodeURIComponent(user.email)}`;
   const dashboardUrl = `${baseUrl}/dashboard`;
-  const upgradeUrl = `${baseUrl}/dashboard/settings?tab=billing`;
+  const upgradeUrl = `${baseUrl}/dashboard/organization?tab=billing`;
   const pricingUrl = `${baseUrl}/pricing`;
 
   const baseData = {

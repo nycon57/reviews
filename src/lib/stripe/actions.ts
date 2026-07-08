@@ -199,7 +199,7 @@ export async function createPortalSession(
   try {
     const session = await stripe.billingPortal.sessions.create({
       customer: customerResult.customerId,
-      return_url: returnUrl || `${APP_URL}/dashboard/settings?tab=billing`,
+      return_url: returnUrl || `${APP_URL}/dashboard/organization?tab=billing`,
     });
 
     return { success: true, url: session.url };

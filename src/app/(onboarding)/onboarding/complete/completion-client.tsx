@@ -25,7 +25,7 @@ const nextSteps = [
     icon: Users,
     title: "Add your team",
     description: "Invite professionals and team members to your organization",
-    href: "/dashboard/team",
+    href: "/dashboard/people",
     recommended: true,
   },
   {
@@ -38,7 +38,7 @@ const nextSteps = [
     icon: Rocket,
     title: "Connect integrations",
     description: "Link Google Business Profile and other platforms",
-    href: "/dashboard/settings?tab=integrations",
+    href: "/dashboard/organization?tab=integrations",
   },
 ];
 

@@ -132,7 +132,7 @@ const DEFAULT_OFFBOARDING_CHECKLIST = [
   {
     title: "Update integrations",
     description: "Disconnect services linked to RepWell.",
-    actionUrl: "/dashboard/settings/integrations",
+    actionUrl: "/dashboard/organization?tab=integrations",
   },
 ];
 
@@ -320,7 +320,7 @@ function buildBaseUrls(organizationId: string): {
   return {
     baseUrl,
     dashboardUrl: `${baseUrl}/dashboard`,
-    billingUrl: `${baseUrl}/dashboard/settings?tab=billing`,
+    billingUrl: `${baseUrl}/dashboard/organization?tab=billing`,
     unsubscribeUrl: `${baseUrl}/api/email/unsubscribe?org=${organizationId}`,
   };
 }

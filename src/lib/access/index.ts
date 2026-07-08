@@ -79,7 +79,6 @@ export async function getAccessContext(): Promise<AccessContext | null> {
       role,
       is_owner,
       organization_id,
-      individual_organization_id,
       organizations (
         account_type,
         subscription_tier,
@@ -98,46 +97,32 @@ export async function getAccessContext(): Promise<AccessContext | null> {
     grace_period_ends_at?: string;
   } | null;
 
-  // Individual path: identified by individual_organization_id. Individuals keep
-  // organization_id for backward compat, so their real subscription tier lives on
-  // the organizations row — the same source billing/Stripe writes to. Read it
-  // instead of assuming "basic" so paying individuals aren't gated out of Pro.
-  if (userData?.individual_organization_id) {
-    return {
-      userId: authUser.id,
-      role: (userData.role || "admin") as UserRole,
-      accountType: "individual" as AccountType,
-      subscriptionTier: (org?.subscription_tier || "basic") as SubscriptionTier,
-      organizationId: userData.individual_organization_id,
-      isOwner: true,
-      isGracePeriod: false,
-    };
+  // Single path (ADR 0006): every account — individual or enterprise — has one
+  // organizations row, and account_type is the discriminator. subscription_tier
+  // is read straight from that row (billing/Stripe's source of truth), so paying
+  // individuals aren't gated out of Pro.
+  if (!userData?.organization_id) {
+    return null;
   }
 
-  // Enterprise path: organization_id is set
-  if (userData?.organization_id) {
-    const gracePeriod = isInGracePeriod(
-      org?.subscription_status,
-      org?.grace_period_ends_at
-    );
+  const accountType = (org?.account_type || "individual") as AccountType;
 
-    // If grace period has expired, redirect to reactivation
-    if (isGracePeriodExpired(org?.subscription_status, org?.grace_period_ends_at)) {
-      redirect("/reactivate");
-    }
-
-    return {
-      userId: authUser.id,
-      role: (userData.role || "user") as UserRole,
-      accountType: (org?.account_type || "enterprise") as AccountType,
-      subscriptionTier: (org?.subscription_tier || "basic") as SubscriptionTier,
-      organizationId: userData.organization_id,
-      isOwner: userData.is_owner || false,
-      isGracePeriod: gracePeriod,
-    };
+  // If grace period has expired, redirect to reactivation. Individuals with no
+  // subscription have a null status, so this never fires for them.
+  if (isGracePeriodExpired(org?.subscription_status, org?.grace_period_ends_at)) {
+    redirect("/reactivate");
   }
 
-  return null;
+  return {
+    userId: authUser.id,
+    // Individual accounts are always their own admin.
+    role: (userData.role || (accountType === "individual" ? "admin" : "user")) as UserRole,
+    accountType,
+    subscriptionTier: (org?.subscription_tier || "basic") as SubscriptionTier,
+    organizationId: userData.organization_id,
+    isOwner: userData.is_owner || false,
+    isGracePeriod: isInGracePeriod(org?.subscription_status, org?.grace_period_ends_at),
+  };
 }
 
 /**
@@ -179,7 +164,7 @@ export async function checkPageAccess(
 
     if (userLevel < requiredLevel) {
       // Redirect to billing with upgrade prompt
-      const upgradeUrl = `/dashboard/settings?tab=billing&upgrade=${minTier}`;
+      const upgradeUrl = `/dashboard/organization?tab=billing&upgrade=${minTier}`;
       redirect(redirectTo || upgradeUrl);
     }
   }

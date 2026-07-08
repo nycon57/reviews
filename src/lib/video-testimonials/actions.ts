@@ -116,7 +116,7 @@ export type BulkCreateInput = z.infer<typeof bulkCreateSchema>;
 // ============================================================================
 
 function getRequestUrl(token: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   return `${baseUrl}/video-testimonial/${token}`;
 }
 

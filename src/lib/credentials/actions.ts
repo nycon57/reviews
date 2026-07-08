@@ -239,7 +239,7 @@ export async function createCredentialForUser(
     return { success: false, error: error.message };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   revalidatePath(`/profile/${userId}`);
 
   return { success: true, data: rowToCredential(data as UserCredentialRow) };
@@ -384,7 +384,7 @@ export async function verifyCredential(
     return { success: false, error: "Credential not found" };
   }
 
-  revalidatePath("/dashboard/team");
+  revalidatePath("/dashboard/people");
   revalidatePath(`/profile/${(data as UserCredentialRow).user_id}`);
 
   return { success: true, data: rowToCredential(data as UserCredentialRow) };

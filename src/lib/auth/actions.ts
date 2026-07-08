@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createUntypedAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import {
   signUpSchema,
@@ -73,23 +74,27 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
     return { success: false, error: "Failed to create user" };
   }
 
-  // Create individual organization for self-serve signup
-  // Uses individual_organizations table (not organizations — reserved for enterprise)
-  const { data: indivOrgData, error: indivOrgError } = await supabase
-    .from("individual_organizations")
+  // Create the organization for self-serve signup (ADR 0006: one organizations
+  // table; account_type discriminates). Self-serve accounts are 'individual' and
+  // skip plan + payment, so onboarding starts at the profile step.
+  const { data: orgData, error: orgError } = await supabase
+    .from("organizations")
     .insert({
       name: organizationName,
       slug: orgSlug,
+      account_type: "individual",
+      subscription_tier: "basic",
+      onboarding_status: "payment_complete",
     })
     .select()
     .single();
 
-  if (indivOrgError) {
-    console.error("Individual organization creation error:", indivOrgError);
+  if (orgError) {
+    console.error("Organization creation error:", orgError);
   }
 
   // Create the user record in our users table
-  if (indivOrgData) {
+  if (orgData) {
     // Generate SEO-friendly slug for the user
     let userSlug: string;
     try {
@@ -103,7 +108,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
       .from("users")
       .insert({
         id: authData.user.id,
-        individual_organization_id: indivOrgData.id,
+        organization_id: orgData.id,
         email: email,
         full_name: fullName,
         slug: userSlug,
@@ -116,7 +121,7 @@ export async function signUp(formData: SignUpInput): Promise<AuthResult> {
       console.error("User record creation error:", userError);
     }
 
-    // Skip widget seeding for individual orgs — widgets require enterprise organization_id
+    // Widget seeding is intentionally skipped here; individual accounts seed on demand.
   }
 
   return {
@@ -309,6 +314,42 @@ export async function checkAdminAccess(): Promise<boolean> {
   const isEnterprise = organization?.account_type === "enterprise";
 
   return isAdmin && isEnterprise;
+}
+
+/**
+ * Check whether the current authenticated user is RepWell platform staff.
+ */
+export async function isPlatformAdmin(): Promise<boolean> {
+  const user = await unifiedGetUser();
+
+  if (!user) return false;
+
+  // TODO(database-types): switch to the typed admin client after
+  // users.is_platform_admin is present in generated database types.
+  const supabase = createUntypedAdminClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("is_platform_admin")
+    .eq("id", user.id)
+    .limit(1);
+
+  if (error) {
+    console.error("Platform admin lookup failed:", error.message);
+    return false;
+  }
+
+  return data?.[0]?.is_platform_admin === true;
+}
+
+/**
+ * Require RepWell platform staff access.
+ */
+export async function requirePlatformAdmin(): Promise<void> {
+  const hasAccess = await isPlatformAdmin();
+
+  if (!hasAccess) {
+    redirect("/dashboard");
+  }
 }
 
 // =============================================

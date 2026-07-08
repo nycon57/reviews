@@ -244,7 +244,7 @@ export function TabNavigationSection({
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: 0.1 }}
             >
-              <BrowserMockup url="app.repwell.ai/dashboard">
+              <BrowserMockup url="repwell.ai/dashboard">
                 <div className="aspect-[4/3] bg-gradient-to-br from-repwell-sage-100/30 to-white flex items-center justify-center">
                   {/* Placeholder for screenshot - in production, use actual images */}
                   <div className="text-center p-8">

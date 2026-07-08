@@ -212,7 +212,7 @@ describe("renderWidget", () => {
 
     const branding = shadow.querySelector(".rw-branding a");
     expect(branding?.textContent).toBe("RepWell");
-    expect((branding as HTMLAnchorElement)?.href).toBe("https://repwell.com/");
+    expect((branding as HTMLAnchorElement)?.href).toBe("https://repwell.ai/");
   });
 
   it("renders NMLS disclaimer when configured", async () => {

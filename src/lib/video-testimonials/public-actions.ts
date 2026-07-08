@@ -729,7 +729,7 @@ export async function generateShareLink(
       actorUserId: (video.user_id as string | null) ?? null,
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
     return { success: true, data: { shareUrl: `${baseUrl}${ensured.url}` } };
   } catch (error) {
     console.error("Error generating share link:", error);
@@ -981,7 +981,7 @@ async function notifyVideoSubmitted(params: {
   durationSeconds: number;
 }) {
   const supabase = createAdminClient();
-  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const { owner, managers } = await getVideoNotificationRecipients({
     organizationId: params.organizationId,
     ownerUserId: params.ownerUserId,
@@ -1055,7 +1055,7 @@ async function notifyVideoReadyForApproval(params: {
   durationSeconds: number | null;
 }) {
   const supabase = createAdminClient();
-  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+  const dashboardBaseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
   const { owner, managers } = await getVideoNotificationRecipients({
     organizationId: params.organizationId,
     ownerUserId: params.ownerUserId,
@@ -2079,7 +2079,7 @@ export async function getShareKit(token: string): Promise<ActionResult<ShareKit>
           sourceId: response.id,
           actorUserId: request.user_id,
         });
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.repwell.com";
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://repwell.ai";
         smartLinkUrl = `${baseUrl}${ensured.url}`;
       } catch (error) {
         console.error("Error ensuring smart link for share kit:", error);

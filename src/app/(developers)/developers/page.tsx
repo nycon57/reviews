@@ -189,7 +189,7 @@ export default function DevelopersPage() {
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Button asChild variant="secondary" size="lg">
-                <Link href="/dashboard/settings/api-keys">
+                <Link href="/dashboard/organization?tab=api">
                   Create API Key
                 </Link>
               </Button>

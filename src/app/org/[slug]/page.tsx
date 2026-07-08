@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPublicOrganizationProfile } from "@/lib/seo/actions";
 import {
@@ -6,6 +7,7 @@ import {
   getBaseUrl,
   generateOrganizationProfilePageSchema,
 } from "@/lib/seo";
+import { logAgentVisit } from "@/lib/agents/detection";
 import { MultiSchemaStructuredData } from "@/components/seo/structured-data";
 import { OrganizationProfileContent } from "./organization-profile-content";
 import { buildCompanyBreadcrumbs } from "@/lib/directory/breadcrumb-utils";
@@ -43,6 +45,7 @@ export default async function OrganizationProfilePage({ params }: PageProps) {
 
   const { organization, branches, featuredProfessionals, testimonials } = result.data;
   const baseUrl = getBaseUrl();
+  logAgentVisit(`/org/${organization.slug || organization.id}`, await headers());
 
   // Build breadcrumbs for navigation
   const breadcrumbs = buildCompanyBreadcrumbs({

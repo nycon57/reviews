@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
@@ -18,6 +19,7 @@ import {
   buildDirectorySearchRequest,
   type DirectorySearchParams,
 } from "@/lib/directory/search-params";
+import { logAgentVisit } from "@/lib/agents/detection";
 import { getIndustryConfig, getSupportedIndustries } from "@/lib/industry/configs";
 import { getBaseUrl } from "@/lib/seo";
 
@@ -101,6 +103,7 @@ export default async function IndustryDirectoryPage(props: PageProps) {
   ]);
 
   const professionals = searchResult.success ? searchResult.data?.professionals || [] : [];
+  logAgentVisit(`/directory/${industrySlug}`, await headers());
   const schemas = generateDirectorySchemas({
     professionals,
     baseUrl,

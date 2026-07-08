@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 
 import { DirectoryPageShell } from "@/components/directory/directory-page-shell";
@@ -11,6 +12,7 @@ import {
   buildDirectorySearchRequest,
   type DirectorySearchParams,
 } from "@/lib/directory/search-params";
+import { logAgentVisit } from "@/lib/agents/detection";
 import { getBaseUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
@@ -59,6 +61,7 @@ export default async function DirectoryPage(props: PageProps) {
     searchRequest.pageSize
   );
   const professionals = searchResult.success ? searchResult.data?.professionals || [] : [];
+  logAgentVisit("/directory", await headers());
   const schemas = generateDirectorySchemas({ professionals, baseUrl });
 
   return (

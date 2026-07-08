@@ -10441,11 +10441,13 @@ export type Database = {
         Row: {
           average_rating: number | null
           industry: string | null
+          logo_url: string | null
           name: string | null
           organization_id: string | null
           professional_count: number | null
           published_reviews: number | null
           slug: string | null
+          website_url: string | null
         }
         Relationships: []
       }

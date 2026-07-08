@@ -359,8 +359,8 @@ function toCompanySummary(row: OrganizationReviewRollupRow): CompanySummary {
     name: row.name?.trim() || "Unknown",
     slug: row.slug ?? "",
     industry: row.industry,
-    logo_url: null,
-    website_url: null,
+    logo_url: row.logo_url ?? null,
+    website_url: row.website_url ?? null,
     professional_count: row.professional_count ?? 0,
     avg_team_rating: row.average_rating,
     total_team_reviews: row.published_reviews ?? 0,
@@ -907,7 +907,7 @@ export async function listCompaniesV2(
   let query = supabase
     .from("organization_review_rollups")
     .select(
-      "organization_id, name, slug, industry, professional_count, published_reviews, average_rating",
+      "organization_id, name, slug, industry, logo_url, website_url, professional_count, published_reviews, average_rating",
       { count: "exact" }
     );
 
